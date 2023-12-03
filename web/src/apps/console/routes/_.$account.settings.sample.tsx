@@ -7,6 +7,7 @@ import { handleError } from '~/root/lib/utils/common';
 import GitRepoSelector from '../components/git-repo-selector';
 import { IAccount } from '../server/gql/queries/access-queries';
 import { ConsoleApiType, GQLServerHandler } from '../server/gql/saved-queries';
+import { parseName } from '../server/r-utils/common';
 
 export const popupWindow = ({
   url = '',
@@ -126,7 +127,7 @@ export const updateAccount = async ({
       account: {
         displayName: data.displayName,
         metadata: {
-          name: data.metadata.name,
+          name: parseName(data),
         },
         contactEmail: data.contactEmail,
         spec: data.spec,

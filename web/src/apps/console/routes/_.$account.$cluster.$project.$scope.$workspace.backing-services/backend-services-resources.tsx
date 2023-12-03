@@ -4,8 +4,8 @@ import { IconButton } from '~/components/atoms/button';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithAvatar,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -65,7 +65,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, name),
                 render: () => (
-                  <ListTitleWithAvatar
+                  <ListTitle
                     title={name}
                     action={
                       <IconButton
@@ -91,7 +91,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, 'author'),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -128,10 +128,12 @@ const ListView = ({
                 key: generateKey(keyPrefix, name),
                 className: 'flex-1',
                 render: () => (
-                  <ListTitleWithAvatar
+                  <ListTitle
                     title={name}
                     avatar={
-                      <img src={logo} alt={name} className="w-4xl h-4xl" />
+                      <div className="pulsable pulsable-circle aspect-square">
+                        <img src={logo} alt={name} className="w-4xl h-4xl" />
+                      </div>
                     }
                   />
                 ),
@@ -145,7 +147,7 @@ const ListView = ({
                 key: generateKey(keyPrefix, 'author'),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

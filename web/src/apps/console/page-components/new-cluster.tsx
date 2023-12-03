@@ -5,14 +5,14 @@ import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { useMapper } from '~/components/utils';
+import { mapper, useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
-import { constDatas } from '../dummy/consts';
+import { constDatas, awsRegions } from '../dummy/consts';
 import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -24,10 +24,10 @@ import {
   parseName,
   parseNodes,
   validateAvailabilityMode,
-  validateCloudProvider,
+  validateClusterCloudProvider,
 } from '../server/r-utils/common';
-import { keyconstants } from '../server/r-utils/key-constants';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
+import { IAccountContext } from '../routes/_.$account';
 
 type props =
   | {
@@ -64,10 +64,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }));
 
   const { a: accountName } = useParams();
-  const { user } = useOutletContext<{
-    user: any;
-    account: any;
-  }>();
+
+  const { account } = useOutletContext<IAccountContext>();
 
   const navigate = useNavigate();
 
@@ -82,8 +80,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   >(options.length === 1 ? options[0] : undefined);
 
   const [selectedRegion, setSelectedRegion] = useState<
-    (typeof constDatas.regions)[number] | undefined
-  >(constDatas.regions.length === 1 ? constDatas.regions[0] : undefined);
+    (typeof awsRegions)[number]
+  >(awsRegions[0]);
 
   const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
     (typeof constDatas.availabilityModes)[number] | undefined
@@ -93,7 +91,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
     initialValues: {
       vpc: '',
       name: '',
-      region: 'ap-south-1' || selectedRegion?.value,
+      region: 'ap-south-1' || selectedRegion?.Name,
       cloudProvider: cloudProvider
         ? cloudProvider.cloudProviderName
         : selectedProvider?.provider?.cloudProviderName || '',
@@ -130,51 +128,13 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           cluster: {
             displayName: val.displayName,
             spec: {
-              // accountName: "{{.accountName}}"
-              // credentialsRef:
-              //   name: "{{.providerSecretName}}"
-              //   namespace: "{{.providerSecretNamespace}}"
-              // availabilityMode: HA
-              // # messageQueueTopicName: "clus-{{.clusterName}}-topic"
-              // cloudProvider: aws
-              // kloudliteRelease: v1.0.5-nightly
-              // aws:
-              //   region: ap-south-1
-              //   k3sMasters:
-              //     ami: ami-06d146e85d1709abb
-              //     amiSSHUsername: ubuntu
-              //     instanceType: c6a.large
-              //     nvidiaGpuEnabled: false
-              //     rootVolumeType: gp3
-              //     rootVolumeSize: 50
-              //     iamInstanceProfileRole: "EC2StorageAccess"
-              //
-              //     publicDnsHost: ""
-              //     clusterInternalDnsHost: "example-cluster.kloudlite-platform.kloudlite.local"
-              //
-              //     cloudflareEnabled: true
-              //     taintMasterNodes: true
-              //     backupToS3Enabled: false
-              //
-              //     nodes:
-              //       master-1:
-              //         role: primary-master
-              //       master-2:
-              //         role: secondary-master
-
-              kloudliteRelease: 'v1.0.5-nightly',
-              accountName,
-              // vpc: val.vpc || undefined,
-              // ...(validateCloudProvider(val.cloudProvider) === 'aws'
-              //   ? {
-              //       aws: {
-              //         region: val.region,
-              //         ami: 'ami-06d146e85d1709abb',
-              //       },
-              //     }
-              //   : {}),
-
-              cloudProvider: validateCloudProvider(val.cloudProvider),
+              cloudProvider: validateClusterCloudProvider(val.cloudProvider),
+              aws: {
+                region: selectedRegion.Name,
+                k3sMasters: {
+                  instanceType: 'c6a.xlarge',
+                },
+              },
               credentialsRef: {
                 name: val.credentialsRef,
               },
@@ -182,9 +142,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             },
             metadata: {
               name: val.name,
-              annotations: {
-                [keyconstants.author]: user.name,
-              },
             },
           },
         });
@@ -192,11 +149,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           throw e[0];
         }
         toast.success('cluster created successfully');
-        navigate(
-          isOnboarding
-            ? `/onboarding/${accountName}/${val.name}/new-project`
-            : `/${accountName}/clusters`
-        );
+        navigate(`/${accountName}/clusters`);
       } catch (err) {
         handleError(err);
       }
@@ -225,17 +178,23 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             completed: false,
           },
           {
-            label: 'Setup First Cluster',
+            label: 'Validate Cloud Provider',
             active: true,
             id: 4,
             completed: false,
           },
           {
-            label: 'Create your project',
-            active: false,
+            label: 'Setup First Cluster',
+            active: true,
             id: 5,
             completed: false,
           },
+          // {
+          //   label: 'Create your project',
+          //   active: false,
+          //   id: 5,
+          //   completed: false,
+          // },
         ]
       : [
           {
@@ -277,7 +236,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         }
         progressItems={items}
         badge={{
-          title: 'Kloudlite Labs Pvt Ltd',
+          title: parseName(account),
           subtitle: accountName,
           image: <UserCircle size={20} />,
         }}
@@ -320,7 +279,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                     size="lg"
                     placeholder="Select cloud provider"
                     value={selectedProvider}
-                    options={options}
+                    options={async () => options}
                     onChange={(value) => {
                       handleChange('credentialsRef')({
                         target: { value: parseName(value.provider) },
@@ -338,11 +297,23 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   label="Region"
                   size="lg"
                   placeholder="Select region"
-                  value={selectedRegion}
-                  options={constDatas.regions}
+                  value={{
+                    label: selectedRegion?.Name || '',
+                    value: selectedRegion?.Name || '',
+                    region: selectedRegion,
+                  }}
+                  options={async () =>
+                    mapper(awsRegions, (v) => {
+                      return {
+                        value: v.Name,
+                        label: v.Name,
+                        region: v,
+                      };
+                    })
+                  }
                   onChange={(region) => {
                     handleChange('region')(dummyEvent(region.value));
-                    setSelectedRegion(region);
+                    setSelectedRegion(region.region);
                   }}
                 />
 
@@ -351,7 +322,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   size="lg"
                   placeholder="Select availability mode"
                   value={selectedAvailabilityMode}
-                  options={constDatas.availabilityModes}
+                  options={async () => constDatas.availabilityModes}
                   onChange={(availabilityMode) => {
                     handleChange('availabilityMode')(
                       dummyEvent(availabilityMode.value)

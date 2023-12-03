@@ -1,5 +1,4 @@
 import { PencilLine } from '@jengaicons/react';
-
 import Tooltip from '~/components/atoms/tooltip';
 import { cn } from '~/components/utils';
 import {
@@ -8,10 +7,8 @@ import {
 } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
-import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { findNodePlan, provisionTypes } from './nodepool-utils';
+import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
+import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 
 const NodeStatus = ({ nodes = [] }: { nodes: any }) => (
   <div className="flex flex-row gap-xl">
@@ -50,8 +47,8 @@ const Resources = ({
   items = [],
   onEdit,
 }: {
-  items: INodepool[];
-  onEdit: (item: INodepool) => void;
+  items: ExtractNodeType<INodepools>[];
+  onEdit: (item: ExtractNodeType<INodepools>) => void;
 }) => {
   return (
     <List.Root>
@@ -68,28 +65,28 @@ const Resources = ({
                   <div className="flex flex-col gap-3xl">
                     <div className="flex flex-row items-center gap-3xl">
                       <ListTitle title="Agenpllo" className="flex-1" />
-                      <ListBody
-                        data={
-                          provisionTypes.find(
-                            (pt) =>
-                              pt.value ===
-                              item.spec.awsNodeConfig?.provisionMode
-                          )?.label
-                        }
-                        className="w-[120px] text-right"
-                      />
-                      <ListBody
-                        data={`${item.spec.minCount} min - ${item.spec.maxCount} max`}
-                        className="w-[120px] text-right underline"
-                      />
-                      <ListBody
-                        data={
-                          findNodePlan(
-                            parseFromAnn(item, keyconstants.node_type)
-                          )?.label
-                        }
-                        className="w-[160px] text-right"
-                      />
+                      {/* <ListBody */}
+                      {/*   data={ */}
+                      {/*     provisionTypes.find( */}
+                      {/*       (pt) => */}
+                      {/*         pt.value === */}
+                      {/*         item.spec.awsNodeConfig?.provisionMode */}
+                      {/*     )?.label */}
+                      {/*   } */}
+                      {/*   className="w-[120px] text-right" */}
+                      {/* /> */}
+                      {/* <ListBody */}
+                      {/*   data={`${item.spec.minCount} min - ${item.spec.maxCount} max`} */}
+                      {/*   className="w-[120px] text-right underline" */}
+                      {/* /> */}
+                      {/* <ListBody */}
+                      {/*   data={ */}
+                      {/*     findNodePlan( */}
+                      {/*       parseFromAnn(item, keyconstants.node_type) */}
+                      {/*     )?.label */}
+                      {/*   } */}
+                      {/*   className="w-[160px] text-right" */}
+                      {/* /> */}
                       <ListBody
                         data="4/8 running"
                         className="w-[100px] text-right"

@@ -2,12 +2,7 @@ import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { IDialog, IModifiedItem } from '~/console/components/types.d';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
-import {
-  parseFromAnn,
-  parseName,
-  parseTargetNs,
-} from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -33,7 +28,7 @@ export const updateSecret = async ({
   data,
   reload,
 }: IUpdateSecret) => {
-  const { workspace, user } = context;
+  const { workspace } = context;
 
   try {
     const { errors: e } = await api.updateSecret({
@@ -41,13 +36,6 @@ export const updateSecret = async ({
         metadata: {
           name: parseName(secret),
           namespace: parseTargetNs(workspace),
-          annotations: {
-            [keyconstants.author]: user?.name || '',
-            [keyconstants.node_type]: parseFromAnn(
-              secret,
-              keyconstants.node_type
-            ),
-          },
         },
         displayName: secret.displayName,
         stringData: data,

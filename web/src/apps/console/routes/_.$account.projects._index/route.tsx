@@ -7,14 +7,17 @@ import Wrapper from '~/console/components/wrapper';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
+import Wip from '~/console/components/wip';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import ProjectResources from './project-resources';
 import Tools from './tools';
 
-export const loader = async (ctx: IRemixCtx) => {
+export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
+
     const { data: projects, errors } = await GQLServerHandler(
       ctx.request
     ).listProjects({
@@ -69,6 +72,8 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Projects = () => {
+  return <Wip />;
+
   const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();
 
@@ -151,7 +156,14 @@ const Projects = () => {
   };
 
   return (
-    <LoadingComp data={promise} skeleton={<div>kk</div>}>
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        projectsData: fake.ConsoleListProjectsQuery.core_listProjects as any,
+        clustersCount: 1,
+        cloudProviderSecretsCount: 1,
+      }}
+    >
       {({ projectsData, clustersCount, cloudProviderSecretsCount }) => {
         const projects = projectsData.edges?.map(({ node }) => node);
         if (!projects) {

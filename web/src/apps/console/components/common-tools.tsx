@@ -106,7 +106,9 @@ const SortbyOptionList = (_: ISortbyOptionList) => {
 };
 
 export interface IModeProps<T = 'list' | 'grid' | NonNullableString> {
+  // eslint-disable-next-line react/no-unused-prop-types
   viewMode?: T;
+  // eslint-disable-next-line react/no-unused-prop-types
   setViewMode?: (fn: T) => void;
 }
 

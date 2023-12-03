@@ -6,7 +6,15 @@ const Pulsable = ({
   isLoading,
 }: ChildrenProps & { isLoading: boolean }) => {
   return (
-    <ReactPulsable backgroundColor="#bebebe82" isLoading={isLoading}>
+    <ReactPulsable
+      config={{
+        bgColors: {
+          light: 'rgba(161, 161, 170, 0.2)',
+          medium: 'rgba(161, 161, 170, 0.3)',
+        },
+      }}
+      isLoading={isLoading}
+    >
       {children}
     </ReactPulsable>
   );

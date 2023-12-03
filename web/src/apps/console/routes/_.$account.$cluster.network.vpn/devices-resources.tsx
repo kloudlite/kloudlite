@@ -1,18 +1,17 @@
-import { PencilLine, QrCode, Trash } from '@jengaicons/react';
+import { PencilLine, QrCode, Trash, WireGuardlogo } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { IShowDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IDevices } from '~/console/server/gql/queries/vpn-queries';
 import {
@@ -21,19 +20,18 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useParams } from '@remix-run/react';
-import HandleDevices, { ShowQR } from './handle-devices';
+import HandleDevices, { ShowWireguardConfig } from './handle-devices';
 
 const RESOURCE_NAME = 'device';
+type BaseType = ExtractNodeType<IDevices>;
 
-const parseItem = (item: ExtractNodeType<IDevices>) => {
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    server: item.spec?.serverName,
     cluster: item.clusterName,
     updateInfo: {
       author: titleCase(
@@ -44,12 +42,19 @@ const parseItem = (item: ExtractNodeType<IDevices>) => {
   };
 };
 
-interface IExtraButton {
-  onDelete: () => void;
-  onQr: () => void;
-  onEdit: () => void;
-}
-const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
+type OnAction = ({
+  action,
+  item,
+}: {
+  action: 'edit' | 'delete' | 'qr' | 'config';
+  item: BaseType;
+}) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+};
+const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
@@ -57,15 +62,22 @@ const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
           label: 'Edit',
           icon: <PencilLine size={16} />,
           type: 'item',
-          onClick: onEdit,
+          onClick: () => onAction({ action: 'edit', item }),
           key: 'edit',
         },
         {
           label: 'Show QR Code',
           icon: <QrCode size={16} />,
           type: 'item',
-          onClick: onQr,
+          onClick: () => onAction({ action: 'qr', item }),
           key: 'qr',
+        },
+        {
+          label: 'Show Wireguard Config',
+          icon: <WireGuardlogo size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'config', item }),
+          key: 'wireguard-config',
         },
         {
           type: 'separator',
@@ -75,7 +87,7 @@ const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
           label: 'Delete',
           icon: <Trash size={16} />,
           type: 'item',
-          onClick: onDelete,
+          onClick: () => onAction({ action: 'delete', item }),
           key: 'delete',
           className: '!text-text-critical',
         },
@@ -85,22 +97,15 @@ const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
 };
 
 interface IResource {
-  items: ExtractNodeType<IDevices>[];
-  onDelete: (item: ExtractNodeType<IDevices>) => void;
-  onQr: (item: ExtractNodeType<IDevices>) => void;
-  onEdit: (item: ExtractNodeType<IDevices>) => void;
+  items: BaseType[];
+  onAction: OnAction;
 }
 
-const GridView = ({
-  items,
-  onDelete = (_) => _,
-  onQr = (_) => _,
-  onEdit = (_) => _,
-}: IResource) => {
+const GridView = ({ items, onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, server, cluster, updateInfo } = parseItem(item);
+        const { name, id, cluster, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -109,22 +114,10 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ExtraButton
-                        onDelete={() => {
-                          onDelete(item);
-                        }}
-                        onQr={() => {
-                          onQr(item);
-                        }}
-                        onEdit={() => {
-                          onEdit(item);
-                        }}
-                      />
-                    }
+                    action={<ExtraButton onAction={onAction} item={item} />}
                   />
                 ),
               },
@@ -132,7 +125,6 @@ const GridView = ({
                 key: generateKey(keyPrefix, 'access'),
                 render: () => (
                   <div className="flex flex-col gap-md">
-                    <ListBody data={server} />
                     <ListBody data={cluster} />
                   </div>
                 ),
@@ -140,7 +132,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -154,16 +146,11 @@ const GridView = ({
   );
 };
 
-const ListView = ({
-  items,
-  onDelete = (_) => _,
-  onQr = (_) => _,
-  onEdit = (_) => _,
-}: IResource) => {
+const ListView = ({ items, onAction }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
-        const { name, id, server, cluster, updateInfo } = parseItem(item);
+        const { name, id, cluster, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -172,25 +159,19 @@ const ListView = ({
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
-                render: () => (
-                  <ListTitleWithSubtitle title={name} subtitle={id} />
-                ),
-              },
-              {
-                key: generateKey(keyPrefix, 'server'),
-                className: 'w-[120px] text-start',
-                render: () => <ListBody data={server} />,
+                className: 'w-full',
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
               {
                 key: generateKey(keyPrefix, cluster),
-                className: 'w-[120px] text-start',
+                className: 'w-[180px] text-start mr-[50px]',
                 render: () => <ListBody data={cluster} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[200px] min-w-[200px] max-w-[200px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -198,19 +179,7 @@ const ListView = ({
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
-                    onQr={() => {
-                      onQr(item);
-                    }}
-                    onEdit={() => {
-                      onEdit(item);
-                    }}
-                  />
-                ),
+                render: () => <ExtraButton onAction={onAction} item={item} />,
               },
             ]}
           />
@@ -220,30 +189,39 @@ const ListView = ({
   );
 };
 
-const DeviceResources = ({
-  items = [],
-}: {
-  items: ExtractNodeType<IDevices>[];
-}) => {
-  const [showHandleDevice, setShowHandleDevice] =
-    useState<IShowDialog<ExtractNodeType<IDevices> | null>>(null);
-  const [showQR, setShowQR] = useState<IShowDialog<string>>(null);
-  const [showDeleteDialog, setShowDeleteDialog] =
-    useState<ExtractNodeType<IDevices> | null>(null);
+const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showHandleDevice, setShowHandleDevice] = useState<BaseType | null>(
+    null
+  );
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
+  const [showWireguardConfig, setShowWireguardConfig] = useState<{
+    device: string;
+    mode: 'qr' | 'config';
+  } | null>(null);
 
   const api = useConsoleApi();
   const reloadPage = useReload();
 
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
-    onQr: (item) => {
-      setShowQR({ type: '', data: item.displayName });
-    },
-    onEdit: (item) => {
-      setShowHandleDevice({ type: DIALOG_TYPE.EDIT, data: item });
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'edit':
+          setShowHandleDevice(item);
+          break;
+        case 'delete':
+          setShowDeleteDialog(item);
+          break;
+        case 'qr':
+          setShowWireguardConfig({ device: parseName(item), mode: 'qr' });
+          break;
+        case 'config':
+          setShowWireguardConfig({ device: parseName(item), mode: 'config' });
+          break;
+        default:
+      }
     },
   };
 
@@ -277,8 +255,22 @@ const DeviceResources = ({
           }
         }}
       />
-      <ShowQR show={showQR} setShow={setShowQR} />
-      <HandleDevices show={showHandleDevice} setShow={setShowHandleDevice} />
+      <ShowWireguardConfig
+        {...{
+          visible: !!showWireguardConfig,
+          setVisible: () => setShowWireguardConfig(null),
+          data: showWireguardConfig!,
+          mode: showWireguardConfig?.mode || 'config',
+        }}
+      />
+      <HandleDevices
+        {...{
+          isUpdate: true,
+          data: showHandleDevice!,
+          visible: !!showHandleDevice,
+          setVisible: () => setShowHandleDevice(null),
+        }}
+      />
     </>
   );
 };

@@ -1,8 +1,8 @@
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
-import { PasswordInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select-primitive';
+import { TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import { useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -13,55 +13,67 @@ import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { validateCloudProvider } from '../server/r-utils/common';
-import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { FadeIn } from './_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
   const api = useConsoleApi();
 
+  const providers = [{ label: 'Amazon Web Services', value: 'aws' }];
+
   const navigate = useNavigate();
-  const [isNameLoading, setIsNameLoading] = useState(false);
+  const [isNameLoading, _setIsNameLoading] = useState(false);
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       displayName: '',
       name: '',
-      provider: 'aws',
-      accessKey: '',
-      accessSecret: '',
+      provider: providers[0],
+      awsAccountId: '',
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
-      provider: Yup.string().required(),
-      accessKey: Yup.string().required(),
-      accessSecret: Yup.string().required(),
+      provider: Yup.object({
+        label: Yup.string().required(),
+        value: Yup.string().required(),
+      }).required(),
     }),
     onSubmit: async (val) => {
+      const addProvider = async () => {
+        switch (val.provider.value) {
+          case 'aws':
+            return api.createProviderSecret({
+              secret: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                aws: {
+                  awsAccountId: val.awsAccountId,
+                },
+                cloudProviderName: validateCloudProvider(val.provider.value),
+              },
+            });
+
+          default:
+            throw new Error('invalid provider');
+        }
+      };
+
       try {
         if (isNameLoading) {
           toast.error('id is being checked, please wait');
           return;
         }
-        ensureAccountClientSide({ account: accountName });
-        const { errors: e } = await api.createProviderSecret({
-          secret: {
-            displayName: val.displayName,
-            metadata: {
-              name: val.name,
-            },
-            stringData: {
-              accessKey: val.accessKey,
-              accessSecret: val.accessSecret,
-            },
-            cloudProviderName: validateCloudProvider(val.provider),
-          },
-        });
+
+        const { errors: e } = await addProvider();
         if (e) {
           throw e[0];
         }
+
         toast.success('provider secret created successfully');
-        navigate(`/onboarding/${accountName}/${val.name}/new-cluster`);
+
+        navigate(`/onboarding/${accountName}/${val.name}/validate-cp`);
       } catch (err) {
         handleError(err);
       }
@@ -83,17 +95,23 @@ const NewCloudProvider = () => {
       completed: false,
     },
     {
-      label: 'Setup First Cluster',
+      label: 'Validate Cloud Provider',
       active: false,
       id: 4,
       completed: false,
     },
     {
-      label: 'Create your project',
+      label: 'Setup First Cluster',
       active: false,
       id: 5,
       completed: false,
     },
+    // {
+    //   label: 'Create your project',
+    //   active: false,
+    //   id: 5,
+    //   completed: false,
+    // },
   ];
 
   const pItems = useMapper(progressItems, (i) => {
@@ -118,53 +136,49 @@ const NewCloudProvider = () => {
             title="Cloud provider details"
             subtitle="A cloud provider offers remote computing resources and services over the internet."
           />
-          <div className="flex flex-col gap-3xl">
-            <div className="flex flex-col">
-              <TextInput
-                label="Name"
-                size="lg"
-                value={values.displayName}
-                onChange={handleChange('displayName')}
-                error={!!errors.displayName}
-                message={errors.displayName}
-              />
-              <IdSelector
-                resType="providersecret"
-                name={values.displayName}
-                onChange={(v) => handleChange('name')(dummyEvent(v))}
-                className="pt-2xl"
-              />
-            </div>
+          <div className="flex flex-col">
+            <TextInput
+              label="Name"
+              onChange={handleChange('displayName')}
+              error={!!errors.displayName}
+              message={errors.displayName}
+              value={values.displayName}
+              name="provider-secret-name"
+              size="lg"
+            />
+            <IdSelector
+              name={values.displayName}
+              resType="providersecret"
+              onChange={(id) => {
+                handleChange('name')({ target: { value: id } });
+              }}
+              className="pt-xl"
+            />
 
-            <div className="flex flex-col gap-3xl">
-              <Select.Root
-                label="Provider"
+            <div className="flex flex-col gap-3xl pt-3xl">
+              <Select
                 error={!!errors.provider}
                 message={errors.provider}
                 value={values.provider}
-                onChange={handleChange('provider')}
-              >
-                <Select.Option value="aws">Amazon Web Services</Select.Option>
-              </Select.Root>
+                size="lg"
+                label="Provider"
+                onChange={(value) => {
+                  handleChange('provider')(dummyEvent(value));
+                }}
+                options={async () => providers}
+              />
 
-              <PasswordInput
-                name="accessKey"
-                label="Access Key ID"
-                size="lg"
-                onChange={handleChange('accessKey')}
-                error={!!errors.accessKey}
-                message={errors.accessKey}
-                value={values.accessKey}
-              />
-              <PasswordInput
-                name="accessSecret"
-                label="Access Key Secret"
-                size="lg"
-                onChange={handleChange('accessSecret')}
-                error={!!errors.accessSecret}
-                message={errors.accessSecret}
-                value={values.accessSecret}
-              />
+              {values.provider.value === 'aws' && (
+                <TextInput
+                  name="awsAccountId"
+                  onChange={handleChange('awsAccountId')}
+                  error={!!errors.awsAccountId}
+                  message={errors.awsAccountId}
+                  value={values.awsAccountId}
+                  label="Account ID"
+                  size="lg"
+                />
+              )}
             </div>
           </div>
           <div className="flex flex-row gap-xl justify-end">

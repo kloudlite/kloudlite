@@ -20,10 +20,14 @@ const CodeView = ({ data, copy, showShellPrompt }: ICodeView) => {
       }}
       className="group/sha cursor-pointer bg-surface-basic-active p-lg rounded-lg bodyMd flex flex-row gap-xl items-center"
     >
-      <code className="flex flex-row items-center gap-lg flex-1 break-all">
-        <span className="opacity-60">{showShellPrompt && '$'}</span>
-        <div>{data}</div>
-      </code>
+      <pre>
+        <code className="flex flex-row items-center gap-lg flex-1 break-all">
+          <span className="opacity-60">{showShellPrompt && '$'}</span>
+          <div className="break-all" style={{ whiteSpace: 'pre-wrap' }}>
+            {data}
+          </div>
+        </code>
+      </pre>
       <span className="invisible group-hover/sha:visible">
         <CopySimple size={14} />
       </span>

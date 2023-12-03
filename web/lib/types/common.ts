@@ -1,8 +1,4 @@
 import { ReactNode } from 'react';
-import {
-  Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
-  Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
-} from '~/root/src/generated/gql/server';
 
 export type NonNullableString = string & NonNullable<undefined>;
 
@@ -54,14 +50,18 @@ type ROnly<T> = {
   readonly [k in keyof T]: T[k] extends object ? ROnly<T[k]> : T[k];
 };
 
+export type NN<T> = NonNullable<T>;
+
+export type RNN<T> = {
+  readonly [k in keyof T]: NN<T[k]>;
+};
+
 export type DeepReadOnly<T> = ROnly<T>;
 
 export type IGqlReturn<T> = Promise<{
   errors?: Error[];
   data: T;
 }>;
-
-export type NN<T> = NonNullable<T>;
 
 export type ExtractArrayType<T> = T extends (infer U)[] ? U : never;
 

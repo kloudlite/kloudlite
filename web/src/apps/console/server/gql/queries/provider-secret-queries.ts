@@ -12,6 +12,8 @@ import {
   ConsoleListProviderSecretsQueryVariables,
   ConsoleUpdateProviderSecretMutation,
   ConsoleUpdateProviderSecretMutationVariables,
+  ConsoleCheckAwsAccessQueryVariables,
+  ConsoleCheckAwsAccessQuery,
 } from '~/root/src/generated/gql/server';
 
 export type IProviderSecrets = NN<
@@ -23,6 +25,22 @@ export type IProviderSecret = NN<
 >;
 
 export const providerSecretQueries = (executor: IExecutor) => ({
+  checkAwsAccess: executor(
+    gql`
+      query Infra_checkAwsAccess($cloudproviderName: String!) {
+        infra_checkAwsAccess(cloudproviderName: $cloudproviderName) {
+          result
+          installationUrl
+        }
+      }
+    `,
+    {
+      transformer(data: ConsoleCheckAwsAccessQuery) {
+        return data.infra_checkAwsAccess;
+      },
+      vars(_: ConsoleCheckAwsAccessQueryVariables) {},
+    }
+  ),
   listProviderSecrets: executor(
     gql`
       query Infra_listProviderSecrets(
@@ -30,42 +48,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
         $pagination: CursorPaginationIn
       ) {
         infra_listProviderSecrets(search: $search, pagination: $pagination) {
-          edges {
-            cursor
-            node {
-              accountName
-              apiVersion
-              cloudProviderName
-              createdBy {
-                userEmail
-                userId
-                userName
-              }
-              creationTime
-              data
-              displayName
-              id
-              kind
-              lastUpdatedBy {
-                userEmail
-                userId
-                userName
-              }
-              markedForDeletion
-              metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
-                name
-                namespace
-              }
-              recordVersion
-              type
-              updateTime
-            }
-          }
           pageInfo {
             endCursor
             hasNextPage
@@ -73,6 +55,34 @@ export const providerSecretQueries = (executor: IExecutor) => ({
             startCursor
           }
           totalCount
+          edges {
+            cursor
+            node {
+              aws {
+                awsAccountId
+              }
+              cloudProviderName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              displayName
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              metadata {
+                namespace
+                name
+                labels
+                annotations
+              }
+              updateTime
+            }
+          }
         }
       }
     `,
@@ -129,14 +139,27 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
-          stringData
-          metadata {
-            annotations
-            name
+          aws {
+            awsAccountId
           }
-
           cloudProviderName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
           creationTime
+          displayName
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          metadata {
+            namespace
+            name
+            labels
+          }
           updateTime
         }
       }

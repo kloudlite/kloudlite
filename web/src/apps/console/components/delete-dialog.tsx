@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import AlertModal from './alert-modal';
 
@@ -8,11 +8,17 @@ interface IDeleteDialog {
   show: any;
   resourceType: string;
   resourceName?: string;
+  customMessages?: {
+    warning?: ReactNode;
+    prompt?: ReactNode;
+    action?: 'Delete' | string;
+  };
 }
 const DeleteDialog = ({
   resourceName,
   resourceType,
   show,
+  customMessages,
   setShow,
   onSubmit,
 }: IDeleteDialog) => {
@@ -24,18 +30,28 @@ const DeleteDialog = ({
   }, [show]);
   return (
     <AlertModal
-      title={`Delete ${resourceType}`}
+      title={`${customMessages?.action || 'Delete'} ${resourceType}`}
       variant="critical"
       message={
         <div className="flex flex-col gap-3xl">
           <div className="text-text-default bodyMd">
-            Are you sure you want to delete &ldquo;{resourceName}&rdquo;?
+            {customMessages?.warning || (
+              <span>
+                Are you sure you want to delete &ldquo;{resourceName}&rdquo;?
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-md">
             <div className="flex flex-row items-center text-text-default">
-              <div className="bodyMd">Enter the {resourceType} name</div>
-              <div className="bodyMd-semibold">&nbsp;{resourceName}&nbsp;</div>
-              <div className="bodyMd">to continue:</div>
+              {customMessages?.prompt || (
+                <>
+                  <div className="bodyMd">Enter the {resourceType} name</div>
+                  <div className="bodyMd-semibold">
+                    &nbsp;{resourceName}&nbsp;
+                  </div>
+                  <div className="bodyMd">to continue:</div>
+                </>
+              )}
             </div>
             <TextInput
               value={inputName}
@@ -49,7 +65,7 @@ const DeleteDialog = ({
       }
       show={show}
       setShow={setShow}
-      okText="Delete"
+      okText={customMessages?.action || 'Delete'}
       cancelText="Cancel"
       footer
       onSubmit={onSubmit}

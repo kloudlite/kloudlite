@@ -24,85 +24,26 @@ const ListBody = ({
     </div>
   );
 };
-const ListItem = ({
-  data,
-  className = '',
-  action,
-}: {
-  data: ReactNode;
-} & IBase) => {
-  return (
-    <div
-      className={cn(
-        'bodyMd-medium text-text-strong truncate',
-        BaseStyle,
-        className
-      )}
-    >
-      <div className="flex-1 truncate">{data}</div>
-      {action}
-    </div>
-  );
-};
 
-const ListItemWithSubtitle = ({
+const ListItem = ({
   data,
   subtitle,
   className = '',
   action,
 }: {
-  data: ReactNode;
-  subtitle: ReactNode;
+  data?: ReactNode;
+  subtitle?: ReactNode;
 } & IBase) => {
   return (
     <div className={cn(BaseStyle, className)}>
       <div className="flex flex-col flex-1 truncate">
-        <ListItem data={data} />
-        {subtitle && (
-          <div className="bodyMd text-text-soft truncate">{subtitle}</div>
+        {data && (
+          <div className="flex-1 bodyMd-medium text-text-strong truncate pulsable">
+            {data}
+          </div>
         )}
-      </div>
-      {action}
-    </div>
-  );
-};
-
-const ListTitle = ({
-  title,
-  className = '',
-  action,
-}: {
-  title: ReactNode;
-} & IBase) => {
-  return (
-    <div
-      className={cn(
-        'bodyMd-semibold text-text-default truncate',
-        BaseStyle,
-        className
-      )}
-    >
-      <div className="flex-1 truncate pulsable">{title}</div>
-      {action}
-    </div>
-  );
-};
-
-const ListTitleWithSubtitle = ({
-  title,
-  subtitle,
-  className = '',
-  action,
-}: {
-  title: ReactNode;
-  subtitle: ReactNode;
-} & IBase) => {
-  return (
-    <div className={cn(BaseStyle, className)}>
-      <div className="flex flex-col gap-sm flex-1 truncate">
-        <ListTitle title={title} />
         {subtitle && (
-          <div className="bodySm text-text-soft truncate pulsable">
+          <div className="pulsable bodyMd text-text-soft truncate">
             {subtitle}
           </div>
         )}
@@ -112,54 +53,40 @@ const ListTitleWithSubtitle = ({
   );
 };
 
-const ListTitleWithAvatar = ({
-  title,
-  avatar: Avatar,
-  className = '',
+const ListTitle = ({
+  className,
   action,
-}: {
-  title: ReactNode;
-  avatar: ReactNode;
-} & IBase) => {
-  return (
-    <div className={cn(BaseStyle, className)}>
-      <div className="flex flex-row items-center gap-lg flex-1">
-        {Avatar}
-        <ListTitle title={title} />
-      </div>
-      {action}
-    </div>
-  );
-};
-
-const ListTitleWithSubtitleAvatar = ({
   title,
+  avatar,
   subtitle,
-  avatar: Avatar,
-  className = '',
-  action,
 }: {
-  title: ReactNode;
-  subtitle: ReactNode;
-  avatar: ReactNode;
-} & IBase) => {
+  className?: string;
+  action?: ReactNode;
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  avatar?: ReactNode;
+}) => {
   return (
     <div className={cn(BaseStyle, className)}>
       <div className="flex flex-row items-center gap-xl flex-1">
-        {Avatar}
-        <ListTitleWithSubtitle title={title} subtitle={subtitle} />
+        {avatar}
+        <div className="flex flex-col gap-sm flex-1 truncate">
+          {title && (
+            <div className="bodyMd-semibold text-text-default truncate pulsable">
+              {title}
+            </div>
+          )}
+
+          {subtitle && (
+            <div className="bodySm text-text-soft truncate pulsable">
+              {subtitle}
+            </div>
+          )}
+        </div>
       </div>
       {action}
     </div>
   );
 };
 
-export {
-  ListBody,
-  ListItem,
-  ListItemWithSubtitle,
-  ListTitle,
-  ListTitleWithAvatar,
-  ListTitleWithSubtitle,
-  ListTitleWithSubtitleAvatar,
-};
+export { ListBody, ListItem, ListTitle };

@@ -4,9 +4,8 @@ import { IconButton } from '~/components/atoms/button';
 import { cn, generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
+  ListItem,
   ListTitle,
-  ListTitleWithSubtitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -75,7 +74,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={
@@ -104,7 +103,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -158,7 +157,7 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

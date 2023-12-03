@@ -14,7 +14,6 @@ import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IManagedServiceTemplates } from '~/console/server/gql/queries/managed-service-queries';
 import { parseTargetNs } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { useInputSearch } from '~/root/lib/client/helpers/search-filter';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -264,7 +263,7 @@ const HandleBackendService = ({
   const [step, setStep] = useState<'choose' | 'fill'>('choose');
 
   const api = useConsoleApi();
-  const { workspace, user } = useOutletContext<IWorkspaceContext>();
+  const { workspace } = useOutletContext<IWorkspaceContext>();
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
@@ -323,14 +322,12 @@ const HandleBackendService = ({
               metadata: {
                 name: val.name,
                 namespace: parseTargetNs(workspace),
-                annotations: {
-                  [keyconstants.author]: user.name,
-                },
+                annotations: {},
               },
               spec: {
                 msvcKind: {
                   apiVersion: selectedService?.service.apiVersion || '',
-                  kind: selectedService?.service.kind,
+                  kind: selectedService?.service.kind || '',
                 },
                 inputs: {
                   ...tempVal,

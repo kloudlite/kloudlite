@@ -11,7 +11,6 @@ import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IManagedServiceTemplate } from '~/console/server/gql/queries/managed-service-queries';
 import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -35,7 +34,7 @@ const HandleBackendResources = ({
   }>();
 
   const api = useConsoleApi();
-  const { backendService, workspace, user } =
+  const { backendService, workspace } =
     useOutletContext<IManagedServiceContext>();
 
   const {
@@ -55,8 +54,6 @@ const HandleBackendResources = ({
       type: Yup.string().required(),
     }),
     onSubmit: () => {
-      console.log(selectedType);
-
       onNext();
     },
   });
@@ -114,9 +111,6 @@ const HandleBackendResources = ({
             metadata: {
               name: valuesFirst.name,
               namespace: parseTargetNs(workspace),
-              annotations: {
-                [keyconstants.author]: user.name,
-              },
             },
             spec: {
               mresKind: {
@@ -125,7 +119,7 @@ const HandleBackendResources = ({
               msvcRef: {
                 apiVersion: template.apiVersion || '',
                 name: parseName(backendService),
-                kind: template.kind,
+                kind: template.kind!,
               },
               inputs: {
                 ...val,
@@ -136,7 +130,6 @@ const HandleBackendResources = ({
         if (e) {
           throw e[0];
         }
-        console.log(parseName(backendService));
       } catch (err) {
         handleError(err);
       }
@@ -181,11 +174,13 @@ const HandleBackendResources = ({
                   label="Type"
                   placeholder="--- Select type ---"
                   value={selectedType}
-                  options={template.resources.map((tr) => ({
-                    label: tr.displayName,
-                    value: tr.name,
-                    resource: tr,
-                  }))}
+                  options={async () =>
+                    template.resources.map((tr) => ({
+                      label: tr.displayName,
+                      value: tr.name,
+                      resource: tr,
+                    }))
+                  }
                   onChange={(value) => {
                     setSelectedType(value);
                     handleChangeFirst('type')(dummyEvent(value.value));

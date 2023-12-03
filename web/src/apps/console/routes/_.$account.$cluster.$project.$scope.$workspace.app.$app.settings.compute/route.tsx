@@ -24,9 +24,9 @@ const SettingCompute = () => {
     initialValues: {
       imageUrl: getContainer(0)?.image || '',
       pullSecret: 'TODO',
-      cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
+      cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
       selectedPlan:
-        app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
+        app.metadata?.annotations?.[keyconstants.selectedPlan] || '4',
       cpu: parseValue(getContainer(0)?.resourceCpu?.max, 250),
     },
     validationSchema: Yup.object({
@@ -40,9 +40,9 @@ const SettingCompute = () => {
       setApp((s) => ({
         ...s,
         metadata: {
-          ...s.metadata,
+          ...s.metadata!,
           annotations: {
-            ...(s.metadata.annotations || {}),
+            ...(s.metadata?.annotations || {}),
             [keyconstants.cpuMode]: val.cpuMode,
             [keyconstants.selectedPlan]: val.selectedPlan,
           },

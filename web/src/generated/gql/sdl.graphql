@@ -7,45 +7,43 @@ directive @specifiedBy(
 type Account {
   apiVersion: String!
   contactEmail: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   description: String
   displayName: String!
   id: String!
   isActive: Boolean
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
   updateTime: Date!
 }
 
 input AccountIn {
-  apiVersion: String
   contactEmail: String!
   description: String
   displayName: String!
   isActive: Boolean
-  kind: String
   logo: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn!
 }
 
 type AccountMembership {
   accountName: String!
-  role: Kloudlite_io__apps__iam__types_Role!
+  role: Kloudlite__io___apps___iam___types__Role!
   user: User!
   userId: String!
 }
 
 input AccountMembershipIn {
   accountName: String!
-  role: Kloudlite_io__apps__iam__types_Role!
+  role: Kloudlite__io___apps___iam___types__Role!
   userId: String!
 }
 
@@ -60,20 +58,20 @@ type App {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   projectName: String!
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
   workspaceName: String!
 }
@@ -84,12 +82,10 @@ type AppEdge {
 }
 
 input AppIn {
-  apiVersion: String
   displayName: String!
   enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn!
 }
 
 type AppPaginatedRecords {
@@ -99,22 +95,50 @@ type AppPaginatedRecords {
 }
 
 type Build {
-  accountName: String!
-  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  credUser: Kloudlite_io__common_CreatedOrUpdatedBy!
+  credUser: Kloudlite__io___common__CreatedOrUpdatedBy!
   errorMessages: Map!
   id: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
-  repository: String!
-  source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
-  status: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus!
-  tags: [String!]!
+  source: Kloudlite__io___apps___container____registry___internal___domain___entities__GitSource!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec!
+  status: Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus!
   updateTime: Date!
+}
+
+type BuildCacheKey {
+  accountName: String!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+  volumeSizeInGB: Float!
+}
+
+type BuildCacheKeyEdge {
+  cursor: String!
+  node: BuildCacheKey!
+}
+
+input BuildCacheKeyIn {
+  displayName: String!
+  name: String!
+  volumeSizeInGB: Float!
+}
+
+type BuildCacheKeyPaginatedRecords {
+  edges: [BuildCacheKeyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type BuildEdge {
@@ -123,11 +147,9 @@ type BuildEdge {
 }
 
 input BuildIn {
-  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
   name: String!
-  repository: String!
-  source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
-  tags: [String!]!
+  source: Kloudlite__io___apps___container____registry___internal___domain___entities__GitSourceIn!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn!
 }
 
 type BuildPaginatedRecords {
@@ -136,11 +158,37 @@ type BuildPaginatedRecords {
   totalCount: Int!
 }
 
+type BuildRun {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  updateTime: Date!
+}
+
+type BuildRunEdge {
+  cursor: String!
+  node: BuildRun!
+}
+
+type BuildRunPaginatedRecords {
+  edges: [BuildRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type BYOCCluster {
   accountName: String!
   apiVersion: String!
   clusterToken: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   helmStatus: Map!
@@ -148,13 +196,13 @@ type BYOCCluster {
   incomingKafkaTopicName: String!
   isConnected: Boolean!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -165,17 +213,20 @@ type BYOCClusterEdge {
 
 input BYOCClusterIn {
   accountName: String!
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn!
 }
 
 type BYOCClusterPaginatedRecords {
   edges: [BYOCClusterEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+type CheckAwsAccessOutput {
+  installationUrl: String
+  result: Boolean!
 }
 
 type CheckNameAvailabilityOutput {
@@ -185,33 +236,17 @@ type CheckNameAvailabilityOutput {
 
 type CloudProviderSecret {
   accountName: String!
-  apiVersion: String!
-  cloudProviderName: CloudProviderSecretCloudProviderName!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  aws: Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  data: Map
   displayName: String!
-  enabled: Boolean
   id: String!
-  kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
   recordVersion: Int!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  stringData: Map
-  type: String
   updateTime: Date!
-}
-
-enum CloudProviderSecretCloudProviderName {
-  aws
-  azure
-  do
-  gcp
-  oci
-  openstack
-  vmware
 }
 
 type CloudProviderSecretEdge {
@@ -220,15 +255,10 @@ type CloudProviderSecretEdge {
 }
 
 input CloudProviderSecretIn {
-  apiVersion: String
-  cloudProviderName: CloudProviderSecretCloudProviderName!
-  data: Map
+  aws: Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   displayName: String!
-  enabled: Boolean
-  kind: String
   metadata: MetadataIn!
-  stringData: Map
-  type: String
 }
 
 type CloudProviderSecretPaginatedRecords {
@@ -239,20 +269,21 @@ type CloudProviderSecretPaginatedRecords {
 
 type Cluster {
   accountName: String!
+  adminKubeconfig: EncodedValue
   apiVersion: String!
   clusterToken: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -262,11 +293,9 @@ type ClusterEdge {
 }
 
 input ClusterIn {
-  apiVersion: String
   displayName: String!
-  kind: String
   metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
 }
 
 type ClusterPaginatedRecords {
@@ -279,19 +308,19 @@ type Config {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -301,12 +330,10 @@ type ConfigEdge {
 }
 
 input ConfigIn {
-  apiVersion: String
   data: Map
   displayName: String!
   enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
+  metadata: MetadataIn
 }
 
 type ConfigPaginatedRecords {
@@ -338,13 +365,13 @@ type CRCheckNameAvailabilityOutput {
 }
 
 type Credential {
-  access: Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess!
+  access: Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess!
   accountName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  expiration: Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration!
+  expiration: Kloudlite__io___apps___container____registry___internal___domain___entities__Expiration!
   id: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
@@ -358,8 +385,8 @@ type CredentialEdge {
 }
 
 input CredentialIn {
-  access: Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess!
-  expiration: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn!
+  access: Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess!
+  expiration: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationIn!
   name: String!
   username: String!
 }
@@ -427,12 +454,12 @@ type DigestPaginatedRecords {
 type DomainEntry {
   accountName: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   domainName: String!
   id: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   recordVersion: Int!
   updateTime: Date!
@@ -455,6 +482,11 @@ type DomainEntryPaginatedRecords {
   totalCount: Int!
 }
 
+type EncodedValue {
+  encoding: String!
+  value: String!
+}
+
 input EnvOrWorkspaceOrProjectId {
   name: String!
   type: EnvOrWorkspaceOrProjectIdType!
@@ -474,7 +506,101 @@ type GitBranch {
   protected: Boolean
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig {
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
+  nodePools: Map
+  region: String!
+  spotNodePools: Map
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
+  region: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig {
+  instanceType: String!
+  nodes: Map
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn {
+  instanceType: String!
+  nodes: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig {
+  iamInstanceProfileRole: String
+  imageId: String!
+  imageSSHUsername: String!
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
+  instanceType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig {
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
+  iamInstanceProfileRole: String
+  imageId: String!
+  imageSSHUsername: String!
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType {
+  ec2
+  spot
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode {
+  instanceTypes: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn {
+  instanceTypes: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig {
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
+  nodes: Map
+  spotFleetTaggingRoleName: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn {
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
+  nodes: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec {
   accountName: String!
   displayName: String
   incomingKafkaTopic: String!
@@ -485,7 +611,7 @@ type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
   storageClasses: [String!]
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
+input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
   accountName: String!
   displayName: String
   incomingKafkaTopic: String!
@@ -496,454 +622,310 @@ input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
   storageClasses: [String!]
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
-  accountId: String
+type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys {
+  keyAccessKey: String!
+  keyAWSAccountId: String!
+  keyAWSAssumeRoleExternalID: String!
+  keyAWSAssumeRoleRoleARN: String!
+  keyIAMInstanceProfileRole: String!
+  keySecretKey: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput {
+  jobName: String!
+  jobNamespace: String!
+  keyK3sAgentJoinToken: String!
+  keyK3sServerJoinToken: String!
+  keyKubeconfig: String!
+  secretName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
+  accountId: String!
   accountName: String!
-  availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
-  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
-  azure: Map
-  cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
-  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
-  credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
-  dnsHostName: String
-  do: Map
-  gcp: Map
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  clusterInternalDnsHost: String
+  clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   kloudliteRelease: String!
-  messageQueueTopicName: String
+  messageQueueTopicName: String!
+  output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  publicDNSHost: String!
+  taintMasterNodes: Boolean!
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode {
+enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode {
   dev
   HA
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws {
-  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters
-  nodePools: Map
-  region: String!
-  spotNodePools: Map
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
-  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn
-  nodePools: Map
-  region: String!
-  spotNodePools: Map
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters {
-  ami: String!
-  amiSSHUsername: String!
-  backupToS3Enabled: Boolean!
+input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
   cloudflareEnabled: Boolean
-  clusterInternalDnsHost: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
-  taintMasterNodes: Boolean!
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn {
-  ami: String!
-  amiSSHUsername: String!
-  backupToS3Enabled: Boolean!
-  cloudflareEnabled: Boolean
-  clusterInternalDnsHost: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
-  taintMasterNodes: Boolean!
+type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode {
+  cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  jobName: String
+  jobNamespace: String
+  stateS3BucketFilePath: String!
+  stateS3BucketName: String!
+  stateS3BucketRegion: String!
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider {
+type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps {
+  availabilityZone: String!
+  lastRecreatedAt: Date
+  role: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
+  maxCount: Int!
+  minCount: Int!
+  targetCount: Int!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  maxCount: Int!
+  minCount: Int!
+  targetCount: Int!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps {
+  lastRecreatedAt: Date
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePropsIn {
+  lastRecreatedAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec {
+  nodepoolName: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn {
+  nodepoolName: String!
+}
+
+enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
   aws
   azure
   do
   gcp
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef {
+type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat {
+  max: String!
+  min: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn {
+  max: String!
+  min: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef {
   key: String!
   name: String!
   namespace: String
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn {
-  key: String!
+type Github__com___kloudlite___operator___apis___common____types__SecretRef {
   name: String!
   namespace: String
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef {
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   name: String!
   namespace: String
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn {
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
-  accountId: String
-  accountName: String!
-  availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
-  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
-  azure: Map
-  cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
-  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
-  credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
-  dnsHostName: String
-  do: Map
-  gcp: Map
-  kloudliteRelease: String!
-  messageQueueTopicName: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec {
-  awsNodeConfig: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig
-  labels: Map
-  maxCount: Int!
-  minCount: Int!
-  taints: [String!]
-  targetCount: Int!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig {
-  imageId: String
-  isGpu: Boolean
-  onDemandSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs
-  provisionMode: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode!
-  region: String
-  spotSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs
-  vpc: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn {
-  imageId: String
-  isGpu: Boolean
-  onDemandSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn
-  provisionMode: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode!
-  region: String
-  spotSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn
-  vpc: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs {
-  instanceType: String!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn {
-  instanceType: String!
-}
-
-enum Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode {
-  on_demand
-  reserved
-  spot
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs {
-  cpuMax: Int!
-  cpuMin: Int!
-  memMax: Int!
-  memMin: Int!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn {
-  cpuMax: Int!
-  cpuMin: Int!
-  memMax: Int!
-  memMin: Int!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn {
-  awsNodeConfig: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn
-  labels: Map
-  maxCount: Int!
-  minCount: Int!
-  taints: [String!]
-  targetCount: Int!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec {
-  clusterName: String
-  labels: Map
-  nodePoolName: String
-  nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
-  taints: [String!]
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn {
-  clusterName: String
-  labels: Map
-  nodePoolName: String
-  nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
-  taints: [String!]
-}
-
-enum Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType {
-  cluster
-  master
-  worker
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec {
+type Github__com___kloudlite___operator___apis___crds___v1__AccountSpec {
   targetNamespace: String
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+input Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn {
   targetNamespace: String
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpec {
-  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers!]!
+type Github__com___kloudlite___operator___apis___crds___v1__AppContainer {
+  args: [String!]
+  command: [String!]
+  env: [Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv!]
+  envFrom: [Github__com___kloudlite___operator___apis___crds___v1__EnvFrom!]
+  image: String!
+  imagePullPolicy: String
+  livenessProbe: Github__com___kloudlite___operator___apis___crds___v1__Probe
+  name: String!
+  readinessProbe: Github__com___kloudlite___operator___apis___crds___v1__Probe
+  resourceCpu: Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
+  resourceMemory: Github__com___kloudlite___operator___apis___crds___v1__ContainerResource
+  volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn {
+  args: [String!]
+  command: [String!]
+  env: [Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn!]
+  envFrom: [Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn!]
+  image: String!
+  imagePullPolicy: String
+  livenessProbe: Github__com___kloudlite___operator___apis___crds___v1__ProbeIn
+  name: String!
+  readinessProbe: Github__com___kloudlite___operator___apis___crds___v1__ProbeIn
+  resourceCpu: Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
+  resourceMemory: Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn
+  volumes: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__AppSpec {
+  containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainer!]!
   displayName: String
   freeze: Boolean
-  hpa: Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpa
-  intercept: Github_com__kloudlite__operator__apis__crds__v1_AppSpecIntercept
+  hpa: Github__com___kloudlite___operator___apis___crds___v1__HPA
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__Intercept
   nodeSelector: Map
   region: String
   replicas: Int
   serviceAccount: String
-  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServices!]
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations!]
+  services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvc!]
+  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers {
-  args: [String!]
-  command: [String!]
-  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv!]
-  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom!]
-  image: String!
-  imagePullPolicy: String
-  livenessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbe
-  name: String!
-  readinessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbe
-  resourceCpu: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpu
-  resourceMemory: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemory
-  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes!]
+input Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn {
+  containers: [Github__com___kloudlite___operator___apis___crds___v1__AppContainerIn!]!
+  displayName: String
+  freeze: Boolean
+  hpa: Github__com___kloudlite___operator___apis___crds___v1__HPAIn
+  intercept: Github__com___kloudlite___operator___apis___crds___v1__InterceptIn
+  nodeSelector: Map
+  region: String
+  replicas: Int
+  serviceAccount: String
+  services: [Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn!]
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv {
+type Github__com___kloudlite___operator___apis___crds___v1__AppSvc {
+  name: String
+  port: Int!
+  targetPort: Int
+  type: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AppSvcIn {
+  name: String
+  port: Int!
+  targetPort: Int
+  type: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__BasicAuth {
+  enabled: Boolean!
+  secretName: String
+  username: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn {
+  enabled: Boolean!
+  secretName: String
+  username: String
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
+  config
+  secret
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerEnv {
   key: String!
   optional: Boolean
   refKey: String
   refName: String
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvType
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret
   value: String
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom {
-  refName: String!
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromType!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn {
-  refName: String!
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromType!
-}
-
-enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromType {
-  config
-  secret
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn {
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerEnvIn {
   key: String!
   optional: Boolean
   refKey: String
   refName: String
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvType
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret
   value: String
 }
 
-enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvType {
-  config
-  secret
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn {
-  args: [String!]
-  command: [String!]
-  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn!]
-  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn!]
-  image: String!
-  imagePullPolicy: String
-  livenessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeIn
-  name: String!
-  readinessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeIn
-  resourceCpu: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpuIn
-  resourceMemory: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemoryIn
-  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn!]
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbe {
-  failureThreshold: Int
-  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGet
-  initialDelay: Int
-  interval: Int
-  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShell
-  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcp
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType!
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGet {
-  httpHeaders: Map
-  path: String!
-  port: Int!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGetIn {
-  httpHeaders: Map
-  path: String!
-  port: Int!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeIn {
-  failureThreshold: Int
-  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGetIn
-  initialDelay: Int
-  interval: Int
-  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn
-  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcpIn
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType!
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShell {
-  command: [String!]
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn {
-  command: [String!]
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcp {
-  port: Int!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcpIn {
-  port: Int!
-}
-
-enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType {
-  httpGet
-  shell
-  tcp
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbe {
-  failureThreshold: Int
-  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGet
-  initialDelay: Int
-  interval: Int
-  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShell
-  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcp
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType!
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGet {
-  httpHeaders: Map
-  path: String!
-  port: Int!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGetIn {
-  httpHeaders: Map
-  path: String!
-  port: Int!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeIn {
-  failureThreshold: Int
-  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGetIn
-  initialDelay: Int
-  interval: Int
-  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn
-  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcpIn
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType!
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShell {
-  command: [String!]
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn {
-  command: [String!]
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcp {
-  port: Int!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcpIn {
-  port: Int!
-}
-
-enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType {
-  httpGet
-  shell
-  tcp
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpu {
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerResource {
   max: String
   min: String
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpuIn {
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerResourceIn {
   max: String
   min: String
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemory {
-  max: String
-  min: String
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemoryIn {
-  max: String
-  min: String
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes {
-  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems!]
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolume {
+  items: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem!]
   mountPath: String!
   refName: String!
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesType!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn {
-  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn!]
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeIn {
+  items: [Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn!]
   mountPath: String!
   refName: String!
-  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesType!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems {
+type Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItem {
   fileName: String
   key: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn {
+input Github__com___kloudlite___operator___apis___crds___v1__ContainerVolumeItemIn {
   fileName: String
   key: String!
 }
 
-enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesType {
-  config
-  secret
+type Github__com___kloudlite___operator___apis___crds___v1__Cors {
+  allowCredentials: Boolean
+  enabled: Boolean
+  origins: [String!]
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpa {
+input Github__com___kloudlite___operator___apis___crds___v1__CorsIn {
+  allowCredentials: Boolean
+  enabled: Boolean
+  origins: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom {
+  refName: String!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn {
+  refName: String!
+  type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__HPA {
   enabled: Boolean
   maxReplicas: Int
   minReplicas: Int
@@ -951,7 +933,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpa {
   thresholdMemory: Int
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn {
+input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
   enabled: Boolean
   maxReplicas: Int
   minReplicas: Int
@@ -959,135 +941,119 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn {
   thresholdMemory: Int
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn {
-  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn!]!
-  displayName: String
-  freeze: Boolean
-  hpa: Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn
-  intercept: Github_com__kloudlite__operator__apis__crds__v1_AppSpecInterceptIn
-  nodeSelector: Map
-  region: String
-  replicas: Int
-  serviceAccount: String
-  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServicesIn!]
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn!]
+type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe {
+  httpHeaders: Map
+  path: String!
+  port: Int!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecIntercept {
+input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Https {
+  clusterIssuer: String
+  enabled: Boolean!
+  forceRedirect: Boolean
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
+  clusterIssuer: String
+  enabled: Boolean!
+  forceRedirect: Boolean
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__Intercept {
   enabled: Boolean!
   toDevice: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecInterceptIn {
+input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
   enabled: Boolean!
   toDevice: String!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecServices {
-  name: String
-  port: Int!
-  targetPort: Int
-  type: String
+type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec {
+  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  mresKind: Github__com___kloudlite___operator___apis___crds___v1__mresKind!
+  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTT!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecServicesIn {
-  name: String
-  port: Int!
-  targetPort: Int
-  type: String
+input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
+  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  mresKind: Github__com___kloudlite___operator___apis___crds___v1__mresKindIn!
+  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTTIn!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations {
-  effect: String
-  key: String
-  operator: String
-  tolerationSeconds: Int
-  value: String
+type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec {
+  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  msvcKind: Github__com___kloudlite___operator___apis___crds___v1__msvcKind!
+  nodeSelector: Map
+  region: String
+  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn {
-  effect: String
-  key: String
-  operator: String
-  tolerationSeconds: Int
-  value: String
+input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
+  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  msvcKind: Github__com___kloudlite___operator___apis___crds___v1__msvcKindIn!
+  nodeSelector: Map
+  region: String
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpec {
-  inputs: Map
-  mresKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKind!
-  msvcRef: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRef!
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecIn {
-  inputs: Map
-  mresKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKindIn!
-  msvcRef: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRefIn!
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKind {
+type Github__com___kloudlite___operator___apis___crds___v1__mresKind {
   kind: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKindIn {
+input Github__com___kloudlite___operator___apis___crds___v1__mresKindIn {
   kind: String!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRef {
+type Github__com___kloudlite___operator___apis___crds___v1__msvcKind {
   apiVersion: String!
-  kind: String
+  kind: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__msvcKindIn {
+  apiVersion: String!
+  kind: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTT {
+  apiVersion: String!
+  kind: String!
   name: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRefIn {
+input Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTTIn {
   apiVersion: String!
-  kind: String
+  kind: String!
   name: String!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpec {
-  inputs: Map
-  msvcKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKind!
-  nodeSelector: Map
-  region: String
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerations!]
+type Github__com___kloudlite___operator___apis___crds___v1__Probe {
+  failureThreshold: Int
+  httpGet: Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe
+  initialDelay: Int
+  interval: Int
+  shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbe
+  tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbe
+  type: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecIn {
-  inputs: Map
-  msvcKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKindIn!
-  nodeSelector: Map
-  region: String
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerationsIn!]
+input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
+  failureThreshold: Int
+  httpGet: Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn
+  initialDelay: Int
+  interval: Int
+  shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn
+  tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn
+  type: String!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKind {
-  apiVersion: String!
-  kind: String
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKindIn {
-  apiVersion: String!
-  kind: String
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerations {
-  effect: String
-  key: String
-  operator: String
-  tolerationSeconds: Int
-  value: String
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerationsIn {
-  effect: String
-  key: String
-  operator: String
-  tolerationSeconds: Int
-  value: String
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec {
+type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec {
   accountName: String!
   clusterName: String!
   displayName: String
@@ -1095,91 +1061,27 @@ type Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec {
   targetNamespace: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_ProjectSpecIn {
-  accountName: String!
-  clusterName: String!
+input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn {
   displayName: String
   logo: String
   targetNamespace: String!
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_RouterSpec {
-  backendProtocol: String
-  basicAuth: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth
-  cors: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCors
-  domains: [String!]!
-  https: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttps
-  ingressClass: String
-  maxBodySizeInMB: Int
-  rateLimit: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimit
-  region: String
-  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes!]
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth {
-  enabled: Boolean!
-  secretName: String
-  username: String
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuthIn {
-  enabled: Boolean!
-  secretName: String
-  username: String
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCors {
-  allowCredentials: Boolean
-  enabled: Boolean
-  origins: [String!]
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCorsIn {
-  allowCredentials: Boolean
-  enabled: Boolean
-  origins: [String!]
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttps {
-  clusterIssuer: String
-  enabled: Boolean!
-  forceRedirect: Boolean
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttpsIn {
-  clusterIssuer: String
-  enabled: Boolean!
-  forceRedirect: Boolean
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecIn {
-  backendProtocol: String
-  basicAuth: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuthIn
-  cors: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCorsIn
-  domains: [String!]!
-  https: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttpsIn
-  ingressClass: String
-  maxBodySizeInMB: Int
-  rateLimit: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimitIn
-  region: String
-  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn!]
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimit {
+type Github__com___kloudlite___operator___apis___crds___v1__RateLimit {
   connections: Int
   enabled: Boolean
   rpm: Int
   rps: Int
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimitIn {
+input Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn {
   connections: Int
   enabled: Boolean
   rpm: Int
   rps: Int
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes {
+type Github__com___kloudlite___operator___apis___crds___v1__Route {
   app: String
   lambda: String
   path: String!
@@ -1187,7 +1089,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes {
   rewrite: Boolean
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn {
+input Github__com___kloudlite___operator___apis___crds___v1__RouteIn {
   app: String
   lambda: String
   path: String!
@@ -1195,62 +1097,192 @@ input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn {
   rewrite: Boolean
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpec {
+type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec {
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuth
+  cors: Github__com___kloudlite___operator___apis___crds___v1__Cors
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__Https
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
+  region: String
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
+  backendProtocol: String
+  basicAuth: Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn
+  cors: Github__com___kloudlite___operator___apis___crds___v1__CorsIn
+  domains: [String!]!
+  https: Github__com___kloudlite___operator___apis___crds___v1__HttpsIn
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
+  region: String
+  routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe {
+  command: [String!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
+  command: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe {
+  port: Int!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
+  port: Int!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec {
   isEnvironment: Boolean
   projectName: String!
   targetNamespace: String!
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn {
+input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
   isEnvironment: Boolean
   projectName: String!
   targetNamespace: String!
 }
 
-type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec {
-  offset: Int
-  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
-  serverName: String!
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
 }
 
-input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
-  offset: Int
-  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
-  serverName: String!
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
 }
 
-type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts {
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec {
+  accountName: String!
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
+  cacheKeyName: String
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
+  cacheKeyName: String
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Registry {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__Repo!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__RepoIn!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Repo {
+  name: String!
+  tags: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn {
+  name: String!
+  tags: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Resource {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec {
+  accountName: String!
+  clusterName: String!
+  dns: String
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
+  accountName: String!
+  clusterName: String!
+  dns: String
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__Port {
   port: Int
   targetPort: Int
 }
 
-input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn {
+input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   port: Int
   targetPort: Int
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Check {
+type Github__com___kloudlite___operator___pkg___operator__Check {
   generation: Int
   message: String
   status: Boolean!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_ResourceRef {
-  apiVersion: String
-  kind: String
+input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef {
+  apiVersion: String!
+  kind: String!
   name: String!
   namespace: String!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Status {
-  checks: Map
-  isReady: Boolean!
-  lastReconcileTime: Date
-  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
-  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  name: String!
+  namespace: String!
 }
 
-type Github_com__kloudlite__operator__pkg__raw___json_RawJson {
+type Github__com___kloudlite___operator___pkg___operator__Status {
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson {
+  RawMessage: Any
+}
+
+input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
   RawMessage: Any
 }
 
@@ -1260,7 +1292,7 @@ type GithubBranch {
 }
 
 type GithubInstallation {
-  account: Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount
+  account: Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccount
   appId: Int
   id: Int
   nodeId: String
@@ -1270,13 +1302,13 @@ type GithubInstallation {
 }
 
 type GithubListRepository {
-  repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
+  repositories: [Kloudlite__io___apps___container____registry___internal___domain___entities__GithubRepository]!
   totalCount: Int
 }
 
 type GithubSearchRepository {
   incompleteResults: Boolean
-  repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
+  repositories: [Kloudlite__io___apps___container____registry___internal___domain___entities__GithubRepository]!
   total: Int
 }
 
@@ -1364,18 +1396,220 @@ type Invitation {
   updateTime: Date!
   userEmail: String
   userName: String
-  userRole: Kloudlite_io__apps__iam__types_Role!
+  userRole: Kloudlite__io___apps___iam___types__Role!
 }
 
 input InvitationIn {
   userEmail: String
   userName: String
-  userRole: Kloudlite_io__apps__iam__types_Role!
+  userRole: Kloudlite__io___apps___iam___types__Role!
 }
 
 scalar Json
 
-type Kloudlite_io__apps__console__internal__entities_InputField {
+enum K8s__io___api___core___v1__ConditionStatus {
+  False
+  True
+  Unknown
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimCondition {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType {
+  FileSystemResizePending
+  Resizing
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
+  Bound
+  Lost
+  Pending
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimSpec {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
+  resources: K8s__io___api___core___v1__ResourceRequirements
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
+  resources: K8s__io___api___core___v1__ResourceRequirementsIn
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimStatus {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+type K8s__io___api___core___v1__ResourceClaim {
+  name: String!
+}
+
+input K8s__io___api___core___v1__ResourceClaimIn {
+  name: String!
+}
+
+type K8s__io___api___core___v1__ResourceRequirements {
+  claims: [K8s__io___api___core___v1__ResourceClaim!]
+  limits: Map
+  requests: Map
+}
+
+input K8s__io___api___core___v1__ResourceRequirementsIn {
+  claims: [K8s__io___api___core___v1__ResourceClaimIn!]
+  limits: Map
+  requests: Map
+}
+
+enum K8s__io___api___core___v1__SecretType {
+  bootstrap__kubernetes__io___token
+  kubernetes__io___basic____auth
+  kubernetes__io___dockercfg
+  kubernetes__io___dockerconfigjson
+  kubernetes__io___service____account____token
+  kubernetes__io___ssh____auth
+  kubernetes__io___tls
+  Opaque
+}
+
+enum K8s__io___api___core___v1__TaintEffect {
+  NoExecute
+  NoSchedule
+  PreferNoSchedule
+}
+
+type K8s__io___api___core___v1__Toleration {
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
+input K8s__io___api___core___v1__TolerationIn {
+  effect: K8s__io___api___core___v1__TaintEffect
+  key: String
+  operator: K8s__io___api___core___v1__TolerationOperator
+  tolerationSeconds: Int
+  value: String
+}
+
+enum K8s__io___api___core___v1__TolerationOperator {
+  Equal
+  Exists
+}
+
+type K8s__io___api___core___v1__TypedLocalObjectReference {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+input K8s__io___api___core___v1__TypedLocalObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+type K8s__io___api___core___v1__TypedObjectReference {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+input K8s__io___api___core___v1__TypedObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+enum K8s__io___apimachinery___pkg___api___resource__Format {
+  BinarySI
+  DecimalExponent
+  DecimalSI
+}
+
+type K8s__io___apimachinery___pkg___api___resource__Quantity {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+input K8s__io___apimachinery___pkg___api___resource__QuantityIn {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
+  matchLabels: Map
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
+  matchLabels: Map
+}
+
+enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator {
+  DoesNotExist
+  Exists
+  In
+  NotIn
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+type Kloudlite__io___apps___console___internal___entities__InputField {
   defaultValue: Any
   inputType: String!
   label: String!
@@ -1386,54 +1620,36 @@ type Kloudlite_io__apps__console__internal__entities_InputField {
   unit: String
 }
 
-type Kloudlite_io__apps__console__internal__entities_MresTemplate {
+type Kloudlite__io___apps___console___internal___entities__MresTemplate {
   apiVersion: String
   description: String!
   displayName: String!
-  fields: [Kloudlite_io__apps__console__internal__entities_InputField!]!
+  fields: [Kloudlite__io___apps___console___internal___entities__InputField!]!
   kind: String
   name: String!
-  outputs: [Kloudlite_io__apps__console__internal__entities_OutputField!]!
+  outputs: [Kloudlite__io___apps___console___internal___entities__OutputField!]!
 }
 
-type Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry {
+type Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry {
   active: Boolean!
   apiVersion: String
   description: String!
   displayName: String!
-  fields: [Kloudlite_io__apps__console__internal__entities_InputField!]!
+  fields: [Kloudlite__io___apps___console___internal___entities__InputField!]!
   kind: String
   logoUrl: String!
   name: String!
-  outputs: [Kloudlite_io__apps__console__internal__entities_OutputField!]!
-  resources: [Kloudlite_io__apps__console__internal__entities_MresTemplate!]!
+  outputs: [Kloudlite__io___apps___console___internal___entities__OutputField!]!
+  resources: [Kloudlite__io___apps___console___internal___entities__MresTemplate!]!
 }
 
-type Kloudlite_io__apps__console__internal__entities_OutputField {
+type Kloudlite__io___apps___console___internal___entities__OutputField {
   description: String!
   label: String!
   name: String!
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions {
-  buildArgs: Map!
-  buildContexts: Map!
-  contextDir: String
-  dockerfileContent: String
-  dockerfilePath: String
-  targetPlatforms: [String!]!
-}
-
-input Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn {
-  buildArgs: Map!
-  buildContexts: Map!
-  contextDir: String
-  dockerfileContent: String
-  dockerfilePath: String
-  targetPlatforms: [String!]!
-}
-
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus {
   error
   failed
   idle
@@ -1443,17 +1659,17 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildS
   success
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration {
-  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+type Kloudlite__io___apps___container____registry___internal___domain___entities__Expiration {
+  unit: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit!
   value: Int!
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {
-  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+input Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationIn {
+  unit: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit!
   value: Int!
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit {
   d
   h
   m
@@ -1461,7 +1677,7 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   y
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository {
+type Kloudlite__io___apps___container____registry___internal___domain___entities__GithubRepository {
   archived: Boolean
   cloneUrl: String
   createdAt: Date
@@ -1488,7 +1704,7 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Github
   visibility: String
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount {
+type Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccount {
   avatarUrl: String
   id: Int
   login: String
@@ -1496,7 +1712,7 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Github
   type: String
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn {
+input Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccountIn {
   avatarUrl: String
   id: Int
   login: String
@@ -1504,30 +1720,30 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_Githu
   type: String
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider {
   github
   gitlab
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource {
+type Kloudlite__io___apps___container____registry___internal___domain___entities__GitSource {
   branch: String!
-  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
+  provider: Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider!
   repository: String!
   webhookId: Int
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
+input Kloudlite__io___apps___container____registry___internal___domain___entities__GitSourceIn {
   branch: String!
-  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
+  provider: Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider!
   repository: String!
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess {
   read
   read_write
 }
 
-enum Kloudlite_io__apps__iam__types_Role {
+enum Kloudlite__io___apps___iam___types__Role {
   account_admin
   account_member
   account_owner
@@ -1536,32 +1752,54 @@ enum Kloudlite_io__apps__iam__types_Role {
   resource_owner
 }
 
-type Kloudlite_io__apps__infra__internal__entities_HelmStatusVal {
+type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials {
+  accessKey: String
+  awsAccountId: String
+  cfParamExternalID: String
+  cfParamInstanceProfileName: String
+  cfParamRoleName: String
+  cfParamStackName: String
+  cfParamTrustedARN: String
+  secretKey: String
+}
+
+input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  accessKey: String
+  awsAccountId: String
+  secretKey: String
+}
+
+type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal {
   isReady: Boolean
   message: String!
 }
 
-type Kloudlite_io__common_CreatedOrUpdatedBy {
+type Kloudlite__io___common__CreatedOrUpdatedBy {
   userEmail: String!
   userId: String!
   userName: String!
 }
 
-type Kloudlite_io__pkg__types_SyncStatus {
-  action: Kloudlite_io__pkg__types_SyncStatusAction!
+type Kloudlite__io___pkg___types__EncodedString {
+  encoding: String!
+  value: String!
+}
+
+type Kloudlite__io___pkg___types__SyncStatus {
+  action: Kloudlite__io___pkg___types__SyncStatusAction!
   error: String
   lastSyncedAt: Date
   recordVersion: Int!
-  state: Kloudlite_io__pkg__types_SyncStatusState!
+  state: Kloudlite__io___pkg___types__SyncStatusState!
   syncScheduledAt: Date
 }
 
-enum Kloudlite_io__pkg__types_SyncStatusAction {
+enum Kloudlite__io___pkg___types__SyncStatusAction {
   APPLY
   DELETE
 }
 
-enum Kloudlite_io__pkg__types_SyncStatusState {
+enum Kloudlite__io___pkg___types__SyncStatusState {
   APPLIED_AT_AGENT
   ERRORED_AT_AGENT
   IDLE
@@ -1573,19 +1811,19 @@ type ManagedResource {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -1595,12 +1833,10 @@ type ManagedResourceEdge {
 }
 
 input ManagedResourceIn {
-  apiVersion: String
   displayName: String!
   enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn!
 }
 
 type ManagedResourcePaginatedRecords {
@@ -1613,19 +1849,19 @@ type ManagedService {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -1635,12 +1871,10 @@ type ManagedServiceEdge {
 }
 
 input ManagedServiceIn {
-  apiVersion: String
   displayName: String!
   enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
 }
 
 type ManagedServicePaginatedRecords {
@@ -1703,7 +1937,7 @@ input MetadataIn {
 type MsvcTemplate {
   category: String!
   displayName: String!
-  items: [Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry!]!
+  items: [Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry!]!
 }
 
 type Mutation {
@@ -1713,12 +1947,12 @@ type Mutation {
   accounts_deactivateAccount(accountName: String!): Boolean!
   accounts_deleteAccount(accountName: String!): Boolean!
   accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean!
-  accounts_inviteMembers(accountName: String!, invitation: [InvitationIn!]!): [Invitation!]
+  accounts_inviteMembers(accountName: String!, invitations: [InvitationIn!]!): [Invitation!]
   accounts_rejectInvitation(accountName: String!, inviteToken: String!): Boolean!
   accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean!
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean!
   accounts_updateAccount(account: AccountIn!): Account!
-  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Kloudlite_io__apps__iam__types_Role!): Boolean!
+  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Kloudlite__io___apps___iam___types__Role!): Boolean!
   auth_changeEmail(email: String!): Boolean!
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean!
   auth_clearMetadata: User!
@@ -1741,7 +1975,6 @@ type Mutation {
   core_createProject(project: ProjectIn!): Project
   core_createRouter(router: RouterIn!): Router
   core_createSecret(secret: SecretIn!): Secret
-  core_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   core_createWorkspace(env: WorkspaceIn!): Workspace
   core_deleteApp(name: String!, namespace: String!): Boolean!
   core_deleteConfig(name: String!, namespace: String!): Boolean!
@@ -1752,7 +1985,6 @@ type Mutation {
   core_deleteProject(name: String!): Boolean!
   core_deleteRouter(name: String!, namespace: String!): Boolean!
   core_deleteSecret(name: String!, namespace: String!): Boolean!
-  core_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean!
   core_deleteWorkspace(name: String!, namespace: String!): Boolean!
   core_updateApp(app: AppIn!): App
   core_updateConfig(config: ConfigIn!): Config
@@ -1762,33 +1994,39 @@ type Mutation {
   core_updateProject(project: ProjectIn!): Project
   core_updateRouter(router: RouterIn!): Router
   core_updateSecret(secret: SecretIn!): Secret
-  core_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   core_updateWorkspace(env: WorkspaceIn!): Workspace
   cr_addBuild(build: BuildIn!): Build
+  cr_addBuildCacheKey(buildCacheKey: BuildCacheKeyIn!): BuildCacheKey
   cr_createCred(credential: CredentialIn!): Credential
   cr_createRepo(repository: RepositoryIn!): Repository
   cr_deleteBuild(id: ID!): Boolean!
+  cr_deleteBuildCacheKey(id: ID!): Boolean!
   cr_deleteCred(username: String!): Boolean!
   cr_deleteDigest(digest: String!, repoName: String!): Boolean!
   cr_deleteRepo(name: String!): Boolean!
+  cr_listBuildsByBuildCacheId(buildCacheKeyId: ID!, pagination: CursorPaginationIn): BuildPaginatedRecords
   cr_triggerBuild(id: ID!): Boolean!
   cr_updateBuild(build: BuildIn!, id: ID!): Build
+  cr_updateBuildCacheKey(buildCacheKey: BuildCacheKeyIn!, id: ID!): BuildCacheKey
   generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
+  infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   infra_deleteBYOCCluster(name: String!): Boolean!
   infra_deleteCluster(name: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
+  infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean!
   infra_updateBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_updateCluster(cluster: ClusterIn!): Cluster
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
+  infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
 }
@@ -1801,11 +2039,11 @@ type Node {
   id: String!
   kind: String!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -1815,10 +2053,8 @@ type NodeEdge {
 }
 
 input NodeIn {
-  apiVersion: String
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn!
 }
 
 type NodePaginatedRecords {
@@ -1831,18 +2067,18 @@ type NodePool {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -1852,11 +2088,9 @@ type NodePoolEdge {
 }
 
 input NodePoolIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn!
 }
 
 type NodePoolPaginatedRecords {
@@ -1887,22 +2121,48 @@ input PaginationIn {
   per_page: Int
 }
 
+type PersistentVolumeClaim {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeClaimSpec
+  status: K8s__io___api___core___v1__PersistentVolumeClaimStatus
+  updateTime: Date!
+}
+
+type PersistentVolumeClaimEdge {
+  cursor: String!
+  node: PersistentVolumeClaim!
+}
+
+type PersistentVolumeClaimPaginatedRecords {
+  edges: [PersistentVolumeClaimEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type Project {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -1922,11 +2182,9 @@ enum ProjectIdType {
 }
 
 input ProjectIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn!
 }
 
 type ProjectPaginatedRecords {
@@ -1945,7 +2203,7 @@ type Query {
   accounts_listAccounts: [Account]
   accounts_listInvitations(accountName: String!): [Invitation!]
   accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!]
-  accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!]
+  accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite__io___apps___iam___types__Role): [AccountMembership!]
   accounts_listMembershipsForUser: [AccountMembership!]
   accounts_resyncAccount(accountName: String!): Boolean!
   auth_findByEmail(email: String!): User
@@ -1959,12 +2217,10 @@ type Query {
   core_getImagePullSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId): ImagePullSecret
   core_getManagedResource(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): ManagedResource
   core_getManagedService(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): ManagedService
-  core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry
+  core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry
   core_getProject(name: String!): Project
   core_getRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Router
   core_getSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Secret
-  core_getVPNDevice(clusterName: String!, name: String!): VPNDevice
-  core_getVPNDeviceConfig(clusterName: String!, name: String!): String!
   core_getWorkspace(name: String!, project: ProjectId!): Workspace
   core_listApps(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps): AppPaginatedRecords
   core_listConfigs(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchConfigs): ConfigPaginatedRecords
@@ -1976,7 +2232,6 @@ type Query {
   core_listProjects(clusterName: String, pq: CursorPaginationIn, search: SearchProjects): ProjectPaginatedRecords
   core_listRouters(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchSecrets): SecretPaginatedRecords
-  core_listVPNDevices(clusterName: String, pq: CursorPaginationIn, search: SearchVPNDevices): VPNDevicePaginatedRecords
   core_listWorkspaces(pq: CursorPaginationIn, project: ProjectId!, search: SearchWorkspaces): WorkspacePaginatedRecords
   core_resyncApp(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncConfig(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
@@ -1991,6 +2246,7 @@ type Query {
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_getBuild(id: ID!): Build
   cr_getCredToken(username: String!): String!
+  cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys): BuildCacheKeyPaginatedRecords
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
   cr_listDigests(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): DigestPaginatedRecords
@@ -2002,17 +2258,24 @@ type Query {
   cr_listGitlabRepositories(groupId: String!, pagination: PaginationIn, query: String): [GitlabProject!]
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
+  infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
+  infra_getBuildRun(buildRunName: String!, repoName: String!): BuildRun
   infra_getBYOCCluster(name: String!): BYOCCluster
   infra_getCluster(name: String!): Cluster
   infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool
   infra_getProviderSecret(name: String!): CloudProviderSecret
+  infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
+  infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice
+  infra_listBuildRuns(pq: CursorPaginationIn, repoName: String!, search: SearchBuildRuns): BuildRunPaginatedRecords
   infra_listBYOCClusters(pagination: CursorPaginationIn, search: SearchCluster): BYOCClusterPaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
   infra_listNodePools(clusterName: String!, pagination: CursorPaginationIn, search: SearchNodepool): NodePoolPaginatedRecords
   infra_listProviderSecrets(pagination: CursorPaginationIn, search: SearchProviderSecret): CloudProviderSecretPaginatedRecords
+  infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
+  infra_listVPNDevices(clusterName: String, pq: CursorPaginationIn, search: SearchVPNDevices): VPNDevicePaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
 }
 
@@ -2023,10 +2286,10 @@ type RemoteLogin {
 
 type Repository {
   accountName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   id: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
@@ -2059,19 +2322,19 @@ type Router {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_RouterSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -2081,12 +2344,10 @@ type RouterEdge {
 }
 
 input RouterIn {
-  apiVersion: String
   displayName: String!
   enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn!
 }
 
 type RouterPaginatedRecords {
@@ -2098,6 +2359,14 @@ type RouterPaginatedRecords {
 input SearchApps {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchBuildCacheKeys {
+  text: MatchFilterIn
+}
+
+input SearchBuildRuns {
   text: MatchFilterIn
 }
 
@@ -2157,6 +2426,10 @@ input SearchNodepool {
   text: MatchFilterIn
 }
 
+input SearchPersistentVolumeClaims {
+  text: MatchFilterIn
+}
+
 input SearchProjects {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
@@ -2201,21 +2474,21 @@ type Secret {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
+  status: Github__com___kloudlite___operator___pkg___operator__Status
   stringData: Map
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
-  type: String
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
+  type: K8s__io___api___core___v1__SecretType
   updateTime: Date!
 }
 
@@ -2225,14 +2498,12 @@ type SecretEdge {
 }
 
 input SecretIn {
-  apiVersion: String
   data: Map
   displayName: String!
   enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
+  metadata: MetadataIn
   stringData: Map
-  type: String
+  type: K8s__io___api___core___v1__SecretType
 }
 
 type SecretPaginatedRecords {
@@ -2271,20 +2542,20 @@ type VPNDevice {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
-  wgConfig: String
+  wireguardConfig: Kloudlite__io___pkg___types__EncodedString
 }
 
 type VPNDeviceEdge {
@@ -2293,11 +2564,9 @@ type VPNDeviceEdge {
 }
 
 input VPNDeviceIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
 
 type VPNDevicePaginatedRecords {
@@ -2310,19 +2579,19 @@ type Workspace {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   projectName: String!
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpec
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -2332,11 +2601,9 @@ type WorkspaceEdge {
 }
 
 input WorkspaceIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn
 }
 
 input WorkspaceOrEnvId {

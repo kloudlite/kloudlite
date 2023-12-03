@@ -4,53 +4,107 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateNodePoolMutation,
   ConsoleCreateNodePoolMutationVariables,
+  ConsoleListNodePoolsQuery,
   ConsoleGetNodePoolQuery,
   ConsoleGetNodePoolQueryVariables,
-  ConsoleListNodePoolsQuery,
   ConsoleListNodePoolsQueryVariables,
+  ConsoleDeleteNodePoolMutation,
+  ConsoleDeleteNodePoolMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type INodepool = NN<ConsoleGetNodePoolQuery['infra_getNodePool']>;
+export type INodepools = NN<ConsoleListNodePoolsQuery['infra_listNodePools']>;
 
 export const nodepoolQueries = (executor: IExecutor) => ({
   getNodePool: executor(
     gql`
-      query User($clusterName: String!, $poolName: String!) {
+      query Infra_getNodePool($clusterName: String!, $poolName: String!) {
         infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
-          updateTime
-          spec {
-            targetCount
-            minCount
-            maxCount
-            awsNodeConfig {
-              vpc
-              spotSpecs {
-                memMin
-                memMax
-                cpuMin
-                cpuMax
-              }
-              region
-              provisionMode
-              onDemandSpecs {
-                instanceType
-              }
-              isGpu
-              imageId
-            }
-          }
-          metadata {
-            name
-            annotations
-          }
           clusterName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
+          displayName
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          spec {
+            aws {
+              availabilityZone
+              ec2Pool {
+                instanceType
+                nodes
+              }
+              iamInstanceProfileRole
+              imageId
+              imageSSHUsername
+              nvidiaGpuEnabled
+              poolType
+              rootVolumeSize
+              rootVolumeType
+              spotPool {
+                cpuNode {
+                  memoryPerVcpu {
+                    max
+                    min
+                  }
+                  vcpu {
+                    max
+                    min
+                  }
+                }
+                gpuNode {
+                  instanceTypes
+                }
+                nodes
+                spotFleetTaggingRoleName
+              }
+            }
+            cloudProvider
+            maxCount
+            minCount
+            targetCount
+          }
           status {
+            checks
             isReady
+            lastReadyGeneration
+            lastReconcileTime
             message {
               RawMessage
             }
-            checks
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
           }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          updateTime
         }
       }
     `,
@@ -75,63 +129,115 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       vars(_: ConsoleCreateNodePoolMutationVariables) {},
     }
   ),
+  updateNodePool: executor(
+    gql`
+      mutation Infra_updateNodePool($clusterName: String!, $pool: NodePoolIn!) {
+        infra_updateNodePool(clusterName: $clusterName, pool: $pool) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCreateNodePoolMutation) =>
+        data.infra_createNodePool,
+      vars(_: ConsoleCreateNodePoolMutationVariables) {},
+    }
+  ),
   listNodePools: executor(
     gql`
-      query listNodePools(
+      query Infra_listNodePools(
         $clusterName: String!
-        $pagination: CursorPaginationIn
         $search: SearchNodepool
+        $pagination: CursorPaginationIn
       ) {
         infra_listNodePools(
           clusterName: $clusterName
-          pagination: $pagination
           search: $search
+          pagination: $pagination
         ) {
+          totalCount
+          pageInfo {
+            endCursor
+            hasNextPage
+            startCursor
+          }
           edges {
+            cursor
             node {
-              updateTime
-              spec {
-                targetCount
-                minCount
-                maxCount
-                awsNodeConfig {
-                  vpc
-                  spotSpecs {
-                    memMin
-                    memMax
-                    cpuMin
-                    cpuMax
-                  }
-                  region
-                  provisionMode
-                  onDemandSpecs {
-                    instanceType
-                  }
-                  isGpu
-                  imageId
-                }
+              clusterName
+              createdBy {
+                userEmail
+                userId
+                userName
               }
+              creationTime
+              displayName
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
               metadata {
                 name
-                annotations
               }
-              clusterName
+              spec {
+                aws {
+                  availabilityZone
+                  ec2Pool {
+                    instanceType
+                    nodes
+                  }
+                  nvidiaGpuEnabled
+                  poolType
+                  spotPool {
+                    cpuNode {
+                      memoryPerVcpu {
+                        max
+                        min
+                      }
+                      vcpu {
+                        max
+                        min
+                      }
+                    }
+                    gpuNode {
+                      instanceTypes
+                    }
+                    nodes
+                  }
+                }
+                cloudProvider
+                maxCount
+                minCount
+                targetCount
+              }
               status {
+                checks
                 isReady
+                lastReadyGeneration
+                lastReconcileTime
                 message {
                   RawMessage
                 }
-                checks
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
               }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
             }
           }
-          pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
-            endCursor
-          }
-          totalCount
         }
       }
     `,
@@ -139,6 +245,18 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListNodePoolsQuery) =>
         data.infra_listNodePools,
       vars(_: ConsoleListNodePoolsQueryVariables) {},
+    }
+  ),
+  deleteNodePool: executor(
+    gql`
+      mutation Infra_deleteNodePool($clusterName: String!, $poolName: String!) {
+        infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteNodePoolMutation) =>
+        data.infra_deleteNodePool,
+      vars(_: ConsoleDeleteNodePoolMutationVariables) {},
     }
   ),
 });

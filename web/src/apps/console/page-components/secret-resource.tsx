@@ -15,7 +15,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import {
   ListBody,
-  ListItemWithSubtitle,
+  ListItem,
   ListTitle,
 } from '../components/console-list-components';
 import DeleteDialog from '../components/delete-dialog';
@@ -126,7 +126,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -188,7 +188,7 @@ const ListView = ({
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

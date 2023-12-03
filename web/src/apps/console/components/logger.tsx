@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unused-prop-types */
 /* eslint-disable no-nested-ternary */
 import { ArrowsIn, ArrowsOut, List } from '@jengaicons/react';
 import Anser from 'anser';
@@ -21,9 +22,11 @@ import {
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
 import generateColor from './color-generator';
+import Pulsable from './pulsable';
+import { logsMockData } from '../dummy/data';
 
-const bgv2Class = 'bg-[#ddd]';
 const hoverClass = `hover:bg-[#ddd]`;
+const hoverClassDark = `hover:bg-[#333]`;
 
 type ILog = { message: string; timestamp: string };
 type ILogWithPodName = ILog & { pod_name: string; lineNumber: number };
@@ -102,7 +105,7 @@ const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
   return (
     <code
       key={`ind+${lineNumber}`}
-      className="inline-flex gap-xl items-center whitespace-pre"
+      className="inline-flex gap-xl items-center whitespace-pre select-none"
       ref={ref}
     >
       <span className="flex sticky left-0" style={{ fontSize }}>
@@ -110,10 +113,7 @@ const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
           enableHL
           inlineData={data}
           language="accesslog"
-          className={classNames(
-            'border-b border-border-tertiary px-md',
-            bgv2Class
-          )}
+          className={classNames('border-b border-border-tertiary px-md')}
         />
         <div className="hljs" />
       </span>
@@ -195,7 +195,7 @@ const InlineSearch = ({
           value: inlineData,
           indices:
             res[0].searchInf.matches?.reduce((acc, curr) => {
-              return [...acc, ...curr.indices];
+              return [...acc, ...curr.indices.filter((i) => i[1] - i[0] > 1)];
             }, def) || def,
         }}
       />
@@ -281,6 +281,7 @@ interface ILogLine {
   log: ILogWithPodName & {
     searchInf?: ISearchInfProps['searchInf'];
   };
+  dark: boolean;
 }
 
 const LogLine = ({
@@ -292,6 +293,7 @@ const LogLine = ({
   language,
   lines,
   hideLines,
+  dark,
 }: ILogLine) => {
   return (
     <code
@@ -300,7 +302,8 @@ const LogLine = ({
         'flex py-xs items-center whitespace-pre border-b border-transparent transition-all',
         {
           'cursor-pointer': selectableLines,
-          [hoverClass]: selectableLines,
+          [hoverClass]: selectableLines && !dark,
+          [hoverClassDark]: selectableLines && dark,
         }
       )}
       style={{
@@ -321,9 +324,10 @@ const LogLine = ({
         className="w-[3px] mr-xl ml-sm h-full"
         style={{ backgroundImage: generateColor(log.pod_name) }}
       />
-      <div className="inline-flex gap-xl">
+      <div className="inline-flex gap-xl pulsable">
         <HighlightIt
           {...{
+            className: 'select-none',
             inlineData: `${dayjs(log.timestamp).format('lll')} |`,
             language: 'apache',
             enableHL: true,
@@ -357,6 +361,7 @@ interface ILogBlock {
   hideLines: boolean;
   language: string;
   solid: boolean;
+  dark: boolean;
 }
 
 const LogBlock = ({
@@ -372,6 +377,7 @@ const LogBlock = ({
   hideLines,
   language,
   solid,
+  dark,
 }: ILogBlock) => {
   const [searchText, setSearchText] = useState('');
 
@@ -491,6 +497,7 @@ const LogBlock = ({
               {(log) => {
                 return (
                   <LogLine
+                    dark={dark}
                     log={log}
                     language={language}
                     searchText={searchText}
@@ -545,17 +552,36 @@ const HighlightJsLog = ({
   noScrollBar = false,
   maxLines,
   fontSize = 14,
-  loadingComponent = null,
   actionComponent = null,
   hideLines = false,
   language = 'accesslog',
   solid = false,
   className = '',
+  dark = false,
 }: IHighlightJsLog) => {
   const [messages, setMessages] = useState<ISocketMessage[]>([]);
+  const tempMessage = useRef('');
   const [errors, setErrors] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [fullScreen, setFullScreen] = useState(false);
+
+  useEffect(() => {
+    if (tempMessage.current) {
+      try {
+        const data = JSON.parse(tempMessage.current);
+        setMessages((s) => [...s, ...data]);
+        tempMessage.current = '';
+        setErrors('');
+        setIsLoading(false);
+      } catch (error) {
+        const e = error as Error;
+        console.log(error);
+        setErrors(
+          `'Something went wrong! Please try again.', ${e.name}: ${+e.message}`
+        );
+      }
+    }
+  }, [tempMessage.current]);
 
   const { setClassName, removeClassName } = useClass({
     elementClass: 'loading-container',
@@ -569,6 +595,7 @@ const HighlightJsLog = ({
         const d = await axios({
           url,
           method: 'GET',
+          withCredentials: true,
         });
         setMessages((d.data || '').trim());
       } catch (err) {
@@ -586,6 +613,8 @@ ${url}`
 
   useEffect(() => {
     if (!url || !websocket) return () => {};
+
+    // setMessages([]);
 
     let wsclient: sock.w3cwebsocket;
     setIsLoading(true);
@@ -609,12 +638,9 @@ ${url}`
     wsclient.onmessage = (msg: sock.IMessageEvent) => {
       try {
         const data: ISocketMessage[] = JSON.parse(msg.data.toString());
-
         setMessages((s) => [...s, ...data]);
-        setIsLoading(false);
       } catch (err) {
-        console.log(err);
-        setErrors("'Something went wrong! Please try again.'");
+        tempMessage.current += msg.data.toString();
       }
     };
     return () => {
@@ -643,68 +669,79 @@ ${url}`
     }
   }, [fullScreen]);
 
+  const mockDataRef = useRef(
+    Array.from({ length: 100 }).map(() => {
+      return {
+        message: logsMockData[Math.floor(Math.random() * 10)],
+        timestamp: dayjs().toISOString(),
+      };
+    })
+  );
+
   return (
-    <div
-      className={classNames(className, {
-        'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
-      })}
-      style={{
-        width: fullScreen ? '100%' : width,
-        height: fullScreen ? '100vh' : height,
-      }}
-    >
-      {isLoading ? (
-        loadingComponent || (
-          <div className="hljs p-xs rounded-md flex flex-col gap-sm items-center justify-center h-full">
-            <code className="">
-              <HighlightIt language={language} inlineData="Loading..." />
-            </code>
-          </div>
-        )
-      ) : errors ? (
-        <div>{errors}</div>
-      ) : (
-        <LogBlock
-          {...{
-            data: messages,
-            follow,
-            enableSearch,
-            selectableLines,
-            title,
-            noScrollBar,
-            solid,
-            maxLines,
-            fontSize,
-            actionComponent: (
-              <div className="flex gap-xl">
-                <div
-                  onClick={() => {
-                    if (!fullScreen) {
-                      setClassName('z-50');
-                    } else {
-                      removeClassName('z-50');
-                    }
-                    setFullScreen((s) => !s);
-                  }}
-                  className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
-                >
-                  {fullScreen ? (
-                    <ArrowsIn size={16} />
-                  ) : (
-                    <ArrowsOut size={16} />
-                  )}
+    <Pulsable isLoading={isLoading}>
+      <div
+        className={classNames(className, {
+          'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
+        })}
+        style={{
+          width: fullScreen ? '100%' : width,
+          height: fullScreen ? '100vh' : height,
+        }}
+      >
+        {errors ? (
+          <pre>{errors}</pre>
+        ) : (
+          <LogBlock
+            {...{
+              data: isLoading
+                ? [
+                    {
+                      pod_name: 'Loading...',
+                      logs: mockDataRef.current,
+                    },
+                  ]
+                : messages,
+              follow,
+              dark,
+              enableSearch,
+              selectableLines,
+              title,
+              noScrollBar,
+              solid,
+              maxLines,
+              fontSize,
+              actionComponent: (
+                <div className="flex gap-xl">
+                  <div
+                    onClick={() => {
+                      if (!fullScreen) {
+                        setClassName('z-50');
+                      } else {
+                        removeClassName('z-50');
+                      }
+                      setFullScreen((s) => !s);
+                    }}
+                    className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
+                  >
+                    {fullScreen ? (
+                      <ArrowsIn size={16} />
+                    ) : (
+                      <ArrowsOut size={16} />
+                    )}
+                  </div>
+                  {actionComponent}
                 </div>
-                {actionComponent}
-              </div>
-            ),
-            width: fullScreen ? '100vw' : width,
-            height: fullScreen ? '100vh' : height,
-            hideLines,
-            language,
-          }}
-        />
-      )}
-    </div>
+              ),
+              width: fullScreen ? '100vw' : width,
+              height: fullScreen ? '100vh' : height,
+              hideLines,
+              language,
+            }}
+          />
+        )}
+      </div>
+    </Pulsable>
   );
 };
 

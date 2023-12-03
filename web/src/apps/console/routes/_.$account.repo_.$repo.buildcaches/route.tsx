@@ -1,29 +1,28 @@
 import { defer } from '@remix-run/node';
-import { useLoaderData, useParams } from '@remix-run/react';
+import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
-import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-import BuildResources from './build-resources';
-import HandleBuild from './handle-builds';
+import { Plus } from '@jengaicons/react';
 import Tools from './tools';
+import BuildCachesResources from './build-caches-resources';
+import HandleBuildCache from './handle-build-cache';
 
 export const loader = async (ctx: IRemixCtx) => {
-  const { repo } = ctx.params;
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).listBuilds({
-      repoName: repo,
-      pagination: getPagination(ctx),
+    const { data, errors } = await GQLServerHandler(
+      ctx.request
+    ).listBuildCaches({
+      pq: getPagination(ctx),
       search: getSearch(ctx),
     });
     if (errors) {
@@ -32,7 +31,7 @@ export const loader = async (ctx: IRemixCtx) => {
     }
 
     return {
-      buildData: data || {},
+      buildCachesData: data || {},
     };
   });
 
@@ -58,28 +57,30 @@ export const handle = () => {
 };
 
 const Builds = () => {
-  const [showHandleBuild, setShowHandleBuild] = useState<IShowDialog>(null);
+  const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
   return (
     <>
       <LoadingComp data={promise}>
-        {({ buildData }) => {
-          const builds = buildData.edges?.map(({ node }) => node);
+        {({ buildCachesData }) => {
+          const buildsCaches = buildCachesData.edges?.map(({ node }) => node);
 
           return (
             <>
-              <SubNavAction deps={[]}>
-                <Button
-                  content="Create build"
-                  variant="primary"
-                  onClick={() => {
-                    setShowHandleBuild({ type: DIALOG_TYPE.ADD, data: null });
-                  }}
-                />
-              </SubNavAction>
+              {buildsCaches.length > 0 && (
+                <SubNavAction deps={[buildsCaches.length]}>
+                  <Button
+                    content="Create build cache"
+                    variant="primary"
+                    onClick={() => {
+                      setVisible(true);
+                    }}
+                  />
+                </SubNavAction>
+              )}
               <Wrapper
                 empty={{
-                  is: builds.length === 0,
+                  is: buildsCaches.length === 0,
                   title: 'This is where you’ll manage your projects.',
                   content: (
                     <p>
@@ -87,16 +88,24 @@ const Builds = () => {
                       project.
                     </p>
                   ),
+                  action: {
+                    content: 'Create build cache',
+                    prefix: <Plus />,
+                    LinkComponent: Link,
+                    onClick: () => {
+                      setVisible(true);
+                    },
+                  },
                 }}
                 tools={<Tools />}
               >
-                <BuildResources items={builds} />
+                <BuildCachesResources items={buildsCaches} />
               </Wrapper>
             </>
           );
         }}
       </LoadingComp>
-      <HandleBuild show={showHandleBuild} setShow={setShowHandleBuild} />
+      <HandleBuildCache {...{ isUpdate: false, visible, setVisible }} />
     </>
   );
 };

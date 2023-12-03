@@ -52,7 +52,9 @@ export const managedResourceQueries = (executor: IExecutor) => ({
           }
           recordVersion
           spec {
-            inputs
+            inputs {
+              RawMessage
+            }
             mresKind {
               kind
             }

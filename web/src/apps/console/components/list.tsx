@@ -125,6 +125,8 @@ const RowBase = ({
     } else {
       Component = linkComponent;
     }
+  } else {
+    Component = 'div';
   }
 
   const css = cn(

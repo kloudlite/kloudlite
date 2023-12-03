@@ -161,6 +161,16 @@ query consoleListProjects($clusterName: String, $pagination: CursorPaginationIn,
         clusterName
         apiVersion
         kind
+        createdBy {
+          userName
+          userEmail
+          userId
+        }
+        lastUpdatedBy {
+          userName
+          userId
+          userEmail
+        }
         metadata {
           namespace
           name
@@ -242,9 +252,21 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
       cursor
       node {
         displayName
+        markedForDeletion
         metadata {
           name
           annotations
+        }
+        creationTime
+        lastUpdatedBy {
+          userId
+          userName
+          userEmail
+        }
+        createdBy {
+          userEmail
+          userId
+          userName
         }
         updateTime
         syncStatus {
@@ -273,9 +295,6 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         spec {
           messageQueueTopicName
           kloudliteRelease
-          gcp
-          do
-          dnsHostName
           credentialsRef {
             namespace
             name
@@ -290,26 +309,29 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
           availabilityMode
           aws {
             k3sMasters {
-              ami
-              amiSSHUsername
-              backupToS3Enabled
-              cloudflareEnabled
-              clusterInternalDnsHost
               iamInstanceProfileRole
               instanceType
               nodes
               nvidiaGpuEnabled
-              publicDnsHost
               rootVolumeSize
               rootVolumeType
-              taintMasterNodes
             }
             nodePools
             region
             spotNodePools
           }
-          azure
           cloudProvider
+          backupToS3Enabled
+          cloudflareEnabled
+          clusterInternalDnsHost
+          output {
+            keyK3sAgentJoinToken
+            keyK3sServerJoinToken
+            keyKubeconfig
+            secretName
+          }
+          publicDNSHost
+          taintMasterNodes
         }
       }
     }
@@ -318,76 +340,113 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
 
 query consoleGetCluster($name: String!) {
   infra_getCluster(name: $name) {
+    accountName
+    apiVersion
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
     displayName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
     metadata {
-      name
       annotations
-    }
-    updateTime
-    syncStatus {
-      syncScheduledAt
-      lastSyncedAt
-      recordVersion
-      state
-      error
-      action
-    }
-    status {
-      resources {
-        namespace
-        name
-        kind
-        apiVersion
-      }
-      message {
-        RawMessage
-      }
-      lastReconcileTime
-      isReady
-      checks
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
     }
     recordVersion
     spec {
-      messageQueueTopicName
-      kloudliteRelease
-      gcp
-      do
-      dnsHostName
-      credentialsRef {
-        namespace
-        name
-      }
-      clusterTokenRef {
-        key
-        name
-        namespace
-      }
       accountId
       accountName
       availabilityMode
       aws {
         k3sMasters {
-          ami
-          amiSSHUsername
-          backupToS3Enabled
-          cloudflareEnabled
-          clusterInternalDnsHost
           iamInstanceProfileRole
+          imageId
+          imageSSHUsername
           instanceType
           nodes
           nvidiaGpuEnabled
-          publicDnsHost
           rootVolumeSize
           rootVolumeType
-          taintMasterNodes
         }
         nodePools
         region
         spotNodePools
       }
-      azure
+      backupToS3Enabled
+      cloudflareEnabled
       cloudProvider
+      clusterInternalDnsHost
+      clusterTokenRef {
+        key
+        name
+        namespace
+      }
+      credentialKeys {
+        keyAccessKey
+        keyAWSAccountId
+        keyAWSAssumeRoleExternalID
+        keyAWSAssumeRoleRoleARN
+        keyIAMInstanceProfileRole
+        keySecretKey
+      }
+      credentialsRef {
+        name
+        namespace
+      }
+      kloudliteRelease
+      messageQueueTopicName
+      output {
+        keyK3sAgentJoinToken
+        keyK3sServerJoinToken
+        keyKubeconfig
+        secretName
+      }
+      publicDNSHost
+      taintMasterNodes
     }
+    status {
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+    adminKubeconfig {
+      value
+      encoding
+    }
+    clusterToken
   }
 }
 
@@ -397,44 +456,15 @@ mutation consoleUpdateCluster($cluster: ClusterIn!) {
   }
 }
 
+query consoleCheckAwsAccess($cloudproviderName: String!) {
+  infra_checkAwsAccess(cloudproviderName: $cloudproviderName) {
+    result
+    installationUrl
+  }
+}
+
 query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: CursorPaginationIn) {
   infra_listProviderSecrets(search: $search, pagination: $pagination) {
-    edges {
-      cursor
-      node {
-        accountName
-        apiVersion
-        cloudProviderName
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        data
-        displayName
-        id
-        kind
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
-        metadata {
-          annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
-          name
-          namespace
-        }
-        recordVersion
-        type
-        updateTime
-      }
-    }
     pageInfo {
       endCursor
       hasNextPage
@@ -442,6 +472,34 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
       startCursor
     }
     totalCount
+    edges {
+      cursor
+      node {
+        aws {
+          awsAccountId
+        }
+        cloudProviderName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        metadata {
+          namespace
+          name
+          labels
+          annotations
+        }
+        updateTime
+      }
+    }
   }
 }
 
@@ -465,53 +523,118 @@ mutation consoleDeleteProviderSecret($secretName: String!) {
 
 query consoleGetProviderSecret($name: String!) {
   infra_getProviderSecret(name: $name) {
-    stringData
-    metadata {
-      annotations
-      name
+    aws {
+      awsAccountId
     }
     cloudProviderName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
     creationTime
+    displayName
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    metadata {
+      namespace
+      name
+      labels
+    }
     updateTime
   }
 }
 
 query consoleGetNodePool($clusterName: String!, $poolName: String!) {
   infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
-    updateTime
-    spec {
-      targetCount
-      minCount
-      maxCount
-      awsNodeConfig {
-        vpc
-        spotSpecs {
-          memMin
-          memMax
-          cpuMin
-          cpuMax
-        }
-        region
-        provisionMode
-        onDemandSpecs {
-          instanceType
-        }
-        isGpu
-        imageId
-      }
-    }
-    metadata {
-      name
-      annotations
-    }
     clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      aws {
+        availabilityZone
+        ec2Pool {
+          instanceType
+          nodes
+        }
+        iamInstanceProfileRole
+        imageId
+        imageSSHUsername
+        nvidiaGpuEnabled
+        poolType
+        rootVolumeSize
+        rootVolumeType
+        spotPool {
+          cpuNode {
+            memoryPerVcpu {
+              max
+              min
+            }
+            vcpu {
+              max
+              min
+            }
+          }
+          gpuNode {
+            instanceTypes
+          }
+          nodes
+          spotFleetTaggingRoleName
+        }
+      }
+      cloudProvider
+      maxCount
+      minCount
+      targetCount
+    }
     status {
+      checks
       isReady
+      lastReadyGeneration
+      lastReconcileTime
       message {
         RawMessage
       }
-      checks
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
     }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
   }
 }
 
@@ -521,58 +644,106 @@ mutation consoleCreateNodePool($clusterName: String!, $pool: NodePoolIn!) {
   }
 }
 
-query consoleListNodePools($clusterName: String!, $pagination: CursorPaginationIn, $search: SearchNodepool) {
+mutation consoleUpdateNodePool($clusterName: String!, $pool: NodePoolIn!) {
+  infra_updateNodePool(clusterName: $clusterName, pool: $pool) {
+    id
+  }
+}
+
+query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagination: CursorPaginationIn) {
   infra_listNodePools(
     clusterName: $clusterName
-    pagination: $pagination
     search: $search
+    pagination: $pagination
   ) {
+    totalCount
+    pageInfo {
+      endCursor
+      hasNextPage
+      startCursor
+    }
     edges {
+      cursor
       node {
-        updateTime
-        spec {
-          targetCount
-          minCount
-          maxCount
-          awsNodeConfig {
-            vpc
-            spotSpecs {
-              memMin
-              memMax
-              cpuMin
-              cpuMax
-            }
-            region
-            provisionMode
-            onDemandSpecs {
-              instanceType
-            }
-            isGpu
-            imageId
-          }
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
         }
+        creationTime
+        displayName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
         metadata {
           name
-          annotations
         }
-        clusterName
+        spec {
+          aws {
+            availabilityZone
+            ec2Pool {
+              instanceType
+              nodes
+            }
+            nvidiaGpuEnabled
+            poolType
+            spotPool {
+              cpuNode {
+                memoryPerVcpu {
+                  max
+                  min
+                }
+                vcpu {
+                  max
+                  min
+                }
+              }
+              gpuNode {
+                instanceTypes
+              }
+              nodes
+            }
+          }
+          cloudProvider
+          maxCount
+          minCount
+          targetCount
+        }
         status {
+          checks
           isReady
+          lastReadyGeneration
+          lastReconcileTime
           message {
             RawMessage
           }
-          checks
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
         }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
       }
     }
-    pageInfo {
-      startCursor
-      hasPreviousPage
-      hasNextPage
-      endCursor
-    }
-    totalCount
   }
+}
+
+mutation consoleDeleteNodePool($clusterName: String!, $poolName: String!) {
+  infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
 }
 
 query consoleGetWorkspace($project: ProjectId!, $name: String!) {
@@ -1229,24 +1400,22 @@ mutation consoleDeleteSecret($namespace: String!, $name: String!) {
 }
 
 mutation consoleCreateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  core_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
     id
   }
 }
 
 mutation consoleUpdateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  core_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+  infra_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
     id
   }
 }
 
 query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq: CursorPaginationIn) {
-  core_listVPNDevices(clusterName: $clusterName, search: $search, pq: $pq) {
+  infra_listVPNDevices(clusterName: $clusterName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
-        accountName
-        apiVersion
         clusterName
         createdBy {
           userEmail
@@ -1255,8 +1424,6 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
         }
         creationTime
         displayName
-        id
-        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -1272,18 +1439,19 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
           name
           namespace
         }
-        recordVersion
         spec {
-          offset
+          accountName
+          clusterName
+          dns
           ports {
             port
             targetPort
           }
-          serverName
         }
         status {
           checks
           isReady
+          lastReadyGeneration
           lastReconcileTime
           message {
             RawMessage
@@ -1317,9 +1485,7 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
 }
 
 query consoleGetVpnDevice($clusterName: String!, $name: String!) {
-  core_getVPNDevice(clusterName: $clusterName, name: $name) {
-    accountName
-    apiVersion
+  infra_getVPNDevice(clusterName: $clusterName, name: $name) {
     clusterName
     createdBy {
       userEmail
@@ -1328,8 +1494,6 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
     }
     creationTime
     displayName
-    id
-    kind
     lastUpdatedBy {
       userEmail
       userId
@@ -1345,18 +1509,19 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
       name
       namespace
     }
-    recordVersion
     spec {
-      offset
+      accountName
+      clusterName
+      dns
       ports {
         port
         targetPort
       }
-      serverName
     }
     status {
       checks
       isReady
+      lastReadyGeneration
       lastReconcileTime
       message {
         RawMessage
@@ -1377,11 +1542,15 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
       syncScheduledAt
     }
     updateTime
+    wireguardConfig {
+      value
+      encoding
+    }
   }
 }
 
 mutation consoleDeleteVpnDevice($clusterName: String!, $deviceName: String!) {
-  core_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
+  infra_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
 }
 
 query consoleListInvitationsForAccount($accountName: String!) {
@@ -1421,18 +1590,39 @@ mutation consoleDeleteAccountInvitation($accountName: String!, $invitationId: St
   )
 }
 
-mutation consoleInviteMembersForAccount($accountName: String!, $invitation: [InvitationIn!]!) {
-  accounts_inviteMembers(accountName: $accountName, invitation: $invitation) {
+mutation consoleInviteMembersForAccount($accountName: String!, $invitations: [InvitationIn!]!) {
+  accounts_inviteMembers(accountName: $accountName, invitations: $invitations) {
     id
   }
 }
 
-mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite_io__apps__iam__types_Role!) {
+query consoleListInvitationsForUser($onlyPending: Boolean!) {
+  accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+    accountName
+    id
+    updateTime
+    inviteToken
+  }
+}
+
+mutation consoleAcceptInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_acceptInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation consoleRejectInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_rejectInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite__io___apps___iam___types__Role!) {
   accounts_updateAccountMembership(
     accountName: $accountName
     memberId: $memberId
     role: $role
   )
+}
+
+mutation consoleDeleteAccountMembership($accountName: String!, $memberId: ID!) {
+  accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
 }
 
 query consoleGetTemplate($category: String!, $name: String!) {
@@ -1569,7 +1759,9 @@ query consoleGetManagedService($project: ProjectId!, $scope: WorkspaceOrEnvId!, 
     }
     recordVersion
     spec {
-      inputs
+      inputs {
+        RawMessage
+      }
       msvcKind {
         apiVersion
         kind
@@ -1645,7 +1837,9 @@ query consoleListManagedServices($project: ProjectId!, $scope: WorkspaceOrEnvId!
         }
         recordVersion
         spec {
-          inputs
+          inputs {
+            RawMessage
+          }
           msvcKind {
             apiVersion
             kind
@@ -1733,7 +1927,9 @@ query consoleGetManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!,
     }
     recordVersion
     spec {
-      inputs
+      inputs {
+        RawMessage
+      }
       mresKind {
         kind
       }
@@ -2108,13 +2304,6 @@ query consoleListDomains($search: SearchDomainEntry, $pagination: CursorPaginati
 
 query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: CursorPaginationIn) {
   cr_listBuilds(repoName: $repoName, search: $search, pagination: $pagination) {
-    totalCount
-    pageInfo {
-      startCursor
-      hasPreviousPage
-      hasNextPage
-      endCursor
-    }
     edges {
       cursor
       node {
@@ -2124,17 +2313,59 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
           userName
         }
         creationTime
-        updateTime
-        status
-        name
+        credUser {
+          userEmail
+          userId
+          userName
+        }
+        errorMessages
         id
         lastUpdatedBy {
           userEmail
           userId
           userName
         }
+        markedForDeletion
+        name
+        source {
+          branch
+          provider
+          repository
+          webhookId
+        }
+        spec {
+          accountName
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          cacheKeyName
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+        }
+        status
+        updateTime
       }
     }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 
@@ -2152,6 +2383,322 @@ mutation consoleUpdateBuild($crUpdateBuildId: ID!, $build: BuildIn!) {
 
 mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
   cr_deleteBuild(id: $crDeleteBuildId)
+}
+
+query consoleListBuildCaches($pq: CursorPaginationIn, $search: SearchBuildCacheKeys) {
+  cr_listBuildCacheKeys(pq: $pq, search: $search) {
+    edges {
+      cursor
+      node {
+        id
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        name
+        updateTime
+        volumeSizeInGB
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateBuildCache($buildCacheKey: BuildCacheKeyIn!) {
+  cr_addBuildCacheKey(buildCacheKey: $buildCacheKey) {
+    id
+  }
+}
+
+mutation consoleUpdateBuildCaches($crUpdateBuildCacheKeyId: ID!, $buildCacheKey: BuildCacheKeyIn!) {
+  cr_updateBuildCacheKey(
+    id: $crUpdateBuildCacheKeyId
+    buildCacheKey: $buildCacheKey
+  ) {
+    id
+  }
+}
+
+mutation consoleDeleteBuildCache($crDeleteBuildCacheKeyId: ID!) {
+  cr_deleteBuildCacheKey(id: $crDeleteBuildCacheKeyId)
+}
+
+query consoleGetPvc($clusterName: String!, $name: String!) {
+  infra_getPVC(clusterName: $clusterName, name: $name) {
+    clusterName
+    creationTime
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      accessModes
+      dataSource {
+        apiGroup
+        kind
+        name
+      }
+      dataSourceRef {
+        apiGroup
+        kind
+        name
+        namespace
+      }
+      resources {
+        claims {
+          name
+        }
+        limits
+        requests
+      }
+      selector {
+        matchExpressions {
+          key
+          operator
+          values
+        }
+        matchLabels
+      }
+      storageClassName
+      volumeMode
+      volumeName
+    }
+    status {
+      accessModes
+      allocatedResources
+      allocatedResourceStatuses
+      capacity
+      conditions {
+        lastProbeTime
+        lastTransitionTime
+        message
+        reason
+        status
+        type
+      }
+      phase
+    }
+    updateTime
+  }
+}
+
+query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClaims, $pq: CursorPaginationIn) {
+  infra_listPVCs(clusterName: $clusterName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        creationTime
+        id
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        spec {
+          accessModes
+          dataSource {
+            apiGroup
+            kind
+            name
+          }
+          dataSourceRef {
+            apiGroup
+            kind
+            name
+            namespace
+          }
+          resources {
+            claims {
+              name
+            }
+            limits
+            requests
+          }
+          selector {
+            matchExpressions {
+              key
+              operator
+              values
+            }
+            matchLabels
+          }
+          storageClassName
+          volumeMode
+          volumeName
+        }
+        status {
+          accessModes
+          allocatedResources
+          allocatedResourceStatuses
+          capacity
+          conditions {
+            lastProbeTime
+            lastTransitionTime
+            message
+            reason
+            status
+            type
+          }
+          phase
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  infra_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        clusterName
+        creationTime
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        spec {
+          accountName
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          cacheKeyName
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+        }
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
+  infra_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
+    clusterName
+    creationTime
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      accountName
+      buildOptions {
+        buildArgs
+        buildContexts
+        contextDir
+        dockerfileContent
+        dockerfilePath
+        targetPlatforms
+      }
+      cacheKeyName
+      registry {
+        repo {
+          name
+          tags
+        }
+      }
+      resource {
+        cpu
+        memoryInMb
+      }
+    }
+    status {
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    updateTime
+  }
 }
 
 mutation authAddOauthCredientials($provider: String!, $state: String!, $code: String!) {

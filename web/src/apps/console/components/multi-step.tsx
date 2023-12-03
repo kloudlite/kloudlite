@@ -29,9 +29,14 @@ export const useMultiStep = ({
 
 interface IStep extends ChildrenProps {
   step: number;
+  className?: string;
 }
-const Step = ({ children, step }: IStep) => {
-  return <div>{children}</div>;
+const Step = ({ children, step, className }: IStep) => {
+  return (
+    <div className={className} data-step={step}>
+      {children}
+    </div>
+  );
 };
 
 interface IRoot extends ChildrenProps {
@@ -39,14 +44,14 @@ interface IRoot extends ChildrenProps {
 }
 const Root = ({ children, currentStep }: IRoot) => {
   return (
-    <div>
+    <>
       {React.Children.map(children as ReactElement[], (child) => {
         if (child?.props?.step === currentStep) {
           return child;
         }
         return null;
       })}
-    </div>
+    </>
   );
 };
 

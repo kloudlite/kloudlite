@@ -6,8 +6,7 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -49,12 +48,12 @@ const GridView = ({
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${cluster}/${project}/workspace/${id}`}
+            to={`/${account}/${cluster}/${project}/workspace/${id}/apps`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={
@@ -80,7 +79,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -106,13 +105,13 @@ const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${cluster}/${project}/workspace/${id}`}
+            to={`/${account}/${cluster}/${project}/workspace/${id}/apps`}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
@@ -134,7 +133,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

@@ -21,12 +21,14 @@ import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
-import { SelectPortalContainer } from '~/components/atoms/select';
+// import { SelectPortalContainer } from '~/components/atoms/select';
 import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ToastContainer } from '~/components/molecule/toast';
 import { TopBar } from '~/components/organisms/top-bar';
+import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
+import rcss from 'react-highlightjs-logs/dist/index.css';
 import { IRemixCtx } from '../types/common';
 
 export const links = () => [
@@ -35,6 +37,8 @@ export const links = () => [
   { rel: 'stylesheet', href: skeletonCSS },
   { rel: 'stylesheet', href: rcSlide },
   { rel: 'stylesheet', href: styleReactPulsable },
+  { rel: 'stylesheet', href: styleZenerSelect },
+  { rel: 'stylesheet', href: rcss },
 ];
 
 export const ErrorWrapper = ({ children, message }: any) => {
@@ -187,21 +191,21 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
           }}
         />
         <LiveReload port={443} />
-        <SelectPortalContainer>
-          <Tooltip.Provider>
-            <ProgressContainer>
-              <NonIdleProgressBar />
-              <ToastContainer
-              // toastClassName={() =>
-              //   'rounded border-border-tertiary border bg-surface-tertiary-default flex flex-row items-center p-xl bodyMd-medium text-text-on-primary'
-              // }
-              />
-              <Wrapper>
-                <Outlet />
-              </Wrapper>
-            </ProgressContainer>
-          </Tooltip.Provider>
-        </SelectPortalContainer>
+        {/* <SelectPortalContainer> */}
+        <Tooltip.Provider>
+          <ProgressContainer>
+            <NonIdleProgressBar />
+            <ToastContainer
+            // toastClassName={() =>
+            //   'rounded border-border-tertiary border bg-surface-tertiary-default flex flex-row items-center p-xl bodyMd-medium text-text-on-primary'
+            // }
+            />
+            <Wrapper>
+              <Outlet />
+            </Wrapper>
+          </ProgressContainer>
+        </Tooltip.Provider>
+        {/* </SelectPortalContainer> */}
 
         <Scripts />
       </body>

@@ -2,14 +2,14 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
-    ConsoleCreateBuildMutation,
-    ConsoleCreateBuildMutationVariables,
-    ConsoleDeleteBuildMutation,
-    ConsoleDeleteBuildMutationVariables,
-    ConsoleListBuildsQuery,
-    ConsoleListBuildsQueryVariables,
-    ConsoleUpdateBuildMutation,
-    ConsoleUpdateBuildMutationVariables,
+  ConsoleCreateBuildMutation,
+  ConsoleCreateBuildMutationVariables,
+  ConsoleDeleteBuildMutation,
+  ConsoleDeleteBuildMutationVariables,
+  ConsoleListBuildsQuery,
+  ConsoleListBuildsQueryVariables,
+  ConsoleUpdateBuildMutation,
+  ConsoleUpdateBuildMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IBuilds = NN<ConsoleListBuildsQuery['cr_listBuilds']>;
@@ -27,13 +27,6 @@ export const buildQueries = (executor: IExecutor) => ({
           search: $search
           pagination: $pagination
         ) {
-          totalCount
-          pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
-            endCursor
-          }
           edges {
             cursor
             node {
@@ -43,17 +36,59 @@ export const buildQueries = (executor: IExecutor) => ({
                 userName
               }
               creationTime
-              updateTime
-              status
-              name
+              credUser {
+                userEmail
+                userId
+                userName
+              }
+              errorMessages
               id
               lastUpdatedBy {
                 userEmail
                 userId
                 userName
               }
+              markedForDeletion
+              name
+              source {
+                branch
+                provider
+                repository
+                webhookId
+              }
+              spec {
+                accountName
+                buildOptions {
+                  buildArgs
+                  buildContexts
+                  contextDir
+                  dockerfileContent
+                  dockerfilePath
+                  targetPlatforms
+                }
+                cacheKeyName
+                registry {
+                  repo {
+                    name
+                    tags
+                  }
+                }
+                resource {
+                  cpu
+                  memoryInMb
+                }
+              }
+              status
+              updateTime
             }
           }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
         }
       }
     `,

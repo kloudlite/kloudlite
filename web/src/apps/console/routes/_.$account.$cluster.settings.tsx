@@ -5,8 +5,6 @@ import SidebarLayout from '../components/sidebar-layout';
 const ClusterSettings = () => {
   const rootContext = useOutletContext();
   const subNavAction = useSubNavData();
-  console.log(rootContext);
-
   return (
     <SidebarLayout
       navItems={[{ label: 'General', value: 'general' }]}

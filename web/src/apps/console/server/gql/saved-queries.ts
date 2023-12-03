@@ -5,6 +5,8 @@ import { accountQueries } from './queries/account-queries';
 import { appQueries } from './queries/app-queries';
 import { baseQueries } from './queries/base-queries';
 import { buildQueries } from './queries/build-queries';
+import { buildCachesQueries } from './queries/build-caches-queries';
+import { buildRunQueries } from './queries/build-run-queries';
 import { clusterQueries } from './queries/cluster-queries';
 import { configQueries } from './queries/config-queries';
 import { crQueries } from './queries/cr-queries';
@@ -22,6 +24,7 @@ import { secretQueries } from './queries/secret-queries';
 import { tagsQueries } from './queries/tags-queries';
 import { vpnQueries } from './queries/vpn-queries';
 import { workspaceQueries } from './queries/workspace-queries';
+import { pvcQueries } from './queries/pvc-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -48,6 +51,9 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...gitQueries(executor),
     ...domainQueries(executor),
     ...buildQueries(executor),
+    ...buildCachesQueries(executor),
+    ...pvcQueries(executor),
+    ...buildRunQueries(executor),
   };
 };
 

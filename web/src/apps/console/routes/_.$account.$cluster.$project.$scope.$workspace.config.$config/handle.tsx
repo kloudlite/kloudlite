@@ -33,7 +33,7 @@ export const updateConfig = async ({
   data,
   reload,
 }: IUpdateConfig) => {
-  const { workspace, user } = context;
+  const { workspace } = context;
   try {
     const { errors: e } = await api.updateConfig({
       config: {
@@ -41,7 +41,6 @@ export const updateConfig = async ({
           name: parseName(config),
           namespace: parseTargetNs(workspace),
           annotations: {
-            [keyconstants.author]: user.name,
             [keyconstants.node_type]: parseFromAnn(
               config,
               keyconstants.node_type

@@ -1,10 +1,10 @@
-import { Trash } from '@jengaicons/react';
+import { Trash, PencilLine } from '@jengaicons/react';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListItemWithSubtitle,
+  ListBody,
+  ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -13,7 +13,7 @@ import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IBuilds } from '~/console/server/gql/queries/build-queries';
+import { IBuildCaches } from '~/console/server/gql/queries/build-caches-queries';
 import {
   ExtractNodeType,
   parseUpdateOrCreatedBy,
@@ -21,15 +21,17 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import HandleBuildCache from './handle-build-cache';
 
-type BaseType = ExtractNodeType<IBuilds>;
-const RESOURCE_NAME = 'build';
+type BaseType = ExtractNodeType<IBuildCaches>;
+const RESOURCE_NAME = 'build cache';
 
 const parseItem = (item: BaseType) => {
   return {
     name: item.name,
+    displayName: item.displayName,
+    size: item.volumeSizeInGB,
     id: item.id,
-    status: item.status,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -39,12 +41,20 @@ const parseItem = (item: BaseType) => {
 
 interface IExtraButton {
   onDelete: () => void;
+  onEdit: () => void;
 }
 
-const ExtraButton = ({ onDelete }: IExtraButton) => {
+const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Edit',
+          icon: <PencilLine size={16} />,
+          type: 'item',
+          onClick: onEdit,
+          key: 'edit',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -61,13 +71,14 @@ const ExtraButton = ({ onDelete }: IExtraButton) => {
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
+const GridView = ({ items, onDelete, onEdit }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
+        const { name, displayName, id, updateInfo, size } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -77,21 +88,27 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
                   <ListTitle
-                    title={name}
+                    title={displayName}
+                    subtitle={name}
                     action={
                       <ExtraButton
                         onDelete={() => {
                           onDelete(item);
                         }}
+                        onEdit={() => onEdit(item)}
                       />
                     }
                   />
                 ),
               },
               {
+                key: generateKey(keyPrefix, 1),
+                render: () => <ListBody data={`${size} GB`} />,
+              },
+              {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -105,11 +122,11 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
+const ListView = ({ items, onDelete, onEdit }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
-        const { name, id, status, updateInfo } = parseItem(item);
+        const { name, displayName, id, updateInfo, size } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -119,18 +136,18 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               {
                 key: generateKey(keyPrefix, 0),
                 className: 'flex-1',
-                render: () => <ListTitle title={name} />,
+                render: () => <ListTitle subtitle={name} title={displayName} />,
               },
               {
-                key: generateKey(keyPrefix, id, index, 'status'),
-                className: 'w-[300px]',
-                render: () => <Badge>{status}</Badge>,
+                key: generateKey(keyPrefix, 1),
+                className: 'w-[200px]',
+                render: () => <ListBody data={`${size} GB`} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
@@ -143,6 +160,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                     onDelete={() => {
                       onDelete(item);
                     }}
+                    onEdit={() => onEdit(item)}
                   />
                 ),
               },
@@ -154,10 +172,12 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
+const BuildCachesResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [showHandleBuildCache, setShowHandleBuildCache] =
+    useState<BaseType | null>(null);
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -166,6 +186,9 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
+    },
+    onEdit: (item) => {
+      setShowHandleBuildCache(item);
     },
   };
 
@@ -182,8 +205,8 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteBuild({
-              crDeleteBuildId: showDeleteDialog?.id || '',
+            const { errors } = await api.deleteBuildCache({
+              crDeleteBuildCacheKeyId: showDeleteDialog!.id,
             });
 
             if (errors) {
@@ -197,8 +220,16 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
+      <HandleBuildCache
+        {...{
+          isUpdate: true,
+          data: showHandleBuildCache!,
+          visible: !!showHandleBuildCache,
+          setVisible: () => setShowHandleBuildCache(null),
+        }}
+      />
     </>
   );
 };
 
-export default BuildResources;
+export default BuildCachesResources;

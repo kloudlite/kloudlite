@@ -3,12 +3,11 @@ import { Params } from '@remix-run/react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode as AvailabilityMode,
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
+  Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProvider,
+  Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
   ProjectId,
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode as ProvisionMode,
-  Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
-  Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
+  Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncStatusAction,
+  Kloudlite__Io___Pkg___Types__SyncStatusState as SyncStatusState,
   WorkspaceOrEnvId,
 } from '~/root/src/generated/gql/server';
 
@@ -61,18 +60,29 @@ export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
 
 type IparseName =
   | {
-      metadata: {
+      metadata?: {
         name: string;
       };
     }
   | undefined
   | null;
 
-export const parseName = (resource: IparseName) => {
-  // if (!resource) {
-  //   throw Error('resource not found');
-  // }
-  return resource?.metadata.name || '';
+export const parseName = (resource: IparseName, ensure = false) => {
+  if (ensure) {
+    if (!resource) {
+      throw Error('resource not found');
+    }
+
+    if (!resource.metadata) {
+      throw Error('metadata not found');
+    }
+
+    if (!resource.metadata.name) {
+      throw Error('name not found');
+    }
+  }
+
+  return resource?.metadata?.name || '';
 };
 
 type IparseNamespace =
@@ -108,19 +118,16 @@ export const parseTargetNs = (resource: IparseTargetNs) => {
   return resource.spec.targetNamespace;
 };
 
-type parseFromAnnResource =
-  | {
-      metadata: {
-        annotations?: FlatMapType<string>;
-      };
-    }
-  | undefined
-  | null;
+type parseFromAnnResource = {
+  metadata?: {
+    annotations?: FlatMapType<string>;
+  };
+} | null;
 
 export const parseFromAnn = (resource: parseFromAnnResource, key: string) =>
   resource?.metadata?.annotations?.[key] || '';
 
-export const validateCloudProvider = (v: string): CloudProvider => {
+export const validateClusterCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
     case 'do':
     case 'aws':
@@ -132,14 +139,15 @@ export const validateCloudProvider = (v: string): CloudProvider => {
   }
 };
 
-export const validateProvisionMode = (v: string): ProvisionMode => {
-  switch (v as ProvisionMode) {
-    case 'on_demand':
-    case 'reserved':
-    case 'spot':
-      return v as ProvisionMode;
+export const validateCloudProvider = (v: string): CloudProvider => {
+  switch (v as CloudProvider) {
+    case 'do':
+    case 'aws':
+    case 'azure':
+    case 'gcp':
+      return v as CloudProvider;
     default:
-      throw Error(`invalid provision mode type ${v}`);
+      throw Error(`invalid cloud provider type ${v}`);
   }
 };
 
@@ -252,4 +260,12 @@ export const parseStatus = ({
   return {
     status: 'unknown',
   };
+};
+
+export const ensureResource = <T>(v: T | undefined | null): T => {
+  if (!v) {
+    throw Error('Resource is not provided');
+  }
+
+  return v;
 };

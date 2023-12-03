@@ -1,11 +1,11 @@
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import { DotsThreeOutlineFill, Trash } from '@jengaicons/react';
 import { useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Badge } from '~/components/atoms/badge';
-import { generateKey } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import CodeView from '~/console/components/code-view';
-import { ListItemWithSubtitle } from '~/console/components/console-list-components';
-import Grid from '~/console/components/grid';
+import { ListItem } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
@@ -16,6 +16,11 @@ import {
   parseCreationTime,
 } from '~/console/server/r-utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { toast } from '~/components/molecule/toast';
+import { handleError } from '~/root/lib/utils/common';
 import SHADialog from './sha-dialog';
 
 const RESOURCE_NAME = 'tag';
@@ -57,11 +62,13 @@ const TagView = ({
   sha,
   updateInfo,
   showSHA = (_) => _,
+  onDelete,
 }: {
   tags: Array<string>;
   sha: string;
   updateInfo: string;
   showSHA: (data: ISHADialogData) => void;
+  onDelete: () => void;
 }) => {
   const [toggleSha, setToggleSha] = useState(false);
 
@@ -100,6 +107,7 @@ const TagView = ({
             <button
               onClick={() => setToggleSha((prev) => !prev)}
               className="px-md rounded outline-none ring-offset-1 focus-visible:ring-2 focus-visible:ring-border-focus border border-border-default hover:bg-surface-basic-hovered active:bg-surface-basic-pressed"
+              aria-label="more"
             >
               <DotsThreeOutlineFill size={16} />
             </button>
@@ -114,7 +122,13 @@ const TagView = ({
     );
   }
 
-  return <ListItemWithSubtitle data={data} subtitle={subtitle} />;
+  return (
+    <ListItem
+      data={data}
+      subtitle={subtitle}
+      action={<ExtraButton onDelete={onDelete} />}
+    />
+  );
 };
 
 interface IResource {
@@ -122,17 +136,17 @@ interface IResource {
   onDelete: (item: BaseType) => void;
   showSHA: (data: ISHADialogData) => void;
 }
-const GridView = ({ items, onDelete = (_) => _, showSHA }: IResource) => {
-  return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
-      {items.map((item, index) => {
-        const { sha, tags, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return <Grid.Column key={id} rows={[]} />;
-      })}
-    </Grid.Root>
-  );
-};
+// const GridView = ({ items, onDelete = (_) => _, showSHA }: IResource) => {
+//   return (
+//     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
+//       {items.map((item, index) => {
+//         const { sha, tags, id, updateInfo } = parseItem(item);
+//         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+//         return <Grid.Column key={id} rows={[]} />;
+//       })}
+//     </Grid.Root>
+//   );
+// };
 
 const ListView = ({
   items,
@@ -159,6 +173,7 @@ const ListView = ({
                     sha={sha}
                     updateInfo={updateInfo}
                     showSHA={showSHA}
+                    onDelete={() => onDelete(item)}
                   />
                 ),
               },
@@ -173,17 +188,17 @@ const ListView = ({
 const TagsResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showSHADialog, setShowSHADialog] =
     useState<IShowDialog<ISHADialogData>>(null);
-  // const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-  //   null
-  // );
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
 
-  // const api = useConsoleApi();
-  // const reloadPage = useReload();
+  const api = useConsoleApi();
+  const reloadPage = useReload();
 
   const props: IResource = {
     items,
     onDelete: (item) => {
-      // setShowDeleteDialog(item);
+      setShowDeleteDialog(item);
     },
     showSHA: (data) => {
       setShowSHADialog({ type: DIALOG_TYPE.NONE, data });
@@ -196,15 +211,24 @@ const TagsResources = ({ items = [] }: { items: BaseType[] }) => {
         listView={<ListView {...props} />}
         gridView={<ListView {...props} />}
       />
-      {/* <DeleteDialog
-        resourceName={showDeleteDialog?.name}
+      <DeleteDialog
+        resourceName="confirm"
         resourceType={RESOURCE_NAME}
+        customMessages={{
+          prompt: (
+            <div>
+              Type <b>confirm</b> to continue
+            </div>
+          ),
+          warning: 'Are you sure you want to delete this digest?',
+        }}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteRepo({
-              name: showDeleteDialog?.name || '',
+            const { errors } = await api.deleteDigest({
+              digest: showDeleteDialog!.digest,
+              repoName: showDeleteDialog!.repository,
             });
 
             if (errors) {
@@ -217,7 +241,7 @@ const TagsResources = ({ items = [] }: { items: BaseType[] }) => {
             handleError(err);
           }
         }}
-      /> */}
+      />
       <SHADialog show={showSHADialog} setShow={setShowSHADialog} />
     </>
   );

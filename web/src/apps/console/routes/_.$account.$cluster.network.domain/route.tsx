@@ -4,16 +4,13 @@ import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import DomainResources from './domain-resources';
 import HandleDomain from './handle-domain';
 import Tools from './tools';
@@ -39,18 +36,20 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Domain = () => {
-  const [showHandleDomain, setShowHandleDomain] =
-    useState<IShowDialog<ExtractNodeType<IDomains> | null>>(null);
+  const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
   return (
-    <LoadingComp data={promise}>
-      {({ domainData }) => {
-        const domains = domainData.edges?.map(({ node }) => node);
+    <>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          domainData: fake.ConsoleListDomainsQuery.infra_listDomainEntries,
+        }}
+      >
+        {({ domainData }) => {
+          const domains = domainData.edges?.map(({ node }) => node);
 
-        console.log(domains);
-
-        return (
-          <>
+          return (
             <Wrapper
               secondaryHeader={{
                 title: 'Domain',
@@ -60,10 +59,7 @@ const Domain = () => {
                     prefix={<Plus />}
                     variant="primary"
                     onClick={() => {
-                      setShowHandleDomain({
-                        type: DIALOG_TYPE.ADD,
-                        data: null,
-                      });
+                      setVisible(true);
                     }}
                   />
                 ),
@@ -75,7 +71,7 @@ const Domain = () => {
                   prefix: <Plus />,
                   variant: 'primary',
                   onClick: () => {
-                    setShowHandleDomain({ type: DIALOG_TYPE.ADD, data: null });
+                    setVisible(true);
                   },
                 },
                 title: 'This is where you’ll oversees and control your domain.',
@@ -90,14 +86,17 @@ const Domain = () => {
             >
               <DomainResources items={domains} />
             </Wrapper>
-            <HandleDomain
-              show={showHandleDomain}
-              setShow={setShowHandleDomain}
-            />
-          </>
-        );
-      }}
-    </LoadingComp>
+          );
+        }}
+      </LoadingComp>
+      <HandleDomain
+        {...{
+          isUpdate: false,
+          visible,
+          setVisible,
+        }}
+      />
+    </>
   );
 };
 

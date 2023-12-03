@@ -29,9 +29,19 @@ const ClusterTabs = () => {
     <CommonTabs
       tabs={[
         {
+          label: 'Overview',
+          to: '/overview',
+          value: '/overview',
+        },
+        {
           label: 'Nodepools',
           to: '/nodepools',
           value: '/nodepools',
+        },
+        {
+          label: 'Storage',
+          to: '/storage',
+          value: '/storage',
         },
         {
           label: 'Network',

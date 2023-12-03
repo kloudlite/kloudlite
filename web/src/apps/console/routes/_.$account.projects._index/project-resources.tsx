@@ -5,8 +5,7 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -15,25 +14,22 @@ import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IProjects } from '~/console/server/gql/queries/project-queries';
 import {
   ExtractNodeType,
-  parseFromAnn,
   parseName,
+  parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 type BaseType = ExtractNodeType<IProjects>;
 const RESOURCE_NAME = 'project';
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: ExtractNodeType<IProjects>) => {
   return {
     name: item.displayName,
     id: parseName(item),
     cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,
     updateInfo: {
-      author: `Updated by ${titleCase(
-        parseFromAnn(item, keyconstants.author)
-      )}`,
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -49,7 +45,9 @@ const ExtraButton = ({ project }: { project: BaseType }) => {
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/${project.clusterName}/${project.metadata.name}/settings`,
+          to: `/${account}/${project.clusterName}/${parseName(
+            project
+          )}/settings`,
           key: 'settings',
         },
       ]}
@@ -72,7 +70,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={<ExtraButton project={item} />}
@@ -84,7 +82,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                 key: generateKey(keyPrefix, path + cluster),
                 render: () => (
                   <div className="flex flex-col gap-md">
-                    <ListItem data={path} />
+                    {/* <ListItem data={path} /> */}
                     <ListBody data={cluster} />
                   </div>
                 ),
@@ -92,7 +90,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -111,7 +109,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, cluster, path, updateInfo } = parseItem(item);
+        const { name, id, cluster, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -123,18 +121,18 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 key: generateKey(keyPrefix, 0),
                 className: 'flex-1',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, path),
-                className: 'w-[230px] text-start',
-                render: () => <ListBody data={path} />,
-              },
+              // {
+              //   key: generateKey(keyPrefix, path),
+              //   className: 'w-[230px] text-start',
+              //   render: () => <ListBody data={path} />,
+              // },
               {
                 key: generateKey(keyPrefix, cluster),
                 className: 'w-[120px] text-start',
@@ -144,7 +142,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />

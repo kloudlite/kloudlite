@@ -1,3 +1,5 @@
+import { AWSlogoFill } from '@jengaicons/react';
+import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import {
   IManagedServiceTemplate,
   IManagedServiceTemplates,
@@ -33,12 +35,21 @@ export const ACCOUNT_ROLES = Object.freeze({
   account_admin: 'Admin',
 });
 
+interface IPopupWindowOptions {
+  url: string;
+  width?: number;
+  height?: number;
+  title?: string;
+}
+
 export const popupWindow = ({
-  url = '',
+  url,
   onClose = () => {},
   width = 800,
   height = 500,
   title = 'kloudlite',
+}: IPopupWindowOptions & {
+  onClose?: () => void;
 }) => {
   const frame = window.open(
     url,
@@ -54,4 +65,63 @@ export const popupWindow = ({
       onClose();
     }
   }, 100);
+};
+
+export const asyncPopupWindow = (options: IPopupWindowOptions) => {
+  return new Promise((resolve) => {
+    popupWindow({
+      ...options,
+      onClose: () => {
+        resolve(true);
+      },
+    });
+  });
+};
+
+export const downloadFile = ({
+  filename,
+  data,
+  format,
+}: {
+  filename: string;
+  format: string;
+  data: string;
+}) => {
+  const blob = new Blob([data], { type: format });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  URL.revokeObjectURL(url);
+  document.body.removeChild(link);
+};
+
+export const providerIcons = (iconsSize = 16) => {
+  return { aws: <AWSlogoFill size={iconsSize} /> };
+};
+
+export const renderCloudProvider = ({
+  cloudprovider,
+}: {
+  cloudprovider: CloudProviders | 'unknown';
+}) => {
+  const iconSize = 16;
+  switch (cloudprovider) {
+    case 'aws':
+      return (
+        <div className="flex flex-row gap-xl items-center">
+          {providerIcons(iconSize).aws}
+          <span>{cloudprovider}</span>
+        </div>
+      );
+    default:
+      return cloudprovider;
+  }
 };

@@ -10,6 +10,7 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
+import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from './util';
 
 interface IReviewComponent {
@@ -80,7 +81,7 @@ const AppReview = () => {
             <div className="bodyMd-semibold text-text-default">
               {app.displayName}
             </div>
-            <div className="bodySm text-text-soft">{app.metadata.name}</div>
+            <div className="bodySm text-text-soft">{parseName(app)}</div>
           </div>
         </ReviewComponent>
 

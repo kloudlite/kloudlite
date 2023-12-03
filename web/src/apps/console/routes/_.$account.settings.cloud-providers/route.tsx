@@ -1,17 +1,15 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
-import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
+import { useState } from 'react';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 
 import HandleProvider from './handle-provider';
@@ -37,13 +35,18 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const CloudProvidersIndex = () => {
-  const [showAddProvider, setShowAddProvider] =
-    useState<IShowDialog<ExtractNodeType<IProviderSecrets> | null>>(null);
+  const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          providersData: fake.ConsoleListProviderSecretsQuery
+            .infra_listProviderSecrets as any,
+        }}
+      >
         {({ providersData }) => {
           const providers = parseNodes(providersData);
           if (!providers) {
@@ -62,10 +65,7 @@ const CloudProvidersIndex = () => {
                     content="Add Cloud Provider"
                     prefix={<PlusFill />}
                     onClick={() => {
-                      setShowAddProvider({
-                        type: DIALOG_TYPE.ADD,
-                        data: null,
-                      });
+                      setVisible(true);
                     }}
                   />
                 ),
@@ -83,7 +83,7 @@ const CloudProvidersIndex = () => {
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
-                    setShowAddProvider({ type: DIALOG_TYPE.ADD, data: null });
+                    setVisible(true);
                   },
                 },
               }}
@@ -99,7 +99,13 @@ const CloudProvidersIndex = () => {
         }}
       </LoadingComp>
       {/* Popup dialog for adding cloud provider */}
-      <HandleProvider show={showAddProvider} setShow={setShowAddProvider} />
+      <HandleProvider
+        {...{
+          isUpdate: false,
+          visible,
+          setVisible,
+        }}
+      />
     </>
   );
 };

@@ -6,6 +6,7 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { Button } from '~/components/atoms/button';
 import { useQueryParameters } from '~/root/lib/client/hooks/use-search';
+import { parseName } from '~/console/server/r-utils/common';
 import { IAppContext } from '../_.$account.$cluster.$project.$scope.$workspace.app.$app/route';
 
 const ItemList = () => {
@@ -13,9 +14,9 @@ const ItemList = () => {
   const [sp] = useSearchParams();
 
   const [url] = useState(
-    `wss://observability.dev.kloudlite.io/observability/logs/app?resource_name=${
-      app.metadata.name
-    }&resource_namespace=${app.metadata.namespace}&start_time=${
+    `wss://observability.dev.kloudlite.io/observability/logs/app?resource_name=${parseName(
+      app
+    )}&resource_namespace=${app.metadata!.namespace}&start_time=${
       sp.get('start') || 1690273382
     }&end_time=${sp.get('end') || 1690532560}`
   );

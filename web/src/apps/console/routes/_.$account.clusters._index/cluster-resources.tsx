@@ -1,13 +1,12 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { dayjs } from '~/components/molecule/dayjs';
 import { generateKey, titleCase } from '~/components/utils';
+import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -16,27 +15,35 @@ import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
-  parseFromAnn,
   parseName,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { renderCloudProvider } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
-import { Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as IClusterSpecCloudProvider } from '~/root/src/generated/gql/server';
 
 const RESOURCE_NAME = 'cluster';
-type BaseType = ExtractNodeType<IClusters>;
-
-interface IResource {
-  items: BaseType[];
-}
 
 const getProvider = (item: ExtractNodeType<IClusters>) => {
   if (!item.spec) {
     return '';
   }
-  switch (item.spec.cloudProvider as IClusterSpecCloudProvider) {
+  switch (item.spec.cloudProvider) {
     case 'aws':
-      return `${item.spec.cloudProvider} (${item.spec.aws?.region})`;
+      return (
+        <div className="flex flex-row items-center gap-lg">
+          {renderCloudProvider({ cloudprovider: item.spec.cloudProvider })}
+          <span>({item.spec.aws?.region})</span>
+        </div>
+      );
+    case 'do':
+    case 'gcp':
+    case 'azure':
+      return (
+        <div className="flex flex-row items-center gap-lg">
+          <span>{item.spec.cloudProvider}</span>
+        </div>
+      );
 
     default:
       logger.error('unknown provider', item.spec.cloudProvider);
@@ -44,16 +51,14 @@ const getProvider = (item: ExtractNodeType<IClusters>) => {
   }
 };
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: ExtractNodeType<IClusters>) => {
   return {
     name: item.displayName,
     id: parseName(item),
     provider: getProvider(item),
     updateInfo: {
-      author: `Updated by ${titleCase(
-        parseFromAnn(item, keyconstants.author)
-      )}`,
-      time: dayjs(item.updateTime).fromNow(),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
+      time: parseUpdateOrCreatedOn(item),
     },
   };
 };
@@ -75,7 +80,7 @@ const ExtraButton = ({ cluster }: { cluster: ExtractNodeType<IClusters> }) => {
   );
 };
 
-const GridView = ({ items }: IResource) => {
+const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -85,12 +90,12 @@ const GridView = ({ items }: IResource) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${id}/nodepools`}
+            to={`/${account}/${id}/overview`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={<ExtraButton cluster={item} />}
@@ -109,7 +114,7 @@ const GridView = ({ items }: IResource) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -123,45 +128,38 @@ const GridView = ({ items }: IResource) => {
   );
 };
 
-const ListView = ({ items }: IResource) => {
+const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, provider, updateInfo } = parseItem(item);
+        const { name, id, provider } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
         return (
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${id}/nodepools`}
+            to={`/${account}/${id}/overview`}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: 'w-full',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
+              lR.statusRender({ className: 'w-[180px] mr-[50px]' }),
               {
-                key: generateKey(keyPrefix, provider),
+                key: generateKey(keyPrefix, `${provider}`),
                 className: 'w-[150px] text-start',
                 render: () => <ListBody data={provider} />,
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
-                render: () => (
-                  <ListItemWithSubtitle
-                    data={`${updateInfo.author}`}
-                    subtitle={updateInfo.time}
-                  />
-                ),
-              },
+              lR.authorRender({ className: 'w-[180px]' }),
               {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => <ExtraButton cluster={item} />,
@@ -174,15 +172,15 @@ const ListView = ({ items }: IResource) => {
   );
 };
 
-const ClusterResources = ({ items = [] }: { items: BaseType[] }) => {
-  const props: IResource = {
-    items,
-  };
-
+const ClusterResources = ({
+  items = [],
+}: {
+  items: ExtractNodeType<IClusters>[];
+}) => {
   return (
     <ListGridView
-      gridView={<GridView {...props} />}
-      listView={<ListView {...props} />}
+      gridView={<GridView {...{ items }} />}
+      listView={<ListView {...{ items }} />}
     />
   );
 };
