@@ -10,9 +10,10 @@ export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
     headers: ctx.request.headers,
   }).whoAmI();
 
-  if (whoAmI.data && whoAmI.data) {
+  if (whoAmI.data) {
     return redirect(`/`);
   }
+
   return false;
 };
 
