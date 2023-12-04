@@ -63,7 +63,7 @@ const Root = (props: IDialog) => {
               throw e[0];
             }
           }
-          resetValues();
+          // resetValues();
           toast.success(
             `Build cache ${isUpdate ? 'updated' : 'created'} successfully`
           );

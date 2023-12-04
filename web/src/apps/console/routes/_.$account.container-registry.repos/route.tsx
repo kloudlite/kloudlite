@@ -39,7 +39,6 @@ export const loader = async (ctx: IRemixCtx) => {
 const ContainerRegistryRepos = () => {
   const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
-
   return (
     <>
       <LoadingComp
