@@ -3,7 +3,7 @@
 import { buildASTSchema, parse, GraphQLNamedType } from 'graphql';
 import fs from 'fs';
 
-const typeDefs = fs.readFileSync('./test/q.graphql');
+const typeDefs = fs.readFileSync('./gql/sdl.graphql');
 
 const astDocument = parse(typeDefs.toString());
 const schema = buildASTSchema(astDocument);
