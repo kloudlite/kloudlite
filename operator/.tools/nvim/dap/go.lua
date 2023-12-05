@@ -166,13 +166,9 @@ dap.configurations.go = {
     args = { "--dev" },
     console = "externalTerminal",
     -- externalTerminal = true,
-    env = {
-      RECONCILE_PERIOD = "30s",
-      MAX_CONCURRENT_RECONCILES = "1",
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/operators/msvc-mongo" .. "/.secrets/env",
     },
-    -- envFile = {
-    --   vim.g.nxt.project_root_dir .. "/operators/msvc-mongo" .. "/.secrets/env",
-    -- },
   },
   {
     type = "go",
