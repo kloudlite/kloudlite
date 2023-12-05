@@ -998,13 +998,15 @@ spec:
                 type: string
               preUninstall:
                 type: string
-              valuesYaml:
-                type: string
+              values:
+                additionalProperties:
+                  x-kubernetes-preserve-unknown-fields: true
+                type: object
             required:
             - chartName
             - chartRepo
             - chartVersion
-            - valuesYaml
+            - values
             type: object
           status:
             description: HelmChartStatus defines the observed state of HelmChart
