@@ -47,7 +47,6 @@
 
           shellHook = ''
             echo "You are using nix flakes"
-            exec fish
           '';
           };
         }
