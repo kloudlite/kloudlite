@@ -416,6 +416,25 @@ func (r *Request[T]) GetOwnedResources() []ResourceRef {
 	return r.resourceRefs
 }
 
+func (r *Request[T]) GetOwnedK8sResources() []client.Object {
+	kresources := make([]client.Object, len(r.resourceRefs))
+
+	for i := range r.resourceRefs {
+		kresources[i] = &unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": r.resourceRefs[i].APIVersion,
+				"kind":       r.resourceRefs[i].Kind,
+				"metadata": map[string]any{
+					"name":      r.resourceRefs[i].Name,
+					"namespace": r.resourceRefs[i].Namespace,
+				},
+			},
+		}
+	}
+
+	return kresources
+}
+
 func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
 	r.resourceRefs = append(r.resourceRefs, refs...)
 }
@@ -428,6 +447,8 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 
 	resources := r.GetOwnedResources()
 
+	allRemovedFromK8s := true
+
 	for i := range resources {
 		res := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": resources[i].APIVersion,
@@ -438,26 +459,57 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 			},
 		}}
 
+		allRemovedFromK8s = false
 		if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return r.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
+			if client.IgnoreNotFound(err) != nil {
+				return r.CheckFailed(checkName, check, err.Error())
 			}
-			return r.CheckFailed("CleanupResource", check,
+			allRemovedFromK8s = true
+		}
+
+		if fn.IsOwner(res, fn.AsOwner(obj, true)) {
+			controllerutil.RemoveFinalizer(res, constants.CommonFinalizer)
+			// FIXME: this is not working
+			controllerutil.RemoveFinalizer(res, constants.GenericFinalizer)
+		}
+
+		if err := r.client.Update(ctx, res); err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				return r.CheckFailed(checkName, check, err.Error())
+			}
+		}
+
+		r.Logger.Infof("deleting resource GVK: %s, %s, as its parent is finalizing", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName()))
+
+		if err := r.client.Delete(ctx, res, &client.DeleteOptions{
+			GracePeriodSeconds: fn.New(int64(30)),
+			PropagationPolicy:  fn.New(metav1.DeletePropagationForeground),
+		}); err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				return r.CheckFailed(checkName, check, err.Error()).Err(nil)
+			}
+			return r.CheckFailed(checkName, check,
 				fmt.Sprintf("waiting for deletion of owned resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
 			).Err(nil)
 		}
 
 		if res.GetDeletionTimestamp() == nil {
 			if err := r.client.Delete(ctx, res); err != nil {
-				return r.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
+				return r.CheckFailed(checkName, check, err.Error()).Err(nil)
 			}
 		}
+	}
+
+	if !allRemovedFromK8s {
+		return r.CheckFailed(checkName, check, "waiting for all owned resources to be removed from k8s")
 	}
 
 	check.Status = true
 	if check != obj.GetStatus().Checks[checkName] {
 		obj.GetStatus().Checks[checkName] = check
-		r.UpdateStatus()
+		if sr := r.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return r.Next()
 }

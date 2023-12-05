@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -187,4 +188,3 @@ func IsBlueprintNamespace(ctx context.Context, k8sClient client.Client, ns strin
 	err := k8sClient.Get(ctx, fn.NN("", ns), &prj)
 	return err != nil
 }
-

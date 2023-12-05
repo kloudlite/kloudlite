@@ -132,59 +132,6 @@ func IfThenElseFn[T any](cond bool, v1 func() T, v2 func() T) T {
 	return v2()
 }
 
-func mapGet[T any](m map[string]any, key string) (T, bool) {
-	if m == nil {
-		return *new(T), false
-	}
-	v, ok := m[key]
-	if !ok {
-		return *new(T), false
-	}
-	tv, ok := v.(T)
-	if !ok {
-		return *new(T), false
-	}
-	return tv, ok
-}
-
-func MapGet[T any](m map[string]any, key string) (T, bool) {
-	return mapGet[T](m, key)
-}
-
-func MapSet[T any](m map[string]T, key string, value T) {
-	if m == nil {
-		m = map[string]T{}
-	}
-	m[key] = value
-}
-
-// MapContains checks if `destination` contains all keys from `source`
-func MapContains[T comparable](destination map[string]T, source map[string]T) bool {
-	if len(destination) == 0 && len(source) == 0 {
-		return true
-	}
-
-	for k, v := range source {
-		if destination[k] != v {
-			return false
-		}
-	}
-	return true
-}
-
-func MapEqual[K comparable, V comparable](first map[K]V, second map[K]V) bool {
-	if len(first) != len(second) {
-		return false
-	}
-
-	for k := range first {
-		if second[k] != first[k] {
-			return false
-		}
-	}
-	return true
-}
-
 func NN(namespace, name string) types.NamespacedName {
 	return types.NamespacedName{Namespace: namespace, Name: name}
 }
