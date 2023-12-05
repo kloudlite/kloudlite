@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -19,12 +20,14 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/yaml"
 )
 
 type Reconciler struct {
@@ -72,7 +75,7 @@ func getJobSvcAccountName() string {
 // +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.HelmChart{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.HelmChart{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -186,6 +189,26 @@ func (r *Reconciler) ensureJobRBAC(req *rApi.Request[*crdsv1.HelmChart]) stepRes
 	return req.Next()
 }
 
+func valuesToYaml(values map[string]apiextensionsv1.JSON) (string, error) {
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+
+	slices.Sort(keys)
+	m := make(map[string]apiextensionsv1.JSON, len(values))
+	for _, k := range keys {
+		m[k] = values[k]
+	}
+
+	b, err := yaml.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
+
 func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
@@ -196,6 +219,11 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
 		job = nil
+	}
+
+	values, err := valuesToYaml(obj.Spec.Values)
+	if err != nil {
+		return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
 	}
 
 	if job == nil {
@@ -226,7 +254,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 
 			"pre-install":  obj.Spec.PreInstall,
 			"post-install": obj.Spec.PostInstall,
-			"values-yaml":  obj.Spec.ValuesYaml,
+			"values-yaml":  values,
 		})
 		if err != nil {
 			return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
@@ -307,7 +335,6 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			"tolerations":          obj.Spec.JobVars.Tolerations,
 			"affinity":             obj.Spec.JobVars.Affinity,
 			"node-selector":        obj.Spec.JobVars.NodeSelector,
-			"backoff-limit":        obj.Spec.JobVars.BackOffLimit,
 
 			"release-name":      obj.Name,
 			"release-namespace": obj.Namespace,

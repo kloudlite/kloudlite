@@ -3,6 +3,7 @@ package v1
 import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -38,8 +39,7 @@ type HelmChartSpec struct {
 	PreUninstall  string `json:"preUninstall,omitempty"`
 	PostUninstall string `json:"postUninstall,omitempty"`
 
-	// +kubebuilder:validation:Type=string
-	ValuesYaml string `json:"valuesYaml"`
+	Values map[string]apiextensionsv1.JSON `json:"values"`
 }
 
 // HelmChartStatus defines the observed state of HelmChart
