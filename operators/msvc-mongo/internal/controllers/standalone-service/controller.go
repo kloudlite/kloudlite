@@ -2,31 +2,28 @@ package standalone_service
 
 import (
 	"context"
-	"embed"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
-	"github.com/kloudlite/operator/operators/msvc-mongo/internal/types"
+	"github.com/kloudlite/operator/operators/msvc-mongo/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -59,8 +56,12 @@ const (
 	KeyMsvcOutput string = "msvc-output"
 )
 
-//go:embed templates
-var templatesDir embed.FS
+const (
+	// secret keys
+	RootPassword string = "ROOT_PASSWORD"
+	Hosts        string = "HOSTS"
+	URI          string = "URI"
+)
 
 func getHelmSecretName(name string) string {
 	return "helm-" + name
@@ -102,9 +103,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconHelmSecret(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.reconHelmSecret(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.reconHelm(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -130,106 +131,53 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.Standalon
 	defer req.LogPostCheck(AccessCredsReady)
 
 	secretName := "msvc-" + obj.Name
-	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
+	scrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
+		scrt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		scrt.SetFinalizers(obj.GetFinalizers())
+
+		scrt.Labels = obj.GetLabels()
+
+		if scrt.Data == nil {
+			scrt.Data = map[string][]byte{
+				"ROOT_PASSWORD": []byte(fn.CleanerNanoid(40)),
+				"HOSTS": func() []byte {
+					var hosts []string
+					for i := 0; i < obj.Spec.ReplicaCount; i++ {
+						hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:27017", obj.Name, i, obj.Name, obj.Namespace))
+					}
+					return []byte(strings.Join(hosts, ","))
+				}(),
+				"URI": []byte(fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", scrt.Data[RootPassword], scrt.Data[Hosts])),
+			}
 		}
-		req.Logger.Infof("secret %s does not exist yet, would be creating it ...", fn.NN(obj.Namespace, secretName).String())
+
+		return nil
+	}); err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
 
-	if scrt == nil {
-		var hosts []string
-		for i := 0; i < obj.Spec.ReplicaCount; i++ {
-			hosts = append(hosts, fmt.Sprintf("%s-%d.%s.%s.svc.cluster.local:27017", obj.Name, i, obj.Name, obj.Namespace))
-		}
+	req.AddToOwnedResources(rApi.ParseResourceRef(scrt))
 
-		rootPassword := fn.CleanerNanoid(40)
-		b, err := templates.Parse(
-			templates.Secret, map[string]any{
-				"name":      secretName,
-				"namespace": obj.Namespace,
-				"labels":    obj.GetLabels(),
-				"string-data": types.MsvcOutput{
-					RootPassword: rootPassword,
-					Hosts:        strings.Join(hosts, ","),
-					URI:          fmt.Sprintf("mongodb://%s:%s@%s/admin?authSource=admin", "root", rootPassword, strings.Join(hosts, ",")),
-				},
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
-		}
+	// creating helm secrets
+	helmAdminSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: getHelmSecretName(obj.Name), Namespace: obj.Namespace}}
+	controllerutil.CreateOrUpdate(ctx, r.Client, helmAdminSecret, func() error {
+		helmAdminSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
-		resourceRefs, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
+		if helmAdminSecret.Data == nil {
+			helmAdminSecret.Data = map[string][]byte{
+				"mongodb-passwords":        []byte(""),
+				"mongodb-root-password":    scrt.Data[RootPassword],
+				"mongodb-metrics-password": []byte(""),
+				"mongodb-replica-set-key":  []byte(""),
+			}
 		}
-
-		req.AddToOwnedResources(resourceRefs...)
-	}
+		return nil
+	})
 
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
-	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	}
-
-	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
-	return req.Next()
-}
-
-func (r *Reconciler) reconHelmSecret(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(HelmSecretReady)
-	defer req.LogPostCheck(HelmSecretReady)
-
-	helmSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getHelmSecretName(obj.Name)), &corev1.Secret{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(HelmSecretReady, check, err.Error())
-		}
-		req.Logger.Infof("helm secret (%s) does not exist, will be creating now...", getHelmSecretName(obj.Name))
-		helmSecret = nil
-	}
-
-	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
-	if !ok {
-		return req.CheckFailed(HelmSecretReady, check, errors.NotInLocals(KeyMsvcOutput).Error()).Err(nil)
-	}
-
-	if helmSecret == nil {
-		if err := r.Create(
-			ctx, &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            getHelmSecretName(obj.Name),
-					Namespace:       obj.Namespace,
-					OwnerReferences: obj.GetOwnerReferences(),
-				},
-				StringData: map[string]string{
-					"mongodb-passwords":        "",
-					"mongodb-root-password":    msvcOutput.RootPassword,
-					"mongodb-metrics-password": "",
-					"mongodb-replica-set-key":  "",
-				},
-			},
-		); err != nil {
-			return req.CheckFailed(HelmSecretReady, check, err.Error())
-		}
-	}
-
-	check.Status = true
-	if check != checks[HelmSecretReady] {
-		checks[HelmSecretReady] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -252,7 +200,8 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 		"labels": map[string]string{
 			constants.MsvcNameKey: obj.Name,
 		},
-		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
+		"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj)},
+		"node-selector": obj.Spec.NodeSelector,
 
 		"storage-class": obj.Spec.Resources.Storage.StorageClass,
 		"storage-size":  obj.Spec.Resources.Storage.Size,
@@ -356,17 +305,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
-	b, err := templatesDir.ReadFile("templates/helm-mongodb-standalone.yml.tpl")
+	var err error
+	r.templateHelmMongoDB, err = templates.Read(templates.HelmMongoDBStandalone)
 	if err != nil {
 		return err
 	}
-	r.templateHelmMongoDB = b
 
-	b, err = templatesDir.ReadFile("templates/helm-mongodb-standalone-auth.yml.tpl")
+	r.templateHelmMongoDBAuth, err = templates.Read(templates.HelmMongoDBStandaloneAuth)
 	if err != nil {
 		return err
 	}
-	r.templateHelmMongoDBAuth = b
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})

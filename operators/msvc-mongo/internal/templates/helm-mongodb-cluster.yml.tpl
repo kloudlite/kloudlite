@@ -1,12 +1,20 @@
 {{- $name := get . "name" }} 
 {{- $namespace := get . "namespace" }} 
 {{- $labels := get . "labels" | default dict }} 
+{{- $annotations := get . "annotations" | default dict}}
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $storageClass := get . "storage-class" }}
 {{- $storageSize := get . "storage-size" }}
 
 {{- $replicaCount := get . "replica-count" }}
+{{- $rootUser := get . "root-user" }}
+{{- $authExistingSecret := get . "auth-existing-secret" }}
+
+{{- $cpuMin := get . "cpu-min" }}
+{{- $cpuMax := get . "cpu-max" }}
+{{- $memoryMin := get . "memory-min" }}
+{{- $memoryMax := get . "memory-max" }}
 
 ---
 
@@ -15,34 +23,33 @@ kind: HelmChart
 metadata:
   name: {{$name}}
   namespace: {{$namespace}}
+  labels: {{$labels | toYAML | nindent 4}}
+  annotations: {{$annotations | toYAML | nindent 4}}
+  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
 spec:
   chartRepo:
     name: bitnami
     url: https://charts.bitnami.com/bitnami
   chartName: bitnami/mongodb
-  chartVersion: 14.0.2
-  valuesYaml: |+
+  chartVersion: 14.3.1
+
+  values:
+    # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
     global:
       storageClass: {{$storageClass}}
+
+    architecture: "replicaset"
     image:
       registry: docker.io
       repository: bitnami/mongodb
       tag: 7.0.2-debian-11-r0
 
-    fullnameOverride: {{.Name}}
+    fullnameOverride: {{$name}}
 
-    architecture: "replicaset"
-
-    replicaCount: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_count" | default 1 | int64 }}
-
-    auth:
-      enabled: true
-      rootUser: {{$rootUser}}
-      rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" | quote }}
-      replicaSetKey: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_set_key" | quote }}
-
+    replicaCount: {{ $replicaCount | int64 }}
     replicaSetName: rs
     replicaSetHostnames: true
+    podLabels: {{$labels | toYAML | nindent 6}}
 
     directoryPerDB: true
 
@@ -50,52 +57,32 @@ spec:
       enabled: true
       size: {{$storageSize}}
 
+    auth:
+      enabled: true
+      rootUser: {{$rootUser}}
+      existingSecret: {{$authExistingSecret}}
+
     volumePermissions:
       enabled: true
 
----
+    metrics:
+      enabled: true
 
-apiVersion: msvc.kloudlite.io/v1
-kind: HelmMongoDB
-metadata:
-  name: {{$name}}
-  namespace: {{$namespace}}
-  labels: {{$labels | toYaml | nindent 4}}
-  ownerReferences: {{$ownerRefs | toYaml | nindent 4}}
-spec:
-  global:
-    storageClass: {{$storageClass}}
-  image:
-    repository: bitnami/mongodb
-    tag: 5.0.8-debian-10-r20
+    priorityClassName: "stateful"
 
-  fullnameOverride: {{.Name}}
-
-  architecture: "replicaset"
-  replicaCount: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_count" | default 1 | int64 }}
-  replicaSetName: rs
-  replicaSetHostnames: true
-
-  auth:
-    enabled: true
-    rootPassword: {{ index (mustFromJson (.Spec.Inputs | toJson)) "root_password" | quote }}
-    replicaSetKey: {{ index (mustFromJson (.Spec.Inputs | toJson)) "replica_set_key" | quote }}
-
-  persistence:
-    enabled: true
-    size: {{$storageSize}}
-
-  volumePermissions:
-    enabled: true
-
-#  metrics:
-#    enabled: true
-
-  resources:
-    requests:
-      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_min" | default 400 }}m
-      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_min" | default 400 }}Mi
-    limits:
-      cpu: {{ index (mustFromJson (.Spec.Inputs | toJson)) "cpu_max" |  default 400}}m
-      memory: {{ index (mustFromJson (.Spec.Inputs | toJson)) "memory_max" | default 500}}Mi
-
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kloudlite.io/provider.az
+        whenUnsatisfiable: DoNotSchedule
+        nodeAffinityPolicy: Honor
+        nodeTaintsPolicy: Honor
+        labelSelector:
+          matchLabels: {{$labels | toYAML | nindent 12}}
+    
+    resources:
+      requests:
+        cpu: {{$cpuMin}}
+        memory: {{$memoryMin}}
+      limits:
+        cpu: {{$cpuMax}}
+        memory: {{$memoryMax}}

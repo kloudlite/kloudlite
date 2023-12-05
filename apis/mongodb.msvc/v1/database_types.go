@@ -7,15 +7,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type DatabaseOutput struct {
+	Credentials ct.SecretRef `json:"credentials"`
+}
+
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	MsvcRef      ct.MsvcRef `json:"msvcRef"`
-	ResourceName string     `json:"resourceName"`
+	MsvcRef      ct.MsvcRef     `json:"msvcRef"`
+	ResourceName string         `json:"resourceName"`
+	Output       DatabaseOutput `json:"output"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Database is the Schema for the databases API

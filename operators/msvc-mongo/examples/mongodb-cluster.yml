@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: examples
+---
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: ClusterService
+metadata:
+  name: mongodb-cluster
+  namespace: examples
+spec:
+  replicas: 3
+  resources:
+    cpu:
+      min: 300m
+      max: 500m
+    memory: 500Mi
+    storage:
+      size: 1Gi
+      storageClass: sc-xfs

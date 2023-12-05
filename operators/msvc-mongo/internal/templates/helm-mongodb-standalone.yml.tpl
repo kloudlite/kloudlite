@@ -1,7 +1,10 @@
 {{- $name := get . "name" }}
 {{- $namespace := get . "namespace" }}
 {{- $labels := get . "labels" | default dict }}
+{{- $annotations := get . "annotations" | default dict}}
 {{- $ownerRefs := get . "owner-refs" | default list }}
+
+{{- $nodeSelector := get . "node-selector" | default dict }}
 
 {{- $storageSize := get . "storage-size" }}
 {{- $storageClass := get . "storage-class" }}
@@ -22,6 +25,7 @@ metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   labels: {{ $labels | toYAML | nindent 4 }}
+  annotations: {{$annotations | toYAML | nindent 4}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 spec:
   chartRepo:
@@ -30,7 +34,7 @@ spec:
   chartVersion: 13.18.1
   chartName: bitnami/mongodb
 
-  valuesYaml: |+
+  values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
     global:
       storageClass: {{$storageClass}}
@@ -45,6 +49,7 @@ spec:
 
     commonLabels: {{$labels | toYAML | nindent 6}}
     podLabels: {{$labels | toYAML | nindent 6}}
+    nodeSelector: {{$nodeSelector | toYAML | nindent 6 }}
 
     auth:
       enabled: true
