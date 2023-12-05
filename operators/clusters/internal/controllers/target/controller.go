@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -50,8 +51,9 @@ func (r *ClusterReconciler) GetName() string {
 	return r.Name
 }
 
-func getBucketFilePath(accountName string, clusterName string) string {
-	return fmt.Sprintf("kloudlite/account-%s/cluster-%s.tfstate", accountName, clusterName)
+func getBucketFilePath(baseDir string, accountName string, clusterName string) string {
+	return filepath.Join(baseDir, "account-"+accountName, "cluster-"+clusterName+".tfstate")
+	// return fmt.Sprintf(baseDir, "kloudlite/account-%s/cluster-%s.tfstate", accountName, clusterName)
 }
 
 const (
@@ -476,9 +478,10 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
 			},
 
-			"aws-s3-bucket-name":     r.Env.KlS3BucketName,
-			"aws-s3-bucket-region":   r.Env.KlS3BucketRegion,
-			"aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
+			"aws-s3-bucket-name":   r.Env.KlS3BucketName,
+			"aws-s3-bucket-region": r.Env.KlS3BucketRegion,
+			// "aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
+			"aws-s3-bucket-filepath": getBucketFilePath(r.Env.KlS3BucketDirectory, obj.Spec.AccountName, obj.Name),
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
@@ -573,7 +576,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 			"aws-s3-bucket-name":     r.Env.KlS3BucketName,
 			"aws-s3-bucket-region":   r.Env.KlS3BucketRegion,
-			"aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
+			"aws-s3-bucket-filepath": getBucketFilePath(r.Env.KlS3BucketDirectory, obj.Spec.AccountName, obj.Name),
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
