@@ -130,7 +130,6 @@ func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 	for i := range controllers {
 		controller := controllers[i]
 		op.controllers = append(op.controllers, func(mgr manager.Manager) {
-      // fmt.Printf("called for controller: %+v\n", controller)
 			_, ok := op.registeredControllers[controller.GetName()]
 			if ok {
 				op.Logger.Debugf("controller %s already registered, skipping", controller.GetName())
@@ -141,10 +140,12 @@ func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 				}
 				op.registeredControllers[controller.GetName()] = struct{}{}
 				setupLog.Info("registering controller", "controller", controller.GetName())
-				if err := controllers[i].SetupWithManager(mgr, op.Logger); err != nil {
-					setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
-					os.Exit(1)
-				}
+				go func() {
+					if err := controller.SetupWithManager(mgr, op.Logger); err != nil {
+						setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
+						os.Exit(1)
+					}
+				}()
 			}
 		})
 	}
