@@ -7,14 +7,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ClusterServiceOutput struct {
+	Credentials ct.SecretRef `json:"credentials,omitempty"`
+	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
+}
+
 // ClusterServiceSpec defines the desired state of ClusterService
 type ClusterServiceSpec struct {
-	Resources        ct.Resources `json:"resources"`
-	OutputSecretName *string      `json:"outputSecretName,omitempty"`
+	Replicas  int                  `json:"replicas"`
+	Resources ct.Resources         `json:"resources"`
+	Output    ClusterServiceOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ClusterService is the Schema for the clusterservices API
 type ClusterService struct {
