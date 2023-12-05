@@ -16,6 +16,7 @@ import (
 	mysqlMsvcv1 "github.com/kloudlite/operator/apis/mysql.msvc/v1"
 	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
+	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/harbor"
@@ -23,9 +24,9 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,12 +34,13 @@ import (
 
 type Reconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	harborCli  *harbor.Client
-	logger     logging.Logger
-	Name       string
-	Env        *env.Env
-	yamlClient kubectl.YAMLClient
+	Scheme             *runtime.Scheme
+	harborCli          *harbor.Client
+	logger             logging.Logger
+	Name               string
+	Env                *env.Env
+	yamlClient         kubectl.YAMLClient
+	templateCommonMres []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -107,6 +109,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	checkName := "finalizing"
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
 	return req.Finalize()
 }
 
@@ -118,7 +128,7 @@ func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource
 	defer req.LogPostCheck(OwnedByMsvc)
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &crdsv1.ManagedService{},
+		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{},
 	)
 	if err != nil {
 		return req.CheckFailed(OwnedByMsvc, check, err.Error())
@@ -162,19 +172,28 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 	req.LogPreCheck(RealMresCreated)
 	defer req.LogPostCheck(RealMresCreated)
 
-	mresBytes, err := templates.Parse(
-		templates.CommonMres, map[string]any{
-			"object":     obj,
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-	)
+	b, err := templates.ParseBytes(r.templateCommonMres, map[string]any{
+		"api-version": obj.Spec.ResourceTemplate.APIVersion,
+		"kind":        obj.Spec.ResourceTemplate.Kind,
+
+		"name":       obj.Name,
+		"namespace":  obj.Namespace,
+		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+		"labels":     obj.GetEnsuredLabels(),
+
+		"msvc-ref":               obj.Spec.ResourceTemplate.MsvcRef,
+		"resource-template-spec": obj.Spec.ResourceTemplate.Spec,
+	})
 	if err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.yamlClient.ApplyYAML(ctx, mresBytes); err != nil {
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
+
+	req.AddToOwnedResources(rr...)
 
 	check.Status = true
 	if check != obj.Status.Checks[RealMresCreated] {
@@ -194,14 +213,24 @@ func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResour
 	req.LogPreCheck(RealMresReady)
 	defer req.LogPreCheck(RealMresReady)
 
-	realMres, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.MsvcRef.APIVersion, Kind: obj.Spec.MresKind.Kind}),
-	)
-	if err != nil {
-		req.Logger.Infof("real managed resource (%s) does not exist, creating it now...", fn.NN(obj.Namespace, obj.Name).String())
+	uobj := unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": obj.Spec.ResourceTemplate.APIVersion,
+			"kind":       obj.Spec.ResourceTemplate.Kind,
+			"metadata": map[string]any{
+				"name":      obj.Name,
+				"namespace": obj.Namespace,
+			},
+		},
 	}
 
-	b, err := json.Marshal(realMres)
+	if err := r.Get(ctx, client.ObjectKeyFromObject(&uobj), &uobj); err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			return req.CheckFailed(RealMresReady, check, err.Error())
+		}
+	}
+
+	b, err := json.Marshal(uobj.Object)
 	if err != nil {
 		return req.CheckFailed(RealMresReady, check, err.Error()).Err(nil)
 	}
@@ -240,6 +269,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+
+	var err error
+	r.templateCommonMres, err = templates.Read(templates.CommonMresTemplate)
+	if err != nil {
+		return err
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedResource{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})

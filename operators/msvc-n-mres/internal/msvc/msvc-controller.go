@@ -19,13 +19,13 @@ import (
 	redpandamsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
+	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,6 +39,8 @@ type Reconciler struct {
 	Name       string
 	Env        *env.Env
 	yamlClient kubectl.YAMLClient
+
+	templateCommonMsvc []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -95,6 +97,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedService]) stepResult.Result {
+	req.LogPreCheck("finalizing")
+	defer req.LogPostCheck("finalizing")
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
 	return req.Finalize()
 }
 
@@ -105,19 +114,26 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 	req.LogPreCheck(RealMsvcCreated)
 	defer req.LogPostCheck(RealMsvcCreated)
 
-	b, err := templates.Parse(
-		templates.CommonMsvc, map[string]any{
-			"obj":        obj,
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-	)
+	b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
+		"api-version": obj.Spec.ServiceTemplate.APIVersion,
+		"kind":        obj.Spec.ServiceTemplate.Kind,
+
+		"name":       obj.Name,
+		"namespace":  obj.Namespace,
+		"labels":     obj.GetEnsuredLabels(),
+		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+		"service-template-spec": obj.Spec.ServiceTemplate.Spec,
+	})
 	if err != nil {
 		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
 		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
 	}
+	req.AddToOwnedResources(rr...)
 
 	check.Status = true
 	if check != obj.Status.Checks[RealMsvcCreated] {
@@ -137,11 +153,9 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 	req.LogPreCheck(RealMsvcReady)
 	defer req.LogPostCheck(RealMsvcReady)
 
-	realMsvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(
-			metav1.TypeMeta{Kind: obj.Spec.MsvcKind.Kind, APIVersion: obj.Spec.MsvcKind.APIVersion},
-		),
-	)
+	uobj := fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.ServiceTemplate.APIVersion, Kind: obj.Spec.ServiceTemplate.Kind})
+
+	realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), uobj)
 	if err != nil {
 		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
 	}
@@ -184,6 +198,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+
+	var err error
+	r.templateCommonMsvc, err = templates.Read(templates.CommonMsvcTemplate)
+	if err != nil {
+		return err
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedService{})
 	msvcs := []client.Object{
