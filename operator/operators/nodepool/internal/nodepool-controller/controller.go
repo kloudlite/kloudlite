@@ -91,6 +91,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 			return ctrl.Result{}, err
 		}
 		if time.Now().Before(t) {
+			req.Logger.Infof("reconcile has been scheduled after %s, will reque after that", t)
 			return ctrl.Result{RequeueAfter: time.Until(t)}, nil
 		}
 		delete(req.Object.Annotations, constants.AnnotationReconcileScheduledAfter)

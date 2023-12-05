@@ -16,9 +16,12 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -55,10 +58,25 @@ spec:
                 - kind
                 - name
                 type: object
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - credentials
+                type: object
               resourceName:
                 type: string
             required:
             - msvcRef
+            - output
             - resourceName
             type: object
           status:

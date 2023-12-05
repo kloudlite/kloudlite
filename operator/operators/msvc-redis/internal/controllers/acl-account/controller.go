@@ -130,7 +130,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepRe
 	}
 	defer redisCli.Close()
 
-	tctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
+	tctx, cf := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cf()
 	if err := redisCli.DeleteUser(tctx, obj.Name); err != nil {
 		return req.CheckFailed(ACLUserDeleted, check, err.Error())
 	}
