@@ -14,6 +14,8 @@ const (
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
+
+  GenericFinalizer string = "kloudlite.io/finalizer"
 )
 
 var LabelKeys = struct {
