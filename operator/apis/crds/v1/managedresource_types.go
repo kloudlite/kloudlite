@@ -6,33 +6,36 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	rawJson "github.com/kloudlite/operator/pkg/raw-json"
 )
 
-type msvcNamedRefTT struct {
+type MsvcNamedRef struct {
 	APIVersion string `json:"apiVersion"`
-	// +kubebuilder:default=Service
-	// +kubebuilder:validation:Optional
-	Kind string `json:"kind"`
-	Name string `json:"name"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
 }
 
 type mresKind struct {
 	Kind string `json:"kind"`
 }
 
+type MresResourceTemplate struct {
+	metav1.TypeMeta `json:",inline"`
+	MsvcRef         MsvcNamedRef                    `json:"msvcRef"`
+	Spec            map[string]apiextensionsv1.JSON `json:"spec"`
+}
+
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
-	MsvcRef  msvcNamedRefTT  `json:"msvcRef"`
-	MresKind mresKind        `json:"mresKind"`
-	Inputs   rawJson.RawJson `json:"inputs,omitempty"`
+	ResourceTemplate MresResourceTemplate `json:"resourceTemplate"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource-gvk",name=Resource_GVK,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // ManagedResource is the Schema for the managedresources API
@@ -42,7 +45,7 @@ type ManagedResource struct {
 	Spec              ManagedResourceSpec `json:"spec"`
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`
-  Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
+	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (m *ManagedResource) EnsureGVK() {
@@ -61,7 +64,7 @@ func (m *ManagedResource) GetStatus() *rApi.Status {
 
 func (m *ManagedResource) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"kloudlite.io/msvc.name": m.Spec.MsvcRef.Name,
+		"kloudlite.io/msvc.name": m.Spec.ResourceTemplate.MsvcRef.Name,
 		"kloudlite.io/mres.name": m.Name,
 	}
 }
@@ -69,6 +72,7 @@ func (m *ManagedResource) GetEnsuredLabels() map[string]string {
 func (m *ManagedResource) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("ManagedResource").String(),
+		"kloudlite.io/resource-gvk":               m.Spec.ResourceTemplate.GroupVersionKind().String(),
 	}
 }
 
