@@ -151,8 +151,6 @@ undeploy: ## Undeploy controllers from the K8s cluster specified in ~/.kube/conf
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen: ## Download controllers-gen locally if necessary.
-	@#$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controllers-tools/cmd/controllers-gen@v0.8.0)
-	@# @GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
 	@GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.1
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize

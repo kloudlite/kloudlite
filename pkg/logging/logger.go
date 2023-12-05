@@ -40,11 +40,11 @@ func (c customLogger) Infof(msg string, args ...any) {
 }
 
 func (c customLogger) Errorf(err error, msg string, args ...any) {
-	c.logger.Errorf(errors.NewEf(err, msg, args...).Error())
+	c.logger.WithOptions(zap.AddCaller(), zap.AddCallerSkip(1)).Errorf(errors.NewEf(err, msg, args...).Error())
 }
 
 func (c customLogger) Error(err error) {
-	c.logger.Errorf(err.Error())
+	c.logger.WithOptions(zap.AddCaller(), zap.AddCallerSkip(1)).Errorf(err.Error())
 }
 
 func (c customLogger) Warnf(msg string, args ...any) {

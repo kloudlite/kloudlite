@@ -13,6 +13,7 @@ type Result interface {
 	Continue(bool) Result
 	RequeueAfter(time.Duration) Result
 	Err(error) Result
+	NoRequeue() Result
 }
 
 type result struct {
@@ -21,25 +22,31 @@ type result struct {
 	err        error
 }
 
-func (opt result) ShouldProceed() bool {
+// NoRequeue implements Result.
+func (res *result) NoRequeue() Result {
+	res.err = nil
+	return res
+}
+
+func (opt *result) ShouldProceed() bool {
 	return opt.toContinue && opt.err == nil
 }
 
-func (opt result) ReconcilerResponse() (ctrl.Result, error) {
+func (opt *result) ReconcilerResponse() (ctrl.Result, error) {
 	return opt.requeue, opt.err
 }
 
-func (opt result) Continue(val bool) Result {
+func (opt *result) Continue(val bool) Result {
 	opt.toContinue = val
 	return opt
 }
 
-func (opt result) RequeueAfter(d time.Duration) Result {
+func (opt *result) RequeueAfter(d time.Duration) Result {
 	opt.requeue = ctrl.Result{RequeueAfter: d}
 	return opt
 }
 
-func (opt result) Err(err error) Result {
+func (opt *result) Err(err error) Result {
 	opt.err = err
 	return opt
 }
