@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
@@ -65,6 +66,14 @@ func (k *kafkaMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.Resou
 	return nil
 }
 
+type ErrConnect struct {
+	Err error
+}
+
+func (e ErrConnect) Error() string {
+	return fmt.Sprintf("failed to connect to kafka, as this error occurred: %v", e.Err)
+}
+
 func NewKafkaMessageSender(ctx context.Context, ev *env.Env, logger logging.Logger) (MessageSender, error) {
 	kp, err := redpanda.NewProducer(ev.KafkaBrokers, redpanda.ProducerOpts{
 		Logger:   logger,
@@ -75,7 +84,7 @@ func NewKafkaMessageSender(ctx context.Context, ev *env.Env, logger logging.Logg
 	}
 
 	if err := kp.Ping(ctx); err != nil {
-		return nil, err
+		return nil, ErrConnect{Err: err}
 	}
 
 	return &kafkaMsgSender{
