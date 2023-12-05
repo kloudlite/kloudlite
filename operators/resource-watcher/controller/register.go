@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"log"
+	"time"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"google.golang.org/grpc/connectivity"
@@ -77,8 +79,24 @@ func RegisterInto(mgr operator.Operator, runningOnPlatform bool) {
 	logger := logging.NewOrDie(&logging.Options{Name: "resource-watcher", Dev: mgr.Operator().IsDev})
 
 	if runningOnPlatform {
-		msgSender, err = watchAndUpdate.NewKafkaMessageSender(context.TODO(), ev, logger)
+		getMsgSender := func() (watchAndUpdate.MessageSender, error) {
+			return watchAndUpdate.NewKafkaMessageSender(context.TODO(), ev, logger)
+		}
+		msgSender, err = getMsgSender()
 		if err != nil {
+			if errors.As(err, &watchAndUpdate.ErrConnect{}) {
+				go func() {
+					for {
+						msgSender, err = getMsgSender()
+						if err == nil {
+							break
+						}
+						logger.Infof("Failed to connect to kafka, retrying in another 5 seconds")
+						<-time.After(5 * time.Second)
+					}
+				}()
+				return
+			}
 			panic(err)
 		}
 	} else {
