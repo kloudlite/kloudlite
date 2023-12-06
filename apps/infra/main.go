@@ -6,12 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/apps/infra/internal/framework"
 	"kloudlite.io/common"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"go.uber.org/fx"
@@ -52,23 +50,12 @@ func main() {
 			return k8s.RestInclusterConfig()
 		}),
 
-		fx.Provide(func(restCfg *rest.Config) (client.Client, error) {
+		fx.Provide(func(restCfg *rest.Config) (k8s.Client, error) {
 			scheme := runtime.NewScheme()
 			utilruntime.Must(k8sScheme.AddToScheme(scheme))
 			utilruntime.Must(crdsv1.AddToScheme(scheme))
 
-			return client.New(restCfg, client.Options{
-				Scheme: scheme,
-				Mapper: nil,
-			})
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (kubectl.YAMLClient, error) {
-			return kubectl.NewYAMLClient(restCfg)
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
-			return k8s.NewExtendedK8sClient(restCfg)
+			return k8s.NewClient(restCfg, scheme)
 		}),
 
 		framework.Module,

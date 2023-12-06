@@ -42,7 +42,6 @@ func (kcf K3sCommonFlags) ParseIntoFlags() []string {
 	// for k, v := range kcf.Annotations {
 	// 	flags = append(flags, "--node-annotation", fmt.Sprintf("%s=%s", k, v))
 	// }
-	//
 	return flags
 }
 

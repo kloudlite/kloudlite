@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"time"
 
 	"go.uber.org/fx"
@@ -14,9 +13,6 @@ import (
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 )
-
-// nnoremap <C-x> :lua require('fzf-lua').lsp_live_workspace_symbols({ fzf_opts = {['--delimiter'] = ':', ['--with-nth'] = "4,1" } })<CR>
-// lua require('fzf-lua').lsp_live_workspace_symbols({ fzf_opts = {['--layout'] = 'reverse-list'} })
 
 func main() {
 	var isDev bool
@@ -49,5 +45,5 @@ func main() {
 	}
 
 	common.PrintReadyBanner()
-  <-app.Done()
+	<-app.Done()
 }

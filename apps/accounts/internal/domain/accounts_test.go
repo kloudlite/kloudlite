@@ -3,6 +3,7 @@ package domain_test
 import (
 	"context"
 	"fmt"
+
 	"kloudlite.io/common"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -17,14 +18,14 @@ import (
 	_ "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	iamMock "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam/mocks"
+	k8sMock "kloudlite.io/mocks/pkg/k8s"
 	fn "kloudlite.io/pkg/functions"
-	k8sMock "kloudlite.io/pkg/k8s/mocks"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// "kloudlite.io/pkg/repos"
-	reposMock "kloudlite.io/pkg/repos/mocks"
+	reposMock "kloudlite.io/mocks/pkg/repos"
 )
 
 var _ = Describe("domain.ActivateAccount says", func() {
@@ -60,7 +61,7 @@ var _ = Describe("domain.ActivateAccount says", func() {
 		return domain.NewDomain(
 			iamClient,
 			consoleClient,
-			//f.containerRegistryClient,
+			// f.containerRegistryClient,
 			authClient,
 			commsClient,
 			k8sYamlClient,
@@ -183,7 +184,7 @@ var _ = Describe("domain.CreateAccount() says", func() {
 		return domain.NewDomain(
 			iamClient,
 			consoleClient,
-			//f.containerRegistryClient,
+			// f.containerRegistryClient,
 			authClient,
 			commsClient,
 			k8sYamlClient,

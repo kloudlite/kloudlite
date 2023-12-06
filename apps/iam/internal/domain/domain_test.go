@@ -3,19 +3,20 @@ package domain_test
 import (
 	"context"
 	"errors"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"kloudlite.io/apps/iam/internal/domain"
 	"kloudlite.io/apps/iam/internal/entities"
 	t "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
+	reposMock "kloudlite.io/mocks/pkg/repos"
 	"kloudlite.io/pkg/repos"
-	reposMock "kloudlite.io/pkg/repos/mocks"
 )
 
 var _ = Describe("domain.AddRoleBinding() says", func() {
 	var rbRepo *reposMock.DbRepo[*entities.RoleBinding]
-	//var roleBindingMap map[t.Action][]t.Role
+	// var roleBindingMap map[t.Action][]t.Role
 
 	BeforeEach(func() {
 		rbRepo = reposMock.NewDbRepo[*entities.RoleBinding]()
@@ -70,6 +71,7 @@ var _ = Describe("domain.AddRoleBinding() says", func() {
 		})
 	})
 })
+
 var _ = Describe("domain.Can() says", func() {
 	var rbRepo *reposMock.DbRepo[*entities.RoleBinding]
 

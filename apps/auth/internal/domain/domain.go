@@ -2,9 +2,7 @@ package domain
 
 import (
 	"context"
-
 	"kloudlite.io/common"
-	"kloudlite.io/pkg/messaging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -35,5 +33,5 @@ type Domain interface {
 }
 
 type Messenger interface {
-	SendEmail(ctx context.Context, template string, payload messaging.Json) error
+	SendEmail(ctx context.Context, template string, payload map[string]any) error
 }
