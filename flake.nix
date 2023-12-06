@@ -21,6 +21,7 @@
           packages = [
             # self.packages.${system}.mocki
           ];
+          hardeningDisable = [ "all" ];
 
           buildInputs = with pkgs; [
             # cli tools
@@ -32,11 +33,16 @@
             # source version control
             git
             pre-commit
+            (python312.withPackages(ps: with ps; [
+              ggshield
+            ]))
+
 
             # programming tools
             go_1_21
             operator-sdk
             mongosh
+            natscli
 
             # kubernetes specific tools
             k9s
@@ -55,7 +61,7 @@
 
           shellHook = ''
             export PATH="$PWD/cmd/mocki/bin:$PATH" # mocki binary
-            exec fish
+            # exec fish # -- not needed if using direnv as it will automatically load current shell
           '';
         };
       }
