@@ -5,67 +5,44 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/xeipuuv/gojsonschema"
 	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type InvalidSchemaError struct {
-	err     error
-	errMsgs []string
+type Client interface {
+	// client go like
+	Get(ctx context.Context, nn types.NamespacedName, obj client.Object) error
+
+	// custom ones
+	ValidateObject(ctx context.Context, obj client.Object) error
+
+	ApplyYAML(ctx context.Context, yamls ...[]byte) error
+	DeleteYAML(ctx context.Context, yamls ...[]byte) error
 }
 
-func (ise InvalidSchemaError) Error() string {
-	m := map[string]any{
-		"message":          ise.err.Error(),
-		"type":             "InvalidData",
-		"validationErrors": ise.errMsgs,
-	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		fmt.Println("[UNEXPECTED] failed to marshal InvalidSchemaError", err)
-		return ise.err.Error()
-	}
-	return string(b)
+type clientHandler struct {
+	kclient    client.Client
+	kclientset *clientset.Clientset
+	yamlclient kubectl.YAMLClient
 }
 
-func NewInvalidSchemaError(err error, errMsgs []string) InvalidSchemaError {
-	return InvalidSchemaError{err: err, errMsgs: errMsgs}
+// Get implements Client.
+func (c *clientHandler) Get(ctx context.Context, nn types.NamespacedName, obj client.Object) error {
+	return c.kclient.Get(ctx, nn, obj)
 }
 
-type ExtendedK8sClient interface {
-	GetCRDJsonSchema(ctx context.Context, name string) (*apiExtensionsV1.JSONSchemaProps, error)
-	ValidateStruct(ctx context.Context, obj client.Object) error
-}
-
-type extendedK8sClient struct {
-	client *clientset.Clientset
-}
-
-func (e extendedK8sClient) GetCRDJsonSchema(ctx context.Context, name string) (*apiExtensionsV1.JSONSchemaProps, error) {
-	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return crd.Spec.Versions[0].Schema.OpenAPIV3Schema, nil
-}
-
-func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object) error {
+// ValidateObject implements Client.
+func (c *clientHandler) ValidateObject(ctx context.Context, obj client.Object) error {
 	gvk := obj.GetObjectKind().GroupVersionKind()
-
-	// compile a regex expression
-	// re := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`)
-	// matches := re.FindAllString(obj.GetName(), -1)
-	// fmt.Println(matches)
-	//
-	// if !re.Match([]byte(obj.GetName())) {
-	// 	return fmt.Errorf("invalid name")
-	// }
 
 	input, err := json.Marshal(obj)
 	if err != nil {
@@ -73,7 +50,7 @@ func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object
 	}
 	documentLoader := gojsonschema.NewBytesLoader(input)
 
-	crd, err := e.client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx,
+	crd, err := c.kclientset.ApiextensionsV1().CustomResourceDefinitions().Get(ctx,
 		fmt.Sprintf("%s.%s", fn.RegularPlural(gvk.Kind), gvk.Group), metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -122,12 +99,41 @@ func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object
 	return nil
 }
 
-func NewExtendedK8sClient(config *rest.Config) (ExtendedK8sClient, error) {
-	cli, err := clientset.NewForConfig(config)
+// ApplyYAML implements Client.
+func (c *clientHandler) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
+	if _, err := c.yamlclient.ApplyYAML(ctx, yamls...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteYAML implements Client.
+func (c *clientHandler) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
+	return c.yamlclient.DeleteYAML(ctx, yamls...)
+}
+
+func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
+	c, err := client.New(cfg, client.Options{
+		Scheme: scheme,
+		Mapper: nil,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &extendedK8sClient{
-		client: cli,
+
+	clientset, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	yamlclient, err := kubectl.NewYAMLClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &clientHandler{
+		kclient:    c,
+		kclientset: clientset,
+		yamlclient: yamlclient,
 	}, nil
 }
