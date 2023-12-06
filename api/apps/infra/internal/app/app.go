@@ -57,8 +57,9 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Provide(func(conn AccountGrpcClient) accounts.AccountsClient {
-		return accounts.NewAccountsClient(conn)
+	fx.Provide(func(conn AccountGrpcClient) (domain.AccountsSvc, error) {
+		ac := accounts.NewAccountsClient(conn)
+		return NewAccountsSvc(ac), nil
 	}),
 
 	fx.Provide(func(client MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {

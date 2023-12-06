@@ -5,7 +5,6 @@ import (
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 
 	iamT "kloudlite.io/apps/iam/types"
@@ -25,6 +24,15 @@ import (
 const (
 	keyClusterToken = "cluster-token"
 )
+
+type ErrClusterAlreadyExists struct {
+	ClusterName string
+	AccountName string
+}
+
+func (e ErrClusterAlreadyExists) Error() string {
+	return fmt.Sprintf("cluster with name %q already exists for account: %s", e.ClusterName, e.AccountName)
+}
 
 func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderSecret, clusterName string, clusterNamespace string) (*corev1.Secret, error) {
 	secret := &corev1.Secret{
@@ -98,11 +106,21 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
 	}
 
-	cluster.AccountName = ctx.AccountName
-	out, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
-		UserId:      string(ctx.UserId),
-		AccountName: ctx.AccountName,
+	existing, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+		"metadata.name":      cluster.Name,
+		"metadata.namespace": cluster.Namespace,
+		"accountName":        ctx.AccountName,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if existing != nil {
+		return nil, ErrClusterAlreadyExists{ClusterName: cluster.Name, AccountName: ctx.AccountName}
+	}
+
+	cluster.AccountName = ctx.AccountName
+	out, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
 	if err != nil {
 		return nil, errors.NewEf(err, "failed to get account %q", ctx.AccountName)
 	}
@@ -118,7 +136,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, err
 	}
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.Cluster); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
 		return nil, err
 	}
 
