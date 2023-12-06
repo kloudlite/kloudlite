@@ -3,6 +3,7 @@ package test_data
 import (
 	"context"
 	io2 "io"
+
 	"kloudlite.io/pkg/repos"
 )
 
@@ -20,9 +21,9 @@ type X struct {
 
 type Type2[T any] interface {
 	Method1() T
-	Method2(x int) string
+	Method2(x int, y ...[]byte) string
 	Method3(x int, y *int, z T, p *repos.DbRepo[X], q map[string]X, r *X, s []int, u ...X) string
-	//Method2(x int, y *int, z T, p *repos.DbRepo[X], q X, r *X, s []int, t []*X, u ...X) (int, string, *int, T, *repos.DbRepo[X], X, *X)
+	// Method2(x int, y *int, z T, p *repos.DbRepo[X], q X, r *X, s []int, t []*X, u ...X) (int, string, *int, T, *repos.DbRepo[X], X, *X)
 }
 
 type Entity interface{}

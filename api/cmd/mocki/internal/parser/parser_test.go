@@ -1,10 +1,11 @@
 package parser_test
 
 import (
-	"github.com/google/go-cmp/cmp"
-	parser "kloudlite.io/cmd/mocki/internal/parser"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	parser "kloudlite.io/cmd/mocki/internal/parser"
 )
 
 func TestFindAndParseInterface(t *testing.T) {
@@ -32,7 +33,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method1")
 		return tMock.MockMethod1()
 	}
-	panic("method 'Method1' not implemented, yet")
+  panic("Type1: method 'Method1' not implemented, yet")
 }`,
 				},
 				MockFunctions: []string{
@@ -66,15 +67,15 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method1")
 		return tMock.MockMethod1()
 	}
-	panic("method 'Method1' not implemented, yet")
+  panic("Type2[T]: method 'Method1' not implemented, yet")
 }`,
 
-					`func (tMock *Type2[T]) Method2(x int) string {
+					`func (tMock *Type2[T]) Method2(x int, y ...[]byte) string {
 	if tMock.MockMethod2 != nil {
-		tMock.registerCall("Method2", x)
-		return tMock.MockMethod2(x)
+		tMock.registerCall("Method2", x, y)
+		return tMock.MockMethod2(x, y...)
 	}
-	panic("method 'Method2' not implemented, yet")
+  panic("Type2[T]: method 'Method2' not implemented, yet")
 }`,
 
 					`func (tMock *Type2[T]) Method3(x int, y *int, z T, p *repos.DbRepo[test_data.X], q map[string]test_data.X, r *test_data.X, s []int, u ...test_data.X) string {
@@ -82,12 +83,12 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method3", x, y, z, p, q, r, s, u)
 		return tMock.MockMethod3(x, y, z, p, q, r, s, u...)
 	}
-	panic("method 'Method3' not implemented, yet")
+  panic("Type2[T]: method 'Method3' not implemented, yet")
 }`,
 				},
 				MockFunctions: []string{
 					`MockMethod1 func() T`,
-					`MockMethod2 func(x int) string`,
+					`MockMethod2 func(x int, y ...[]byte) string`,
 					`MockMethod3 func(x int, y *int, z T, p *repos.DbRepo[test_data.X], q map[string]test_data.X, r *test_data.X, s []int, u ...test_data.X) string`,
 				},
 				StructName:         "Type2[T any]",
@@ -114,7 +115,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method1")
 		return tMock.MockMethod1()
 	}
-	panic("method 'Method1' not implemented, yet")
+  panic("Type3[T]: method 'Method1' not implemented, yet")
 }`,
 				},
 				MockFunctions: []string{
@@ -144,7 +145,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method1", ka, kb)
 		return tMock.MockMethod1(ka, kb)
 	}
-	panic("method 'Method1' not implemented, yet")
+  panic("Type4: method 'Method1' not implemented, yet")
 }`,
 				},
 				MockFunctions: []string{
@@ -169,7 +170,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method1")
 		tMock.MockMethod1()
 	}
-	panic("method 'Method1' not implemented, yet")
+  panic("Type5: method 'Method1' not implemented, yet")
 }`,
 
 					`func (tMock *Type5) Method2(x int) {
@@ -177,7 +178,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method2", x)
 		tMock.MockMethod2(x)
 	}
-	panic("method 'Method2' not implemented, yet")
+  panic("Type5: method 'Method2' not implemented, yet")
 }`,
 				},
 				MockFunctions: []string{
@@ -209,7 +210,7 @@ func TestFindAndParseInterface(t *testing.T) {
 		tMock.registerCall("Method1", writer)
 		tMock.MockMethod1(writer)
 	}
-	panic("method 'Method1' not implemented, yet")
+  panic("Type6: method 'Method1' not implemented, yet")
 }`,
 				},
 				MockFunctions: []string{
@@ -238,7 +239,6 @@ func TestFindAndParseInterface(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := parser.NewParser()
 			got, err := p.FindAndParseInterface(tt.args.packagePath, tt.args.interfaceName)
-
 			if err != nil {
 				if !tt.wantErr {
 					t.Errorf("FindAndParseInterface() error = %v, wantErr %v", err, tt.wantErr)
@@ -256,7 +256,7 @@ func TestFindAndParseInterface(t *testing.T) {
 			}
 
 			if !cmp.Equal(got, tt.want) {
-				t.Errorf("FindAndParseInterface(), got=%s", cmp.Diff(tt.want, got))
+				t.Errorf("FindAndParseInterface(), got=\n%s\n\nwant:\n%s\n", got, tt.want)
 			}
 		})
 	}
