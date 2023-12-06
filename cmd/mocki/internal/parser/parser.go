@@ -94,7 +94,7 @@ func (p *Parser) TypeExtracter(ut types.Type, variadic bool) (string, error) {
 					}
 				}
 
-				//pkgName = fmt.Sprintf("%s%d", pkgName, p.getCounter())
+				// pkgName = fmt.Sprintf("%s%d", pkgName, p.getCounter())
 				p.Imports[pkgPath] = ImportInfo{PackagePath: pkgPath, Alias: alias}
 			}
 
@@ -125,8 +125,13 @@ func (p *Parser) TypeExtracter(ut types.Type, variadic bool) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if variadic {
+
+		if variadic && !strings.HasPrefix(t2, "...") {
 			return "..." + t2, nil
+		}
+
+		if strings.HasPrefix(t2, "...") {
+			return "...[]" + strings.Replace(t2, "...", "", 1), nil
 		}
 		return "[]" + t2, nil
 	case *types.Map:
@@ -156,7 +161,7 @@ func (p *Parser) ExtractResults(signature *types.Signature) ([]string, error) {
 }
 
 func (p *Parser) ExtractParameters(signature *types.Signature) ([]string, []string, error) {
-	//typeParams := signature.TypeParams()
+	// typeParams := signature.TypeParams()
 	params := signature.Params()
 	plist := make([]string, 0, params.Len())
 	callVarsList := make([]string, 0, params.Len())
@@ -165,7 +170,7 @@ func (p *Parser) ExtractParameters(signature *types.Signature) ([]string, []stri
 		pt := params.At(i)
 		x := pt.String()
 
-		//because, only last element in parameter list, can be variadic
+		// because, only last element in parameter list, can be variadic
 		variadic := i == params.Len()-1 && signature.Variadic()
 
 		_ = x
@@ -215,6 +220,7 @@ func (args *ImplementationArgs) FormatReturnValues() string {
 
 	return fmt.Sprintf("(%s)", strings.Join(args.FunctionReturns, ", "))
 }
+
 func GenerateImplementation(args ImplementationArgs) (string, error) {
 	buff := new(bytes.Buffer)
 	tt := template.New("impl_gen")
@@ -225,7 +231,7 @@ func GenerateImplementation(args ImplementationArgs) (string, error) {
 		{{.ReceiverName}}.registerCall("{{.FunctionName}}" {{- if .FunctionCallArgs}}, {{end}} {{- .FunctionCallArgs | join ", " | replace "..." "" }})
 		{{if .FunctionReturns}}return {{end}}{{.ReceiverName}}.{{.MockFunctionName}}({{.FunctionCallArgs | join ", "}})
 	}
-	panic("method '{{.FunctionName}}' not implemented, yet")
+  panic("{{.ReceiverStructName}}: method '{{.FunctionName}}' not implemented, yet")
 }`); err != nil {
 		return "", err
 	}
@@ -318,7 +324,6 @@ func (p *Parser) FindAndParseInterface(packagePath string, interfaceName string)
 	p.pkgImports = pkgImports
 
 	genericConstraints, constraintVars, err := p.ExtractGenericConstraints(namedType)
-
 	if err != nil {
 		return nil, err
 	}
