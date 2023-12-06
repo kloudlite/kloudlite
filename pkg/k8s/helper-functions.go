@@ -3,11 +3,16 @@ package k8s
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"os"
 )
+
+func RestInclusterConfig() (*rest.Config, error) {
+	return rest.InClusterConfig()
+}
 
 func RestConfigFromEnv(envVar string) (*rest.Config, error) {
 	kcfgPath, ok := os.LookupEnv(envVar)
@@ -41,6 +46,3 @@ func RestConfigFromKubeConfig(b []byte) (*rest.Config, error) {
 	})
 }
 
-func RestInclusterConfig() (*rest.Config, error) {
-	return rest.InClusterConfig()
-}
