@@ -12,9 +12,7 @@ import (
 )
 
 func (d *domain) ListVPNDevices(ctx context.Context, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error) {
-	filter := repos.Filter{
-		"accountName": accountName,
-	}
+	filter := repos.Filter{"accountName": accountName}
 	if clusterName != nil {
 		filter["clusterName"] = *clusterName
 	}
@@ -26,60 +24,11 @@ func (d *domain) GetVPNDevice(ctx InfraContext, clusterName string, deviceName s
 	return d.findVPNDevice(ctx, clusterName, deviceName)
 }
 
-func (d *domain) validateVPNDeviceLimits(ctx context.Context, accountName string, clusterName string) error {
-	count, err := d.vpnDeviceRepo.Count(ctx, repos.Filter{
-		"accountName": accountName,
-		"clusterName": clusterName,
-	})
-	if err != nil {
-		return err
-	}
-
-	if count > d.env.VPNDevicesMaxOffset {
-		return fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.env.VPNDevicesMaxOffset)
-	}
-
-	return nil
-}
-
-// func (d *domain) lookupNextOffset(ctx context.Context, accountName string, clusterName string) (int, error) {
-// 	vpnDevices, err := d.vpnDeviceRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-// 		"accountName": accountName,
-// 		"clusterName": clusterName,
-// 	}, Sort: map[string]any{"spec.offset": 1}})
-// 	if err != nil {
-// 		return 0, err
-// 	}
-//
-// 	for i, j := d.env.VPNDevicesOffsetStart, 0; i <= int(d.env.VPNDevicesMaxOffset); i, j = i+1, j+1 {
-// 		if j >= len(vpnDevices) {
-// 			return i, nil
-// 		}
-//
-// 		if vpnDevices[j].Spec.Offset != nil && *vpnDevices[j].Spec.Offset != i {
-// 			return i, nil
-// 		}
-// 	}
-//
-// 	return 0, fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.env.VPNDevicesMaxOffset)
-// }
-
 func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
 	device.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &device.Device); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
 		return nil, err
 	}
-
-	if err := d.validateVPNDeviceLimits(ctx, ctx.AccountName, clusterName); err != nil {
-		return nil, err
-	}
-
-	// offset, err := d.lookupNextOffset(ctx, ctx.AccountName, clusterName)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//
-	// device.Spec.Offset = fn.New(offset)
 
 	device.IncrementRecordVersion()
 	device.CreatedBy = common.CreatedOrUpdatedBy{
@@ -110,7 +59,7 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 
 func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
 	device.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &device.Device); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
 		return nil, err
 	}
 

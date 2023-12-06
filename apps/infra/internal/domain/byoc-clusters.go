@@ -41,7 +41,7 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	cluster.EnsureGVK()
 	cluster.IncomingKafkaTopicName = common.GetKafkaTopicName(ctx.AccountName, cluster.Name)
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.BYOC); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &cluster.BYOC); err != nil {
 		return nil, err
 	}
 
@@ -112,7 +112,7 @@ func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	}
 
 	cluster.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.BYOC); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &cluster.BYOC); err != nil {
 		return nil, err
 	}
 

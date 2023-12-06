@@ -8,7 +8,6 @@ import (
 	ct "github.com/kloudlite/operator/apis/common-types"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,10 +32,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	}
 	nodepool.LastUpdatedBy = nodepool.CreatedBy
 
-	out, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
-		UserId:      string(ctx.UserId),
-		AccountName: ctx.AccountName,
-	})
+	out, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +126,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	nodepool.SyncStatus = t.GenSyncStatus(t.SyncActionApply, nodepool.RecordVersion)
 
 	nodepool.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &nodepool.NodePool); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &nodepool.NodePool); err != nil {
 		return nil, err
 	}
 	nodepool.IncrementRecordVersion()
@@ -155,7 +151,7 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 		return nil, err
 	}
 	nodePool.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &nodePool.NodePool); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &nodePool.NodePool); err != nil {
 		return nil, err
 	}
 

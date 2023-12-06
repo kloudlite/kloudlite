@@ -7,15 +7,11 @@ import (
 
 	"kloudlite.io/common"
 
-	iamT "kloudlite.io/apps/iam/types"
-
 	"kloudlite.io/apps/infra/internal/entities"
 
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	fn "kloudlite.io/pkg/functions"
@@ -45,14 +41,12 @@ type domain struct {
 	pvcRepo         repos.DbRepo[*entities.PersistentVolumeClaim]
 	buildRunRepo    repos.DbRepo[*entities.BuildRun]
 
-	k8sClient client.Client
+	k8sClient k8s.Client
 
-	producer          kafka.Producer
-	k8sYamlClient     kubectl.YAMLClient
-	k8sExtendedClient k8s.ExtendedK8sClient
+	producer kafka.Producer
 
 	iamClient                   iam.IAMClient
-	accountsClient              accounts.AccountsClient
+	accountsSvc                 AccountsSvc
 	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
 }
 
@@ -136,10 +130,10 @@ func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVer
 	if err != nil {
 		return err
 	}
-	if _, err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+
+	if err := d.k8sClient.ApplyYAML(ctx, b); err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -149,7 +143,7 @@ func (d *domain) deleteK8sResource(ctx InfraContext, obj client.Object) error {
 		return err
 	}
 
-	if err := d.k8sYamlClient.DeleteYAML(ctx, b); err != nil {
+	if err := d.k8sClient.DeleteYAML(ctx, b); err != nil {
 		return err
 	}
 	return nil
@@ -182,28 +176,8 @@ func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error
 	return nil
 }
 
-func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action) error {
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(action),
-	})
-	if err != nil {
-		return err
-	}
-	if !co.Status {
-		return fmt.Errorf("unauthorized to perform action %q in account %q", action, ctx.AccountName)
-	}
-	return nil
-}
-
 func (d *domain) getAccNamespace(ctx InfraContext, name string) (string, error) {
-	acc, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
-		UserId:      string(ctx.UserId),
-		AccountName: ctx.AccountName,
-	})
+	acc, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
 	if err != nil {
 		return "", err
 	}
@@ -230,12 +204,10 @@ var Module = fx.Module("domain",
 
 			producer SendTargetClusterMessagesProducer,
 
-			k8sClient client.Client,
-			k8sYamlClient kubectl.YAMLClient,
-			k8sExtendedClient k8s.ExtendedK8sClient,
+			k8sClient k8s.Client,
 
 			iamClient iam.IAMClient,
-			accountsClient accounts.AccountsClient,
+			accountsSvc AccountsSvc,
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 
 			logger logging.Logger,
@@ -256,12 +228,10 @@ var Module = fx.Module("domain",
 
 				producer: producer,
 
-				k8sClient:         k8sClient,
-				k8sYamlClient:     k8sYamlClient,
-				k8sExtendedClient: k8sExtendedClient,
+				k8sClient: k8sClient,
 
 				iamClient:                   iamClient,
-				accountsClient:              accountsClient,
+				accountsSvc:                 accountsSvc,
 				messageOfficeInternalClient: msgOfficeInternalClient,
 			}
 		}),
