@@ -1411,7 +1411,6 @@ export type ConsoleGetClusterQuery = {
       state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
-    adminKubeconfig?: { value: string; encoding: string };
   };
 };
 

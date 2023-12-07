@@ -2,7 +2,7 @@ import { Plus, SmileySad } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
 import { useCallback, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { Profile } from '~/components/molecule/profile';
+import Profile from '~/components/molecule/profile';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import { IShowDialog } from '~/console/components/types.d';

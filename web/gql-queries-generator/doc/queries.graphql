@@ -442,10 +442,6 @@ query consoleGetCluster($name: String!) {
       syncScheduledAt
     }
     updateTime
-    adminKubeconfig {
-      value
-      encoding
-    }
     clusterToken
   }
 }

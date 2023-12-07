@@ -277,10 +277,6 @@ export const clusterQueries = (executor: IExecutor) => ({
             syncScheduledAt
           }
           updateTime
-          adminKubeconfig {
-            value
-            encoding
-          }
           clusterToken
         }
       }

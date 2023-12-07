@@ -21,17 +21,17 @@ const Tools = () => {
         },
       },
 
-      {
-        name: 'Region',
-        type: 'region',
-        search: false,
-        dataFetcher: async () => {
-          return [
-            { content: 'Mumbai(ap-south-1)', value: 'ap-south-1' },
-            { content: 'NY(ap-south-2)', value: 'do' },
-          ];
-        },
-      },
+      // {
+      //   name: 'Region',
+      //   type: 'region',
+      //   search: false,
+      //   dataFetcher: async () => {
+      //     return [
+      //       { content: 'Mumbai(ap-south-1)', value: 'ap-south-1' },
+      //       { content: 'NY(ap-south-2)', value: 'do' },
+      //     ];
+      //   },
+      // },
 
       {
         name: 'Status',
