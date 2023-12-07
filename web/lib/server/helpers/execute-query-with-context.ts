@@ -41,9 +41,15 @@ export const ExecuteQueryWithContext = (
     formatter: formatter<A, B, C>,
     def?: any
   ): IExecutorResp<B, C> {
+    const apiName = `[#] ${
+      (q as any)?.definitions[0]?.selectionSet?.selections[0]?.name?.value || ''
+    }`;
+
     const res: IExecutorResp<B, C> = async (variables) => {
       const { transformer } = formatter;
+
       try {
+        console.time(apiName);
         const defCookie =
           headers.get('klsession') || headers.get('cookie') || null;
 
@@ -97,6 +103,8 @@ export const ExecuteQueryWithContext = (
             },
           ],
         };
+      } finally {
+        console.timeEnd(apiName);
       }
     };
 

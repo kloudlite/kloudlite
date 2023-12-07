@@ -1,4 +1,4 @@
-import { HeadersFunction, redirect } from '@remix-run/node';
+import { HeadersFunction } from '@remix-run/node';
 import {
   Link,
   Links,
@@ -29,7 +29,6 @@ import { TopBar } from '~/components/organisms/top-bar';
 import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
-import { IRemixCtx } from '../types/common';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -206,10 +205,10 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
   );
 };
 
-export const loader = (ctx: IRemixCtx) => {
-  if (ctx?.request?.headers?.get('referer')) {
-    return redirect(ctx.request.url);
-  }
+export const loader = () => {
+  // if (ctx?.request?.headers?.get('referer')) {
+  //   return redirect(ctx.request.url);
+  // }
 
   const nodeEnv = process.env.NODE_ENV;
   return {

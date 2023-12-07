@@ -15,7 +15,8 @@ import { DetailItem } from '~/console/components/commons';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { TitleBox } from '~/console/components/raw-wrapper';
 import { IClusterContext } from '../_.$account.$cluster';
 
 const KubeConfigDownload = ({ cluster }: { cluster: string }) => {
@@ -121,6 +122,11 @@ const Log = () => {
       //     }}
       //   />
       // }
+      title={
+        <div className="flex flex-col gap-lg">
+          <div className="headingXl">Logs</div>
+        </div>
+      }
       dark
       websocket
       height="60vh"
@@ -211,9 +217,11 @@ const ClusterInfo = () => {
             </div>
           </div>
         </Box>
-        <Box title="Logs">
-          <Log />
-        </Box>
+        <div>
+          <Suspense>
+            <Log />
+          </Suspense>
+        </div>
       </div>
     </Wrapper>
   );

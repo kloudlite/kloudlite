@@ -1,36 +1,35 @@
-import { PassThrough } from 'stream';
+/* eslint-disable no-param-reassign */
+import { PassThrough } from 'node:stream';
 
-import { Response } from '@remix-run/node';
+import type { EntryContext } from '@remix-run/node';
+import { createReadableStreamFromReadable } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import isbot from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
 
 const ABORT_DELAY = 5_000;
 
-const handleBotRequest = (
-  request,
-  responseStatusCode,
-  responseHeaders,
-  remixContext
-) =>
-  new Promise((resolve, reject) => {
-    let shellRendered = false;
+function handleBotRequest(
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  remixContext: EntryContext
+) {
+  return new Promise((resolve, reject) => {
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer
         context={remixContext}
         url={request.url}
         abortDelay={ABORT_DELAY}
       />,
-
       {
         onAllReady() {
-          shellRendered = true;
           const body = new PassThrough();
 
           responseHeaders.set('Content-Type', 'text/html');
 
           resolve(
-            new Response(body, {
+            new Response(createReadableStreamFromReadable(body), {
               headers: responseHeaders,
               status: responseStatusCode,
             })
@@ -38,48 +37,41 @@ const handleBotRequest = (
 
           pipe(body);
         },
-        onShellError(error) {
+        onShellError(error: unknown) {
           reject(error);
         },
-        onError(error) {
-          // eslint-disable-next-line no-param-reassign
+        onError(error: unknown) {
           responseStatusCode = 500;
-          // Log streaming rendering errors from inside the shell.  Don't log
-          // errors encountered during initial shell rendering since they'll
-          // reject and get logged in handleDocumentRequest.
-          if (shellRendered) {
-            console.error(error);
-          }
+          console.error(error);
         },
       }
     );
 
     setTimeout(abort, ABORT_DELAY);
   });
+}
 
-const handleBrowserRequest = (
-  request,
-  responseStatusCode,
-  responseHeaders,
-  remixContext
-) =>
-  new Promise((resolve, reject) => {
-    let shellRendered = false;
+function handleBrowserRequest(
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  remixContext: EntryContext
+) {
+  return new Promise((resolve, reject) => {
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer
         context={remixContext}
         url={request.url}
         abortDelay={ABORT_DELAY}
       />,
-
       {
         onShellReady() {
-          shellRendered = true;
           const body = new PassThrough();
+
           responseHeaders.set('Content-Type', 'text/html');
 
           resolve(
-            new Response(body, {
+            new Response(createReadableStreamFromReadable(body), {
               headers: responseHeaders,
               status: responseStatusCode,
             })
@@ -87,32 +79,27 @@ const handleBrowserRequest = (
 
           pipe(body);
         },
-        onShellError(error) {
+        onShellError(error: unknown) {
           reject(error);
         },
-        onError(error) {
-          // eslint-disable-next-line no-param-reassign
+        onError(error: unknown) {
+          console.error(error);
           responseStatusCode = 500;
-          // Log streaming rendering errors from inside the shell.  Don't log
-          // errors encountered during initial shell rendering since they'll
-          // reject and get logged in handleDocumentRequest.
-          if (shellRendered) {
-            console.error(error);
-          }
         },
       }
     );
 
     setTimeout(abort, ABORT_DELAY);
   });
+}
 
-export default (
-  request,
-  responseStatusCode,
-  responseHeaders,
-  remixContext,
-  loadContext
-) => {
+export default function handleRequest(
+  request: Request,
+  responseStatusCode: number,
+  responseHeaders: Headers,
+  remixContext: EntryContext
+  // loadContext: AppLoadContext
+) {
   return isbot(request.headers.get('user-agent'))
     ? handleBotRequest(
         request,
@@ -126,4 +113,4 @@ export default (
         responseHeaders,
         remixContext
       );
-};
+}

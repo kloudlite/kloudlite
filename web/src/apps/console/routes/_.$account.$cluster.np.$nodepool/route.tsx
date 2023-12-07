@@ -151,11 +151,11 @@ const ClusterInfo = () => {
         return (
           <Wrapper
             header={{
-              title: 'Nodepool Info',
+              title: `${nodepool.displayName}`,
             }}
           >
             <div className="flex flex-col gap-6xl">
-              <Box title={`Nodepool Info (${nodepool.displayName})`}>
+              <Box title="Info">
                 <div className="flex flex-col">
                   <div className="flex flex-row gap-3xl flex-wrap">
                     <DetailItem

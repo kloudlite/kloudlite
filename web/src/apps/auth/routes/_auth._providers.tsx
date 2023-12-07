@@ -33,6 +33,7 @@ export const restActions = async (ctx: IRemixCtx) => {
     gitlabLoginUrl = '',
     googleLoginUrl = '',
   } = data || {};
+
   return {
     githubLoginUrl,
     gitlabLoginUrl,

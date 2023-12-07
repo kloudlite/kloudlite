@@ -56,10 +56,10 @@ export const searchFilter = <T>({
     includeMatches: true,
     ignoreLocation: true,
     shouldSort: !remainOrder,
-    sortFn: (a, b) => {
-      console.log(a, b);
-      return -1;
-    },
+    // sortFn: (a, b) => {
+    //   // console.log(a, b);
+    //   return -1;
+    // },
   });
 
   const results = fuse.search(searchText);
