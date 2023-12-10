@@ -62,7 +62,7 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 	}
 
 	mres.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &mres.ManagedResource); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +101,7 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.Managed
 	}
 
 	mres.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &mres.ManagedResource); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
 		return nil, err
 	}
 

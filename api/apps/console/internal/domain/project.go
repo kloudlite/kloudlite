@@ -114,7 +114,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	project.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &project.Project); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &project.Project); err != nil {
 		return nil, err
 	}
 
@@ -131,8 +131,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	project.ClusterName = ctx.ClusterName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
 
-  project.Spec.AccountName = ctx.AccountName
-  project.Spec.ClusterName = ctx.ClusterName
+	project.Spec.AccountName = ctx.AccountName
+	project.Spec.ClusterName = ctx.ClusterName
 
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
@@ -151,7 +151,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 				constants.ProjectNameKey: prj.Name,
 			},
 		},
-	}, 0); err != nil {
+	}, prj.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -231,7 +231,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	project.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &project.Project); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &project.Project); err != nil {
 		return nil, err
 	}
 

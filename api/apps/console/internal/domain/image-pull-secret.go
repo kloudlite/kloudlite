@@ -50,7 +50,7 @@ func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 	}
 
 	ips.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ips.ImagePullSecret); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &ips.ImagePullSecret); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +85,7 @@ func (d *domain) UpdateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 	}
 
 	ips.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ips.ImagePullSecret); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &ips.ImagePullSecret); err != nil {
 		return nil, err
 	}
 

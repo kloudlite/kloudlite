@@ -3,7 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/kubectl"
+
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 	app "kloudlite.io/apps/console/internal/app"
@@ -12,9 +12,9 @@ import (
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
 	loki_client "kloudlite.io/pkg/loki-client"
+	"kloudlite.io/pkg/messaging/nats"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 
@@ -30,14 +30,6 @@ func (fm *fm) RedisOptions() (hosts, username, password, basePrefix string) {
 	return fm.ev.AuthRedisHosts, fm.ev.AuthRedisUserName, fm.ev.AuthRedisPassword, fm.ev.AuthRedisPrefix
 }
 
-func (fm *fm) GetHttpPort() uint16 {
-	return fm.ev.Port
-}
-
-func (fm *fm) GetHttpCors() string {
-	return "*"
-}
-
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
@@ -51,12 +43,8 @@ var Module = fx.Module("framework",
 
 	cache.FxLifeCycle[app.AuthCacheClient](),
 
-	fx.Provide(func(restCfg *rest.Config) (kubectl.YAMLClient, error) {
-		return kubectl.NewYAMLClient(restCfg)
-	}),
-
-	fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
-		return k8s.NewExtendedK8sClient(restCfg)
+	fx.Provide(func(restCfg *rest.Config) (k8s.Client, error) {
+		return k8s.NewClient(restCfg, nil)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
@@ -81,8 +69,17 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
-		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "console:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
 	}),
 
 	app.Module,
