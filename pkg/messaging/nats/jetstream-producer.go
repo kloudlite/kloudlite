@@ -13,17 +13,15 @@ type JetstreamProducer struct {
 	js jetstream.JetStream
 }
 
-// LifecycleOnStart implements messaging.Producer.
-func (*JetstreamProducer) LifecycleOnStart(ctx context.Context) error {
-	panic("unimplemented")
-}
+// Stop implements messaging.Producer.
+func (c *JetstreamProducer) Stop(ctx context.Context) error {
+	sctx, cf := context.WithTimeout(ctx, 5*time.Second)
+	defer cf()
 
-// LifecycleOnStop implements messaging.Producer.
-func (c *JetstreamProducer) LifecycleOnStop(_ context.Context) error {
 	select {
 	case <-c.js.PublishAsyncComplete():
 		fmt.Println("All Messages Acknowledged")
-	case <-time.After(5 * time.Second):
+	case <-sctx.Done():
 		fmt.Println("server is dying, cannot wait more, Message Acknowledgement Timeout")
 	}
 	return nil
@@ -31,7 +29,7 @@ func (c *JetstreamProducer) LifecycleOnStop(_ context.Context) error {
 
 // ProduceAsync implements messaging.Producer.
 func (c *JetstreamProducer) ProduceAsync(ctx context.Context, msg types.ProduceMsg) error {
-	pa, err := c.js.PublishAsync(msg.NatsJetstreamMsg.Subject, msg.NatsJetstreamMsg.Payload)
+	pa, err := c.js.PublishAsync(msg.Subject, msg.Payload)
 	if err != nil {
 		return err
 	}
@@ -50,12 +48,6 @@ func (c *JetstreamProducer) ProduceAsync(ctx context.Context, msg types.ProduceM
 
 // Produce implements messaging.Producer.
 func (c *JetstreamProducer) Produce(ctx context.Context, msg types.ProduceMsg) error {
-	_, err := c.js.Publish(ctx, msg.NatsJetstreamMsg.Subject, msg.NatsJetstreamMsg.Payload)
+	_, err := c.js.Publish(ctx, msg.Subject, msg.Payload)
 	return err
-}
-
-func NewJetstreamProducer(jsc *JetstreamClient) (*JetstreamProducer, error) {
-	return &JetstreamProducer{
-		js: jsc.js,
-	}, nil
 }

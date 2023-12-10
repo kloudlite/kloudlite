@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"kloudlite.io/common"
 	"os"
 	"strconv"
 
+	"kloudlite.io/common"
+
 	"github.com/kloudlite/operator/pkg/constants"
-	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/messaging"
+	msgTypes "kloudlite.io/pkg/messaging/types"
 	"kloudlite.io/pkg/types"
 
 	t "github.com/kloudlite/operator/agent/types"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -29,11 +30,10 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-type MessageDispatcher kafka.Producer
+type MessageDispatcher messaging.Producer
 
 type domain struct {
-	k8sExtendedClient k8s.ExtendedK8sClient
-	k8sYamlClient     kubectl.YAMLClient
+	k8sClient k8s.Client
 
 	producer MessageDispatcher
 
@@ -88,11 +88,9 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b, kafka.MessageArgs{
-		Key: []byte(obj.GetNamespace()),
-		Headers: map[string][]byte{
-			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
-		},
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, ctx.ClusterName),
+		Payload: b,
 	})
 	return err
 }
@@ -111,13 +109,12 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 	if err != nil {
 		return err
 	}
-
-	_, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b, kafka.MessageArgs{
-		Key: []byte(obj.GetNamespace()),
-		Headers: map[string][]byte{
-			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
-		},
+	
+  err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, ctx.ClusterName),
+		Payload: b,
 	})
+
 	return err
 }
 
@@ -371,8 +368,7 @@ func (d *domain) canReadResourcesInWorkspaceOrEnv(ctx ConsoleContext, projectNam
 
 var Module = fx.Module("domain",
 	fx.Provide(func(
-		k8sYamlClient kubectl.YAMLClient,
-		k8sExtendedClient k8s.ExtendedK8sClient,
+		k8sClient k8s.Client,
 
 		producer MessageDispatcher,
 
@@ -420,8 +416,7 @@ var Module = fx.Module("domain",
 		}
 
 		return &domain{
-			k8sExtendedClient: k8sExtendedClient,
-			k8sYamlClient:     k8sYamlClient,
+			k8sClient: k8sClient,
 
 			producer: producer,
 

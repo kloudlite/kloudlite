@@ -65,7 +65,7 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	}
 
 	app.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &app.App); err != nil {
 		return nil, err
 	}
 
@@ -125,13 +125,12 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	}
 
 	app.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &app.App); err != nil {
 		return nil, err
 	}
 
 	exApp, err := d.findApp(ctx, app.Namespace, app.Name)
 	if err != nil {
-
 		return nil, err
 	}
 

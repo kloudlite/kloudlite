@@ -116,7 +116,7 @@ func (d *domain) createWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 	}
 
 	ws.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ws.Workspace); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &ws.Workspace); err != nil {
 		return nil, err
 	}
 
@@ -166,7 +166,7 @@ func (d *domain) UpdateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 
 func (d *domain) updateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
 	ws.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ws.Workspace); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &ws.Workspace); err != nil {
 		return nil, err
 	}
 

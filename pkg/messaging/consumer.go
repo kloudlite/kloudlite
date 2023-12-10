@@ -8,8 +8,8 @@ import (
 )
 
 type Consumer interface {
-	Consume(ctx context.Context, consumeFn func(msg *types.ConsumeMsg) error) error
-	Stop() error
+	Consume(consumeFn func(msg *types.ConsumeMsg) error, opts types.ConsumeOpts) error
+	Stop(ctx context.Context) error
 }
 
 var _ Consumer = (*nats.JetstreamConsumer)(nil)

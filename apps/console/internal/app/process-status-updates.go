@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
@@ -9,20 +10,34 @@ import (
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/entities"
 	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/messaging"
+	msgTypes "kloudlite.io/pkg/messaging/types"
 )
 
-type ResourceUpdateConsumer kafka.Consumer
+type ResourceUpdateConsumer messaging.Consumer
 
-func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
+func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
-	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
+
+	projectGVK := fn.GVK("crds.kloudlite.io/v1", "Project")
+	appsGVK := fn.GVK("crds.kloudlite.io/v1", "App")
+	workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Workspace")
+	imagePullSecretGVK := fn.GVK("crds.kloudlite.io/v1", "ImagePullSecret")
+	configGVK := fn.GVK("crds.kloudlite.io/v1", "Config")
+	secretGVK := fn.GVK("crds.kloudlite.io/v1", "Secret")
+	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
+	managedServiceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedService")
+	managedResourceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
+
+	msgReader := func(msg *msgTypes.ConsumeMsg) error {
+		logger := logger.WithKV("subject", msg.Subject)
+
 		counter += 1
-		logger := ctx.Logger
 		logger.Debugf("[%d] received message", counter)
 
 		var ru types.ResourceUpdate
-		if err := json.Unmarshal(value, &ru); err != nil {
+		if err := json.Unmarshal(msg.Payload, &ru); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 		}
@@ -55,11 +70,11 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 			return nil
 		}
 
-		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		dctx := domain.NewConsoleContext(ctx, "sys-user:status-updater", ru.AccountName, ru.ClusterName)
+		kind := obj.GetObjectKind().GroupVersionKind().String()
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:status-updater", ru.AccountName, ru.ClusterName)
 
 		switch kind {
-		case "Project":
+		case projectGVK.String():
 			{
 				var p entities.Project
 				if err := fn.JsonConversion(ru.Object, &p); err != nil {
@@ -72,7 +87,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				return d.OnUpdateProjectMessage(dctx, p)
 			}
 
-		case "Workspace":
+		case workspaceGVK.String():
 			{
 				var p entities.Workspace
 				if err := fn.JsonConversion(ru.Object, &p); err != nil {
@@ -84,7 +99,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateWorkspaceMessage(dctx, p)
 			}
-		case "App":
+		case appsGVK.String():
 			{
 				var a entities.App
 				if err := fn.JsonConversion(ru.Object, &a); err != nil {
@@ -96,7 +111,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateAppMessage(dctx, a)
 			}
-		case "Config":
+		case configGVK.String():
 			{
 				var c entities.Config
 				if err := fn.JsonConversion(ru.Object, &c); err != nil {
@@ -107,7 +122,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateConfigMessage(dctx, c)
 			}
-		case "Secret":
+		case secretGVK.String():
 			{
 				var s entities.Secret
 				if err := fn.JsonConversion(ru.Object, &s); err != nil {
@@ -118,7 +133,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateSecretMessage(dctx, s)
 			}
-		case "ImagePullSecret":
+		case imagePullSecretGVK.String():
 			{
 				var s entities.ImagePullSecret
 				if err := fn.JsonConversion(ru.Object, &s); err != nil {
@@ -129,7 +144,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateImagePullSecretMessage(dctx, s)
 			}
-		case "Router":
+		case routerGVK.String():
 			{
 				var r entities.Router
 				if err := fn.JsonConversion(ru.Object, &r); err != nil {
@@ -140,7 +155,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateRouterMessage(dctx, r)
 			}
-		case "ManagedService":
+		case managedServiceGVK.String():
 			{
 				var msvc entities.ManagedService
 				if err := fn.JsonConversion(ru.Object, &msvc); err != nil {
@@ -151,7 +166,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 				}
 				return d.OnUpdateManagedServiceMessage(dctx, msvc)
 			}
-		case "ManagedResource":
+		case managedResourceGVK.String():
 			{
 				var mres entities.ManagedResource
 				if err := fn.JsonConversion(ru.Object, &mres); err != nil {
@@ -165,5 +180,12 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 		}
 
 		return nil
+	}
+
+	consumer.Consume(msgReader, msgTypes.ConsumeOpts{
+		OnError: func(err error) error {
+			logger.Errorf(err, "received while reading messages, ignoring it")
+			return nil
+		},
 	})
 }

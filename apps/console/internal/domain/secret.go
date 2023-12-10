@@ -57,7 +57,7 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	}
 
 	secret.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
 		return nil, err
 	}
 
@@ -95,7 +95,7 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	}
 
 	secret.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
 		return nil, err
 	}
 

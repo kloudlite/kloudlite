@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"fmt"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -29,11 +29,6 @@ func (c *logger) Debugf(msg string, args ...any) {
 }
 
 func (c *logger) Infof(msg string, args ...any) {
-	if c == nil {
-		fmt.Printf("[empty logger]\t")
-		fmt.Printf(msg+"\n", args...)
-		return
-	}
 	c.zapLogger.Infof(msg, args...)
 }
 
@@ -54,8 +49,9 @@ func (c *logger) WithName(name string) Logger {
 }
 
 type Options struct {
-	Name string
-	Dev  bool
+	Name        string
+	Dev         bool
+	CallerTrace bool
 }
 
 var EmptyLogger *logger
@@ -66,28 +62,46 @@ func New(options *Options) (Logger, error) {
 		opts = *options
 	}
 
-	zapConfig := func() zap.Config {
+	cfg := func() zapcore.EncoderConfig {
 		if opts.Dev {
-			cfg := zap.NewDevelopmentConfig()
-			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-			cfg.EncoderConfig.LineEnding = "\n"
-			cfg.EncoderConfig.TimeKey = ""
-			cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
-				enc.AppendString(fmt.Sprintf("(%s) %s", caller.Function, caller.TrimmedPath()))
-			}
+			cfg := zap.NewDevelopmentEncoderConfig()
+			cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.LineEnding = "\n"
+			cfg.TimeKey = ""
+
 			return cfg
 		}
-		return zap.NewProductionConfig()
+		pcfg := zap.NewProductionEncoderConfig()
+		pcfg.TimeKey = ""
+		return pcfg
 	}()
 
-	lgr, err := zapConfig.Build(zap.AddCallerSkip(1), zap.AddStacktrace(zap.DPanicLevel))
-	if err != nil {
-		return nil, err
+	// if !opts.Dev {
+	// 	cfg.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+	// 		encoder.AppendString(ts.UTC().Format(time.RFC3339))
+	// 	}
+	// }
+
+	loglevel := zapcore.InfoLevel
+	if opts.Dev {
+		loglevel = zapcore.DebugLevel
 	}
 
-	cLogger := logger{zapLogger: lgr.Sugar()}
-	if opts.Name != "" {
-		cLogger.zapLogger = cLogger.zapLogger.Named(opts.Name)
+	zapOpts := make([]zap.Option, 0, 3)
+	zapOpts = append(zapOpts, zap.AddStacktrace(zap.DPanicLevel))
+
+	if !opts.Dev {
+		opts.CallerTrace = true
 	}
-	return &cLogger, nil
+
+	if opts.CallerTrace {
+		zapOpts = append(zapOpts, zap.AddCaller(), zap.AddCallerSkip(1))
+	}
+
+	lgr := zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(cfg), os.Stdout, loglevel), zapOpts...)
+
+	cLogger := &logger{
+		zapLogger: lgr.Sugar(),
+	}
+	return cLogger, nil
 }

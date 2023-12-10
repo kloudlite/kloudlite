@@ -55,7 +55,7 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	}
 
 	config.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &config.Config); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &config.Config); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	}
 
 	config.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &config.Config); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &config.Config); err != nil {
 		return nil, err
 	}
 

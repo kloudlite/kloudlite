@@ -2,43 +2,55 @@ package nats
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
 
-	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/messaging/types"
 )
 
 type JetstreamConsumer struct {
+	name       string
+	js         jetstream.JetStream
+	logger     logging.Logger
 	consumer   jetstream.Consumer
 	consumeCtx jetstream.ConsumeContext
 }
 
 // Consume implements messaging.Consumer.
-func (jc *JetstreamConsumer) Consume(ctx context.Context, consumeFn func(msg *types.ConsumeMsg) error) error {
-	var sendAck bool
-	flag.BoolVar(&sendAck, "ack", false, "--ack")
-	flag.Parse()
+func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error, opts types.ConsumeOpts) error {
 	cctx, err := jc.consumer.Consume(func(msg jetstream.Msg) {
-		if err := consumeFn(&types.ConsumeMsg{
-			NatsJetstreamMsg: &types.NatsJetstreamConsumeMsg{
-				Payload: msg.Data(),
-			},
-		}); err != nil {
-			fmt.Println(err)
-			msg.Nak()
-		}
-		if sendAck {
-			msg.DoubleAck(ctx)
-		}
 		mm, err := msg.Metadata()
 		if err != nil {
 			msg.Nak()
+			return
 		}
-		fmt.Printf("message sequence, stream: %d, consumer: %d\n", mm.Sequence.Stream, mm.Sequence.Consumer)
+
+		msg.InProgress()
+
+		if err := consumeFn(&types.ConsumeMsg{
+			Subject:   msg.Subject(),
+			Timestamp: mm.Timestamp,
+			Payload:   msg.Data(),
+		}); err != nil {
+			if opts.OnError == nil {
+				jc.logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+				msg.Nak()
+				return
+			}
+
+			if opts.OnError != nil {
+				if err := opts.OnError(err); err != nil {
+					msg.Nak()
+					return
+				}
+			}
+		}
+
+		msg.Ack()
+		jc.logger.Infof("acknowledged message, stream: %s, consumer: %s", mm.Stream, mm.Consumer)
 	})
 	if err != nil {
 		return err
@@ -55,28 +67,14 @@ func (jc *JetstreamConsumer) Consume(ctx context.Context, consumeFn func(msg *ty
 }
 
 // Stop implements Consumer.
-func (nc *JetstreamConsumer) Stop() error {
+func (nc *JetstreamConsumer) Stop(context.Context) error {
 	nc.consumeCtx.Stop()
 	return nil
 }
 
+type ConsumerConfig jetstream.ConsumerConfig
+
 type JetstreamConsumerArgs struct {
-	Stream string
-	jetstream.ConsumerConfig
-}
-
-func NewJetstreamConsumer(ctx context.Context, jsc *JetstreamClient, args JetstreamConsumerArgs) (*JetstreamConsumer, error) {
-	s, err := jsc.js.Stream(ctx, args.Stream)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := s.CreateOrUpdateConsumer(ctx, args.ConsumerConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &JetstreamConsumer{
-		consumer: c,
-	}, nil
+	Stream         string
+	ConsumerConfig ConsumerConfig
 }

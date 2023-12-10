@@ -1,34 +1,38 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+
 	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/messaging"
+	msgTypes "kloudlite.io/pkg/messaging/types"
 )
 
-type ErrorOnApplyConsumer kafka.Consumer
+type ErrorOnApplyConsumer messaging.Consumer
 
-func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain) {
+func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
-	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
+
+	msgReader := func(msg *msgTypes.ConsumeMsg) error {
 		counter += 1
-		logger := ctx.Logger
 		logger.Debugf("received message [%d]", counter)
-		var msg t.AgentErrMessage
-		if err := json.Unmarshal(value, &msg); err != nil {
+		var errMsg t.AgentErrMessage
+		if err := json.Unmarshal(msg.Payload, &errMsg); err != nil {
 			return err
 		}
 
-		obj := unstructured.Unstructured{Object: msg.Object}
+		obj := unstructured.Unstructured{Object: errMsg.Object}
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GroupVersionKind(),
-			"accountName", msg.AccountName,
-			"clusterName", msg.ClusterName,
+			"accountName", errMsg.AccountName,
+			"clusterName", errMsg.ClusterName,
 		)
 
 		mLogger.Infof("received message")
@@ -37,45 +41,52 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain) {
 		}()
 
 		kind := obj.GroupVersionKind().Kind
-		dctx := domain.NewConsoleContext(ctx, "sys-user:apply-on-error-worker", msg.AccountName, msg.ClusterName)
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", errMsg.AccountName, errMsg.ClusterName)
 
 		switch kind {
 		case "Project":
 			{
-				return d.OnApplyProjectError(dctx, msg.Error, obj.GetName())
+				return d.OnApplyProjectError(dctx, errMsg.Error, obj.GetName())
 			}
 		case "Env":
 			{
-				return d.OnApplyWorkspaceError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyWorkspaceError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "App":
 			{
-				return d.OnApplyAppError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyAppError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Config":
 			{
-				return d.OnApplyConfigError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyConfigError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Secret":
 			{
-				return d.OnApplySecretError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplySecretError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Router":
 			{
-				return d.OnApplyRouterError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyRouterError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "ManagedService":
 			{
-				return d.OnApplyManagedServiceError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyManagedServiceError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "ManagedResource":
 			{
-				return d.OnApplyManagedResourceError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyManagedResourceError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		default:
 			{
 				return fmt.Errorf("console apply error reader does not acknowledge resource with kind (%s)", kind)
 			}
 		}
+	}
+
+	consumer.Consume(msgReader, msgTypes.ConsumeOpts{
+		OnError: func(err error) error {
+			logger.Errorf(err, "received while reading messages, ignoring it")
+			return nil
+		},
 	})
 }
