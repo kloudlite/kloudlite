@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"kloudlite.io/pkg/messaging"
@@ -12,14 +13,11 @@ import (
 )
 
 func main() {
-	var producer messaging.Producer
+	natsUrl := os.Getenv("NATS_URL")
+	// natsStream := os.Getenv("NATS_STREAM")
 
-	nc, err := nats.NewClient("tls://connect.ngs.global", nats.ClientOpts{
-		CrdeentialsFile: "/home/nxtcoder17/Downloads/NGS-Default-CLI.creds",
-		Options: nats.Options{
-			Servers: []string{"tls://connect.ngs.global"},
-			Name:    "nats-producer",
-		},
+	nc, err := nats.NewClient(natsUrl, nats.ClientOpts{
+		Name: "nats-producer",
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -30,31 +28,35 @@ func main() {
 		log.Fatal(err)
 	}
 
-	producer, err = nats.NewJetstreamProducer(jc)
+	var producer messaging.Producer = jc.CreateProducer()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	subjectBase := fmt.Sprintf("resource-sync.account-sasfa.cluster-asdfasf.platform.kloudlite-console.resource-update")
+
+	fmt.Printf("subject base: %s\n", subjectBase)
+
 	for i := 0; i < 1000; i++ {
-		producer.Produce(context.TODO(), types.ProduceMsg{
-			NatsJetstreamMsg: &types.NatsJetstreamProduceMsg{
-				Subject: func() string {
-				  if i % 2 == 0 {
-				    return "example.even"
-				  }
-				  return "example.odd"
-				}(),
-				Payload: func() []byte {
-				  if i % 2 == 0 {
-            return []byte(fmt.Sprintf("even: %d", i))
-          }
-          return []byte(fmt.Sprintf("odd: %d", i))
-				}(),
-			},
-		})
+		if err := producer.Produce(context.TODO(), types.ProduceMsg{
+			Subject: func() string {
+				if i%2 == 0 {
+					return fmt.Sprintf("%s.even", subjectBase)
+				}
+				return fmt.Sprintf("%s.odd", subjectBase)
+			}(),
+			Payload: func() []byte {
+				if i%2 == 0 {
+					return []byte(fmt.Sprintf("even: %d", i))
+				}
+				return []byte(fmt.Sprintf("odd: %d", i))
+			}(),
+		}); err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("%d message sent\n", i+1)
 		time.Sleep(1 * time.Second)
 	}
 
-	producer.LifecycleOnStop(context.TODO())
+	producer.Stop(context.TODO())
 }

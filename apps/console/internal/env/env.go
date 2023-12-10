@@ -19,15 +19,20 @@ type Env struct {
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ClusterCookieName string `env:"CLUSTER_COOKIE_NAME" required:"true"`
 
-	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
-	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+	// KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
+	// KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
+	// KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
+	//
+	// KafkaStatusUpdatesTopic string `env:"KAFKA_STATUS_UPDATES_TOPIC" required:"true"`
+	// KafkaErrorOnApplyTopic  string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
+	// KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
+	//
+	// KafkaWaitQueueTopic string `env:"KAFKA_WAIT_QUEUE_TOPIC" required:"true"`
 
-	KafkaStatusUpdatesTopic string `env:"KAFKA_STATUS_UPDATES_TOPIC" required:"true"`
-	KafkaErrorOnApplyTopic  string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
-	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
-
-	KafkaWaitQueueTopic string `env:"KAFKA_WAIT_QUEUE_TOPIC" required:"true"`
+	// NATS:start
+	NatsURL    string `env:"NATS_URL" required:"true"`
+	NatsStream string `env:"NATS_STREAM" required:"true"`
+	// NATS:end
 
 	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
 	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`

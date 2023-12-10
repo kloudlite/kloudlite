@@ -54,7 +54,7 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	}
 
 	msvc.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &msvc.ManagedService); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &msvc.ManagedService); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +93,7 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	}
 
 	msvc.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &msvc.ManagedService); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &msvc.ManagedService); err != nil {
 		return nil, err
 	}
 

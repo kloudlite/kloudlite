@@ -27,9 +27,9 @@ import (
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
 	loki_client "kloudlite.io/pkg/loki-client"
+	"kloudlite.io/pkg/messaging/nats"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -482,23 +482,17 @@ var Module = fx.Module("app",
 		},
 	),
 
-	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (domain.MessageDispatcher, error) {
-		return kafka.NewProducer(conn, kafka.ProducerOpts{
-			Logger: logger.WithName("message-dispatcher"),
-		})
-	}),
-	fx.Invoke(func(lf fx.Lifecycle, producer domain.MessageDispatcher) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return producer.LifecycleOnStart(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				return producer.LifecycleOnStop(ctx)
-			},
-		})
+	fx.Provide(func(jc *nats.JetstreamClient, logger logging.Logger) domain.MessageDispatcher {
+		return jc.CreateProducer()
 	}),
 
-	// fx.Invoke(ProcessErrorOnApply),
+	fx.Invoke(func(lf fx.Lifecycle, producer domain.MessageDispatcher) {
+		lf.Append(fx.Hook{
+			OnStop: func(ctx context.Context) error {
+				return producer.Stop(ctx)
+			},
+		})
+	}),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -514,42 +508,68 @@ var Module = fx.Module("app",
 
 	domain.Module,
 
-	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		return kafka.NewConsumer(conn, ev.KafkaConsumerGroupId, []string{ev.KafkaErrorOnApplyTopic}, kafka.ConsumerOpts{
-			Logger: logger.WithName("error-consumer"),
-		})
-	}),
-	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				if err := consumer.LifecycleOnStart(ctx); err != nil {
-					return err
-				}
-				go ProcessErrorOnApply(consumer, d)
-				return nil
-			},
-			OnStop: func(ctx context.Context) error {
-				return consumer.LifecycleOnStop(ctx)
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteConsole, common.EventErrorOnApply)
+		consumerName := "console:error-on-apply"
+		// ci, err := jc.GetConsumerInfo(context.TODO(), ev.NatsStream, consumerName)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		//
+		// logger.Infof("consumer [%s] has %d pending acks, %d pending messages", consumerName, ci.NumAckPending, ci.NumPending)
+
+		return jc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to errors, that occurred when the resource was applied at the agent",
+				FilterSubjects: []string{topic},
 			},
 		})
 	}),
 
-	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		return kafka.NewConsumer(conn, ev.KafkaConsumerGroupId, []string{ev.KafkaStatusUpdatesTopic}, kafka.ConsumerOpts{
-			Logger: logger.WithName("resource-update-consumer"),
-		})
-	}),
-	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				if err := consumer.LifecycleOnStart(ctx); err != nil {
-					return err
-				}
-				go ProcessResourceUpdates(consumer, d)
+			OnStart: func(context.Context) error {
+				go ProcessErrorOnApply(consumer, d, logger)
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {
-				return consumer.LifecycleOnStop(ctx)
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteConsole, common.EventResourceUpdate)
+
+		consumerName := "console:resource-updates"
+		// ci, err := jc.GetConsumerInfo(context.TODO(), ev.NatsStream, consumerName)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		//
+		// logger.Infof("consumer [%s] has %d pending acks, %d pending messages", consumerName, ci.NumAckPending, ci.NumPending)
+
+		return jc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to console resource updates from tenant clusters",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go ProcessResourceUpdates(consumer, d, logger)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
 			},
 		})
 	}),

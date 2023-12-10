@@ -55,7 +55,7 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 	}
 
 	router.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &router.Router); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
 		return nil, err
 	}
 
@@ -94,7 +94,7 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 	}
 
 	router.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &router.Router); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
 		return nil, err
 	}
 
