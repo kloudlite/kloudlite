@@ -44,7 +44,7 @@ func (d *domain) applyAccountOnCluster(ctx context.Context, account *entities.Ac
 		return err
 	}
 
-	if _, err := d.k8sYamlClient.ApplyYAML(ctx, y); err != nil {
+	if err := d.k8sClient.ApplyYAML(ctx, y); err != nil {
 		return err
 	}
 
@@ -78,25 +78,25 @@ func (d *domain) GetAccount(ctx UserContext, name string) (*entities.Account, er
 }
 
 func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName string, targetNamespace string) error {
-	if _, err := d.k8sYamlClient.Client().CoreV1().Namespaces().Get(ctx, targetNamespace, metav1.GetOptions{}); err != nil {
+	if err := d.k8sClient.Get(ctx, fn.NN("", targetNamespace), &corev1.Namespace{}); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return err
 		}
+	}
 
-		if _, err := d.k8sYamlClient.Client().CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "v1",
-				Kind:       "Namespace",
+	if err := d.k8sClient.Create(ctx, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: targetNamespace,
+			Labels: map[string]string{
+				constants.AccountNameKey: accountName,
 			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: targetNamespace,
-				Labels: map[string]string{
-					constants.AccountNameKey: accountName,
-				},
-			},
-		}, metav1.CreateOptions{}); err != nil {
-			return err
-		}
+		},
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -109,7 +109,7 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 		account.Spec.TargetNamespace = fn.New(fmt.Sprintf("kl-account-%s", account.Name))
 	}
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &account.Account); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &account.Account); err != nil {
 		return nil, err
 	}
 
@@ -146,7 +146,7 @@ func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*enti
 	}
 
 	account.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &account.Account); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &account.Account); err != nil {
 		return nil, err
 	}
 
