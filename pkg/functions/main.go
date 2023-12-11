@@ -12,8 +12,19 @@ import (
 )
 
 func ToBase64StringFromJson(v interface{}) (string, error) {
-	b, e := json.Marshal(v)
-	return base64.StdEncoding.EncodeToString(b), e
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(b), nil
+}
+
+func ToBase64UrlFromJson(v interface{}) (string, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }
 
 func Must[T any](value T, err error) T {

@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
@@ -21,6 +22,7 @@ import (
 type Client interface {
 	// client go like
 	Get(ctx context.Context, nn types.NamespacedName, obj client.Object) error
+	Create(ctx context.Context, obj client.Object) error
 
 	// custom ones
 	ValidateObject(ctx context.Context, obj client.Object) error
@@ -33,6 +35,11 @@ type clientHandler struct {
 	kclient    client.Client
 	kclientset *clientset.Clientset
 	yamlclient kubectl.YAMLClient
+}
+
+// CreateOrUpdate implements Client.
+func (ch *clientHandler) Create(ctx context.Context, obj client.Object) error {
+	return ch.kclient.Create(ctx, obj)
 }
 
 // Get implements Client.
@@ -113,6 +120,11 @@ func (c *clientHandler) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 }
 
 func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
+	if scheme == nil {
+		scheme = runtime.NewScheme()
+		clientgoscheme.AddToScheme(scheme)
+	}
+
 	c, err := client.New(cfg, client.Options{
 		Scheme: scheme,
 		Mapper: nil,

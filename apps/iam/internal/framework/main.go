@@ -43,7 +43,6 @@ var Module fx.Option = fx.Module(
 		})
 	}),
 
-	//rpc.NewGrpcServerFx[*fm](),
 	app.Module,
 
 	fx.Invoke(func(lf fx.Lifecycle, server app.IAMGrpcServer, ev *env.Env) {

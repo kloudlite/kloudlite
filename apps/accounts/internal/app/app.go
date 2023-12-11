@@ -30,9 +30,11 @@ type AuthClient grpc.Client
 
 type ConsoleClient grpc.Client
 
-type ContainerRegistryClient grpc.Client
-type CommsClient grpc.Client
-type IAMClient grpc.Client
+type (
+	ContainerRegistryClient grpc.Client
+	CommsClient             grpc.Client
+	IAMClient               grpc.Client
+)
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Account]("accounts", "acc", entities.AccountIndices),
@@ -46,10 +48,6 @@ var Module = fx.Module("app",
 	fx.Provide(func(conn ConsoleClient) console.ConsoleClient {
 		return console.NewConsoleClient(conn)
 	}),
-
-	// fx.Provide(func(conn ContainerRegistryClient) container_registry.ContainerRegistryClient {
-	// 	return container_registry.NewContainerRegistryClient(conn)
-	// }),
 
 	fx.Provide(func(conn IAMClient) iam.IAMClient {
 		return iam.NewIAMClient(conn)

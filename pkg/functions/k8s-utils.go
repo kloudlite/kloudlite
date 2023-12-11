@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"regexp"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"kloudlite.io/constants"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -35,4 +36,13 @@ var nameValidator *regexp.Regexp = regexp.MustCompile(constants.K8sNameValidator
 
 func IsValidK8sResourceName(name string) bool {
 	return nameValidator.Match([]byte(name))
+}
+
+func GVK(apiVersion string, kind string) schema.GroupVersionKind {
+	gv, _ := schema.ParseGroupVersion(apiVersion)
+	return schema.GroupVersionKind{
+		Group:   gv.Group,
+		Version: gv.Version,
+		Kind:    kind,
+	}
 }

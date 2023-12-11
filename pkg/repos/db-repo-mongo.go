@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/logging"
 )
 
 type dbRepo[T Entity] struct {
@@ -516,6 +517,7 @@ func (repo *dbRepo[T]) SilentUpsert(ctx context.Context, filter Filter, data T) 
 		},
 	)
 }
+
 func (repo *dbRepo[T]) SilentUpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
 	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
 		ctx,
@@ -555,6 +557,7 @@ func (repo *dbRepo[T]) SilentUpdateById(ctx context.Context, id ID, updatedData 
 func (repo *dbRepo[T]) ErrAlreadyExists(err error) bool {
 	return mongo.IsDuplicateKeyError(err)
 }
+
 func (repo *dbRepo[T]) MergeMatchFilters(filter Filter, mFilter map[string]MatchFilter) Filter {
 	if filter == nil {
 		filter = map[string]any{}
@@ -607,14 +610,17 @@ func NewFxMongoRepo[T Entity](collectionName, shortName string, indexFields []In
 			},
 		),
 		fx.Invoke(
-			func(lifecycle fx.Lifecycle, repo DbRepo[T]) {
+			func(lifecycle fx.Lifecycle, repo DbRepo[T], logger logging.Logger) {
 				lifecycle.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
-							err := repo.IndexFields(ctx, indexFields)
-							if err != nil {
-								return errors.NewEf(err, "could not create indexes on DB for repo %T", repo)
-							}
+							go func() {
+								err := repo.IndexFields(ctx, indexFields)
+								if err != nil {
+									logger.Errorf(err, "failed to update indexes on DB for repo %T", repo)
+								}
+								logger.Infof("indexes updated on DB for repo %T", repo)
+							}()
 							return nil
 						},
 					},
