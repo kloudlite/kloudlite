@@ -476,12 +476,12 @@ type ComplexityRoot struct {
 	}
 
 	K8s__io___api___core___v1__PersistentVolumeClaimStatus struct {
-		AccessModes               func(childComplexity int) int
-		AllocatedResourceStatuses func(childComplexity int) int
-		AllocatedResources        func(childComplexity int) int
-		Capacity                  func(childComplexity int) int
-		Conditions                func(childComplexity int) int
-		Phase                     func(childComplexity int) int
+		AccessModes        func(childComplexity int) int
+		AllocatedResources func(childComplexity int) int
+		Capacity           func(childComplexity int) int
+		Conditions         func(childComplexity int) int
+		Phase              func(childComplexity int) int
+		ResizeStatus       func(childComplexity int) int
 	}
 
 	K8s__io___api___core___v1__ResourceClaim struct {
@@ -2671,13 +2671,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.AccessModes(childComplexity), true
 
-	case "K8s__io___api___core___v1__PersistentVolumeClaimStatus.allocatedResourceStatuses":
-		if e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.AllocatedResourceStatuses == nil {
-			break
-		}
-
-		return e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.AllocatedResourceStatuses(childComplexity), true
-
 	case "K8s__io___api___core___v1__PersistentVolumeClaimStatus.allocatedResources":
 		if e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.AllocatedResources == nil {
 			break
@@ -2705,6 +2698,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.Phase(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeClaimStatus.resizeStatus":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.ResizeStatus == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.ResizeStatus(childComplexity), true
 
 	case "K8s__io___api___core___v1__ResourceClaim.name":
 		if e.complexity.K8s__io___api___core___v1__ResourceClaim.Name == nil {
@@ -4702,10 +4702,10 @@ type K8s__io___api___core___v1__PersistentVolumeClaimSpec @shareable {
 type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
   accessModes: [String!]
   allocatedResources: Map
-  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  resizeStatus: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim @shareable {
@@ -4806,6 +4806,7 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfi
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
   instanceType: String!
+  nvidiaGpuEnabled: Boolean!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
@@ -4970,10 +4971,10 @@ input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
 input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   accessModes: [String!]
   allocatedResources: Map
-  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  resizeStatus: String
 }
 
 input K8s__io___api___core___v1__ResourceClaimIn {
@@ -17658,47 +17659,6 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVo
 	return fc, nil
 }
 
-func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResourceStatuses(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeClaimStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResourceStatuses(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AllocatedResourceStatuses, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResourceStatuses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "K8s__io___api___core___v1__PersistentVolumeClaimStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimStatus_capacity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeClaimStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_capacity(ctx, field)
 	if err != nil {
@@ -17831,6 +17791,47 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVo
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type K8s__io___api___core___v1__PersistentVolumeClaimPhase does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimStatus_resizeStatus(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeClaimStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_resizeStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResizeStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_resizeStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeClaimStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -24309,14 +24310,14 @@ func (ec *executionContext) fieldContext_PersistentVolumeClaim_status(ctx contex
 				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_accessModes(ctx, field)
 			case "allocatedResources":
 				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResources(ctx, field)
-			case "allocatedResourceStatuses":
-				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResourceStatuses(ctx, field)
 			case "capacity":
 				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_capacity(ctx, field)
 			case "conditions":
 				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_conditions(ctx, field)
 			case "phase":
 				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_phase(ctx, field)
+			case "resizeStatus":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeClaimStatus_resizeStatus(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PersistentVolumeClaimStatus", field.Name)
 		},
@@ -29763,7 +29764,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"instanceType"}
+	fieldsInOrder := [...]string{"instanceType", "nvidiaGpuEnabled"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -29775,6 +29776,14 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
 			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nvidiaGpuEnabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
+			it.NvidiaGpuEnabled, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -30963,7 +30972,7 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"accessModes", "allocatedResources", "allocatedResourceStatuses", "capacity", "conditions", "phase"}
+	fieldsInOrder := [...]string{"accessModes", "allocatedResources", "capacity", "conditions", "phase", "resizeStatus"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -30983,14 +30992,6 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatedResources"))
 			it.AllocatedResources, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "allocatedResourceStatuses":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("allocatedResourceStatuses"))
-			it.AllocatedResourceStatuses, err = ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -31015,6 +31016,14 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
 			it.Phase, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeClaimPhase2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimPhase(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "resizeStatus":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resizeStatus"))
+			it.ResizeStatus, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -34754,10 +34763,6 @@ func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimSta
 
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResources(ctx, field, obj)
 
-		case "allocatedResourceStatuses":
-
-			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_allocatedResourceStatuses(ctx, field, obj)
-
 		case "capacity":
 
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_capacity(ctx, field, obj)
@@ -34769,6 +34774,10 @@ func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimSta
 		case "phase":
 
 			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_phase(ctx, field, obj)
+
+		case "resizeStatus":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus_resizeStatus(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -38855,7 +38864,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -38863,7 +38872,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

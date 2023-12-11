@@ -129,7 +129,7 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	return d.deleteFromTargetCluster(ctx, clusterName, &device.Device)
 }
 
-func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, errMsg string, name string) error {
+func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, name)
 	if err != nil {
 		return err

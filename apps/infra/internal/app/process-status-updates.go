@@ -1,39 +1,46 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
-	wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/logging"
+
+	"kloudlite.io/pkg/messaging"
+	msgTypes "kloudlite.io/pkg/messaging/types"
 	t "kloudlite.io/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ReceiveInfraUpdatesConsumer kafka.Consumer
+type ReceiveInfraUpdatesConsumer messaging.Consumer
 
 func gvk(obj client.Object) string {
 	val := obj.GetObjectKind().GroupVersionKind().String()
 	return val
 }
 
-func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) {
-	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
-		logger := ctx.Logger
-		logger.Debugf("processing msg timestamp %s", metadata.Timestamp.Format(time.RFC3339))
+var (
+	clusterGVK  = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
+	nodepoolGVK = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
+	deviceGVK   = fn.GVK("wireguard.kloudlite.io/v1", "Device")
+	pvcGVK      = fn.GVK("v1", "PersistentVolumeClaim")
+	buildrunGVK = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
+)
+
+func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+	readMsg := func(msg *msgTypes.ConsumeMsg) error {
+		logger.Debugf("processing msg timestamp %s", msg.Timestamp.Format(time.RFC3339))
 
 		var su types.ResourceUpdate
-		if err := json.Unmarshal(value, &su); err != nil {
+		if err := json.Unmarshal(msg.Payload, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 		}
@@ -52,7 +59,6 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
 			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
-			"partition/offset", fmt.Sprintf("%d/%d", metadata.Partition, metadata.Offset),
 		)
 
 		mLogger.Infof("received message")
@@ -60,44 +66,12 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 			mLogger.Infof("processed message")
 		}()
 
-		dctx := domain.InfraContext{Context: ctx, UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
+		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
 
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
-		clusterGVK := func() string {
-			cluster := &clustersv1.Cluster{}
-			cluster.EnsureGVK()
-			return gvk(cluster)
-		}()
-
-		nodepoolGVK := func() string {
-			np := &clustersv1.NodePool{}
-			np.EnsureGVK()
-			return gvk(np)
-		}()
-
-		deviceGVK := func() string {
-			dev := &wireguardv1.Device{}
-			dev.EnsureGVK()
-			return gvk(dev)
-		}()
-
-		pvcGVK := func() string {
-			return schema.GroupVersionKind{
-				Group:   "",
-				Version: "v1",
-				Kind:    "PersistentVolumeClaim",
-			}.String()
-		}()
-
-		buildRunGVK := func() string {
-			brun := &distributionv1.BuildRun{}
-			brun.EnsureGVK()
-			return gvk(brun)
-		}()
-
 		switch gvkStr {
-		case clusterGVK:
+		case clusterGVK.String():
 			{
 				var clus entities.Cluster
 				if err := fn.JsonConversion(su.Object, &clus); err != nil {
@@ -108,7 +82,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				}
 				return d.OnUpdateClusterMessage(dctx, clus)
 			}
-		case nodepoolGVK:
+		case nodepoolGVK.String():
 			{
 				var np entities.NodePool
 				if err := fn.JsonConversion(su.Object, &np); err != nil {
@@ -119,7 +93,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				}
 				return d.OnUpdateNodePoolMessage(dctx, su.ClusterName, np)
 			}
-		case deviceGVK:
+		case deviceGVK.String():
 			{
 				var device entities.VPNDevice
 				if err := fn.JsonConversion(su.Object, &device); err != nil {
@@ -141,7 +115,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				}
 				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device)
 			}
-		case pvcGVK:
+		case pvcGVK.String():
 			{
 				var pvc entities.PersistentVolumeClaim
 				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
@@ -152,7 +126,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				}
 				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc)
 			}
-		case buildRunGVK:
+		case buildrunGVK.String():
 			{
 				var buildRun entities.BuildRun
 				if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
@@ -169,5 +143,12 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				return nil
 			}
 		}
+	}
+
+	consumer.Consume(readMsg, msgTypes.ConsumeOpts{
+		OnError: func(err error) error {
+			logger.Errorf(err, "error while consuming message")
+			return nil
+		},
 	})
 }

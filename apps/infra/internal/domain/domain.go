@@ -16,8 +16,9 @@ import (
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/messaging"
+	msgTypes "kloudlite.io/pkg/messaging/types"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -25,7 +26,7 @@ import (
 	types "kloudlite.io/pkg/types"
 )
 
-type SendTargetClusterMessagesProducer kafka.Producer
+type SendTargetClusterMessagesProducer messaging.Producer
 
 type domain struct {
 	logger logging.Logger
@@ -43,7 +44,7 @@ type domain struct {
 
 	k8sClient k8s.Client
 
-	producer kafka.Producer
+	producer messaging.Producer
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -73,12 +74,11 @@ func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj 
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, d.env.KafkaTopicSendMessagesToTargetWaitQueue, b, kafka.MessageArgs{
-		Key: []byte(obj.GetNamespace()),
-		Headers: map[string][]byte{
-			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, clusterName)),
-		},
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
+		Payload: b,
 	})
+
 	return err
 }
 
@@ -97,12 +97,12 @@ func (d *domain) deleteFromTargetCluster(ctx InfraContext, clusterName string, o
 	if err != nil {
 		return err
 	}
-	_, err = d.producer.Produce(ctx, d.env.KafkaTopicSendMessagesToTargetWaitQueue, b, kafka.MessageArgs{
-		Key: []byte(obj.GetNamespace()),
-		Headers: map[string][]byte{
-			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, clusterName)),
-		},
+
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
+		Payload: b,
 	})
+
 	return err
 }
 

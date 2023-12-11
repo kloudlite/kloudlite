@@ -303,3 +303,18 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 	}
 	return nil
 }
+
+// OnNodepoolApplyError implements Domain.
+func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
+	np, err := d.findNodePool(ctx, clusterName, name)
+	if err != nil {
+		return err
+	}
+
+	np.SyncStatus.State = t.SyncStateErroredAtAgent
+	np.SyncStatus.LastSyncedAt = time.Now()
+	np.SyncStatus.Error = &errMsg
+
+	_, err = d.nodePoolRepo.UpdateById(ctx, np.Id, np)
+	return err
+}

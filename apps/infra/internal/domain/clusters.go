@@ -178,12 +178,17 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 			return &clustersv1.AWSClusterConfig{
 				Region: cluster.Spec.AWS.Region,
 				K3sMasters: clustersv1.AWSK3sMastersConfig{
-					ImageId:                "ami-06d146e85d1709abb",
-					ImageSSHUsername:       "ubuntu",
-					InstanceType:           cluster.Spec.AWS.K3sMasters.InstanceType,
-					NvidiaGpuEnabled:       false,
-					RootVolumeType:         "gp3",
-					RootVolumeSize:         50,
+					ImageId:          "ami-06d146e85d1709abb",
+					ImageSSHUsername: "ubuntu",
+					InstanceType:     cluster.Spec.AWS.K3sMasters.InstanceType,
+					NvidiaGpuEnabled: cluster.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
+					RootVolumeType:   "gp3",
+					RootVolumeSize: func() int {
+						if cluster.Spec.AWS.K3sMasters.NvidiaGpuEnabled {
+							return 80
+						}
+						return 50
+					}(),
 					IAMInstanceProfileRole: &cps.AWS.CfParamInstanceProfileName,
 					Nodes: func() map[string]clustersv1.MasterNodeProps {
 						if cluster.Spec.AvailabilityMode == "dev" {
@@ -208,7 +213,8 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 				},
 			}
 		}(),
-		MessageQueueTopicName: fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name),
+		// MessageQueueTopicName: fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name),
+		MessageQueueTopicName: common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name),
 		KloudliteRelease:      "v1.0.5-nightly",
 		Output:                nil,
 	}

@@ -101,7 +101,8 @@ type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn struct {
-	InstanceType string `json:"instanceType"`
+	InstanceType     string `json:"instanceType"`
+	NvidiaGpuEnabled bool   `json:"nvidiaGpuEnabled"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
@@ -462,21 +463,21 @@ type K8sIoAPICoreV1PersistentVolumeClaimSpecIn struct {
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatus struct {
-	AccessModes               []string                                        `json:"accessModes,omitempty"`
-	AllocatedResources        map[string]interface{}                          `json:"allocatedResources,omitempty"`
-	AllocatedResourceStatuses map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
-	Capacity                  map[string]interface{}                          `json:"capacity,omitempty"`
-	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
-	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
+	AccessModes        []string                                        `json:"accessModes,omitempty"`
+	AllocatedResources map[string]interface{}                          `json:"allocatedResources,omitempty"`
+	Capacity           map[string]interface{}                          `json:"capacity,omitempty"`
+	Conditions         []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
+	Phase              *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
+	ResizeStatus       *string                                         `json:"resizeStatus,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
-	AccessModes               []string                                          `json:"accessModes,omitempty"`
-	AllocatedResources        map[string]interface{}                            `json:"allocatedResources,omitempty"`
-	AllocatedResourceStatuses map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
-	Capacity                  map[string]interface{}                            `json:"capacity,omitempty"`
-	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
-	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
+	AccessModes        []string                                          `json:"accessModes,omitempty"`
+	AllocatedResources map[string]interface{}                            `json:"allocatedResources,omitempty"`
+	Capacity           map[string]interface{}                            `json:"capacity,omitempty"`
+	Conditions         []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
+	Phase              *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
+	ResizeStatus       *string                                           `json:"resizeStatus,omitempty"`
 }
 
 type K8sIoAPICoreV1ResourceClaim struct {

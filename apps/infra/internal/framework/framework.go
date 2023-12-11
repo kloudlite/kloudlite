@@ -10,8 +10,8 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/messaging/nats"
 	mongoRepo "kloudlite.io/pkg/repos"
 )
 
@@ -38,8 +38,15 @@ var Module = fx.Module("framework",
 
 	mongoRepo.NewMongoClientFx[*framework](),
 
-	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
-		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		c, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   "infra",
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nats.NewJetstreamClient(c)
 	}),
 
 	fx.Provide(
