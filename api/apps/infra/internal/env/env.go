@@ -11,22 +11,15 @@ type Env struct {
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
 	AuthRedisHosts    string `env:"AUTH_REDIS_HOSTS" required:"true"`
-	AuthRedisUserName string `env:"AUTH_REDIS_USER_NAME" required:"true"`
+	AuthRedisUserName string `env:"AUTH_REDIS_USERNAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
-	KafkaBrokers         string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaUsername        string `env:"KAFKA_USERNAME" required:"true"`
-	KafkaPassword        string `env:"KAFKA_PASSWORD" required:"true"`
-	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
-
-	KafkaTopicSendMessagesToTargetWaitQueue string `env:"KAFKA_TOPIC_SEND_MESSAGES_TO_TARGET_WAIT_QUEUE" required:"true"`
-	KafkaTopicInfraUpdates                  string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
+	NatsURL    string `env:"NATS_URL" required:"true"`
+	NatsStream string `env:"NATS_STREAM" required:"true"`
 
 	AccountCookieName       string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ProviderSecretNamespace string `env:"PROVIDER_SECRET_NAMESPACE" required:"true"`
-
-	// KloudliteReservedNamespace string `env:"KLOUDLITE_RESERVED_NAMESPACE" required:"true"`
 
 	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
 	AccountsGrpcAddr string `env:"ACCOUNTS_GRPC_ADDR" required:"true"`
@@ -35,8 +28,6 @@ type Env struct {
 
 	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
 	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
-
-	// AWSAssumeTenantRoleFormatString string `env:"AWS_ASSUME_TENANT_ROLE_FORMAT_STRING" required:"true"`
 
 	AWSCfParamTrustedARN           string `env:"AWS_CF_PARAM_TRUSTED_ARN" required:"true"`
 	AWSCfStackNamePrefix           string `env:"AWS_CF_STACK_NAME_PREFIX" required:"true"`

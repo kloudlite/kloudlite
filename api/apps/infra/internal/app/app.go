@@ -22,8 +22,8 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/messaging/nats"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -66,18 +66,14 @@ var Module = fx.Module(
 		return message_office_internal.NewMessageOfficeInternalClient(client)
 	}),
 
-	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (domain.SendTargetClusterMessagesProducer, error) {
-		return kafka.NewProducer(conn, kafka.ProducerOpts{
-			Logger: logger.WithName("target-cluster-messages-producer"),
-		})
+	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) domain.SendTargetClusterMessagesProducer {
+		return jsc.CreateProducer()
 	}),
+
 	fx.Invoke(func(lf fx.Lifecycle, producer domain.SendTargetClusterMessagesProducer) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return producer.LifecycleOnStart(ctx)
-			},
 			OnStop: func(ctx context.Context) error {
-				return producer.LifecycleOnStop(ctx)
+				return producer.Stop(ctx)
 			},
 		})
 	}),
@@ -92,19 +88,56 @@ var Module = fx.Module(
 		infra.RegisterInfraServer(gserver, srv)
 	}),
 
-	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (ReceiveInfraUpdatesConsumer, error) {
-		return kafka.NewConsumer(conn, ev.KafkaConsumerGroupId, []string{ev.KafkaTopicInfraUpdates}, kafka.ConsumerOpts{
-			Logger: logger.WithName("infra-updates"),
+	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveInfraUpdatesConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteInfra, common.EventErrorOnApply)
+
+		consumerName := "infra:resource-updates"
+		return jsc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer receives infra resource updates, processes them, and keeps our Database updated about things happening in the cluster",
+				FilterSubjects: []string{topic},
+			},
 		})
 	}),
-	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveInfraUpdatesConsumer, d domain.Domain) {
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveInfraUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				go processInfraUpdates(consumer, d)
-				return consumer.LifecycleOnStart(ctx)
+			OnStart: func(context.Context) error {
+				go processInfraUpdates(consumer, d, logger)
+				return nil
 			},
 			OnStop: func(ctx context.Context) error {
-				return consumer.LifecycleOnStop(ctx)
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteInfra, common.EventErrorOnApply)
+
+		consumerName := "infra:error-on-apply"
+		return jsc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer receives infra resource apply error on agent, processes them, and keeps our Database updated about why the resource apply failed at agent",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go ProcessErrorOnApply(consumer, logger, d)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
 			},
 		})
 	}),

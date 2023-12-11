@@ -61,7 +61,12 @@ func main() {
 		framework.Module,
 	)
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
+	ctx, cancel := func() (context.Context, context.CancelFunc) {
+		if isDev {
+			return context.WithCancel(context.TODO())
+		}
+		return context.WithTimeout(context.Background(), 2*time.Second)
+	}()
 	defer cancel()
 
 	if err := app.Start(ctx); err != nil {
