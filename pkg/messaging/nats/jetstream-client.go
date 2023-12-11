@@ -38,11 +38,10 @@ func (jsc *JetstreamClient) CreateConsumer(ctx context.Context, args JetstreamCo
 	}
 
 	return &JetstreamConsumer{
-		name:       args.ConsumerConfig.Name,
-		js:         jsc.js,
-		logger:     jsc.logger.WithName(args.ConsumerConfig.Name),
-		consumer:   c,
-		consumeCtx: nil,
+		name:     args.ConsumerConfig.Name,
+		js:       jsc.js,
+		logger:   jsc.logger.WithName(args.ConsumerConfig.Name),
+		consumer: c,
 	}, nil
 }
 
