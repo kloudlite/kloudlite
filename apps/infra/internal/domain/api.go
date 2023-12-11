@@ -65,6 +65,7 @@ type Domain interface {
 
 	OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
 	OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
+	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
 
 	ListNodes(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error)
 	GetNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error)
@@ -80,7 +81,7 @@ type Domain interface {
 	UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
 	DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error
 
-	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, errMsg string, name string) error
+	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
 	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
 	OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
 

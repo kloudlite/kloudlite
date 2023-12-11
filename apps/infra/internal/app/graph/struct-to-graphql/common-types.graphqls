@@ -239,10 +239,10 @@ type K8s__io___api___core___v1__PersistentVolumeClaimSpec @shareable {
 type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
   accessModes: [String!]
   allocatedResources: Map
-  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  resizeStatus: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim @shareable {
@@ -343,6 +343,7 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfi
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
   instanceType: String!
+  nvidiaGpuEnabled: Boolean!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
@@ -507,10 +508,10 @@ input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
 input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   accessModes: [String!]
   allocatedResources: Map
-  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  resizeStatus: String
 }
 
 input K8s__io___api___core___v1__ResourceClaimIn {
