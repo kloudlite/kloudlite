@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"go.uber.org/fx"
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
-	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/messaging/nats"
 	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/message-office/internal/app/graph"
@@ -29,31 +29,25 @@ type (
 )
 
 var Module = fx.Module("app",
-
 	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
 
-	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (UpdatesProducer, error) {
-		return kafka.NewProducer(conn, kafka.ProducerOpts{
-			Logger: logger.WithName("updates-updatesProducer"),
-		})
+	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) UpdatesProducer {
+		return jsc.CreateProducer()
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, producer UpdatesProducer) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return producer.LifecycleOnStart(ctx)
-			},
 			OnStop: func(ctx context.Context) error {
-				return producer.LifecycleOnStop(ctx)
+				return producer.Stop(ctx)
 			},
 		})
 	}),
 
 	domain.Module,
 
-	fx.Provide(func(logger logging.Logger, producer UpdatesProducer, ev *env.Env, d domain.Domain, conn kafka.Conn) messages.MessageDispatchServiceServer {
-		return NewMessageOfficeServer(conn, producer, ev, d, logger.WithName("message-office-grpc-server"))
+	fx.Provide(func(logger logging.Logger, jc *nats.JetstreamClient, producer UpdatesProducer, ev *env.Env, d domain.Domain) (messages.MessageDispatchServiceServer, error) {
+		return NewMessageOfficeServer(producer, jc, ev, d, logger.WithName("message-office-grpc-server"))
 	}),
 
 	fx.Provide(func(conn RealVectorGrpcClient) proto_rpc.VectorClient {
