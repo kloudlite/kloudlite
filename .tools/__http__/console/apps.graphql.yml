@@ -97,7 +97,7 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      name: "{{.name}}x"
+      name: "{{.name}}"
       namespace: "{{.namespace}}"
     spec:
       # region: r1

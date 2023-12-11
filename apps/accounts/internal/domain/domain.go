@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"golang.org/x/net/context"
 	"kloudlite.io/apps/accounts/internal/entities"
@@ -77,10 +76,9 @@ type domain struct {
 
 	accountRepo    repos.DbRepo[*entities.Account]
 	invitationRepo repos.DbRepo[*entities.Invitation]
-	//accountInviteTokenRepo cache.Repo[*entities.Invitation]
+	// accountInviteTokenRepo cache.Repo[*entities.Invitation]
 
-	k8sYamlClient     kubectl.YAMLClient
-	k8sExtendedClient k8s.ExtendedK8sClient
+	k8sClient k8s.Client
 
 	logger logging.Logger
 }
@@ -92,12 +90,11 @@ func NewDomain(
 	authClient auth.AuthClient,
 	commsClient comms.CommsClient,
 
-	k8sYamlClient kubectl.YAMLClient,
-	k8sExtendedClient k8s.ExtendedK8sClient,
+	k8sClient k8s.Client,
 
 	accountRepo repos.DbRepo[*entities.Account],
 	invitationRepo repos.DbRepo[*entities.Invitation],
-	//accountInviteTokenRepo cache.Repo[*entities.Invitation],
+	// accountInviteTokenRepo cache.Repo[*entities.Invitation],
 
 	logger logging.Logger,
 ) Domain {
@@ -107,12 +104,11 @@ func NewDomain(
 		consoleClient: consoleClient,
 		commsClient:   commsClient,
 
-		k8sYamlClient:     k8sYamlClient,
-		k8sExtendedClient: k8sExtendedClient,
+		k8sClient: k8sClient,
 
 		accountRepo:    accountRepo,
 		invitationRepo: invitationRepo,
-		//accountInviteTokenRepo: accountInviteTokenRepo,
+		// accountInviteTokenRepo: accountInviteTokenRepo,
 
 		logger: logger,
 	}

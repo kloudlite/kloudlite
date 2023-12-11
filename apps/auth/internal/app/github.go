@@ -39,7 +39,7 @@ func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
 		return "", fmt.Errorf("github oauth is disabled")
 	}
 	csrfToken := fn.Must(fn.CleanerNanoid(32))
-	b64state, err := fn.Json.ToB64Url(map[string]string{"csrf": csrfToken, "state": state})
+	b64state, err := fn.ToBase64UrlFromJson(map[string]string{"csrf": csrfToken, "state": state})
 	if err != nil {
 		return "", errors.NewEf(err, "could not JSON marshal oauth State into []byte")
 	}

@@ -21,11 +21,14 @@ tasks:
       CGO_ENABLED: 0
       GOOS: linux
       GOARCH: amd64
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
+      - go build -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   run:
@@ -47,6 +50,6 @@ tasks:
         tdir=$(mktemp -d)
         task build Out=$tdir/{{.APP}}
 
-        docker buildx build -f ./Dockerfile.ci -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
-        docker push {{.IMAGE}}
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
+        podman push {{.IMAGE}}
         rm -rf $tdir
