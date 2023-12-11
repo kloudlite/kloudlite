@@ -11,8 +11,7 @@ const Root = ({ children }: IBreadcrum) => {
 
 const Button = React.forwardRef<HTMLButtonElement, IButton>((props, ref) => {
   return (
-    <div className="flex flex-row gap-md items-center">
-      <div className="text-text-disabled bodySm">/</div>
+    <div className="flex flex-row gap-md items-center bodyMd-medium">
       <NativeButton size="md" variant="plain" ref={ref} {...props} />
     </div>
   );

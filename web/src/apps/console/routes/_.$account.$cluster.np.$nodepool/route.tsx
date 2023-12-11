@@ -148,6 +148,7 @@ const ClusterInfo = () => {
         if (!nodepool) {
           return null;
         }
+
         return (
           <Wrapper
             header={{

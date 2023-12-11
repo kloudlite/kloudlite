@@ -15,7 +15,8 @@ import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
-import { FadeIn, InfoLabel, parseValue } from './util';
+import { FadeIn, parseValue } from './util';
+import { InfoLabel } from '~/console/components/commons';
 
 interface IExposedPorts {
   targetPort?: number;

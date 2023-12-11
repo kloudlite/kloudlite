@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { Box } from '~/console/components/common-console-components';
 import HighlightJsLog from '~/console/components/logger';
 
 const Log = () => {
@@ -39,31 +40,33 @@ const Log = () => {
   // const [url, setUrl] = useState(getUrl(from));
 
   return (
-    <div className="p-3xl hljs rounded">
-      <HighlightJsLog
-        // actionComponent={
-        //   <Select
-        //     size="md"
-        //     options={async () => selectOptions}
-        //     value={selectOptions[parseValue(selected, 1)]}
-        //     onChange={(e) => {
-        //       setSelected(e.value);
-        //     }}
-        //   />
-        // }
-        title={
-          <div className="flex flex-col gap-lg">
-            <div className="headingXl">Logs</div>
-          </div>
-        }
-        dark
-        websocket
-        height="60vh"
-        width="100%"
-        url={getUrl(selectOptions[3].from())}
-        selectableLines
-      />
-    </div>
+    <Box title="Cluster Logs">
+      <div className=" hljs rounded">
+        <HighlightJsLog
+          // actionComponent={
+          //   <Select
+          //     size="md"
+          //     options={async () => selectOptions}
+          //     value={selectOptions[parseValue(selected, 1)]}
+          //     onChange={(e) => {
+          //       setSelected(e.value);
+          //     }}
+          //   />
+          // }
+          // title={
+          //   <div className="flex flex-col gap-lg">
+          //     <div className="">Cluster logs</div>
+          //   </div>
+          // }
+          dark
+          websocket
+          height="60vh"
+          width="100%"
+          url={getUrl(selectOptions[3].from())}
+          selectableLines
+        />
+      </div>
+    </Box>
   );
 };
 

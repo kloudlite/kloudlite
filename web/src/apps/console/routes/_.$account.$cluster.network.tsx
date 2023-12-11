@@ -11,7 +11,7 @@ const ContainerRegistry = () => {
         { label: 'Domain', value: 'domain' },
       ]}
       parentPath="/network"
-      headerTitle="Network"
+      // headerTitle="Network"
     >
       <Outlet context={{ ...rootContext }} />
     </SidebarLayout>

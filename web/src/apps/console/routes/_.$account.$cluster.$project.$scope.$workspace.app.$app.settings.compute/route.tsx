@@ -14,9 +14,9 @@ import {
 } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/datas';
 import {
   FadeIn,
-  InfoLabel,
   parseValue,
 } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { InfoLabel } from '~/console/components/commons';
 
 const SettingCompute = () => {
   const { app, setApp, getContainer } = useAppState();

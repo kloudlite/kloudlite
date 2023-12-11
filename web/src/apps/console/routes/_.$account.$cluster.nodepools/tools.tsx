@@ -27,6 +27,6 @@ const Tools = () => {
     ],
     [searchParams]
   );
-  return <CommonTools {...{ options }} />;
+  return <CommonTools {...{ options, noViewMode: true }} />;
 };
 export default Tools;

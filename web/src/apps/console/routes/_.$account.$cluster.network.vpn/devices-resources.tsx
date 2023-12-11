@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
@@ -32,7 +31,6 @@ const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    cluster: item.clusterName,
     updateInfo: {
       author: titleCase(
         `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
@@ -105,7 +103,7 @@ const GridView = ({ items, onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, cluster, updateInfo } = parseItem(item);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -119,14 +117,6 @@ const GridView = ({ items, onAction }: IResource) => {
                     subtitle={id}
                     action={<ExtraButton onAction={onAction} item={item} />}
                   />
-                ),
-              },
-              {
-                key: generateKey(keyPrefix, 'access'),
-                render: () => (
-                  <div className="flex flex-col gap-md">
-                    <ListBody data={cluster} />
-                  </div>
                 ),
               },
               {
@@ -150,7 +140,7 @@ const ListView = ({ items, onAction }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
-        const { name, id, cluster, updateInfo } = parseItem(item);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -161,11 +151,6 @@ const ListView = ({ items, onAction }: IResource) => {
                 key: generateKey(keyPrefix, name + id),
                 className: 'w-full',
                 render: () => <ListTitle title={name} subtitle={id} />,
-              },
-              {
-                key: generateKey(keyPrefix, cluster),
-                className: 'w-[180px] text-start mr-[50px]',
-                render: () => <ListBody data={cluster} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),

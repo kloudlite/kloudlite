@@ -321,7 +321,7 @@ const LogLine = ({
       )}
 
       <div
-        className="w-[3px] mr-xl ml-sm h-full pulsable-hidden"
+        className="w-[3px] mr-xl ml-sm h-full pulsable pulsable-hidden"
         style={{ backgroundImage: generateColor(log.pod_name) }}
       />
       <div className="inline-flex gap-xl pulsable">
@@ -670,7 +670,7 @@ ${url}`
   }, [fullScreen]);
 
   const mockDataRef = useRef(
-    Array.from({ length: 5 }).map(() => {
+    Array.from({ length: 15 }).map(() => {
       return {
         message: logsMockData[Math.floor(Math.random() * 10)],
         timestamp: dayjs().toISOString(),

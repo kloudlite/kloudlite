@@ -1414,6 +1414,14 @@ export type ConsoleGetClusterQuery = {
   };
 };
 
+export type ConsoleGetKubeConfigQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetKubeConfigQuery = {
+  infra_getCluster?: { adminKubeconfig?: { encoding: string; value: string } };
+};
+
 export type ConsoleUpdateClusterMutationVariables = Exact<{
   cluster: ClusterIn;
 }>;

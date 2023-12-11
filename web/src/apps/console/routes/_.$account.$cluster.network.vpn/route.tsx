@@ -53,14 +53,13 @@ const VPN = () => {
       >
         {({ devicesData }) => {
           const devices = devicesData.edges?.map(({ node }) => node);
-
           return (
             <Wrapper
               secondaryHeader={{
-                title: 'VPN',
+                title: 'Wireguard devices',
                 action: devices.length > 0 && (
                   <Button
-                    content="Add device"
+                    content="Create Device"
                     prefix={<Plus />}
                     variant="primary"
                     onClick={() => {
@@ -72,7 +71,7 @@ const VPN = () => {
               empty={{
                 is: devices.length === 0,
                 action: {
-                  content: 'Add device',
+                  content: 'Create Device',
                   prefix: <Plus />,
                   variant: 'primary',
                   onClick: () => {

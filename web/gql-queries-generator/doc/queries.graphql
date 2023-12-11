@@ -446,6 +446,15 @@ query consoleGetCluster($name: String!) {
   }
 }
 
+query consoleGetKubeConfig($name: String!) {
+  infra_getCluster(name: $name) {
+    adminKubeconfig {
+      encoding
+      value
+    }
+  }
+}
+
 mutation consoleUpdateCluster($cluster: ClusterIn!) {
   infra_updateCluster(cluster: $cluster) {
     id

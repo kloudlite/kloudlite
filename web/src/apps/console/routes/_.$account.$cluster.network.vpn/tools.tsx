@@ -4,7 +4,7 @@ import CommonTools from '~/console/components/common-tools';
 const Tools = () => {
   const options = useMemo(() => [], []);
 
-  return <CommonTools {...{ options }} />;
+  return <CommonTools {...{ options, noViewMode: true }} />;
 };
 
 export default Tools;

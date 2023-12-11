@@ -10,6 +10,7 @@ import {
   ConsoleDeleteClusterMutationVariables,
   ConsoleGetClusterQuery,
   ConsoleGetClusterQueryVariables,
+  ConsoleGetKubeConfigQuery,
   ConsoleListClustersQuery,
   ConsoleListClustersQueryVariables,
   ConsoleUpdateClusterMutation,
@@ -283,6 +284,22 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetClusterQuery) => data.infra_getCluster,
+      vars(_: ConsoleGetClusterQueryVariables) {},
+    }
+  ),
+  getKubeConfig: executor(
+    gql`
+      query Infra_getCluster($name: String!) {
+        infra_getCluster(name: $name) {
+          adminKubeconfig {
+            encoding
+            value
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleGetKubeConfigQuery) => data.infra_getCluster,
       vars(_: ConsoleGetClusterQueryVariables) {},
     }
   ),

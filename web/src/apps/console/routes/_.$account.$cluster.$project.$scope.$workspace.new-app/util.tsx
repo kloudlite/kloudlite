@@ -1,7 +1,5 @@
-import { Question } from '@jengaicons/react';
 import { motion } from 'framer-motion';
-import { FormEventHandler, ReactNode } from 'react';
-import Tooltip from '~/components/atoms/tooltip';
+import { FormEventHandler } from 'react';
 import { ChildrenProps } from '~/components/types';
 import { cn } from '~/components/utils';
 import { InputMaybe } from '~/root/src/generated/gql/server';
@@ -38,24 +36,6 @@ export const FadeIn = ({
     >
       {children}
     </motion.form>
-  );
-};
-
-interface InfoLabelProps {
-  info: ReactNode;
-  label: ReactNode;
-}
-
-export const InfoLabel = ({ info, label }: InfoLabelProps) => {
-  return (
-    <span className="flex items-center gap-lg">
-      {label}{' '}
-      <Tooltip.Root content={info}>
-        <span className="text-text-primary">
-          <Question color="currentColor" size={13} />
-        </span>
-      </Tooltip.Root>
-    </span>
   );
 };
 

@@ -12,9 +12,10 @@ const ClusterOverview = () => {
       navItems={[
         { label: 'Info', value: 'info' },
         { label: 'Logs', value: 'logs' },
+        { label: 'Metrics', value: 'metrics' },
       ]}
+      headerTitle=""
       parentPath="/overview"
-      headerTitle="Overview"
       headerActions={subNavAction.data}
     >
       <Outlet context={{ ...rootContext }} />

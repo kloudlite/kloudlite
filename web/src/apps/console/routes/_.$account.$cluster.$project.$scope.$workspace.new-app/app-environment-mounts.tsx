@@ -12,6 +12,7 @@ import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
+import { InfoLabel } from '~/console/components/commons';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { useAppState } from '~/console/page-components/app-states';
@@ -22,7 +23,6 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
-import { InfoLabel } from './util';
 
 export interface IValue {
   refKey: string;

@@ -13,7 +13,7 @@ interface Item extends Omit<IActionItem, 'children'> {
 interface ISidebarLayout {
   navItems: Item[];
   parentPath: string;
-  headerTitle: string;
+  headerTitle?: string;
   children: ReactNode;
   headerActions?: ReactNode;
 }
@@ -28,7 +28,11 @@ const SidebarLayout = ({
   const { activePath } = useActivePath({ parent: parentPath });
   return (
     <>
-      <SubHeader title={headerTitle} actions={headerActions} />
+      {!!headerTitle || !!headerActions ? (
+        <SubHeader title={headerTitle} actions={headerActions} />
+      ) : (
+        <div className="pt-6xl" />
+      )}
       <div className="flex flex-col md:flex-row">
         <div className="flex flex-col">
           <div className="flex flex-col">
@@ -73,7 +77,7 @@ const SidebarLayout = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-col flex-1 overflow-x-hidden md:pl-10xl">
+        <div className="flex flex-col flex-1 overflow-x-hidden md:pl-6xl">
           <div className="flex-1 flex flex-col gap-6xl">{children}</div>
         </div>
       </div>

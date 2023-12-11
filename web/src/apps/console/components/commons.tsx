@@ -1,9 +1,7 @@
-import { CopySimple, Check, Info } from '@jengaicons/react';
+import { CopySimple, Info, Question } from '@jengaicons/react';
 import { ReactNode, useState } from 'react';
-import Chips from '~/components/atoms/chips';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { WorkspacesLogo } from '~/components/branding/workspace-logo';
-import { toast } from '~/components/molecule/toast';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { generateKey, titleCase } from '~/components/utils';
 import { Badge } from '~/components/atoms/badge';
@@ -11,6 +9,8 @@ import {
   Kloudlite__Io___Pkg___Types__SyncStatusState as SyncState,
   Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncAction,
 } from '~/root/src/generated/gql/server';
+import Tooltip from '~/components/atoms/tooltip';
+import { Link } from '@remix-run/react';
 import { ListItem } from './console-list-components';
 import {
   parseUpdateOrCreatedBy,
@@ -40,6 +40,32 @@ export const DetailItem = ({
   );
 };
 
+interface InfoLabelProps {
+  info: ReactNode;
+  label: ReactNode;
+  title?: ReactNode;
+}
+
+export const InfoLabel = ({ info, title, label }: InfoLabelProps) => {
+  return (
+    <span className="flex items-center gap-lg">
+      {label}{' '}
+      <Tooltip.Root
+        content={
+          <div className="p-md text-xs flex flex-col gap-md">
+            <div className="headingSm">{title}</div>
+            {info}
+          </div>
+        }
+      >
+        <span className="text-text-primary">
+          <Question color="currentColor" size={13} />
+        </span>
+      </Tooltip.Root>
+    </span>
+  );
+};
+
 export const CopyButton = ({
   title,
   value,
@@ -53,21 +79,32 @@ export const CopyButton = ({
       setTimeout(() => {
         setCopyIcon(<CopySimple />);
       }, 1000);
-      toast.success('Copied to clipboard');
+      // toast.success('Copied to clipboard');
     },
   });
 
   return (
-    <Chips.Chip
-      type="CLICKABLE"
-      item={title}
-      label={title}
-      prefix={copyIcon}
+    // <Chips.Chip
+    //   type="CLICKABLE"
+    //   item={title}
+    //   label={title}
+    //   prefix={copyIcon}
+    //   onClick={() => {
+    //     copy(value);
+    //     setCopyIcon(<Check />);
+    //   }}
+    // />
+    <div
       onClick={() => {
         copy(value);
-        setCopyIcon(<Check />);
       }}
-    />
+      className="flex flex-row gap-md items-center select-none group cursor-pointer"
+    >
+      <span>{title}</span>
+      <span className="invisible group-hover:visible">
+        <CopySimple size={10} />
+      </span>
+    </div>
   );
 };
 
@@ -104,11 +141,7 @@ type ICommonMeta = IUpdateMeta & IStatusMeta;
 const parseStatusComponent = ({ status }: { status: IStatus }) => {
   switch (status) {
     case 'deleting':
-      return (
-        <Badge icon={<Info />} type="critical">
-          Deleting...
-        </Badge>
-      );
+      return <div className="bodySm text-text-soft">Deleting...</div>;
     default:
       return null;
   }
@@ -153,4 +186,23 @@ export const listRender = ({
       };
     },
   };
+};
+
+export const SubHeaderTitle = ({
+  to,
+  toTitle,
+  title,
+}: {
+  to: string;
+  toTitle: ReactNode;
+  title: ReactNode;
+}) => {
+  return (
+    <div className="flex flex-col gap-md">
+      <Link to={to} className="text-text-soft bodySm">
+        {toTitle}
+      </Link>
+      <span>{title}</span>
+    </div>
+  );
 };

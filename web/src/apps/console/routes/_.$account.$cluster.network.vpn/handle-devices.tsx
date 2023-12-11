@@ -40,10 +40,8 @@ import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import { downloadFile } from '~/console/utils/commons';
 import CodeView from '~/console/components/code-view';
-import {
-  InfoLabel,
-  parseValue,
-} from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { InfoLabel } from '~/console/components/commons';
+import { parseValue } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { IAccountContext } from '../_.$account';
 
 interface IExposedPorts {
