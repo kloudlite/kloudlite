@@ -17,8 +17,8 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
-      # GOOS: linux
-      # GOARCH: amd64
+      GOOS: linux
+      GOARCH: amd64
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value

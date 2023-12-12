@@ -234,6 +234,11 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 			g.logger.WithKV("subject", msg.Subject).Infof("dispatched message to agent")
 		}()
 		return server.Send(&messages.Action{Message: msg.Payload})
+	}, types.ConsumeOpts{
+		OnError: func(err error) error {
+			g.logger.Errorf(err, "consumer error")
+			return nil
+		},
 	})
 
 	return nil

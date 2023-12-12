@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"runtime/trace"
 
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/apps/build-agent/internal/env"
@@ -36,14 +35,6 @@ func main() {
 				}, nil
 			}
 			return k8s.RestInclusterConfig()
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (kubectl.YAMLClient, error) {
-			return kubectl.NewYAMLClient(restCfg)
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
-			return k8s.NewExtendedK8sClient(restCfg)
 		}),
 
 		fn.FxErrorHandler(),
