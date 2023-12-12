@@ -15,7 +15,7 @@ type DatabaseOutput struct {
 type DatabaseSpec struct {
 	MsvcRef      ct.MsvcRef     `json:"msvcRef"`
 	ResourceName string         `json:"resourceName"`
-	Output       DatabaseOutput `json:"output"`
+	Output       DatabaseOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 // +kubebuilder:object:root=true

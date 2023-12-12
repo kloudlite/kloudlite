@@ -83,6 +83,11 @@ type SecretRef struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
+type ConfigMapRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
 type SecretKeyRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace,omitempty"`
