@@ -3,8 +3,8 @@ package nats
 import (
 	"context"
 
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/nats-io/nats.go/jetstream"
-	"kloudlite.io/pkg/logging"
 )
 
 type JetstreamClient struct {

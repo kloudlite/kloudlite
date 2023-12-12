@@ -3,7 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/apps/infra/internal/domain"
+	"github.com/kloudlite/api/apps/infra/internal/domain"
 )
 
 func toInfraContext(ctx context.Context) (domain.InfraContext, error) {

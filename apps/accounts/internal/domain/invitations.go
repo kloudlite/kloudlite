@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
 	nanoid "github.com/matoous/go-nanoid/v2"
-	"kloudlite.io/apps/accounts/internal/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
 )
 
 func (d *domain) findInvitation(ctx context.Context, accountName string, invitationId repos.ID) (*entities.Invitation, error) {

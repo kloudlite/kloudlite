@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/repos"
 
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/pkg/logging"
 
+	"github.com/kloudlite/api/apps/accounts/internal/app"
+	"github.com/kloudlite/api/apps/accounts/internal/env"
+	"github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/accounts/internal/app"
-	"kloudlite.io/apps/accounts/internal/env"
-	"kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
 )
 
 type fm struct {

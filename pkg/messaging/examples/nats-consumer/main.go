@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 
-	"kloudlite.io/pkg/messaging"
-	msg_nats "kloudlite.io/pkg/messaging/nats"
-	"kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/nats"
+	"github.com/kloudlite/api/pkg/messaging"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/nats"
 )
 
 func main() {

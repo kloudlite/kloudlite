@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	app "github.com/kloudlite/api/apps/console/internal/app"
+	"github.com/kloudlite/api/apps/console/internal/env"
+	"github.com/kloudlite/api/pkg/cache"
+	rpc "github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
+	loki_client "github.com/kloudlite/api/pkg/loki-client"
+	"github.com/kloudlite/api/pkg/messaging/nats"
+	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
-	app "kloudlite.io/apps/console/internal/app"
-	"kloudlite.io/apps/console/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
-	loki_client "kloudlite.io/pkg/loki-client"
-	"kloudlite.io/pkg/nats"
-	mongoDb "kloudlite.io/pkg/repos"
 )
 
 type fm struct {

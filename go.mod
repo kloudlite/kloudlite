@@ -1,4 +1,4 @@
-module kloudlite.io
+module github.com/kloudlite/api
 
 go 1.21.1
 

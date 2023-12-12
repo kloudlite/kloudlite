@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	iam "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	iam "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 )
 
 type IAMServerCallerInfo struct {

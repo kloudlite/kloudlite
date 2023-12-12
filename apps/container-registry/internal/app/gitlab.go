@@ -6,15 +6,15 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/types"
 	gitlab "github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
 	"golang.org/x/oauth2"
 	oauthGitlab "golang.org/x/oauth2/gitlab"
-	"kloudlite.io/apps/container-registry/internal/domain"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/types"
 )
 
 type gitlabOptions interface {

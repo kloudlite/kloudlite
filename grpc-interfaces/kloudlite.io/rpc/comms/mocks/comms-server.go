@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	comms "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	comms "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 )
 
 type CommsServerCallerInfo struct {

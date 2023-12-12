@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/common"
-	"kloudlite.io/constants"
-	"kloudlite.io/pkg/errors"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/pkg/errors"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/repos"
 	"time"
 )
 

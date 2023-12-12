@@ -5,25 +5,25 @@ import (
 	"fmt"
 	"strconv"
 
-	"kloudlite.io/common"
+	"github.com/kloudlite/api/common"
 
-	"kloudlite.io/apps/infra/internal/entities"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
 
+	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/messaging"
+	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/pkg/constants"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/messaging"
-	msgTypes "kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	types "github.com/kloudlite/api/pkg/types"
 	t "github.com/kloudlite/operator/agent/types"
-	types "kloudlite.io/pkg/types"
 )
 
 type SendTargetClusterMessagesProducer messaging.Producer

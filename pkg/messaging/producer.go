@@ -3,8 +3,8 @@ package messaging
 import (
 	"context"
 
-	"kloudlite.io/pkg/messaging/nats"
-	"kloudlite.io/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/messaging/types"
 )
 
 type Producer interface {

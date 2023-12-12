@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type RegistryContext struct {

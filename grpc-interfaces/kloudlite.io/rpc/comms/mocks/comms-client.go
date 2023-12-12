@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	comms "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	grpc "google.golang.org/grpc"
-	comms "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 )
 
 type CommsClientCallerInfo struct {

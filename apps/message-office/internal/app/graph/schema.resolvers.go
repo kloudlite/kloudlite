@@ -7,8 +7,8 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/message-office/internal/app/graph/generated"
-	"kloudlite.io/apps/message-office/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/message-office/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/message-office/internal/app/graph/model"
 )
 
 // ClusterToken is the resolver for the clusterToken field.

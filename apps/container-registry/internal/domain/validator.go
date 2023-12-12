@@ -3,8 +3,8 @@ package domain
 import (
 	"fmt"
 
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"k8s.io/utils/strings/slices"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
 )
 
 func validateTag(tag string) error {

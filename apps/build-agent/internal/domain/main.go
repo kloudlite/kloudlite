@@ -3,9 +3,9 @@ package domain
 import (
 	"context"
 
+	"github.com/kloudlite/api/apps/build-agent/internal/env"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/build-agent/internal/env"
-	"kloudlite.io/pkg/logging"
 )
 
 type Impl struct {

@@ -2,7 +2,7 @@ package beacon
 
 import (
 	"context"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Beacon interface {

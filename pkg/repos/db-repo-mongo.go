@@ -12,11 +12,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/fx"
 
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 )
 
 type dbRepo[T Entity] struct {

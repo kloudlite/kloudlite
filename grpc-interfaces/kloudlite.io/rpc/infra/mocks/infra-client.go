@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	infra "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
 	grpc "google.golang.org/grpc"
-	infra "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 )
 
 type InfraClientCallerInfo struct {

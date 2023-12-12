@@ -2,8 +2,8 @@ package domain
 
 import (
 	"fmt"
-	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) ListPVCs(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolumeClaim], error) {

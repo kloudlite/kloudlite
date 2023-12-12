@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kloudlite/api/apps/infra/internal/app"
+	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/messaging/nats"
+	mongoRepo "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/infra/internal/app"
-	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/nats"
-	mongoRepo "kloudlite.io/pkg/repos"
 )
 
 type framework struct {

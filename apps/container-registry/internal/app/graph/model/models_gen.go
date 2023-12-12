@@ -7,8 +7,8 @@ import (
 	"io"
 	"strconv"
 
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type BuildCacheKeyEdge struct {

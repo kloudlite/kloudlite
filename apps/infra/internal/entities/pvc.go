@@ -1,8 +1,8 @@
 package entities
 
 import (
+	"github.com/kloudlite/api/pkg/repos"
 	corev1 "k8s.io/api/core/v1"
-	"kloudlite.io/pkg/repos"
 )
 
 type PersistentVolumeClaim struct {

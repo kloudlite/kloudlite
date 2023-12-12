@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 type redisCli[T any] struct {

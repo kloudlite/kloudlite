@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 
+	"github.com/kloudlite/api/apps/webhooks/internal/env"
+	"github.com/kloudlite/api/apps/webhooks/internal/framework"
+	"github.com/kloudlite/api/pkg/config"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/webhooks/internal/env"
-	"kloudlite.io/apps/webhooks/internal/framework"
-	"kloudlite.io/pkg/config"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 )
 
 func main() {

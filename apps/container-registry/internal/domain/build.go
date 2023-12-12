@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {

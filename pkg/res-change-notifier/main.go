@@ -2,8 +2,8 @@ package rcn
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/repos"
 	"net/http"
 )
 

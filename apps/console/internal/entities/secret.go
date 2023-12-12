@@ -1,10 +1,10 @@
 package entities
 
 import (
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 type Secret struct {

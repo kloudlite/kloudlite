@@ -8,10 +8,10 @@ import (
 	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/messaging"
-	msgTypes "kloudlite.io/pkg/messaging/types"
+	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/messaging"
+	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 )
 
 type ErrorOnApplyConsumer messaging.Consumer

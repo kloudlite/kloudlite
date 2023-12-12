@@ -7,9 +7,9 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/accounts/internal/app/graph/generated"
-	"kloudlite.io/apps/accounts/internal/app/graph/model"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/model"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 // FindUserByID is the resolver for the findUserByID field.

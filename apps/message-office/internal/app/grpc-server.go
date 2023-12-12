@@ -7,20 +7,20 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/metadata"
-	"kloudlite.io/common"
 
-	"kloudlite.io/pkg/messaging"
-	msg_nats "kloudlite.io/pkg/messaging/nats"
-	"kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/nats"
+	"github.com/kloudlite/api/pkg/messaging"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/nats"
 
-	"kloudlite.io/apps/message-office/internal/domain"
-	"kloudlite.io/apps/message-office/internal/env"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/apps/message-office/internal/domain"
+	"github.com/kloudlite/api/apps/message-office/internal/env"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 type (

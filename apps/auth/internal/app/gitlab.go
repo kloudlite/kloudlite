@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 	oauthGitlab "golang.org/x/oauth2/gitlab"
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/apps/auth/internal/env"
-	"kloudlite.io/pkg/errors"
 )
 
 type gitlabI struct {

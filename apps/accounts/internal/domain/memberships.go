@@ -2,13 +2,13 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/apps/accounts/internal/entities"
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	"strings"
 
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) addMembership(ctx context.Context, accountName string, userId repos.ID, role iamT.Role) error {

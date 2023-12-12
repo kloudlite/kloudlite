@@ -1,8 +1,8 @@
 package app
 
 import (
+	"github.com/kloudlite/api/pkg/redpanda"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/redpanda"
 )
 
 var Module = fx.Module(

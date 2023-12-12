@@ -15,7 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	l "github.com/gofiber/fiber/v2/middleware/logger"
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 type Server interface {

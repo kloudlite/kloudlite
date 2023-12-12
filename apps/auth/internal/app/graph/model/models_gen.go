@@ -3,7 +3,7 @@
 package model
 
 import (
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type OAuthProviderStatus struct {

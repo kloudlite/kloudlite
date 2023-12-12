@@ -6,13 +6,13 @@ import (
 
 	"go.uber.org/fx"
 
-	"kloudlite.io/apps/message-office/internal/app"
-	"kloudlite.io/apps/message-office/internal/env"
-	"kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/nats"
-	mongoDb "kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/message-office/internal/app"
+	"github.com/kloudlite/api/apps/message-office/internal/env"
+	"github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/nats"
+	mongoDb "github.com/kloudlite/api/pkg/repos"
 )
 
 type fm struct {

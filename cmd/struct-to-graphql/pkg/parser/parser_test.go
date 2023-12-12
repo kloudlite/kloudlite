@@ -15,11 +15,11 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	exampleTypes "github.com/kloudlite/api/cmd/struct-to-graphql/internal/example/types"
+	"github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser"
+	types2 "github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser/testdata/types"
+	"github.com/kloudlite/api/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	exampleTypes "kloudlite.io/cmd/struct-to-graphql/internal/example/types"
-	"kloudlite.io/cmd/struct-to-graphql/pkg/parser"
-	types2 "kloudlite.io/cmd/struct-to-graphql/pkg/parser/testdata/types"
-	"kloudlite.io/pkg/types"
 )
 
 type ExampleJson struct {

@@ -1,10 +1,10 @@
 package framework
 
 import (
+	app "github.com/kloudlite/api/apps/build-agent/internal/app"
+	"github.com/kloudlite/api/apps/build-agent/internal/env"
+	"github.com/kloudlite/api/pkg/redpanda"
 	"go.uber.org/fx"
-	app "kloudlite.io/apps/build-agent/internal/app"
-	"kloudlite.io/apps/build-agent/internal/env"
-	"kloudlite.io/pkg/redpanda"
 )
 
 type fm struct {

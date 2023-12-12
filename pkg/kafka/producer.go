@@ -2,8 +2,8 @@ package kafka
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/twmb/franz-go/pkg/kgo"
-	"kloudlite.io/pkg/logging"
 	"strings"
 	"time"
 )

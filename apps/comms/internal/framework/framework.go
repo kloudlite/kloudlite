@@ -3,12 +3,12 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/apps/comms/internal/app"
+	"github.com/kloudlite/api/apps/comms/internal/env"
+	"github.com/kloudlite/api/pkg/grpc"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/mail"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/comms/internal/app"
-	"kloudlite.io/apps/comms/internal/env"
-	"kloudlite.io/pkg/grpc"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/mail"
 	"time"
 )
 

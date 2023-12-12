@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	fn "kloudlite.io/pkg/functions"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 type lokiClient struct {

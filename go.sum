@@ -321,8 +321,6 @@ github.com/klauspost/compress v1.17.0 h1:Rnbp4K9EjcDuVuHtd0dgA4qNuv9yKDYKK1ulpJw
 github.com/klauspost/compress v1.17.0/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55 h1:YnZh3TL6AG4EfoInx1/L5zcPHd2QxgLKseJB1KtHjdQ=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
-github.com/kloudlite/operator v0.0.0-20231122102406-f6459bc7a96a h1:4bLqedXrd2Ht0OK6C+vteimGMjm5h5HOSt0hBCUHux4=
-github.com/kloudlite/operator v0.0.0-20231122102406-f6459bc7a96a/go.mod h1:P3q1mIkMOQvyftrV5t7RP2nrYMEUzg8Z0rd+DwQZGzg=
 github.com/kloudlite/operator v0.0.0-20231206054547-f41e4bfa411f h1:69puLWpV2TIPZw/x53QdF1qQI6Huc/hiHeiic6an3wg=
 github.com/kloudlite/operator v0.0.0-20231206054547-f41e4bfa411f/go.mod h1:P3q1mIkMOQvyftrV5t7RP2nrYMEUzg8Z0rd+DwQZGzg=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=

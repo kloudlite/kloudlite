@@ -2,8 +2,8 @@ package stripe
 
 import (
 	"fmt"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/stripe/stripe-go"
-	fn "kloudlite.io/pkg/functions"
 )
 
 type CustomerId string

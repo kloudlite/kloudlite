@@ -1,14 +1,14 @@
 package framework
 
 import (
+	"github.com/kloudlite/api/apps/ci/internal/app"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/config"
+	rpc "github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/ci/internal/app"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/config"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/repos"
 )
 
 type GrpcAuthConfig struct {

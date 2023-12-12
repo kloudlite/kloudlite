@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 )
 
 // Access is the resolver for the access field.

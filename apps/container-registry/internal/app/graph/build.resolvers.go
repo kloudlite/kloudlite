@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
-	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	fn "kloudlite.io/pkg/functions"
 )
 
 // CreatedBy is the resolver for the createdBy field.

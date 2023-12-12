@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) SuggestName(ctx context.Context, seed *string) string {

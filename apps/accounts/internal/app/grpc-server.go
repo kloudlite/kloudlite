@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 
-	"kloudlite.io/apps/accounts/internal/domain"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
-	"kloudlite.io/pkg/grpc"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/accounts/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
+	"github.com/kloudlite/api/pkg/grpc"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type AccountsGrpcServer grpc.Server

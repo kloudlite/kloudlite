@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"text/template"
 
-	"kloudlite.io/pkg/grpc"
+	"github.com/kloudlite/api/pkg/grpc"
 
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"go.uber.org/fx"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 )
 
 type CommsGrpcServer grpc.Server

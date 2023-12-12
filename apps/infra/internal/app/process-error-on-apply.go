@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/messaging"
+	"github.com/kloudlite/api/pkg/messaging/types"
 	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/messaging"
-	"kloudlite.io/pkg/messaging/types"
 )
 
 type ErrorOnApplyConsumer messaging.Consumer

@@ -3,7 +3,7 @@ package agent
 import (
 	"context"
 
-	"kloudlite.io/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/redpanda"
 )
 
 type Action string

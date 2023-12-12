@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"kloudlite.io/apps/iam/internal/entities"
-	t "kloudlite.io/apps/iam/types"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/iam/internal/entities"
+	t "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Domain interface {

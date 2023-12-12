@@ -3,10 +3,10 @@ package domain
 import (
 	"context"
 	"fmt"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error) {

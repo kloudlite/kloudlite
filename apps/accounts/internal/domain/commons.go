@@ -3,9 +3,9 @@ package domain
 import (
 	"context"
 	"fmt"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/repos"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type UserContext struct {

@@ -1,18 +1,18 @@
 package domain
 
 import (
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 	"golang.org/x/net/context"
-	"kloudlite.io/apps/accounts/internal/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
 )
 
 type CheckNameAvailabilityOutput struct {

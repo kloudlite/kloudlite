@@ -3,7 +3,7 @@ package mocks
 
 import (
 	context "context"
-	accounts "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
+	accounts "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 )
 
 type AccountsSvcCallerInfo struct {

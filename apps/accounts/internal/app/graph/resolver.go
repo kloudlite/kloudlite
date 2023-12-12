@@ -3,8 +3,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/apps/accounts/internal/domain"
-	"kloudlite.io/common"
+	"github.com/kloudlite/api/apps/accounts/internal/domain"
+	"github.com/kloudlite/api/common"
 )
 
 // This file will not be regenerated automatically.

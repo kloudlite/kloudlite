@@ -5,7 +5,7 @@ package model
 import (
 	"time"
 
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type App struct {

@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/app/graph/model"
-	"kloudlite.io/apps/console/internal/entities"
-	fn "kloudlite.io/pkg/functions"
 )
 
 // CreationTime is the resolver for the creationTime field.

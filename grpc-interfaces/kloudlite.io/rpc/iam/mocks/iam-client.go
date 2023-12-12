@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	iam "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	grpc "google.golang.org/grpc"
-	iam "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 )
 
 type IAMClientCallerInfo struct {

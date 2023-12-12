@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	app "github.com/kloudlite/api/apps/container-registry/internal/app"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	"github.com/kloudlite/api/pkg/cache"
+	rpc "github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kafka"
+	"github.com/kloudlite/api/pkg/logging"
+	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	app "kloudlite.io/apps/container-registry/internal/app"
-	"kloudlite.io/apps/container-registry/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/kafka"
-	"kloudlite.io/pkg/logging"
-	mongoDb "kloudlite.io/pkg/repos"
 )
 
 type fm struct {
@@ -59,25 +59,25 @@ var Module = fx.Module("framework",
 	}),
 
 	// cache.FxLifeCycle[app.AuthCacheClient](),
-  fx.Invoke(
-    func(c app.AuthCacheClient, lf fx.Lifecycle, logger logging.Logger) {
-      lf.Append(
-        fx.Hook{
-          OnStart: func(ctx context.Context) error {
-            logger.Infof("connecting to redis")
-            if err := c.Connect(ctx); err != nil {
-              return err
-            }
-            logger.Infof("connected to redis")
-            return nil
-          },
-          OnStop: func(ctx context.Context) error {
-            return c.Disconnect(ctx)
-          },
-        },
-      )
-    },
-  ),
+	fx.Invoke(
+		func(c app.AuthCacheClient, lf fx.Lifecycle, logger logging.Logger) {
+			lf.Append(
+				fx.Hook{
+					OnStart: func(ctx context.Context) error {
+						logger.Infof("connecting to redis")
+						if err := c.Connect(ctx); err != nil {
+							return err
+						}
+						logger.Infof("connected to redis")
+						return nil
+					},
+					OnStop: func(ctx context.Context) error {
+						return c.Disconnect(ctx)
+					},
+				},
+			)
+		},
+	),
 
 	fx.Provide(func(ev *env.Env) cache.Client {
 		return cache.NewRedisClient(ev.CRRedisHosts, ev.CRRedisUserName, ev.CRRedisPassword, ev.CRRedisPrefix)
@@ -85,25 +85,25 @@ var Module = fx.Module("framework",
 
 	// cache.FxLifeCycle[cache.Client](),
 
-  fx.Invoke(
-    func(c cache.Client, lf fx.Lifecycle, logger logging.Logger) {
-      lf.Append(
-        fx.Hook{
-          OnStart: func(ctx context.Context) error {
-            logger.Infof("connecting to redis")
-            if err := c.Connect(ctx); err != nil {
-              return err
-            }
-            logger.Infof("connected to redis")
-            return nil
-          },
-          OnStop: func(ctx context.Context) error {
-            return c.Disconnect(ctx)
-          },
-        },
-      )
-    },
-  ),
+	fx.Invoke(
+		func(c cache.Client, lf fx.Lifecycle, logger logging.Logger) {
+			lf.Append(
+				fx.Hook{
+					OnStart: func(ctx context.Context) error {
+						logger.Infof("connecting to redis")
+						if err := c.Connect(ctx); err != nil {
+							return err
+						}
+						logger.Infof("connected to redis")
+						return nil
+					},
+					OnStop: func(ctx context.Context) error {
+						return c.Disconnect(ctx)
+					},
+				},
+			)
+		},
+	),
 
 	app.Module,
 

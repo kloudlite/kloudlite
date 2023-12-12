@@ -1,11 +1,11 @@
 package framework
 
 import (
+	"github.com/kloudlite/api/apps/worker-audit-logging/internal/app"
+	"github.com/kloudlite/api/apps/worker-audit-logging/internal/env"
+	"github.com/kloudlite/api/pkg/redpanda"
+	repos "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/worker-audit-logging/internal/app"
-	"kloudlite.io/apps/worker-audit-logging/internal/env"
-	"kloudlite.io/pkg/redpanda"
-	repos "kloudlite.io/pkg/repos"
 	"strings"
 )
 

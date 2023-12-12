@@ -3,21 +3,20 @@ package app
 import (
 	"context"
 
+	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"go.uber.org/fx"
-	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
-	msg_nats "kloudlite.io/pkg/messaging/nats"
-	"kloudlite.io/pkg/nats"
-	"kloudlite.io/pkg/repos"
-
-	"kloudlite.io/apps/message-office/internal/app/graph"
-	"kloudlite.io/apps/message-office/internal/app/graph/generated"
-	proto_rpc "kloudlite.io/apps/message-office/internal/app/proto-rpc"
-	"kloudlite.io/apps/message-office/internal/domain"
-	"kloudlite.io/apps/message-office/internal/env"
-	"kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/pkg/nats"
+	"github.com/kloudlite/api/apps/message-office/internal/app/graph"
+	"github.com/kloudlite/api/apps/message-office/internal/app/graph/generated"
+	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
+	"github.com/kloudlite/api/apps/message-office/internal/domain"
+	"github.com/kloudlite/api/apps/message-office/internal/env"
+	"github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 type (

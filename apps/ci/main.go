@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/apps/ci/internal/framework"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/ci/internal/framework"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 )
 
 func main() {

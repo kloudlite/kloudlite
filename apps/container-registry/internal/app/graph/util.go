@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"kloudlite.io/apps/container-registry/internal/domain"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func getUserId(ctx context.Context) (repos.ID, error) {

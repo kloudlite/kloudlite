@@ -1,8 +1,8 @@
 package entities
 
 import (
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/pkg/repos"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Invitation struct {

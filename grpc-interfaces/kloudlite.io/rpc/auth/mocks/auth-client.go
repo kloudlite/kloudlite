@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	auth "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	grpc "google.golang.org/grpc"
-	auth "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 )
 
 type AuthClientCallerInfo struct {

@@ -5,10 +5,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
 )
 
 type Consumer interface {

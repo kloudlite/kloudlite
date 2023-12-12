@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	repos "kloudlite.io/pkg/repos"
+	repos "github.com/kloudlite/api/pkg/repos"
 )
 
 type DbRepoCallerInfo struct {

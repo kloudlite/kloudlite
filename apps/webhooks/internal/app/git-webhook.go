@@ -6,17 +6,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/constants"
+	"github.com/kloudlite/api/constants"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/kloudlite/api/apps/webhooks/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/types"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/webhooks/internal/env"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/types"
 )
 
 func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {

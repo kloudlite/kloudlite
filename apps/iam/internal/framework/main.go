@@ -3,13 +3,13 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/apps/iam/internal/app"
+	"github.com/kloudlite/api/apps/iam/internal/env"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/grpc"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/iam/internal/app"
-	"kloudlite.io/apps/iam/internal/env"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/grpc"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
 	"time"
 )
 

@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 type StreamSelector struct {

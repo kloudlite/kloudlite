@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"kloudlite.io/apps/comms/internal/env"
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/apps/comms/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
-	"kloudlite.io/pkg/mail"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
+	"github.com/kloudlite/api/pkg/mail"
 )
 
 type commsSvc struct {

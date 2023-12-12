@@ -3,7 +3,7 @@ package functions_test
 import (
 	"testing"
 
-	fn "kloudlite.io/pkg/functions"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 func TestReverse(t *testing.T) {

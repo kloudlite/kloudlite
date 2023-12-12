@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 
-	proto_rpc "kloudlite.io/apps/message-office/internal/app/proto-rpc"
-	"kloudlite.io/apps/message-office/internal/domain"
-	"kloudlite.io/pkg/logging"
+	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
+	"github.com/kloudlite/api/apps/message-office/internal/domain"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 type vectorProxyServer struct {

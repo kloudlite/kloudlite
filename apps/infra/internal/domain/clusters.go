@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"time"
 
+	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
-	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
 
+	"github.com/kloudlite/api/apps/infra/internal/entities"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	"kloudlite.io/apps/infra/internal/entities"
 
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 const (

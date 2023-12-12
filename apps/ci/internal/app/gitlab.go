@@ -6,14 +6,14 @@ import (
 	"regexp"
 	"strings"
 
-	"kloudlite.io/apps/ci/internal/domain"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/ci/internal/domain"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/types"
 
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 	oauthGitlab "golang.org/x/oauth2/gitlab"
-	"kloudlite.io/pkg/errors"
 )
 
 type gitlabI struct {

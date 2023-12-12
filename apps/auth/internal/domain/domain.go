@@ -2,8 +2,8 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Domain interface {

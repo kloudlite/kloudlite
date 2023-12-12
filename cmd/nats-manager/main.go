@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"kloudlite.io/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/messaging/nats"
 	// "log"
 	// "os"
 	// "kloudlite.io/pkg/messaging"

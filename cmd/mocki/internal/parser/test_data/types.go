@@ -4,7 +4,7 @@ import (
 	"context"
 	io2 "io"
 
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Type1 interface {

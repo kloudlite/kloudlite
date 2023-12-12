@@ -9,7 +9,7 @@ import (
 	"os"
 	"text/template"
 
-	"kloudlite.io/cmd/mocki/internal/parser"
+	"github.com/kloudlite/api/cmd/mocki/internal/parser"
 
 	"github.com/Masterminds/sprig/v3"
 )

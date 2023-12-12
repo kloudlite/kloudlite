@@ -6,10 +6,10 @@ import (
 
 	"go.uber.org/fx"
 
-	"kloudlite.io/apps/message-office/internal/env"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/message-office/internal/env"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type domain struct {

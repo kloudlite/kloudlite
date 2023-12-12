@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/infra/internal/app/graph/generated"
-	"kloudlite.io/apps/infra/internal/app/graph/model"
-	"kloudlite.io/apps/infra/internal/entities"
-	fn "kloudlite.io/pkg/functions"
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 // CreationTime is the resolver for the creationTime field.

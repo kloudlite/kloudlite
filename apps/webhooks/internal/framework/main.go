@@ -3,12 +3,12 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/apps/webhooks/internal/app"
+	"github.com/kloudlite/api/apps/webhooks/internal/env"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/webhooks/internal/app"
-	"kloudlite.io/apps/webhooks/internal/env"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 )
 
 type fm struct {

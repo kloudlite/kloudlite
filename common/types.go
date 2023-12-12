@@ -2,7 +2,7 @@ package common
 
 import (
 	"encoding/json"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type CreatedOrUpdatedBy struct {

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 type Client struct {

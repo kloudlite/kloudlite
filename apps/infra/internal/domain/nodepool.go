@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	ct "github.com/kloudlite/operator/apis/common-types"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
 
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/infra/internal/entities"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 const tenantKloudliteControllerNamespace = "kloudlite"

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/accounts/internal/app/graph/generated"
-	"kloudlite.io/apps/accounts/internal/entities"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
 )
 
 // CreationTime is the resolver for the creationTime field.

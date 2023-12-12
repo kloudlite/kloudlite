@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	parser "kloudlite.io/cmd/mocki/internal/parser"
+	parser "github.com/kloudlite/api/cmd/mocki/internal/parser"
 )
 
 func TestFindAndParseInterface(t *testing.T) {

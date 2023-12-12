@@ -7,17 +7,17 @@ import (
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 
-	"kloudlite.io/apps/auth/internal/app/graph"
-	"kloudlite.io/apps/auth/internal/app/graph/generated"
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/apps/auth/internal/env"
-	"kloudlite.io/common"
-	"kloudlite.io/constants"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
-	"kloudlite.io/pkg/cache"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/auth/internal/app/graph"
+	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
+	"github.com/kloudlite/api/pkg/cache"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type CommsClientConnection *grpc.ClientConn

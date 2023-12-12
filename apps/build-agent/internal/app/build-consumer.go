@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 )
 
 const (

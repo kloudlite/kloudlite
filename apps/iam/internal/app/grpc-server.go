@@ -3,15 +3,15 @@ package app
 import (
 	"context"
 	"fmt"
-	"kloudlite.io/apps/iam/internal/entities"
-	"kloudlite.io/pkg/grpc"
+	"github.com/kloudlite/api/apps/iam/internal/entities"
+	"github.com/kloudlite/api/pkg/grpc"
 	"strings"
 
-	t "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
+	t "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type IAMGrpcServer grpc.Server

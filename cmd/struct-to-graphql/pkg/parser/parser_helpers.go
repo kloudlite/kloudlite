@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser/types"
 	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"kloudlite.io/cmd/struct-to-graphql/pkg/parser/types"
 )
 
 func sanitizeEnums(enums []string) []string {

@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
+	"github.com/kloudlite/api/apps/iam/internal/domain"
+	"github.com/kloudlite/api/apps/iam/internal/entities"
+	t "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	reposMock "github.com/kloudlite/api/mocks/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"kloudlite.io/apps/iam/internal/domain"
-	"kloudlite.io/apps/iam/internal/entities"
-	t "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
-	reposMock "kloudlite.io/mocks/pkg/repos"
-	"kloudlite.io/pkg/repos"
 )
 
 var _ = Describe("domain.AddRoleBinding() says", func() {

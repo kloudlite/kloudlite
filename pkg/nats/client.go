@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/nats-io/nats.go"
-	"kloudlite.io/pkg/logging"
 )
 
 type Client struct {

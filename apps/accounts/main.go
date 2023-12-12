@@ -6,14 +6,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
 
-	"kloudlite.io/apps/accounts/internal/env"
-	"kloudlite.io/apps/accounts/internal/framework"
+	"github.com/kloudlite/api/apps/accounts/internal/env"
+	"github.com/kloudlite/api/apps/accounts/internal/framework"
 )
 
 func main() {

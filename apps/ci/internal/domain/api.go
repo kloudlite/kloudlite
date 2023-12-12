@@ -3,10 +3,10 @@ package domain
 import (
 	"context"
 
-	"kloudlite.io/pkg/harbor"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/pkg/harbor"
+	"github.com/kloudlite/api/pkg/types"
 
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Domain interface {

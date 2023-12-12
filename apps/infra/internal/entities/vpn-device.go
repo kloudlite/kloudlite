@@ -3,10 +3,10 @@ package entities
 import (
 	"fmt"
 
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 	wireguardV1 "github.com/kloudlite/operator/apis/wireguard/v1"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 type VPNDevice struct {

@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 type authGrpcServer struct {

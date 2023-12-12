@@ -8,12 +8,12 @@ import (
 	"context"
 	"errors"
 
-	"kloudlite.io/apps/auth/internal/app/graph/generated"
-	"kloudlite.io/apps/auth/internal/app/graph/model"
-	"kloudlite.io/common"
-	klErrors "kloudlite.io/pkg/errors"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
+	"github.com/kloudlite/api/common"
+	klErrors "github.com/kloudlite/api/pkg/errors"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 // AuthSetRemoteAuthHeader is the resolver for the auth_setRemoteAuthHeader field.

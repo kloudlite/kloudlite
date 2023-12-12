@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	agent "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/agent"
 	grpc "google.golang.org/grpc"
-	agent "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent"
 )
 
 type KubeAgentClientCallerInfo struct {

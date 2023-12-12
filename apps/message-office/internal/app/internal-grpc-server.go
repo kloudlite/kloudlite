@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"kloudlite.io/apps/message-office/internal/domain"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
+	"github.com/kloudlite/api/apps/message-office/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 )
 
 type internalMsgServer struct {

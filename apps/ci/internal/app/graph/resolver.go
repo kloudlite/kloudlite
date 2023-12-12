@@ -1,6 +1,6 @@
 package graph
 
-import "kloudlite.io/apps/ci/internal/domain"
+import "github.com/kloudlite/api/apps/ci/internal/domain"
 
 // This file will not be regenerated automatically.
 //

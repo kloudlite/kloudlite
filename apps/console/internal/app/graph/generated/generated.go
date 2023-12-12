@@ -18,12 +18,12 @@ import (
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/console/internal/app/graph/model"
-	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/apps/console/internal/entities"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 )
 
 // region    ************************** generated!.gotpl **************************

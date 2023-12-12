@@ -2,14 +2,14 @@ package app
 
 import (
 	"encoding/json"
-	"kloudlite.io/apps/iam/internal/entities"
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/apps/iam/internal/entities"
+	"github.com/kloudlite/api/pkg/logging"
 	"os"
 
+	"github.com/kloudlite/api/apps/iam/internal/env"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/iam/internal/env"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/repos"
 )
 
 var Module = fx.Module(

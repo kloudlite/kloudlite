@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	container_registry "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	container_registry "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/container_registry"
 )
 
 type ContainerRegistryServerCallerInfo struct {

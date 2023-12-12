@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 type ObservabilityArgs struct {

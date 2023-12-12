@@ -2,10 +2,10 @@ package domain
 
 import (
 	"fmt"
-	"kloudlite.io/apps/console/internal/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) findEnvironment(ctx ConsoleContext, namespace, name string) (*entities.Workspace, error) {

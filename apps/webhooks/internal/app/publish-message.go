@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 )
 
 type PublishMessage struct {

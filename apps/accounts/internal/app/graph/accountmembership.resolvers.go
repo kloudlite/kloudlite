@@ -7,8 +7,8 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/accounts/internal/app/graph/generated"
-	"kloudlite.io/apps/accounts/internal/entities"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
 )
 
 // UserID is the resolver for the userId field.

@@ -3,11 +3,11 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"github.com/kloudlite/api/apps/worker-audit-logging/internal/domain"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/worker-audit-logging/internal/domain"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/repos"
 	"time"
 )
 

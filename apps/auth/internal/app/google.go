@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/apps/auth/internal/env"
-	"kloudlite.io/pkg/errors"
 )
 
 type googleI struct {

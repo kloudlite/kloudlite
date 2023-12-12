@@ -3,10 +3,10 @@ package domain
 import (
 	"context"
 
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 )
 
 func NewRegistryContext(parent context.Context, userId repos.ID, accountName string) RegistryContext {
