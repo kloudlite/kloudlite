@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	fn "github.com/kloudlite/api/pkg/functions"
+	t "github.com/kloudlite/api/pkg/types"
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	fn "kloudlite.io/pkg/functions"
-	t "kloudlite.io/pkg/types"
 )
 
 type (

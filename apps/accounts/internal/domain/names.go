@@ -3,8 +3,8 @@ package domain
 import (
 	"context"
 
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) CheckNameAvailability(ctx context.Context, name string) (*CheckNameAvailabilityOutput, error) {

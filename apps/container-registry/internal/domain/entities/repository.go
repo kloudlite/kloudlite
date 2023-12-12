@@ -1,8 +1,8 @@
 package entities
 
 import (
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Repository struct {

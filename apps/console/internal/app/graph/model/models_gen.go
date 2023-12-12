@@ -7,8 +7,8 @@ import (
 	"io"
 	"strconv"
 
-	"kloudlite.io/apps/console/internal/entities"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type AppEdge struct {

@@ -3,10 +3,10 @@ package entities
 import (
 	"fmt"
 
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
 )
 
 const (

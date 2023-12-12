@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 const userContextKey = "__local_user_context__"

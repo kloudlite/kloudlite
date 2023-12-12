@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
+	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 )
 
 type accountsSvc struct {

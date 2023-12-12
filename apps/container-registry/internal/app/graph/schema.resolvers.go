@@ -7,13 +7,13 @@ package graph
 import (
 	"context"
 
-	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
-	"kloudlite.io/apps/container-registry/internal/domain"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
+	generated1 "github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 )
 
 // CrCreateRepo is the resolver for the cr_createRepo field.

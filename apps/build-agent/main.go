@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"runtime/trace"
 
+	"github.com/kloudlite/api/apps/build-agent/internal/env"
+	"github.com/kloudlite/api/apps/build-agent/internal/framework"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
-	"kloudlite.io/apps/build-agent/internal/env"
-	"kloudlite.io/apps/build-agent/internal/framework"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
 )
 
 func main() {

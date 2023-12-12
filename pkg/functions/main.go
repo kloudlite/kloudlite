@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/kloudlite/api/pkg/errors"
 	nanoid "github.com/matoous/go-nanoid/v2"
-	"kloudlite.io/pkg/errors"
 )
 
 func ToBase64StringFromJson(v interface{}) (string, error) {

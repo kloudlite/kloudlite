@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/pkg/logging"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/fx"

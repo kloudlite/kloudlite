@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"kloudlite.io/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/redpanda"
 )
 
 type sender struct {

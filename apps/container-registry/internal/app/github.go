@@ -13,15 +13,15 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v45/github"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"go.uber.org/fx"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
-	"kloudlite.io/apps/container-registry/internal/domain"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
 
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/pkg/errors"
 	// fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/pkg/types"
 )
 
 type githubOptions interface {

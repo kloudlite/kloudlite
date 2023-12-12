@@ -3,7 +3,7 @@ package repos
 import (
 	"context"
 	"encoding/base64"
-	"kloudlite.io/pkg/functions"
+	"github.com/kloudlite/api/pkg/functions"
 	"time"
 )
 

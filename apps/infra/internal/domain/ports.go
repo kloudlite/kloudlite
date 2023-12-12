@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 )
 
 type AccountsSvc interface {

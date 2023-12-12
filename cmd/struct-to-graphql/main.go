@@ -12,8 +12,8 @@ import (
 	_ "github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/util/rand"
 
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/spf13/pflag"
-	fn "kloudlite.io/pkg/functions"
 )
 
 //go:embed parser-entrypoint.go.tmpl

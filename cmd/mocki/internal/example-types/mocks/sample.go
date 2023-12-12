@@ -1,8 +1,8 @@
 package mocks
 
 import (
+	example_types "github.com/kloudlite/api/cmd/mocki/internal/example-types"
 	io2 "io"
-	example_types "kloudlite.io/cmd/mocki/internal/example-types"
 )
 
 type SampleCallerInfo struct {

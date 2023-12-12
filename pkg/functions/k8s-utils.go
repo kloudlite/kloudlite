@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"regexp"
 
+	"github.com/kloudlite/api/constants"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"kloudlite.io/constants"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )

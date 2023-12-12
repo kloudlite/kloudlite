@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/kloudlite/api/pkg/repos"
 	"golang.org/x/oauth2"
-	"kloudlite.io/pkg/repos"
 )
 
 type DockerBuildInput struct {

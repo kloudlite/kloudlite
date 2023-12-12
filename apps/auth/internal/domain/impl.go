@@ -10,17 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"kloudlite.io/constants"
+	"github.com/kloudlite/api/constants"
 
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 	"golang.org/x/oauth2"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
 )
 
 func generateId(prefix string) string {

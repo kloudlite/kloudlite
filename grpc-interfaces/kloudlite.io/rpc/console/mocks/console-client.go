@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	console "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	grpc "google.golang.org/grpc"
-	console "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 )
 
 type ConsoleClientCallerInfo struct {

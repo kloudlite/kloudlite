@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"kloudlite.io/apps/console/internal/app/graph/model"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 
-	"kloudlite.io/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/domain"
 )
 
 func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {

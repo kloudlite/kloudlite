@@ -8,8 +8,8 @@ import (
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type BYOCClusterEdge struct {

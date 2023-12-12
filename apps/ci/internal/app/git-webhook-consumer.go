@@ -5,18 +5,18 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
-	"kloudlite.io/constants"
+	"github.com/kloudlite/api/constants"
 	"text/template"
 	"time"
 
+	"github.com/kloudlite/api/apps/ci/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/finance"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
+	text_templates "github.com/kloudlite/api/pkg/text-templates"
+	"github.com/kloudlite/api/pkg/types"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/ci/internal/domain"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
-	text_templates "kloudlite.io/pkg/text-templates"
-	"kloudlite.io/pkg/types"
 )
 
 var (

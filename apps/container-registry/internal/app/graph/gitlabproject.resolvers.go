@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 )
 
 // CreatedAt is the resolver for the created_at field.

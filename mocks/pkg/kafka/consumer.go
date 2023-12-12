@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	kafka "kloudlite.io/pkg/kafka"
+	kafka "github.com/kloudlite/api/pkg/kafka"
 )
 
 type ConsumerCallerInfo struct {

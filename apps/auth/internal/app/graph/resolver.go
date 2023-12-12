@@ -1,8 +1,8 @@
 package graph
 
 import (
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/apps/auth/internal/env"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
 )
 
 // This file will not be regenerated automatically.

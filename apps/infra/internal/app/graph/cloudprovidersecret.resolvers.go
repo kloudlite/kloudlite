@@ -9,13 +9,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser"
+	fn "github.com/kloudlite/api/pkg/functions"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/infra/internal/app/graph/generated"
-	"kloudlite.io/apps/infra/internal/app/graph/model"
-	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/cmd/struct-to-graphql/pkg/parser"
-	fn "kloudlite.io/pkg/functions"
 )
 
 // Aws is the resolver for the aws field.

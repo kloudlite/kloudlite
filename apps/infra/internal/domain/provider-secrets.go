@@ -9,14 +9,14 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	fn "github.com/kloudlite/api/pkg/functions"
 	ct "github.com/kloudlite/operator/apis/common-types"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
-	fn "kloudlite.io/pkg/functions"
 
-	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/pkg/repos"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"

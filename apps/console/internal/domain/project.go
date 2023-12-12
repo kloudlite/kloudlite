@@ -10,12 +10,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"kloudlite.io/apps/console/internal/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 )
 
 // query

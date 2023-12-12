@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
 )
 
 type Server interface {

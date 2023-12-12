@@ -1,9 +1,9 @@
 package entities
 
 import (
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
 )
 
 type Account struct {

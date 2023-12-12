@@ -3,8 +3,8 @@ package domain
 import (
 	"context"
 
-	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type InfraContext struct {

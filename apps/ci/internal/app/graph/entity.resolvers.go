@@ -6,9 +6,9 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/ci/internal/app/graph/generated"
-	"kloudlite.io/apps/ci/internal/app/graph/model"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/ci/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/ci/internal/app/graph/model"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (r *entityResolver) FindAppByID(ctx context.Context, id repos.ID) (*model.App, error) {

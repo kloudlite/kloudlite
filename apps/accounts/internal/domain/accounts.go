@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/accounts/internal/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
-	"kloudlite.io/constants"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/yaml"
 )
 

@@ -3,11 +3,11 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
 	"net"
 )
 

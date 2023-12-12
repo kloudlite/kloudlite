@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/twmb/franz-go/pkg/kgo"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 )
 
 type RecordMetadata struct {

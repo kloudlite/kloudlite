@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
+	"github.com/kloudlite/api/pkg/errors"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/errors"
 )
 
 type redisRepo[T any] struct {

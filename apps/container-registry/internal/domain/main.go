@@ -6,16 +6,16 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 	"k8s.io/utils/strings/slices"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/apps/container-registry/internal/env"
-	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
 )
 
 type Impl struct {

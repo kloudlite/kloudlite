@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	auth "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	auth "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 )
 
 type AuthServerCallerInfo struct {

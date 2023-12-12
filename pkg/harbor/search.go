@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"kloudlite.io/pkg/errors"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 // Repository created by pasting json from harbor instance network tab

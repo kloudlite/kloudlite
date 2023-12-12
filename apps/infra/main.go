@@ -6,18 +6,18 @@ import (
 	"os"
 	"time"
 
+	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/apps/infra/internal/framework"
+	"github.com/kloudlite/api/common"
 	"k8s.io/client-go/rest"
-	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/apps/infra/internal/framework"
-	"kloudlite.io/common"
 
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"go.uber.org/fx"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sScheme "k8s.io/client-go/kubernetes/scheme"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
 )
 
 func main() {

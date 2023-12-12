@@ -3,10 +3,10 @@ package domain
 import (
 	"fmt"
 
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *Impl) AddBuildCache(ctx RegistryContext, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error) {

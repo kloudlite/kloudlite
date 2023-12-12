@@ -6,13 +6,13 @@ import (
 
 	"go.uber.org/fx"
 
-	"kloudlite.io/apps/auth/internal/app"
-	"kloudlite.io/apps/auth/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/auth/internal/app"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/pkg/cache"
+	rpc "github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type CommsGrpcEnv struct {

@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	grpc "google.golang.org/grpc"
-	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 )
 
 type MessageOfficeInternalClientCallerInfo struct {

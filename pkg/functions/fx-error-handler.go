@@ -1,8 +1,8 @@
 package functions
 
 import (
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/logging"
 )
 
 type ErrH struct {

@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/model"
+	"github.com/kloudlite/api/common"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/accounts/internal/app/graph/generated"
-	"kloudlite.io/apps/accounts/internal/app/graph/model"
-	"kloudlite.io/common"
-	fn "kloudlite.io/pkg/functions"
 )
 
 // Checks is the resolver for the checks field.

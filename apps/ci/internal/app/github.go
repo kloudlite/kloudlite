@@ -11,16 +11,16 @@ import (
 	"strings"
 	"time"
 
-	"kloudlite.io/apps/ci/internal/domain"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/ci/internal/domain"
+	"github.com/kloudlite/api/pkg/types"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	// "github.com/google/go-github/v43/github"
 	"github.com/google/go-github/v45/github"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
 )
 
 type githubI struct {

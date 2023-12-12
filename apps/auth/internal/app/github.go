@@ -11,12 +11,12 @@ import (
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v43/github"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/apps/auth/internal/env"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
 )
 
 type githubI struct {

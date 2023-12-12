@@ -8,9 +8,9 @@ import (
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 
+	"github.com/kloudlite/api/apps/container-registry/templates"
+	text_templates "github.com/kloudlite/api/pkg/text-templates"
 	common_types "github.com/kloudlite/operator/apis/common-types"
-	"kloudlite.io/apps/container-registry/templates"
-	text_templates "kloudlite.io/pkg/text-templates"
 )
 
 func BuildUrl(repo, pullToken string) (string, error) {
