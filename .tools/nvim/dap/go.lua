@@ -27,6 +27,18 @@ dap.configurations.go = {
   },
   {
     type = "go",
+    name = "Debug agent operator",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/cmd/agent-operator",
+    args = { "--dev", "--serverHost", "localhost:8080" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/cmd/agent-operator" .. "/.secrets/env",
+    },
+  },
+  {
+    type = "go",
     name = "Debug app-n-lambda",
     request = "launch",
     program = vim.g.nxt.project_root_dir .. "/operators/app-n-lambda",
@@ -168,6 +180,17 @@ dap.configurations.go = {
     -- externalTerminal = true,
     envFile = {
       vim.g.nxt.project_root_dir .. "/operators/msvc-mongo" .. "/.secrets/env",
+    },
+  },
+  {
+    type = "go",
+    name = "Debug msvc-redis",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/operators/msvc-redis",
+    args = { "--dev" },
+    console = "externalTerminal",
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/operators/msvc-redis" .. "/.secrets/env",
     },
   },
   {
