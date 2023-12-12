@@ -78,7 +78,7 @@ const (
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/finalizers,verbs=update
 
 func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &clustersv1.Cluster{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.Cluster{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -113,9 +113,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureMessageQueueTopic(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.ensureMessageQueueTopic(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -330,7 +330,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 				"aws_region": obj.Spec.AWS.Region,
 
 				"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
-				"enable_nvidia_gpu_support": true,
+				"enable_nvidia_gpu_support": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
 
 				"k3s_masters": map[string]any{
 					"image_id":           obj.Spec.AWS.K3sMasters.ImageId,
@@ -370,7 +370,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 					"release":            obj.Spec.KloudliteRelease,
 					"install_crds":       true,
 					"install_csi_driver": true,
-					"install_operators":  true,
+					"install_operators":  false,
 					"install_agent":      true,
 					"agent_vars": map[string]any{
 						"account_name":             obj.Spec.AccountName,
@@ -487,6 +487,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 
 			"values.json": string(valuesJson),
+			"job-image":   r.Env.IACJobImage,
 		})
 		if err != nil {
 			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
@@ -581,6 +582,8 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 			"values.json":           string(valuesJson),
+
+			"job-image": r.Env.IACJobImage,
 		})
 		if err != nil {
 			return req.CheckFailed(clusterDestroyJob, check, err.Error()).Err(nil)

@@ -178,6 +178,7 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 
 			"job-name":      getJobName(obj.Name),
 			"job-namespace": obj.Namespace,
+
 			"labels": map[string]string{
 				LabelBucketCreateJob:    "true",
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
@@ -192,6 +193,8 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 
 			"values.json": string(valuesBytes),
+
+			"job-image": r.Env.IACJobImage,
 		})
 		if err != nil {
 			return req.CheckFailed(BucketCreateJob, check, err.Error()).Err(nil)
@@ -296,6 +299,8 @@ func (r *Reconciler) StartBucketDestroyJob(req *rApi.Request[*clustersv1.Account
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 
 			"values.json": string(valuesBytes),
+
+			"job-image": r.Env.IACJobImage,
 		})
 		if err != nil {
 			return req.CheckFailed(BucketDestroyJob, check, err.Error()).Err(nil)
@@ -351,6 +356,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.AccountS3Bucket{})
+	builder.Owns(&batchv1.Job{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
