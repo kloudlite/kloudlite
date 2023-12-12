@@ -7,8 +7,9 @@ import (
 	"os"
 
 	"kloudlite.io/pkg/messaging"
-	"kloudlite.io/pkg/messaging/nats"
+	msg_nats "kloudlite.io/pkg/messaging/nats"
 	"kloudlite.io/pkg/messaging/types"
+	"kloudlite.io/pkg/nats"
 )
 
 func main() {
@@ -23,18 +24,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	jc, err := nats.NewJetstreamClient(nc)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// subjectBase := fmt.Sprintf("%s.account-*.cluster-*.platform.kloudlite-console.resource-update", natsStream)
 	subjectBase := fmt.Sprintf("resource-sync.*.*.platform.kloudlite-console.resource-update")
 	_ = subjectBase
 
-	consumer, err = jc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+	consumer, err = msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 		Stream: natsStream,
-		ConsumerConfig: nats.ConsumerConfig{
+		ConsumerConfig: msg_nats.ConsumerConfig{
 			FilterSubjects: []string{subjectBase},
 			Name:           "example-consumer",
 			Durable:        "example-consumer",
@@ -48,5 +49,5 @@ func main() {
 	consumer.Consume(func(msg *types.ConsumeMsg) error {
 		log.Println(string(msg.Payload))
 		return nil
-	})
+	}, types.ConsumeOpts{})
 }

@@ -6,7 +6,8 @@ import (
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"go.uber.org/fx"
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
-	"kloudlite.io/pkg/messaging/nats"
+	msg_nats "kloudlite.io/pkg/messaging/nats"
+	"kloudlite.io/pkg/nats"
 	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/message-office/internal/app/graph"
@@ -33,7 +34,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) UpdatesProducer {
-		return jsc.CreateProducer()
+		return msg_nats.NewJetstreamProducer(jsc)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, producer UpdatesProducer) {

@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"kloudlite.io/pkg/messaging"
-	"kloudlite.io/pkg/messaging/nats"
+	msgNats "kloudlite.io/pkg/messaging/nats"
 	"kloudlite.io/pkg/messaging/types"
+	"kloudlite.io/pkg/nats"
 )
 
 func main() {
@@ -28,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var producer messaging.Producer = jc.CreateProducer()
+	var producer messaging.Producer = msgNats.NewJetstreamProducer(jc)
 	if err != nil {
 		log.Fatal(err)
 	}
