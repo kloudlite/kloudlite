@@ -23,6 +23,8 @@
 
 {{- $valuesJson := get . "values.json" }} 
 
+{{- $jobImage := get . "job-image" }}
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -40,7 +42,8 @@ spec:
       serviceAccountName: {{$serviceAccountName}}
       containers:
       - name: iac
-        image: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-dev
+        image: {{$jobImage}}
+
         imagePullPolicy: Always
         env:
           - name: AWS_S3_BUCKET_NAME

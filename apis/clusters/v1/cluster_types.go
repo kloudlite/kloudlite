@@ -31,7 +31,7 @@ type AWSK3sMastersConfig struct {
 	ImageId                string                     `json:"imageId" graphql:"noinput"`
 	ImageSSHUsername       string                     `json:"imageSSHUsername" graphql:"noinput"`
 	InstanceType           string                     `json:"instanceType"`
-	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled" graphql:"noinput"`
+	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled"`
 	RootVolumeType         string                     `json:"rootVolumeType" graphql:"noinput"`
 	RootVolumeSize         int                        `json:"rootVolumeSize" graphql:"noinput"`
 	IAMInstanceProfileRole *string                    `json:"iamInstanceProfileRole,omitempty" graphql:"noinput"`
