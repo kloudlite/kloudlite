@@ -1,8 +1,0 @@
-kind: Service
-apiVersion: v1
-metadata:
-  name: ci-api-local
-  namespace: hotspot
-spec:
-  type: ExternalName
-  externalName: tunneling.hotspot.svc.cluster.local

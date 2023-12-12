@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go v1.45.11
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
-	github.com/containerd/continuity v0.4.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobuffalo/flect v1.0.2
 	github.com/gofiber/adaptor/v2 v2.1.23
@@ -17,15 +16,13 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/operator v0.0.0-20231122102406-f6459bc7a96a
+	github.com/kloudlite/operator v0.0.0-20231206054547-f41e4bfa411f
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.54
-	github.com/otiai10/copy v1.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.29.1
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
-	github.com/slack-go/slack v0.11.4
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tektoncd/triggers v0.22.1
 	github.com/twmb/franz-go v1.14.4
@@ -46,7 +43,6 @@ require (
 	k8s.io/apiextensions-apiserver v0.28.1
 	k8s.io/apimachinery v0.28.1
 	k8s.io/client-go v0.28.1
-	rogchap.com/v8go v0.8.0
 	sigs.k8s.io/controller-runtime v0.16.1
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -91,7 +87,6 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
-	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -122,7 +117,7 @@ require (
 	github.com/google/go-github/v41 v41.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.3.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -155,7 +150,6 @@ require (
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/tektoncd/pipeline v0.43.2 // indirect
@@ -175,7 +169,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/dig v1.14.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/term v0.13.0 // indirect

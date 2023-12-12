@@ -9,15 +9,9 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        # -- function with 0 arguments
-        dir = {}: (builtins.getEnv "PPOJECT_ROOT");
       in
       {
         packages = {
-          example = pkgs.writeScriptBin "example" ''
-            echo this ${dir{}};
-          '';
-
           mocki = pkgs.writeScriptBin "mocki" ''
             $PROJECT_ROOT/cmd/mocki/bin/mocki "$@"
           '';
@@ -25,19 +19,13 @@
             $PROJECT_ROOT/cmd/nats-manager/bin/nats-manager --url "nats://nats.kloudlite.svc.cluster.local:4222" --stream "resource-sync" "$@"
           '';
         };
-        formatter = pkgs.nixpkgs-fmt;
         devShells.default = pkgs.mkShell {
           packages = [
-            self.packages.${system}.example
-
             self.packages.${system}.mocki
             self.packages.${system}.nats-manager
           ];
           hardeningDisable = [ "all" ];
-
           buildInputs = with pkgs; [
-            # INFO; search packages at https://search.nixos.org/packages
-
             # cli tools
             curl
             jq
@@ -51,12 +39,10 @@
               ggshield
             ]))
 
-
             # programming tools
             go_1_21
             operator-sdk
-            mongosh # -- mongodb client
-            redli  # -- redis client
+            mongosh
             natscli
 
             # kubernetes specific tools
@@ -76,7 +62,6 @@
 
           shellHook = ''
             export PROJECT_ROOT="$PWD"
-            # exec fish # -- not needed if using direnv as it will automatically load current shell
           '';
         };
       }

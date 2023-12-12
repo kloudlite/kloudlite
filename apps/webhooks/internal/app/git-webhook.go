@@ -22,7 +22,7 @@ import (
 func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
 	headers := ctx.GetReqHeaders()
 	if v, ok := headers["X-Kloudlite-Trigger"]; ok {
-		if len(v) != len(envVars.KlHookTriggerAuthzSecret) || v != envVars.KlHookTriggerAuthzSecret {
+		if len(v) != len(envVars.KlHookTriggerAuthzSecret) || v[0] != envVars.KlHookTriggerAuthzSecret {
 			return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", v)
 		}
 		return true, nil
@@ -33,7 +33,7 @@ func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
 	cHash := "sha256=" + hex.EncodeToString(hash.Sum(nil))
 
 	ghSignature := headers["X-Hub-Signature-256"]
-	if len(cHash) != len(ghSignature) || cHash != ghSignature {
+	if len(cHash) != len(ghSignature) || cHash != ghSignature[0] {
 		return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", ghSignature)
 	}
 	return true, nil
@@ -42,14 +42,14 @@ func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
 func validateGitlabHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
 	headers := ctx.GetReqHeaders()
 	if v, ok := headers["X-Kloudlite-Trigger"]; ok {
-		if len(v) != len(envVars.KlHookTriggerAuthzSecret) || v != envVars.KlHookTriggerAuthzSecret {
+		if len(v) != len(envVars.KlHookTriggerAuthzSecret) || v[0] != envVars.KlHookTriggerAuthzSecret {
 			return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", v)
 		}
 		return true, nil
 	}
 
 	gToken := headers["X-Gitlab-Token"]
-	if len(envVars.GitlabAuthzSecret) != len(gToken) || envVars.GitlabAuthzSecret != gToken {
+	if len(envVars.GitlabAuthzSecret) != len(gToken) || envVars.GitlabAuthzSecret != gToken[0] {
 		return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", gToken)
 	}
 	return true, nil
