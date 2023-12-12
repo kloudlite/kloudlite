@@ -8,8 +8,8 @@ import (
 )
 
 type JetstreamClient struct {
-	js     jetstream.JetStream
-	logger logging.Logger
+	Jetstream     jetstream.JetStream
+	Logger logging.Logger
 }
 
 type ConsumerManager interface {
@@ -20,40 +20,15 @@ type ConsumerManager interface {
 
 var _ ConsumerManager = (*JetstreamClient)(nil)
 
-func (jsc *JetstreamClient) CreateProducer() *JetstreamProducer {
-	return &JetstreamProducer{
-		js: jsc.js,
-	}
-}
-
-func (jsc *JetstreamClient) CreateConsumer(ctx context.Context, args JetstreamConsumerArgs) (*JetstreamConsumer, error) {
-	s, err := jsc.js.Stream(ctx, args.Stream)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := s.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig(args.ConsumerConfig))
-	if err != nil {
-		return nil, err
-	}
-
-	return &JetstreamConsumer{
-		name:     args.ConsumerConfig.Name,
-		js:       jsc.js,
-		logger:   jsc.logger.WithName(args.ConsumerConfig.Name),
-		consumer: c,
-	}, nil
-}
-
 // DeleteConsumer implements ConsumerManager.
 func (jc *JetstreamClient) DeleteConsumer(ctx context.Context, stream string, consumer string) error {
-	err := jc.js.DeleteConsumer(ctx, stream, consumer)
+	err := jc.Jetstream.DeleteConsumer(ctx, stream, consumer)
 	return err
 }
 
 // ListConsumers implements ConsumerManager.
 func (jc *JetstreamClient) ListConsumers(ctx context.Context, stream string) ([]*jetstream.ConsumerInfo, error) {
-	s, err := jc.js.Stream(ctx, stream)
+	s, err := jc.Jetstream.Stream(ctx, stream)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +43,9 @@ func (jc *JetstreamClient) ListConsumers(ctx context.Context, stream string) ([]
 	return consumers, nil
 }
 
+// GetConsumerInfo implements ConsumerManager
 func (jc *JetstreamClient) GetConsumerInfo(ctx context.Context, stream string, consumer string) (*jetstream.ConsumerInfo, error) {
-	s, err := jc.js.Stream(ctx, stream)
+	s, err := jc.Jetstream.Stream(ctx, stream)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +65,7 @@ func NewJetstreamClient(nc *Client) (*JetstreamClient, error) {
 	}
 
 	return &JetstreamClient{
-		js:     js,
-		logger: nc.logger,
+		Jetstream:     js,
+		Logger: nc.logger,
 	}, nil
 }
