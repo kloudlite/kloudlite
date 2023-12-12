@@ -11,7 +11,7 @@ import (
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/messaging/nats"
+	"kloudlite.io/pkg/nats"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 

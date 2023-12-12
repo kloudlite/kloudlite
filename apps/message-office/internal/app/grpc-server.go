@@ -13,8 +13,9 @@ import (
 	"kloudlite.io/common"
 
 	"kloudlite.io/pkg/messaging"
-	"kloudlite.io/pkg/messaging/nats"
+	msg_nats "kloudlite.io/pkg/messaging/nats"
 	"kloudlite.io/pkg/messaging/types"
+	"kloudlite.io/pkg/nats"
 
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
@@ -184,22 +185,6 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 	}, nil
 }
 
-// func (g *grpcServer) createConsumer2(ev *env.Env, topicName string) (messaging.Consumer, error) {
-// 	clogger := g.logger.WithKV("message-office-consumer")
-//
-// 	consumer, err := messaging.NewConsumer(g.kafkaConn, fmt.Sprintf("message-office-%s", topicName), []string{topicName}, kafka.ConsumerOpts{Logger: clogger})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	if err := consumer.Ping(context.TODO()); err != nil {
-// 		return nil, err
-// 	}
-//
-// 	clogger.Infof("successfully connected to kafka brokers")
-// 	return consumer, nil
-// }
-
 func (g *grpcServer) SendActions(request *messages.Empty, server messages.MessageDispatchService_SendActionsServer) error {
 	accountName, clusterName, err := validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
@@ -235,8 +220,8 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		}()
 		return server.Send(&messages.Action{Message: msg.Payload})
 	}, types.ConsumeOpts{
-		OnError: func(err error) error {
-			g.logger.Errorf(err, "consumer error")
+		OnError: func(error) error {
+			g.logger.Infof("error occurrred on agent side, while parsing/applying the message, ignoring as we don't want to block the queue")
 			return nil
 		},
 	})
@@ -377,9 +362,9 @@ func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, 
 		createConsumer: func(ctx context.Context, accountName string, clusterName string) (messaging.Consumer, error) {
 			name := fmt.Sprintf("tenant-consumer-for-account-%s-cluster-%s", accountName, clusterName)
 
-			return jc.CreateConsumer(ctx, nats.JetstreamConsumerArgs{
+			return msg_nats.NewJetstreamConsumer(ctx, jc, msg_nats.JetstreamConsumerArgs{
 				Stream: ev.NatsStream,
-				ConsumerConfig: nats.ConsumerConfig{
+				ConsumerConfig: msg_nats.ConsumerConfig{
 					Name:        name,
 					Durable:     name,
 					Description: "this consumer consumes messages from platform, and dispatches them to the tenant cluster via kloudlite agent",

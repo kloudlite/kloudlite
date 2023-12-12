@@ -23,7 +23,8 @@ import (
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/messaging/nats"
+	msg_nats "kloudlite.io/pkg/messaging/nats"
+	"kloudlite.io/pkg/nats"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -67,7 +68,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) domain.SendTargetClusterMessagesProducer {
-		return jsc.CreateProducer()
+		return msg_nats.NewJetstreamProducer(jsc)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, producer domain.SendTargetClusterMessagesProducer) {
@@ -92,9 +93,9 @@ var Module = fx.Module(
 		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteInfra, common.EventErrorOnApply)
 
 		consumerName := "infra:resource-updates"
-		return jsc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.NatsStream,
-			ConsumerConfig: nats.ConsumerConfig{
+			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
 				Description:    "this consumer receives infra resource updates, processes them, and keeps our Database updated about things happening in the cluster",
@@ -119,9 +120,10 @@ var Module = fx.Module(
 		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteInfra, common.EventErrorOnApply)
 
 		consumerName := "infra:error-on-apply"
-		return jsc.CreateConsumer(context.TODO(), nats.JetstreamConsumerArgs{
+
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.NatsStream,
-			ConsumerConfig: nats.ConsumerConfig{
+			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
 				Description:    "this consumer receives infra resource apply error on agent, processes them, and keeps our Database updated about why the resource apply failed at agent",

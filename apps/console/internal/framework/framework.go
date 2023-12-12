@@ -14,7 +14,7 @@ import (
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 	loki_client "kloudlite.io/pkg/loki-client"
-	"kloudlite.io/pkg/messaging/nats"
+	"kloudlite.io/pkg/nats"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 
