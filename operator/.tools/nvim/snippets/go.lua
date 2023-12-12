@@ -30,39 +30,6 @@ Enabled bool `json:"enabled,omitempty"`
 
 table.insert(snippets, res_enabled)
 
-local robj = s(
-  "robj",
-  fmta(
-    [[
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(<p1>)
-	defer req.LogPostCheck(<p2>)
-
-  <p3>
-
-	check.Status = true
-	if check != obj.Status.Checks[<p4>] {
-		obj.Status.Checks[<p5>] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-		  return sr
-		}
-	}
-
-	return req.Next()
-]],
-    {
-      p1 = i(1, "Checkname"),
-      p2 = rep(1),
-      p3 = i(0, "//body"),
-      p4 = rep(1),
-      p5 = rep(1),
-    }
-  )
-)
-table.insert(snippets, robj)
-
 local import_ginkgo = s(
   "imp_ginkgo",
   fmt(

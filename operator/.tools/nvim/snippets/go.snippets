@@ -77,3 +77,30 @@ snippet kubebuilder-printcolumns-default
 	// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 	// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\\\.io\\\\/resource\\\\.ready",name=Ready,type=string
 	// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+
+snippet robj "creates template for recocilation step functino"
+  ctx, obj := req.Context(), req.Object
+  check := rApi.Check{Generation: obj.Generation}
+
+  checkName := "${1:checkName}"
+
+  req.LogPreCheck(checkName)
+  defer req.LogPostCheck(checkName)
+
+  fail := func(err error) stepResult.Result {
+    return req.CheckFailed(checkName, check, err.Error())
+  }
+
+  ${2://function-body}
+
+  check.Status = true
+  if check != obj.Status.Checks[checkName] {
+    obj.Status.Checks[checkName] = check
+    fn.MapSet(obj.Status.Checks, checkName, check)
+    if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+      return sr
+    }
+  }
+
+  return req.Next()
+
