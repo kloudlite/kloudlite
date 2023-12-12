@@ -86,10 +86,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -200,57 +196,34 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 		rootPassword := fn.CleanerNanoid(40)
 		host := fmt.Sprintf("%s-headless.%s.svc.%s:6379", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 
-		accessCreds.StringData = map[string]string{
-			"ROOT_PASSWORD": rootPassword,
-			"HOSTS":         host,
-			"URI":           fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
+		var m map[string]string
+
+		out := types.MsvcOutput{
+			RootPassword: rootPassword,
+			Hosts:        host,
+			Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
 		}
+
+		b, err := json.Marshal(out)
+		if err != nil {
+			return err
+		}
+
+		if err := json.Unmarshal(b, &m); err != nil {
+			return err
+		}
+
+		accessCreds.StringData = m
 
 		return nil
 	})
 
-	// secretName := "msvc-" + obj.Name
-	// scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secretName), &corev1.Secret{})
-	// if err != nil {
-	// 	req.Logger.Infof("secret %s does not exist yet, would be creating it ...", fn.NN(obj.Namespace, secretName).String())
-	// }
-	//
-	// if scrt == nil {
-	// 	rootPassword := fn.CleanerNanoid(40)
-	// 	b, err := templates.ParseBytes(
-	// 		templates.Secret, map[string]any{
-	// 			"name":       secretName,
-	// 			"namespace":  obj.Namespace,
-	// 			"labels":     obj.GetLabels(),
-	// 			"owner-refs": obj.GetOwnerReferences(),
-	// 			"string-data": types.MsvcOutput{
-	// 				RootPassword: rootPassword,
-	// 				Hosts:        host,
-	// 				Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
-	// 			},
-	// 		},
-	// 	)
-	// 	if err != nil {
-	// 		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	// 	}
-	//
-	// 	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-	// 		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	// 	}
-	// }
-	//
-	// if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
-	// 	obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
-	// 	if err := r.Update(ctx, obj); err != nil {
-	// 		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	// 	}
-	// 	return req.Done().RequeueAfter(100 * time.Millisecond)
-	// }
-
 	check.Status = true
 	if check != obj.Status.Checks[AccessCredsReady] {
 		obj.Status.Checks[AccessCredsReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](accessCreds)
@@ -273,10 +246,10 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	if !ok {
 		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyRootPassword).Error())
 	}
-	aclConfigmapName, ok := rApi.GetLocal[string](req, KeyAclConfigMapName)
-	if !ok {
-		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
-	}
+	// aclConfigmapName, ok := rApi.GetLocal[string](req, KeyAclConfigMapName)
+	// if !ok {
+	// 	return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
+	// }
 
 	b, err := templates.ParseBytes(r.templateHelmRedisStandalone, map[string]any{
 		"name":      obj.Name,
@@ -295,8 +268,8 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		"limits-cpu": obj.Spec.Resources.Cpu.Min,
 		"limits-mem": obj.Spec.Resources.Memory,
 
-		"acl-configmap-name": aclConfigmapName,
-		"root-password":      msvcOutput.RootPassword,
+		// "acl-configmap-name": aclConfigmapName,
+		"root-password": msvcOutput.RootPassword,
 	})
 	if err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)

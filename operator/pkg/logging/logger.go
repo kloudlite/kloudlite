@@ -105,7 +105,8 @@ func New(options *Options) (Logger, error) {
 		loglevel = zapcore.DebugLevel
 	}
 
-	zapOpts := make([]zap.Option, 0, 2)
+	zapOpts := make([]zap.Option, 0, 3)
+	zapOpts = append(zapOpts, zap.AddStacktrace(zap.DPanicLevel))
 	if opts.CallerTrace {
 		zapOpts = append(zapOpts, zap.AddCaller(), zap.AddCallerSkip(1))
 	}
