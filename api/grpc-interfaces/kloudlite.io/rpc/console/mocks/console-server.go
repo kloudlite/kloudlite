@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	console "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	console "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 )
 
 type ConsoleServerCallerInfo struct {

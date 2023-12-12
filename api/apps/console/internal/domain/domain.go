@@ -8,26 +8,26 @@ import (
 	"os"
 	"strconv"
 
-	"kloudlite.io/common"
+	"github.com/kloudlite/api/common"
 
+	"github.com/kloudlite/api/pkg/messaging"
+	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/constants"
-	"kloudlite.io/pkg/messaging"
-	msgTypes "kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/types"
 
 	t "github.com/kloudlite/operator/agent/types"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	"kloudlite.io/apps/console/internal/entities"
-	"kloudlite.io/apps/console/internal/env"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/apps/console/internal/env"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type MessageDispatcher messaging.Producer

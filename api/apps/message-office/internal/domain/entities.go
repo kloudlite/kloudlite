@@ -1,6 +1,6 @@
 package domain
 
-import "kloudlite.io/pkg/repos"
+import "github.com/kloudlite/api/pkg/repos"
 
 type MessageOfficeToken struct {
 	repos.BaseEntity `json:",inline"`

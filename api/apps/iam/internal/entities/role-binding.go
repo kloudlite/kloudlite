@@ -1,9 +1,9 @@
 package entities
 
 import (
-	t "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
+	t "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type RoleBinding struct {

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 )
 
 // CreationTime is the resolver for the creationTime field.

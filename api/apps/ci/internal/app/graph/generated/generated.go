@@ -17,9 +17,9 @@ import (
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"kloudlite.io/apps/ci/internal/app/graph/model"
-	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/ci/internal/app/graph/model"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 )
 
 // region    ************************** generated!.gotpl **************************

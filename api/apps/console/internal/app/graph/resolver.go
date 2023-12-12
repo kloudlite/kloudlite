@@ -1,7 +1,7 @@
 package graph
 
 import (
-	"kloudlite.io/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/domain"
 )
 
 // This file will not be regenerated automatically.

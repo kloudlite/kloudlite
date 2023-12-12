@@ -14,8 +14,8 @@ import (
 
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"github.com/gorilla/websocket"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"go.uber.org/fx"
-	fn "kloudlite.io/pkg/functions"
 )
 
 var upgrader = websocket.Upgrader{}

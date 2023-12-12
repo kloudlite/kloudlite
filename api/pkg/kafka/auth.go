@@ -2,9 +2,9 @@ package kafka
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/pkg/sasl/scram"
-	"kloudlite.io/pkg/errors"
 )
 
 type SASLMechanism string

@@ -3,8 +3,8 @@ package domain
 import (
 	"fmt"
 
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 )
 
 type ErrIAMUnauthorized struct {

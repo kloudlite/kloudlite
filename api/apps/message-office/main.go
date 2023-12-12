@@ -9,11 +9,11 @@ import (
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 
-	"kloudlite.io/apps/message-office/internal/env"
-	"kloudlite.io/apps/message-office/internal/framework"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/apps/message-office/internal/env"
+	"github.com/kloudlite/api/apps/message-office/internal/framework"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 func main() {

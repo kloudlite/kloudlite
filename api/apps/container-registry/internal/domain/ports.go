@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/google/go-github/v45/github"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/pkg/types"
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/types"
 )
 
 type Github interface {

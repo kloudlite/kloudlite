@@ -3,9 +3,9 @@
 package model
 
 import (
-	"kloudlite.io/apps/accounts/internal/entities"
-	"kloudlite.io/apps/iam/types"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	"github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type AccountMembershipIn struct {

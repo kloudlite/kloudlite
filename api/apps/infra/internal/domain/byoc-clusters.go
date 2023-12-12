@@ -2,15 +2,15 @@ package domain
 
 import (
 	"fmt"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/apps/infra/internal/entities"
-	fn "kloudlite.io/pkg/functions"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entities.BYOCCluster, error) {

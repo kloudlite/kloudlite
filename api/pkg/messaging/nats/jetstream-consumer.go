@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/nats"
 	"github.com/nats-io/nats.go/jetstream"
-	"kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/nats"
 )
 
 type JetstreamConsumer struct {

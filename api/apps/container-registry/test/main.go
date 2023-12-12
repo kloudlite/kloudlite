@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
-	"kloudlite.io/apps/container-registry/internal/domain"
 )
 
 func main() {

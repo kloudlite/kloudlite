@@ -1,7 +1,7 @@
 package common
 
 import (
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type AuthSession struct {

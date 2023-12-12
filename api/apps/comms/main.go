@@ -7,12 +7,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/kloudlite/api/apps/comms/internal/app"
+	"github.com/kloudlite/api/apps/comms/internal/env"
+	"github.com/kloudlite/api/apps/comms/internal/framework"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/comms/internal/app"
-	"kloudlite.io/apps/comms/internal/env"
-	"kloudlite.io/apps/comms/internal/framework"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/logging"
 )
 
 //go:embed email-templates

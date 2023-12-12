@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/nats"
+	"github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/nats"
 )
 
 type JetstreamProducer struct {

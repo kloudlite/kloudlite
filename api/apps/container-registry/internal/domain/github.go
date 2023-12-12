@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/google/go-github/v45/github"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 	"golang.org/x/oauth2"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/constants"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
 )
 
 type ErrEventNotSupported struct {

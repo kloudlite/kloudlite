@@ -7,12 +7,12 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/accounts/internal/app/graph/generated"
-	"kloudlite.io/apps/accounts/internal/app/graph/model"
-	"kloudlite.io/apps/accounts/internal/domain"
-	"kloudlite.io/apps/accounts/internal/entities"
-	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/accounts/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/accounts/internal/domain"
+	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 // User is the resolver for the User field.

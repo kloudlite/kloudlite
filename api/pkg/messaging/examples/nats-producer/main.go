@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"kloudlite.io/pkg/messaging"
-	msgNats "kloudlite.io/pkg/messaging/nats"
-	"kloudlite.io/pkg/messaging/types"
-	"kloudlite.io/pkg/nats"
+	"github.com/kloudlite/api/pkg/messaging"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/nats"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var producer messaging.Producer = msgNats.NewJetstreamProducer(jc)
+	var producer messaging.Producer = msg_nats.NewJetstreamProducer(jc)
 	if err != nil {
 		log.Fatal(err)
 	}

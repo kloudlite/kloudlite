@@ -8,15 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 
-	"kloudlite.io/apps/ci/internal/app/graph/generated"
-	"kloudlite.io/apps/ci/internal/app/graph/model"
-	"kloudlite.io/apps/ci/internal/domain"
-	"kloudlite.io/common"
-	wErrors "kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/ci/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/ci/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/ci/internal/domain"
+	"github.com/kloudlite/api/common"
+	wErrors "github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 )
 
 func (r *appResolver) Pipelines(ctx context.Context, obj *model.App) ([]*model.GitPipeline, error) {

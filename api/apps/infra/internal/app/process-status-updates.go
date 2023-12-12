@@ -7,16 +7,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/apps/infra/internal/entities"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 
-	"kloudlite.io/pkg/messaging"
-	msgTypes "kloudlite.io/pkg/messaging/types"
-	t "kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/pkg/messaging"
+	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	t "github.com/kloudlite/api/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type grpcServer struct {

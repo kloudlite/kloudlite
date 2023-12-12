@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kloudlite/api/constants"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
-	"kloudlite.io/constants"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

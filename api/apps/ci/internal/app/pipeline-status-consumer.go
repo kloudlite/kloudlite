@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	"kloudlite.io/apps/ci/internal/domain"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
+	"github.com/kloudlite/api/apps/ci/internal/domain"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/redpanda"
 )
 
 type PipelineStatusConsumer redpanda.Consumer

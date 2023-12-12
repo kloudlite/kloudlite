@@ -1,8 +1,8 @@
 package entities
 
 import (
+	"github.com/kloudlite/api/pkg/repos"
 	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
-	"kloudlite.io/pkg/repos"
 )
 
 type BuildRun struct {

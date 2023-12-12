@@ -16,7 +16,7 @@ import (
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"kloudlite.io/apps/message-office/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/message-office/internal/app/graph/model"
 )
 
 // region    ************************** generated!.gotpl **************************

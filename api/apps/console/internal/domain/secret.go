@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/console/internal/entities"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
 )
 
 // query

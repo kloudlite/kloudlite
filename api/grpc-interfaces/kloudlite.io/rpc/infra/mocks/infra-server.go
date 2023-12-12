@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	infra "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
+	infra "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
 )
 
 type InfraServerCallerInfo struct {

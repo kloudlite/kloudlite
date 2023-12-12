@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/kloudlite/api/pkg/rexec"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
-	"kloudlite.io/pkg/rexec"
 )
 
 type wgManager struct {

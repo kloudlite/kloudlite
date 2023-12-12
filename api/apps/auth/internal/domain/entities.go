@@ -3,8 +3,8 @@ package domain
 import (
 	"time"
 
+	"github.com/kloudlite/api/pkg/repos"
 	"golang.org/x/oauth2"
-	"kloudlite.io/pkg/repos"
 )
 
 type InvitationStatus string

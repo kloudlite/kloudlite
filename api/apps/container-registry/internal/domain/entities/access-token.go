@@ -1,8 +1,8 @@
 package entities
 
 import (
+	"github.com/kloudlite/api/pkg/repos"
 	"golang.org/x/oauth2"
-	"kloudlite.io/pkg/repos"
 )
 
 type AccessToken struct {

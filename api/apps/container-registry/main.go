@@ -5,12 +5,12 @@ import (
 	"flag"
 	"runtime/trace"
 
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	"github.com/kloudlite/api/apps/container-registry/internal/framework"
+	"github.com/kloudlite/api/common"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/container-registry/internal/env"
-	"kloudlite.io/apps/container-registry/internal/framework"
-	"kloudlite.io/common"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 )
 
 func main() {

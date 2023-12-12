@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/errors"
-	"kloudlite.io/pkg/logging"
 )
 
 func NewMongoDatabase(ctx context.Context, uri string, dbName string) (db *mongo.Database, e error) {

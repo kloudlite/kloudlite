@@ -2,7 +2,7 @@ package mocks
 
 import (
 	context "context"
-	agent "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent"
+	agent "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/agent"
 )
 
 type KubeAgentServerCallerInfo struct {

@@ -7,12 +7,12 @@ package graph
 import (
 	"context"
 
-	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/app/graph/model"
-	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/apps/console/internal/entities"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 // CoreCreateProject is the resolver for the core_createProject field.

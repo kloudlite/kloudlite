@@ -2,8 +2,8 @@ package mocks
 
 import (
 	context "context"
+	container_registry "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	grpc "google.golang.org/grpc"
-	container_registry "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 )
 
 type ContainerRegistryClientCallerInfo struct {

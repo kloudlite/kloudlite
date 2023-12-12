@@ -1,10 +1,10 @@
 package app
 
 import (
+	"github.com/kloudlite/api/apps/build-agent/internal/domain"
+	"github.com/kloudlite/api/apps/build-agent/internal/env"
+	"github.com/kloudlite/api/pkg/redpanda"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/build-agent/internal/domain"
-	"kloudlite.io/apps/build-agent/internal/env"
-	"kloudlite.io/pkg/redpanda"
 )
 
 type venv struct {
