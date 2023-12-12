@@ -4,12 +4,16 @@ import (
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ClusterServiceOutput struct {
-	Credentials ct.SecretRef `json:"credentials,omitempty"`
-	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
+	NodeSelector              map[string]string                 `json:"nodeSelector,omitempty"`
+	Tolerations               []corev1.Toleration               `json:"tolerations,omitempty"`
+	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+	Credentials               ct.SecretRef                      `json:"credentials,omitempty"`
+	HelmSecret                ct.SecretRef                      `json:"helmSecret,omitempty"`
 }
 
 // ClusterServiceSpec defines the desired state of ClusterService
