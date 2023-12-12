@@ -76,7 +76,6 @@ spec:
                 type: string
             required:
             - msvcRef
-            - output
             - resourceName
             type: object
           status:

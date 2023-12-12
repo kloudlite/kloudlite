@@ -14,12 +14,9 @@
 {{- $limitsMem := get . "limits-mem" }}
 
 {{- $obj := get . "object"}}
-{{/*{{- $ownerRefs := get . "owner-refs" }}*/}}
-{{/*{{- $storageClass := get . "storage-class"}}*/}}
-{{/*{{- $aclAccountsMap := get . "acl-account-map"}}*/}}
 
 {{/*{{- $freeze := get . "freeze" | default false}}*/}}
-{{- $aclConfigmapName := get . "acl-configmap-name"  -}}
+{{- /* {{- $aclConfigmapName := get . "acl-configmap-name"  -}} */}}
 {{- $rootPassword := get . "root-password"  -}}
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 
@@ -37,7 +34,7 @@ spec:
   chartVersion: 18.0.2
   chartName: bitnami/redis
 
-  valuesYaml: |+
+  values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/redis/
     global:
      storageClass: {{$storageClass}}
@@ -62,13 +59,7 @@ spec:
 
     architecture: standalone
 
-    existingConfigmap: {{$aclConfigmapName}}
-  {{/*  commonConfiguration: |+*/}}
-  {{/*    {{- if $aclAccountsMap}}*/}}
-  {{/*    {{- range $k, $v := $aclAccountsMap}}*/}}
-  {{/*    {{ $v }}*/}}
-  {{/*    {{- end }}*/}}
-  {{/*    {{- end }}*/}}
+    {{- /* existingConfigmap: {{$aclConfigmapName}} */}}
 
     master:
       count: 1
@@ -84,30 +75,8 @@ spec:
         size: {{$storageSize}}
 
       podLabels: {}
-{{/*        {{ if $labels}}{{$labels | toYAML | nindent 6 }}{{ end}}*/}}
-{{/*        {{- if .Spec.Region }}*/}}
-{{/*        kloudlite.io/region: {{.Spec.Region}}*/}}
-{{/*        {{- end }}*/}}
-{{/*        kloudlite.io/stateful-node: "true"*/}}
 
-{{/*      priorityClassName: {{$priorityClassName}}*/}}
-{{/*      affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}*/}}
-{{/*      {{- if .Spec.Region }}*/}}
-{{/*      tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}*/}}
-{{/*      nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}*/}}
-{{/*      {{- end }}*/}}
-
-{{/*    replica:*/}}
-{{/*      {{- if $labels}}*/}}
-{{/*      podLabels: {{$labels | toYAML | nindent 6 }}*/}}
-{{/*      {{- end}}*/}}
-
-{{/*      priorityClassName: {{$priorityClassName}}*/}}
-{{/*      affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}*/}}
-{{/*      {{- if .Spec.Region}}*/}}
-{{/*      tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}*/}}
-{{/*      nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}*/}}
-{{/*      {{- end }}*/}}
+    priorityClassName: {{$priorityClassName}}
 
     volumePermissions:
       enabled: true
