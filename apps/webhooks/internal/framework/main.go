@@ -1,10 +1,13 @@
 package framework
 
 import (
+	"context"
+	"fmt"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/webhooks/internal/app"
 	"kloudlite.io/apps/webhooks/internal/env"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
 
@@ -42,6 +45,20 @@ var Module = fx.Module(
 	),
 
 	redpanda.NewClientFx[*fm](),
-	httpServer.NewHttpServerFx[*fm](),
+	fx.Provide(func(logger logging.Logger) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 	app.Module,
 )

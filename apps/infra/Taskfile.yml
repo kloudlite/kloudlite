@@ -16,6 +16,8 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     vars:
       BuiltAt:
         sh: date | sed 's/\s/_/g'

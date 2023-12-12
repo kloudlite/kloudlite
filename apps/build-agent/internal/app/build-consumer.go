@@ -26,7 +26,6 @@ type Obj struct {
 
 func fxInvokeProcessBuilds() fx.Option {
 	return fx.Options(
-
 		fx.Invoke(
 			func(consumer redpanda.Consumer, logr logging.Logger, yamlClient kubectl.YAMLClient) {
 				consumer.StartConsuming(

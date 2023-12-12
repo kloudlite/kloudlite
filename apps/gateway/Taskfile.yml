@@ -18,6 +18,6 @@ tasks:
       - sh: test -n '{{.Tag}}'
         msg: 'var Tag must be defined'
     cmds:
-      - docker build . -t  {{.Image}}
-      - docker push {{.Image}}
+      - podman build . -t  {{.Image}}
+      - podman push {{.Image}}
 
