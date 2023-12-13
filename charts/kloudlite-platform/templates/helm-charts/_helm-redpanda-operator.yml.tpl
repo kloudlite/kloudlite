@@ -13,7 +13,7 @@ spec:
 
   chartName: redpanda/operator
   {{- /* chartVersion: 5.5.1 */}}
-  chartVersion: 0.3.21
+  chartVersion: 0.4.6
 
   valuesYaml: |+
     nameOverride: {{$chartOpts.name}}

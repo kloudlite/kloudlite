@@ -21,9 +21,14 @@ spec:
         port: 9092
 
     statefulset:
-      replicas: 1
+      replicas: 2
       priorityClassName: {{.Values.statefulPriorityClassName}}
       nodeSelector: {{.Values.managedServicesNodeSelector | toYaml | nindent 10 }}
+      topologySpreadConstraints:
+        maxSkew: 1
+        topologyKey: kloudlite.io/provider.az
+        whenUnsatisfiable: ScheduleAnyway
+
       {{- /* additionalRedpandaCmdFlags: */}}
         {{- /* - --check */}}
         {{- /* - "false" */}}

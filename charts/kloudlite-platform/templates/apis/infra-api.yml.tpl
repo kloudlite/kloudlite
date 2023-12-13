@@ -38,7 +38,7 @@ spec:
 
         - key: INFRA_DB_URI
           type: secret
-          refName: "mres-{{.Values.managedResources.infraDb}}"
+          refName: "mres-{{.Values.managedResources.infraDb}}-creds"
           refKey: URI
 
         - key: HTTP_PORT
@@ -52,47 +52,58 @@ spec:
 
         - key: AUTH_REDIS_HOSTS
           type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          refName: "msvc-{{.Values.managedServices.redisSvc}}"
           refKey: HOSTS
 
         - key: AUTH_REDIS_PASSWORD
           type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
-          refKey: PASSWORD
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          {{- /* refKey: PASSWORD */}}
+          refName: "msvc-{{.Values.managedServices.redisSvc}}"
+          refKey: ROOT_PASSWORD
 
         - key: AUTH_REDIS_PREFIX
-          type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
-          refKey: PREFIX
+          value: "auth"
+          {{- /* type: secret */}}
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          {{- /* refKey: PREFIX */}}
 
-        - key: AUTH_REDIS_USER_NAME
-          type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
-          refKey: USERNAME
+        - key: AUTH_REDIS_USERNAME
+          value: ""
+          {{- /* type: secret */}}
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          {{- /* refKey: USERNAME */}}
 
-        - key: KAFKA_BROKERS
-          type: secret
-          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
-          refKey: KAFKA_BROKERS
+        {{- /* - key: KAFKA_BROKERS */}}
+        {{- /*   type: secret */}}
+        {{- /*   refName: {{.Values.secretNames.redpandaAdminAuthSecret}} */}}
+        {{- /*   refKey: KAFKA_BROKERS */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_USERNAME */}}
+        {{- /*   type: secret */}}
+        {{- /*   refName: {{.Values.secretNames.redpandaAdminAuthSecret}} */}}
+        {{- /*   refKey: USERNAME */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_PASSWORD */}}
+        {{- /*   type: secret */}}
+        {{- /*   refName: {{.Values.secretNames.redpandaAdminAuthSecret}} */}}
+        {{- /*   refKey: PASSWORD */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_TOPIC_INFRA_UPDATES */}}
+        {{- /*   value: {{ required "env var KAKFA_TOPIC_INFRA_UPDATES must be set" .Values.kafka.topicInfraStatusUpdates }} */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES */}}
+        {{- /*   value: {{.Values.kafka.topicBYOCClientUpdates}} */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_CONSUMER_GROUP_ID */}}
+        {{- /*   value: {{.Values.kafka.consumerGroupId}} */}}
 
-        - key: KAFKA_USERNAME
-          type: secret
-          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
-          refKey: USERNAME
+        - key: NATS_URL
+          value: "nats://nats.kloudlite.svc.cluster.local:4222"
 
-        - key: KAFKA_PASSWORD
-          type: secret
-          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
-          refKey: PASSWORD
-
-        - key: KAFKA_TOPIC_INFRA_UPDATES
-          value: {{ required "env var KAKFA_TOPIC_INFRA_UPDATES must be set" .Values.kafka.topicInfraStatusUpdates }}
-
-        - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
-          value: {{.Values.kafka.topicBYOCClientUpdates}}
-
-        - key: KAFKA_CONSUMER_GROUP_ID
-          value: {{.Values.kafka.consumerGroupId}}
+        - key: NATS_STREAM
+          value: resource-sync
 
         - key: ACCOUNT_COOKIE_NAME
           value: kloudlite-account
@@ -128,13 +139,13 @@ spec:
           value: {{.Values.apps.infraApi.configuration.aws.cloudformation.params.trustedARN}}
         
         - key: AWS_CF_STACK_NAME_PREFIX
-          value: "kloudlite-access-stack"
+          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.stackNamePrefix}}
 
         - key: AWS_CF_ROLE_NAME_PREFIX
-          value: "kloudlite-access-role"
+          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.roleNamePrefix}}
 
         - key: AWS_CF_INSTANCE_PROFILE_NAME_PREFIX
-          value: "kloudlite-instance-profile"
+          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.instanceProfileNamePrefix}}
 
         - key: PUBLIC_DNS_HOST_SUFFIX
           value: {{.Values.baseDomain}}

@@ -65,7 +65,7 @@ spec:
   chartName: vector/vector
   chartVersion: 0.23.0
 
-  valuesYaml: |+
+  values:
     role: Agent
     containerPorts:
       - containerPort: 6000

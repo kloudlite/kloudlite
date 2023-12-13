@@ -13,7 +13,7 @@ spec:
   chartName: bitnami/grafana
   chartVersion: 9.6.2
 
-  valuesYaml: |+
+  values:
     global:
       storageClass: {{.Values.persistence.storageClasses.ext4}}
 

@@ -33,7 +33,7 @@ spec:
             - --cloud-provider=kloudlite
             - --logtostderr=true
             - --stderrthreshold=info
-            - scale-down-unneeded-time=1m
+            - scale-down-unneeded-time=10m
           image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag  | default .Chart.AppVersion }}
           imagePullPolicy: {{.Values.clusterAutoscaler.image.pullPolicy | default .Values.defaults.imagePullPolicy }}
           name: main

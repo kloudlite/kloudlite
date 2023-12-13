@@ -34,27 +34,33 @@ spec:
 
         - key: REDIS_HOSTS
           type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          refName: msvc-{{.Values.managedServices.redisSvc}}
           refKey: HOSTS
 
         - key: REDIS_PASSWORD
           type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
-          refKey: PASSWORD
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          refName: msvc-{{.Values.managedServices.redisSvc}}
+          {{- /* refKey: PASSWORD */}}
+          refKey: ROOT_PASSWORD
 
         - key: REDIS_PREFIX
-          type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
-          refKey: PREFIX
+          value: auth
+          {{- /* type: secret */}}
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          {{- /* refName: msvc-{{.Values.managedServices.redisSvc}} */}}
+          {{- /* refKey: PREFIX */}}
 
         - key: REDIS_USERNAME
-          type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
-          refKey: USERNAME
+          value: ""
+          {{- /* type: secret */}}
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          {{- /* refKey: USERNAME */}}
 
         - key: MONGO_URI
           type: secret
-          refName: mres-{{.Values.managedResources.authDb}}
+          refName: mres-{{.Values.managedResources.authDb}}-creds
           refKey: URI
 
         - key: COMMS_SERVICE

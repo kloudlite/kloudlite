@@ -1,15 +1,14 @@
 {{- define "nodepool-operator-env" -}}
 - name: CLOUD_PROVIDER_NAME
-  value: {{.Values.operators.platformOperator.configuration.cloudProviderName}}
-
+  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.cloudProviderName must be set" .Values.operators.platformOperator.configuration.nodepool.cloudProviderName }} 
 - name: CLOUD_PROVIDER_REGION
-  value: {{.Values.operators.platformOperator.configuration.cloudProviderRegion}}
+  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.cloudProviderRegion must be set" .Values.operators.platformOperator.configuration.nodepool.cloudProviderRegion }} 
 
 - name: "K3S_JOIN_TOKEN"
-  value: {{.Values.operators.platformOperator.configuration.k3sJoinToken}}
+  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.k3sJoinToken must be set" .Values.operators.platformOperator.configuration.nodepool.k3sJoinToken }} 
 
 - name: "K3S_SERVER_PUBLIC_HOST"
-  value: {{.Values.operators.platformOperator.configuration.k3sServerPublicHost}}
+  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.k3sServerPublicHost must be set" .Values.operators.platformOperator.configuration.nodepool.k3sServerPublicHost }} 
 
 - name: "KLOUDLITE_ACCOUNT_NAME"
   value: {{.Values.accountName}}

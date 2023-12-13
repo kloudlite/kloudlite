@@ -4,11 +4,14 @@ metadata:
   name: {{.Values.managedResources.accountsDb}}
   namespace: {{.Release.Namespace}}
 spec:
-  inputs:
-    resourceName: {{.Values.managedResources.accountsDb}}
-  msvcRef:
+  resourceTemplate:
     apiVersion: mongodb.msvc.kloudlite.io/v1
-    kind: StandaloneService
-    name: {{.Values.managedServices.mongoSvc}}
-  mresKind:
     kind: Database
+
+    msvcRef:
+      apiVersion: mongodb.msvc.kloudlite.io/v1
+      kind: ClusterService
+      name: {{.Values.managedServices.mongoSvc}}
+
+    spec:
+      resourceName: {{.Values.managedResources.accountsDb}}

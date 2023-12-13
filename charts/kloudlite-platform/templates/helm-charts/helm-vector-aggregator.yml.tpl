@@ -15,7 +15,7 @@ spec:
   chartName: vector/vector
   chartVersion: 0.23.0
 
-  valuesYaml: |+
+  values:
     global:
       storageClass: {{.Values.persistence.storageClasses.ext4}}
 

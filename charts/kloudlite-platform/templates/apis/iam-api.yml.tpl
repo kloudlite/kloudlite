@@ -31,27 +31,34 @@ spec:
 
         - key: REDIS_HOSTS
           type: secret
-          refName: mres-{{.Values.managedResources.iamRedis}}
+          {{- /* refName: mres-{{.Values.managedResources.iamRedis}} */}}
+          {{- /* refKey: HOSTS */}}
+          refName: msvc-{{.Values.managedServices.redisSvc}}
           refKey: HOSTS
+
 
         - key: REDIS_PASSWORD
           type: secret
-          refName: mres-{{.Values.managedResources.iamRedis}}
-          refKey: PASSWORD
+          {{- /* refName: mres-{{.Values.managedResources.iamRedis}} */}}
+          {{- /* refKey: PASSWORD */}}
+          refName: msvc-{{.Values.managedServices.redisSvc}}
+          refKey: ROOT_PASSWORD
 
         - key: REDIS_PREFIX
-          type: secret
-          refName: mres-{{.Values.managedResources.iamRedis}}
-          refKey: PREFIX
+          value: "iam"
+          {{- /* type: secret */}}
+          {{- /* refName: mres-{{.Values.managedResources.iamRedis}} */}}
+          {{- /* refKey: PREFIX */}}
 
         - key: REDIS_USERNAME
-          type: secret
-          refName: mres-{{.Values.managedResources.iamRedis}}
-          refKey: USERNAME
+          value: ""
+          {{- /* type: secret */}}
+          {{- /* refName: mres-{{.Values.managedResources.iamRedis}} */}}
+          {{- /* refKey: USERNAME */}}
 
         - key: MONGO_DB_URI
           type: secret
-          refName: mres-{{.Values.managedResources.iamDb}}
+          refName: mres-{{.Values.managedResources.iamDb}}-creds
           refKey: URI
 
         - key: COOKIE_DOMAIN

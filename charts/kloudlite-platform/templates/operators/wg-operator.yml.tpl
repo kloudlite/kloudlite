@@ -112,8 +112,8 @@ spec:
             - name: CLUSTER_INTERNAL_DNS
               value: {{.Values.clusterInternalDNS}}
 
-          image: {{.Values.operators.wgOperator.image}}
-          imagePullPolicy: {{.Values.operators.wgOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
+          image: {{.Values.operators.wgOperator.image.repository}}:{{.Values.operators.wgOperator.image.tag | default .Values.kloudlite_release }}
+          imagePullPolicy: {{.Values.operators.wgOperator.image.pullPolicy | default .Values.imagePullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz

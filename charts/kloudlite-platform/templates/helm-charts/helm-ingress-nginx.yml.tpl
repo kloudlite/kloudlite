@@ -15,7 +15,7 @@ spec:
   {{- /* chartVersion: 4.8.0 */}}
   chartVersion: 4.6.0
 
-  valuesYaml: |+
+  values:
     nameOverride: {{$chartOpts.name}}
 
     rbac:

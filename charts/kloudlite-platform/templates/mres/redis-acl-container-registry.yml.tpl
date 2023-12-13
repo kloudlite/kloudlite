@@ -5,13 +5,15 @@ metadata:
   name: {{.Values.managedResources.containerRegistryRedis}}
   namespace: {{.Release.Namespace}}
 spec:
-  inputs:
-    keyPrefix: container-registry
-  mresKind:
-    kind: ACLAccount
-  msvcRef:
+  resourceTemplate:
     apiVersion: redis.msvc.kloudlite.io/v1
-    kind: StandaloneService
-    name: {{.Values.managedServices.redisSvc}}
+    kind: ACLAccount
 
+    msvcRef:
+      apiVersion: redis.msvc.kloudlite.io/v1
+      kind: StandaloneService
+      name: {{.Values.managedServices.redisSvc}}
+
+    spec:
+      keyPrefix: container-registry
 ---
