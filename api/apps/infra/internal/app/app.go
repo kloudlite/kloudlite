@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
@@ -22,7 +24,8 @@ import (
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
-	"github.com/kloudlite/api/pkg/messaging/nats"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
@@ -66,11 +69,19 @@ var Module = fx.Module(
 		return message_office_internal.NewMessageOfficeInternalClient(client)
 	}),
 
-	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) domain.SendTargetClusterMessagesProducer {
+	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) SendTargetClusterMessagesProducer {
 		return msg_nats.NewJetstreamProducer(jsc)
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, producer domain.SendTargetClusterMessagesProducer) {
+	fx.Provide(func(p SendTargetClusterMessagesProducer) domain.ResourceDispatcher {
+		return NewResourceDispatcher(p)
+	}),
+
+	fx.Provide(func(config *rest.Config, scheme *runtime.Scheme) (domain.K8sClient, error) {
+		return NewK8sClient(config, scheme)
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, producer SendTargetClusterMessagesProducer) {
 		lf.Append(fx.Hook{
 			OnStop: func(ctx context.Context) error {
 				return producer.Stop(ctx)
@@ -89,7 +100,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveInfraUpdatesConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteInfra, common.EventErrorOnApply)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventErrorOnApply)
 
 		consumerName := "infra:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
@@ -116,7 +127,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteInfra, common.EventErrorOnApply)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventErrorOnApply)
 
 		consumerName := "infra:error-on-apply"
 

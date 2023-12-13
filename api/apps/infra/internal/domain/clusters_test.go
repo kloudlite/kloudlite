@@ -15,7 +15,7 @@ import (
 	iamMock "github.com/kloudlite/api/mocks/grpc-interfaces/kloudlite.io/rpc/iam"
 	msgOfficeInternalMock "github.com/kloudlite/api/mocks/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	k8sMock "github.com/kloudlite/api/mocks/pkg/k8s"
-	kafkaMock "github.com/kloudlite/api/mocks/pkg/kafka"
+
 	reposMock "github.com/kloudlite/api/mocks/pkg/repos"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
@@ -42,7 +42,6 @@ func TestCreateCluster(t *testing.T) {
 
 		k8sClient k8sMock.Client
 
-		producer kafkaMock.Producer
 
 		iamClient                   iamMock.IAMClient
 		accountsSvc                 domainMocks.AccountsSvc
@@ -309,7 +308,6 @@ func TestCreateCluster(t *testing.T) {
 				pvcRepo:                     &dargs.pvcRepo,
 				buildRunRepo:                &dargs.buildRunRepo,
 				k8sClient:                   &dargs.k8sClient,
-				producer:                    &dargs.producer,
 				iamClient:                   &dargs.iamClient,
 				accountsSvc:                 &dargs.accountsSvc,
 				messageOfficeInternalClient: &dargs.messageOfficeInternalClient,
