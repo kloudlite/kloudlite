@@ -12,7 +12,7 @@ import (
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/logging"
 	loki_client "github.com/kloudlite/api/pkg/loki-client"
-	"github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
 	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"

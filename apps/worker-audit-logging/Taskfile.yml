@@ -1,6 +1,18 @@
 version: 3
 
 tasks:
+  build:
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
+
   local-build:
     preconditions:
         - sh: '[ -n "{{.EnvName}}" ]'

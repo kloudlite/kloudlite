@@ -29,7 +29,8 @@ import (
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
 	loki_client "github.com/kloudlite/api/pkg/loki-client"
-	"github.com/kloudlite/api/pkg/messaging/nats"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	 "github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -509,7 +510,7 @@ var Module = fx.Module("app",
 	domain.Module,
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteConsole, common.EventErrorOnApply)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
 		consumerName := "console:error-on-apply"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.NatsStream,
@@ -535,7 +536,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteConsole, common.EventResourceUpdate)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventResourceUpdate)
 
 		consumerName := "console:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{

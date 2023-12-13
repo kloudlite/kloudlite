@@ -8,7 +8,8 @@ import (
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
-	"github.com/kloudlite/api/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/messaging"
+	"github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/api/pkg/repos"
 	"time"
 )
@@ -51,7 +52,7 @@ type AuditLogEvent struct {
 }
 
 type beacon struct {
-	producer redpanda.Producer
+	producer messaging.Producer
 	topic    string
 }
 
@@ -81,8 +82,10 @@ func (b *beacon) TriggerEvent(ctx context.Context, accountId repos.ID, event *Au
 			event.Tags["user-agent"] = ua
 		}
 	}
-	_, err = b.producer.Produce(ctx, b.topic, string(accountId), eventB)
-	if err != nil {
+	if err:=b.producer.Produce(ctx, types.ProduceMsg{
+		Subject: b.topic,
+		Payload: eventB,
+	}); err != nil {
 		return err
 	}
 	return nil
@@ -92,10 +95,10 @@ func defaultDesc(action, resType, resId string) string {
 	return fmt.Sprintf("performed [action=%s] on target [type=%s, id=%s]", action, resType, resId)
 }
 
-func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction) {
+func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction) error {
 	session, err := getSession(ctx)
 	if err != nil {
-		return
+		return err
 	}
 
 	ale := AuditLogEvent{
@@ -127,15 +130,18 @@ func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act
 
 	eventB, err := json.Marshal(ale)
 	if err != nil {
-		return
+		return err
 	}
-	_, err = b.producer.Produce(ctx, b.topic, string(accountId), eventB)
-	if err != nil {
-		return
+	if err:=b.producer.Produce(ctx, types.ProduceMsg{
+		Subject: b.topic,
+		Payload: eventB,
+	}); err != nil {
+		return err
 	}
-	return
+
+	return nil
 }
 
-func NewBeacon(producer redpanda.Producer, topic string) Beacon {
+func NewBeacon(producer messaging.Producer, topic string) Beacon {
 	return &beacon{producer: producer, topic: topic}
 }

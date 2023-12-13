@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/nats-io/nats.go/jetstream"
-	fn "kloudlite.io/pkg/functions"
 )
 
 type KeyValueManager struct {

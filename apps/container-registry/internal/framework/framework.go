@@ -3,13 +3,13 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/nats"
 
 	app "github.com/kloudlite/api/apps/container-registry/internal/app"
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"github.com/kloudlite/api/pkg/cache"
 	rpc "github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
-	"github.com/kloudlite/api/pkg/kafka"
 	"github.com/kloudlite/api/pkg/logging"
 	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
@@ -31,10 +31,6 @@ func (fm *fm) GetMongoConfig() (url string, dbName string) {
 	return fm.ev.DBUri, fm.ev.DBName
 }
 
-func (fm *fm) GetBrokers() string {
-	return fm.ev.KafkaBrokers
-}
-
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
@@ -50,9 +46,19 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
-		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "container-registry:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
 	}),
+
 
 	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
