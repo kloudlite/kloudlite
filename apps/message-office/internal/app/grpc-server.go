@@ -139,7 +139,7 @@ func (g *grpcServer) parseError(ctx context.Context, accountName string, cluster
 		logger.Infof("[%v] processed error-on-apply message", g.infraUpdatesCounter)
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.KloudliteInfra, common.EventErrorOnApply)
+	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventErrorOnApply)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: errMsg.Message,
@@ -243,7 +243,7 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName stri
 		logger.Infof("[%v] processed resource status update", g.resourceUpdatesCounter)
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.KloudliteConsole, common.EventResourceUpdate)
+	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ConsoleReceiver, common.EventResourceUpdate)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: msg.Message,
@@ -283,7 +283,7 @@ func (g *grpcServer) processClusterUpdate(ctx context.Context, accountName strin
 		logger.Infof("[%v] processed Cluster update", g.infraUpdatesCounter)
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.KloudliteInfra, common.EventResourceUpdate)
+	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventResourceUpdate)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: msg.Message,
@@ -324,7 +324,7 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 		g.logger.Infof("[%v] processed infra update", g.infraUpdatesCounter)
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.KloudliteInfra, common.EventResourceUpdate)
+	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventResourceUpdate)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: msg.Message,

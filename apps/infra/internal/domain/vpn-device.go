@@ -51,7 +51,7 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, err
 	}
 
-	if err := d.applyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
 		return nil, err
 	}
 	return nDevice, nil
@@ -88,7 +88,7 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, err
 	}
 
-	if err := d.applyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
 		return nil, err
 	}
 	return nDevice, nil
@@ -126,7 +126,7 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	if _, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, device); err != nil {
 		return err
 	}
-	return d.deleteFromTargetCluster(ctx, clusterName, &device.Device)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &device.Device)
 }
 
 func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {

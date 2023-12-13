@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
 	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -20,7 +22,6 @@ import (
 	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
-	"github.com/kloudlite/api/pkg/kafka"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	registryAuth "github.com/kloudlite/container-registry-authorizer/auth"
@@ -46,18 +47,6 @@ func (fm *venv) GithubScopes() string {
 	return fm.ev.GithubScopes
 }
 
-func (fm *venv) GetSubscriptionTopics() []string {
-	return []string{fm.ev.KafkaGitWebhookTopic}
-}
-
-func (fm *venv) GetConsumerGroupId() string {
-	return fm.ev.KafkaConsumerGroup
-}
-
-// func (fm *venv) GithubWebhookAuthzSecret() string {
-// 	return fm.ev.GithubWebhookAuthzSecret
-// }
-
 func (fm *venv) GitlabConfig() (clientId, clientSecret, callbackUrl string) {
 	return fm.ev.GitlabClientId, fm.ev.GitlabClientSecret, fm.ev.GitlabCallbackUrl
 }
@@ -74,10 +63,6 @@ func (fm *venv) GitlabWebhookUrl() *string {
 	return &fm.ev.GitlabWebhookUrl
 }
 
-func (fm *venv) GetBrokerHosts() string {
-	return fm.ev.KafkaBrokers
-}
-
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
@@ -85,39 +70,24 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
 	repos.NewFxMongoRepo[*entities.BuildCacheKey]("build-caches", "build-cache", entities.BuildCacheKeyIndexes),
 
-	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (kafka.Consumer, error) {
-		return kafka.NewConsumer(conn, ev.KafkaConsumerGroup, []string{ev.KafkaGitWebhookTopic}, kafka.ConsumerOpts{
-			Logger: logger.WithName("kafka-consumer"),
-		})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, producer kafka.Producer) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return producer.LifecycleOnStart(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				return producer.LifecycleOnStop(ctx)
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (GitWebhookConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		consumerName := "container-reg:git-webhooks"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to errors, that occurred when the resource was applied at the agent",
+				FilterSubjects: []string{topic},
 			},
 		})
 	}),
 
-	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (kafka.Producer, error) {
-		return kafka.NewProducer(conn, kafka.ProducerOpts{
-			Logger: logger.WithName("kafka-producer"),
-		})
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) BuildRunProducer {
+		return msg_nats.NewJetstreamProducer(jc)
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer kafka.Consumer) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return consumer.LifecycleOnStart(ctx)
-			},
-			OnStop: func(ctx context.Context) error {
-				return consumer.LifecycleOnStop(ctx)
-			},
-		})
-	}),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -255,10 +225,15 @@ var Module = fx.Module("app",
 
 	domain.Module,
 
-	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain, consumer kafka.Consumer, producer kafka.Producer, logr logging.Logger, envs *env.Env) {
+	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain, consumer GitWebhookConsumer, producer BuildRunProducer, logr logging.Logger, envs *env.Env) {
 		lf.Append(fx.Hook{
-			OnStart: func(_ context.Context) error {
-				go invokeProcessGitWebhooks(d, consumer, producer, logr, envs)
+			OnStart: func(ctx context.Context) error {
+				go func() {
+					err := processGitWebhooks(ctx,d, consumer, producer, logr, envs)
+					if err != nil {
+						logr.Errorf(err, "could not process git webhooks")
+					}
+				}()
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {

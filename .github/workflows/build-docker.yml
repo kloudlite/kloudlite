@@ -1,0 +1,92 @@
+name: build-docker-images
+
+on:
+  push:
+    paths:
+      - "apps/**/**"
+      - "pkg/**"
+      - "grpc-interfaces/**"
+      - "common/**"
+      - "go.*"
+      - ".github/workflows/**"
+
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-builds:
+    strategy:
+      matrix:
+        app:
+          - accounts
+          - auth
+          - comms
+          - console
+          - container-registry
+          - iam
+          - infra
+          - worker-audit-logging
+          - webhooks
+          - message-office
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install UPX
+        run: |
+          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+          tar -xf upx.tar.xz
+          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
+
+      - name: Build Binary
+        run: |
+          cd apps/${{matrix.app}}
+          task build Out=$PWD/../../.github/workflows/container-build/app
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Image Tags
+        run: |
+          echo "BRANCH_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')" >> $GITHUB_ENV
+
+      - name: Build & Push Image
+        run: |
+          cd .github/workflows/container-build
+          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}-internal:${{env.BRANCH_TAG}}"
+          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}-internal:commit-${GITHUB_SHA}"

@@ -10,7 +10,7 @@ import (
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
-	"github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
 	mongoRepo "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
