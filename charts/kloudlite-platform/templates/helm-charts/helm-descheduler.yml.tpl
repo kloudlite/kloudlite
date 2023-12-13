@@ -13,5 +13,5 @@ spec:
   chartName: "descheduler/descheduler"
   chartVersion: "0.28.0"
 
-  valuesYaml: ""
+  values: {}
 {{- end }}

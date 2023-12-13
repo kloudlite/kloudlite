@@ -39,6 +39,8 @@ spec:
       affinity:
         nodeAffinity: {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
       {{- end }}
+      tolerations: {{.Values.operators.platformOperator.configuration.tolerations | toYaml | nindent 8 }}
+      nodeSelector: {{.Values.operators.platformOperator.configuration.nodeSelector | toYaml | nindent 8 }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
@@ -115,6 +117,6 @@ spec:
                 - ALL
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: "{{.Values.clusterSvcAccount}}"
+      serviceAccountName: {{.Values.clusterSvcAccount}}
       terminationGracePeriodSeconds: 10
 {{end}}

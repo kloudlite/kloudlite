@@ -4,15 +4,17 @@ kind: ManagedResource
 metadata:
   name: {{.Values.managedResources.messageOfficeDb}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
-  inputs:
-    resourceName: {{.Values.managedResources.messageOfficeDb}}
-  msvcRef:
+  resourceTemplate:
     apiVersion: mongodb.msvc.kloudlite.io/v1
-    kind: StandaloneService
-    name: {{.Values.managedServices.mongoSvc}}
-  mresKind:
     kind: Database
+
+    msvcRef:
+      apiVersion: mongodb.msvc.kloudlite.io/v1
+      kind: ClusterService
+      name: {{.Values.managedServices.mongoSvc}}
+
+    spec:
+      resourceName: {{.Values.managedResources.messageOfficeDb}}
+
 ---

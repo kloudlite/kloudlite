@@ -14,7 +14,7 @@ spec:
   chartName: strimzi/strimzi-kafka-operator
   chartVersion: 0.37.0
 
-  valuesYaml: |+
+  values:
     replicas: 1
     watchAnyNamespace: true
     defaultImageTag: 0.37.0

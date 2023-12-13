@@ -43,7 +43,7 @@ spec:
 
         - key: CONSOLE_DB_URI
           type: secret
-          refName: "mres-{{.Values.managedResources.consoleDb}}"
+          refName: "mres-{{.Values.managedResources.consoleDb}}-creds"
           refKey: URI
 
         - key: CONSOLE_DB_NAME
@@ -51,23 +51,28 @@ spec:
 
         - key: AUTH_REDIS_HOSTS
           type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          refName: "msvc-{{.Values.managedServices.redisSvc}}"
           refKey: HOSTS
 
         - key: AUTH_REDIS_PASSWORD
           type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
-          refKey: PASSWORD
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          {{- /* refKey: PASSWORD */}}
+          refName: "msvc-{{.Values.managedServices.redisSvc}}"
+          refKey: ROOT_PASSWORD
 
         - key: AUTH_REDIS_PREFIX
-          type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
-          refKey: PREFIX
+          value: "auth"
+          {{- /* type: secret */}}
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          {{- /* refKey: PREFIX */}}
 
         - key: AUTH_REDIS_USERNAME
-          type: secret
-          refName: "mres-{{.Values.managedResources.authRedis}}"
-          refKey: USERNAME
+          value: ""
+          {{- /* type: secret */}}
+          {{- /* refName: "mres-{{.Values.managedResources.authRedis}}" */}}
+          {{- /* refKey: USERNAME */}}
 
         - key: ACCOUNT_COOKIE_NAME
           value: {{.Values.accountCookieName}}
@@ -75,29 +80,35 @@ spec:
         - key: CLUSTER_COOKIE_NAME
           value: {{.Values.clusterCookieName}}
 
-        - key: KAFKA_BROKERS
-          type: secret
-          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
-          refKey: KAFKA_BROKERS
+        {{- /* - key: KAFKA_BROKERS */}}
+        {{- /*   type: secret */}}
+        {{- /*   refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}" */}}
+        {{- /*   refKey: KAFKA_BROKERS */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_USERNAME */}}
+        {{- /*   type: secret */}}
+        {{- /*   refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}" */}}
+        {{- /*   refKey: USERNAME */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_PASSWORD */}}
+        {{- /*   type: secret */}}
+        {{- /*   refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}" */}}
+        {{- /*   refKey: PASSWORD */}}
 
-        - key: KAFKA_USERNAME
-          type: secret
-          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
-          refKey: USERNAME
+        {{- /* - key: KAFKA_STATUS_UPDATES_TOPIC */}}
+        {{- /*   value: {{.Values.kafka.topicStatusUpdates}} */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_ERROR_ON_APPLY_TOPIC */}}
+        {{- /*   value: {{.Values.kafka.topicErrorOnApply}} */}}
+        {{- /**/}}
+        {{- /* - key: KAFKA_CONSUMER_GROUP_ID */}}
+        {{- /*   value: {{.Values.kafka.consumerGroupId}} */}}
 
-        - key: KAFKA_PASSWORD
-          type: secret
-          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
-          refKey: PASSWORD
+        - key: NATS_URL
+          value: "nats://nats.kloudlite.svc.cluster.local:4222"
 
-        - key: KAFKA_STATUS_UPDATES_TOPIC
-          value: {{.Values.kafka.topicStatusUpdates}}
-
-        - key: KAFKA_ERROR_ON_APPLY_TOPIC
-          value: {{.Values.kafka.topicErrorOnApply}}
-
-        - key: KAFKA_CONSUMER_GROUP_ID
-          value: {{.Values.kafka.consumerGroupId}}
+        - key: NATS_STREAM
+          value: "resource-sync"
 
         - key: IAM_GRPC_ADDR
           value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}

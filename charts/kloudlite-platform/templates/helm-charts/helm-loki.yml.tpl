@@ -14,7 +14,7 @@ spec:
   chartName: grafana/loki-stack
   chartVersion: 2.9.10
 
-  valuesYaml: |+
+  values:
     loki:
       enabled: true
       priorityClassName: {{.Values.statefulPriorityClassName}}

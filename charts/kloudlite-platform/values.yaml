@@ -43,15 +43,17 @@ defaultProjectWorkspaceName: "default"
 
 statefulPriorityClassName: "stateful"
 
-managedServicesNodeSelector: &msvc-node-selector
-  kloudlite.io/cloud-provider.az: ap-south-1a
-
 kloudlite_release: v1.0.5-nightly
 
 helmCharts:
-  cert-manager:
+  certManager:
+    # -- whether to enable cert-manager
     enabled: true
     name: cert-manager
+
+    configuration:
+      nodeSelector: {}
+      tolerations: []
 
   ingress-nginx:
     enabled: true
@@ -84,23 +86,23 @@ helmCharts:
         region: <loki-s3-bucket-region>
         bucketName: <loki-s3-bucket-name>
 
-  redpanda-operator:
-    enabled: true
-    name: redpanda-operator
+  # redpanda-operator:
+  #   enabled: true
+  #   name: redpanda-operator
+  #
+  #   configuration:
+  #     # -- cpu, and memory resources for redpanda operator
+  #     resources:
+  #       limits:
+  #         cpu: 60m
+  #         memory: 60Mi
+  #       requests:
+  #         cpu: 40m
+  #         memory: 40Mi
 
-    configuration:
-      # -- cpu, and memory resources for redpanda operator
-      resources:
-        limits:
-          cpu: 60m
-          memory: 60Mi
-        requests:
-          cpu: 40m
-          memory: 40Mi
-
-  strimzi-operator:
-    enabled: true
-    name: strimzi-operator
+  # strimzi-operator:
+  #   enabled: true
+  #   name: strimzi-operator
 
   vector:
     enabled: true
@@ -148,26 +150,26 @@ secretNames:
   oAuthSecret: oauth-secrets
   # -- secret where all the webhook related should be
   webhookAuthzSecret: webhook-authz
-  # -- secret where all the redpanda admin related creds should be
-  redpandaAdminAuthSecret: msvc-redpanda-admin-auth
+  # # -- secret where all the redpanda admin related creds should be
+  # redpandaAdminAuthSecret: msvc-redpanda-admin-auth
   # -- harbor admin secret name
   harborAdminSecret: harbor-admin-creds
 
-# -- redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
-redpandaCluster:
-  create: true
-  name: "redpanda"
-  version: v22.1.6
-  replicas: 1
-  storage:
-    capacity: 2Gi
-  resources:
-    requests:
-      cpu: 200m
-      memory: 200Mi
-    limits:
-      cpu: 300m
-      memory: 400Mi
+# # -- redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
+# redpandaCluster:
+#   create: true
+#   name: "redpanda"
+#   version: v22.1.6
+#   replicas: 1
+#   storage:
+#     capacity: 2Gi
+#   resources:
+#     requests:
+#       cpu: 200m
+#       memory: 200Mi
+#     limits:
+#       cpu: 300m
+#       memory: 400Mi
 
 clusterIssuer:
   # -- whether to install cluster issuer
@@ -490,7 +492,9 @@ apps:
 
         tenantRoleFormatString: "arn:aws:iam::%s:role/kloudlite-access-role"
         cloudformation:
-          stackNamePrefix: "kloudlite-access-stack"
+          stackNamePrefix: "kloudlite-tenant-stack"
+          roleNamePrefix: "kloudlite-tenant-role"
+          instanceProfileNamePrefix: "kloudlite-instance-profile"
           stackS3URL: ""
           params:
             trustedARN: ""
@@ -656,30 +660,33 @@ operators:
         k3sJoinToken: ""
         k3sServerPublicHost: ""
 
+      cluster:
+        jobImage:
+          # -- required
+          name: ghcr.io/kloudlite/infrastructure-as-code
+          # -- optional
+          tag: ""
+
+        IACStateStore:
+          # -- s3 bucket name, to store kloudlite's infrastructure-as-code remote state
+          s3BucketName: ""
+          # -- s3 bucket region, to store kloudlite's infrastructure-as-code remote state
+          s3BucketRegion: ""
+          S3BucketDir: ""
+
+          accessKey: ""
+          secretKey: ""
+
+        cloudflare:
+          # -- cloudflare api token, required to authenticate with cloudflare api
+          apiToken: ""
+          # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
+          zoneId: ""
+          # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created
+          baseDomain: ""
+
       routers:
         acmeEmail: ""
-
-
-  # -- kloudlite account operator
-  accountOperator:
-    # -- whether to enable account operator
-    enabled: true
-    # @ignored
-    # -- workload name for account operator
-    name: kl-accounts-operator
-    # -- image (with tag) for account operator
-    image: ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly
-
-  byocOperator:
-    # -- whether to enable byoc operator
-    enabled: true
-
-    # @ignored
-    # -- workload name for byoc operator
-    name: kl-byoc-operator
-
-    # -- image (with tag) for byoc operator
-    image: ghcr.io/kloudlite/platform/operator/byoc:v1.0.5-nightly
 
   wgOperator:
     # -- whether to enable wg operator
@@ -688,7 +695,10 @@ operators:
     # @ignored
     name: kl-wg-operator
     # -- wg operator image and tag
-    image: ghcr.io/kloudlite/operators/wireguard:v1.0.5-nightly
+    image:
+      repository: ghcr.io/kloudlite/operators/wireguard
+      tag: v1.0.5-nightly
+      pullPolicy: ""
 
     # -- wireguard configuration options
     configuration:
@@ -700,82 +710,3 @@ operators:
       dnsHostedZone: <dns-hosted-zone>
 
       enableExamples: false
-  
-  resourceWatcher:
-    # -- whether to enable resource watcher
-    enabled: true
-    # -- resource watcher workload name
-    name: resource-watcher
-
-    # -- resource watcher image
-    image: "ghcr.io/kloudlite/operators/resource-watcher:v1.0.5-nightly"
-
-  clusterOperator:
-    # -- whether to enable clusters operator
-    enabled: true
-    # -- resource watcher workload name
-    name: cluster-operator
-
-    # -- cluster operator image
-    image:
-      # -- required
-      name: "ghcr.io/kloudlite/operators/clusters"
-      # -- optional
-      # tag: v1.0.5-nightly
-
-    configuration:
-      jobImage:
-        # -- required
-        name: ghcr.io/kloudlite/infrastructure-as-code
-        # -- optional
-        tag: ""
-
-      IACStateStore:
-        # -- s3 bucket name, to store kloudlite's infrastructure-as-code remote state
-        s3BucketName: ""
-        # -- s3 bucket region, to store kloudlite's infrastructure-as-code remote state
-        s3BucketRegion: ""
-
-        accessKey: ""
-        secretKey: ""
-      
-      cloudflare:
-        # -- cloudflare api token, required to authenticate with cloudflare api
-        apiToken: ""
-        # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
-        zoneId: ""
-        # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created
-        baseDomain: ""
-
-  nodepoolOperator:
-    # -- whether to enable nodepool operator
-    enabled: true
-    # -- nodepool operator workload name
-    name: nodepool-operator
-    # -- nodepool operator image
-    image: "ghcr.io/kloudlite/platform/operator/nodepool:v1.0.5-nightly"
-
-    configuration:
-      # -- cloudprovider name
-      cloudprovider:
-        # -- aws
-        name: "aws"
-        region: "ap-south-1"
-
-        # -- cloudprovider access key
-        accessKey: ""
-        # -- cloudprovider secret key
-        secretKey: ""
-
-      k3s:
-        joinToken: ""
-        serverPublicHost: ""
-
-      kloudlite:
-        accountName: "kloudlite"
-        clusterName: "dev"
-
-      IACStateStore:
-        s3BucketName: ""
-        s3BucketRegion: ""
-        s3BucketDir: ""

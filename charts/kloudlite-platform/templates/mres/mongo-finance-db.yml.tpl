@@ -4,15 +4,16 @@ kind: ManagedResource
 metadata:
   name: {{.Values.managedResources.financeDb}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
-  inputs:
-    resourceName: {{.Values.managedResources.financeDb}}
-  msvcRef:
+  resourceTemplate:
     apiVersion: mongodb.msvc.kloudlite.io/v1
-    kind: StandaloneService
-    name: {{.Values.managedServices.mongoSvc}}
-  mresKind:
     kind: Database
+
+    msvcRef:
+      apiVersion: mongodb.msvc.kloudlite.io/v1
+      kind: ClusterService
+      name: {{.Values.managedServices.mongoSvc}}
+
+    spec:
+      resourceName: {{.Values.managedResources.financeDb}}
 ---

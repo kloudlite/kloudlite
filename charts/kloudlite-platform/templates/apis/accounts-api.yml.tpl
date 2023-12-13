@@ -40,28 +40,33 @@ spec:
 
         - key: MONGO_URI
           type: secret
-          refName: mres-{{.Values.managedResources.accountsDb}}
+          refName: mres-{{.Values.managedResources.accountsDb}}-creds
           refKey: URI
 
         - key: AUTH_REDIS_HOSTS
           type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          refName: msvc-{{.Values.managedServices.redisSvc}}
           refKey: HOSTS
 
         - key: AUTH_REDIS_PASSWORD
           type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
-          refKey: PASSWORD
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          refName: msvc-{{.Values.managedServices.redisSvc}}
+          {{- /* refKey: PASSWORD */}}
+          refKey: ROOT_PASSWORD
 
         - key: AUTH_REDIS_PREFIX
-          type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
-          refKey: PREFIX
+          {{- /* type: secret */}}
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          {{- /* refKey: PREFIX */}}
+          value: auth
 
         - key: AUTH_REDIS_USERNAME
-          type: secret
-          refName: mres-{{.Values.managedResources.authRedis}}
-          refKey: USERNAME
+          value: ""
+          {{- /* type: secret */}}
+          {{- /* refName: mres-{{.Values.managedResources.authRedis}} */}}
+          {{- /* refKey: USERNAME */}}
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
