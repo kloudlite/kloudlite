@@ -6,14 +6,18 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/pkg/messaging"
+	types2 "github.com/kloudlite/api/pkg/messaging/types"
 	"net/http"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/apps/webhooks/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
-	"github.com/kloudlite/api/pkg/redpanda"
+
 	"github.com/kloudlite/api/pkg/types"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/fx"
@@ -97,7 +101,7 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 
 func LoadGitWebhook() fx.Option {
 	return fx.Invoke(
-		func(app *fiber.App, envVars *env.Env, producer redpanda.Producer, logr logging.Logger) error {
+		func(app *fiber.App, envVars *env.Env, producer messaging.Producer, logr logging.Logger) error {
 			app.Post(
 				"/git/:provider", func(ctx *fiber.Ctx) error {
 					logger := logr.WithName("git-webhook")
@@ -142,7 +146,14 @@ func LoadGitWebhook() fx.Option {
 						return err
 					}
 
-					msg, err := producer.Produce(ctx.Context(), envVars.GitWebhooksTopic, repoUrl, b)
+					err = producer.Produce(ctx.Context(), types2.ProduceMsg{
+						Subject: string(common.GitWebhookTopicName),
+						Payload: b,
+					})
+					if err != nil {
+						return err
+					}
+
 					if err != nil {
 						errMsg := fmt.Sprintf("could not produce message to topic %s", gitProvider)
 						logger.Errorf(err, errMsg)
@@ -150,11 +161,10 @@ func LoadGitWebhook() fx.Option {
 					}
 
 					logger.WithKV(
-						"produced.offset", msg.Offset,
-						"produced.topic", msg.Topic,
-						"produced.timestamp", msg.Timestamp,
+						"produced.subject", string(common.GitWebhookTopicName),
+						"produced.timestamp", time.Now(),
 					).Infof("queued webhook")
-					return ctx.Status(http.StatusAccepted).JSON(msg)
+					return ctx.Status(http.StatusAccepted).JSON(map[string]string{"status": "ok"})
 				},
 			)
 			return nil

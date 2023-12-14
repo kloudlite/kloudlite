@@ -29,12 +29,12 @@ import (
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
 	loki_client "github.com/kloudlite/api/pkg/loki-client"
-	"github.com/kloudlite/api/pkg/messaging/nats"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 type (
-	AuthCacheClient          cache.Client
 	IAMGrpcClient            grpc.Client
 	InfraClient              grpc.Client
 	LogsAndMetricsHttpServer httpServer.Server
@@ -73,14 +73,14 @@ var Module = fx.Module("app",
 	// streaming logs
 	fx.Invoke(
 		func(logAndMetricsServer LogsAndMetricsHttpServer, client loki_client.LokiClient,
-			ev *env.Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger,
+			ev *env.Env, sessionRepo cache.Repo[*common.AuthSession], d domain.Domain, logger logging.Logger,
 			infraClient infra.InfraClient,
 		) {
 			a := logAndMetricsServer.Raw()
 
 			a.Use(
 				httpServer.NewSessionMiddleware[*common.AuthSession](
-					cacheClient,
+					sessionRepo,
 					constants.CookieName,
 					ev.CookieDomain,
 					constants.CacheSessionPrefix,
@@ -403,7 +403,7 @@ var Module = fx.Module("app",
 	),
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo cache.Repo[*common.AuthSession], ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -473,7 +473,7 @@ var Module = fx.Module("app",
 			schema := generated.NewExecutableSchema(gqlConfig)
 			server.SetupGraphqlServer(schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
-					cacheClient,
+					sessionRepo,
 					constants.CookieName,
 					ev.CookieDomain,
 					constants.CacheSessionPrefix,
@@ -509,7 +509,7 @@ var Module = fx.Module("app",
 	domain.Module,
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteConsole, common.EventErrorOnApply)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
 		consumerName := "console:error-on-apply"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.NatsStream,
@@ -535,7 +535,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.KloudliteConsole, common.EventResourceUpdate)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventResourceUpdate)
 
 		consumerName := "console:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{

@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/common"
 
 	"github.com/kloudlite/api/apps/infra/internal/app"
 	"github.com/kloudlite/api/apps/infra/internal/env"
@@ -10,7 +11,7 @@ import (
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
-	"github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
 	mongoRepo "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
@@ -49,11 +50,14 @@ var Module = fx.Module("framework",
 		return nats.NewJetstreamClient(c)
 	}),
 
+
 	fx.Provide(
-		func(f *framework) app.AuthCacheClient {
-			return cache.NewRedisClient(f.AuthRedisHosts, f.AuthRedisUserName, f.AuthRedisPassword, f.AuthRedisPrefix)
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
+
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
 		return grpc.NewGrpcClient(ev.IAMGrpcAddr)

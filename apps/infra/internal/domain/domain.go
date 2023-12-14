@@ -1,11 +1,8 @@
 package domain
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
-
-	"github.com/kloudlite/api/common"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
@@ -13,20 +10,16 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/logging"
-	"github.com/kloudlite/api/pkg/messaging"
-	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/pkg/constants"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	types "github.com/kloudlite/api/pkg/types"
-	t "github.com/kloudlite/operator/agent/types"
 )
 
-type SendTargetClusterMessagesProducer messaging.Producer
+
 
 type domain struct {
 	logger logging.Logger
@@ -42,76 +35,25 @@ type domain struct {
 	pvcRepo         repos.DbRepo[*entities.PersistentVolumeClaim]
 	buildRunRepo    repos.DbRepo[*entities.BuildRun]
 
-	k8sClient k8s.Client
+	//k8sClient k8s.Client
 
-	producer messaging.Producer
+	//producer messaging.Producer
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
 	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
+	resDispatcher               ResourceDispatcher
+	k8sClient                   K8sClient
 }
 
-func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj client.Object, recordVersion int) error {
-	ann := obj.GetAnnotations()
-	if ann == nil {
-		ann = make(map[string]string, 1)
-	}
-	ann[constants.RecordVersionKey] = fmt.Sprintf("%d", recordVersion)
-	obj.SetAnnotations(ann)
 
-	m, err := fn.K8sObjToMap(obj)
-	if err != nil {
-		return err
-	}
-
-	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
-		Action:      t.ActionApply,
-		Object:      m,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
-		Payload: b,
-	})
-
-	return err
-}
-
-func (d *domain) deleteFromTargetCluster(ctx InfraContext, clusterName string, obj client.Object) error {
-	m, err := fn.K8sObjToMap(obj)
-	if err != nil {
-		return err
-	}
-
-	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.AccountName,
-		ClusterName: clusterName,
-		Action:      t.ActionDelete,
-		Object:      m,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, clusterName),
-		Payload: b,
-	})
-
-	return err
-}
 
 func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
 	switch action {
 	case types.SyncActionApply:
-		return d.applyToTargetCluster(ctx, clusterName, obj, recordVersion)
+		return d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, obj, recordVersion)
 	case types.SyncActionDelete:
-		return d.deleteFromTargetCluster(ctx, clusterName, obj)
+		return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, obj)
 	}
 	return fmt.Errorf("unknonw action: %q", action)
 }
@@ -201,10 +143,9 @@ var Module = fx.Module("domain",
 			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
 			buildRunRepo repos.DbRepo[*entities.BuildRun],
+			resourceDispatcher ResourceDispatcher,
 
-			producer SendTargetClusterMessagesProducer,
-
-			k8sClient k8s.Client,
+			k8sClient K8sClient,
 
 			iamClient iam.IAMClient,
 			accountsSvc AccountsSvc,
@@ -215,7 +156,6 @@ var Module = fx.Module("domain",
 			return &domain{
 				logger: logger,
 				env:    env,
-
 				clusterRepo:     clusterRepo,
 				byocClusterRepo: byocClusterRepo,
 				nodeRepo:        nodeRepo,
@@ -225,11 +165,8 @@ var Module = fx.Module("domain",
 				vpnDeviceRepo:   vpnDeviceRepo,
 				pvcRepo:         pvcRepo,
 				buildRunRepo:    buildRunRepo,
-
-				producer: producer,
-
+				resDispatcher :  resourceDispatcher,
 				k8sClient: k8sClient,
-
 				iamClient:                   iamClient,
 				accountsSvc:                 accountsSvc,
 				messageOfficeInternalClient: msgOfficeInternalClient,

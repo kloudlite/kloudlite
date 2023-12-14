@@ -17,7 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const tenantKloudliteControllerNamespace = "kloudlite"
+const tenantControllerNamespace = "kloudlite"
 
 func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateNodepool); err != nil {
@@ -55,7 +55,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "provider-creds",
-			Namespace: tenantKloudliteControllerNamespace,
+			Namespace: tenantControllerNamespace,
 		},
 		Data: map[string][]byte{
 			"access_key": credsSecret.Data[cluster.Spec.CredentialKeys.KeyAccessKey],
@@ -63,7 +63,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		},
 	}
 
-	if err := d.applyToTargetCluster(ctx, clusterName, providerSecret, 1); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, providerSecret, 1); err != nil {
 		return nil, err
 	}
 
@@ -139,7 +139,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		return nil, err
 	}
 
-	if err := d.applyToTargetCluster(ctx, clusterName, &np.NodePool, np.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &np.NodePool, np.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -182,7 +182,7 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 		return nil, err
 	}
 
-	if err := d.applyToTargetCluster(ctx, clusterName, &unp.NodePool, unp.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.NodePool, unp.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -208,7 +208,7 @@ func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName s
 	if err != nil {
 		return err
 	}
-	return d.deleteFromTargetCluster(ctx, clusterName, &upC.NodePool)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.NodePool)
 }
 
 func (d *domain) GetNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error) {

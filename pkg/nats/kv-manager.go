@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/nats-io/nats.go/jetstream"
-	fn "kloudlite.io/pkg/functions"
 )
 
 type KeyValueManager struct {
@@ -18,7 +18,6 @@ func (kvm KeyValueManager) ListStores(ctx context.Context) []string {
 	for e := range kvml.Name() {
 		buckets = append(buckets, e)
 	}
-
 	return buckets
 }
 
