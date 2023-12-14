@@ -39,6 +39,7 @@ type Env struct {
 	AWSSecretKey string `env:"AWS_SECRET_KEY" required:"true"`
 
 	PublicDNSHostSuffix string `env:"PUBLIC_DNS_HOST_SUFFIX" required:"true"`
+	SessionKVBucket     string `env:"SESSION_KV_BUCKET" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

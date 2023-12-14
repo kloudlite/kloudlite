@@ -53,6 +53,7 @@ type Env struct {
 	RegistryAuthorizerPort uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
 
 	JobBuildNamespace string `env:"JOB_BUILD_NAMESPACE" required:"true"`
+	SessionKVBucket   string `env:"SESSION_KV_BUCKET" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

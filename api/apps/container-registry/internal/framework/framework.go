@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/nats"
 
 	app "github.com/kloudlite/api/apps/container-registry/internal/app"
@@ -59,35 +60,25 @@ var Module = fx.Module("framework",
 		return nats.NewJetstreamClient(nc)
 	}),
 
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "infra:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
-		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
+		return nats.NewJetstreamClient(nc)
 	}),
 
-	// cache.FxLifeCycle[app.AuthCacheClient](),
-	fx.Invoke(
-		func(c app.AuthCacheClient, lf fx.Lifecycle, logger logging.Logger) {
-			lf.Append(
-				fx.Hook{
-					OnStart: func(ctx context.Context) error {
-						logger.Infof("connecting to redis")
-						if err := c.Connect(ctx); err != nil {
-							return err
-						}
-						logger.Infof("connected to redis")
-						return nil
-					},
-					OnStop: func(ctx context.Context) error {
-						return c.Disconnect(ctx)
-					},
-				},
-			)
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
-
-	fx.Provide(func(ev *env.Env) cache.Client {
-		return cache.NewRedisClient(ev.CRRedisHosts, ev.CRRedisUserName, ev.CRRedisPassword, ev.CRRedisPrefix)
-	}),
 
 	// cache.FxLifeCycle[cache.Client](),
 
