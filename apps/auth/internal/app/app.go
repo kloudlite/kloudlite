@@ -1,9 +1,6 @@
 package app
 
 import (
-	"net/http"
-
-	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 
@@ -47,25 +44,12 @@ var Module = fx.Module(
 		},
 	),
 
-	fx.Invoke(func(server httpServer.Server, cacheClient cache.Client, ev *env.Env) {
-		sessionMiddleware := httpServer.NewSessionMiddleware[*common.AuthSession](cacheClient, constants.CookieName, ev.CookieDomain, constants.CacheSessionPrefix)
-		// INFO: (route: `/.check/logged-in`)  is supposed to be used by nginx, as authentication url for other kloudlite services,
-		// where this api acts as authentication provider
-		server.Raw().Get("/.check/logged-in", sessionMiddleware, func(c *fiber.Ctx) error {
-			session := httpServer.GetSession[*common.AuthSession](c.Context())
-			if session == nil {
-				return c.SendStatus(http.StatusUnauthorized)
-			}
-			return c.SendStatus(http.StatusOK)
-		})
-	}),
-
 	fx.Invoke(
 		func(
 			server httpServer.Server,
 			d domain.Domain,
 			ev *env.Env,
-			cacheClient cache.Client,
+			repo cache.Repo[*common.AuthSession],
 		) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{Resolvers: graph.NewResolver(d, ev)},
@@ -74,7 +58,7 @@ var Module = fx.Module(
 			server.SetupGraphqlServer(
 				schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
-					cacheClient,
+					repo,
 					constants.CookieName,
 					ev.CookieDomain,
 					constants.CacheSessionPrefix,

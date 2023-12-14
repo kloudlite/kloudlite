@@ -3,13 +3,14 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/nats"
 
 	app "github.com/kloudlite/api/apps/container-registry/internal/app"
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"github.com/kloudlite/api/pkg/cache"
 	rpc "github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
-	"github.com/kloudlite/api/pkg/kafka"
 	"github.com/kloudlite/api/pkg/logging"
 	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
@@ -31,10 +32,6 @@ func (fm *fm) GetMongoConfig() (url string, dbName string) {
 	return fm.ev.DBUri, fm.ev.DBName
 }
 
-func (fm *fm) GetBrokers() string {
-	return fm.ev.KafkaBrokers
-}
-
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
@@ -50,38 +47,38 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
-		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "container-registry:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
 	}),
 
-	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
-		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "infra:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
 	}),
 
-	// cache.FxLifeCycle[app.AuthCacheClient](),
-	fx.Invoke(
-		func(c app.AuthCacheClient, lf fx.Lifecycle, logger logging.Logger) {
-			lf.Append(
-				fx.Hook{
-					OnStart: func(ctx context.Context) error {
-						logger.Infof("connecting to redis")
-						if err := c.Connect(ctx); err != nil {
-							return err
-						}
-						logger.Infof("connected to redis")
-						return nil
-					},
-					OnStop: func(ctx context.Context) error {
-						return c.Disconnect(ctx)
-					},
-				},
-			)
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
-
-	fx.Provide(func(ev *env.Env) cache.Client {
-		return cache.NewRedisClient(ev.CRRedisHosts, ev.CRRedisUserName, ev.CRRedisPassword, ev.CRRedisPrefix)
-	}),
 
 	// cache.FxLifeCycle[cache.Client](),
 

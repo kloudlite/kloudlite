@@ -30,10 +30,10 @@ type Env struct {
 
 	GithubScopes string `env:"GITHUB_SCOPES" required:"true"`
 
-	KafkaBrokers string `env:"KAFKA_BROKERS" required:"true"`
-
-	KafkaGitWebhookTopic string `env:"KAFKA_GIT_WEBHOOK_TOPIC" required:"true"`
-	KafkaConsumerGroup   string `env:"KAFKA_CONSUMER_GROUP" required:"true"`
+	// NATS:start
+	NatsURL    string `env:"NATS_URL" required:"true"`
+	NatsStream string `env:"NATS_STREAM" required:"true"`
+	// NATS:end
 
 	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
 
@@ -53,6 +53,7 @@ type Env struct {
 	RegistryAuthorizerPort uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
 
 	JobBuildNamespace string `env:"JOB_BUILD_NAMESPACE" required:"true"`
+	SessionKVBucket   string `env:"SESSION_KV_BUCKET" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

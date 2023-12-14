@@ -42,12 +42,8 @@ tasks:
         msg: 'var Tag must have a value'
     silent: true
     cmds:
-      - |+
+      - |
         tdir=$(mktemp -d)
         task build Out=$tdir/{{.APP}}
-
-        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
-        podman push {{.IMAGE}}
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}" --push
         rm -rf $tdir
-
-

@@ -7,5 +7,5 @@ import (
 
 type Beacon interface {
 	TriggerEvent(ctx context.Context, accountId repos.ID, event *AuditLogEvent) error
-	TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction)
+	TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction) error
 }

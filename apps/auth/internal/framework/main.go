@@ -3,12 +3,14 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/nats"
 
 	"go.uber.org/fx"
 
 	"github.com/kloudlite/api/apps/auth/internal/app"
 	"github.com/kloudlite/api/apps/auth/internal/env"
-	"github.com/kloudlite/api/pkg/cache"
 	rpc "github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
@@ -55,8 +57,28 @@ var Module fx.Option = fx.Module(
 	fx.Provide(func(ev *env.Env) *CommsGrpcEnv {
 		return &CommsGrpcEnv{ev}
 	}),
+
 	repos.NewMongoClientFx[*fm](),
-	cache.NewRedisFx[*fm](),
+
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "auth:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
+	}),
+
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+		},
+	),
 
 	fx.Provide(func(logger logging.Logger) httpServer.Server {
 		corsOrigins := "https://studio.apollographql.com"

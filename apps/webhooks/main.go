@@ -25,6 +25,5 @@ func main() {
 		fn.FxErrorHandler(),
 		config.EnvFx[env.Env](),
 		framework.Module,
-		// fx.NopLogger,
 	).Run()
 }
