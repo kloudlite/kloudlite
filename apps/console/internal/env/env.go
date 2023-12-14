@@ -43,6 +43,7 @@ type Env struct {
 
 	LokiServerHttpAddr string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
 	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
+	SessionKVBucket    string `env:"SESSION_KV_BUCKET" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

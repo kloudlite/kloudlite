@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/common"
 
 	app "github.com/kloudlite/api/apps/console/internal/app"
 	"github.com/kloudlite/api/apps/console/internal/env"
@@ -37,11 +38,25 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
-		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "accounts:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
 	}),
 
-	cache.FxLifeCycle[app.AuthCacheClient](),
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+		},
+	),
 
 	fx.Provide(func(restCfg *rest.Config) (k8s.Client, error) {
 		return k8s.NewClient(restCfg, nil)

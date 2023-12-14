@@ -155,7 +155,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, env *env.Env) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo cache.Repo[*common.AuthSession], env *env.Env) {
 			config := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			config.Directives.IsLoggedIn = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -206,7 +206,7 @@ var Module = fx.Module(
 			schema := generated.NewExecutableSchema(config)
 			server.SetupGraphqlServer(schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
-					cacheClient,
+					sessionRepo,
 					"hotspot-session",
 					env.CookieDomain,
 					constants.CacheSessionPrefix,

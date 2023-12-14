@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/cache"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
 	"net/url"
@@ -19,7 +20,6 @@ import (
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
@@ -29,7 +29,6 @@ import (
 )
 
 type (
-	AuthCacheClient      cache.Client
 	IAMGrpcClient        grpc.Client
 	AuthGrpcClient       grpc.Client
 	AuthorizerHttpServer httpServer.Server
@@ -88,7 +87,6 @@ var Module = fx.Module("app",
 		return msg_nats.NewJetstreamProducer(jc)
 	}),
 
-
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
 			return iam.NewIAMClient(conn)
@@ -110,7 +108,7 @@ var Module = fx.Module("app",
 	fxGitlab[*venv](),
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo cache.Repo[*common.AuthSession], ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -147,7 +145,7 @@ var Module = fx.Module("app",
 
 			schema := generated.NewExecutableSchema(gqlConfig)
 			server.SetupGraphqlServer(schema, httpServer.NewSessionMiddleware[*common.AuthSession](
-				cacheClient,
+				sessionRepo,
 				"hotspot-session",
 				ev.CookieDomain,
 				constants.CacheSessionPrefix,
@@ -229,7 +227,7 @@ var Module = fx.Module("app",
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				go func() {
-					err := processGitWebhooks(ctx,d, consumer, producer, logr, envs)
+					err := processGitWebhooks(ctx, d, consumer, producer, logr, envs)
 					if err != nil {
 						logr.Errorf(err, "could not process git webhooks")
 					}
