@@ -18,7 +18,6 @@ func (kvm KeyValueManager) ListStores(ctx context.Context) []string {
 	for e := range kvml.Name() {
 		buckets = append(buckets, e)
 	}
-
 	return buckets
 }
 
