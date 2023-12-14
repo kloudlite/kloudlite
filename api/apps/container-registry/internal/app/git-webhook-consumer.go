@@ -1,9 +1,12 @@
 package app
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/messaging"
+	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"strings"
 
 	"github.com/kloudlite/container-registry-authorizer/admin"
@@ -16,7 +19,6 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/api/pkg/kafka"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/types"
 	common_types "github.com/kloudlite/operator/apis/common-types"
@@ -30,32 +32,34 @@ const (
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
 
+type GitWebhookConsumer messaging.Consumer
+type BuildRunProducer messaging.Producer
+
 func getUniqueKey(build *entities.Build, hook *domain.GitWebhookPayload) string {
 	uid := fmt.Sprint(build.Id, hook.CommitHash)
 
 	return fmt.Sprintf("%x", md5.Sum([]byte(uid)))
 }
 
-func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer kafka.Producer, logr logging.Logger, envs *env.Env) {
-	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, msg []byte, metadata kafka.RecordMetadata) error {
-		logger := ctx.Logger.WithName("ci-webhook")
+func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhookConsumer, producer BuildRunProducer, logr logging.Logger, envs *env.Env) error {
+	err := consumer.Consume(func(msg *msgTypes.ConsumeMsg) error {
+		logger := logr.WithName("ci-webhook")
 		logger.Infof("started processing")
 		defer func() {
 			logger.Infof("finished processing")
 		}()
-
 		var gitHook types.GitHttpHook
-		if err := json.Unmarshal(msg, &gitHook); err != nil {
+		if err := json.Unmarshal(msg.Payload, &gitHook); err != nil {
 			logger.Errorf(err, "could not unmarshal into *GitWebhookPayload")
 			return err
 		}
 
 		hook, err := func() (*domain.GitWebhookPayload, error) {
 			if gitHook.GitProvider == constants.ProviderGithub {
-				return d.ParseGithubHook(gitHook.Headers[GithubEventHeader], gitHook.Body)
+				return d.ParseGithubHook(gitHook.Headers[GithubEventHeader][0], gitHook.Body)
 			}
 			if gitHook.GitProvider == constants.ProviderGitlab {
-				return d.ParseGitlabHook(gitHook.Headers[GitlabEventHeader], gitHook.Body)
+				return d.ParseGitlabHook(gitHook.Headers[GitlabEventHeader][0], gitHook.Body)
 			}
 			return nil, errors.New("unknown git provider")
 		}()
@@ -249,32 +253,33 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			if err != nil {
 				return err
 			}
-			po1, err := producer.Produce(ctx, constants.MSGTO_TargetWaitQueueTopicName, b1, kafka.MessageArgs{
-				Key: []byte(build.Spec.AccountName),
-				Headers: map[string][]byte{
-					"topic": []byte(common.GetKafkaTopicName(envs.BuildClusterAccountName, envs.BuildClusterName)),
-				},
-			})
-			if err != nil {
+			topic := common.GetTenantClusterMessagingTopic(envs.BuildClusterAccountName, envs.BuildClusterName)
+			if err = producer.Produce(ctx, msgTypes.ProduceMsg{
+				Subject: topic,
+				Payload: b2,
+			}); err != nil {
 				return err
 			}
-			logger.Infof("produced message to topic=%s, offset=%d", po1.Topic, po1.Offset)
 
-			po2, err := producer.Produce(ctx, constants.MSGTO_TargetWaitQueueTopicName, b2, kafka.MessageArgs{
-				Key: []byte(build.Spec.AccountName),
-				Headers: map[string][]byte{
-					"topic": []byte(common.GetKafkaTopicName(envs.BuildClusterAccountName, envs.BuildClusterName)),
-				},
-			})
-			if err != nil {
+			if err = producer.Produce(ctx, msgTypes.ProduceMsg{
+				Subject: topic,
+				Payload: b1,
+			}); err != nil {
 				return err
 			}
+
+			logger.Infof("produced message to topic=%s", topic)
 
 			build.Status = entities.BuildStatusQueued
-			d.UpdateBuildInternal(ctx, build)
-
-			logger.Infof("produced message to topic=%s, offset=%d", po2.Topic, po2.Offset)
+			_, err = d.UpdateBuildInternal(ctx, build)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
-	})
+	}, msgTypes.ConsumeOpts{})
+	if err != nil {
+		return err
+	}
+	return nil
 }

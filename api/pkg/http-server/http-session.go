@@ -3,6 +3,7 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/common"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -12,13 +13,12 @@ import (
 
 const userContextKey = "__local_user_context__"
 
-func NewSessionMiddleware[T repos.Entity](
-	cacheClient cache.Client,
+func NewSessionMiddleware(
+	repo cache.Repo[*common.AuthSession],
 	cookieName string,
 	cookieDomain string,
 	sessionKeyPrefix string,
 ) fiber.Handler {
-	repo := cache.NewRepo[T](cacheClient)
 	return func(ctx *fiber.Ctx) error {
 		cookies := map[string]string{}
 		ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
@@ -46,7 +46,7 @@ func NewSessionMiddleware[T repos.Entity](
 
 		ctx.SetUserContext(
 			context.WithValue(
-				ctx.UserContext(), "set-session", func(session T) {
+				ctx.UserContext(), "set-session", func(session *common.AuthSession) {
 					err := repo.Set(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, session.GetId()), session)
 					if err != nil {
 						fmt.Println("[ERROR]", err)

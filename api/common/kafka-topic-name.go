@@ -2,21 +2,18 @@ package common
 
 import "fmt"
 
+type topicName string
+
+const (
+	GitWebhookTopicName topicName = "webhooks.git"
+	AuditEventLogTopicName topicName = "audit.event-log"
+)
+
+
 func GetKafkaTopicName(accountName string, clusterName string) string {
 	return fmt.Sprintf("kl-send-to-acc-%s-clus-%s", accountName, clusterName)
 }
 
-/*
-In case of NATS Jetstream:
-
-	baseName => jetstream name
-	  @returns subject name in format {{baseName}}.account-{{accountName}}.cluster-{{clusterName}}
-
-In case of Kafka:
-
-	baseName => topic base name
-	@returns topic name in format {{baseName}}-account-{{accountName}}-cluster-{{clusterName}}
-*/
 func GetTenantClusterMessagingTopic(accountName string, clusterName string) string {
 	return fmt.Sprintf("resource-sync.account-%s.cluster-%s.tenant", accountName, clusterName)
 }
@@ -28,29 +25,17 @@ const (
 	EventResourceUpdate platformEvent = "resource-update"
 )
 
-type resourceController string
+type messageReceiver string
 
 const (
-	KloudliteConsole resourceController = "kloudlite-console"
-	KloudliteInfra   resourceController = "kloudlite-infra"
+	ConsoleReceiver messageReceiver = "kloudlite-console"
+	InfraReceiver   messageReceiver = "kloudlite-infra"
 )
 
-func GetPlatformClusterMessagingTopic(accountName string, clusterName string, controller resourceController, ev platformEvent) string {
+func GetPlatformClusterMessagingTopic(accountName string, clusterName string, controller messageReceiver, ev platformEvent) string {
 	if accountName == "*" && clusterName == "*" {
 		return fmt.Sprintf("resource-sync.*.*.platform.%s.%s", controller, ev)
 	}
 	return fmt.Sprintf("resource-sync.account-%s.cluster-%s.platform.%s.%s", accountName, clusterName, controller, ev)
 }
 
-// Stream
-// {
-//   nodepools,
-//   jobs,
-//   projects,
-//   apps,
-//   msvc,
-//   mres
-// }
-//
-// resource-sync.account-%s.cluster-%s.tenant.{{resource-id}}.{1,2,3}
-// resource-sync.account-%s.cluster-%s.platform.{{resource-id}}.{1,2,3}

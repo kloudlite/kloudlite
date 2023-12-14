@@ -1,0 +1,18 @@
+namespace: dev
+apps:
+  authApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  commsApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  consoleApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  accountsApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  iamApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  infraApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  gatewayApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+  containerRegistryApi:
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly

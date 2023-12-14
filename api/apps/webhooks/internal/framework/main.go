@@ -7,25 +7,12 @@ import (
 	"github.com/kloudlite/api/apps/webhooks/internal/env"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
-	"github.com/kloudlite/api/pkg/redpanda"
+	"github.com/kloudlite/api/pkg/nats"
 	"go.uber.org/fx"
 )
 
 type fm struct {
 	*env.Env
-}
-
-func (f fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
-	// return &redpanda.KafkaSASLAuth{
-	// 	SASLMechanism: redpanda.ScramSHA256,
-	// 	User:          v.KafkaUsername,
-	// 	Password:      v.KafkaPassword,
-	// }
-}
-
-func (f fm) GetBrokers() string {
-	return f.KafkaBrokers
 }
 
 func (f fm) GetHttpPort() uint16 {
@@ -44,10 +31,21 @@ var Module = fx.Module(
 		},
 	),
 
-	redpanda.NewClientFx[*fm](),
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
+		name := "webhook:jetstream-client"
+		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return nats.NewJetstreamClient(nc)
+	}),
+
 	fx.Provide(func(logger logging.Logger) httpServer.Server {
-		corsOrigins := "https://studio.apollographql.com"
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
