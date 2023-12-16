@@ -173,7 +173,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*zookeeperMsvcv1.
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 		return req.Done().RequeueAfter(2 * time.Second)
 	}
@@ -329,7 +329,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*zookeeperMsvcv1.Service]
 					),
 				},
 			); err != nil {
-				return req.FailWithOpError(err)
+				return req.CheckFailed(StsReady, check, err.Error())
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)

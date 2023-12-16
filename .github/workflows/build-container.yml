@@ -1,0 +1,151 @@
+name: build-operators
+
+on:
+  repository_dispatch:
+    types:
+      - webhook
+  push:
+    paths:
+      - "operators/**"
+      - "operator/**"
+      - "cmd/agent-operator/**"
+      - "cmd/platform-operator/**"
+      - "pkg/**"
+      - "common/**"
+      - "go.*"
+      - ".github/workflows/**"
+
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-builds:
+    strategy:
+      matrix:
+        name:
+          - platform
+          - agent
+          - account
+          - app
+          - clusters
+          - distribution
+          - helm-charts
+          - msvc-elasticsearch
+          - msvc-influx
+          - msvc-mongo
+          - msvc-mysql
+          - msvc-n-mres
+          - msvc-neo4j
+          - msvc-redis
+          - msvc-redpanda
+          - msvc-zookeeper
+          - nodepool
+          - project
+          - resource-watcher
+          - routers
+          - wireguard
+        include:
+          - name: platform
+            buildDir: cmd/agent-operator
+          - name: agent
+            buildDir: cmd/platform-operator
+          - name: account
+            buildDir: operators/account
+          - name: app
+            buildDir: operators/app-n-lambda
+          - name: clusters
+            buildDir: operators/clusters
+          - name: distribution
+            buildDir: operators/distribution
+          - name: helm-charts
+            buildDir: operators/helm-charts
+          - name: msvc-elasticsearch
+            buildDir: operators/msvc-elasticsearch
+          - name: msvc-influx
+            buildDir: operators/msvc-influx
+          - name: msvc-mongo
+            buildDir: operators/msvc-mongo
+          - name: msvc-mysql
+            buildDir: operators/msvc-mysql
+          - name: msvc-n-mres
+            buildDir: operators/msvc-n-mres
+          - name: msvc-neo4j
+            buildDir: operators/msvc-neo4j
+          - name: msvc-redis
+            buildDir: operators/msvc-redis
+          - name: msvc-redpanda
+            buildDir: operators/msvc-redpanda
+          - name: msvc-zookeeper
+            buildDir: operators/msvc-zookeeper
+          - name: nodepool
+            buildDir: operators/nodepool
+          - name: project
+            buildDir: operators/project
+          - name: resource-watcher
+            buildDir: operators/resource-watcher
+          - name: routers
+            buildDir: operators/routers
+          - name: wireguard
+            buildDir: operators/wireguard
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install UPX
+        run: |
+          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+          tar -xf upx.tar.xz
+          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
+
+      - name: Build Binary
+        run: |
+          task build Out=$PWD/../../.github/workflows/container-build/app CWD=${{matrix.buildDir}}
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          branch_name=${GITHUB_REF#refs/heads/}
+          version_string="v${branch_name#release-}-nightly"
+          
+          cd .github/workflows/container-build
+          upx ./app
+          task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:$version_string"
+          task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:commit-${GITHUB_SHA}"
