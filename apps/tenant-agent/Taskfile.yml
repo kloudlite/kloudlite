@@ -18,8 +18,7 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w -X 'github.com/kloudlite/operator/common.BuiltAt={{.BuiltAt}}'" -o {{.Out}}
-      - upx {{.Out}}
+      - go build -ldflags="-s -w -X 'github.com/kloudlite/api/common.BuiltAt={{.BuiltAt}}'" -o {{.Out}}
 
   run:
     dotenv:
