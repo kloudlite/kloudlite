@@ -48,7 +48,7 @@ type Client interface {
 	UninstallRelease(ctx context.Context, namespace string, releaseName string) error
 
 	// install or upgrade release based on a chart
-	// EnsureRelease(ctx context.Context, namespace string, spec ChartSpec) (*release.Release, error)
+	//EnsureRelease(ctx context.Context, namespace string, spec ChartSpec) (*release.Release, error)
 	InstallOrUpgradeChart(ctx context.Context, namespace string, spec ChartSpec, opts UpgradeOpts) (*release.Release, error)
 
 	GetLastOperationLogs() string

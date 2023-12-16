@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type ServiceReconciler struct {
@@ -38,7 +37,7 @@ type ServiceReconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -362,7 +361,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder := ctrl.NewControllerManagedBy(mgr).For(&zookeeperMsvcv1.Service{})
 	builder.Owns(fn.NewUnstructured(constants.HelmZookeeperType))
 	builder.Owns(&corev1.Secret{})
-	builder.Watches(&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+	builder.Watches(&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
 		value, ok := obj.GetLabels()[constants.MsvcNameKey]
 		if !ok {
 			return nil

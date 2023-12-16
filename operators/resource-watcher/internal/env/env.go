@@ -9,7 +9,7 @@ import (
 type Env struct {
 	CommonEnv
 	RunningOnPlatformEnv
-	RunningOnTargetClusterEnv
+	RunningOnTenantClusterEnv
 }
 
 type CommonEnv struct {
@@ -17,18 +17,15 @@ type CommonEnv struct {
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 	AccountName             string        `env:"ACCOUNT_NAME" required:"true"`
 	ClusterName             string        `env:"CLUSTER_NAME" required:"true"`
+	GrpcAddr                string        `env:"GRPC_ADDR" required:"true"`
 }
 
 type RunningOnPlatformEnv struct {
-	KafkaBrokers              string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaResourceUpdatesTopic string `env:"KAFKA_RESOURCE_UPDATES_TOPIC" required:"true"`
-	KafkaInfraUpdatesTopic    string `env:"KAFKA_INFRA_UPDATES_TOPIC" required:"true"`
+	PlatformAccessToken string `env:"PLATFORM_ACCESS_TOKEN" required:"true"`
 }
 
-type RunningOnTargetClusterEnv struct {
-	GrpcAddr    string `env:"GRPC_ADDR" required:"true"`
-	AccessToken string `env:"ACCESS_TOKEN" required:"true"`
-
+type RunningOnTenantClusterEnv struct {
+	AccessToken                    string `env:"ACCESS_TOKEN" required:"true"`
 	ClusterIdentitySecretName      string `env:"CLUSTER_IDENTITY_SECRET_NAME" required:"true"`
 	ClusterIdentitySecretNamespace string `env:"CLUSTER_IDENTITY_SECRET_NAMESPACE" required:"true"`
 }
@@ -41,7 +38,7 @@ func GetCommonEnv() (CommonEnv, error) {
 	return ev, nil
 }
 
-func GetPlatformEnv() (RunningOnPlatformEnv, error) {
+func GetPlatofmrClusterEnvs() (RunningOnPlatformEnv, error) {
 	ev := RunningOnPlatformEnv{}
 	if err := env.Set(&ev); err != nil {
 		return RunningOnPlatformEnv{}, err
@@ -49,10 +46,10 @@ func GetPlatformEnv() (RunningOnPlatformEnv, error) {
 	return ev, nil
 }
 
-func GetTargetClusterEnvs() (RunningOnTargetClusterEnv, error) {
-	ev := RunningOnTargetClusterEnv{}
+func GetTargetClusterEnvs() (RunningOnTenantClusterEnv, error) {
+	ev := RunningOnTenantClusterEnv{}
 	if err := env.Set(&ev); err != nil {
-		return RunningOnTargetClusterEnv{}, err
+		return RunningOnTenantClusterEnv{}, err
 	}
 	return ev, nil
 }

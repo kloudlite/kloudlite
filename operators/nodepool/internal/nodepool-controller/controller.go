@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -838,16 +837,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.NodePool{})
 
-	watches := []*source.Kind{
-		{Type: &corev1.Node{}},
-		{Type: &batchv1.Job{}},
+	watches := []client.Object{
+		&corev1.Node{},
+		&batchv1.Job{},
 	}
 
-	for i := range watches {
+	for _, obj := range watches {
 		builder.Watches(
-			watches[i],
+			obj,
 			handler.EnqueueRequestsFromMapFunc(
-				func(o client.Object) []reconcile.Request {
+				func(ctx context.Context, o client.Object) []reconcile.Request {
 					npName, ok := o.GetLabels()[constants.NodePoolNameKey]
 					if !ok {
 						return nil

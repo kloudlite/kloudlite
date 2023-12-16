@@ -14,8 +14,7 @@
 {{- $limitsCpu := get . "limits-cpu" }}
 {{- $limitsMem := get . "limits-mem" }}
 
-{{- $freeze := get . "freeze" | default false}}
-{{/*{{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}*/}}
+{{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 {{- $existingSecret := get . "existing-secret" -}}
 
 
@@ -37,7 +36,9 @@ spec:
   values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
     global:
+      {{- if $storageClass }}
       storageClass: {{$storageClass}}
+      {{- end }}
     fullnameOverride: {{$name}}
     image:
       tag: 5.0.8-debian-10-r20
@@ -45,7 +46,7 @@ spec:
     architecture: standalone
     useStatefulSet: true
 
-    replicaCount: {{ if $freeze}}0{{else}}1{{end}}
+    replicaCount: 1
 
     commonLabels: {{$labels | toYAML | nindent 6}}
     podLabels: {{$labels | toYAML | nindent 6}}
@@ -64,6 +65,8 @@ spec:
 
     metrics:
       enabled: true
+
+    priorityClassName: "{{$priorityClassName}}"
 
     livenessProbe:
       enabled: true

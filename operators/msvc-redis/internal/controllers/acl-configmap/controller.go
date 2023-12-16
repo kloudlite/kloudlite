@@ -24,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -191,8 +190,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLConfigMap{}).Owns(&corev1.ConfigMap{})
 	builder.Watches(
-		&source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+		&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {
 					return nil

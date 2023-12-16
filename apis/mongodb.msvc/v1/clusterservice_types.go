@@ -9,15 +9,16 @@ import (
 )
 
 type ClusterServiceOutput struct {
-	NodeSelector              map[string]string                 `json:"nodeSelector,omitempty"`
-	Tolerations               []corev1.Toleration               `json:"tolerations,omitempty"`
-	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
-	Credentials               ct.SecretRef                      `json:"credentials,omitempty"`
-	HelmSecret                ct.SecretRef                      `json:"helmSecret,omitempty"`
+	Credentials ct.SecretRef `json:"credentials,omitempty"`
+	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
 }
 
 // ClusterServiceSpec defines the desired state of ClusterService
 type ClusterServiceSpec struct {
+	NodeSelector              map[string]string                 `json:"nodeSelector,omitempty"`
+	Tolerations               []corev1.Toleration               `json:"tolerations,omitempty"`
+	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+
 	Replicas  int                  `json:"replicas"`
 	Resources ct.Resources         `json:"resources"`
 	Output    ClusterServiceOutput `json:"output,omitempty" graphql:"noinput"`
