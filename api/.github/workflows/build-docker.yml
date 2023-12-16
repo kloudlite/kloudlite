@@ -91,8 +91,9 @@ jobs:
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
-          original_string=$GITHUB_REF
-          version_string="v${original_string#release-}-nightly"
+
+          branch_name=${GITHUB_REF#refs/heads/}
+          version_string="v${branch_name#release-}-nightly"
           
           cd .github/workflows/container-build
           task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}:$version_string"
