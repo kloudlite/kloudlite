@@ -3,8 +3,8 @@ package framework
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/apps/webhooks/internal/app"
-	"github.com/kloudlite/api/apps/webhooks/internal/env"
+	"github.com/kloudlite/api/apps/webhook/internal/app"
+	"github.com/kloudlite/api/apps/webhook/internal/env"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
