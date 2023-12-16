@@ -1,6 +1,9 @@
 name: build-docker-images
 
 on:
+  repository_dispatch:
+    types:
+      - webhook
   push:
     paths:
       - "apps/**/**"
@@ -86,7 +89,11 @@ jobs:
           echo "BRANCH_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')" >> $GITHUB_ENV
 
       - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release')
         run: |
+          original_string=$GITHUB_REF
+          version_string="v${original_string#release-}-nightly"
+          
           cd .github/workflows/container-build
-          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}-internal:${{env.BRANCH_TAG}}"
-          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}-internal:commit-${GITHUB_SHA}"
+          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}:$version_string"
+          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}:commit-${GITHUB_SHA}"

@@ -73,6 +73,7 @@ func New(options *Options) (Logger, error) {
 		}
 		pcfg := zap.NewProductionEncoderConfig()
 		pcfg.TimeKey = ""
+		pcfg.LineEnding = "\n"
 		return pcfg
 	}()
 
