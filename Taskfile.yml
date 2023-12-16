@@ -232,43 +232,6 @@ tasks:
         podman push {{.Image}}
 
 
-  local-build:agent:
-    preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      Name: kl-agent
-      Image: ghcr.io/kloudlite/agents/{{.Name}}:{{.Tag}}
-    dir: ./agent
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    silent: true
-    cmds:
-      - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
-        tDir=$(mktemp -d)
-
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        CGO_ENABLED=0 go build -o $tDir/{{.Name}} .
-        
-        echo "[Debug]: $tDir/Dockerfile.base"
-        
-        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.Name}} /kloudlite-agent" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-
-        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
-        docker push {{.Image}}
-        rm -rf $tDir
 
   build:operator:
     preconditions:
@@ -355,19 +318,6 @@ tasks:
     cmds:
       - go build -o "{{.KlTemplatizer}}" ./cmd/template/main.go
 
-  build:agent:
-    preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      Name: kl-agent
-      Image: "{{.dockerRegistry}}/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}"
-    dir: ./agent
-    cmds:
-      - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
-      - docker push {{.Image}}
 
   build:webhook-worker:
     preconditions:
@@ -382,41 +332,6 @@ tasks:
     cmds:
       - docker buildx build -t {{.Image}} . --build-context project=".." --build-arg name="{{.Name}}"
       - docker push {{.Image}}
-
-  local-build:webhook-worker:
-    preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      Name: webhook-worker
-      Image: "{{.dockerRegistry}}/kloudlite/workers/{{.EnvName}}/registry-webhook-worker:{{.Tag}}"
-    dir: ./webhook-worker
-    cmds:
-      - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-        
-        tDir=$(mktemp -d)
-        
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-        
-        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        CGO_ENABLED=0 go build -o $tDir/{{.Name}} .
-
-        echo "[Debug]: $tDir/Dockerfile.base"
-
-        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.Name}} /kloudlite-agent" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-        
-        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
-        docker push {{.Image}}
-        rm -rf $tDir
 
   build:http-lb:
     dir: ./http-lb

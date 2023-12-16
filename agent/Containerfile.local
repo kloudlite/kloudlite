@@ -1,6 +1,0 @@
-# syntax=docker/dockerfile:1.4
-FROM gcr.io/distroless/static:nonroot
-WORKDIR /app
-ARG binpath
-COPY --from=local-builder ${binpath} ./kloudlite-agent
-ENTRYPOINT ["./kloudlite-agent"]

@@ -1,4 +1,4 @@
-name: build-operators
+name: Build Operators
 
 on:
   push:
