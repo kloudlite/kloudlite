@@ -132,14 +132,15 @@ func (c *Client) userExists(ctx context.Context, dbName string, userName string)
 
 func ConnectAndPing(ctx context.Context, authenticatedUri string) error {
 	cli, err := newClient(ctx, authenticatedUri)
+
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := cli.Close(); err != nil {
 			fmt.Println("could not close client")
 		}
 	}()
-	if err != nil {
-		return err
-	}
 
 	if err := cli.conn.Ping(ctx, nil); err != nil {
 		return errors.NewEf(err, "could not ping mongodb")

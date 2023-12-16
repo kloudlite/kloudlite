@@ -1,7 +1,7 @@
 package project
 
 import (
-	"fmt"
+	_ "fmt"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/constants"

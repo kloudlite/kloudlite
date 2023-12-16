@@ -20,6 +20,7 @@ type DatabaseSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/msvc-gvk",name=Msvc GVK,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -52,6 +53,7 @@ func (d *Database) GetEnsuredLabels() map[string]string {
 func (d *Database) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Database").String(),
+		"kloudlite.io/msvc-gvk":                   d.Spec.MsvcRef.GroupVersionKind().String(),
 	}
 }
 

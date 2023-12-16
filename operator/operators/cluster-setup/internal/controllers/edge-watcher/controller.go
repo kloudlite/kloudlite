@@ -4,16 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
 	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
@@ -22,6 +12,14 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler struct {
@@ -111,8 +109,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&extensionsv1.Cluster{})
 	for _, k := range []client.Object{&csiv1.Driver{}, &crdsv1.EdgeRouter{}} {
 		builder.Watches(
-			&source.Kind{Type: k}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+			k, handler.EnqueueRequestsFromMapFunc(
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					if v, ok := obj.GetLabels()["kloudlite.io/created-by-edge-watcher"]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN("", v)}}
 					}
@@ -123,8 +121,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder.Watches(
-		&source.Kind{Type: fn.NewUnstructured(constants.EdgeInfraType)}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+		fn.NewUnstructured(constants.EdgeInfraType), handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), obj.GetName())}}
 			},
 		),

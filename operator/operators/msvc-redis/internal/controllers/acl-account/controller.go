@@ -27,7 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -320,10 +319,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&redisMsvcv1.ClusterService{},
 	}
 
-	for i := range watchList {
+	for _, obj := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+			obj, handler.EnqueueRequestsFromMapFunc(
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil

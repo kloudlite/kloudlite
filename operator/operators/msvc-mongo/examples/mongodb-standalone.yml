@@ -4,7 +4,6 @@ metadata:
   name: mongodb-standalone
   namespace: default
 spec:
-  replicaCount: 1
   resources:
     cpu:
       min: 300m

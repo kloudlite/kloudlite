@@ -5,11 +5,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
@@ -30,6 +25,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler struct {
@@ -297,10 +295,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&influxdbMsvcv1.Service{},
 	}
 
-	for i := range children {
+	for _, obj := range children {
 		builder.Watches(
-			&source.Kind{Type: children[i]},
-			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+			obj,
+			handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
 				if v, ok := obj.GetLabels()[constants.MresNameKey]; ok {
 					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 				}

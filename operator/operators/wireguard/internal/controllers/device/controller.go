@@ -12,11 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -26,6 +21,9 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/templates"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 /*
@@ -641,11 +639,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&appsv1.Deployment{},
 	}
 
-	for i := range watchList {
+	for _, object := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]},
+			object,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					if dev, ok := obj.GetLabels()[constants.WGDeviceNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), dev)}}
 					}
