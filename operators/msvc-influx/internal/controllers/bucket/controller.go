@@ -22,7 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -128,7 +127,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*influxdbMsvcv1.Bucket]) s
 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 		}
 		return req.UpdateStatus()
 	}
