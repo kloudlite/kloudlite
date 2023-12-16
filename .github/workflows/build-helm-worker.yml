@@ -21,7 +21,21 @@ permissions:
   packages: write
 
 jobs:
-  docker-builds:
+  helm-worker-build:
+    # check if docker file is changed
+    paths:
+      - "operators/helm-charts/**"
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build Helm Job Runner
+        run: |
+          cd operators/helm-charts
+          docker buildx build -f ./Containerfile.helm-job-runner -t ghcr.io/kloudlite/operator-workers/helm-runner . --push
+
+  operator-builds:
     strategy:
       matrix:
         name:
