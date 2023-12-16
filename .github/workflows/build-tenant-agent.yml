@@ -3,7 +3,7 @@ name: Build Agent
 on:
   push:
     paths:
-      - "operators/helm-charts/Containerfile.helm-job-runner"
+      - "agent/**"
 
 permissions:
   contents: read
