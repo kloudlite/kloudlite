@@ -146,6 +146,7 @@ jobs:
           version_string="v${branch_name#release-}-nightly"
           
           cd .github/workflows/container-build
+
           upx ./app
           task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:$version_string"
           task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:commit-${GITHUB_SHA}"
