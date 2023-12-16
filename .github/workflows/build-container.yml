@@ -127,7 +127,7 @@ jobs:
 
       - name: Build Binary
         run: |
-          task build Out=$PWD/../../.github/workflows/container-build/app CWD=${{matrix.buildDir}}
+          task build Out=$PWD/.github/workflows/container-build/app CWD=${{matrix.buildDir}}
           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
