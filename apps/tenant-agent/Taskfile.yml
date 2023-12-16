@@ -1,0 +1,49 @@
+version: 3
+
+tasks:
+  vector:proto:
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./internal/proto/*.proto
+
+  build:
+    env:
+      GOOS: linux
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
+
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w -X 'github.com/kloudlite/operator/common.BuiltAt={{.BuiltAt}}'" -o {{.Out}}
+      - upx {{.Out}}
+
+  run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go run . --dev
+
+  local-build:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: kl-agent
+      Image: ghcr.io/kloudlite/agents/{{.Name}}:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    silent: true
+    cmds:
+      - |+
+        task build Out=bin/{{.Name}}
+        echo "[#] building container image {{.Image}}"
+        podman buildx build -f ./Containerfile.local --build-context local-builder=bin --build-arg binpath=./{{.Name}} -t {{.Image}} .
+        echo "[#] pushing container image {{.Image}}"
+        podman push {{.Image}}
+

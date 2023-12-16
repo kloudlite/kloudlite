@@ -1,0 +1,75 @@
+name: Build Tenant Agent
+
+on:
+  push:
+    paths:
+      - "apps/tenant-agent/**"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-agent:
+    runs-on: ubuntu-latest
+    name: Build and push helm worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install UPX
+        run: |
+          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+          tar -xf upx.tar.xz
+          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
+
+      - name: Build Binary
+        run: |
+          cd apps/tenant-agent
+          task build Out=$PWD/../../.github/workflows/container-build/app
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          branch_name=${GITHUB_REF#refs/heads/}
+          version_string="v${branch_name#release-}-nightly"
+
+          cd .github/workflows/container-build
+
+          upx ./app
+          task go-container-build Image="ghcr.io/kloudlite/tenant/agent:$version_string"
+          task go-container-build Image="ghcr.io/kloudlite/tenant/agent:commit-${GITHUB_SHA}"
