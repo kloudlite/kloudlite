@@ -279,7 +279,10 @@ func main() {
 		cc, err := func() (*grpc.ClientConn, error) {
 			if isDev {
 				logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
-				return libGrpc.Connect(ev.GrpcAddr)
+				return libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
+					SecureConnect: false,
+					Timeout:       20 * time.Second,
+				})
 			}
 			logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
