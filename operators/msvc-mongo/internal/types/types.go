@@ -2,10 +2,24 @@ package types
 
 import "encoding/json"
 
-type MsvcOutput struct {
+type StandaloneSvcOutput struct {
+	RootUsername string `json:"ROOT_USERNAME"`
 	RootPassword string `json:"ROOT_PASSWORD"`
 	Hosts        string `json:"HOSTS"`
 	URI          string `json:"URI"`
+	AuthSource   string `json:"AUTH_SOURCE"`
+}
+
+func (sso StandaloneSvcOutput) ToMap() (map[string]string, error) {
+	b, err := json.Marshal(sso)
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]string
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 type ClusterSvcOutput struct {

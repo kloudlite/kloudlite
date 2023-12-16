@@ -8,10 +8,10 @@ import (
 )
 
 func main() {
-	var runningOnPlatform bool
-	flag.BoolVar(&runningOnPlatform, "running-on-platform", false, "--running-on-platform")
+	var runningOnTenant bool
+	flag.BoolVar(&runningOnTenant, "running-on-tenant", false, "--running-on-tenant")
 
 	mgr := operator.New("resource-watcher")
-	controller.RegisterInto(mgr, runningOnPlatform)
+	controller.RegisterInto(mgr, runningOnTenant)
 	mgr.Start()
 }

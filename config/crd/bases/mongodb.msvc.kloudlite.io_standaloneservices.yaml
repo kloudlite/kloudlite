@@ -52,13 +52,29 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              outputSecretName:
-                type: string
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  helmSecret:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
               region:
                 type: string
-              replicaCount:
-                default: 1
-                type: integer
               resources:
                 description: Storage      ct.Storage   `json:"storage"`
                 properties:

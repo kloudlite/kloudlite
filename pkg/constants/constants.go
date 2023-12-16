@@ -9,13 +9,13 @@ const (
 )
 
 const (
-	CommonFinalizer        string = "finalizers.kloudlite.io"
+	CommonFinalizer        string = "finalizers.kloudlite.io/watch"
 	CommonFinalizer2       string = "kloudlite.io/finalizer"
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
 
-  GenericFinalizer string = "kloudlite.io/finalizer"
+	GenericFinalizer string = "kloudlite.io/finalizer"
 )
 
 var LabelKeys = struct {

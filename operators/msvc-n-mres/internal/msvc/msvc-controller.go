@@ -4,11 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
 	influxdbmsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
@@ -30,6 +25,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler struct {
@@ -220,17 +218,17 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&neo4jmsvcv1.StandaloneService{},
 	}
 
-	for i := range msvcs {
+	for _, obj := range msvcs {
 		builder.Watches(
-			&source.Kind{Type: msvcs[i]},
+			obj,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 					}
 					return nil
 				}))
-		builder.Owns(msvcs[i])
+		builder.Owns(obj)
 	}
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})

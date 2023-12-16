@@ -25,26 +25,6 @@ webhooks:
     resources:
     - clusters
   sideEffects: None
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /mutate-mongodb-msvc-kloudlite-io-v1-standaloneservice
-  failurePolicy: Fail
-  name: mstandaloneservice.kb.io
-  rules:
-  - apiGroups:
-    - mongodb.msvc.kloudlite.io
-    apiVersions:
-    - v1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - standaloneservices
-  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -71,24 +51,4 @@ webhooks:
     - UPDATE
     resources:
     - clusters
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /validate-mongodb-msvc-kloudlite-io-v1-standaloneservice
-  failurePolicy: Fail
-  name: vstandaloneservice.kb.io
-  rules:
-  - apiGroups:
-    - mongodb.msvc.kloudlite.io
-    apiVersions:
-    - v1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - standaloneservices
   sideEffects: None

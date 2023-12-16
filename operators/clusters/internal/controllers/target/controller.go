@@ -23,6 +23,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,9 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	apiLabels "k8s.io/apimachinery/pkg/labels"
 )
 
 type ClusterReconciler struct {
@@ -652,38 +650,40 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
 	builder.Owns(&batchv1.Job{})
 
-	builder.Watches(&source.Kind{Type: &redpandav1.Topic{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-		clusterName, ok := obj.GetLabels()[constants.ClusterNameKey]
-		if !ok {
-			return nil
-		}
-		clusterNamespace, ok := obj.GetLabels()[constants.ClusterNamespaceKey]
-		if !ok {
-			return nil
-		}
-
-		return []reconcile.Request{{NamespacedName: fn.NN(clusterNamespace, clusterName)}}
-	}))
-
-	builder.Watches(&source.Kind{Type: &clustersv1.AccountS3Bucket{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-		if v, ok := obj.GetLabels()[constants.AccountNameKey]; ok {
-			var clusterlist clustersv1.ClusterList
-			if err := r.List(context.TODO(), &clusterlist, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-					constants.AccountNameKey: v,
-				}),
-			}); err != nil {
+	builder.Watches(&redpandav1.Topic{}, handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, obj client.Object) []reconcile.Request {
+			clusterName, ok := obj.GetLabels()[constants.ClusterNameKey]
+			if !ok {
+				return nil
+			}
+			clusterNamespace, ok := obj.GetLabels()[constants.ClusterNamespaceKey]
+			if !ok {
 				return nil
 			}
 
-			rreq := make([]reconcile.Request, 0, len(clusterlist.Items))
-			for i := range clusterlist.Items {
-				rreq = append(rreq, reconcile.Request{NamespacedName: fn.NN(clusterlist.Items[i].GetNamespace(), clusterlist.Items[i].GetName())})
+			return []reconcile.Request{{NamespacedName: fn.NN(clusterNamespace, clusterName)}}
+		}))
+
+	builder.Watches(&clustersv1.AccountS3Bucket{}, handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, obj client.Object) []reconcile.Request {
+			if v, ok := obj.GetLabels()[constants.AccountNameKey]; ok {
+				var clusterlist clustersv1.ClusterList
+				if err := r.List(ctx, &clusterlist, &client.ListOptions{
+					LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+						constants.AccountNameKey: v,
+					}),
+				}); err != nil {
+					return nil
+				}
+
+				rreq := make([]reconcile.Request, 0, len(clusterlist.Items))
+				for i := range clusterlist.Items {
+					rreq = append(rreq, reconcile.Request{NamespacedName: fn.NN(clusterlist.Items[i].GetNamespace(), clusterlist.Items[i].GetName())})
+				}
+				return rreq
 			}
-			return rreq
-		}
-		return nil
-	}))
+			return nil
+		}))
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())

@@ -42,7 +42,7 @@ type Reconciler struct {
 	Scheme     *runtime.Scheme
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 	restConfig *rest.Config
 	helmClient helm.Client
 	Env        *env.Env
@@ -544,13 +544,13 @@ func (r *Reconciler) ensureGitlabRunner(req *rApi.Request[*v1.ManagedCluster]) s
 		return req.CheckFailed(GitlabRunnerInstalled, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+	if _, err := r.helmClient.InstallOrUpgradeChart(ctx, obj.Spec.GitlabRunner.Namespace, helm.ChartSpec{
 		ReleaseName: obj.Spec.GitlabRunner.ReleaseName,
 		// ChartName:   "gitlab/gitlab-runner",
 		ChartName:  fmt.Sprintf("%s/gitlab-runner-0.50.1.tgz", r.Env.HelmChartsDir),
 		Namespace:  obj.Spec.GitlabRunner.Namespace,
 		ValuesYaml: string(b),
-	}); err != nil {
+	}, helm.UpgradeOpts{UpgradeOnlyIfValuesChanged: false}); err != nil {
 		return req.CheckFailed(GitlabRunnerInstalled, check, err.Error()).Err(nil)
 	}
 
@@ -586,7 +586,7 @@ func (r *Reconciler) ensureCertManager(req *rApi.Request[*v1.ManagedCluster]) st
 		return req.CheckFailed(CertManagerInstalled, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+	if _, err := r.helmClient.EnsureRelease(ctx, obj.Spec.CertManager.Namespace, helm.ChartSpec{
 		ReleaseName: obj.Spec.CertManager.ReleaseName,
 		ChartName:   fmt.Sprintf("%s/cert-manager-v1.11.0.tgz", r.Env.HelmChartsDir),
 		Namespace:   obj.Spec.CertManager.Namespace,
@@ -622,7 +622,7 @@ func (r *Reconciler) ensureLoki(req *rApi.Request[*v1.ManagedCluster]) stepResul
 		return req.CheckFailed(LokiReady, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+	if _, err := r.helmClient.EnsureRelease(ctx, lc.NsCore, helm.ChartSpec{
 		ReleaseName: obj.Spec.Loki.ReleaseName,
 		// ChartName:   "grafana/loki-stack",
 		ChartName:  fmt.Sprintf("%s/loki-stack-2.8.7.tgz", r.Env.HelmChartsDir),
@@ -658,7 +658,7 @@ func (r *Reconciler) ensurePrometheus(req *rApi.Request[*v1.ManagedCluster]) ste
 		return req.CheckFailed(PrometheusReady, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.helmClient.EnsureRelease(ctx, helm.ChartSpec{
+	if _, err := r.helmClient.EnsureRelease(ctx, lc.NsCore, helm.ChartSpec{
 		ReleaseName: obj.Spec.Prometheus.ReleaseName,
 		// ChartName:   "bitnami/kube-prometheus",
 		ChartName:  fmt.Sprintf("%s/kube-prometheus-8.2.2.tgz", r.Env.HelmChartsDir),

@@ -24,7 +24,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -210,8 +209,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&redpandaMsvcv1.Topic{})
 	builder.Owns(&redpandaMsvcv1.ACLUser{})
 	builder.Watches(
-		&source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+		&corev1.Secret{}, handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				if obj.GetLabels()["kloudlite.io/cluster-config"] == "true" {
 					return []reconcile.Request{{fn.NN(obj.GetNamespace(), obj.GetName())}}
 				}

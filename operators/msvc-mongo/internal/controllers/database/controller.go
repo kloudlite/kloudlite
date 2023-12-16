@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/types"
@@ -25,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -165,20 +163,14 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 
 	check := rApi.Check{Generation: obj.Generation}
 
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
-	if err != nil {
-		req.Logger.Infof("msvc secret does not exist, means msvc does not exist, then why keep managed resource, finalizing ...")
-		return req.Finalize()
-	}
-
-	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](msvcSecret)
+	_, URI, err := r.getMsvcConnectionParams(ctx, obj)
 	if err != nil {
 		return req.CheckFailed(DBUserDeleted, check, err.Error()).Err(nil)
 	}
 
 	mctx, cancel := r.newMongoContext(ctx)
 	defer cancel()
-	mongoCli, err := libMongo.NewClient(mctx, msvcOutput.URI)
+	mongoCli, err := libMongo.NewClient(mctx, URI)
 	if err != nil {
 		return req.CheckFailed(DBUserDeleted, check, err.Error())
 	}
@@ -233,11 +225,22 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 	switch obj.Spec.MsvcRef.Kind {
 	case "StandaloneService":
 		{
-			_, err := rApi.Get(ctx, r.Client, fn.NN(obj.GetNamespace(), obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
+			msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.GetNamespace(), obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
 			if err != nil {
 				return "", "", err
 			}
-			return "", "", err
+
+			s, err := rApi.Get(ctx, r.Client, fn.NN(msvc.Spec.Output.Credentials.Namespace, msvc.Spec.Output.Credentials.Name), &corev1.Secret{})
+			if err != nil {
+				return "", "", err
+			}
+
+			cso, err := fn.ParseFromSecret[types.StandaloneSvcOutput](s)
+			if err != nil {
+				return "", "", err
+			}
+
+			return cso.Hosts, cso.URI, err
 		}
 	case "ClusterService":
 		{
@@ -322,7 +325,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		b2, err := templates.Parse(
 			templates.Secret, map[string]any{
 				"name":        secretName,
-				"namespace":   obj.Namespace,
+				"namespace":   secretNamespace,
 				"owner-refs":  obj.GetOwnerReferences(),
 				"string-data": mresOutput,
 			},
@@ -391,24 +394,23 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&mongodbMsvcv1.ClusterService{},
 	}
 
-	for i := range watchList {
+	for _, obj := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]},
+			obj,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil
 					}
 
 					var dbList mongodbMsvcv1.DatabaseList
-					if err := r.List(
-						context.TODO(), &dbList, &client.ListOptions{
-							LabelSelector: labels.SelectorFromValidatedSet(
-								map[string]string{constants.MsvcNameKey: msvcName},
-							),
-							Namespace: obj.GetNamespace(),
-						},
+					if err := r.List(ctx, &dbList, &client.ListOptions{
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{constants.MsvcNameKey: msvcName},
+						),
+						Namespace: obj.GetNamespace(),
+					},
 					); err != nil {
 						return nil
 					}

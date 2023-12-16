@@ -29,6 +29,12 @@ type Driver struct {
 	Status rApi.Status `json:"status,omitempty"`
 }
 
+func (d *Driver) EnsureGVK() {
+	if d != nil {
+		d.SetGroupVersionKind(GroupVersion.WithKind("Driver"))
+	}
+}
+
 func (d *Driver) GetStatus() *rApi.Status {
 	return &d.Status
 }

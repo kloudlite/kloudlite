@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -275,7 +274,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 		},
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
-		"storage-class": "sc-xfs",
+		"storage-class": obj.Spec.Resources.Storage.StorageClass,
 		"storage-size":  obj.Spec.Resources.Storage.Size,
 
 		"replica-count":        obj.Spec.Replicas,
@@ -379,8 +378,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.ClusterService{})
 	builder.Owns(&corev1.Secret{})
 	builder.Watches(
-		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(
+			func(context context.Context, obj client.Object) []reconcile.Request {
 				v, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {
 					return nil

@@ -126,7 +126,7 @@ func (r *Reconciler) ensureKafkaTopic(req *rApi.Request[*clusterv1.BYOC]) stepRe
 			}
 			kt.Labels["kloudlite.io/byoc.name"] = obj.Name
 		}
-		kt.Spec.RedpandaAdmin = rpAdminList.Items[0].Name
+		kt.Spec.RedpandaAdmin = &rpAdminList.Items[0].Name
 		return nil
 	}); err != nil {
 		return req.CheckFailed(KafkaTopicExists, check, err.Error()).Err(nil)

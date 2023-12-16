@@ -54,7 +54,6 @@ const (
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &influxdbMsvcv1.Bucket{})
-
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -122,7 +121,6 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*influxdbMsvcv1.Bucket]) s
 			},
 		),
 	)
-
 	if err != nil {
 		return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 	}
@@ -269,21 +267,21 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for i := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+			watchList[i],
+			handler.EnqueueRequestsFromMapFunc(
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil
 					}
 
 					var buckets influxdbMsvcv1.BucketList
-					if err := r.List(
-						context.TODO(), &buckets, &client.ListOptions{
-							LabelSelector: labels.SelectorFromValidatedSet(
-								map[string]string{constants.MsvcNameKey: msvcName},
-							),
-							Namespace: obj.GetNamespace(),
-						},
+					if err := r.List(ctx, &buckets, &client.ListOptions{
+						LabelSelector: labels.SelectorFromValidatedSet(
+							map[string]string{constants.MsvcNameKey: msvcName},
+						),
+						Namespace: obj.GetNamespace(),
+					},
 					); err != nil {
 						return nil
 					}

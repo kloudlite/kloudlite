@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -39,22 +40,26 @@ type Reconciler struct {
 	logger      logging.Logger
 	Name        string
 	Env         *env.Env
-	MsgSender   MessageSender
 	accessToken string
+	MsgSender   MessageSender
 }
 
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-// func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
 func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
 	obj.SetManagedFields(nil)
+
+	// mctx, cf := context.WithTimeout(ctx, 100*time.Second)
+	_ = time.Second
+	mctx, cf := context.WithCancel(ctx)
+	defer cf()
 
 	switch {
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
 		{
-			if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -67,7 +72,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 			switch obj.GetObjectKind().GroupVersionKind().Kind {
 			case "Cluster":
 				{
-					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+					if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
 						ClusterName: obj.GetName(),
 						AccountName: obj.Object["spec"].(map[string]any)["accountName"].(string),
 						Object:      obj.Object,
@@ -77,7 +82,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				}
 			default:
 				{
-					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+					if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
 						ClusterName: r.Env.ClusterName,
 						AccountName: r.Env.AccountName,
 						Object:      obj.Object,
@@ -106,7 +111,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 						}
 					}
 
-					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+					if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
 						ClusterName: r.Env.ClusterName,
 						AccountName: r.Env.AccountName,
 						Object:      obj.Object,
@@ -123,7 +128,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
-			if err := r.MsgSender.DispatchResourceUpdates(ctx, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -140,13 +145,13 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	if obj.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-			return r.RemoveWatcherFinalizer(ctx, obj)
+			return r.RemoveWatcherFinalizer(mctx, obj)
 		}
 		return ctrl.Result{}, nil
 	}
 
 	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-		return r.AddWatcherFinalizer(ctx, obj)
+		return r.AddWatcherFinalizer(mctx, obj)
 	}
 
 	return ctrl.Result{}, nil
@@ -155,8 +160,14 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update
-
 func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
+	if r.MsgSender == nil {
+		r.logger.Infof("message-sender is nil")
+		return ctrl.Result{
+			// RequeueAfter: 2 *time.Second,
+		}, errors.New("waiting for message sender to be initialized")
+	}
+
 	var wName types.WrappedName
 	if err := json.Unmarshal([]byte(oReq.Name), &wName); err != nil {
 		return ctrl.Result{}, nil
@@ -228,9 +239,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for _, object := range watchList {
 		builder.Watches(
-			&source.Kind{Type: object},
+			object,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					v, ok := obj.GetAnnotations()[constants.GVKKey]
 					if !ok {
 						return nil

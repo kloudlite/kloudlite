@@ -8,18 +8,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type StandaloneServiceOutput struct {
+	Credentials ct.SecretRef `json:"credentials,omitempty"`
+	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
+}
+
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
 	Region       string              `json:"region,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default=1
-	ReplicaCount int `json:"replicaCount,omitempty"`
 	// Storage      ct.Storage   `json:"storage"`
-	Resources        ct.Resources `json:"resources"`
-	OutputSecretName *string      `json:"outputSecretName,omitempty"`
+	Resources ct.Resources `json:"resources"`
+
+	Output StandaloneServiceOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 // +kubebuilder:object:root=true

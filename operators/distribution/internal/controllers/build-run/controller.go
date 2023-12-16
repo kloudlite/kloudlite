@@ -4,6 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	"github.com/kloudlite/operator/operators/distribution/internal/env"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -13,16 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
-
-	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
-	"github.com/kloudlite/operator/operators/distribution/internal/env"
-	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 )
 
 type Reconciler struct {
@@ -259,11 +257,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&corev1.Secret{},
 		&batchv1.Job{},
 	}
-	for i := range watchList {
+	for _, object := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]},
+			object,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					if brn, ok := obj.GetAnnotations()[constants.BuildRunNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), brn)}}
 					}

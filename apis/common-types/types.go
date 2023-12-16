@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Storage struct {
@@ -73,9 +74,8 @@ const (
 // }
 
 type MsvcRef struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
+	metav1.TypeMeta `json:",inline"`
+	Name            string `json:"name"`
 }
 
 type SecretRef struct {

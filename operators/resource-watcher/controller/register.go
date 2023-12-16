@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -22,47 +21,36 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 )
 
-func RegisterInto(mgr operator.Operator, runningOnPlatform bool) {
+func RegisterInto(mgr operator.Operator, runningOnTenant bool) {
 	ev, err2 := func() (*env.Env, error) {
+		var ev env.Env
+
 		ce, err := env.GetCommonEnv()
 		if err != nil {
 			return nil, err
 		}
 
-		if runningOnPlatform {
-			pe, err := env.GetPlatformEnv()
+		ev.CommonEnv = ce
+
+		if runningOnTenant {
+			te, err := env.GetTargetClusterEnvs()
 			if err != nil {
 				return nil, err
 			}
-
-			return &env.Env{
-				CommonEnv:            ce,
-				RunningOnPlatformEnv: pe,
-			}, nil
+			ev.RunningOnTenantClusterEnv = te
+		} else {
+			pe, err := env.GetPlatofmrClusterEnvs()
+			if err != nil {
+				return nil, err
+			}
+			ev.RunningOnPlatformEnv = pe
 		}
 
-		te, err := env.GetTargetClusterEnvs()
-		if err != nil {
-			return nil, err
-		}
-		return &env.Env{
-			CommonEnv:                 ce,
-			RunningOnTargetClusterEnv: te,
-		}, nil
+		return &ev, nil
 	}()
 
 	if err2 != nil {
 		panic(err2)
-	}
-
-	if runningOnPlatform {
-		if ev.KafkaBrokers == "" || ev.KafkaInfraUpdatesTopic == "" || ev.KafkaResourceUpdatesTopic == "" {
-			panic("env-var KAFKA_BROKERS, KAFKA_INFRA_UPDATES_TOPIC, KAFKA_RESOURCE_UPDATES_TOPIC are required, when running with --running-on-platform")
-		}
-	} else {
-		if ev.GrpcAddr == "" {
-			panic("env-var GRPC_ADDR is required, when running on target clusters")
-		}
 	}
 
 	mgr.AddToSchemes(
@@ -73,76 +61,51 @@ func RegisterInto(mgr operator.Operator, runningOnPlatform bool) {
 		wireguardv1.AddToScheme,
 	)
 
-	var msgSender watchAndUpdate.MessageSender
-	var err error
-
 	logger := logging.NewOrDie(&logging.Options{Name: "resource-watcher", Dev: mgr.Operator().IsDev})
 
-	if runningOnPlatform {
-		getMsgSender := func() (watchAndUpdate.MessageSender, error) {
-			return watchAndUpdate.NewKafkaMessageSender(context.TODO(), ev, logger)
-		}
-		msgSender, err = getMsgSender()
-		if err != nil {
-			if errors.As(err, &watchAndUpdate.ErrConnect{}) {
-				go func() {
-					for {
-						msgSender, err = getMsgSender()
-						if err == nil {
-							break
-						}
-						logger.Infof("Failed to connect to kafka, retrying in another 5 seconds")
-						<-time.After(5 * time.Second)
-					}
-				}()
-				return
-			}
-			panic(err)
-		}
-	} else {
-		var err error
+	errCh := make(chan error)
 
-		cc, err := libGrpc.ConnectSecure(ev.GrpcAddr)
-		if err != nil {
-			log.Fatalf("Failed to connect after retries: %v", err)
-		}
-
-		msgSender, err = watchAndUpdate.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
-		if err != nil {
-			log.Fatalf("Failed to create grpc message sender: %v", err)
-		}
-
-		go func() {
-			errCh := make(chan error)
-			for {
-				var err error
-
-				cc, err := libGrpc.ConnectSecure(ev.GrpcAddr)
-				if err != nil {
-					log.Fatalf("Failed to connect after retries: %v", err)
-				}
-
-				msgSender, err = watchAndUpdate.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
-				if err != nil {
-					log.Fatalf("Failed to create grpc message sender: %v", err)
-				}
-
-				connState := cc.GetState()
-				for connState != connectivity.Ready && connState != connectivity.Shutdown {
-					log.Printf("Connection lost, trying to reconnect")
-					errCh <- err
-				}
-				<-errCh
-				cc.Close()
-			}
-		}()
+	watchAndUpdateReconciler := &watchAndUpdate.Reconciler{
+		Name: "resource-watcher",
+		Env:  ev,
 	}
 
+	go func() {
+		for {
+			logger.Infof("connecting to grpc addr: %s", ev.GrpcAddr)
+
+			cc, err := libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
+				SecureConnect: runningOnTenant,
+				Timeout:       100 * time.Second,
+			})
+			if err != nil {
+				logger.Infof("failed to connect to grpc addr: %s, will be retrying in %d seconds", ev.GrpcAddr, 2)
+				<-time.After(2 * time.Second)
+				continue
+			}
+
+			logger.Infof("grpc connection successfull")
+
+			msgSender, err := watchAndUpdate.NewGRPCMessageSender(context.TODO(), cc, ev, logger, runningOnTenant)
+			if err != nil {
+				logger.Infof("Failed to create grpc message sender: %v", err)
+				<-time.After(2 * time.Second)
+				continue
+			}
+
+			watchAndUpdateReconciler.MsgSender = msgSender
+
+			connState := cc.GetState()
+			for connState != connectivity.Ready && connState != connectivity.Shutdown {
+				log.Printf("Connection lost, trying to reconnect")
+				errCh <- err
+			}
+			<-errCh
+			cc.Close()
+		}
+	}()
+
 	mgr.RegisterControllers(
-		&watchAndUpdate.Reconciler{
-			Name:      "resource-watcher",
-			Env:       ev,
-			MsgSender: msgSender,
-		},
+		watchAndUpdateReconciler,
 	)
 }
