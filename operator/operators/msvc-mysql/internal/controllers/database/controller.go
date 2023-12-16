@@ -168,7 +168,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mysqlMsvcv1.Database]) st
 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 		}
 		return req.UpdateStatus()
 	}

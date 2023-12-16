@@ -26,6 +26,7 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
+      GOOS: linux
     vars:
       BuiltAt:
         sh: date | sed 's/\s/_/g'
@@ -37,7 +38,6 @@ tasks:
     dir: "{{.CWD}}"
     cmds:
       - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
-      - upx {{.Out}}
 
   setup:
     dir: ./bin

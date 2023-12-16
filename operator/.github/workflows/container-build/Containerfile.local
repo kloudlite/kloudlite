@@ -1,0 +1,6 @@
+#syntax=docker/dockerfile:1
+FROM gcr.io/distroless/static-debian11:nonroot
+LABEL org.opencontainers.image.source https://github.com/kloudlite/api
+WORKDIR /app
+COPY --chown=1001 ./app ./app
+CMD ["./app"]

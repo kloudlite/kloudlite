@@ -165,7 +165,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.Stan
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
@@ -334,7 +334,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.StandaloneSe
 					),
 				},
 			); err != nil {
-				return req.FailWithOpError(err)
+				return req.CheckFailed(StsReady, check, err.Error())
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)

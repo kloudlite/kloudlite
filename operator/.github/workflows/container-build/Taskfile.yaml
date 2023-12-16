@@ -1,0 +1,11 @@
+version: 3
+
+tasks:
+  go-container-build:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+    silent: true
+    cmds:
+      - |
+        docker buildx build -f ./Containerfile.local -t {{.Image}} . --push
