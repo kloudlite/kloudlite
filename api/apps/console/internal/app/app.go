@@ -79,7 +79,7 @@ var Module = fx.Module("app",
 			a := logAndMetricsServer.Raw()
 
 			a.Use(
-				httpServer.NewSessionMiddleware[*common.AuthSession](
+				httpServer.NewSessionMiddleware(
 					sessionRepo,
 					constants.CookieName,
 					ev.CookieDomain,
@@ -472,7 +472,7 @@ var Module = fx.Module("app",
 
 			schema := generated.NewExecutableSchema(gqlConfig)
 			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware[*common.AuthSession](
+				httpServer.NewSessionMiddleware(
 					sessionRepo,
 					constants.CookieName,
 					ev.CookieDomain,
