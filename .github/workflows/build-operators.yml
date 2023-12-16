@@ -1,9 +1,6 @@
 name: build-operators
 
 on:
-  repository_dispatch:
-    types:
-      - webhook
   push:
     paths:
       - "operators/**"
@@ -21,7 +18,8 @@ permissions:
   packages: write
 
 jobs:
-  docker-builds:
+
+  operator-builds:
     strategy:
       matrix:
         name:
