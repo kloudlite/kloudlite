@@ -31,7 +31,7 @@ jobs:
           - iam
           - infra
           - worker-audit-logging
-          - webhooks
+          - webhook
           - message-office
     runs-on: ubuntu-latest
     name: Deploy to Docker Image

@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	"github.com/kloudlite/api/apps/webhooks/internal/env"
-	"github.com/kloudlite/api/apps/webhooks/internal/framework"
+	"github.com/kloudlite/api/apps/webhook/internal/env"
+	"github.com/kloudlite/api/apps/webhook/internal/framework"
 	"github.com/kloudlite/api/pkg/config"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"

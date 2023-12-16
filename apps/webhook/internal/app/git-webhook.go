@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kloudlite/api/apps/webhooks/internal/env"
+	"github.com/kloudlite/api/apps/webhook/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 
