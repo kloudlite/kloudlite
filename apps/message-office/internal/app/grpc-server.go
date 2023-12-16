@@ -107,7 +107,35 @@ func validateAndDecodeFromGrpcContext(ctx context.Context, tokenSecret string) (
 	if len(authToken) != 1 {
 		return "", "", errors.New("no authorization header passed")
 	}
+
 	return validateAndDecodeAccessToken(authToken[0], tokenSecret)
+}
+
+func (g *grpcServer) validateAndDecodeFromGrpcContext(grpcServerCtx context.Context, tokenSecret string) (accountName string, clusterName string, err error) {
+	authToken := metadata.ValueFromIncomingContext(grpcServerCtx, "authorization")
+	if len(authToken) != 1 {
+		return "", "", errors.New("no authorization header passed")
+	}
+
+	if authToken[0] != g.ev.PlatformAccessToken {
+		return validateAndDecodeAccessToken(authToken[0], tokenSecret)
+	}
+
+	splits := strings.Split(authToken[0], ";")
+	for _, v := range splits {
+		sp := strings.SplitN(v, "=", 2)
+		if len(sp) != 2 {
+			return "", "", errors.New("invalid access token, incorrect data format")
+		}
+		if sp[0] == "account" {
+			accountName = sp[1]
+		}
+		if sp[0] == "cluster" {
+			clusterName = sp[1]
+		}
+	}
+
+	return accountName, clusterName, nil
 }
 
 func (g *grpcServer) ValidateAccessToken(ctx context.Context, msg *messages.ValidateAccessTokenIn) (*messages.ValidateAccessTokenOut, error) {
@@ -117,6 +145,10 @@ func (g *grpcServer) ValidateAccessToken(ctx context.Context, msg *messages.Vali
 	defer func() {
 		logger.Infof("is access token valid? (%v)", isValid)
 	}()
+
+	if msg.AccessToken == g.ev.PlatformAccessToken {
+		return &messages.ValidateAccessTokenOut{Valid: true}, nil
+	}
 
 	if _, _, err := validateAndDecodeAccessToken(msg.AccessToken, g.ev.TokenHashingSecret); err != nil {
 		isValid = false
@@ -152,7 +184,7 @@ func (g *grpcServer) parseError(ctx context.Context, accountName string, cluster
 
 // ReceiveErrors implements messages.MessageDispatchServiceServer
 func (g *grpcServer) ReceiveErrors(server messages.MessageDispatchService_ReceiveErrorsServer) error {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return err
 	}
@@ -186,7 +218,7 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 }
 
 func (g *grpcServer) SendActions(request *messages.Empty, server messages.MessageDispatchService_SendActionsServer) error {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return err
 	}
@@ -256,7 +288,7 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName stri
 }
 
 func (g *grpcServer) ReceiveResourceUpdates(server messages.MessageDispatchService_ReceiveResourceUpdatesServer) error {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return err
 	}
@@ -296,7 +328,7 @@ func (g *grpcServer) processClusterUpdate(ctx context.Context, accountName strin
 }
 
 func (g *grpcServer) ReceiveClusterUpdates(server messages.MessageDispatchService_ReceiveClusterUpdatesServer) (err error) {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return err
 	}
@@ -338,7 +370,7 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 
 // ReceiveInfraUpdates implements messages.MessageDispatchServiceServer
 func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) (err error) {
-	accountName, clusterName, err := validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return err
 	}

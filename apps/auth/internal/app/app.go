@@ -57,7 +57,7 @@ var Module = fx.Module(
 
 			server.SetupGraphqlServer(
 				schema,
-				httpServer.NewSessionMiddleware[*common.AuthSession](
+				httpServer.NewSessionMiddleware(
 					repo,
 					constants.CookieName,
 					ev.CookieDomain,

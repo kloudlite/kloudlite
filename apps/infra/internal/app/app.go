@@ -205,7 +205,7 @@ var Module = fx.Module(
 
 			schema := generated.NewExecutableSchema(config)
 			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware[*common.AuthSession](
+				httpServer.NewSessionMiddleware(
 					sessionRepo,
 					"hotspot-session",
 					env.CookieDomain,

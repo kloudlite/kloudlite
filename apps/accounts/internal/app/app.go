@@ -90,7 +90,7 @@ var Module = fx.Module("app",
 
 			schema := generated.NewExecutableSchema(gqlConfig)
 			server.SetupGraphqlServer(schema,
-				httpServer.NewSessionMiddleware[*common.AuthSession](
+				httpServer.NewSessionMiddleware(
 					sessionRepo,
 					constants.CookieName,
 					env.CookieDomain,
