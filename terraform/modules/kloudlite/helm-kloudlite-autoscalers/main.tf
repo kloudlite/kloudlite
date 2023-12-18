@@ -16,10 +16,6 @@ resource "ssh_resource" "helm_install_kloudlite_autoscalers" {
     "mkdir -p manifests"
   ]
 
-  triggers = {
-    always_run = timestamp()
-  }
-
   file {
     content     = <<EOF
 apiVersion: crds.kloudlite.io/v1
@@ -42,7 +38,7 @@ spec:
     tolerations:
       - operator: Exists
 
-  valuesYaml: |+
+  values:
     defaults:
       imageTag: ${var.kloudlite_release}
       imagePullPolicy: "Always"

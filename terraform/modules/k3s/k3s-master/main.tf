@@ -42,11 +42,11 @@ locals {
       var.backup_to_s3.enabled ? [
         "--etcd-s3",
         "--etcd-s3-endpoint", "s3.amazonaws.com",
-        "--etcd-s3-access-key", var.backup_to_s3.aws_access_key,
-        "--etcd-s3-secret-key", var.backup_to_s3.aws_secret_key,
+
         "--etcd-s3-bucket", var.backup_to_s3.bucket_name,
         "--etcd-s3-region", var.backup_to_s3.bucket_region,
         "--etcd-s3-folder", var.backup_to_s3.bucket_folder,
+
         "--etcd-snapshot-compress",
         "--etcd-snapshot-schedule-cron", local.backup_crontab_schedule[k],
       ] : [],
@@ -88,10 +88,8 @@ resource "ssh_resource" "k3s_primary_master" {
 sudo k3s etcd-snapshot list \
   --s3  \
   --s3-region="${var.backup_to_s3.bucket_region}" \
+  --s3-bucket="${var.backup_to_s3.bucket_name}" \
   --s3-folder="${var.backup_to_s3.bucket_folder}" \
-   --s3-bucket="${var.backup_to_s3.bucket_name}" \
-   --s3-access-key="${var.backup_to_s3.aws_access_key}" \
-   --s3-secret-key="${var.backup_to_s3.aws_secret_key}"
 EOF2
 
       latest_snapshot=$(bash k3s-list-snapshot.sh 2> /dev/null | tail -n +2 | sort -k 3 -r | head -n +1 | awk '{print $1}')
