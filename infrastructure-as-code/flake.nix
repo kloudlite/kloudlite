@@ -18,9 +18,9 @@
       {
         devShells.default = pkgs.mkShell {
           # hardeningDisable = [ "all" ];
-
           buildInputs = with pkgs; [
             # cli tools
+            bash
             go-task
             terraform
 
@@ -36,6 +36,8 @@
           ];
 
           shellHook = ''
+            export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
+            mkdir -p $TF_PLUGIN_CACHE_DIR
           '';
         };
       }
