@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"github.com/kloudlite/api/pkg/nats"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 
@@ -24,8 +26,18 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
 	repos.NewFxMongoRepo[*domain.RemoteLogin]("remote_logins", "rlgn", domain.RemoteTokenIndexes),
-	cache.NewFxRepo[*domain.VerifyToken](),
-	cache.NewFxRepo[*domain.ResetPasswordToken](),
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*domain.VerifyToken], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*domain.VerifyToken](cxt, ev.VerifyTokenKVBucket, jc)
+		},
+	),
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*domain.ResetPasswordToken], error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVRepo[*domain.ResetPasswordToken](cxt, ev.ResetPasswordTokenKVBucket, jc)
+		},
+	),
 
 	fx.Provide(
 		func(conn CommsClientConnection) comms.CommsClient {
