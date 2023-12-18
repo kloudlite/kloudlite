@@ -42,6 +42,8 @@ type Env struct {
 	CommsService    string `env:"COMMS_SERVICE" required:"true"`
 	NatsURL         string `env:"NATS_URL" required:"true"`
 	SessionKVBucket string `env:"SESSION_KV_BUCKET" required:"true"`
+	VerifyTokenKVBucket string `env:"VERIFY_TOKEN_KV_BUCKET" required:"true"`
+	ResetPasswordTokenKVBucket string `env:"RESET_PASSWORD_TOKEN_KV_BUCKET" required:"true"`
 }
 
 func (ev *Env) validateEnv() error {
