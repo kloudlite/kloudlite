@@ -32,7 +32,7 @@ var Module fx.Option = fx.Module("framework",
 	}),
 
 	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
-		name := "console:jetstream-client"
+		name := "audit-worker:jetstream-client"
 		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,
 			Logger: logger,
@@ -40,14 +40,8 @@ var Module fx.Option = fx.Module("framework",
 		if err != nil {
 			return nil, err
 		}
-
 		return nats.NewJetstreamClient(nc)
 	}),
-
-
-
-	//redpanda.NewConsumerFx[*redpandaCfg](),
-	//redpanda.NewProducerFx[redpanda.Client](),
 
 	fx.Provide(func(ev *env.Env) *eventsDbCfg {
 		return &eventsDbCfg{ev: ev}

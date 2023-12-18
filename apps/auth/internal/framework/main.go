@@ -37,9 +37,6 @@ func (e *fm) GetHttpCors() string {
 	return e.CorsOrigins
 }
 
-func (e *fm) RedisOptions() (hosts, username, password, basePrefix string) {
-	return e.RedisHosts, e.RedisUserName, e.RedisPassword, e.RedisPrefix
-}
 
 func (e *fm) GetMongoConfig() (url string, dbName string) {
 	return e.MongoUri, e.MongoDbName
