@@ -50,9 +50,6 @@ variable "backup_to_s3" {
   type        = object({
     enabled = bool
 
-    aws_access_key = optional(string, "")
-    aws_secret_key = optional(string, "")
-
     bucket_name   = optional(string, "")
     bucket_region = optional(string, "")
     bucket_folder = optional(string, "")
@@ -61,8 +58,6 @@ variable "backup_to_s3" {
   validation {
     error_message = "when backup_to_s3 is enabled, all the following variables must be set: aws_access_key, aws_secret_key, bucket_name, bucket_region, bucket_folder and cron_schedule"
     condition     = var.backup_to_s3.enabled == false || alltrue([
-      var.backup_to_s3.aws_access_key != "",
-      var.backup_to_s3.aws_secret_key != "",
       var.backup_to_s3.bucket_name != "",
       var.backup_to_s3.bucket_region != "",
       var.backup_to_s3.bucket_folder != "",
