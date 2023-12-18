@@ -59,21 +59,38 @@ module "aws-security-groups" {
 }
 
 module "k3s-master-instances" {
-  source               = "../../modules/aws/aws-ec2-nodepool"
-  depends_on           = [null_resource.variable_validations]
+  source               = "../../modules/aws/ec2-node"
+  for_each             = {for name, cfg in var.k3s_masters.nodes : name => cfg}
+  ami                  = var.k3s_masters.image_id
+  availability_zone    = each.value.availability_zone
   instance_type        = var.k3s_masters.instance_type
   iam_instance_profile = var.k3s_masters.iam_instance_profile
-  nodes                = {
-    for name, cfg in var.k3s_masters.nodes : name =>{ last_recreated_at : cfg.last_recreated_at }
-  }
-  nvidia_gpu_enabled = var.k3s_masters.nvidia_gpu_enabled
-  root_volume_size   = var.k3s_masters.root_volume_size
-  root_volume_type   = var.k3s_masters.root_volume_type
-  security_groups    = module.aws-security-groups.sg_for_k3s_masters_names
-  ssh_key_name       = aws_key_pair.k3s_nodes_ssh_key.key_name
-  tracker_id         = "${var.tracker_id}-masters"
-  ami                = var.k3s_masters.image_id
+  is_nvidia_gpu_node   = var.enable_nvidia_gpu_support
+  node_name            = each.key
+  root_volume_size     = var.k3s_masters.root_volume_size
+  root_volume_type     = var.k3s_masters.root_volume_type
+  security_groups      = module.aws-security-groups.sg_for_k3s_masters_names
+  last_recreated_at    = each.value.last_recreated_at
+  ssh_key_name         = aws_key_pair.k3s_nodes_ssh_key.key_name
+  tracker_id           = var.tracker_id
 }
+
+#module "k3s-master-instances2" {
+#  source               = "../../modules/aws/aws-ec2-nodepool"
+#  depends_on           = [null_resource.variable_validations]
+#  instance_type        = var.k3s_masters.instance_type
+#  iam_instance_profile = var.k3s_masters.iam_instance_profile
+#  nodes                = {
+#    for name, cfg in var.k3s_masters.nodes : name =>{ last_recreated_at : cfg.last_recreated_at }
+#  }
+#  nvidia_gpu_enabled = var.k3s_masters.nvidia_gpu_enabled
+#  root_volume_size   = var.k3s_masters.root_volume_size
+#  root_volume_type   = var.k3s_masters.root_volume_type
+#  security_groups    = module.aws-security-groups.sg_for_k3s_masters_names
+#  ssh_key_name       = aws_key_pair.k3s_nodes_ssh_key.key_name
+#  tracker_id         = var.tracker_id
+#  ami                = var.k3s_masters.image_id
+#}
 
 module "kloudlite-k3s-masters" {
   source                    = "../kloudlite-k3s-masters"
@@ -85,13 +102,14 @@ module "kloudlite-k3s-masters" {
   master_nodes              = {
     for name, cfg in var.k3s_masters.nodes : name => {
       role : cfg.role,
-      public_ip : module.k3s-master-instances.public_ips[name],
+      public_ip : module.k3s-master-instances[name].public_ip,
       node_labels : {
         (module.constants.node_labels.provider_name) : "aws",
         (module.constants.node_labels.provider_region) : var.aws_region,
         (module.constants.node_labels.provider_az) : cfg.availability_zone,
         (module.constants.node_labels.node_has_role) : cfg.role,
         (module.constants.node_labels.provider_aws_instance_profile_name) : var.k3s_masters.iam_instance_profile,
+        (module.constants.node_labels.provider_instance_type) : var.k3s_masters.instance_type,
       }
       availability_zone = cfg.availability_zone,
       last_recreated_at = cfg.last_recreated_at,

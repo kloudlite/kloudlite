@@ -31,9 +31,6 @@ module "k3s-masters" {
   backup_to_s3 = {
     enabled = var.backup_to_s3.enabled
 
-    aws_access_key = var.backup_to_s3.aws_access_key
-    aws_secret_key = var.backup_to_s3.aws_secret_key
-
     bucket_name   = var.backup_to_s3.bucket_name
     bucket_region = var.backup_to_s3.bucket_region
     bucket_folder = var.backup_to_s3.bucket_folder
@@ -104,6 +101,29 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: ${local.kloudlite_namespace}
+EOF2
+EOF
+  ssh_params = {
+    public_ip   = module.k3s-masters.k3s_primary_public_ip
+    username    = var.ssh_username
+    private_key = var.ssh_private_key
+  }
+}
+
+module "kloudlite-k3s-params" {
+  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  depends_on = [module.k3s-masters.kubeconfig_with_public_host]
+  command    = <<EOF
+kubectl apply -f - <<EOF2
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k3s-params
+  namespace: ${local.kloudlite_namespace}
+stringData:
+  k3s_masters_public_dns_host: ${var.public_dns_host}
+  k3s_masters_join_token: ${module.k3s-masters.k3s_server_token}
+  k3s_agent_join_token: ${module.k3s-masters.k3s_agent_token}
 EOF2
 EOF
   ssh_params = {
