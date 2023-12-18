@@ -6,3 +6,4 @@
 *.tfstate.backup
 .terraform.d
 .direnv
+.terraform.d
