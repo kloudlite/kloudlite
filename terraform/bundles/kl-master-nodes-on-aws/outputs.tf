@@ -1,7 +1,7 @@
 output "k3s_masters" {
   value = {
-    for node_name, public_ip in module.k3s-master-instances.public_ips : node_name => {
-      public_ip         = public_ip
+    for node_name, output in module.k3s-master-instances : node_name => {
+      public_ip         = output.public_ip
       availability_zone = var.k3s_masters.nodes[node_name].availability_zone
     }
   }
