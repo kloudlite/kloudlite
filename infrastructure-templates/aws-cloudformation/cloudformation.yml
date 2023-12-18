@@ -14,7 +14,7 @@ Parameters:
   RoleName:
     Type: String
     Description: Name of the role to be created
-    Default: kloudlite-access-role
+    Default: kloudlite-tenant-role
   InstanceProfileName:
     Type: String
     Description: Name of the instance profile to be created

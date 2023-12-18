@@ -1,11 +1,25 @@
+Description: |+
+  Creates a stack containing an IAM role which can be used
+  to manage tenant's AWS infrastructure using Assume Role Policy.
+
+  It also creates a group that uses that role.
+  And a user which is a member of that group.
+
 Parameters:
-  roleName:
+  ResourceName:
     Type: String
+    Description: "this value will be prefixed with resources that will be created in this stack"
+    Default: "kloudlite-platform"
+
+  TenantRoleNamePrefix:
+    Type: String
+    Description: "this value will be prefixed with assume role resource that will be created in this stack"
+    Default: "kloudlite-tenant-role"
 
 Resources:
+  # assume role settings
   AssumeRoleInAnotherAccountPolicy:
     Type: AWS::IAM::ManagedPolicy
-
     Properties:
       ManagedPolicyName: "assume-role-in-another-account-policy"
       Description: "Assume Role From Another Account Policy"
@@ -16,13 +30,78 @@ Resources:
             Effect: "Allow"
             Action:
               - "sts:AssumeRole"
-            Resource: !Sub 'arn:aws:iam::*:role/${roleName}'
+            Resource: !Sub 'arn:aws:iam::*:role/${TenantRoleNamePrefix}-*'
 
   AssumeRoleGroup:
     Type: AWS::IAM::Group
     DependsOn:
       - AssumeRoleInAnotherAccountPolicy
     Properties:
-      GroupName: "assume-role-group"
+      GroupName: !Sub "${ResourceName}-assume-role-group"
       ManagedPolicyArns:
         - !Ref AssumeRoleInAnotherAccountPolicy
+
+  PlatformAdminUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub ${ResourceName}-admin
+
+  AddPlatformUserToAssumeRoleGroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Description: "this is required to allow this user credentials, to manage other AWS accounts"
+    Properties:
+      GroupName: !Ref AssumeRoleGroup
+      Users:
+        - !Ref PlatformAdminUser
+
+  # platform admin settings
+  PlatformAdminRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Sub ${ResourceName}-role
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
+        - "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "spotfleet.amazonaws.com"
+                - "ec2.amazonaws.com"
+                - "s3.amazonaws.com"
+
+  PlatformAdminGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Sub "${ResourceName}-group"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
+        - "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+
+  AddPlatformUserToPlatformAdminGroup:
+    Type: AWS::IAM::UserToGroupAddition
+    Description: "this is required to allow this user credentials, to manage other AWS accounts"
+    Properties:
+      GroupName: !Ref PlatformAdminGroup
+      Users:
+        - !Ref PlatformAdminUser
+
+  PlatformAdminInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${ResourceName}-instance-profile"
+      Roles:
+        - !Ref PlatformAdminRole
+
+Outputs:
+  UserArn:
+    Description: The ARN of the IAM role
+    Value: !GetAtt [ PlatformAdminUser, Arn ]
