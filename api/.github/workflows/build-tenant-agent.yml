@@ -12,7 +12,7 @@ permissions:
 jobs:
   build-agent:
     runs-on: ubuntu-latest
-    name: Build and push helm worker
+    name: Build Tenant Agent
     steps:
       - name: Checkout
         uses: actions/checkout@v3

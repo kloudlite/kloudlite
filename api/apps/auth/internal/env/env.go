@@ -8,10 +8,6 @@ import (
 
 type Env struct {
 	MongoUri      string `env:"MONGO_URI" required:"true"`
-	RedisHosts    string `env:"REDIS_HOSTS" required:"true"`
-	RedisUserName string `env:"REDIS_USERNAME" required:"true"`
-	RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
-	RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
 	Port          uint16 `env:"PORT" required:"true"`
 	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
