@@ -27,7 +27,7 @@ type Impl struct {
 	iamClient      iam.IAMClient
 	envs           *env.Env
 	logger         logging.Logger
-	cacheClient    cache.Client
+	cacheClient    cache.BinaryDataRepo
 
 	authClient auth.AuthClient
 
@@ -205,7 +205,7 @@ var Module = fx.Module(
 			buildCacheRepo repos.DbRepo[*entities.BuildCacheKey],
 			tagRepo repos.DbRepo[*entities.Digest],
 			iamClient iam.IAMClient,
-			cacheClient cache.Client,
+			cacheClient cache.BinaryDataRepo,
 			authClient auth.AuthClient,
 			github Github,
 			gitlab Gitlab,

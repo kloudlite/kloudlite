@@ -21,3 +21,11 @@ type Repo[T any] interface {
 	Drop(c context.Context, key string) error
 	ErrNoRecord(err error) bool
 }
+
+type BinaryDataRepo interface {
+	Set(c context.Context, key string, value []byte) error
+	SetWithExpiry(c context.Context, key string, value []byte, duration time.Duration) error
+	Get(c context.Context, key string) ([]byte, error)
+	Drop(c context.Context, key string) error
+	ErrNoRecord(err error) bool
+}
