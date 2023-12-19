@@ -1,6 +1,7 @@
 import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
+import { uuid } from '~/components/utils';
 import { gatewayUrl } from '../../configs/base-url.cjs';
 import {
   ICookies,
@@ -41,7 +42,8 @@ export const ExecuteQueryWithContext = (
     formatter: formatter<A, B, C>,
     def?: any
   ): IExecutorResp<B, C> {
-    const apiName = `[#] ${
+    const logId = uuid();
+    const apiName = `[#${logId.substring(0, 5)}] ${
       (q as any)?.definitions[0]?.selectionSet?.selections[0]?.name?.value || ''
     }`;
 
