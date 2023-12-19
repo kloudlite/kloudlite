@@ -269,7 +269,18 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 		return nil, err
 	}
 
-	return d.findCluster(ctx, name)
+	c, err := d.findCluster(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+
+	var clus entities.Cluster
+	if err := d.k8sClient.Get(ctx, fn.NN(c.Namespace, c.Name), &clus); err != nil {
+		return nil, err
+	}
+
+	c.Status = clus.Status
+	return c, nil
 }
 
 func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
