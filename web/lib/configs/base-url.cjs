@@ -26,8 +26,17 @@ const baseUrls = () => {
       return process.env.COOKIE_DOMAIN;
     })() || '.kloudlite.io';
 
+  const gatewayUrl =
+    (() => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        return window.GATEWAY_URL;
+      }
+      return process.env.GATEWAY_URL;
+    })() || 'http://gateway-api.kl-core.svc.cluster.local';
+
   return {
-    gatewayUrl: 'http://gateway-api.kl-core.svc.cluster.local',
+    gatewayUrl,
     authBaseUrl: `https://auth${postFix}.${bUrl}`,
     consoleBaseUrl: `https://console${postFix}.${bUrl}`,
     cookieDomain,

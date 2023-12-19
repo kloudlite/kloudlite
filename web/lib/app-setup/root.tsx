@@ -219,6 +219,9 @@ export const loader = () => {
 
     ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
     ...(process.env.BASE_URL ? { BASE_URL: process.env.BASE_URL } : {}),
+    ...(process.env.GATEWAY_URL
+      ? { GATEWAY_URL: process.env.GATEWAY_URL }
+      : {}),
   };
 };
 
