@@ -1,6 +1,8 @@
 package router
 
 import (
+	"regexp"
+
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -11,7 +13,6 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -24,7 +25,7 @@ func newRouter() crdsv1.Router {
 		},
 		Spec: crdsv1.RouterSpec{
 			Region: "master",
-			Https: crdsv1.Https{
+			Https: &crdsv1.Https{
 				Enabled: false,
 			},
 			// RateLimit:       crdsv1.RateLimit{},

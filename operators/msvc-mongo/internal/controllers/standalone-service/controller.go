@@ -187,7 +187,7 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 		msvcOutput.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		if msvcOutput.Data == nil {
-			host := fmt.Sprintf("%s-%d.%s-headless.%s.svc.%s:27017", obj.Name, 0, obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+			host := fmt.Sprintf("%s-%d.%s.%s.svc.%s:27017", obj.Name, 0, obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 
 			rootUsername := "root"
 
@@ -243,7 +243,7 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 	check.Status = true
 	if check != obj.Status.Checks[ReconcileCredentials] {
-		obj.Status.Checks[ReconcileCredentials] = check
+		fn.MapSet(obj.Status.Checks, ReconcileCredentials, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

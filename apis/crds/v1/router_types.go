@@ -27,9 +27,8 @@ type RateLimit struct {
 
 type Https struct {
 	// +kubebuilder:default=true
-	Enabled       bool   `json:"enabled"`
-	ClusterIssuer string `json:"clusterIssuer,omitempty"`
-	ForceRedirect bool   `json:"forceRedirect,omitempty"`
+	Enabled       bool `json:"enabled"`
+	ForceRedirect bool `json:"forceRedirect,omitempty"`
 }
 
 type BasicAuth struct {

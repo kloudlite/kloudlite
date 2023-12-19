@@ -21,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/operators/routers/internal/controllers"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
 	"github.com/kloudlite/operator/operators/routers/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -54,20 +53,6 @@ const (
 
 	Finalizing string = "finalizing"
 )
-
-func getIngressClassName(obj *crdsv1.Router) string {
-	if obj.Spec.IngressClass != "" {
-		return obj.Spec.IngressClass
-	}
-	return controllers.GetIngressClassName(obj.Spec.Region)
-}
-
-func getClusterIssuer(obj *crdsv1.Router) string {
-	if obj.Spec.Https.ClusterIssuer != "" {
-		return obj.Spec.Https.ClusterIssuer
-	}
-	return controllers.GetClusterIssuerName(obj.Spec.Region)
-}
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
@@ -267,7 +252,7 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) (
 
 	var wcDomains, nonWcDomains []string
 
-	issuerName := getClusterIssuer(obj)
+	issuerName := r.Env.ClusterIssuer
 	wcdMap := make(map[string]bool, cap(wcDomains))
 
 	if obj.Spec.Https.Enabled {
@@ -344,7 +329,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	}
 
 	if obj.Spec.Https != nil && obj.Spec.Https.Enabled {
-		annotations["cert-manager.io/cluster-issuer"] = getClusterIssuer(obj)
+		annotations["cert-manager.io/cluster-issuer"] = r.Env.ClusterIssuer
 		annotations["nginx.kubernetes.io/ssl-redirect"] = "true"
 		annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"] = fmt.Sprintf("%v", obj.Spec.Https.ForceRedirect)
 	}
@@ -447,8 +432,8 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 				"wildcard-domains":     wcDomains,
 				"router-domains":       obj.Spec.Domains,
 
-				"ingress-class":  getIngressClassName(obj),
-				"cluster-issuer": getClusterIssuer(obj),
+				"ingress-class":  r.Env.IngressClass,
+				"cluster-issuer": r.Env.ClusterIssuer,
 
 				"route-to-workspace-switcher": r.isInProjectNamespace(ctx, obj),
 				"routes":                      appRoutes,

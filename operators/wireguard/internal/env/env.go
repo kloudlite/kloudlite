@@ -17,7 +17,7 @@ type Env struct {
 	// default dns.khost.dev
 	DnsHostedZone string `env:"DNS_HOSTED_ZONE"`
 
-	ClusterInternalDns string `env:"CLUSTER_INTERNAL_DNS" required:"true"`
+	ClusterInternalDns string `env:"CLUSTER_INTERNAL_DNS""`
 }
 
 func GetEnvOrDie() *Env {
