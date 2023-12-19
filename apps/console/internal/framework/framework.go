@@ -27,9 +27,6 @@ func (fm *fm) GetMongoConfig() (url string, dbName string) {
 	return fm.ev.ConsoleDBUri, fm.ev.ConsoleDBName
 }
 
-func (fm *fm) RedisOptions() (hosts, username, password, basePrefix string) {
-	return fm.ev.AuthRedisHosts, fm.ev.AuthRedisUserName, fm.ev.AuthRedisPassword, fm.ev.AuthRedisPrefix
-}
 
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
@@ -82,19 +79,6 @@ var Module = fx.Module("framework",
 				return nil
 			},
 		})
-	}),
-
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
-		name := "console:jetstream-client"
-		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
-			Name:   name,
-			Logger: logger,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return nats.NewJetstreamClient(nc)
 	}),
 
 	app.Module,
