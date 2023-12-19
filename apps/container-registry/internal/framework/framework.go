@@ -61,45 +61,14 @@ var Module = fx.Module("framework",
 		return nats.NewJetstreamClient(nc)
 	}),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
-		name := "infra:jetstream-client"
-		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
-			Name:   name,
-			Logger: logger,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return nats.NewJetstreamClient(nc)
-	}),
-
 	fx.Provide(
 		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
 			cxt := context.TODO()
 			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
-	),
-
-	// cache.FxLifeCycle[cache.Client](),
-
-	fx.Invoke(
-		func(c cache.Client, lf fx.Lifecycle, logger logging.Logger) {
-			lf.Append(
-				fx.Hook{
-					OnStart: func(ctx context.Context) error {
-						logger.Infof("connecting to redis")
-						if err := c.Connect(ctx); err != nil {
-							return err
-						}
-						logger.Infof("connected to redis")
-						return nil
-					},
-					OnStop: func(ctx context.Context) error {
-						return c.Disconnect(ctx)
-					},
-				},
-			)
+		func(ev *env.Env, jc *nats.JetstreamClient) (cache.BinaryDataRepo, error) {
+			cxt := context.TODO()
+			return cache.NewNatsKVBinaryRepo(cxt, ev.SessionKVBucket, jc)
 		},
 	),
 
