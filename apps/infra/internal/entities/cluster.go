@@ -10,7 +10,6 @@ import (
 type Cluster struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	// clustersv1.Cluster `json:",inline" graphql:"uri=k8s://clusters.clusters.kloudlite.io"`
 	clustersv1.Cluster `json:",inline"`
 
 	common.ResourceMetadata `json:",inline"`
