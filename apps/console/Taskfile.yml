@@ -89,6 +89,4 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -o /tmp/{{.Name}} ./main.go
-      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
-      - /tmp/{{.Name}} --dev
+      - go run ./main.go --dev
