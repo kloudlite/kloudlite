@@ -29,12 +29,6 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
-      - name: Install UPX
-        run: |
-          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
-          tar -xf upx.tar.xz
-          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
