@@ -10,8 +10,8 @@ type Env struct {
 
 	PlatformAccessToken string `env:"PLATFORM_ACCESS_TOKEN" required:"true"`
 
-	DbName string `env:"DB_NAME" required:"true"`
-	DbUri  string `env:"DB_URI"  required:"true"`
+	DbName string `env:"MONGO_DB_NAME" required:"true"`
+	DbUri  string `env:"MONGO_URI"  required:"true"`
 
 	ExternalGrpcPort uint16 `env:"EXTERNAL_GRPC_PORT" required:"true"`
 	InternalGrpcPort uint16 `env:"INTERNAL_GRPC_PORT" required:"true"`
