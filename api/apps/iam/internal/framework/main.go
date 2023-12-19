@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/apps/iam/internal/app"
 	"github.com/kloudlite/api/apps/iam/internal/env"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
@@ -15,10 +14,6 @@ import (
 
 type fm struct {
 	*env.Env
-}
-
-func (f *fm) RedisOptions() (hosts, username, password, basePrefix string) {
-	return f.RedisHosts, f.RedisUsername, f.RedisPassword, f.RedisPrefix
 }
 
 func (f *fm) GetMongoConfig() (url, dbName string) {
@@ -35,7 +30,6 @@ var Module fx.Option = fx.Module(
 		return &fm{Env: ev}
 	}),
 	repos.NewMongoClientFx[*fm](),
-	cache.NewRedisFx[*fm](),
 
 	fx.Provide(func(logger logging.Logger) (app.IAMGrpcServer, error) {
 		return grpc.NewGrpcServer(grpc.ServerOpts{
