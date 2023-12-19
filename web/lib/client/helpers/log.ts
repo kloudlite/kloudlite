@@ -89,16 +89,20 @@ const logger = {
       console.log('');
     }
 
-    if (err && isDev) {
+    if (err) {
       console.trace(err);
-      PostToHook(`\`\`\`${err}\`\`\``);
+      if (!isDev) {
+        PostToHook(`\`\`\`${err}\`\`\``);
+      }
     } else {
       console.trace(args);
     }
 
-    if (isDev && typeof window === 'undefined') {
-      serverError(args);
-    }
+    // if (isDev && typeof window === 'undefined') {
+    //   serverError(args);
+    // }
+
+    serverError(args);
   },
 };
 
