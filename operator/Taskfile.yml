@@ -50,8 +50,11 @@ tasks:
       - make manifests
       - |+
         [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
-      - |+
-        for file in $(ls config/crd/bases/*.yaml)
+        F={{.Filter}}
+        if [ -z "$F" ]; then
+          F="*"
+        fi
+        for file in $(ls config/crd/bases/$F.yaml)
         do
           cat $file
           # actually, don't need it as all crds have --- at the start

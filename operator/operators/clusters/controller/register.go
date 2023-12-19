@@ -2,7 +2,6 @@ package controller
 
 import (
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	redpandav1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	"github.com/kloudlite/operator/operator"
 	account_s3_bucket "github.com/kloudlite/operator/operators/clusters/internal/controllers/account-s3-bucket"
 	"github.com/kloudlite/operator/operators/clusters/internal/controllers/target"
@@ -11,7 +10,7 @@ import (
 
 func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
-	mgr.AddToSchemes(clustersv1.AddToScheme, redpandav1.AddToScheme)
+	mgr.AddToSchemes(clustersv1.AddToScheme)
 	// mgr.RegisterWebhooks(&clustersv1.Cluster{})
 	mgr.RegisterControllers(
 		&target.ClusterReconciler{Name: "clusters:target", Env: ev},

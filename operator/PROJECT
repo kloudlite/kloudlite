@@ -62,27 +62,9 @@ resources:
     namespaced: true
   controller: true
   domain: kloudlite.io
-  group: msvc
-  kind: MongoDB
-  path: github.com/kloudlite/operator/apis/msvc/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
   group: mongodbs.msvc
   kind: Database
   path: github.com/kloudlite/operator/apis/mongodbs.msvc/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: watchers.msvc
-  kind: MongoDB
-  path: github.com/kloudlite/operator/apis/watchers.msvc/v1
   version: v1
 - api:
     crdVersion: v1
@@ -134,51 +116,6 @@ resources:
     namespaced: true
   controller: true
   domain: kloudlite.io
-  group: s3.aws
-  kind: Bucket
-  path: github.com/kloudlite/operator/apis/s3.aws/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: watcher
-  kind: StatusWatcher
-  path: github.com/kloudlite/operator/apis/watcher/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: watcher
-  kind: BillingWatcher
-  path: github.com/kloudlite/operator/apis/watcher/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: artifacts
-  kind: HarborProject
-  path: github.com/kloudlite/operator/apis/artifacts/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: artifacts
-  kind: HarborUserAccount
-  path: github.com/kloudlite/operator/apis/artifacts/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
   group: redpanda.msvc
   kind: Service
   path: github.com/kloudlite/operator/apis/redpanda.msvc/v1
@@ -191,33 +128,6 @@ resources:
   group: redpanda.msvc
   kind: Topic
   path: github.com/kloudlite/operator/apis/redpanda.msvc/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: mongodb.external
-  kind: Database
-  path: github.com/kloudlite/operator/apis/mongodb.external/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: mysql.external
-  kind: Database
-  path: github.com/kloudlite/operator/apis/mysql.external/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: kloudlite.io
-  group: crds
-  kind: AccountRouter
-  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -347,81 +257,9 @@ resources:
     crdVersion: v1
     namespaced: true
   domain: kloudlite.io
-  group: artifacts
-  kind: HarborWebhook
-  path: github.com/kloudlite/operator/apis/artifacts/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: csi
-  kind: AwsEBS
-  path: github.com/kloudlite/operator/apis/csi/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: csi
-  kind: Driver
-  path: github.com/kloudlite/operator/apis/csi/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: csi
-  kind: StorageClass
-  path: github.com/kloudlite/operator/apis/csi/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: crds
-  kind: EdgeRouter
-  path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
   group: elasticsearch.msvc
   kind: Kibana
   path: github.com/kloudlite/operator/apis/elasticsearch.msvc/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: extensions
-  kind: EdgeWorker
-  path: github.com/kloudlite/operator/apis/extensions/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: cluster-setup
-  kind: PrimaryCluster
-  path: github.com/kloudlite/operator/apis/cluster-setup/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: cluster-setup
-  kind: SecondaryCluster
-  path: github.com/kloudlite/operator/apis/cluster-setup/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: crds
-  kind: Env
-  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 - api:
     crdVersion: v1
@@ -438,38 +276,6 @@ resources:
   group: crds
   kind: Secret
   path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: crds
-  kind: SecondaryEnv
-  path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: crds
-  kind: Anchor
-  path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: cluster-setup
-  kind: ManagedCluster
-  path: github.com/kloudlite/operator/apis/cluster-setup/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: clusters
-  kind: BYOC
-  path: github.com/kloudlite/operator/apis/clusters/v1
   version: v1
 - api:
     crdVersion: v1

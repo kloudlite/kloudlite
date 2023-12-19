@@ -215,7 +215,12 @@ func (r *Reconciler) ensureDnsConfigReady(req *rApi.Request[*wgv1.Dns]) stepResu
 				"kl.local",
 				dev.Name,
 				obj.Namespace,
-				r.Env.ClusterInternalDns,
+				func() string {
+					if r.Env.ClusterInternalDns == "" {
+						return "cluster.local"
+					}
+					return r.Env.ClusterInternalDns
+				}(),
 			)
 		}
 
