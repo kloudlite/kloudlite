@@ -3,10 +3,9 @@ package framework
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/common"
-
 	"github.com/kloudlite/api/apps/infra/internal/app"
 	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -82,7 +81,6 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
 
 	fx.Provide(func(logr logging.Logger) (app.InfraGrpcServer, error) {
