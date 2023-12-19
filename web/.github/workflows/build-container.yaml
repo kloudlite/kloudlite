@@ -20,8 +20,6 @@ jobs:
         app:
           - auth
           - console
-          - devdoc
-          - website
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
