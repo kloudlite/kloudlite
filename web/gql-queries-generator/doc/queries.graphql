@@ -442,7 +442,6 @@ query consoleGetCluster($name: String!) {
       syncScheduledAt
     }
     updateTime
-    clusterToken
   }
 }
 
@@ -2491,7 +2490,6 @@ query consoleGetPvc($clusterName: String!, $name: String!) {
     status {
       accessModes
       allocatedResources
-      allocatedResourceStatuses
       capacity
       conditions {
         lastProbeTime
@@ -2559,7 +2557,6 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
         status {
           accessModes
           allocatedResources
-          allocatedResourceStatuses
           capacity
           conditions {
             lastProbeTime
@@ -2703,6 +2700,13 @@ query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
       }
     }
     updateTime
+  }
+}
+
+query authCheckOauthEnabled {
+  auth_listOAuthProviders {
+    enabled
+    provider
   }
 }
 

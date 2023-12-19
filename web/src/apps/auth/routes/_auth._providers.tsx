@@ -20,6 +20,22 @@ const Provider = () => {
 };
 
 export const restActions = async (ctx: IRemixCtx) => {
+  const { data: checkData, errors: checkError } = await GQLServerHandler(
+    ctx.request
+  ).checkOauthEnabled({});
+
+  if (checkError) {
+    logger.error(checkError);
+  }
+
+  if (checkData.find((v) => !v.enabled)) {
+    return {
+      githubLoginUrl: '',
+      gitlabLoginUrl: '',
+      googleLoginUrl: '',
+    };
+  }
+
   const { data, errors } = await GQLServerHandler(
     ctx.request
   ).loginPageInitUrls();

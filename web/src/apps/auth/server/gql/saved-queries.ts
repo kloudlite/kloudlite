@@ -21,11 +21,29 @@ import {
   AuthVerifyEmailMutationVariables,
   AuthWhoAmIQuery,
   AuthWhoAmIQueryVariables,
+  AuthCheckOauthEnabledQuery,
+  AuthCheckOauthEnabledQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
+    checkOauthEnabled: executor(
+      gql`
+        query Auth_listOAuthProviders {
+          auth_listOAuthProviders {
+            enabled
+            provider
+          }
+        }
+      `,
+      {
+        transformer(data: AuthCheckOauthEnabledQuery) {
+          return data.auth_listOAuthProviders;
+        },
+        vars(_: AuthCheckOauthEnabledQueryVariables) {},
+      }
+    ),
     addOauthCredientials: executor(
       gql`
         mutation Mutation($provider: String!, $state: String!, $code: String!) {

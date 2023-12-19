@@ -132,6 +132,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               aws: {
                 region: selectedRegion.Name,
                 k3sMasters: {
+                  nvidiaGpuEnabled: true,
                   instanceType: 'c6a.xlarge',
                 },
               },

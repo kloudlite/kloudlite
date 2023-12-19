@@ -278,7 +278,6 @@ export const clusterQueries = (executor: IExecutor) => ({
             syncScheduledAt
           }
           updateTime
-          clusterToken
         }
       }
     `,
