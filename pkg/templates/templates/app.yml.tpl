@@ -99,7 +99,7 @@ metadata:
 spec:
   type: ExternalName
   {{- if $isIntercepted }}
-  externalName: {{.Spec.Intercept.ToDevice}}.wg-{{$accountName}}.svc.{{$clusterDnsSuffix}}
+  externalName: {{.Spec.Intercept.ToDevice}}.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
   {{- else}}
   externalName: {{.Name}}-internal.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
   {{- end }}
