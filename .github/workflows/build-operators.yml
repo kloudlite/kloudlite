@@ -46,11 +46,11 @@ jobs:
           - wireguard
         include:
           - name: platform
-            buildDir: cmd/agent-operator
+            buildDir: cmd/platform-operator
           - name: resource-watcher
             buildDir: cmd/resource-watcher
           - name: agent
-            buildDir: cmd/platform-operator
+            buildDir: cmd/agent-operator
           - name: account
             buildDir: operators/account
           - name: app
