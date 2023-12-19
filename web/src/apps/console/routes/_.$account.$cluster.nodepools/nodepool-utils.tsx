@@ -5,6 +5,11 @@ const { nodePlans, provisionTypes, taintsData } = {
       options: [
         {
           label: '1x - small - 2VCPU 3.75GB Memory',
+          labelDetail: {
+            size: 'small',
+            cpu: '2VCPU',
+            memory: '3.75GB',
+          },
           value: 'c6a.large',
           spotSpec: {
             cpuMax: 4,
@@ -17,6 +22,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '2x - medium - 4VCPU 7.5GB Memory',
+          labelDetail: {
+            size: 'medium',
+            cpu: '4VCPU',
+            memory: '7.5GB',
+          },
           value: 'c6a.xlarge',
           spotSpec: {
             cpuMax: 8,
@@ -28,6 +38,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '4x - large - 8VCPU 15GB Memory',
+          labelDetail: {
+            size: 'large',
+            cpu: '8VCPU',
+            memory: '15GB',
+          },
           value: 'c6a.2xlarge',
           spotSpec: {
             cpuMax: 16,
@@ -39,6 +54,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '8x - xlarge - 16VCPU 30GB Memory',
+          labelDetail: {
+            size: 'xlarge',
+            cpu: '16VCPU',
+            memory: '30GB',
+          },
           value: 'c6a.4xlarge',
           spotSpec: {
             cpuMax: 32,
@@ -55,6 +75,11 @@ const { nodePlans, provisionTypes, taintsData } = {
       options: [
         {
           label: '1x - small - 2VCPU 4GB Memory',
+          labelDetail: {
+            size: 'small',
+            cpu: '2VCPU',
+            memory: '4GB',
+          },
           value: 't4g.small',
           spotSpec: {
             cpuMax: 4,
@@ -66,6 +91,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '2x - medium - 4VCPU 8GB Memory',
+          labelDetail: {
+            size: 'medium',
+            cpu: '4VCPU',
+            memory: '8GB',
+          },
           value: 't4g.medium',
           spotSpec: {
             cpuMax: 8,
@@ -77,6 +107,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '4x - large - 8VCPU 16GB Memory',
+          labelDetail: {
+            size: 'large',
+            cpu: '8VCPU',
+            memory: '16GB',
+          },
           value: 't4g.large',
           spotSpec: {
             cpuMax: 16,
@@ -88,6 +123,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '8x - xlarge - 16VCPU 32GB Memory',
+          labelDetail: {
+            size: 'xlarge',
+            cpu: '16VCPU',
+            memory: '32GB',
+          },
           value: 't4g.xlarge',
           spotSpec: {
             cpuMax: 32,
@@ -104,6 +144,11 @@ const { nodePlans, provisionTypes, taintsData } = {
       options: [
         {
           label: '1x - small - 2VCPU 8GB Memory',
+          labelDetail: {
+            size: 'small',
+            cpu: '2VCPU',
+            memory: '8GB',
+          },
           value: 'g4dn.xlarge',
           spotSpec: {
             cpuMax: 4,
@@ -116,6 +161,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '2x - medium - 4VCPU 16GB Memory',
+          labelDetail: {
+            size: 'medium',
+            cpu: '4VCPU',
+            memory: '16GB',
+          },
           value: 'g4dn.2xlarge',
           spotSpec: {
             cpuMax: 8,
@@ -128,6 +178,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '4x - large - 8VCPU 32GB Memory',
+          labelDetail: {
+            size: 'large',
+            cpu: '8VCPU',
+            memory: '32GB',
+          },
           value: 'g4dn.4xlarge',
           spotSpec: {
             cpuMax: 16,
@@ -140,6 +195,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '8x - xlarge - 16VCPU 64GB Memory',
+          labelDetail: {
+            size: 'xlarge',
+            cpu: '16VCPU',
+            memory: '64GB',
+          },
           value: 'g4dn.8xlarge',
           spotSpec: {
             cpuMax: 32,
@@ -157,6 +217,11 @@ const { nodePlans, provisionTypes, taintsData } = {
       options: [
         {
           label: '1x - small - 2VCPU 8GB Memory',
+          labelDetail: {
+            size: 'small',
+            cpu: '2VCPU',
+            memory: '8GB',
+          },
           value: 'm6a.large',
           spotSpec: {
             cpuMax: 4,
@@ -168,6 +233,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '2x - medium - 4VCPU 16GB Memory',
+          labelDetail: {
+            size: 'medium',
+            cpu: '4VCPU',
+            memory: '16GB',
+          },
           value: 'm6a.xlarge',
           spotSpec: {
             cpuMax: 8,
@@ -179,6 +249,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '4x - large - 8VCPU 32GB Memory',
+          labelDetail: {
+            size: 'large',
+            cpu: '8VCPU',
+            memory: '32GB',
+          },
           value: 'm6a.2xlarge',
           spotSpec: {
             cpuMax: 16,
@@ -190,6 +265,11 @@ const { nodePlans, provisionTypes, taintsData } = {
         },
         {
           label: '8x - xlarge - 16VCPU 64GB Memory',
+          labelDetail: {
+            size: 'xlarge',
+            cpu: '16VCPU',
+            memory: '64GB',
+          },
           value: 'm6a.4xlarge',
           spotSpec: {
             cpuMax: 32,
@@ -223,4 +303,27 @@ const findNodePlan = (id: string) => {
     .find((np) => np.value === id);
 };
 
-export { nodePlans, provisionTypes, taintsData, findNodePlan };
+const findNodePlanWithCategory = (
+  id: string
+):
+  | ((typeof nodePlans)[number]['options'][number] & { category: string })
+  | null => {
+  let nodePlan = null;
+
+  nodePlans.forEach((np) => {
+    np.options.forEach((npp) => {
+      if (npp.value === id) {
+        nodePlan = { ...npp, category: np.label };
+      }
+    });
+  });
+  return nodePlan;
+};
+
+export {
+  nodePlans,
+  provisionTypes,
+  taintsData,
+  findNodePlan,
+  findNodePlanWithCategory,
+};

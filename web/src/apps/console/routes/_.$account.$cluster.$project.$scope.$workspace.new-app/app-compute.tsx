@@ -11,7 +11,8 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IcpuMode, plans } from './datas';
-import { FadeIn, InfoLabel, parseValue } from './util';
+import { FadeIn, parseValue } from './util';
+import { InfoLabel } from '~/console/components/commons';
 
 const AppCompute = () => {
   const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =

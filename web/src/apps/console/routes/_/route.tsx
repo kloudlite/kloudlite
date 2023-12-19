@@ -9,7 +9,7 @@ import { SetStateAction, cloneElement, useCallback, useState } from 'react';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import { Profile } from '~/components/molecule/profile';
+import Profile from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
 import { generateKey, titleCase } from '~/components/utils';
 import Breadcrum from '~/console/components/breadcrum';

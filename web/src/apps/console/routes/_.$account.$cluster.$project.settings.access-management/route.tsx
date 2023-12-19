@@ -2,7 +2,7 @@ import { Plus, SmileySad } from '@jengaicons/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tabs from '~/components/atoms/tabs';
-import { Profile } from '~/components/molecule/profile';
+import Profile from '~/components/molecule/profile';
 import Wrapper from '~/console/components/wrapper';
 import { dummyData } from '~/console/dummy/data';
 import HandleUser from './handle-user';

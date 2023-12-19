@@ -1411,8 +1411,15 @@ export type ConsoleGetClusterQuery = {
       state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
-    adminKubeconfig?: { value: string; encoding: string };
   };
+};
+
+export type ConsoleGetKubeConfigQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetKubeConfigQuery = {
+  infra_getCluster?: { adminKubeconfig?: { encoding: string; value: string } };
 };
 
 export type ConsoleUpdateClusterMutationVariables = Exact<{

@@ -1,5 +1,6 @@
 import { redirect } from '@remix-run/node';
 import {
+  Link,
   Outlet,
   useLoaderData,
   useOutletContext,
@@ -7,11 +8,19 @@ import {
 } from '@remix-run/react';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
+import { BrandLogo } from '~/components/branding/brand-logo';
+import { ChevronRight } from '@jengaicons/react';
 import { CommonTabs } from '../components/common-navbar-tabs';
-import { type ICluster } from '../server/gql/queries/cluster-queries';
+import {
+  IClusters,
+  type ICluster,
+} from '../server/gql/queries/cluster-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 import { IAccountContext } from './_.$account';
+import Breadcrum from '../components/breadcrum';
+import { ExtractNodeType, parseName } from '../server/r-utils/common';
+import LogoWrapper from '../components/logo-wrapper';
 
 export interface IClusterContext extends IAccountContext {
   cluster: ICluster;
@@ -34,7 +43,7 @@ const ClusterTabs = () => {
           value: '/overview',
         },
         {
-          label: 'Nodepools',
+          label: 'Compute',
           to: '/nodepools',
           value: '/nodepools',
         },
@@ -55,17 +64,55 @@ const ClusterTabs = () => {
         },
       ]}
       baseurl={`/${account}/${cluster}`}
-      backButton={{
-        to: `${account}/clusters`,
-        label: 'Clusters',
-      }}
     />
   );
 };
 
-export const handle = () => {
+const NetworkBreadcrum = ({
+  cluster,
+}: {
+  cluster: ExtractNodeType<IClusters>;
+}) => {
+  const { displayName } = cluster;
+  const { account } = useParams();
+  return (
+    <div className="flex flex-row items-center">
+      <Breadcrum.Button
+        to={`/${account}/clusters`}
+        LinkComponent={Link}
+        content={
+          <div className="flex flex-row gap-md items-center">
+            <ChevronRight size={14} /> Clusters <ChevronRight size={14} />{' '}
+          </div>
+        }
+      />
+      <Breadcrum.Button
+        to={`/${account}/${parseName(cluster)}/overview/info`}
+        LinkComponent={Link}
+        content={<span>{displayName}</span>}
+      />
+    </div>
+  );
+};
+
+const Logo = () => {
+  const { account } = useParams();
+  return (
+    <LogoWrapper to={`/${account}`}>
+      <BrandLogo detailed={false} />
+    </LogoWrapper>
+  );
+};
+
+export const handle = ({
+  cluster,
+}: {
+  cluster: ExtractNodeType<IClusters>;
+}) => {
   return {
     navbar: <ClusterTabs />,
+    breadcrum: () => <NetworkBreadcrum cluster={cluster} />,
+    logo: <Logo />,
   };
 };
 

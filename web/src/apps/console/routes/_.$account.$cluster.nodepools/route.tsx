@@ -1,6 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -12,9 +12,12 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import { parseName } from '~/console/server/r-utils/common';
+import { SubHeaderTitle } from '~/console/components/commons';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
+import { IClusterContext } from '../_.$account.$cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -38,8 +41,9 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const ClusterDetail = () => {
   const [visible, setVisible] = useState(false);
-
   const { promise } = useLoaderData<typeof loader>();
+
+  const { cluster, account } = useOutletContext<IClusterContext>();
 
   return (
     <>
@@ -63,7 +67,7 @@ const ClusterDetail = () => {
                 action: nodepools.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Create new nodepool"
+                    content="Create Nodepool"
                     prefix={<PlusFill />}
                     onClick={() => {
                       setVisible(true);
@@ -81,7 +85,7 @@ const ClusterDetail = () => {
                   </p>
                 ),
                 action: {
-                  content: 'Create new nodepool',
+                  content: 'Create Nodepool',
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
