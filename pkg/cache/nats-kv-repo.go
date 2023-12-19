@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/nats-io/nats.go/jetstream"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -27,7 +28,8 @@ func (v *Value[T]) isExpired() bool {
 	return time.Since(v.ExpiresAt) > 0
 }
 
-func (r *natsKVRepo[T]) Set(c context.Context, key string, value T) error {
+func (r *natsKVRepo[T]) Set(c context.Context, _key string, value T) error {
+	key:=sanitiseKey(_key)
 	v := Value[T]{
 		Data: value,
 	}
@@ -41,7 +43,8 @@ func (r *natsKVRepo[T]) Set(c context.Context, key string, value T) error {
 	return nil
 }
 
-func (r *natsKVRepo[T]) Get(c context.Context, key string) (T, error) {
+func (r *natsKVRepo[T]) Get(c context.Context, _key string) (T, error) {
+	key:= sanitiseKey(_key)
 	get, err := r.keyValue.Get(c, key)
 	if err != nil {
 		var x T
@@ -60,7 +63,12 @@ func (r *natsKVRepo[T]) Get(c context.Context, key string) (T, error) {
 	return value.Data, err
 }
 
-func (r *natsKVRepo[T]) SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error {
+func sanitiseKey(key string) string {
+	return strings.ReplaceAll(key, ":", "-")
+}
+
+func (r *natsKVRepo[T]) SetWithExpiry(c context.Context, _key string, value T, duration time.Duration) error {
+	key := sanitiseKey(_key)
 	v := Value[T]{
 		Data:      value,
 		ExpiresAt: time.Now().Add(duration),
@@ -80,7 +88,7 @@ func (r *natsKVRepo[T]) Drop(c context.Context, key string) error {
 }
 
 func (r *natsKVRepo[T]) ErrNoRecord(err error) bool {
-	return err == nil
+	return  errors.Is(err, jetstream.ErrKeyNotFound)
 }
 
 func NewNatsKVRepo[T any](ctx context.Context, bucketName string, jc *nats.JetstreamClient) (Repo[T], error) {
