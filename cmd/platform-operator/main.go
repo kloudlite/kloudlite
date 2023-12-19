@@ -6,10 +6,8 @@ import (
 	clusters "github.com/kloudlite/operator/operators/clusters/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
-	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
-	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
-	resourceWatcher "github.com/kloudlite/operator/operators/resource-watcher/controller"
+	routers "github.com/kloudlite/operator/operators/routers/controller"
 	// routers "github.com/kloudlite/operator/operators/routers/controller"
 )
 
@@ -18,20 +16,18 @@ func main() {
 
 	// kloudlite resources
 	app.RegisterInto(mgr)
+	routers.RegisterInto(mgr)
 	project.RegisterInto(mgr)
 	helmCharts.RegisterInto(mgr)
-	// routers.RegisterInto(mgr)
 
 	// kloudlite managed services
-	msvcAndMres.RegisterInto(mgr)
 	msvcMongo.RegisterInto(mgr)
 
 	// kloudlite cluster management
 	clusters.RegisterInto(mgr)
-	nodepool.RegisterInto(mgr)
 
 	// kloudlite resource status updates
-	resourceWatcher.RegisterInto(mgr, false)
+	// resourceWatcher.RegisterInto(mgr, false)
 
 	mgr.Start()
 }

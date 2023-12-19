@@ -650,20 +650,6 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
 	builder.Owns(&batchv1.Job{})
 
-	builder.Watches(&redpandav1.Topic{}, handler.EnqueueRequestsFromMapFunc(
-		func(ctx context.Context, obj client.Object) []reconcile.Request {
-			clusterName, ok := obj.GetLabels()[constants.ClusterNameKey]
-			if !ok {
-				return nil
-			}
-			clusterNamespace, ok := obj.GetLabels()[constants.ClusterNamespaceKey]
-			if !ok {
-				return nil
-			}
-
-			return []reconcile.Request{{NamespacedName: fn.NN(clusterNamespace, clusterName)}}
-		}))
-
 	builder.Watches(&clustersv1.AccountS3Bucket{}, handler.EnqueueRequestsFromMapFunc(
 		func(ctx context.Context, obj client.Object) []reconcile.Request {
 			if v, ok := obj.GetLabels()[constants.AccountNameKey]; ok {

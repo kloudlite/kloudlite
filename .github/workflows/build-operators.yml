@@ -18,12 +18,12 @@ permissions:
   packages: write
 
 jobs:
-
   operator-builds:
     strategy:
       matrix:
         name:
           - platform
+          - resource-watcher
           - agent
           - account
           - app
@@ -47,6 +47,8 @@ jobs:
         include:
           - name: platform
             buildDir: cmd/agent-operator
+          - name: resource-watcher
+            buildDir: cmd/resource-watcher
           - name: agent
             buildDir: cmd/platform-operator
           - name: account
