@@ -9,6 +9,7 @@ on:
       - "src/**"
       - ".github/workflows/**"
 
+
 permissions:
   contents: read
   packages: write
