@@ -4,3 +4,4 @@ LABEL org.opencontainers.image.source https://github.com/kloudlite/api
 WORKDIR /app
 COPY --chown=1001 ./app ./app
 CMD ["./app"]
+ENTRYPOINT ["./app"]
