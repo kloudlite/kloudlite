@@ -713,6 +713,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsCluste
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn =
   {
     instanceType: Scalars['String']['input'];
+    nvidiaGpuEnabled: Scalars['Boolean']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn =
@@ -929,12 +930,12 @@ export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequir
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
   accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
   allocatedResources?: InputMaybe<Scalars['Map']['input']>;
-  allocatedResourceStatuses?: InputMaybe<Scalars['Map']['input']>;
   capacity?: InputMaybe<Scalars['Map']['input']>;
   conditions?: InputMaybe<
     Array<K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn>
   >;
   phase?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase>;
+  resizeStatus?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type K8s__Io___Apimachinery___Pkg___Api___Resource__Format =
@@ -1280,7 +1281,7 @@ export type ConsoleListClustersQuery = {
           }>;
           message?: { RawMessage?: any };
         };
-        spec?: {
+        spec: {
           messageQueueTopicName: string;
           kloudliteRelease: string;
           accountId: string;
@@ -1334,7 +1335,6 @@ export type ConsoleGetClusterQuery = {
     markedForDeletion?: boolean;
     recordVersion: number;
     updateTime: any;
-    clusterToken: string;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata: {
@@ -1346,7 +1346,7 @@ export type ConsoleGetClusterQuery = {
       name: string;
       namespace?: string;
     };
-    spec?: {
+    spec: {
       accountId: string;
       accountName: string;
       availabilityMode: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode;
@@ -3387,7 +3387,6 @@ export type ConsoleGetPvcQuery = {
     status?: {
       accessModes?: Array<string>;
       allocatedResources?: any;
-      allocatedResourceStatuses?: any;
       capacity?: any;
       phase?: K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase;
       conditions?: Array<{
@@ -3456,7 +3455,6 @@ export type ConsoleListPvcsQuery = {
         status?: {
           accessModes?: Array<string>;
           allocatedResources?: any;
-          allocatedResourceStatuses?: any;
           capacity?: any;
           phase?: K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase;
           conditions?: Array<{
@@ -3590,6 +3588,14 @@ export type ConsoleGetBuildRunQuery = {
       }>;
     };
   };
+};
+
+export type AuthCheckOauthEnabledQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthCheckOauthEnabledQuery = {
+  auth_listOAuthProviders?: Array<{ enabled: boolean; provider: string }>;
 };
 
 export type AuthAddOauthCredientialsMutationVariables = Exact<{

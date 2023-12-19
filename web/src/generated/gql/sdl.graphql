@@ -187,7 +187,6 @@ type BuildRunPaginatedRecords {
 type BYOCCluster {
   accountName: String!
   apiVersion: String!
-  clusterToken: String!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -271,7 +270,6 @@ type Cluster {
   accountName: String!
   adminKubeconfig: EncodedValue
   apiVersion: String!
-  clusterToken: String!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -281,7 +279,7 @@ type Cluster {
   markedForDeletion: Boolean
   metadata: Metadata!
   recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
@@ -541,6 +539,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersCon
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
   instanceType: String!
+  nvidiaGpuEnabled: Boolean!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig {
@@ -1467,19 +1466,19 @@ input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
 type K8s__io___api___core___v1__PersistentVolumeClaimStatus {
   accessModes: [String!]
   allocatedResources: Map
-  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  resizeStatus: String
 }
 
 input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   accessModes: [String!]
   allocatedResources: Map
-  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+  resizeStatus: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim {
@@ -2008,7 +2007,6 @@ type Mutation {
   cr_triggerBuild(id: ID!): Boolean!
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   cr_updateBuildCacheKey(buildCacheKey: BuildCacheKeyIn!, id: ID!): BuildCacheKey
-  generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry

@@ -62,7 +62,6 @@ export const pvcQueries = (executor: IExecutor) => ({
           status {
             accessModes
             allocatedResources
-            allocatedResourceStatuses
             capacity
             conditions {
               lastProbeTime
@@ -143,7 +142,6 @@ export const pvcQueries = (executor: IExecutor) => ({
               status {
                 accessModes
                 allocatedResources
-                allocatedResourceStatuses
                 capacity
                 conditions {
                   lastProbeTime
