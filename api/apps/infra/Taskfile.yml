@@ -52,7 +52,7 @@ tasks:
 
   run:
     cmds:
-      - fwatcher --exec 'go run main.go --dev' --ext '.go'
+      - go run main.go --dev
       # - go build  -o bin/infra . && ./bin/infra --dev
   docker-build:
     vars:

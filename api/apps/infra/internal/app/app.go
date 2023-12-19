@@ -3,9 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
-
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -77,9 +74,6 @@ var Module = fx.Module(
 		return NewResourceDispatcher(p)
 	}),
 
-	fx.Provide(func(config *rest.Config, scheme *runtime.Scheme) (domain.K8sClient, error) {
-		return NewK8sClient(config, scheme)
-	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, producer SendTargetClusterMessagesProducer) {
 		lf.Append(fx.Hook{

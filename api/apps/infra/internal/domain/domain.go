@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/k8s"
 	"strconv"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -43,7 +44,7 @@ type domain struct {
 	accountsSvc                 AccountsSvc
 	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
 	resDispatcher               ResourceDispatcher
-	k8sClient                   K8sClient
+	k8sClient                   k8s.Client
 }
 
 
@@ -145,7 +146,7 @@ var Module = fx.Module("domain",
 			buildRunRepo repos.DbRepo[*entities.BuildRun],
 			resourceDispatcher ResourceDispatcher,
 
-			k8sClient K8sClient,
+			k8sClient k8s.Client,
 
 			iamClient iam.IAMClient,
 			accountsSvc AccountsSvc,
