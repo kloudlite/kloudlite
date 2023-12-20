@@ -361,7 +361,9 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		UserEmail: ctx.UserEmail,
 	}
 
-	clus.Spec = cluster.Spec
+  // FIXME: no update for cluster spec
+	// clus.Spec = cluster.Spec
+
 	clus.Labels = cluster.Labels
 	clus.Annotations = cluster.Annotations
 	clus.SyncStatus = t.GenSyncStatus(t.SyncActionApply, clus.RecordVersion)

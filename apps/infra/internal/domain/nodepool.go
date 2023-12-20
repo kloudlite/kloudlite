@@ -2,8 +2,9 @@ package domain
 
 import (
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -122,6 +123,10 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		}
 	}
 
+	if nodepool.Spec.TargetCount < nodepool.Spec.MinCount {
+		nodepool.Spec.TargetCount = nodepool.Spec.MinCount
+	}
+
 	nodepool.AccountName = ctx.AccountName
 	nodepool.ClusterName = clusterName
 	nodepool.SyncStatus = t.GenSyncStatus(t.SyncActionApply, nodepool.RecordVersion)
@@ -151,6 +156,7 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateNodepool); err != nil {
 		return nil, err
 	}
+
 	nodePool.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &nodePool.NodePool); err != nil {
 		return nil, err
@@ -174,7 +180,13 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 
 	np.Labels = nodePool.Labels
 	np.Annotations = nodePool.Annotations
-	np.Spec = nodePool.Spec
+	np.Spec.MinCount = nodePool.Spec.MinCount
+	np.Spec.MaxCount = nodePool.Spec.MaxCount
+	np.Spec.TargetCount = nodePool.Spec.TargetCount
+
+	if np.Spec.TargetCount < np.Spec.MinCount {
+		np.Spec.TargetCount = np.Spec.MinCount
+	}
 
 	np.SyncStatus = t.GenSyncStatus(t.SyncActionApply, np.RecordVersion)
 
