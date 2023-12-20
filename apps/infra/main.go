@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"os"
 	"time"
 
@@ -59,6 +60,7 @@ func main() {
 			scheme := runtime.NewScheme()
 			utilruntime.Must(k8sScheme.AddToScheme(scheme))
 			utilruntime.Must(crdsv1.AddToScheme(scheme))
+			utilruntime.Must(clustersv1.AddToScheme(scheme))
 
 			return k8s.NewClient(restCfg, scheme)
 		}),

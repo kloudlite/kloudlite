@@ -86,12 +86,12 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster.EnsureGVK()
@@ -99,7 +99,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	cps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if cps.IsMarkedForDeletion() {
@@ -112,7 +112,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		"accountName":        ctx.AccountName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if existing != nil {
@@ -133,15 +133,15 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	tokenScrt, err := d.createTokenSecret(ctx, cps, cluster.Name, cluster.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.Cluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, tokenScrt, 1); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster.Spec = clustersv1.ClusterSpec{
@@ -236,7 +236,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		if d.clusterRepo.ErrAlreadyExists(err) {
 			return nil, errors.Newf("cluster with name %q already exists in namespace %q", cluster.Name, cluster.Namespace)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &nCluster.Cluster, nCluster.RecordVersion); err != nil {
