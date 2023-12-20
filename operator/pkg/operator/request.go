@@ -325,6 +325,7 @@ func (r *Request[T]) UpdateStatus() stepResult.Result {
 func (r *Request[T]) Finalize() stepResult.Result {
 	controllerutil.RemoveFinalizer(r.Object, constants.CommonFinalizer)
 	controllerutil.RemoveFinalizer(r.Object, constants.ForegroundFinalizer)
+	controllerutil.RemoveFinalizer(r.Object, "finalizers.kloudlite.io")
 	return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
 }
 
