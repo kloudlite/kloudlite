@@ -36,7 +36,7 @@ func (r *managedResourceResolver) ID(ctx context.Context, obj *entities.ManagedR
 func (r *managedResourceResolver) Spec(ctx context.Context, obj *entities.ManagedResource) (*model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec, error) {
 	m := &model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }

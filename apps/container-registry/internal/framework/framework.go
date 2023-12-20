@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/pkg/nats"
 
@@ -55,7 +56,7 @@ var Module = fx.Module("framework",
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return nats.NewJetstreamClient(nc)

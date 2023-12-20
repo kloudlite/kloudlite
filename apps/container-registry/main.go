@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	"runtime/trace"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/framework"
@@ -21,7 +22,7 @@ func main() {
 	app := fx.New(
 		fx.Provide(func() (*env.Env, error) {
 			if e, err := env.LoadEnv(); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			} else {
 				e.IsDev = isDev
 				return e, nil

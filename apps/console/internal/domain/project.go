@@ -30,7 +30,7 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 		Action: string(iamT.ListProjects),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -53,7 +53,7 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 		"metadata.name": name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if prj == nil {
 		return nil, errors.Newf("no project with name=%q found", name)
@@ -68,7 +68,7 @@ func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace strin
 		"spec.targetNamespace": targetNamespace,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if prj == nil {
 		return nil, errors.Newf("no project with targetNamespace=%q found", targetNamespace)
@@ -86,7 +86,7 @@ func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project,
 		Action: string(iamT.GetProject),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -107,7 +107,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		Action: string(iamT.CreateProject),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -116,7 +116,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &project.Project); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	project.IncrementRecordVersion()
@@ -139,9 +139,9 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &corev1.Namespace{
@@ -153,11 +153,11 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 			},
 		},
 	}, prj.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &prj.Project, prj.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	defaultWs := entities.Workspace{
@@ -178,7 +178,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	if _, err = d.findWorkspace(ctx, defaultWs.Namespace, defaultWs.Name); err != nil {
 		if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 
@@ -194,7 +194,7 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		Action: string(iamT.DeleteProject),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -203,12 +203,12 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 
 	prj, err := d.findProject(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	prj.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, prj.RecordVersion+1)
 	if _, err := d.projectRepo.UpdateById(ctx, prj.Id, prj); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &prj.Project)
@@ -224,7 +224,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		Action: string(iamT.UpdateProject),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -233,12 +233,12 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &project.Project); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	exProject, err := d.findProject(ctx, project.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if exProject.GetDeletionTimestamp() != nil {
@@ -259,11 +259,11 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	upProject, err := d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upProject.Project, upProject.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return upProject, nil
@@ -272,7 +272,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Project) error {
 	p, err := d.findProject(ctx, project.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(project.Annotations, p.RecordVersion); err != nil {
@@ -285,7 +285,7 @@ func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Pro
 func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Project) error {
 	exProject, err := d.findProject(ctx, project.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(project.Annotations)
@@ -310,7 +310,7 @@ func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Pro
 	exProject.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnApplyProjectError(ctx ConsoleContext, errMsg string, name string) error {
@@ -323,7 +323,7 @@ func (d *domain) OnApplyProjectError(ctx ConsoleContext, errMsg string, name str
 	p.SyncStatus.LastSyncedAt = time.Now()
 	p.SyncStatus.Error = &errMsg
 	_, err := d.projectRepo.UpdateById(ctx, p.Id, p)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
@@ -336,7 +336,7 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 		Action: string(iamT.UpdateProject),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -345,7 +345,7 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 
 	p, err := d.findProject(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.resyncK8sResource(ctx, t.SyncActionApply, &corev1.Namespace{
@@ -357,7 +357,7 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 			},
 		},
 	}, 0); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project, p.RecordVersion)

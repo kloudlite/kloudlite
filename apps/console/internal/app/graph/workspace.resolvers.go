@@ -36,7 +36,7 @@ func (r *workspaceResolver) ID(ctx context.Context, obj *entities.Workspace) (st
 func (r *workspaceResolver) Spec(ctx context.Context, obj *entities.Workspace) (*model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec, error) {
 	m := &model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }

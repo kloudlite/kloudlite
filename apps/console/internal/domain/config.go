@@ -13,7 +13,7 @@ import (
 func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
 	//
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
@@ -32,7 +32,7 @@ func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (
 		"metadata.name":      name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if cfg == nil {
 		return nil, errors.Newf("no config with name=%q,namespace=%q found", name, namespace)
@@ -42,7 +42,7 @@ func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (
 
 func (d *domain) GetConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findConfig(ctx, namespace, name)
 }
@@ -51,12 +51,12 @@ func (d *domain) GetConfig(ctx ConsoleContext, namespace string, name string) (*
 
 func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	config.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &config.Config); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	config.IncrementRecordVersion()
@@ -76,13 +76,13 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	if err != nil {
 		if d.configRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &c.Config, c.RecordVersion); err != nil {
-		return c, err
+		return c, errors.NewE(err)
 	}
 
 	return c, nil
@@ -90,17 +90,17 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 
 func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	config.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &config.Config); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currConfig.IncrementRecordVersion()
@@ -120,11 +120,11 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 
 	upConfig, err := d.configRepo.UpdateById(ctx, currConfig.Id, currConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upConfig.Config, upConfig.RecordVersion); err != nil {
-		return upConfig, err
+		return upConfig, errors.NewE(err)
 	}
 
 	return upConfig, nil
@@ -132,17 +132,17 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 
 func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	c, err := d.findConfig(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
 	if _, err := d.configRepo.UpdateById(ctx, c.Id, c); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &c.Config)
@@ -151,7 +151,7 @@ func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string)
 func (d *domain) OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name string) error {
 	c, err := d.findConfig(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	c.SyncStatus.State = t.SyncStateErroredAtAgent
@@ -159,13 +159,13 @@ func (d *domain) OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name 
 	c.SyncStatus.Error = &errMsg
 
 	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error {
 	c, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(config.Annotations, c.RecordVersion); err != nil {
@@ -178,7 +178,7 @@ func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Confi
 func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error {
 	exConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(config.Annotations)
@@ -203,17 +203,17 @@ func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Confi
 	exConfig.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.configRepo.UpdateById(ctx, exConfig.Id, exConfig)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncConfig(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	c, err := d.findConfig(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config, c.RecordVersion)

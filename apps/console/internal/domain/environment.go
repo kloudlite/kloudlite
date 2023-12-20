@@ -18,7 +18,7 @@ func (d *domain) findEnvironment(ctx ConsoleContext, namespace, name string) (*e
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if ws == nil {
 		return nil, errors.Newf("no environment with name=%q, namespace=%q found", name, namespace)
@@ -28,7 +28,7 @@ func (d *domain) findEnvironment(ctx ConsoleContext, namespace, name string) (*e
 
 func (d *domain) ListEnvironments(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if search == nil {
@@ -49,16 +49,16 @@ func (d *domain) GetEnvironment(ctx ConsoleContext, namespace, name string) (*en
 
 func (d *domain) CreateEnvironment(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
 	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	p, err := d.findProjectByTargetNs(ctx, ws.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.checkProjectAccess(ctx, p.Name, iamT.CreateEnvironment); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ws.ProjectName = p.Name
@@ -69,7 +69,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, ws entities.Workspace) (*
 
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
 	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.updateWorkspace(ctx, ws)
@@ -77,7 +77,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, ws entities.Workspace) (*
 
 func (d *domain) DeleteEnvironment(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteWorkspace(ctx, namespace, name)
@@ -85,7 +85,7 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, namespace, name string) e
 
 func (d *domain) ResyncEnvironment(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncWorkspace(ctx, namespace, name)

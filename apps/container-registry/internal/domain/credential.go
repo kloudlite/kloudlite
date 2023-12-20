@@ -35,7 +35,7 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 		"accountName": accountname,
 	})
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	if c == nil {
@@ -43,7 +43,7 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 	}
 
 	if err := d.cacheClient.SetWithExpiry(ctx, username+"::"+accountname, []byte(c.TokenKey), time.Minute*5); err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	if c == nil {
@@ -68,7 +68,7 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 	})
 
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -80,7 +80,7 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 		"accountName": ctx.AccountName,
 	})
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	if c == nil {
 		return "", errors.Newf("credential not found")
@@ -89,13 +89,13 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", c.Expiration.Value, c.Expiration.Unit))
 
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	token, err := admin.GenerateToken(c.UserName, ctx.AccountName, string(c.Access), i, d.envs.RegistrySecretKey+c.TokenKey)
 
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	return token, nil
@@ -111,7 +111,7 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -123,7 +123,7 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 		"accountName": ctx.AccountName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if c != nil {
@@ -189,7 +189,7 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -212,7 +212,7 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -224,7 +224,7 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 		"accountName": ctx.AccountName,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if _, err = d.cacheClient.Get(ctx, userName+"::"+ctx.AccountName); err != nil {

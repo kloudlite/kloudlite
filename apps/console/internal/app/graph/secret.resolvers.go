@@ -29,7 +29,7 @@ func (r *secretResolver) CreationTime(ctx context.Context, obj *entities.Secret)
 func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Data, &m); err != nil {
-		return m, err
+		return m, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -46,7 +46,7 @@ func (r *secretResolver) ID(ctx context.Context, obj *entities.Secret) (string, 
 func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.StringData, &m); err != nil {
-		return m, err
+		return m, errors.NewE(err)
 	}
 	return m, nil
 }

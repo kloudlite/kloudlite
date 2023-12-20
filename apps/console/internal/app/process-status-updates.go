@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"github.com/kloudlite/api/pkg/errors"
 	"strings"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
@@ -78,7 +79,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var p entities.Project
 				if err := fn.JsonConversion(ru.Object, &p); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
@@ -91,7 +92,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var p entities.Workspace
 				if err := fn.JsonConversion(ru.Object, &p); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
@@ -103,7 +104,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var a entities.App
 				if err := fn.JsonConversion(ru.Object, &a); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
@@ -115,7 +116,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var c entities.Config
 				if err := fn.JsonConversion(ru.Object, &c); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteConfigMessage(dctx, c)
@@ -126,7 +127,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var s entities.Secret
 				if err := fn.JsonConversion(ru.Object, &s); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteSecretMessage(dctx, s)
@@ -137,7 +138,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var s entities.ImagePullSecret
 				if err := fn.JsonConversion(ru.Object, &s); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteImagePullSecretMessage(dctx, s)
@@ -148,7 +149,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var r entities.Router
 				if err := fn.JsonConversion(ru.Object, &r); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteRouterMessage(dctx, r)
@@ -159,7 +160,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var msvc entities.ManagedService
 				if err := fn.JsonConversion(ru.Object, &msvc); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteManagedServiceMessage(dctx, msvc)
@@ -170,7 +171,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 				var mres entities.ManagedResource
 				if err := fn.JsonConversion(ru.Object, &mres); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteManagedResourceMessage(dctx, mres)

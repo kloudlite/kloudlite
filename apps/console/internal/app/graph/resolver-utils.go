@@ -43,7 +43,7 @@ func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
 		UserId:    session.UserId,
 		UserEmail: session.UserEmail,
 		UserName:  session.UserName,
-	}, err
+	}, errors.NewE(err)
 }
 
 func (r *queryResolver) getNamespaceFromProjectID(ctx context.Context, project model.ProjectID) (string, error) {
@@ -52,11 +52,11 @@ func (r *queryResolver) getNamespaceFromProjectID(ctx context.Context, project m
 		{
 			cc, err := toConsoleContext(ctx)
 			if err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			proj, err := r.Domain.GetProject(cc, project.Value)
 			if err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			return proj.Spec.TargetNamespace, nil
 		}
@@ -72,7 +72,7 @@ func (r *queryResolver) getNamespaceFromProjectID(ctx context.Context, project m
 func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID) (string, error) {
 	pTargetNs, err := r.getNamespaceFromProjectID(ctx, project)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	switch scope.Type {
@@ -80,11 +80,11 @@ func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, pro
 		{
 			cc, err := toConsoleContext(ctx)
 			if err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			env, err := r.Domain.GetEnvironment(cc, pTargetNs, scope.Value)
 			if err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			return env.Spec.TargetNamespace, nil
 		}
@@ -92,11 +92,11 @@ func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, pro
 		{
 			cc, err := toConsoleContext(ctx)
 			if err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			ws, err := r.Domain.GetWorkspace(cc, pTargetNs, scope.Value)
 			if err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			return ws.Spec.TargetNamespace, nil
 		}

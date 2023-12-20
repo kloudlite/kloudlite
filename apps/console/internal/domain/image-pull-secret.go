@@ -12,7 +12,7 @@ import (
 
 func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
 	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := repos.Filter{
@@ -27,7 +27,7 @@ func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, sear
 func (d *domain) findImagePullSecret(ctx ConsoleContext, namespace, name string) (*entities.ImagePullSecret, error) {
 	ips, err := d.pullSecretsRepo.FindOne(ctx, repos.Filter{"accountName": ctx.AccountName, "name": name, "namespace": namespace})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if ips == nil {
@@ -38,7 +38,7 @@ func (d *domain) findImagePullSecret(ctx ConsoleContext, namespace, name string)
 
 func (d *domain) GetImagePullSecret(ctx ConsoleContext, namespace, name string) (*entities.ImagePullSecret, error) {
 	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.findImagePullSecret(ctx, namespace, name)
@@ -46,12 +46,12 @@ func (d *domain) GetImagePullSecret(ctx ConsoleContext, namespace, name string) 
 
 func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
 	if err := d.canMutateSecretsInAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ips.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &ips.ImagePullSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ips.IncrementRecordVersion()
@@ -71,9 +71,9 @@ func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 	if err != nil {
 		if d.pullSecretsRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return nIps, nil
@@ -81,17 +81,17 @@ func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 
 func (d *domain) UpdateImagePullSecret(ctx ConsoleContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
 	if err := d.canMutateSecretsInAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ips.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &ips.ImagePullSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currScrt, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currScrt.IncrementRecordVersion()
@@ -111,30 +111,30 @@ func (d *domain) UpdateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 
 	upIps, err := d.pullSecretsRepo.UpdateById(ctx, currScrt.Id, currScrt)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upIps.ImagePullSecret, ips.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
-	return upIps, err
+	return upIps, errors.NewE(err)
 }
 
 func (d *domain) DeleteImagePullSecret(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateSecretsInAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	ips, err := d.findImagePullSecret(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	ips.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, ips.RecordVersion)
 
 	if _, err := d.pullSecretsRepo.UpdateById(ctx, ips.Id, ips); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &ips.ImagePullSecret)
@@ -143,7 +143,7 @@ func (d *domain) DeleteImagePullSecret(ctx ConsoleContext, namespace, name strin
 func (d *domain) OnUpdateImagePullSecretMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error {
 	exIps, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(ips.Annotations)
@@ -168,13 +168,13 @@ func (d *domain) OnUpdateImagePullSecretMessage(ctx ConsoleContext, ips entities
 	exIps.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.pullSecretsRepo.UpdateById(ctx, exIps.Id, exIps)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnDeleteImagePullSecretMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error {
 	a, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.pullSecretsRepo.DeleteById(ctx, a.Id)
@@ -190,17 +190,17 @@ func (d *domain) OnApplyImagePullSecretError(ctx ConsoleContext, errMsg string, 
 	a.SyncStatus.LastSyncedAt = time.Now()
 	a.SyncStatus.Error = &errMsg
 	_, err := d.pullSecretsRepo.UpdateById(ctx, a.Id, a)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncImagePullSecret(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	exIps, err := d.findImagePullSecret(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return d.resyncK8sResource(ctx, exIps.SyncStatus.Action, &exIps.ImagePullSecret, exIps.RecordVersion)
 }

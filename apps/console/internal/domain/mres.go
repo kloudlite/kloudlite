@@ -14,7 +14,7 @@ import (
 
 func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := repos.Filter{
@@ -34,7 +34,7 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 		"metadata.name":      name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if mres == nil {
 		return nil, errors.Newf(
@@ -48,7 +48,7 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 
 func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.ManagedResource, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.findMRes(ctx, namespace, name)
@@ -58,12 +58,12 @@ func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name s
 
 func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, mres.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	mres.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	mres.IncrementRecordVersion()
@@ -83,13 +83,13 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 	if err != nil {
 		if d.mresRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &m.ManagedResource, 0); err != nil {
-		return m, err
+		return m, errors.NewE(err)
 	}
 
 	return m, nil
@@ -97,17 +97,17 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 
 func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, mres.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	mres.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	m, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	m.IncrementRecordVersion()
@@ -126,11 +126,11 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.Managed
 
 	upMres, err := d.mresRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
-		return upMres, err
+		return upMres, errors.NewE(err)
 	}
 
 	return upMres, nil
@@ -138,17 +138,17 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.Managed
 
 func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	m, err := d.findMRes(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	m.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, m.RecordVersion)
 	if _, err := d.mresRepo.UpdateById(ctx, m.Id, m); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &m.ManagedResource)
@@ -157,7 +157,7 @@ func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, nam
 func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
 	exMres, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(mres.Annotations, exMres.RecordVersion); err != nil {
@@ -170,7 +170,7 @@ func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entitie
 func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
 	exMres, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(mres.Annotations)
@@ -195,7 +195,7 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 	exMres.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.mresRepo.UpdateById(ctx, exMres.Id, exMres)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
@@ -208,17 +208,17 @@ func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, 
 	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.Error = &errMsg
 	_, err := d.mresRepo.UpdateById(ctx, m.Id, m)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncManagedResource(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	m, err := d.findMRes(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return d.resyncK8sResource(ctx, m.SyncStatus.Action, &m.ManagedResource, m.RecordVersion)
 }
