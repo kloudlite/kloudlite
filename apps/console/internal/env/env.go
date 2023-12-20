@@ -30,7 +30,7 @@ type Env struct {
 	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
 	SessionKVBucket    string `env:"SESSION_KV_BUCKET" required:"true"`
 	IsDev              bool
-	KubernetesApiProxy string `json:"KUBERNETES_API_PROXY"`
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {
