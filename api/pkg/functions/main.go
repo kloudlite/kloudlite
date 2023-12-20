@@ -13,7 +13,7 @@ import (
 func ToBase64StringFromJson(v interface{}) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	return base64.StdEncoding.EncodeToString(b), nil
 }
@@ -21,7 +21,7 @@ func ToBase64StringFromJson(v interface{}) (string, error) {
 func ToBase64UrlFromJson(v interface{}) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	return base64.URLEncoding.EncodeToString(b), nil
 }
@@ -72,7 +72,7 @@ func JsonConversion(from any, to any) error {
 		return nil
 	}
 	if err := json.Unmarshal(b, &to); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }

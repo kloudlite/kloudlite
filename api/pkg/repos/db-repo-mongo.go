@@ -30,11 +30,11 @@ var re = regexp.MustCompile(`(\W|_)+/g`)
 func toMap(v any) (map[string]any, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	var m map[string]any
 	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -43,11 +43,11 @@ func fromMap[T Entity](v map[string]any) (T, error) {
 	var emptyResult T
 	b, err := json.Marshal(v)
 	if err != nil {
-		return emptyResult, err
+		return emptyResult, errors.NewE(err)
 	}
 	var result T
 	if err := json.Unmarshal(b, &result); err != nil {
-		return emptyResult, err
+		return emptyResult, errors.NewE(err)
 	}
 	return result, nil
 }
@@ -56,14 +56,14 @@ func bsonToStruct[T any](r *mongo.SingleResult) (T, error) {
 	var m map[string]any
 	var result T
 	if err := r.Decode(&m); err != nil {
-		return result, err
+		return result, errors.NewE(err)
 	}
 	b, err := json.Marshal(m)
 	if err != nil {
-		return result, err
+		return result, errors.NewE(err)
 	}
 	if err := json.Unmarshal(b, &result); err != nil {
-		return result, err
+		return result, errors.NewE(err)
 	}
 	return result, nil
 }
@@ -73,16 +73,16 @@ func cursorToStruct[T any](ctx context.Context, curr *mongo.Cursor) ([]T, error)
 	var results []T
 
 	if err := curr.All(ctx, &m); err != nil {
-		return results, err
+		return results, errors.NewE(err)
 	}
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return results, err
+		return results, errors.NewE(err)
 	}
 
 	if err := json.Unmarshal(b, &results); err != nil {
-		return results, err
+		return results, errors.NewE(err)
 	}
 
 	return results, nil
@@ -106,7 +106,7 @@ func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return make([]T, 0), nil
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return cursorToStruct[T](ctx, curr)
@@ -123,7 +123,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return item, errors.Newf("no document found")
 		}
-		return item, err
+		return item, errors.NewE(err)
 	}
 	return item, nil
 }
@@ -135,7 +135,7 @@ func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return item, nil
 		}
-		return item, err
+		return item, errors.NewE(err)
 	}
 	return item, nil
 }
@@ -166,11 +166,11 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 	if pagination.After != nil {
 		aft, err := CursorFromBase64(*pagination.After)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		objectID, err := primitive.ObjectIDFromHex(string(aft))
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		queryFilter["_id"] = bson.M{"$gt": objectID}
 	}
@@ -178,11 +178,11 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 	if pagination.Before != nil {
 		bef, err := CursorFromBase64(*pagination.Before)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		objectID, err := primitive.ObjectIDFromHex(string(bef))
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		queryFilter["_id"] = bson.M{"$lt": objectID}
 	}
@@ -209,17 +209,17 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	results, err := cursorToStruct[T](ctx, curr)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	total, err := repo.db.Collection(repo.collectionName).CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	pageInfo := PageInfo{}
@@ -294,12 +294,12 @@ func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 
 	inputM, err := toMap(data)
 	if err != nil {
-		return emptyResult, err
+		return emptyResult, errors.NewE(err)
 	}
 
 	r, err := repo.db.Collection(repo.collectionName).InsertOne(ctx, inputM)
 	if err != nil {
-		return emptyResult, err
+		return emptyResult, errors.NewE(err)
 	}
 
 	r2 := repo.db.Collection(repo.collectionName).FindOne(ctx, Filter{"_id": r.InsertedID})
@@ -314,7 +314,7 @@ func (repo *dbRepo[T]) Exists(ctx context.Context, filter Filter) (bool, error) 
 		if err == mongo.ErrNoDocuments {
 			return false, nil
 		}
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -328,7 +328,7 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 		bson.M{"$set": updatedData},
 	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -348,7 +348,7 @@ func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData
 	m, err := toMap(updatedData)
 	if err != nil {
 		var x T
-		return x, err
+		return x, errors.NewE(err)
 	}
 
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
@@ -374,7 +374,7 @@ func (repo *dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opt
 
 	m, err := toMap(updatedData)
 	if err != nil {
-		return result, err
+		return result, errors.NewE(err)
 	}
 
 	delete(m, "_id")
@@ -425,13 +425,13 @@ func (repo *dbRepo[T]) DeleteOne(ctx context.Context, filter Filter) error {
 			return nil
 		}
 	}
-	return err
+	return errors.NewE(err)
 }
 
 func (repo *dbRepo[T]) DeleteMany(ctx context.Context, filter Filter) error {
 	_, err := repo.db.Collection(repo.collectionName).DeleteMany(ctx, filter)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -480,17 +480,17 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 			dummyIdxName := buildIndexName(indexName, dummyKey, 1)
 			_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, mongo.IndexModel{Keys: b2, Options: &options.IndexOptions{Unique: &f.Unique, Name: &dummyIdxName}})
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 			_, err = repo.db.Collection(repo.collectionName).Indexes().DropOne(ctx, indexName)
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 			if _, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, indexModel); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 			if _, err := repo.db.Collection(repo.collectionName).Indexes().DropOne(ctx, dummyIdxName); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 		}
 	}
@@ -525,7 +525,7 @@ func (repo *dbRepo[T]) SilentUpdateMany(ctx context.Context, filter Filter, upda
 		bson.M{"$set": updatedData},
 	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -542,7 +542,7 @@ func (repo *dbRepo[T]) SilentUpdateById(ctx context.Context, id ID, updatedData 
 	m, err := toMap(updatedData)
 	if err != nil {
 		var x T
-		return x, err
+		return x, errors.NewE(err)
 	}
 
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(

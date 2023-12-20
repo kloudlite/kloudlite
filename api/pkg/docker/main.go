@@ -26,7 +26,7 @@ func (d *docker) DeleteDigest(repoName string, refrence string) error {
 	// send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	defer resp.Body.Close()
 
@@ -38,7 +38,7 @@ func (d *docker) DeleteDigest(repoName string, refrence string) error {
 	// read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	// print the response body

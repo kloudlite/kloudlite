@@ -14,7 +14,7 @@ func LoadEnv[T any]() func() (*T, error) {
 		if err != nil {
 			return nil, errors.Newf("not able to load ENV: %v", err)
 		}
-		return &x, err
+		return &x, errors.NewE(err)
 	}
 }
 
