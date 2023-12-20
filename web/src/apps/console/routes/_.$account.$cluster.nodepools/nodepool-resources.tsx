@@ -256,6 +256,7 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
                       <ExtraButton
                         onDelete={() => onDelete(item)}
                         onEdit={() => onEdit(item)}
+                        status="none"
                       />
                     }
                   />
