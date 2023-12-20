@@ -202,7 +202,7 @@ const ListDetail = (
         />
       </div>
 
-      <AnimateHide show={open}>hello</AnimateHide>
+      {/* <AnimateHide show={open}>hello</AnimateHide> */}
     </div>
   );
 };
