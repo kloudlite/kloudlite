@@ -79,11 +79,25 @@ export const ExecuteQueryWithContext = (
             query: print(q),
             variables: variables || {},
           },
+          timeout: 5000,
         });
 
-        let { data,errors } = resp.data;
-        if(errors){
-          throw new Error(JSON.stringify(errors))
+        let { data } = resp.data;
+        const { errors } = resp.data;
+
+        if (errors) {
+          const e = errors as Error[];
+          if (e.length === 1) {
+            throw errors[0];
+          }
+
+          throw new Error(
+            e.reduce((acc, curr) => {
+              return `${acc}\n\n1. ${curr.name ? `${curr.name}:` : ''}:${
+                curr.message
+              }${curr.stack ? `\n${curr.stack}` : ''}`;
+            }, 'Errors:')
+          );
         }
 
         if (data) {
@@ -97,10 +111,12 @@ export const ExecuteQueryWithContext = (
         }
         return { ...resp.data, data };
       } catch (err) {
-        console.error('ErrorIn:', apiName, err);
         if ((err as AxiosError).response) {
+          console.error('ErrorIn:', apiName, (err as Error).name);
           return (err as AxiosError).response?.data;
         }
+
+        console.error('ErrorIn:', apiName, (err as Error).message);
 
         return {
           errors: [
