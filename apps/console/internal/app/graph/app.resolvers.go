@@ -30,7 +30,7 @@ func (r *appResolver) ID(ctx context.Context, obj *entities.App) (string, error)
 func (r *appResolver) Spec(ctx context.Context, obj *entities.App) (*model.GithubComKloudliteOperatorApisCrdsV1AppSpec, error) {
 	m := model.GithubComKloudliteOperatorApisCrdsV1AppSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }

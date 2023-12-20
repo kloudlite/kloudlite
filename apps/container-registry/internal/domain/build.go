@@ -20,7 +20,7 @@ func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, paginati
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -42,7 +42,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -50,7 +50,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	}
 
 	if err := validateBuild(build); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	var webhookId *int
@@ -58,7 +58,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	if build.Source.Provider == "gitlab" {
 		webhookId, err = d.GitlabAddWebhook(ctx, ctx.UserId, d.gitlab.GetRepoId(build.Source.Repository))
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 
@@ -85,7 +85,7 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -93,7 +93,7 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 	}
 
 	if err := validateBuild(build); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
@@ -123,7 +123,7 @@ func (d *Impl) ListBuildsByGit(ctx context.Context, repoUrl, branch, provider st
 		Filter: filter,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return b, nil
@@ -139,7 +139,7 @@ func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[strin
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -161,7 +161,7 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -170,7 +170,7 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 
 	b, err := d.buildRepo.FindOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if b == nil {
@@ -190,7 +190,7 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -199,11 +199,11 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 
 	b, err := d.buildRepo.FindById(ctx, buildId)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err = d.buildRepo.DeleteOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if b.Source.Provider == "gitlab" {

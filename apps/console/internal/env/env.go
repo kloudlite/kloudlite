@@ -1,6 +1,9 @@
 package env
 
-import "github.com/codingconcepts/env"
+import (
+	"github.com/codingconcepts/env"
+	"github.com/kloudlite/api/pkg/errors"
+)
 
 type Env struct {
 	Port                   uint16 `env:"HTTP_PORT" required:"true"`
@@ -36,7 +39,7 @@ type Env struct {
 func LoadEnv() (*Env, error) {
 	var e Env
 	if err := env.Set(&e); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &e, nil
 }

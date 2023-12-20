@@ -122,12 +122,12 @@ func (gh *githubI) CheckWebhookExists(ctx context.Context, token *entities.Acces
 
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	hook, _, err := gh.ghCliForUser(ctx, token.Token).Repositories.GetHook(ctx, owner, repo, int64(*webhookId))
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return hook != nil, nil
@@ -139,14 +139,14 @@ func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *entities.AccessT
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	resp, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
 	if err != nil && resp.StatusCode == http.StatusNotFound {
 		return nil
 	}
-	return err
+	return errors.NewE(err)
 
 }
 
@@ -155,7 +155,7 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (st
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
 
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
@@ -167,7 +167,7 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (st
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get installation token")
 	}
-	return it.GetToken(), err
+	return it.GetToken(), errors.NewE(err)
 
 }
 
@@ -175,7 +175,7 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (st
 func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *entities.AccessToken, repoUrl string, branchName string) (string, error) {
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
@@ -187,7 +187,7 @@ func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *entities.Acces
 	if err != nil {
 		return "", errors.NewEf(err, "failed to get installation token")
 	}
-	return it.GetToken(), err
+	return it.GetToken(), errors.NewE(err)
 }
 
 // GetToken implements domain.Github.
@@ -199,7 +199,7 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 func (gh *githubI) ListBranches(ctx context.Context, accToken *entities.AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error) {
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	var branches []*github.Branch

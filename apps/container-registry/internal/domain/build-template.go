@@ -3,6 +3,7 @@ package domain
 import (
 	"bytes"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"net/url"
 	"text/template"
 
@@ -17,7 +18,7 @@ func BuildUrl(repo, pullToken string) (string, error) {
 	parsedURL, err := url.Parse(repo)
 	if err != nil {
 		fmt.Println("Error parsing Repo URL:", err)
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	parsedURL.User = url.User(pullToken)
@@ -44,20 +45,20 @@ type BuildJobTemplateData struct {
 func getTemplate(obj BuildJobTemplateData) ([]byte, error) {
 	b, err := templates.ReadBuildJobTemplate()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	tmpl := text_templates.WithFunctions(template.New("build-job-template"))
 
 	tmpl, err = tmpl.Parse(string(b))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	out := new(bytes.Buffer)
 	err = tmpl.Execute(out, obj)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return out.Bytes(), nil

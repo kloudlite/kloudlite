@@ -46,6 +46,6 @@ func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
 		UserId:    session.UserId,
 		UserName:  session.UserName,
 		UserEmail: session.UserEmail,
-	}, err
+	}, errors.NewE(err)
 
 }

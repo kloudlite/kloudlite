@@ -71,24 +71,24 @@ func validateName(name string) error {
 func validateBuild(build entities.Build) error {
 	for _, v := range build.Spec.Registry.Repo.Tags {
 		if err := validateTag(v); err != nil {
-			return err
+			return errors.NewE(err)
 		}
 	}
 
 	if err := validateRepository(build.Spec.Registry.Repo.Name); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := validateBranch(build.Source.Branch); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := validateProvider(string(build.Source.Provider)); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := validateName(build.Name); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil

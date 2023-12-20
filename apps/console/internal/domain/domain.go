@@ -77,7 +77,7 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
@@ -86,20 +86,20 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 		Object:      m,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, ctx.ClusterName),
 		Payload: b,
 	})
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error {
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
@@ -108,15 +108,15 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 		Object:      m,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-	
-  err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, ctx.ClusterName),
 		Payload: b,
 	})
 
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) resyncK8sResource(ctx ConsoleContext, action types.SyncAction, obj client.Object, rv int) error {
@@ -144,7 +144,7 @@ func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string
 
 	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
 	if err != nil {
-		return 0, err
+		return 0, errors.NewE(err)
 	}
 
 	return int(annVersion), nil
@@ -153,7 +153,7 @@ func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string
 func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) error {
 	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if annVersion != rv {
@@ -166,7 +166,7 @@ func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) error
 func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace string) error {
 	prj, err := d.findProjectByTargetNs(ctx, targetNamespace)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -178,7 +178,7 @@ func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace
 		Action: string(iamT.MutateResourcesInProject),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if !co.Status {
 		return errors.Newf("unauthorized to mutate resources in project %q", prj.Name)
@@ -189,12 +189,12 @@ func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace
 func (d *domain) canMutateResourcesInWorkspace(ctx ConsoleContext, targetNamespace string) error {
 	ws, err := d.findWorkspaceByTargetNs(ctx, targetNamespace)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	wsp, err := d.findWorkspace(ctx, ws.Namespace, ws.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -206,7 +206,7 @@ func (d *domain) canMutateResourcesInWorkspace(ctx ConsoleContext, targetNamespa
 		Action: string(iamT.MutateResourcesInProject),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if !co.Status {
 		return errors.Newf("unauthorized to mutate resources in workspace %q", wsp.Name)
@@ -217,7 +217,7 @@ func (d *domain) canMutateResourcesInWorkspace(ctx ConsoleContext, targetNamespa
 func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace string) error {
 	ws, err := d.findWorkspaceByTargetNs(ctx, targetNamespace)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -229,7 +229,7 @@ func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace
 		Action: string(iamT.GetProject),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if !co.Status {
 		return errors.Newf("unauthorized to read resources in project %q", ws.Spec.ProjectName)
@@ -240,7 +240,7 @@ func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace
 func (d *domain) canReadResourcesInProject(ctx ConsoleContext, targetNamespace string) error {
 	prj, err := d.findProjectByTargetNs(ctx, targetNamespace)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -252,7 +252,7 @@ func (d *domain) canReadResourcesInProject(ctx ConsoleContext, targetNamespace s
 		Action: string(iamT.GetProject),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if !co.Status {
 		return errors.Newf("unauthorized to read resources in project %q", prj.Name)
@@ -269,7 +269,7 @@ func (d *domain) canMutateSecretsInAccount(ctx context.Context, userId string, a
 		Action: string(iamT.CreateSecretsInAccount),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if !co.Status {
 		return errors.Newf("unauthorized to mutate secrets in account %q", accountName)
@@ -286,7 +286,7 @@ func (d *domain) canReadSecretsFromAccount(ctx context.Context, userId string, a
 		Action: string(iamT.ReadSecretsFromAccount),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if !co.Status {
 		return errors.Newf("unauthorized to read secrets from account  %q", accountName)
@@ -304,7 +304,7 @@ func (d *domain) checkProjectAccess(ctx ConsoleContext, projectName string, acti
 		Action: string(action),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -324,7 +324,7 @@ func (d *domain) checkWorkspaceAccess(ctx ConsoleContext, projectName string, wo
 		Action: string(action),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -344,7 +344,7 @@ func (d *domain) checkEnvironmentAccess(ctx ConsoleContext, projectName string, 
 		Action: string(action),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -391,18 +391,18 @@ var Module = fx.Module("domain",
 	) (Domain, error) {
 		open, err := os.Open(ev.MsvcTemplateFilePath)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		b, err := io.ReadAll(open)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		var templates []*entities.MsvcTemplate
 
 		if err := yaml.Unmarshal(b, &templates); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		msvcTemplatesMap := map[string]map[string]*entities.MsvcTemplateEntry{}

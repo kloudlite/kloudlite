@@ -17,7 +17,7 @@ import (
 func (d *Impl) GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error) {
 	token, err := d.getAccessTokenByUserId(ctx, "gitlab", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.gitlab.ListGroups(ctx, token, query, pagination)
@@ -26,11 +26,11 @@ func (d *Impl) GitlabListGroups(ctx context.Context, userId repos.ID, query *str
 func (d *Impl) GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error) {
 	token, err := d.getAccessTokenByUserId(ctx, "gitlab", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	repos, err := d.gitlab.ListRepos(ctx, token, gid, query, pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	res := make([]*entities.GitlabProject, len(repos))
@@ -66,13 +66,13 @@ func (d *Impl) GitlabListBranches(ctx context.Context, userId repos.ID, repoId s
 
 	token, err := d.getAccessTokenByUserId(ctx, "gitlab", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	branches, err := d.gitlab.ListBranches(ctx, token, repoId, query, pagination)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	res := make([]*entities.GitBranch, len(branches))
@@ -96,7 +96,7 @@ func (d *Impl) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId str
 
 	token, err := d.getAccessTokenByUserId(ctx, "gitlab", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	// if grHook != nil {
@@ -111,7 +111,7 @@ func (d *Impl) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId str
 
 	webhookId, err := d.gitlab.AddWebhook(ctx, token, repoId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	// grHook, err = d.gitRepoHookRepo.Create(
@@ -155,7 +155,7 @@ func (d *Impl) GitlabPullToken(ctx context.Context, userId repos.ID) (string, er
 	at, err := d.getAccessTokenByUserId(ctx, "gitlab", userId)
 
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	return at.Token.AccessToken, nil
