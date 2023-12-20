@@ -18,6 +18,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -261,7 +262,34 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 		"metadata.namespace": accNs,
 	}
 
-	return d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
+	pr, err := d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	edges := make([]repos.RecordEdge[*entities.Cluster], 0, len(pr.Edges))
+
+	for i := range pr.Edges {
+		c, found, err := d.readClusterK8sResource(ctx, pr.Edges[i].Node.Namespace, pr.Edges[i].Node.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		if found {
+			pr.Edges[i].Node.Status = c.Status
+		}
+
+		if !found && pr.Edges[i].Node.MarkedForDeletion != nil && *pr.Edges[i].Node.MarkedForDeletion {
+			if err := d.clusterRepo.DeleteById(ctx, pr.Edges[i].Node.Id); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		edges = append(edges, pr.Edges[i])
+	}
+
+	pr.Edges = edges
+	return pr, nil
 }
 
 func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, error) {
@@ -274,12 +302,22 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 		return nil, err
 	}
 
-	var clus entities.Cluster
-	if err := d.k8sClient.Get(ctx, fn.NN(c.Namespace, c.Name), &clus); err != nil {
+	clus, found, err := d.readClusterK8sResource(ctx, c.Namespace, c.Name)
+	if err != nil {
 		return nil, err
 	}
 
-	c.Status = clus.Status
+	if found {
+		c.Status = clus.Status
+	}
+
+	if !found && c.MarkedForDeletion != nil && *c.MarkedForDeletion {
+		if err := d.clusterRepo.DeleteById(ctx, c.Id); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
 	return c, nil
 }
 
@@ -332,6 +370,17 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	return uCluster, nil
 }
 
+func (d *domain) readClusterK8sResource(ctx InfraContext, namespace string, name string) (cluster *clustersv1.Cluster, found bool, err error) {
+	var clus entities.Cluster
+	if err := d.k8sClient.Get(ctx, fn.NN(namespace, name), &clus.Cluster); err != nil {
+		if apiErrors.IsNotFound(err) {
+			return nil, false, nil
+		}
+	}
+
+	return &clus.Cluster, true, nil
+}
+
 func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCluster); err != nil {
 		return err
@@ -341,14 +390,18 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return err
 	}
 
-	c.MarkedForDeletion = fn.New(true)
-	c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
-	upC, err := d.clusterRepo.UpdateById(ctx, c.Id, c)
-	if err != nil {
-		return err
+	if c.MarkedForDeletion == nil || *c.MarkedForDeletion {
+		c.MarkedForDeletion = fn.New(true)
+		c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
+		upC, err := d.clusterRepo.UpdateById(ctx, c.Id, c)
+		if err != nil {
+			return err
+		}
+
+		return d.deleteK8sResource(ctx, &upC.Cluster)
 	}
 
-	return d.deleteK8sResource(ctx, &upC.Cluster)
+	return nil
 }
 
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
