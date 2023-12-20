@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/apps/webhook/internal/app"
 	"github.com/kloudlite/api/apps/webhook/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
@@ -38,7 +39,7 @@ var Module = fx.Module(
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return nats.NewJetstreamClient(nc)

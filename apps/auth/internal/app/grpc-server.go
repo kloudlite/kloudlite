@@ -17,7 +17,7 @@ type authGrpcServer struct {
 func (a *authGrpcServer) GetUser(ctx context.Context, in *auth.GetUserIn) (*auth.GetUserOut, error) {
 	user, err := a.d.GetUserById(ctx, repos.ID(in.UserId))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if user == nil {
 		return nil, errors.Newf("could not find user with (id=%q)", in.UserId)
@@ -47,12 +47,12 @@ func (a *authGrpcServer) FromAccToken(token domain.AccessToken) *auth.AccessToke
 func (a *authGrpcServer) EnsureUserByEmail(ctx context.Context, request *auth.GetUserByEmailRequest) (*auth.GetUserByEmailOut, error) {
 	user, err := a.d.GetUserByEmail(ctx, request.Email)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if user == nil {
 		user, err = a.d.EnsureUserByEmail(ctx, request.Email)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 	return &auth.GetUserByEmailOut{
@@ -63,7 +63,7 @@ func (a *authGrpcServer) EnsureUserByEmail(ctx context.Context, request *auth.Ge
 func (a *authGrpcServer) GetAccessToken(ctx context.Context, in *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
 	token, err := a.d.GetAccessToken(ctx, in.Provider, in.UserId, in.TokenId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if token == nil {
 		return nil, errors.Newf("token is nil")

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/apps/iam/internal/app"
 	"github.com/kloudlite/api/apps/iam/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
@@ -54,7 +55,7 @@ var Module fx.Option = fx.Module(
 				select {
 				case <-timeout.Done():
 				case err := <-errCh:
-					return err
+					return errors.NewE(err)
 				}
 				return nil
 			},

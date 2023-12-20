@@ -68,7 +68,7 @@ func (ev *Env) validateEnv() error {
 				ev.GitlabClientSecret == "" ||
 				ev.GitlabCallbackUrl == "" ||
 				ev.GitlabScopes == "" {
-				return err
+				return errors.NewE(err)
 			}
 		}
 
@@ -79,7 +79,7 @@ func (ev *Env) validateEnv() error {
 				ev.GoogleClientSecret == "" ||
 				ev.GoogleCallbackUrl == "" ||
 				ev.GoogleScopes == "" {
-				return err
+				return errors.NewE(err)
 			}
 		}
 	}
@@ -89,10 +89,10 @@ func (ev *Env) validateEnv() error {
 func LoadEnv() (*Env, error) {
 	var ev Env
 	if err := env.Set(&ev); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if err := ev.validateEnv(); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &ev, nil
 }
