@@ -19,6 +19,7 @@ import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
 import { IDialogBase } from '~/console/components/types.d';
 import { Checkbox } from '~/components/atoms/checkbox';
+import { Switch } from '~/components/atoms/switch';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_.$account.$cluster';
 
@@ -191,6 +192,13 @@ const Root = (props: IDialog) => {
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
+          <TextInput
+            label="Name"
+            value={values.displayName}
+            onChange={handleChange('displayName')}
+            error={!!errors.displayName}
+            message={errors.displayName}
+          />
           {isUpdate && (
             <Chips.Chip
               {...{
@@ -202,13 +210,6 @@ const Root = (props: IDialog) => {
               }}
             />
           )}
-          <TextInput
-            label="Name"
-            value={values.displayName}
-            onChange={handleChange('displayName')}
-            error={!!errors.displayName}
-            message={errors.displayName}
-          />
 
           {!isUpdate && (
             <IdSelector
@@ -275,46 +276,47 @@ const Root = (props: IDialog) => {
               />
             </>
           )}
-          <div className="flex flex-row gap-xl items-end">
-            <div className="flex-1">
-              <div>AutoScale</div>
-            </div>
-            <div className="flex-1">
-              <Checkbox
-                onChange={(v) => handleChange('autoScale')(dummyEvent(v))}
-                label={values.autoScale ? 'Enabled' : 'Disabled'}
-              />
-            </div>
-          </div>
 
           <div className="flex flex-row gap-xl items-end">
-            <div className="flex-1">
-              <NumberInput
-                label={values.autoScale ? 'Min Node Count' : `Node Count`}
-                placeholder="Minimum"
-                value={values.minimum}
-                error={!!errors.minimum}
-                message={errors.minimum}
-                onChange={(e) => {
-                  handleChange('minimum')(e);
-                  if (!values.autoScale) {
-                    handleChange('maximum')(e);
-                  }
-                }}
-              />
-            </div>
-            {values.autoScale && (
+            <div className="flex flex-row gap-xl items-end flex-1 ">
               <div className="flex-1">
                 <NumberInput
-                  error={!!errors.maximum}
-                  message={errors.maximum}
-                  label="Max Node Count"
-                  placeholder="Maximum"
-                  value={values.maximum}
-                  onChange={handleChange('maximum')}
+                  label={values.autoScale ? 'Min Node Count' : `Node Count`}
+                  placeholder="Minimum"
+                  value={values.minimum}
+                  error={!!errors.minimum}
+                  message={errors.minimum}
+                  onChange={(e) => {
+                    handleChange('minimum')(e);
+                    if (!values.autoScale) {
+                      handleChange('maximum')(e);
+                    }
+                  }}
                 />
               </div>
-            )}
+              {values.autoScale && (
+                <div className="flex-1">
+                  <NumberInput
+                    error={!!errors.maximum}
+                    message={errors.maximum}
+                    label="Max Node Count"
+                    placeholder="Maximum"
+                    value={values.maximum}
+                    onChange={handleChange('maximum')}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-md min-w-[115px]">
+              <div className="bodyMd-medium text-text-default">AutoScale</div>
+              <div className="flex items-center h-form-text-field-height">
+                <Switch
+                  label={values.autoScale ? 'Enabled' : 'Disabled'}
+                  checked={values.autoScale}
+                  onChange={(v) => handleChange('autoScale')(dummyEvent(v))}
+                />
+              </div>
+            </div>
           </div>
 
           {/* {show?.type === DIALOG_TYPE.ADD && ( */}
@@ -353,7 +355,7 @@ const HandleNodePool = (props: IDialog) => {
 
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
-      <Popup.Header>{isUpdate ? 'Add nodepool' : 'Edit nodepool'}</Popup.Header>
+      <Popup.Header>{isUpdate ? 'Edit nodepool' : 'Add nodepool'}</Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );

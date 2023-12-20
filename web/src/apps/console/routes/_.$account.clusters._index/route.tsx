@@ -121,6 +121,7 @@ const Clusters = () => {
     >
       {({ clustersData, secretsCount }) => {
         const clusters = parseNodes(clustersData);
+        console.log(clusters);
 
         if (!clusters) {
           return null;
