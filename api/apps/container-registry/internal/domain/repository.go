@@ -39,7 +39,7 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) (*entities
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -69,7 +69,7 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -80,7 +80,7 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 		"name":        repoName,
 		"accountName": ctx.AccountName,
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	res, err := d.digestRepo.Find(ctx, repos.Query{
@@ -91,7 +91,7 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if len(res) > 0 {
@@ -112,7 +112,7 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -126,7 +126,7 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if e == nil {
@@ -135,24 +135,24 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 
 	r_url, err := url.Parse(fmt.Sprintf("https://%s", d.envs.RegistryHost))
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 10, "s"))
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	token, err := admin.GenerateToken(KL_ADMIN, e.AccountName, string("read_write"), i, d.envs.RegistrySecretKey+e.AccountName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	r_url.User = url.UserPassword(KL_ADMIN, token)
 
 	dockerCli := docker.NewDockerClient(r_url.String())
 	if err := dockerCli.DeleteDigest(fmt.Sprintf("%s/%s", ctx.AccountName, repoName), e.Digest); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	// update if present else, ignore
@@ -174,7 +174,7 @@ func (d *Impl) ListRepositories(ctx RegistryContext, search map[string]repos.Mat
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -195,7 +195,7 @@ func (d *Impl) ListRepositoryDigests(ctx RegistryContext, repoName string, searc
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {

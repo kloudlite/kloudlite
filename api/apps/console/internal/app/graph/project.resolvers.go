@@ -36,7 +36,7 @@ func (r *projectResolver) ID(ctx context.Context, obj *entities.Project) (string
 func (r *projectResolver) Spec(ctx context.Context, obj *entities.Project) (*model.GithubComKloudliteOperatorApisCrdsV1ProjectSpec, error) {
 	m := &model.GithubComKloudliteOperatorApisCrdsV1ProjectSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }

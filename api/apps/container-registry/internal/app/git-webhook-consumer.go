@@ -51,7 +51,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 		var gitHook types.GitHttpHook
 		if err := json.Unmarshal(msg.Payload, &gitHook); err != nil {
 			logger.Errorf(err, "could not unmarshal into *GitWebhookPayload")
-			return err
+			return errors.NewE(err)
 		}
 
 		hook, err := func() (*domain.GitWebhookPayload, error) {
@@ -70,7 +70,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 				return nil
 			}
 			logger.Errorf(err, "could not extract gitHook")
-			return err
+			return errors.NewE(err)
 		}
 
 		logger = logger.WithKV("repo", hook.RepoUrl, "provider", hook.GitProvider, "branch", hook.GitBranch)
@@ -79,7 +79,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 
 		builds, err := d.ListBuildsByGit(ctx, hook.RepoUrl, hook.GitBranch, hook.GitProvider)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		var pullToken string
@@ -90,7 +90,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 			pullToken, err = d.GithubInstallationToken(ctx, hook.RepoUrl)
 			if err != nil {
 				fmt.Println(err)
-				return err
+				return errors.NewE(err)
 			}
 
 		case constants.ProviderGitlab:
@@ -113,7 +113,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 						build.ErrorMessages["access-error"] = errorMessage
 						_, err := d.UpdateBuildInternal(ctx, build)
 						if err != nil {
-							return err
+							return errors.NewE(err)
 						}
 					}
 
@@ -123,7 +123,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 						delete(build.ErrorMessages, "access-error")
 						_, err := d.UpdateBuildInternal(ctx, build)
 						if err != nil {
-							return err
+							return errors.NewE(err)
 						}
 					}
 				}
@@ -144,7 +144,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 
 			i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			token, err := admin.GenerateToken(domain.KL_ADMIN, build.Spec.AccountName, string("read_write"), i, envs.RegistrySecretKey+build.Spec.AccountName)
@@ -196,7 +196,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 			})
 			if err != nil {
 				logger.Errorf(err, "could not get build template")
-				return err
+				return errors.NewE(err)
 			}
 
 			sec := corev1.Secret{
@@ -221,7 +221,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 
 			var m map[string]any
 			if err := yaml.Unmarshal(b, &m); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			b1, err := json.Marshal(t.AgentMessage{
@@ -231,17 +231,17 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 				Object:      m,
 			})
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			b, err = yaml.Marshal(sec)
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			var m2 map[string]any
 			if err := yaml.Unmarshal(b, &m2); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			b2, err := json.Marshal(t.AgentMessage{
@@ -251,21 +251,21 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 				Object:      m2,
 			})
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 			topic := common.GetTenantClusterMessagingTopic(envs.BuildClusterAccountName, envs.BuildClusterName)
 			if err = producer.Produce(ctx, msgTypes.ProduceMsg{
 				Subject: topic,
 				Payload: b2,
 			}); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			if err = producer.Produce(ctx, msgTypes.ProduceMsg{
 				Subject: topic,
 				Payload: b1,
 			}); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			logger.Infof("produced message to topic=%s", topic)
@@ -273,13 +273,13 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 			build.Status = entities.BuildStatusQueued
 			_, err = d.UpdateBuildInternal(ctx, build)
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 		}
 		return nil
 	}, msgTypes.ConsumeOpts{})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }

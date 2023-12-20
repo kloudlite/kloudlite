@@ -91,7 +91,7 @@ var Module = fx.Module("app",
 			a.Use("/observability", func(c *fiber.Ctx) error {
 				cc, err := toConsoleContext(c.Context(), ev.AccountCookieName, ev.ClusterCookieName)
 				if err != nil {
-					return err
+					return errors.NewE(err)
 				}
 
 				st := c.Query("start_time")
@@ -103,7 +103,7 @@ var Module = fx.Module("app",
 				if st != "" {
 					st, err := strconv.ParseInt(st, 10, 64)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 					startTime = fn.New(time.Unix(st, 0))
 				}
@@ -111,7 +111,7 @@ var Module = fx.Module("app",
 				if et != "" {
 					et, err := strconv.ParseInt(et, 10, 64)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 					endTime = fn.New(time.Unix(et, 0))
 				}
@@ -134,7 +134,7 @@ var Module = fx.Module("app",
 				}
 
 				if b, err := args.Validate(); !b {
-					return err
+					return errors.NewE(err)
 				}
 
 				c.Locals("observability-args", args)
@@ -175,7 +175,7 @@ var Module = fx.Module("app",
 						{
 							app, err := d.GetApp(cc, args.ResourceNamespace, args.ResourceName)
 							if err != nil {
-								return err
+								return errors.NewE(err)
 							}
 							logger.Infof("userId: %s, has access to resource 'app': %s/%s, allowing user to consume logs", cc.UserId, app.Namespace, app.Name)
 
@@ -202,7 +202,7 @@ var Module = fx.Module("app",
 								ClusterName: cc.ClusterName,
 							})
 							if err != nil {
-								return err
+								return errors.NewE(err)
 							}
 							logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName)
 							streamSelectors = nil
@@ -230,7 +230,7 @@ var Module = fx.Module("app",
 								NodepoolName: args.ResourceName,
 							})
 							if err != nil {
-								return err
+								return errors.NewE(err)
 							}
 							logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName, args.ResourceName)
 							streamSelectors = append(streamSelectors,
@@ -300,11 +300,11 @@ var Module = fx.Module("app",
 								for j := range lr.Data.Result[i].Values {
 									ts, err := strconv.ParseInt(lr.Data.Result[i].Values[j][0], 10, 64)
 									if err != nil {
-										return nil, err
+										return nil, errors.NewE(err)
 									}
 									data[i].Logs[j].Timestamp = time.Unix(0, ts).Format(time.RFC3339)
 									if err := json.Unmarshal([]byte(lr.Data.Result[i].Values[j][1]), &logMessage); err != nil {
-										return nil, err
+										return nil, errors.NewE(err)
 									}
 									data[i].Logs[j].Message = logMessage.Message
 								}
@@ -330,11 +330,11 @@ var Module = fx.Module("app",
 
 					b, err := client.GetLogs(*lokiQueryFilter)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 
 					if _, err := c.Write(b); err != nil {
-						return err
+						return errors.NewE(err)
 					}
 
 					return nil

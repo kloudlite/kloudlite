@@ -62,7 +62,7 @@ func (r *buildResolver) ErrorMessages(ctx context.Context, obj *entities.Build) 
 	}
 
 	if err := fn.JsonConversion(obj.ErrorMessages, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return m, nil
@@ -121,14 +121,14 @@ func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.G
 		buildArgs := make(map[string]any)
 		if bo.BuildArgs != nil {
 			if err := fn.JsonConversion(bo.BuildArgs, &buildArgs); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 		}
 
 		buildCtxs := make(map[string]any)
 		if bo.BuildArgs != nil {
 			if err := fn.JsonConversion(bo.BuildContexts, &buildCtxs); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 		}
 
@@ -144,7 +144,7 @@ func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.G
 
 	bo, err := getBuildOptions()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	spec := obj.Spec
@@ -216,14 +216,14 @@ func (r *buildInResolver) Spec(ctx context.Context, obj *entities.Build, data *m
 		buildArgs := make(map[string]string)
 		if bo.BuildArgs != nil {
 			if err := fn.JsonConversion(bo.BuildArgs, &buildArgs); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 		}
 
 		buildCtxs := make(map[string]string)
 		if bo.BuildArgs != nil {
 			if err := fn.JsonConversion(bo.BuildContexts, &buildCtxs); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 		}
 
@@ -239,7 +239,7 @@ func (r *buildInResolver) Spec(ctx context.Context, obj *entities.Build, data *m
 
 	bo, err := getBuildOptions()
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	obj.Spec = dbv1.BuildRunSpec{
