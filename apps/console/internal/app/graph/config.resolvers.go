@@ -27,7 +27,7 @@ func (r *configResolver) CreationTime(ctx context.Context, obj *entities.Config)
 func (r *configResolver) Data(ctx context.Context, obj *entities.Config) (map[string]interface{}, error) {
 	m := make(map[string]any, len(obj.Data))
 	if err := fn.JsonConversion(obj.Data, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }

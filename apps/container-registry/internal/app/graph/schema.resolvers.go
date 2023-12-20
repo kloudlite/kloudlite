@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 
 	generated1 "github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
@@ -20,7 +21,7 @@ import (
 func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities.Repository) (*entities.Repository, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CreateRepository(cc, repository.Name)
@@ -30,7 +31,7 @@ func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities
 func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities.Credential) (*entities.Credential, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CreateCredential(cc, credential)
@@ -40,10 +41,10 @@ func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities
 func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteRepository(cc, name); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil
@@ -53,10 +54,10 @@ func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool,
 func (r *mutationResolver) CrDeleteCred(ctx context.Context, username string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteCredential(cc, username); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -65,10 +66,10 @@ func (r *mutationResolver) CrDeleteCred(ctx context.Context, username string) (b
 func (r *mutationResolver) CrDeleteDigest(ctx context.Context, repoName string, digest string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteRepositoryDigest(cc, repoName, digest); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -77,7 +78,7 @@ func (r *mutationResolver) CrDeleteDigest(ctx context.Context, repoName string, 
 func (r *mutationResolver) CrAddBuild(ctx context.Context, build entities.Build) (*entities.Build, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.AddBuild(cc, build)
@@ -87,7 +88,7 @@ func (r *mutationResolver) CrAddBuild(ctx context.Context, build entities.Build)
 func (r *mutationResolver) CrUpdateBuild(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.UpdateBuild(cc, id, build)
@@ -98,11 +99,11 @@ func (r *mutationResolver) CrDeleteBuild(ctx context.Context, id repos.ID) (bool
 	cc, err := toRegistryContext(ctx)
 
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.Domain.DeleteBuild(cc, id); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -112,11 +113,11 @@ func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (boo
 	cc, err := toRegistryContext(ctx)
 
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.Domain.TriggerBuild(cc, id); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -125,7 +126,7 @@ func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (boo
 func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.AddBuildCache(cc, buildCacheKey)
@@ -135,11 +136,11 @@ func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey
 func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -148,7 +149,7 @@ func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.I
 func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
@@ -158,12 +159,12 @@ func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.I
 func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	records := make([]*model.BuildEdge, len(rr.Edges))
@@ -192,7 +193,7 @@ func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, build
 func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.RepositoryPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := map[string]repos.MatchFilter{}
@@ -204,7 +205,7 @@ func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRep
 
 	rr, err := r.Domain.ListRepositories(cc, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	records := make([]*model.RepositoryEdge, len(rr.Edges))
@@ -234,7 +235,7 @@ func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRep
 func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCreds, pagination *repos.CursorPagination) (*model.CredentialPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := map[string]repos.MatchFilter{}
@@ -246,7 +247,7 @@ func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCre
 
 	rr, err := r.Domain.ListCredentials(cc, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	records := make([]*model.CredentialEdge, len(rr.Edges))
@@ -276,7 +277,7 @@ func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCre
 func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.DigestPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := map[string]repos.MatchFilter{}
@@ -288,7 +289,7 @@ func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, sear
 
 	rr, err := r.Domain.ListRepositoryDigests(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	records := make([]*model.DigestEdge, len(rr.Edges))
@@ -317,12 +318,12 @@ func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, sear
 func (r *queryResolver) CrGetCredToken(ctx context.Context, username string) (string, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	token, err := r.Domain.GetToken(cc, username)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	return token, nil
@@ -332,7 +333,7 @@ func (r *queryResolver) CrGetCredToken(ctx context.Context, username string) (st
 func (r *queryResolver) CrCheckUserNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CheckUserNameAvailability(cc, name)
@@ -343,7 +344,7 @@ func (r *queryResolver) CrGetBuild(ctx context.Context, id repos.ID) (*entities.
 	cc, err := toRegistryContext(ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetBuild(cc, id)
@@ -354,7 +355,7 @@ func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, searc
 	cc, err := toRegistryContext(ctx)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := map[string]repos.MatchFilter{}
@@ -367,7 +368,7 @@ func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, searc
 	rr, err := r.Domain.ListBuilds(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	records := make([]*model.BuildEdge, len(rr.Edges))
@@ -397,7 +398,7 @@ func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, searc
 func (r *queryResolver) CrListGithubInstallations(ctx context.Context, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GithubListInstallations(ctx, userId, pagination)
@@ -407,7 +408,7 @@ func (r *queryResolver) CrListGithubInstallations(ctx context.Context, paginatio
 func (r *queryResolver) CrListGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (*entities.GithubListRepository, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GithubListRepos(ctx, userId, int64(installationID), pagination)
@@ -417,7 +418,7 @@ func (r *queryResolver) CrListGithubRepos(ctx context.Context, installationID in
 func (r *queryResolver) CrSearchGithubRepos(ctx context.Context, organization string, search string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GithubSearchRepos(ctx, userId, search, organization, pagination)
@@ -427,7 +428,7 @@ func (r *queryResolver) CrSearchGithubRepos(ctx context.Context, organization st
 func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GithubListBranches(ctx, userId, repoURL, pagination)
@@ -437,7 +438,7 @@ func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string
 func (r *queryResolver) CrListGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GitlabListGroups(ctx, userId, query, pagination)
@@ -447,7 +448,7 @@ func (r *queryResolver) CrListGitlabGroups(ctx context.Context, query *string, p
 func (r *queryResolver) CrListGitlabRepositories(ctx context.Context, groupID string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.Domain.GitlabListRepos(ctx, userId, groupID, query, pagination)
 }
@@ -456,7 +457,7 @@ func (r *queryResolver) CrListGitlabRepositories(ctx context.Context, groupID st
 func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string, query *string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
 	userId, err := getUserId(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
@@ -466,7 +467,7 @@ func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string,
 func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := map[string]repos.MatchFilter{}
@@ -478,7 +479,7 @@ func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.Curs
 
 	rr, err := r.Domain.ListBuildCaches(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	records := make([]*model.BuildCacheKeyEdge, len(rr.Edges))

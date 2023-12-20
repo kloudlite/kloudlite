@@ -26,7 +26,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Ch
 	}
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -51,7 +51,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Me
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error) {
 	var m []*model.GithubComKloudliteOperatorPkgOperatorResourceRef
 	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -60,7 +60,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Re
 func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver) Fields(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.KloudliteIoAppsConsoleInternalEntitiesInputField, error) {
 	var m []*model.KloudliteIoAppsConsoleInternalEntitiesInputField
 	if err := fn.JsonConversion(obj.Fields, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -69,7 +69,7 @@ func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry
 func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver) Outputs(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.KloudliteIoAppsConsoleInternalEntitiesOutputField, error) {
 	var m []*model.KloudliteIoAppsConsoleInternalEntitiesOutputField
 	if err := fn.JsonConversion(obj.Fields, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -78,7 +78,7 @@ func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry
 func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver) Resources(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.KloudliteIoAppsConsoleInternalEntitiesMresTemplate, error) {
 	var m []*model.KloudliteIoAppsConsoleInternalEntitiesMresTemplate
 	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -102,7 +102,7 @@ func (r *kloudlite__io___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx co
 func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Annotations, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -132,7 +132,7 @@ func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.Object
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Labels, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -141,7 +141,7 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
 	if err := fn.JsonConversion(data, &m); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	obj.SetAnnotations(m)
 	return nil
@@ -151,7 +151,7 @@ func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta
 func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
 	if err := fn.JsonConversion(data, &m); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	obj.SetLabels(m)
 	return nil

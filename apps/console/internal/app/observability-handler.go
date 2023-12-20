@@ -54,7 +54,7 @@ func (args *ObservabilityArgs) Validate() (bool, error) {
 	if len(errorMsgs) > 0 {
 		b, err := json.Marshal(map[string]any{"error": errorMsgs})
 		if err != nil {
-			return false, err
+			return false, errors.NewE(err)
 		}
 		return false, errors.Newf(string(b))
 	}
@@ -124,7 +124,7 @@ const (
 func queryProm(promAddr string, resType PromMetricsType, filters map[ObservabilityLabel]string, startTime *time.Time, endTime *time.Time, writer io.Writer) error {
 	promQuery, err := buildPromQuery(resType, filters)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	pu, err := url.Parse(promAddr)
@@ -154,14 +154,14 @@ func queryProm(promAddr string, resType PromMetricsType, filters map[Observabili
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	fmt.Printf("[DEBUG]: prometheus actual request: %s\n", req.URL.String())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -170,9 +170,9 @@ func queryProm(promAddr string, resType PromMetricsType, filters map[Observabili
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	_, err = writer.Write(b)
-	return err
+	return errors.NewE(err)
 }

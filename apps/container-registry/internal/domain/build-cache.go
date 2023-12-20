@@ -17,7 +17,7 @@ func (d *Impl) AddBuildCache(ctx RegistryContext, buildCache entities.BuildCache
 		Action: string(iamT.UpdateAccount),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -37,7 +37,7 @@ func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache ent
 		Action: string(iamT.UpdateAccount),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -49,7 +49,7 @@ func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache ent
 		"id":          id,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	back.VolumeSize = buildCache.VolumeSize
@@ -68,7 +68,7 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 		Action: string(iamT.UpdateAccount),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !co.Status {
@@ -81,7 +81,7 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 	})
 
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	i, err := d.buildRepo.Count(ctx, repos.Filter{
@@ -89,7 +89,7 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 		"spec.cacheKeyName": back.Name,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if i > 0 {
@@ -108,7 +108,7 @@ func (d *Impl) ListBuildCaches(ctx RegistryContext, search map[string]repos.Matc
 		Action: string(iamT.GetAccount),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !co.Status {

@@ -12,7 +12,7 @@ import (
 
 func (d *domain) ListRouters(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := repos.Filter{
@@ -32,7 +32,7 @@ func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (
 		"metadata.name":      name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if router == nil {
 		return nil, errors.Newf("no router with name=%q,namespace=%q found", name, namespace)
@@ -42,7 +42,7 @@ func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (
 
 func (d *domain) GetRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findRouter(ctx, namespace, name)
 }
@@ -51,12 +51,12 @@ func (d *domain) GetRouter(ctx ConsoleContext, namespace string, name string) (*
 
 func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error) {
 	if err := d.canMutateResourcesInProject(ctx, router.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	router.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	router.IncrementRecordVersion()
@@ -76,13 +76,13 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 	if err != nil {
 		if d.routerRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &r.Router, 0); err != nil {
-		return r, err
+		return r, errors.NewE(err)
 	}
 
 	return r, nil
@@ -90,17 +90,17 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 
 func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error) {
 	if err := d.canMutateResourcesInProject(ctx, router.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	router.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	exRouter, err := d.findRouter(ctx, router.Namespace, router.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	exRouter.IncrementRecordVersion()
@@ -119,11 +119,11 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 
 	upRouter, err := d.routerRepo.UpdateById(ctx, exRouter.Id, exRouter)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upRouter.Router, upRouter.RecordVersion); err != nil {
-		return upRouter, err
+		return upRouter, errors.NewE(err)
 	}
 
 	return upRouter, nil
@@ -131,17 +131,17 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 
 func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string) error {
 	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	r, err := d.findRouter(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	r.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, r.RecordVersion)
 	if _, err := d.routerRepo.UpdateById(ctx, r.Id, r); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &r.Router)
@@ -150,11 +150,11 @@ func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string)
 func (d *domain) OnDeleteRouterMessage(ctx ConsoleContext, router entities.Router) error {
 	exRouter, err := d.findRouter(ctx, router.Namespace, router.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(router.Annotations, exRouter.RecordVersion); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.routerRepo.DeleteById(ctx, exRouter.Id)
@@ -163,7 +163,7 @@ func (d *domain) OnDeleteRouterMessage(ctx ConsoleContext, router entities.Route
 func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Router) error {
 	exRouter, err := d.findRouter(ctx, router.Namespace, router.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(router.Annotations)
@@ -188,13 +188,13 @@ func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Route
 	exRouter.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.routerRepo.UpdateById(ctx, exRouter.Id, exRouter)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnApplyRouterError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
 	m, err := d.findRouter(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	m.SyncStatus.State = t.SyncStateErroredAtAgent
@@ -202,13 +202,13 @@ func (d *domain) OnApplyRouterError(ctx ConsoleContext, errMsg string, namespace
 	m.SyncStatus.Error = &errMsg
 
 	_, err = d.routerRepo.UpdateById(ctx, m.Id, m)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncRouter(ctx ConsoleContext, namespace, name string) error {
 	r, err := d.findRouter(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncK8sResource(ctx, r.SyncStatus.Action, &r.Router, r.RecordVersion)

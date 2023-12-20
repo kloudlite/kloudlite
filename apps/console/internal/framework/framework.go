@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 
 	app "github.com/kloudlite/api/apps/console/internal/app"
 	"github.com/kloudlite/api/apps/console/internal/env"
@@ -41,7 +42,7 @@ var Module = fx.Module("framework",
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return nats.NewJetstreamClient(nc)
@@ -70,10 +71,10 @@ var Module = fx.Module("framework",
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if err := c2.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				return nil
 			},
@@ -121,7 +122,7 @@ var Module = fx.Module("framework",
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				if err := lc.Ping(ctx); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				logger.Infof("loki client successfully connected to loki server running @ %s", ev.LokiServerHttpAddr)
 				return nil

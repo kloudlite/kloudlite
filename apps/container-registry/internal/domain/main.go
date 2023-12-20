@@ -44,7 +44,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		l.Errorf(err)
-		return err
+		return errors.NewE(err)
 	}
 
 	for _, e := range events {
@@ -78,7 +78,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"accountName": accountName,
 			})
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			if digest == nil {
@@ -100,7 +100,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				} else {
 					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 				}
 
@@ -113,7 +113,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			})
 
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			if digest == nil {
@@ -133,14 +133,14 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 					MediaType:   e.Target.MediaType,
 					URL:         e.Target.URL,
 				}); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 			} else {
 				if b := slices.Contains(digest.Tags, tag); !b {
 					digest.Tags = append(digest.Tags, tag)
 					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 				}
 			}
@@ -150,13 +150,13 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"name":        repoName,
 			})
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			if ee == nil {
 				_, err := d.repositoryRepo.Create(ctx, &entities.Repository{})
 				if err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				return nil
 			}
@@ -177,7 +177,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"accountName": accountName,
 			}); err != nil {
 				d.logger.Errorf(err)
-				return err
+				return errors.NewE(err)
 			}
 
 		case "HEAD":
