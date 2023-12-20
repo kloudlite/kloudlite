@@ -40,7 +40,7 @@ func (r *accountResolver) Spec(ctx context.Context, obj *entities.Account) (*mod
 	}
 	m := model.GithubComKloudliteOperatorApisCrdsV1AccountSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }

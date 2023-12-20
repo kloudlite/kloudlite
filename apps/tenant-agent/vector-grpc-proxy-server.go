@@ -35,7 +35,7 @@ func (v *vectorGrpcProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.P
 	per, err := v.realVectorClient.PushEvents(outgoingCtx, msg)
 	if err != nil {
 		v.logger.Error(err)
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return per, nil
 
@@ -54,7 +54,7 @@ func (v *vectorGrpcProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.
 	hcr, err := v.realVectorClient.HealthCheck(outgoingCtx, msg)
 	if err != nil {
 		v.logger.Error(err)
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return hcr, nil
 }

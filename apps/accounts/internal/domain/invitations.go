@@ -18,7 +18,7 @@ func (d *domain) findInvitation(ctx context.Context, accountName string, invitat
 		"id":          invitationId,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if inv == nil {
@@ -35,7 +35,7 @@ func (d *domain) findInvitationByInviteToken(ctx context.Context, accountName st
 		"inviteToken": inviteToken,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if inv == nil {
@@ -47,12 +47,12 @@ func (d *domain) findInvitationByInviteToken(ctx context.Context, accountName st
 
 func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations []*entities.Invitation) ([]*entities.Invitation, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.InviteAccountMember); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	_, err := d.findAccount(ctx, accountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	results := make([]*entities.Invitation, len(invitations))
@@ -67,7 +67,7 @@ func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations 
 			UserId: string(ctx.UserId),
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		invitations[i].InvitedBy = user.Name
@@ -86,7 +86,7 @@ func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations 
 			// TODO: verify user name, if it is not empty, then use it, otherwise use email
 			Name: inv.UserName,
 		}); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		results[i] = inv
@@ -98,7 +98,7 @@ func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations 
 func (d *domain) ResendInviteEmail(ctx UserContext, accountName string, invitationId repos.ID) (bool, error) {
 	inv, err := d.findInvitation(ctx, accountName, invitationId)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	action := iamT.InviteAccountMember
@@ -107,7 +107,7 @@ func (d *domain) ResendInviteEmail(ctx UserContext, accountName string, invitati
 	}
 
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, action); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if _, err := d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
@@ -117,7 +117,7 @@ func (d *domain) ResendInviteEmail(ctx UserContext, accountName string, invitati
 		Email:           inv.UserEmail,
 		Name:            accountName,
 	}); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil
@@ -125,7 +125,7 @@ func (d *domain) ResendInviteEmail(ctx UserContext, accountName string, invitati
 
 func (d *domain) ListInvitations(ctx UserContext, accountName string) ([]*entities.Invitation, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.ListAccountInvitations); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.invitationRepo.Find(ctx, repos.Query{Filter: repos.Filter{"accountName": accountName}})
@@ -146,7 +146,7 @@ func (d *domain) ListInvitationsForUser(ctx UserContext, onlyPending bool) ([]*e
 
 func (d *domain) GetInvitation(ctx UserContext, accountName string, invitationId repos.ID) (*entities.Invitation, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.ListAccountInvitations); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return d.invitationRepo.FindById(ctx, invitationId)
@@ -154,16 +154,16 @@ func (d *domain) GetInvitation(ctx UserContext, accountName string, invitationId
 
 func (d *domain) DeleteInvitation(ctx UserContext, accountName string, invitationId repos.ID) (bool, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.DeleteAccountInvitation); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	inv, err := d.findInvitation(ctx, accountName, invitationId)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := d.invitationRepo.DeleteById(ctx, inv.Id); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -171,7 +171,7 @@ func (d *domain) DeleteInvitation(ctx UserContext, accountName string, invitatio
 func (d *domain) AcceptInvitation(ctx UserContext, accountName string, inviteToken string) (bool, error) {
 	inv, err := d.findInvitationByInviteToken(ctx, accountName, ctx.UserEmail, inviteToken)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if inv.Accepted != nil || inv.Rejected != nil {
@@ -180,11 +180,11 @@ func (d *domain) AcceptInvitation(ctx UserContext, accountName string, inviteTok
 
 	inv.Accepted = fn.New(true)
 	if _, err := d.invitationRepo.UpdateById(ctx, inv.Id, inv); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := d.addMembership(ctx, accountName, ctx.UserId, inv.UserRole); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil
@@ -193,7 +193,7 @@ func (d *domain) AcceptInvitation(ctx UserContext, accountName string, inviteTok
 func (d *domain) RejectInvitation(ctx UserContext, accountName string, inviteToken string) (bool, error) {
 	inv, err := d.findInvitationByInviteToken(ctx, accountName, ctx.UserEmail, inviteToken)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if inv.Accepted != nil || inv.Rejected != nil {
@@ -202,7 +202,7 @@ func (d *domain) RejectInvitation(ctx UserContext, accountName string, inviteTok
 
 	inv.Rejected = fn.New(true)
 	if _, err := d.invitationRepo.UpdateById(ctx, inv.Id, inv); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil

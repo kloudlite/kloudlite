@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/nats"
 	"time"
 
@@ -39,7 +40,7 @@ var Module = fx.Module("framework",
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return nats.NewJetstreamClient(nc)
@@ -79,19 +80,19 @@ var Module = fx.Module("framework",
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if err := c2.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if err := c3.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if err := c4.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if err := c5.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				return nil
 			},

@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"github.com/kloudlite/api/apps/iam/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"os"
 
@@ -18,11 +19,11 @@ var Module = fx.Module(
 		if ev.ActionRoleMapFile != "" {
 			b, err := os.ReadFile(ev.ActionRoleMapFile)
 			if err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 			var rbm RoleBindingMap
 			if err := json.Unmarshal(b, &rbm); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 			return rbm, nil
 		}

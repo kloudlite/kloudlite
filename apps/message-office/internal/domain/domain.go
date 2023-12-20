@@ -25,7 +25,7 @@ func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, ac
 		"clusterName": clusterName,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if r == nil {
@@ -41,7 +41,7 @@ func (d *domain) getClusterToken(ctx context.Context, accountName string, cluste
 	}
 	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"accountName": accountName, "clusterName": clusterName})
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	if mot == nil {
 		return "", nil
@@ -56,7 +56,7 @@ func (d *domain) GetClusterToken(ctx context.Context, accountName string, cluste
 func (d *domain) GenClusterToken(ctx context.Context, accountName, clusterName string) (string, error) {
 	token, err := d.getClusterToken(ctx, accountName, clusterName)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	if token != "" {
 		return token, nil
@@ -67,7 +67,7 @@ func (d *domain) GenClusterToken(ctx context.Context, accountName, clusterName s
 		Token:       fn.CleanerNanoidOrDie(40),
 	})
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	return record.Token, nil
 }
@@ -75,7 +75,7 @@ func (d *domain) GenClusterToken(ctx context.Context, accountName, clusterName s
 func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*AccessToken, error) {
 	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"token": clusterToken})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if mot == nil {
@@ -95,7 +95,7 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*Acce
 		AccessToken: fn.CleanerNanoidOrDie(40),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if record == nil {
@@ -104,7 +104,7 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*Acce
 
 	mot.Granted = fn.New(true)
 	if _, err := d.moRepo.UpdateById(ctx, mot.Id, mot); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return record, nil

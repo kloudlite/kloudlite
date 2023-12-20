@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"go.uber.org/fx"
 
@@ -43,7 +44,7 @@ var Module = fx.Module("framework",
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return nats.NewJetstreamClient(nc)

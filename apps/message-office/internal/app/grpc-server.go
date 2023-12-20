@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	klErrors "github.com/kloudlite/api/pkg/errors"
 	"strings"
 
 	"github.com/kloudlite/api/common"
@@ -186,12 +187,12 @@ func (g *grpcServer) parseError(ctx context.Context, accountName string, cluster
 func (g *grpcServer) ReceiveErrors(server messages.MessageDispatchService_ReceiveErrorsServer) error {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
-		return err
+		return klErrors.NewE(err)
 	}
 	for {
 		errorMsg, err := server.Recv()
 		if err != nil {
-			return err
+			return klErrors.NewE(err)
 		}
 		_ = g.parseError(server.Context(), accountName, clusterName, errorMsg)
 	}
@@ -203,7 +204,7 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 
 	ct, err := g.domain.GetClusterToken(ctx, msg.AccountName, msg.ClusterName)
 	if err != nil {
-		return nil, err
+		return nil, klErrors.NewE(err)
 	}
 	if ct != msg.ClusterToken {
 		return nil, errors.New("invalid cluster-token,account-name,cluster-name triplet")
@@ -220,7 +221,7 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 func (g *grpcServer) SendActions(request *messages.Empty, server messages.MessageDispatchService_SendActionsServer) error {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
-		return err
+		return klErrors.NewE(err)
 	}
 
 	logger := g.logger.WithKV("accountName", accountName, "clusterName", clusterName)
@@ -233,7 +234,7 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 
 	consumer, err := g.createConsumer(server.Context(), accountName, clusterName)
 	if err != nil {
-		return err
+		return klErrors.NewE(err)
 	}
 
 	logger.Infof("consumer is available now")
@@ -290,12 +291,12 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName stri
 func (g *grpcServer) ReceiveResourceUpdates(server messages.MessageDispatchService_ReceiveResourceUpdatesServer) error {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
-		return err
+		return klErrors.NewE(err)
 	}
 	for {
 		statusMsg, err := server.Recv()
 		if err != nil {
-			return err
+			return klErrors.NewE(err)
 		}
 		_ = g.processResourceUpdate(server.Context(), accountName, clusterName, statusMsg)
 	}
@@ -330,12 +331,12 @@ func (g *grpcServer) processClusterUpdate(ctx context.Context, accountName strin
 func (g *grpcServer) ReceiveClusterUpdates(server messages.MessageDispatchService_ReceiveClusterUpdatesServer) (err error) {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
-		return err
+		return klErrors.NewE(err)
 	}
 	for {
 		clientUpdateMsg, err := server.Recv()
 		if err != nil {
-			return err
+			return klErrors.NewE(err)
 		}
 
 		_ = g.processClusterUpdate(server.Context(), accountName, clusterName, clientUpdateMsg)
@@ -372,12 +373,12 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) (err error) {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
-		return err
+		return klErrors.NewE(err)
 	}
 	for {
 		statusMsg, err := server.Recv()
 		if err != nil {
-			return err
+			return klErrors.NewE(err)
 		}
 		_ = g.processInfraUpdate(server.Context(), accountName, clusterName, statusMsg)
 	}
