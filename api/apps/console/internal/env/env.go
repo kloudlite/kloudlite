@@ -11,7 +11,6 @@ type Env struct {
 	ConsoleDBUri  string `env:"MONGO_URI" required:"true"`
 	ConsoleDBName string `env:"MONGO_DB_NAME" required:"true"`
 
-
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ClusterCookieName string `env:"CLUSTER_COOKIE_NAME" required:"true"`
 
@@ -30,6 +29,8 @@ type Env struct {
 	LokiServerHttpAddr string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
 	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
 	SessionKVBucket    string `env:"SESSION_KV_BUCKET" required:"true"`
+	IsDev              bool
+	KubernetesApiProxy string `json:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {

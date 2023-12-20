@@ -22,6 +22,7 @@ type Env struct {
 	SessionKVBucket           string `env:"SESSION_KV_BUCKET" required:"true"`
 	NatsURL                   string `env:"NATS_URL" required:"true"`
 	IsDev                     bool
+	KubernetesApiProxy        string `json:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {
