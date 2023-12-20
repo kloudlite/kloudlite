@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"github.com/ztrue/tracerr"
+
 	"net/http"
 	"strings"
 	"time"
@@ -30,6 +33,7 @@ type Server interface {
 type server struct {
 	Logger logging.Logger
 	*fiber.App
+	isDev bool
 }
 
 func (s *server) Raw() *fiber.App {
@@ -59,12 +63,18 @@ func (s *server) Listen(addr string) error {
 }
 
 type ServerArgs struct {
+	IsDev            bool
 	Logger           logging.Logger
 	CorsAllowOrigins *string
 }
 
 func NewServer(args ServerArgs) Server {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			args.Logger.Errorf(err)
+			return err
+		},
+	})
 	app.Use(
 		l.New(
 			l.Config{
@@ -94,7 +104,7 @@ func NewServer(args ServerArgs) Server {
 		args.Logger = logging.EmptyLogger
 	}
 
-	return &server{App: app, Logger: args.Logger}
+	return &server{App: app, Logger: args.Logger, isDev: args.IsDev}
 }
 
 func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...fiber.Handler) {
@@ -106,5 +116,11 @@ func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...
 	for _, v := range middlewares {
 		s.Use(v)
 	}
+	gqlServer.SetErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
+		if s.isDev {
+			tracerr.Print(err.(*gqlerror.Error).Unwrap())
+		}
+		return gqlerror.Errorf(err.Error())
+	})
 	s.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
 }
