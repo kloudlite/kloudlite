@@ -34,14 +34,20 @@ func main() {
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
-			return env.LoadEnv()
+			if e, err := env.LoadEnv(); err != nil {
+				return nil, err
+			} else {
+				e.IsDev = isDev
+				return e, nil
+			}
 		}),
 
-		fx.Provide(func() (*rest.Config, error) {
-			if isDev {
-				return &rest.Config{Host: "localhost:8080"}, nil
+		fx.Provide(func(e *env.Env) (*rest.Config, error) {
+			if e.KubernetesApiProxy != "" {
+				return &rest.Config{
+					Host: e.KubernetesApiProxy,
+				}, nil
 			}
-
 			return k8s.RestInclusterConfig()
 		}),
 		framework.Module,
