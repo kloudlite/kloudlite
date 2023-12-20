@@ -2,10 +2,9 @@ package app
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -29,7 +28,7 @@ func (g *grpcServer) GetCluster(ctx context.Context, in *infra.GetClusterIn) (*i
 	}
 
 	if c == nil {
-		return nil, fmt.Errorf("cluster %s not found", in.ClusterName)
+		return nil, errors.Newf("cluster %s not found", in.ClusterName)
 	}
 
 	return &infra.GetClusterOut{
@@ -66,7 +65,7 @@ func (g *grpcServer) GetNodepool(ctx context.Context, in *infra.GetNodepoolIn) (
 	}
 
 	if np == nil {
-		return nil, fmt.Errorf("nodepool %s not found", in.NodepoolName)
+		return nil, errors.Newf("nodepool %s not found", in.NodepoolName)
 	}
 
 	return &infra.GetNodepoolOut{

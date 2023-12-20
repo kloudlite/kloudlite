@@ -101,7 +101,7 @@ func (c *clientHandler) ValidateObject(ctx context.Context, obj client.Object) e
 		for _, err := range result.Errors() {
 			errMsgs = append(errMsgs, err.String())
 		}
-		return NewInvalidSchemaError(fmt.Errorf("document is invalid"), errMsgs)
+		return NewInvalidSchemaError(errors.Newf("document is invalid"), errMsgs)
 	}
 	return nil
 }

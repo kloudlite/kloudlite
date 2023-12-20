@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"regexp"
 	"strings"
 
@@ -187,7 +188,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 
 		default:
 			l.Infof("unhandled method", e.Request.Method)
-			return fmt.Errorf("unhandled method %s", e.Request.Method)
+			return errors.Newf("unhandled method %s", e.Request.Method)
 		}
 
 	}

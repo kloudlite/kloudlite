@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"strings"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -183,7 +184,7 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudPr
 			}
 		}
 	default:
-		return nil, fmt.Errorf("unknown cloud provider")
+		return nil, errors.Newf("unknown cloud provider")
 	}
 	secret := corev1SecretFromProviderSecret(&psecret)
 	if err != nil {
@@ -264,7 +265,7 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 	}
 
 	if len(clusters) > 0 {
-		return fmt.Errorf("cloud provider secret %q is used by %d cluster(s), deletion is forbidden", secretName, len(clusters))
+		return errors.Newf("cloud provider secret %q is used by %d cluster(s), deletion is forbidden", secretName, len(clusters))
 	}
 
 	if err := d.deleteK8sResource(ctx, corev1SecretFromProviderSecret(cps)); err != nil {
@@ -313,7 +314,7 @@ func (d *domain) findProviderSecret(ctx InfraContext, name string) (*entities.Cl
 	}
 
 	if scrt == nil {
-		return nil, fmt.Errorf("provider secret with name %q not found", name)
+		return nil, errors.Newf("provider secret with name %q not found", name)
 	}
 
 	return scrt, nil

@@ -1,9 +1,8 @@
 package domain
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -26,7 +25,7 @@ func (d *domain) GetBuildRun(ctx InfraContext, repoName string, buildRunName str
 	}
 
 	if brun == nil {
-		return nil, fmt.Errorf("build run with name %q not found", buildRunName)
+		return nil, errors.Newf("build run with name %q not found", buildRunName)
 	}
 	return brun, nil
 }

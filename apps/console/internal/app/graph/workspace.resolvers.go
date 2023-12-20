@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *workspaceResolver) CreationTime(ctx context.Context, obj *entities.Workspace) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,7 +27,7 @@ func (r *workspaceResolver) CreationTime(ctx context.Context, obj *entities.Work
 // ID is the resolver for the id field.
 func (r *workspaceResolver) ID(ctx context.Context, obj *entities.Workspace) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -44,7 +44,7 @@ func (r *workspaceResolver) Spec(ctx context.Context, obj *entities.Workspace) (
 // UpdateTime is the resolver for the updateTime field.
 func (r *workspaceResolver) UpdateTime(ctx context.Context, obj *entities.Workspace) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
 }
@@ -52,7 +52,7 @@ func (r *workspaceResolver) UpdateTime(ctx context.Context, obj *entities.Worksp
 // Metadata is the resolver for the metadata field.
 func (r *workspaceInResolver) Metadata(ctx context.Context, obj *entities.Workspace, data *v1.ObjectMeta) error {
 	if data == nil {
-		return fmt.Errorf("data is nil")
+		return errors.Newf("data is nil")
 	}
 	obj.ObjectMeta = *data
 	return nil
@@ -61,7 +61,7 @@ func (r *workspaceInResolver) Metadata(ctx context.Context, obj *entities.Worksp
 // Spec is the resolver for the spec field.
 func (r *workspaceInResolver) Spec(ctx context.Context, obj *entities.Workspace, data *model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn) error {
 	if data == nil {
-		return fmt.Errorf("data is nil")
+		return errors.Newf("data is nil")
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }

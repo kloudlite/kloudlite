@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"log"
 	"net/url"
 	"regexp"
@@ -26,7 +27,7 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) (*entities
 	}
 
 	if !re.MatchString(repoName) {
-		return nil, fmt.Errorf("invalid repository name, must be lowercase alphanumeric with underscore")
+		return nil, errors.Newf("invalid repository name, must be lowercase alphanumeric with underscore")
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -42,7 +43,7 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) (*entities
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to create repository")
+		return nil, errors.Newf("unauthorized to create repository")
 	}
 
 	return d.repositoryRepo.Create(ctx, &entities.Repository{
@@ -72,7 +73,7 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete repository")
+		return errors.Newf("unauthorized to delete repository")
 	}
 
 	if _, err = d.repositoryRepo.FindOne(ctx, repos.Filter{
@@ -94,7 +95,7 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 	}
 
 	if len(res) > 0 {
-		return fmt.Errorf("repository %s is not empty, please delete all Digests first", repoName)
+		return errors.Newf("repository %s is not empty, please delete all Digests first", repoName)
 	}
 
 	return d.repositoryRepo.DeleteOne(ctx, repos.Filter{"name": repoName, "accountName": ctx.AccountName})
@@ -115,7 +116,7 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete repository digest")
+		return errors.Newf("unauthorized to delete repository digest")
 	}
 
 	e, err := d.digestRepo.FindOne(ctx, repos.Filter{
@@ -129,7 +130,7 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 	}
 
 	if e == nil {
-		return fmt.Errorf("%s not found in repository %s", digest, repoName)
+		return errors.Newf("%s not found in repository %s", digest, repoName)
 	}
 
 	r_url, err := url.Parse(fmt.Sprintf("https://%s", d.envs.RegistryHost))
@@ -177,7 +178,7 @@ func (d *Impl) ListRepositories(ctx RegistryContext, search map[string]repos.Mat
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list repositories")
+		return nil, errors.Newf("unauthorized to list repositories")
 	}
 
 	filter := repos.Filter{"accountName": ctx.AccountName}
@@ -198,7 +199,7 @@ func (d *Impl) ListRepositoryDigests(ctx RegistryContext, repoName string, searc
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list repository digests")
+		return nil, errors.Newf("unauthorized to list repository digests")
 	}
 
 	filter := repos.Filter{"accountName": ctx.AccountName, "repository": repoName}

@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -38,7 +38,7 @@ func (r *appResolver) Spec(ctx context.Context, obj *entities.App) (*model.Githu
 // UpdateTime is the resolver for the updateTime field.
 func (r *appResolver) UpdateTime(ctx context.Context, obj *entities.App) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("obj is nil")
+		return "", errors.Newf("obj is nil")
 	}
 
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil

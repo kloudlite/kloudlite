@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -30,7 +30,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Ch
 // LastReconcileTime is the resolver for the lastReconcileTime field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("syncStatus is nil")
+		return nil, errors.Newf("syncStatus is nil")
 	}
 	if obj.LastReconcileTime == nil {
 		return fn.New(time.Now().Format(time.RFC3339)), nil
@@ -41,7 +41,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) La
 // Message is the resolver for the message field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("syncStatus is nil")
+		return nil, errors.Newf("syncStatus is nil")
 	}
 	if obj.Message == nil {
 		return nil, nil
@@ -54,7 +54,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Me
 // UserID is the resolver for the userId field.
 func (r *kloudlite__io___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("createdOrUpdatedBy is nil")
+		return "", errors.Newf("createdOrUpdatedBy is nil")
 	}
 	return string(obj.UserId), nil
 }
@@ -62,7 +62,7 @@ func (r *kloudlite__io___common__CreatedOrUpdatedByResolver) UserID(ctx context.
 // LastSyncedAt is the resolver for the lastSyncedAt field.
 func (r *kloudlite__io___pkg___types__SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("syncStatus is nil")
+		return nil, errors.Newf("syncStatus is nil")
 	}
 	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
 }
@@ -70,7 +70,7 @@ func (r *kloudlite__io___pkg___types__SyncStatusResolver) LastSyncedAt(ctx conte
 // SyncScheduledAt is the resolver for the syncScheduledAt field.
 func (r *kloudlite__io___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("syncStatus is nil")
+		return nil, errors.Newf("syncStatus is nil")
 	}
 	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
 }
@@ -87,7 +87,7 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 // CreationTimestamp is the resolver for the creationTimestamp field.
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("metadata is nil")
+		return "", errors.Newf("metadata is nil")
 	}
 	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
@@ -95,7 +95,7 @@ func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.Object
 // DeletionTimestamp is the resolver for the deletionTimestamp field.
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("metadata is nil")
+		return nil, errors.Newf("metadata is nil")
 	}
 
 	if obj.DeletionTimestamp == nil {

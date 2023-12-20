@@ -56,7 +56,7 @@ func (args *ObservabilityArgs) Validate() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		return false, fmt.Errorf(string(b))
+		return false, errors.Newf(string(b))
 	}
 	return true, nil
 }

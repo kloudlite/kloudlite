@@ -6,17 +6,16 @@ package graph
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 // Account is the resolver for the account field.
 func (r *githubInstallationResolver) Account(ctx context.Context, obj *entities.GithubInstallation) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("Account: obj is nil")
+		return nil, errors.Newf("Account: obj is nil")
 	}
 
 	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount{

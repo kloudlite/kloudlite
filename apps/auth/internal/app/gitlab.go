@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/kloudlite/api/apps/auth/internal/domain"
@@ -20,21 +19,21 @@ type gitlabI struct {
 
 func (gl *gitlabI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
 	if !gl.enabled {
-		return nil, fmt.Errorf("gitlab oauth is disabled")
+		return nil, errors.Newf("gitlab oauth is disabled")
 	}
 	return gl.cfg.TokenSource(ctx, token).Token()
 }
 
 func (gl *gitlabI) Authorize(_ context.Context, state string) (string, error) {
 	if !gl.enabled {
-		return "", fmt.Errorf("gitlab oauth is disabled")
+		return "", errors.Newf("gitlab oauth is disabled")
 	}
 	return gl.cfg.AuthCodeURL(state), nil
 }
 
 func (gl *gitlabI) Callback(ctx context.Context, code string, state string) (*gitlab.User, *oauth2.Token, error) {
 	if !gl.enabled {
-		return nil, nil, fmt.Errorf("gitlab oauth is disabled")
+		return nil, nil, errors.Newf("gitlab oauth is disabled")
 	}
 	token, err := gl.cfg.Exchange(ctx, code)
 	if err != nil {

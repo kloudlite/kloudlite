@@ -23,7 +23,7 @@ type googleI struct {
 
 func (g *googleI) Authorize(ctx context.Context, state string) (string, error) {
 	if !g.enabled {
-		return "", fmt.Errorf("google oauth is disabled")
+		return "", errors.Newf("google oauth is disabled")
 	}
 
 	return g.cfg.AuthCodeURL(state), nil
@@ -31,7 +31,7 @@ func (g *googleI) Authorize(ctx context.Context, state string) (string, error) {
 
 func (g *googleI) Callback(ctx context.Context, code string, state string) (*domain.GoogleUser, *oauth2.Token, error) {
 	if !g.enabled {
-		return nil, nil, fmt.Errorf("google oauth is disabled")
+		return nil, nil, errors.Newf("google oauth is disabled")
 	}
 
 	nCode, err := url.PathUnescape(code)

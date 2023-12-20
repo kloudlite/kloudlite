@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -31,7 +32,7 @@ func (d *docker) DeleteDigest(repoName string, refrence string) error {
 
 	if resp.StatusCode != 202 {
 		fmt.Println(uri)
-		return fmt.Errorf("failed to delete tag %s:%s: %s", repoName, refrence, resp.Status)
+		return errors.Newf("failed to delete tag %s:%s: %s", repoName, refrence, resp.Status)
 	}
 
 	// read the response body

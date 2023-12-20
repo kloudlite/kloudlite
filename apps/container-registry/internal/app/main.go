@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/errors"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
 	"net/url"
@@ -135,7 +135,7 @@ var Module = fx.Module("app",
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m[ev.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named %q present in request", ev.AccountCookieName)
+					return nil, errors.Newf("no cookie named %q present in request", ev.AccountCookieName)
 				}
 
 				nctx := context.WithValue(ctx, "user-session", sess)

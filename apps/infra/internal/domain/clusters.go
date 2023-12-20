@@ -78,7 +78,7 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 
 	kubeconfig, ok := kscrt.Data[cluster.Spec.Output.KeyKubeconfig]
 	if !ok {
-		return nil, fmt.Errorf("kubeconfig key %q not found in secret %q", cluster.Spec.Output.KeyKubeconfig, cluster.Spec.Output.SecretName)
+		return nil, errors.Newf("kubeconfig key %q not found in secret %q", cluster.Spec.Output.KeyKubeconfig, cluster.Spec.Output.SecretName)
 	}
 
 	return fn.New(string(kubeconfig)), nil
@@ -103,7 +103,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if cps.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
+		return nil, errors.Newf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
 	}
 
 	existing, err := d.clusterRepo.FindOne(ctx, repos.Filter{
@@ -234,7 +234,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	nCluster, err := d.clusterRepo.Create(ctx, &cluster)
 	if err != nil {
 		if d.clusterRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("cluster with name %q already exists in namespace %q", cluster.Name, cluster.Namespace)
+			return nil, errors.Newf("cluster with name %q already exists in namespace %q", cluster.Name, cluster.Namespace)
 		}
 		return nil, err
 	}
@@ -294,7 +294,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if clus.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("cluster %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
+		return nil, errors.Newf("cluster %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
 	}
 
 	cps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
@@ -303,7 +303,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if cps.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster update", cps.Name)
+		return nil, errors.Newf("cloud provider secret %q is marked for deletion, aborting cluster update", cps.Name)
 	}
 
 	cluster.Spec.CredentialsRef.Namespace = cps.Namespace
@@ -405,7 +405,7 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 	}
 
 	if cluster == nil {
-		return nil, fmt.Errorf("cluster with name %q not found", clusterName)
+		return nil, errors.Newf("cluster with name %q not found", clusterName)
 	}
 	return cluster, nil
 }

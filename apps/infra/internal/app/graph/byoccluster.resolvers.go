@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *bYOCClusterResolver) CreationTime(ctx context.Context, obj *entities.BYOCCluster) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("byocCluster/creation-time is nil")
+		return "", errors.Newf("byocCluster/creation-time is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,7 +27,7 @@ func (r *bYOCClusterResolver) CreationTime(ctx context.Context, obj *entities.BY
 // HelmStatus is the resolver for the helmStatus field.
 func (r *bYOCClusterResolver) HelmStatus(ctx context.Context, obj *entities.BYOCCluster) (map[string]interface{}, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("byocCluster is nil")
+		return nil, errors.Newf("byocCluster is nil")
 	}
 	var m map[string]any
 	if err := fn.JsonConversion(obj.HelmStatus, &m); err != nil {
@@ -39,7 +39,7 @@ func (r *bYOCClusterResolver) HelmStatus(ctx context.Context, obj *entities.BYOC
 // ID is the resolver for the id field.
 func (r *bYOCClusterResolver) ID(ctx context.Context, obj *entities.BYOCCluster) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("byocCluster is nil")
+		return "", errors.Newf("byocCluster is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -56,7 +56,7 @@ func (r *bYOCClusterResolver) Spec(ctx context.Context, obj *entities.BYOCCluste
 // UpdateTime is the resolver for the updateTime field.
 func (r *bYOCClusterResolver) UpdateTime(ctx context.Context, obj *entities.BYOCCluster) (string, error) {
 	if obj == nil || obj.UpdateTime.IsZero() {
-		return "", fmt.Errorf("byocCluster/update-time is nil")
+		return "", errors.Newf("byocCluster/update-time is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
 	"strconv"
 
@@ -56,7 +57,7 @@ func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction
 	case types.SyncActionDelete:
 		return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, obj)
 	}
-	return fmt.Errorf("unknonw action: %q", action)
+	return errors.Newf("unknonw action: %q", action)
 }
 
 func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVersion int) error {
@@ -95,7 +96,7 @@ func (d *domain) deleteK8sResource(ctx InfraContext, obj client.Object) error {
 func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
 	annotatedVersion, ok := annotations[constants.RecordVersionKey]
 	if !ok {
-		return 0, fmt.Errorf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
+		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
 	}
 
 	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
@@ -113,7 +114,7 @@ func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error
 	}
 
 	if annVersion != rv {
-		return fmt.Errorf("record version mismatch, expected %d, got %d", rv, annVersion)
+		return errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
 	}
 
 	return nil
@@ -125,7 +126,7 @@ func (d *domain) getAccNamespace(ctx InfraContext, name string) (string, error) 
 		return "", err
 	}
 	if !acc.IsActive {
-		return "", fmt.Errorf("account %q is not active", ctx.AccountName)
+		return "", errors.Newf("account %q is not active", ctx.AccountName)
 	}
 
 	return acc.TargetNamespace, nil

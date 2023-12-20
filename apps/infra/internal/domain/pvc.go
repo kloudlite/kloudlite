@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"fmt"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -25,7 +25,7 @@ func (d *domain) GetPVC(ctx InfraContext, clusterName string, buildRunName strin
 	}
 
 	if pvc == nil {
-		return nil, fmt.Errorf("persistent volume claim with name %q not found", buildRunName)
+		return nil, errors.Newf("persistent volume claim with name %q not found", buildRunName)
 	}
 	return pvc, nil
 }

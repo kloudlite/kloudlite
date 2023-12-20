@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"log"
 	"os"
 	"strings"
@@ -70,7 +70,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	mLogger.Infof("[%d] received message", g.inMemCounter)
 
 	if len(strings.TrimSpace(msg.AccountName)) == 0 {
-		return g.handleErrorOnApply(fmt.Errorf("field 'accountName' must be defined in message"), msg)
+		return g.handleErrorOnApply(errors.Newf("field 'accountName' must be defined in message"), msg)
 	}
 
 	switch msg.Action {
@@ -105,7 +105,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 		}
 	default:
 		{
-			err := fmt.Errorf("invalid action (%s)", msg.Action)
+			err := errors.Newf("invalid action (%s)", msg.Action)
 			mLogger.Infof("[%d] [error]: %s", err.Error())
 			mLogger.Infof("[%d] failed to process message", g.inMemCounter)
 			return g.handleErrorOnApply(err, msg)

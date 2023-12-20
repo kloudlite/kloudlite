@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"go.uber.org/fx"
 
 	"github.com/codingconcepts/env"
@@ -12,7 +12,7 @@ func LoadEnv[T any]() func() (*T, error) {
 		var x T
 		err := env.Set(&x)
 		if err != nil {
-			return nil, fmt.Errorf("not able to load ENV: %v", err)
+			return nil, errors.Newf("not able to load ENV: %v", err)
 		}
 		return &x, err
 	}

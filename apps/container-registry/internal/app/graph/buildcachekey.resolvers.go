@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
@@ -17,7 +17,7 @@ import (
 // CreatedBy is the resolver for the createdBy field.
 func (r *buildCacheKeyResolver) CreatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("buildCacheKey is nil")
+		return nil, errors.Newf("buildCacheKey is nil")
 	}
 	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
 		UserEmail: obj.CreatedBy.UserEmail,
@@ -29,7 +29,7 @@ func (r *buildCacheKeyResolver) CreatedBy(ctx context.Context, obj *entities.Bui
 // CreationTime is the resolver for the creationTime field.
 func (r *buildCacheKeyResolver) CreationTime(ctx context.Context, obj *entities.BuildCacheKey) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("buildCacheKey is nil")
+		return "", errors.Newf("buildCacheKey is nil")
 	}
 
 	return obj.CreationTime.Format(time.RFC3339), nil
@@ -38,7 +38,7 @@ func (r *buildCacheKeyResolver) CreationTime(ctx context.Context, obj *entities.
 // ID is the resolver for the id field.
 func (r *buildCacheKeyResolver) ID(ctx context.Context, obj *entities.BuildCacheKey) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("buildCacheKey is nil")
+		return "", errors.Newf("buildCacheKey is nil")
 	}
 
 	return string(obj.Id), nil
@@ -47,7 +47,7 @@ func (r *buildCacheKeyResolver) ID(ctx context.Context, obj *entities.BuildCache
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
 func (r *buildCacheKeyResolver) LastUpdatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("buildCacheKey is nil")
+		return nil, errors.Newf("buildCacheKey is nil")
 	}
 
 	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
@@ -60,7 +60,7 @@ func (r *buildCacheKeyResolver) LastUpdatedBy(ctx context.Context, obj *entities
 // UpdateTime is the resolver for the updateTime field.
 func (r *buildCacheKeyResolver) UpdateTime(ctx context.Context, obj *entities.BuildCacheKey) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("buildCacheKey is nil")
+		return "", errors.Newf("buildCacheKey is nil")
 	}
 
 	return obj.UpdateTime.Format(time.RFC3339), nil
@@ -69,7 +69,7 @@ func (r *buildCacheKeyResolver) UpdateTime(ctx context.Context, obj *entities.Bu
 // VolumeSizeInGb is the resolver for the volumeSizeInGB field.
 func (r *buildCacheKeyResolver) VolumeSizeInGb(ctx context.Context, obj *entities.BuildCacheKey) (float64, error) {
 	if obj == nil {
-		return 0, fmt.Errorf("buildCacheKey is nil")
+		return 0, errors.Newf("buildCacheKey is nil")
 	}
 
 	return float64(obj.VolumeSize), nil
@@ -78,7 +78,7 @@ func (r *buildCacheKeyResolver) VolumeSizeInGb(ctx context.Context, obj *entitie
 // VolumeSizeInGb is the resolver for the volumeSizeInGB field.
 func (r *buildCacheKeyInResolver) VolumeSizeInGb(ctx context.Context, obj *entities.BuildCacheKey, data float64) error {
 	if obj == nil {
-		return fmt.Errorf("buildCacheKey is nil")
+		return errors.Newf("buildCacheKey is nil")
 	}
 
 	obj.VolumeSize = float32(data)

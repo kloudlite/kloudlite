@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
@@ -17,7 +17,7 @@ import (
 // Repositories is the resolver for the repositories field.
 func (r *githubSearchRepositoryResolver) Repositories(ctx context.Context, obj *entities.GithubSearchRepository) ([]*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("Repositories: obj is nil")
+		return nil, errors.Newf("Repositories: obj is nil")
 	}
 
 	repositories := make([]*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository, len(obj.Repositories))

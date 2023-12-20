@@ -2,6 +2,7 @@ package entities
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -41,7 +42,7 @@ func (asc *AWSSecretCredentials) IsAssumeRoleConfiguration() bool {
 
 func (asc *AWSSecretCredentials) Validate() error {
 	if asc == nil {
-		return fmt.Errorf("aws secret credentials, is nil")
+		return errors.Newf("aws secret credentials, is nil")
 	}
 
 	if asc.AccessKey != nil || asc.SecretKey != nil {
@@ -49,23 +50,23 @@ func (asc *AWSSecretCredentials) Validate() error {
 	}
 
 	if asc.AWSAccountId == nil {
-		return fmt.Errorf("awsAccountId, must be provided")
+		return errors.Newf("awsAccountId, must be provided")
 	}
 
 	if asc.CfParamStackName == "" {
-		return fmt.Errorf("cfParamStackName, must be provided")
+		return errors.Newf("cfParamStackName, must be provided")
 	}
 	if asc.CfParamExternalID == "" {
-		return fmt.Errorf("cfParamExternalID, must be provided")
+		return errors.Newf("cfParamExternalID, must be provided")
 	}
 	if asc.CfParamRoleName == "" {
-		return fmt.Errorf("cfParamRoleName, must be provided")
+		return errors.Newf("cfParamRoleName, must be provided")
 	}
 	if asc.CfParamTrustedARN == "" {
-		return fmt.Errorf("cfParamTrustedARN, must be provided")
+		return errors.Newf("cfParamTrustedARN, must be provided")
 	}
 	if asc.CfParamInstanceProfileName == "" {
-		return fmt.Errorf("cfParamInstanceProfileName, must be provided")
+		return errors.Newf("cfParamInstanceProfileName, must be provided")
 	}
 
 	return nil
@@ -110,23 +111,23 @@ var CloudProviderSecretIndices = []repos.IndexField{
 
 func (cps *CloudProviderSecret) Validate() error {
 	if cps == nil {
-		return fmt.Errorf("cloud provider secret is nil")
+		return errors.Newf("cloud provider secret is nil")
 	}
 
 	switch cps.CloudProviderName {
 	case ct.CloudProviderAWS:
 		{
 			if cps.AWS == nil {
-				return fmt.Errorf(".aws is nil, must be provided when cloudproviderName is set to aws")
+				return errors.Newf(".aws is nil, must be provided when cloudproviderName is set to aws")
 			}
 			if cps.AWS.AWSAccountId == nil && (cps.AWS.AccessKey == nil || cps.AWS.SecretKey == nil) {
-				return fmt.Errorf("neither .aws.%s nor (.aws.%s and .aws.%s) is provided", AWSAccountId, AccessKey, SecretKey)
+				return errors.Newf("neither .aws.%s nor (.aws.%s and .aws.%s) is provided", AWSAccountId, AccessKey, SecretKey)
 			}
 		}
 	default:
 		{
 			// if cps.StringData[AccessKey] == "" || cps.StringData[SecretKey] == "" {
-			// 	return false, fmt.Errorf(".stringData.accessKey or .stringData.accessSecret is empty")
+			// 	return false, errors.Newf(".stringData.accessKey or .stringData.accessSecret is empty")
 			// }
 		}
 	}

@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *projectResolver) CreationTime(ctx context.Context, obj *entities.Project) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,7 +27,7 @@ func (r *projectResolver) CreationTime(ctx context.Context, obj *entities.Projec
 // ID is the resolver for the id field.
 func (r *projectResolver) ID(ctx context.Context, obj *entities.Project) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -44,7 +44,7 @@ func (r *projectResolver) Spec(ctx context.Context, obj *entities.Project) (*mod
 // UpdateTime is the resolver for the updateTime field.
 func (r *projectResolver) UpdateTime(ctx context.Context, obj *entities.Project) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
@@ -58,7 +58,7 @@ func (r *projectInResolver) Metadata(ctx context.Context, obj *entities.Project,
 // Spec is the resolver for the spec field.
 func (r *projectInResolver) Spec(ctx context.Context, obj *entities.Project, data *model.GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn) error {
 	if obj == nil {
-		return fmt.Errorf("resource is nil")
+		return errors.Newf("resource is nil")
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }

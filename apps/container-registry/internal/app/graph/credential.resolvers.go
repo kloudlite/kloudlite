@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
@@ -22,7 +22,7 @@ func (r *credentialResolver) Access(ctx context.Context, obj *entities.Credentia
 // CreatedBy is the resolver for the createdBy field.
 func (r *credentialResolver) CreatedBy(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("resource is nil")
+		return nil, errors.Newf("resource is nil")
 	}
 
 	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
@@ -35,7 +35,7 @@ func (r *credentialResolver) CreatedBy(ctx context.Context, obj *entities.Creden
 // CreationTime is the resolver for the creationTime field.
 func (r *credentialResolver) CreationTime(ctx context.Context, obj *entities.Credential) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 
 	return obj.CreationTime.Format(time.RFC3339), nil
@@ -44,7 +44,7 @@ func (r *credentialResolver) CreationTime(ctx context.Context, obj *entities.Cre
 // Expiration is the resolver for the expiration field.
 func (r *credentialResolver) Expiration(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("resource is nil")
+		return nil, errors.Newf("resource is nil")
 	}
 
 	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration{
@@ -56,7 +56,7 @@ func (r *credentialResolver) Expiration(ctx context.Context, obj *entities.Crede
 // ID is the resolver for the id field.
 func (r *credentialResolver) ID(ctx context.Context, obj *entities.Credential) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 
 	return string(obj.Id), nil
@@ -65,7 +65,7 @@ func (r *credentialResolver) ID(ctx context.Context, obj *entities.Credential) (
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
 func (r *credentialResolver) LastUpdatedBy(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("resource is nil")
+		return nil, errors.Newf("resource is nil")
 	}
 
 	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
@@ -78,7 +78,7 @@ func (r *credentialResolver) LastUpdatedBy(ctx context.Context, obj *entities.Cr
 // UpdateTime is the resolver for the updateTime field.
 func (r *credentialResolver) UpdateTime(ctx context.Context, obj *entities.Credential) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 
 	return obj.UpdateTime.Format(time.RFC3339), nil
@@ -87,7 +87,7 @@ func (r *credentialResolver) UpdateTime(ctx context.Context, obj *entities.Crede
 // Access is the resolver for the access field.
 func (r *credentialInResolver) Access(ctx context.Context, obj *entities.Credential, data model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) error {
 	if obj == nil {
-		return fmt.Errorf("resource is nil")
+		return errors.Newf("resource is nil")
 	}
 
 	obj.Access = entities.RepoAccess(data)
@@ -97,7 +97,7 @@ func (r *credentialInResolver) Access(ctx context.Context, obj *entities.Credent
 // Expiration is the resolver for the expiration field.
 func (r *credentialInResolver) Expiration(ctx context.Context, obj *entities.Credential, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationIn) error {
 	if obj == nil {
-		return fmt.Errorf("resource is nil")
+		return errors.Newf("resource is nil")
 	}
 
 	obj.Expiration = entities.Expiration{

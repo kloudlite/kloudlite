@@ -3,9 +3,8 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-
 	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	"github.com/kloudlite/api/pkg/messaging/types"
@@ -58,7 +57,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 			}
 		default:
 			{
-				return fmt.Errorf("infra error-on-apply reader does not acknowledge resource with kind (%s)", kind)
+				return errors.Newf("infra error-on-apply reader does not acknowledge resource with kind (%s)", kind)
 			}
 		}
 	}

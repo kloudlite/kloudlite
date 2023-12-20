@@ -2,8 +2,6 @@ package domain_test
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/kloudlite/api/common"
 
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
@@ -83,7 +81,7 @@ var _ = Describe("domain.ActivateAccount says", func() {
 			}
 
 			accountRepo.MockFindOne = func(ctx context.Context, filter repos.Filter) (*entities.Account, error) {
-				return nil, fmt.Errorf("not found")
+				return nil, errors.Newf("not found")
 			}
 
 			_, err := d.ActivateAccount(domain.UserContext{}, "sample")
@@ -102,7 +100,7 @@ var _ = Describe("domain.ActivateAccount says", func() {
 				}
 
 				accountRepo.MockFindOne = func(ctx context.Context, filter repos.Filter) (*entities.Account, error) {
-					return nil, fmt.Errorf("mock: account not found")
+					return nil, errors.Newf("mock: account not found")
 				}
 
 				_, err := d.ActivateAccount(domain.UserContext{}, "sample")
@@ -204,7 +202,7 @@ var _ = Describe("domain.CreateAccount() says", func() {
 			// iamClient.MockCan = func(ctx context.Context, in *iam.CanIn, opts ...grpc.CallOption) (*iam.CanOut, error) { }
 
 			accountRepo.MockCreate = func(ctx context.Context, data *entities.Account) (*entities.Account, error) {
-				return nil, fmt.Errorf("account already exists")
+				return nil, errors.Newf("account already exists")
 			}
 
 			k8sExtendedClient.MockValidateStruct = func(ctx context.Context, obj client.Object) error {
@@ -221,7 +219,7 @@ var _ = Describe("domain.CreateAccount() says", func() {
 		Context("but account is not valid", func() {
 			BeforeEach(func() {
 				k8sExtendedClient.MockValidateStruct = func(ctx context.Context, obj client.Object) error {
-					return fmt.Errorf("invalid account data")
+					return errors.Newf("invalid account data")
 				}
 			})
 
@@ -229,7 +227,7 @@ var _ = Describe("domain.CreateAccount() says", func() {
 				d := getDomain()
 
 				accountRepo.MockCreate = func(ctx context.Context, data *entities.Account) (*entities.Account, error) {
-					return nil, fmt.Errorf("account already exists")
+					return nil, errors.Newf("account already exists")
 				}
 
 				_, err := d.CreateAccount(domain.UserContext{}, entities.Account{})

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"io"
 	"strconv"
 	"time"
@@ -48,12 +49,12 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 	m := httpServer.GetHttpCookies(requestCtx)
 	klAccount := m[accountCookieName]
 	if klAccount == "" {
-		return domain.ConsoleContext{}, fmt.Errorf("no cookie named '%s' present in request", accountCookieName)
+		return domain.ConsoleContext{}, errors.Newf("no cookie named '%s' present in request", accountCookieName)
 	}
 
 	klCluster := m[clusterCookieName]
 	if klCluster == "" {
-		return domain.ConsoleContext{}, fmt.Errorf("no cookie named '%s' present in request", clusterCookieName)
+		return domain.ConsoleContext{}, errors.Newf("no cookie named '%s' present in request", clusterCookieName)
 	}
 
 	return domain.NewConsoleContext(requestCtx, sess.UserId, klAccount, klCluster), nil
@@ -440,12 +441,12 @@ var Module = fx.Module("app",
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m[ev.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", ev.AccountCookieName)
+					return nil, errors.Newf("no cookie named '%s' present in request", ev.AccountCookieName)
 				}
 
 				klCluster := m[ev.ClusterCookieName]
 				if klCluster == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", ev.ClusterCookieName)
+					return nil, errors.Newf("no cookie named '%s' present in request", ev.ClusterCookieName)
 				}
 
 				nctx := context.WithValue(ctx, "user-session", sess)
@@ -462,7 +463,7 @@ var Module = fx.Module("app",
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m[ev.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named %q present in request", ev.AccountCookieName)
+					return nil, errors.Newf("no cookie named %q present in request", ev.AccountCookieName)
 				}
 
 				nctx := context.WithValue(ctx, "user-session", sess)

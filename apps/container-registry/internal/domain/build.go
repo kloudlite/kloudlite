@@ -2,12 +2,11 @@ package domain
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -25,7 +24,7 @@ func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, paginati
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list builds")
+		return nil, errors.Newf("unauthorized to list builds")
 	}
 
 	filter := repos.Filter{"spec.accountName": ctx.AccountName, "spec.cacheKeyName": cacheId}
@@ -47,7 +46,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to add build")
+		return nil, errors.Newf("unauthorized to add build")
 	}
 
 	if err := validateBuild(build); err != nil {
@@ -90,7 +89,7 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to update build")
+		return nil, errors.Newf("unauthorized to update build")
 	}
 
 	if err := validateBuild(build); err != nil {
@@ -144,7 +143,7 @@ func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[strin
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list builds")
+		return nil, errors.Newf("unauthorized to list builds")
 	}
 
 	filter := repos.Filter{"spec.accountName": ctx.AccountName, "spec.registry.repo.name": repoName}
@@ -166,7 +165,7 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get build")
+		return nil, errors.Newf("unauthorized to get build")
 	}
 
 	b, err := d.buildRepo.FindOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId})
@@ -175,7 +174,7 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 	}
 
 	if b == nil {
-		return nil, fmt.Errorf("build not found")
+		return nil, errors.Newf("build not found")
 	}
 
 	return b, nil
@@ -195,7 +194,7 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete build")
+		return errors.Newf("unauthorized to delete build")
 	}
 
 	b, err := d.buildRepo.FindById(ctx, buildId)

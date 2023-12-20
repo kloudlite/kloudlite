@@ -7,12 +7,11 @@ package graph
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
-
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -29,7 +28,7 @@ func (r *clusterResolver) AdminKubeconfig(ctx context.Context, obj *entities.Clu
 	}
 
 	if s == nil {
-		return nil, fmt.Errorf("kubeconfig could not be found")
+		return nil, errors.Newf("kubeconfig could not be found")
 	}
 
 	return &model.EncodedValue{

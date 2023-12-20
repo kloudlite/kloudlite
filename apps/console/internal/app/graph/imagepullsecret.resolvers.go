@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -16,35 +16,35 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *imagePullSecretResolver) CreationTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("obj is nil")
+		return "", errors.Newf("obj is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
 
 // DockerConfigJSON is the resolver for the dockerConfigJson field.
 func (r *imagePullSecretResolver) DockerConfigJSON(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(fmt.Errorf("not implemented: DockerConfigJSON - dockerConfigJson"))
+	panic(errors.Newf("not implemented: DockerConfigJSON - dockerConfigJson"))
 }
 
 // DockerPassword is the resolver for the dockerPassword field.
 func (r *imagePullSecretResolver) DockerPassword(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(fmt.Errorf("not implemented: DockerPassword - dockerPassword"))
+	panic(errors.Newf("not implemented: DockerPassword - dockerPassword"))
 }
 
 // DockerRegistryEndpoint is the resolver for the dockerRegistryEndpoint field.
 func (r *imagePullSecretResolver) DockerRegistryEndpoint(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(fmt.Errorf("not implemented: DockerRegistryEndpoint - dockerRegistryEndpoint"))
+	panic(errors.Newf("not implemented: DockerRegistryEndpoint - dockerRegistryEndpoint"))
 }
 
 // DockerUsername is the resolver for the dockerUsername field.
 func (r *imagePullSecretResolver) DockerUsername(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(fmt.Errorf("not implemented: DockerUsername - dockerUsername"))
+	panic(errors.Newf("not implemented: DockerUsername - dockerUsername"))
 }
 
 // ID is the resolver for the id field.
 func (r *imagePullSecretResolver) ID(ctx context.Context, obj *entities.ImagePullSecret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("obj is nil")
+		return "", errors.Newf("obj is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -52,29 +52,29 @@ func (r *imagePullSecretResolver) ID(ctx context.Context, obj *entities.ImagePul
 // UpdateTime is the resolver for the updateTime field.
 func (r *imagePullSecretResolver) UpdateTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("obj is nil")
+		return "", errors.Newf("obj is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
 // DockerConfigJSON is the resolver for the dockerConfigJson field.
 func (r *imagePullSecretInResolver) DockerConfigJSON(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(fmt.Errorf("not implemented: DockerConfigJSON - dockerConfigJson"))
+	panic(errors.Newf("not implemented: DockerConfigJSON - dockerConfigJson"))
 }
 
 // DockerPassword is the resolver for the dockerPassword field.
 func (r *imagePullSecretInResolver) DockerPassword(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(fmt.Errorf("not implemented: DockerPassword - dockerPassword"))
+	panic(errors.Newf("not implemented: DockerPassword - dockerPassword"))
 }
 
 // DockerRegistryEndpoint is the resolver for the dockerRegistryEndpoint field.
 func (r *imagePullSecretInResolver) DockerRegistryEndpoint(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(fmt.Errorf("not implemented: DockerRegistryEndpoint - dockerRegistryEndpoint"))
+	panic(errors.Newf("not implemented: DockerRegistryEndpoint - dockerRegistryEndpoint"))
 }
 
 // DockerUsername is the resolver for the dockerUsername field.
 func (r *imagePullSecretInResolver) DockerUsername(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(fmt.Errorf("not implemented: DockerUsername - dockerUsername"))
+	panic(errors.Newf("not implemented: DockerUsername - dockerUsername"))
 }
 
 // ImagePullSecret returns generated.ImagePullSecretResolver implementation.

@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -20,7 +20,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *secretResolver) CreationTime(ctx context.Context, obj *entities.Secret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
@@ -37,7 +37,7 @@ func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[st
 // ID is the resolver for the id field.
 func (r *secretResolver) ID(ctx context.Context, obj *entities.Secret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -59,7 +59,7 @@ func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*model
 // UpdateTime is the resolver for the updateTime field.
 func (r *secretResolver) UpdateTime(ctx context.Context, obj *entities.Secret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
 }
@@ -67,7 +67,7 @@ func (r *secretResolver) UpdateTime(ctx context.Context, obj *entities.Secret) (
 // Data is the resolver for the data field.
 func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
 	if obj == nil {
-		return fmt.Errorf("obj is nil")
+		return errors.Newf("obj is nil")
 	}
 	return fn.JsonConversion(data, &obj.Data)
 }
@@ -75,11 +75,11 @@ func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data 
 // Metadata is the resolver for the metadata field.
 func (r *secretInResolver) Metadata(ctx context.Context, obj *entities.Secret, data *v1.ObjectMeta) error {
 	if data == nil {
-		return fmt.Errorf("data is nil")
+		return errors.Newf("data is nil")
 	}
 
 	if obj == nil {
-		return fmt.Errorf("obj is nil")
+		return errors.Newf("obj is nil")
 	}
 
 	obj.ObjectMeta = *data
@@ -94,7 +94,7 @@ func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret,
 // Type is the resolver for the type field.
 func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *model.K8sIoAPICoreV1SecretType) error {
 	if data == nil {
-		return fmt.Errorf("secret type is nil")
+		return errors.Newf("secret type is nil")
 	}
 	obj.Type = corev1.SecretType(*data)
 	return nil

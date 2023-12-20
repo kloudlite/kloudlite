@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -32,7 +32,7 @@ func (d *domain) findWorkspace(ctx ConsoleContext, namespace, name string) (*ent
 		return nil, err
 	}
 	if ws == nil {
-		return nil, fmt.Errorf("no workspace with name=%q, namespace=%q found", name, namespace)
+		return nil, errors.Newf("no workspace with name=%q, namespace=%q found", name, namespace)
 	}
 	return ws, nil
 }
@@ -80,7 +80,7 @@ func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*
 	}
 
 	if w == nil {
-		return nil, fmt.Errorf("no workspace found for target namespace %q", targetNs)
+		return nil, errors.Newf("no workspace found for target namespace %q", targetNs)
 	}
 
 	return w, nil
@@ -103,7 +103,7 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 	}
 
 	if ws.Spec.IsEnvironment != nil {
-		return nil, fmt.Errorf(".Spec.IsEnvironment can not be set, to create environments, use CreateEnvironment")
+		return nil, errors.Newf(".Spec.IsEnvironment can not be set, to create environments, use CreateEnvironment")
 	}
 
 	ws.ProjectName = p.Name
@@ -112,7 +112,7 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 
 func (d *domain) createWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
 	if ws.ProjectName == "" {
-		return nil, fmt.Errorf(".ProjectName can not be empty")
+		return nil, errors.Newf(".ProjectName can not be empty")
 	}
 
 	ws.EnsureGVK()

@@ -2,8 +2,7 @@ package domain
 
 import (
 	"context"
-	"fmt"
-
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -72,7 +71,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 	case ResTypeNodePool:
 		{
 			if clusterName == nil || *clusterName == "" {
-				return nil, fmt.Errorf("clusterName is required for checking name availability for %s", ResTypeNodePool)
+				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
 			}
 
 			cp, err := d.nodePoolRepo.FindOne(ctx, repos.Filter{
@@ -86,7 +85,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 	case ResTypeVPNDevice:
 		{
 			if clusterName == nil || *clusterName == "" {
-				return nil, fmt.Errorf("clusterName is required for checking name availability for %s", ResTypeVPNDevice)
+				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeVPNDevice)
 			}
 
 			cp, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
@@ -99,7 +98,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 		}
 	default:
 		{
-			return &CheckNameAvailabilityOutput{Result: false}, fmt.Errorf("unknown resource type provided: %q", typeArg)
+			return &CheckNameAvailabilityOutput{Result: false}, errors.Newf("unknown resource type provided: %q", typeArg)
 		}
 	}
 }

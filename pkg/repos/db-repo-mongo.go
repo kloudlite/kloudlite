@@ -91,7 +91,7 @@ func cursorToStruct[T any](ctx context.Context, curr *mongo.Cursor) ([]T, error)
 func (repo *dbRepo[T]) NewId() ID {
 	id, e := fn.CleanerNanoid(28)
 	if e != nil {
-		panic(fmt.Errorf("could not get cleanerNanoid()"))
+		panic(errors.Newf("could not get cleanerNanoid()"))
 	}
 	return ID(fmt.Sprintf("%s-%s", repo.shortName, strings.ToLower(id)))
 }
@@ -121,7 +121,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return item, fmt.Errorf("no document found")
+			return item, errors.Newf("no document found")
 		}
 		return item, err
 	}
@@ -142,19 +142,19 @@ func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 
 func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, pagination CursorPagination) (*PaginatedRecord[T], error) {
 	if pagination.First != nil && pagination.Last != nil {
-		return nil, fmt.Errorf("first/last only one of these parameters could be passed on, you have specified both")
+		return nil, errors.Newf("first/last only one of these parameters could be passed on, you have specified both")
 	}
 
 	if pagination.After != nil && pagination.Before != nil {
-		return nil, fmt.Errorf("after/before only one of these parameters could be passed on, you have specified both")
+		return nil, errors.Newf("after/before only one of these parameters could be passed on, you have specified both")
 	}
 
 	if pagination.After != nil && pagination.First == nil {
-		return nil, fmt.Errorf("paramter `after` requires paramter `first` to be specified")
+		return nil, errors.Newf("paramter `after` requires paramter `first` to be specified")
 	}
 
 	if pagination.Before != nil && pagination.Last == nil {
-		return nil, fmt.Errorf("paramter `before` requires paramter `last` to be specified")
+		return nil, errors.Newf("paramter `before` requires paramter `last` to be specified")
 	}
 
 	queryFilter := Filter{}

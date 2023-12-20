@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -59,7 +58,7 @@ func (d *Impl) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPa
 			return &payload, nil
 		}
 	default:
-		return nil, &ErrEventNotSupported{err: fmt.Errorf("event type (%s), currently not supported", eventType)}
+		return nil, &ErrEventNotSupported{err: errors.Newf("event type (%s), currently not supported", eventType)}
 	}
 
 }

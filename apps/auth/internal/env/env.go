@@ -1,9 +1,8 @@
 package env
 
 import (
-	"fmt"
-
 	"github.com/codingconcepts/env"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 type Env struct {
@@ -49,7 +48,7 @@ type Env struct {
 func (ev *Env) validateEnv() error {
 	if ev.OAuth2Enabled {
 		if ev.OAuth2GithubEnabled {
-			err := fmt.Errorf("when github oauth2 is enabled, secrets `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PK_FILE`, `GITHUB_SCOPES` are required")
+			err := errors.Newf("when github oauth2 is enabled, secrets `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PK_FILE`, `GITHUB_SCOPES` are required")
 
 			if ev.GithubClientId == "" ||
 				ev.GithubClientSecret == "" ||
@@ -62,7 +61,7 @@ func (ev *Env) validateEnv() error {
 		}
 
 		if ev.OAuth2GitlabEnabled {
-			err := fmt.Errorf("when gitlab oauth2 is enabled, secrets `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, `GITLAB_CALLBACK_URL`, `GITLAB_SCOPES` are required")
+			err := errors.Newf("when gitlab oauth2 is enabled, secrets `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, `GITLAB_CALLBACK_URL`, `GITLAB_SCOPES` are required")
 
 			if ev.GitlabClientId == "" ||
 				ev.GitlabClientSecret == "" ||
@@ -73,7 +72,7 @@ func (ev *Env) validateEnv() error {
 		}
 
 		if ev.OAuth2GoogleEnabled {
-			err := fmt.Errorf("when google oauth2 is enabled, secrets `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `GOOGLE_SCOPES` are required")
+			err := errors.Newf("when google oauth2 is enabled, secrets `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `GOOGLE_SCOPES` are required")
 
 			if ev.GoogleClientId == "" ||
 				ev.GoogleClientSecret == "" ||

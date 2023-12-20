@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"strings"
 
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
@@ -28,7 +29,7 @@ func (d *domain) findAccount(ctx context.Context, name string) (*entities.Accoun
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("account with name %q not found", name)
+		return nil, errors.Newf("account with name %q not found", name)
 	}
 
 	return result, nil
@@ -156,11 +157,11 @@ func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*enti
 	}
 
 	if acc.IsActive != nil && !*acc.IsActive {
-		return nil, fmt.Errorf("account %q is not active, could not update", account.Name)
+		return nil, errors.Newf("account %q is not active, could not update", account.Name)
 	}
 
 	if acc.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("account %q is marked for deletion, could not update", account.Name)
+		return nil, errors.Newf("account %q is marked for deletion, could not update", account.Name)
 	}
 
 	acc.Labels = account.Labels
@@ -233,7 +234,7 @@ func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 	}
 
 	if account.IsActive != nil && *account.IsActive {
-		return false, fmt.Errorf("account %q is already active", name)
+		return false, errors.Newf("account %q is already active", name)
 	}
 
 	account.IsActive = fn.New(true)
@@ -256,7 +257,7 @@ func (d *domain) DeactivateAccount(ctx UserContext, name string) (bool, error) {
 	}
 
 	if account.IsActive != nil && !*account.IsActive {
-		return false, fmt.Errorf("account %q is already deactive", name)
+		return false, errors.Newf("account %q is already deactive", name)
 	}
 
 	account.IsActive = fn.New(false)

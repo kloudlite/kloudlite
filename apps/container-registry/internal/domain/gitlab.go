@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
@@ -179,6 +178,6 @@ func (d *Impl) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPa
 			return payload, nil
 		}
 	default:
-		return nil, &ErrEventNotSupported{err: fmt.Errorf("event type (%s) currently not supported", eventType)}
+		return nil, &ErrEventNotSupported{err: errors.Newf("event type (%s) currently not supported", eventType)}
 	}
 }

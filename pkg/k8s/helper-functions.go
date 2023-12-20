@@ -2,7 +2,7 @@ package k8s
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"os"
 
 	"k8s.io/client-go/rest"
@@ -17,7 +17,7 @@ func RestInclusterConfig() (*rest.Config, error) {
 func RestConfigFromEnv(envVar string) (*rest.Config, error) {
 	kcfgPath, ok := os.LookupEnv(envVar)
 	if !ok {
-		return nil, fmt.Errorf("KUBECONFIG env variable is not set")
+		return nil, errors.Newf("KUBECONFIG env variable is not set")
 	}
 
 	return clientcmd.BuildConfigFromKubeconfigGetter("", func() (*api.Config, error) {
