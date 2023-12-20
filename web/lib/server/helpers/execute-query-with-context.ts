@@ -81,7 +81,10 @@ export const ExecuteQueryWithContext = (
           },
         });
 
-        let { data } = resp.data;
+        let { data,errors } = resp.data;
+        if(errors){
+          throw new Error(JSON.stringify(errors))
+        }
 
         if (data) {
           data = transformer(data);
