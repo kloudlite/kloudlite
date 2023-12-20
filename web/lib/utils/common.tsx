@@ -3,8 +3,8 @@ import logger from '../client/helpers/log';
 
 export const handleError = (e: unknown): void => {
   const err = e as Error;
-  logger.error(e);
   toast.error(err.message);
+  logger.error(e);
 };
 
 export const parseError = (e: unknown): Error => {

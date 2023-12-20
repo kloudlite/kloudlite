@@ -56,7 +56,7 @@ const PostToHook = (message: string) => {
   return {};
 };
 
-const isDev = getNodeEnv() === 'development';
+export const isDev = getNodeEnv() === 'development';
 
 const logger = {
   time: isDev ? console.time : () => {},
@@ -98,11 +98,9 @@ const logger = {
       console.trace(args);
     }
 
-    // if (isDev && typeof window === 'undefined') {
-    //   serverError(args);
-    // }
-
-    serverError(args);
+    if (isDev && typeof window === 'undefined') {
+      serverError(args);
+    }
   },
 };
 
