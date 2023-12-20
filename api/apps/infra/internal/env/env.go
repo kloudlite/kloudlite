@@ -32,6 +32,8 @@ type Env struct {
 
 	PublicDNSHostSuffix string `env:"PUBLIC_DNS_HOST_SUFFIX" required:"true"`
 	SessionKVBucket     string `env:"SESSION_KV_BUCKET" required:"true"`
+	IsDev               bool
+	KubernetesApiProxy  string `json:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {

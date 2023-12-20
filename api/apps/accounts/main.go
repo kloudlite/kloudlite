@@ -34,7 +34,7 @@ func main() {
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
-			if e, err := env.LoadEnv(); err!=nil {
+			if e, err := env.LoadEnv(); err != nil {
 				return nil, err
 			} else {
 				e.IsDev = isDev
@@ -42,10 +42,10 @@ func main() {
 			}
 		}),
 
-		fx.Provide(func() (*rest.Config, error) {
-			if isDev {
+		fx.Provide(func(e *env.Env) (*rest.Config, error) {
+			if e.KubernetesApiProxy != "" {
 				return &rest.Config{
-					Host: "localhost:8080",
+					Host: e.KubernetesApiProxy,
 				}, nil
 			}
 

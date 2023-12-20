@@ -89,8 +89,8 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(logger logging.Logger) httpServer.Server {
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+	fx.Provide(func(logger logging.Logger, e env.Env) httpServer.Server {
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, IsDev: e.IsDev})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {

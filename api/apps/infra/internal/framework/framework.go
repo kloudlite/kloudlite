@@ -49,14 +49,12 @@ var Module = fx.Module("framework",
 		return nats.NewJetstreamClient(c)
 	}),
 
-
 	fx.Provide(
 		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
 			cxt := context.TODO()
 			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
-
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
 		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
@@ -102,9 +100,9 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(logger logging.Logger) httpServer.Server {
+	fx.Provide(func(logger logging.Logger, e env.Env) httpServer.Server {
 		corsOrigins := "https://studio.apollographql.com"
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
