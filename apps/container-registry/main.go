@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"runtime/trace"
 
-	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"github.com/kloudlite/api/apps/container-registry/internal/framework"
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -19,7 +19,14 @@ func main() {
 	flag.Parse()
 
 	app := fx.New(
-		fx.Provide(env.LoadEnv),
+		fx.Provide(func() (*env.Env, error) {
+			if e, err := env.LoadEnv(); err != nil {
+				return nil, err
+			} else {
+				e.IsDev = isDev
+				return e, nil
+			}
+		}),
 		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {

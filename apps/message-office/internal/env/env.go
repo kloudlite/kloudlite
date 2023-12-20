@@ -20,6 +20,7 @@ type Env struct {
 	VectorGrpcAddr string `env:"VECTOR_GRPC_ADDR" required:"true"`
 
 	TokenHashingSecret string `env:"TOKEN_HASHING_SECRET" required:"true"`
+	IsDev              bool
 }
 
 func LoadEnvOrDie() *Env {
