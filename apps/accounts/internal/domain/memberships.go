@@ -18,7 +18,7 @@ func (d *domain) addMembership(ctx context.Context, accountName string, userId r
 		ResourceRef:  iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
 		Role:         string(role),
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -26,12 +26,12 @@ func (d *domain) addMembership(ctx context.Context, accountName string, userId r
 
 func (d *domain) RemoveAccountMembership(ctx UserContext, accountName string, memberId repos.ID) (bool, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.RemoveAccountMembership); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	account, err := d.findAccount(ctx, accountName)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if (account.IsActive != nil && !*account.IsActive) || account.IsMarkedForDeletion() {
@@ -43,7 +43,7 @@ func (d *domain) RemoveAccountMembership(ctx UserContext, accountName string, me
 		ResourceRef: iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
 	})
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return out.Result, nil
@@ -51,12 +51,12 @@ func (d *domain) RemoveAccountMembership(ctx UserContext, accountName string, me
 
 func (d *domain) UpdateAccountMembership(ctx UserContext, accountName string, memberId repos.ID, role iamT.Role) (bool, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.UpdateAccountMembership); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	account, err := d.findAccount(ctx, accountName)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if (account.IsActive != nil && !*account.IsActive) || account.IsMarkedForDeletion() {
@@ -71,7 +71,7 @@ func (d *domain) UpdateAccountMembership(ctx UserContext, accountName string, me
 	})
 
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return out.Result, nil
@@ -79,7 +79,7 @@ func (d *domain) UpdateAccountMembership(ctx UserContext, accountName string, me
 
 func (d *domain) ListMembershipsForAccount(ctx UserContext, accountName string, role *iamT.Role) ([]*entities.AccountMembership, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.ListMembershipsForAccount); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	out, err := d.iamClient.ListMembershipsForResource(ctx, &iam.MembershipsForResourceIn{
@@ -87,7 +87,7 @@ func (d *domain) ListMembershipsForAccount(ctx UserContext, accountName string, 
 		ResourceRef:  iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	memberships := make([]*entities.AccountMembership, len(out.RoleBindings))
@@ -108,7 +108,7 @@ func (d *domain) ListMembershipsForUser(ctx UserContext) ([]*entities.AccountMem
 		ResourceType: string(iamT.ResourceAccount),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	memberships := make([]*entities.AccountMembership, len(out.RoleBindings))
@@ -132,7 +132,7 @@ func (d *domain) GetAccountMembership(ctx UserContext, accountName string) (*ent
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &entities.AccountMembership{
 		AccountName: accountName,

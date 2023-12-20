@@ -19,14 +19,14 @@ import (
 // AuthSetRemoteAuthHeader is the resolver for the auth_setRemoteAuthHeader field.
 func (r *mutationResolver) AuthSetRemoteAuthHeader(ctx context.Context, loginID string, authHeader *string) (bool, error) {
 	err := r.d.SetRemoteLoginAuthHeader(ctx, repos.ID(loginID), *authHeader)
-	return err == nil, err
+	return err == nil, klErrors.NewE(err)
 }
 
 // AuthCreateRemoteLogin is the resolver for the auth_createRemoteLogin field.
 func (r *mutationResolver) AuthCreateRemoteLogin(ctx context.Context, secret *string) (string, error) {
 	login, err := r.d.CreateRemoteLogin(ctx, *secret)
 	if err != nil {
-		return "", err
+		return "", klErrors.NewE(err)
 	}
 	return string(login), nil
 }
@@ -35,7 +35,7 @@ func (r *mutationResolver) AuthCreateRemoteLogin(ctx context.Context, secret *st
 func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.Login(ctx, email, password)
 	if err != nil {
-		return nil, err
+		return nil, klErrors.NewE(err)
 	}
 
 	if !sessionEntity.UserVerified {
@@ -50,7 +50,7 @@ func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password
 func (r *mutationResolver) AuthSignup(ctx context.Context, name string, email string, password string) (*model.Session, error) {
 	sessionEntity, err := r.d.SignUp(ctx, name, email, password)
 	if err != nil {
-		return nil, err
+		return nil, klErrors.NewE(err)
 	}
 	httpServer.SetSession(ctx, sessionEntity)
 	session := sessionModelFromAuthSession(sessionEntity)
@@ -74,7 +74,7 @@ func (r *mutationResolver) AuthSetMetadata(ctx context.Context, values map[strin
 		return nil, errors.New("user not logged in")
 	}
 	userEntity, err := r.d.SetUserMetadata(ctx, session.UserId, values)
-	return userModelFromEntity(userEntity), err
+	return userModelFromEntity(userEntity), klErrors.NewE(err)
 }
 
 // AuthClearMetadata is the resolver for the auth_clearMetadata field.
@@ -84,14 +84,14 @@ func (r *mutationResolver) AuthClearMetadata(ctx context.Context) (*model.User, 
 		return nil, errors.New("user not logged in")
 	}
 	userEntity, err := r.d.ClearUserMetadata(ctx, session.UserId)
-	return userModelFromEntity(userEntity), err
+	return userModelFromEntity(userEntity), klErrors.NewE(err)
 }
 
 // AuthVerifyEmail is the resolver for the auth_verifyEmail field.
 func (r *mutationResolver) AuthVerifyEmail(ctx context.Context, token string) (*model.Session, error) {
 	sessionEntity, err := r.d.VerifyEmail(ctx, token)
 	httpServer.SetSession(ctx, sessionEntity)
-	return sessionModelFromAuthSession(sessionEntity), err
+	return sessionModelFromAuthSession(sessionEntity), klErrors.NewE(err)
 }
 
 // AuthResetPassword is the resolver for the auth_resetPassword field.
@@ -142,7 +142,7 @@ func (r *mutationResolver) OAuthLogin(ctx context.Context, provider string, code
 		return nil, klErrors.NewEf(err, "could not create session")
 	}
 	httpServer.SetSession(ctx, sessionEntity)
-	return sessionModelFromAuthSession(sessionEntity), err
+	return sessionModelFromAuthSession(sessionEntity), klErrors.NewE(err)
 }
 
 // OAuthAddLogin is the resolver for the oAuth_addLogin field.
@@ -162,18 +162,18 @@ func (r *queryResolver) AuthMe(ctx context.Context) (*model.User, error) {
 	}
 	u, err := r.d.GetUserById(ctx, session.UserId)
 	if err != nil {
-		return nil, err
+		return nil, klErrors.NewE(err)
 	}
 	if u == nil {
 		return nil, klErrors.Newf("user(email=%s) does not exist in system", session.UserEmail)
 	}
-	return userModelFromEntity(u), err
+	return userModelFromEntity(u), klErrors.NewE(err)
 }
 
 // AuthFindByEmail is the resolver for the auth_findByEmail field.
 func (r *queryResolver) AuthFindByEmail(ctx context.Context, email string) (*model.User, error) {
 	userEntity, err := r.d.GetUserByEmail(ctx, email)
-	return userModelFromEntity(userEntity), err
+	return userModelFromEntity(userEntity), klErrors.NewE(err)
 }
 
 // OAuthRequestLogin is the resolver for the oAuth_requestLogin field.

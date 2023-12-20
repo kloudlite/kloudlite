@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"go.uber.org/fx"
@@ -22,8 +23,8 @@ func main() {
 		fx.NopLogger,
 		fn.FxErrorHandler(),
 		fx.Provide(func() (*env.Env, error) {
-			if e, err := env.LoadEnv(); err!=nil {
-				return nil, err
+			if e, err := env.LoadEnv(); err != nil {
+				return nil, errors.NewE(err)
 			} else {
 				e.IsDev = isDev
 				return e, nil

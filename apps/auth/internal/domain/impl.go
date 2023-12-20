@@ -76,7 +76,7 @@ func (d *domainI) GetRemoteLogin(ctx context.Context, loginId repos.ID, secret s
 	if id.Secret != secret {
 		return nil, errors.New("invalid secret")
 	}
-	return id, err
+	return id, errors.NewE(err)
 }
 
 func (d *domainI) CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error) {
@@ -87,7 +87,7 @@ func (d *domainI) CreateRemoteLogin(ctx context.Context, secret string) (repos.I
 		},
 	)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	return create.Id, nil
 }
@@ -99,9 +99,9 @@ func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*User, e
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
-	return u, err
+	return u, errors.NewE(err)
 }
 
 func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error) {
@@ -118,9 +118,9 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 			}
 			_, err = d.addOAuthLogin(ctx, provider, t, user, u.AvatarURL)
 			if err != nil {
-				return false, err
+				return false, errors.NewE(err)
 			}
-			return true, err
+			return true, errors.NewE(err)
 		}
 
 	case constants.ProviderGitlab:
@@ -131,9 +131,9 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 			}
 			_, err = d.afterOAuthLogin(ctx, provider, t, user, &u.AvatarURL)
 			if err != nil {
-				return false, err
+				return false, errors.NewE(err)
 			}
-			return true, err
+			return true, errors.NewE(err)
 		}
 
 	default:
@@ -155,7 +155,7 @@ func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*User, erro
 func (d *domainI) Login(ctx context.Context, email string, password string) (*common.AuthSession, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if user == nil {
@@ -177,7 +177,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 
 	if err != nil {
 		if matched != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 
@@ -202,12 +202,12 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	err = d.generateAndSendVerificationToken(ctx, user)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password"), nil
@@ -226,12 +226,12 @@ func (d *domainI) InviteUser(ctx context.Context, email string, name string) (re
 func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata UserMetadata) (*User, error) {
 	user, err := d.userRepo.FindById(ctx, userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	user.Metadata = metadata
 	updated, err := d.userRepo.UpdateById(ctx, userId, user)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return updated, nil
 }
@@ -239,12 +239,12 @@ func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata
 func (d *domainI) ClearUserMetadata(ctx context.Context, userId repos.ID) (*User, error) {
 	user, err := d.userRepo.FindById(ctx, userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	user.Metadata = nil
 	updated, err := d.userRepo.UpdateById(ctx, userId, user)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return updated, nil
 }
@@ -252,16 +252,16 @@ func (d *domainI) ClearUserMetadata(ctx context.Context, userId repos.ID) (*User
 func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSession, error) {
 	v, err := d.verifyTokenRepo.Get(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	user, err := d.userRepo.FindById(ctx, v.UserId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	user.Verified = true
 	u, err := d.userRepo.UpdateById(ctx, v.UserId, user)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if _, err := d.commsClient.SendWelcomeEmail(
 		ctx, &comms.WelcomeEmailInput{
@@ -291,7 +291,7 @@ func (d *domainI) ResetPassword(ctx context.Context, token string, password stri
 	user.PasswordSalt = salt
 	_, err = d.userRepo.UpdateById(ctx, repos.ID(get.UserId), user)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	err = d.resetTokenRepo.Drop(ctx, token)
@@ -307,7 +307,7 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 	resetToken := generateId("reset")
 	one, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if one == nil {
 		return false, errors.New("no account present with provided email, register your account first.")
@@ -319,11 +319,11 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 		time.Second*24*60*60,
 	)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	err = d.sendResetPasswordEmail(ctx, resetToken, one)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -331,16 +331,16 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 func (d *domainI) ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error) {
 	user, err := d.userRepo.FindById(ctx, id)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	user.Email = email
 	updated, err := d.userRepo.UpdateById(ctx, id, user)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	err = d.generateAndSendVerificationToken(ctx, updated)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -348,19 +348,19 @@ func (d *domainI) ChangeEmail(ctx context.Context, id repos.ID, email string) (b
 func (d *domainI) ResendVerificationEmail(ctx context.Context, userId repos.ID) (bool, error) {
 	user, err := d.userRepo.FindById(ctx, userId)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	err = d.generateAndSendVerificationToken(ctx, user)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
-	return true, err
+	return true, errors.NewE(err)
 }
 
 func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPassword string, newPassword string) (bool, error) {
 	user, err := d.userRepo.FindById(ctx, id)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	sum := md5.Sum([]byte(currentPassword + user.PasswordSalt))
 	if user.Password == hex.EncodeToString(sum[:]) {
@@ -370,7 +370,7 @@ func (d *domainI) ChangePassword(ctx context.Context, id repos.ID, currentPasswo
 		user.Password = hex.EncodeToString(newSum[:])
 		_, err := d.userRepo.UpdateById(ctx, id, user)
 		if err != nil {
-			return false, err
+			return false, errors.NewE(err)
 		}
 		// TODO send comm
 		return true, nil
@@ -451,7 +451,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User, avatarUrl *string) (*common.AuthSession, error) {
 	user, err := d.addOAuthLogin(ctx, provider, token, newUser, avatarUrl)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, fmt.Sprintf("oauth2/%s", provider))
 	return session, nil
@@ -473,12 +473,12 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				d.logger.Infof("user has no public email, trying to get his protected email")
 				pEmail, err := d.github.GetPrimaryEmail(ctx, t)
 				if err != nil {
-					return "", err
+					return "", errors.NewE(err)
 				}
 				return pEmail, nil
 			}()
 			if err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 
 			name := func() string {
@@ -537,7 +537,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
 	b, err := json.Marshal(t)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	return b64.StdEncoding.EncodeToString(b), nil
 }
@@ -560,7 +560,7 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 
 	hash, err := d.Hash(accToken.Token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if provider == "github" {
@@ -570,7 +570,7 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 		}
 		hash2, err := d.Hash(token)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		if hash != hash2 {
 			accToken.Token = token
@@ -584,7 +584,7 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 		}
 		hash2, err := d.Hash(token)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		if hash != hash2 {
 			accToken.Token = token
@@ -636,11 +636,11 @@ func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *Us
 		}, time.Second*24*60*60,
 	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	err = d.sendVerificationEmail(ctx, verificationToken, user)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }

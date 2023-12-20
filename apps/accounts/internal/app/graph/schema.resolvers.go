@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/accounts/internal/app/graph/model"
@@ -26,7 +27,7 @@ func (r *accountMembershipResolver) User(ctx context.Context, obj *entities.Acco
 func (r *mutationResolver) AccountsCreateAccount(ctx context.Context, account entities.Account) (*entities.Account, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.domain.CreateAccount(uc, account)
 }
@@ -35,7 +36,7 @@ func (r *mutationResolver) AccountsCreateAccount(ctx context.Context, account en
 func (r *mutationResolver) AccountsUpdateAccount(ctx context.Context, account entities.Account) (*entities.Account, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.domain.UpdateAccount(uc, account)
 }
@@ -44,7 +45,7 @@ func (r *mutationResolver) AccountsUpdateAccount(ctx context.Context, account en
 func (r *mutationResolver) AccountsDeactivateAccount(ctx context.Context, accountName string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.DeactivateAccount(uc, accountName)
 }
@@ -53,7 +54,7 @@ func (r *mutationResolver) AccountsDeactivateAccount(ctx context.Context, accoun
 func (r *mutationResolver) AccountsActivateAccount(ctx context.Context, accountName string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.ActivateAccount(uc, accountName)
 }
@@ -62,7 +63,7 @@ func (r *mutationResolver) AccountsActivateAccount(ctx context.Context, accountN
 func (r *mutationResolver) AccountsDeleteAccount(ctx context.Context, accountName string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.DeactivateAccount(uc, accountName)
 }
@@ -71,7 +72,7 @@ func (r *mutationResolver) AccountsDeleteAccount(ctx context.Context, accountNam
 func (r *mutationResolver) AccountsInviteMembers(ctx context.Context, accountName string, invitations []*entities.Invitation) ([]*entities.Invitation, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.domain.InviteMembers(uc, accountName, invitations)
 }
@@ -80,7 +81,7 @@ func (r *mutationResolver) AccountsInviteMembers(ctx context.Context, accountNam
 func (r *mutationResolver) AccountsResendInviteMail(ctx context.Context, accountName string, invitationID string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.ResendInviteEmail(uc, accountName, repos.ID(invitationID))
 }
@@ -89,7 +90,7 @@ func (r *mutationResolver) AccountsResendInviteMail(ctx context.Context, account
 func (r *mutationResolver) AccountsDeleteInvitation(ctx context.Context, accountName string, invitationID string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.DeleteInvitation(uc, accountName, repos.ID(invitationID))
 }
@@ -98,7 +99,7 @@ func (r *mutationResolver) AccountsDeleteInvitation(ctx context.Context, account
 func (r *mutationResolver) AccountsAcceptInvitation(ctx context.Context, accountName string, inviteToken string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.AcceptInvitation(uc, accountName, inviteToken)
 }
@@ -107,7 +108,7 @@ func (r *mutationResolver) AccountsAcceptInvitation(ctx context.Context, account
 func (r *mutationResolver) AccountsRejectInvitation(ctx context.Context, accountName string, inviteToken string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return r.domain.RejectInvitation(uc, accountName, inviteToken)
@@ -117,7 +118,7 @@ func (r *mutationResolver) AccountsRejectInvitation(ctx context.Context, account
 func (r *mutationResolver) AccountsRemoveAccountMembership(ctx context.Context, accountName string, memberID repos.ID) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.RemoveAccountMembership(uc, accountName, memberID)
 }
@@ -126,7 +127,7 @@ func (r *mutationResolver) AccountsRemoveAccountMembership(ctx context.Context, 
 func (r *mutationResolver) AccountsUpdateAccountMembership(ctx context.Context, accountName string, memberID repos.ID, role iamT.Role) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return r.domain.UpdateAccountMembership(uc, accountName, memberID, iamT.Role(role))
 }
@@ -135,12 +136,12 @@ func (r *mutationResolver) AccountsUpdateAccountMembership(ctx context.Context, 
 func (r *queryResolver) AccountsListAccounts(ctx context.Context) ([]*entities.Account, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	a, err := r.domain.ListAccounts(uc)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if a == nil {
 		return []*entities.Account{}, nil
@@ -152,7 +153,7 @@ func (r *queryResolver) AccountsListAccounts(ctx context.Context) ([]*entities.A
 func (r *queryResolver) AccountsGetAccount(ctx context.Context, accountName string) (*entities.Account, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.domain.GetAccount(uc, accountName)
@@ -162,11 +163,11 @@ func (r *queryResolver) AccountsGetAccount(ctx context.Context, accountName stri
 func (r *queryResolver) AccountsResyncAccount(ctx context.Context, accountName string) (bool, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.domain.ResyncAccount(uc, accountName); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -175,12 +176,12 @@ func (r *queryResolver) AccountsResyncAccount(ctx context.Context, accountName s
 func (r *queryResolver) AccountsListInvitations(ctx context.Context, accountName string) ([]*entities.Invitation, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	invs, err := r.domain.ListInvitations(uc, accountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if invs == nil {
@@ -193,7 +194,7 @@ func (r *queryResolver) AccountsListInvitations(ctx context.Context, accountName
 func (r *queryResolver) AccountsGetInvitation(ctx context.Context, accountName string, invitationID string) (*entities.Invitation, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.domain.GetInvitation(uc, accountName, repos.ID(invitationID))
 }
@@ -202,12 +203,12 @@ func (r *queryResolver) AccountsGetInvitation(ctx context.Context, accountName s
 func (r *queryResolver) AccountsListInvitationsForUser(ctx context.Context, onlyPending bool) ([]*entities.Invitation, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	invitations, err := r.domain.ListInvitationsForUser(uc, onlyPending)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if invitations == nil {
 		return make([]*entities.Invitation, 0), nil
@@ -225,7 +226,7 @@ func (r *queryResolver) AccountsCheckNameAvailability(ctx context.Context, name 
 func (r *queryResolver) AccountsListMembershipsForUser(ctx context.Context) ([]*entities.AccountMembership, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.domain.ListMembershipsForUser(uc)
 }
@@ -234,7 +235,7 @@ func (r *queryResolver) AccountsListMembershipsForUser(ctx context.Context) ([]*
 func (r *queryResolver) AccountsListMembershipsForAccount(ctx context.Context, accountName string, role *iamT.Role) ([]*entities.AccountMembership, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.domain.ListMembershipsForAccount(uc, accountName, nil)
@@ -244,7 +245,7 @@ func (r *queryResolver) AccountsListMembershipsForAccount(ctx context.Context, a
 func (r *queryResolver) AccountsGetAccountMembership(ctx context.Context, accountName string) (*entities.AccountMembership, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.domain.GetAccountMembership(uc, accountName)
@@ -254,7 +255,7 @@ func (r *queryResolver) AccountsGetAccountMembership(ctx context.Context, accoun
 func (r *userResolver) Accounts(ctx context.Context, obj *model.User) ([]*entities.AccountMembership, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.domain.ListMembershipsForUser(uc)
@@ -264,7 +265,7 @@ func (r *userResolver) Accounts(ctx context.Context, obj *model.User) ([]*entiti
 func (r *userResolver) AccountInvitations(ctx context.Context, obj *model.User, onlyPending bool) ([]*entities.Invitation, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.domain.ListInvitationsForUser(uc, onlyPending)

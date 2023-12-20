@@ -21,7 +21,7 @@ import (
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -57,7 +57,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Re
 	}
 	m := make([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, len(obj.Resources))
 	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -78,7 +78,7 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Annotations, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -111,7 +111,7 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 
 	m := make(map[string]interface{}, len(obj.Labels))
 	if err := fn.JsonConversion(obj.Labels, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return m, nil

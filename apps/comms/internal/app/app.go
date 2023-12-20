@@ -3,6 +3,7 @@ package app
 import (
 	"embed"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"text/template"
 
 	"github.com/kloudlite/api/pkg/grpc"
@@ -32,20 +33,20 @@ type WelcomeEmail *EmailTemplate
 func parseTemplate(et EmailTemplatesDir, templateName string, subject string) (*EmailTemplate, error) {
 	txtFile, err := et.ReadFile(fmt.Sprintf("email-templates/%v/email.txt", templateName))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	txt, err := template.New("email-text").Parse(string(txtFile))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	htmlFile, err := et.ReadFile(fmt.Sprintf("email-templates/%v/email.html", templateName))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	html, err := template.New(templateName).Parse(string(htmlFile))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &EmailTemplate{
