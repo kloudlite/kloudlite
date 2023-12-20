@@ -9,6 +9,8 @@ export const links = () => {
   return [...baseLinks(), { rel: 'stylesheet', href: authStylesUrl }];
 };
 
+export { ErrorBoundary } from '~/lib/app-setup/root';
+
 const Layout = ({ children }: ChildrenProps) => {
   return (
     // <SSRProvider>

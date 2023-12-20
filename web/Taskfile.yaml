@@ -8,8 +8,9 @@ tasks:
     interactive: true
     cmds:
       - |
-        BASE_URL=dev.kloudlite.io
+        BASE_URL=devc.kloudlite.io
         COOKIE_DOMAIN=".kloudlite.io"
+        GATEWAY_URL="http://gateway.karthik-testing.svc.cluster.local"
         case {{.app}} in
           "auth")
             PORT=4000
@@ -38,7 +39,7 @@ tasks:
             ;;
 
           "vision")
-            URL_SUFFIX="-vision"
+            URL_SUFFIX=""
             ;;
 
           *)
@@ -47,18 +48,18 @@ tasks:
 
         esac
 
-        REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.dev.kloudlite.io"
+        REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.devc.kloudlite.io"
 
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
 
         case "{{.tscheck}}" in
           "no")
-            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+            GATEWAY_URL=$GATEWAY_URL URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
             ;;
 
           *)
-            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
+            GATEWAY_URL=$GATEWAY_URL URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
            ;;
 
         esac
@@ -121,12 +122,12 @@ tasks:
 
         case $(whoami) in
           "bikash")
-            BASE_URL=dev.kloudlite.io
+            BASE_URL=devc.kloudlite.io
             URL_SUFFIX=1
             ;;
 
           "vision")
-            BASE_URL=dev.kloudlite.io
+            BASE_URL=devc.kloudlite.io
             URL_SUFFIX="-vision"
             ;;
 
