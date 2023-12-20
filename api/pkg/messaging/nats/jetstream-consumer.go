@@ -52,7 +52,7 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 		jc.client.Logger.Infof("acknowledged message, stream: %s, consumer: %s", mm.Stream, mm.Consumer)
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	defer cctx.Stop()
@@ -81,12 +81,12 @@ type JetstreamConsumerArgs struct {
 func NewJetstreamConsumer(ctx context.Context, jc *nats.JetstreamClient, args JetstreamConsumerArgs) (*JetstreamConsumer, error) {
 	s, err := jc.Jetstream.Stream(ctx, args.Stream)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	c, err := s.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig(args.ConsumerConfig))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &JetstreamConsumer{
