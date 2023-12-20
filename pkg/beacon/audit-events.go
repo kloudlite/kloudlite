@@ -68,7 +68,7 @@ func getSession(ctx context.Context) (*common.AuthSession, error) {
 func (b *beacon) TriggerEvent(ctx context.Context, accountId repos.ID, event *AuditLogEvent) error {
 	eventB, err := json.Marshal(event)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if event.Tags == nil {
@@ -82,11 +82,11 @@ func (b *beacon) TriggerEvent(ctx context.Context, accountId repos.ID, event *Au
 			event.Tags["user-agent"] = ua
 		}
 	}
-	if err:=b.producer.Produce(ctx, types.ProduceMsg{
+	if err := b.producer.Produce(ctx, types.ProduceMsg{
 		Subject: b.topic,
 		Payload: eventB,
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -98,7 +98,7 @@ func defaultDesc(action, resType, resId string) string {
 func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction) error {
 	session, err := getSession(ctx)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	ale := AuditLogEvent{
@@ -130,13 +130,13 @@ func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act
 
 	eventB, err := json.Marshal(ale)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-	if err:=b.producer.Produce(ctx, types.ProduceMsg{
+	if err := b.producer.Produce(ctx, types.ProduceMsg{
 		Subject: b.topic,
 		Payload: eventB,
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil

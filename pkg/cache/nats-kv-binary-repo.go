@@ -36,7 +36,7 @@ func (r *natsKVBinaryRepo) Set(c context.Context, key string, value []byte) erro
 		return errors.NewEf(err, "failed to marshal value")
 	}
 	if _, err := r.keyValue.Put(c, key, b); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -45,7 +45,7 @@ func (r *natsKVBinaryRepo) Get(c context.Context, key string) ([]byte, error) {
 	get, err := r.keyValue.Get(c, key)
 	if err != nil {
 		var x []byte
-		return x, err
+		return x, errors.NewE(err)
 	}
 	var value BinaryValue
 	err = json.Unmarshal(get.Value(), &value)
@@ -57,7 +57,7 @@ func (r *natsKVBinaryRepo) Get(c context.Context, key string) ([]byte, error) {
 		}()
 		return value.Data, errors.New("Key is expired")
 	}
-	return value.Data, err
+	return value.Data, errors.NewE(err)
 }
 
 func (r *natsKVBinaryRepo) SetWithExpiry(c context.Context, key string, value []byte, duration time.Duration) error {
@@ -70,7 +70,7 @@ func (r *natsKVBinaryRepo) SetWithExpiry(c context.Context, key string, value []
 		return errors.NewEf(err, "failed to marshal value")
 	}
 	if _, err := r.keyValue.Put(c, key, b); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }

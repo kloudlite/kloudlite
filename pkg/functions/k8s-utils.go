@@ -2,6 +2,7 @@ package functions
 
 import (
 	"encoding/json"
+	"github.com/kloudlite/api/pkg/errors"
 	"regexp"
 
 	"github.com/kloudlite/api/constants"
@@ -22,12 +23,12 @@ func K8sObjToYAML(obj client.Object) ([]byte, error) {
 func K8sObjToMap(obj client.Object) (map[string]any, error) {
 	b, err := json.Marshal(obj)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	var m map[string]any
 	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }

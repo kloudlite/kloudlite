@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"os"
 	"os/exec"
 
@@ -29,7 +30,7 @@ func (c *Client) GetSecret(ctx context.Context, namespace, name string) (*v1.Sec
 
 	var secret v1.Secret
 	if err := json.Unmarshal(stdout.Bytes(), &secret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &secret, nil
