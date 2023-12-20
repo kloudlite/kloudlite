@@ -2,9 +2,9 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -28,11 +28,11 @@ func (d *domain) checkAccountAccess(ctx context.Context, accountName string, use
 
 	if err != nil {
 		d.logger.Errorf(err, "iam.can check for action: ", action)
-		return fmt.Errorf("unauthorized to perform action: %s", action)
+		return errors.Newf("unauthorized to perform action: %s", action)
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to perform action: %s", action)
+		return errors.Newf("unauthorized to perform action: %s", action)
 	}
 
 	return nil

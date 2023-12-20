@@ -2,15 +2,14 @@ package domain
 
 import (
 	"context"
-	"fmt"
-
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, accountName string, namespace *string, name string) (*CheckNameAvailabilityOutput, error) {
 	errNamespaceRequired := func() error {
-		return fmt.Errorf("namespace is required for resource type %q", resType)
+		return errors.Newf("namespace is required for resource type %q", resType)
 	}
 
 	switch resType {
@@ -196,7 +195,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	default:
 		{
-			return nil, fmt.Errorf("resource type %q is not acknowledged", resType)
+			return nil, errors.Newf("resource type %q is not acknowledged", resType)
 		}
 	}
 }

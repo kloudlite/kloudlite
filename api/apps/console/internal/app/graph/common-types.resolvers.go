@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -22,7 +22,7 @@ import (
 // Checks is the resolver for the checks field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("obj is nil")
+		return nil, errors.Newf("obj is nil")
 	}
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
@@ -34,7 +34,7 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Ch
 // LastReconcileTime is the resolver for the lastReconcileTime field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("obj is nil")
+		return nil, errors.Newf("obj is nil")
 	}
 
 	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
@@ -110,7 +110,7 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 // CreationTimestamp is the resolver for the creationTimestamp field.
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("metadata is nil")
+		return "", errors.Newf("metadata is nil")
 	}
 	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
@@ -118,7 +118,7 @@ func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.Object
 // DeletionTimestamp is the resolver for the deletionTimestamp field.
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("metadata is nil")
+		return nil, errors.Newf("metadata is nil")
 	}
 
 	if obj.DeletionTimestamp == nil {

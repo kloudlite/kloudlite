@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *clusterResolver) CreationTime(ctx context.Context, obj *entities.Cluster) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("cluster obj is nil")
+		return "", errors.Newf("cluster obj is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,7 +27,7 @@ func (r *clusterResolver) CreationTime(ctx context.Context, obj *entities.Cluste
 // ID is the resolver for the id field.
 func (r *clusterResolver) ID(ctx context.Context, obj *entities.Cluster) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("cluster obj is nil")
+		return "", errors.Newf("cluster obj is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -35,7 +35,7 @@ func (r *clusterResolver) ID(ctx context.Context, obj *entities.Cluster) (string
 // Spec is the resolver for the spec field.
 func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("cluster is nil")
+		return nil, errors.Newf("cluster is nil")
 	}
 
 	var spec model.GithubComKloudliteOperatorApisClustersV1ClusterSpec
@@ -48,7 +48,7 @@ func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*mod
 // UpdateTime is the resolver for the updateTime field.
 func (r *clusterResolver) UpdateTime(ctx context.Context, obj *entities.Cluster) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("cluster is nil")
+		return "", errors.Newf("cluster is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
@@ -56,7 +56,7 @@ func (r *clusterResolver) UpdateTime(ctx context.Context, obj *entities.Cluster)
 // Metadata is the resolver for the metadata field.
 func (r *clusterInResolver) Metadata(ctx context.Context, obj *entities.Cluster, data *v1.ObjectMeta) error {
 	if obj == nil {
-		return fmt.Errorf("cluster is nil")
+		return errors.Newf("cluster is nil")
 	}
 	return fn.JsonConversion(data, &obj.ObjectMeta)
 }
@@ -64,7 +64,7 @@ func (r *clusterInResolver) Metadata(ctx context.Context, obj *entities.Cluster,
 // Spec is the resolver for the spec field.
 func (r *clusterInResolver) Spec(ctx context.Context, obj *entities.Cluster, data *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn) error {
 	if obj == nil {
-		return fmt.Errorf("cluster is nil")
+		return errors.Newf("cluster is nil")
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }

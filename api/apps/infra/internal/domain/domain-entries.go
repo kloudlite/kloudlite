@@ -2,10 +2,10 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -94,7 +94,7 @@ func (d *domain) findDomainEntry(ctx context.Context, accountName string, domain
 	}
 
 	if one == nil {
-		return nil, fmt.Errorf("domainName entry not found")
+		return nil, errors.Newf("domainName entry not found")
 	}
 
 	return one, nil

@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -37,7 +37,7 @@ func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (
 		return nil, err
 	}
 	if exSecret == nil {
-		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
+		return nil, errors.Newf("no secret with name=%s,namespace=%s found", name, namespace)
 	}
 	return exSecret, nil
 }
@@ -105,7 +105,7 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	}
 
 	if exSecret.Type != secret.Type {
-		return nil, fmt.Errorf("updating secret.type is forbidden")
+		return nil, errors.Newf("updating secret.type is forbidden")
 	}
 
 	exSecret.IncrementRecordVersion()

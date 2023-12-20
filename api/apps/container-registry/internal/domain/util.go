@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -73,7 +73,7 @@ func isValidUserName(name string) error {
 	re := regexp.MustCompile(pattern)
 
 	if !re.MatchString(name) {
-		return fmt.Errorf("invalid username, must be lowercase alphanumeric with underscore")
+		return errors.Newf("invalid username, must be lowercase alphanumeric with underscore")
 	}
 
 	return nil

@@ -2,7 +2,7 @@ package domain
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,7 +19,7 @@ func (d *domain) ValidateProviderSecret(providerName string, accessKeyId, secret
 		}
 	default:
 		{
-			return fmt.Errorf("provider %s is not supported", providerName)
+			return errors.Newf("provider %s is not supported", providerName)
 		}
 	}
 }
@@ -33,14 +33,14 @@ func validateAwsKeys(accessKeyID, secretAccessKey string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("Error creating session: %s", err)
+		return errors.Newf("Error creating session: %s", err)
 	}
 
 	svc := iam.New(sess)
 	userOutput, err := svc.GetUser(nil)
 
 	if err != nil {
-		return fmt.Errorf("Failed to get user: %s", err)
+		return errors.Newf("Failed to get user: %s", err)
 	}
 
 	// Getting the policies attached to the user
@@ -51,7 +51,7 @@ func validateAwsKeys(accessKeyID, secretAccessKey string) error {
 	policies, err := svc.ListAttachedUserPolicies(listUserPoliciesInput)
 
 	if err != nil {
-		return fmt.Errorf("Failed to list user policies: %s", err)
+		return errors.Newf("Failed to list user policies: %s", err)
 	}
 
 	for _, attachedPolicy := range policies.AttachedPolicies {
@@ -90,7 +90,7 @@ func validateAwsKeys(accessKeyID, secretAccessKey string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("coudn't find the required permissions ( full access to [S3,EC2,IAM] on all resources )")
+	return errors.Newf("coudn't find the required permissions ( full access to [S3,EC2,IAM] on all resources )")
 
 }
 
@@ -106,7 +106,7 @@ func validatePolicyJson(policyJSON string, actions []string) (bool, error) {
 
 	var policy Policy
 	if err := json.Unmarshal([]byte(policyJSON), &policy); err != nil {
-		return false, fmt.Errorf("Failed to unmarshal policy document: %v", err)
+		return false, errors.Newf("Failed to unmarshal policy document: %v", err)
 	}
 
 	for _, s := range policy.Statement {
@@ -132,7 +132,7 @@ func validatePolicyJson(policyJSON string, actions []string) (bool, error) {
 		}
 	}
 
-	return false, fmt.Errorf("permissions not matched")
+	return false, errors.Newf("permissions not matched")
 }
 
 func contains(slice []string, value string) bool {

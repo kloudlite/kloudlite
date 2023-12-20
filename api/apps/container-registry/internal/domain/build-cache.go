@@ -1,11 +1,10 @@
 package domain
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -22,7 +21,7 @@ func (d *Impl) AddBuildCache(ctx RegistryContext, buildCache entities.BuildCache
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to add build cache")
+		return nil, errors.Newf("unauthorized to add build cache")
 	}
 
 	buildCache.AccountName = ctx.AccountName
@@ -42,7 +41,7 @@ func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache ent
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to update build cache")
+		return nil, errors.Newf("unauthorized to update build cache")
 	}
 
 	back, err := d.buildCacheRepo.FindOne(ctx, repos.Filter{
@@ -73,7 +72,7 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete build cache")
+		return errors.Newf("unauthorized to delete build cache")
 	}
 
 	back, err := d.buildCacheRepo.FindOne(ctx, repos.Filter{
@@ -94,7 +93,7 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 	}
 
 	if i > 0 {
-		return fmt.Errorf("build cache is in use, please delete all builds that use this cache first")
+		return errors.Newf("build cache is in use, please delete all builds that use this cache first")
 	}
 
 	return d.buildCacheRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": id})
@@ -113,7 +112,7 @@ func (d *Impl) ListBuildCaches(ctx RegistryContext, search map[string]repos.Matc
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list build caches")
+		return nil, errors.Newf("unauthorized to list build caches")
 	}
 
 	return d.buildCacheRepo.FindPaginated(ctx, d.buildCacheRepo.MergeMatchFilters(repos.Filter{"accountName": ctx.AccountName}, search), pagination)

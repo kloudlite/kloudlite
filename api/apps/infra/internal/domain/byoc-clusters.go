@@ -1,9 +1,9 @@
 package domain
 
 import (
-	"fmt"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 
 	"github.com/kloudlite/api/common"
@@ -28,7 +28,7 @@ func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entitie
 		return nil, err
 	}
 	if cluster == nil {
-		return nil, fmt.Errorf("BYOC cluster with name %q not found", clusterName)
+		return nil, errors.Newf("BYOC cluster with name %q not found", clusterName)
 	}
 	return cluster, nil
 }
@@ -154,7 +154,7 @@ func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
 	}
 
 	if clus.IsMarkedForDeletion() {
-		return fmt.Errorf("BYOC cluster %q is already marked for deletion", name)
+		return errors.Newf("BYOC cluster %q is already marked for deletion", name)
 	}
 
 	clus.MarkedForDeletion = fn.New(true)

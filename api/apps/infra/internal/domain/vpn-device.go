@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -105,7 +105,7 @@ func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string
 	}
 
 	if device == nil {
-		return nil, fmt.Errorf("no vpn device with name=%q found", name)
+		return nil, errors.Newf("no vpn device with name=%q found", name)
 	}
 
 	return device, nil

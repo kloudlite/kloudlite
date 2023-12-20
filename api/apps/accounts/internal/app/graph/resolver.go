@@ -2,9 +2,9 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 )
 
 // This file will not be regenerated automatically.
@@ -24,7 +24,7 @@ func NewResolver(domain domain.Domain) *Resolver {
 func toUserContext(ctx context.Context) (domain.UserContext, error) {
 	sess, ok := ctx.Value("kloudlite-user-session").(common.AuthSession)
 	if !ok {
-		return domain.UserContext{}, fmt.Errorf("`kloudlite-user-session` not set in request context")
+		return domain.UserContext{}, errors.Newf("`kloudlite-user-session` not set in request context")
 	}
 
 	return domain.UserContext{

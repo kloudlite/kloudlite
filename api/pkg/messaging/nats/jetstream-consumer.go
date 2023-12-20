@@ -2,7 +2,7 @@ package nats
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"os"
 	"os/signal"
 
@@ -62,7 +62,7 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	signal := <-quit
-	return fmt.Errorf("os signal: %s received, stopped consuming messages", signal)
+	return errors.Newf("os signal: %s received, stopped consuming messages", signal)
 }
 
 // Stop implements Consumer.

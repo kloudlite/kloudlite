@@ -263,12 +263,15 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 	if err != nil {
 		return nil, err
 	}
-	d.commsClient.SendWelcomeEmail(
+	if _, err := d.commsClient.SendWelcomeEmail(
 		ctx, &comms.WelcomeEmailInput{
 			Email: user.Email,
 			Name:  user.Name,
 		},
-	)
+	); err != nil {
+		d.logger.Errorf(err)
+	}
+
 	return newAuthSession(u.Id, u.Email, u.Name, u.Verified, "email/verify"), nil
 }
 

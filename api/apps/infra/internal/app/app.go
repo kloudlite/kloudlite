@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
@@ -185,7 +185,7 @@ var Module = fx.Module(
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m[env.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", env.AccountCookieName)
+					return nil, errors.Newf("no cookie named '%s' present in request", env.AccountCookieName)
 				}
 				cc := domain.InfraContext{
 					Context:     ctx,

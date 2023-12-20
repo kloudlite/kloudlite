@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -35,7 +35,7 @@ func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (
 		return nil, err
 	}
 	if cfg == nil {
-		return nil, fmt.Errorf("no config with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no config with name=%q,namespace=%q found", name, namespace)
 	}
 	return cfg, nil
 }

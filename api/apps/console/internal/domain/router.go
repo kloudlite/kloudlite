@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -35,7 +35,7 @@ func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (
 		return nil, err
 	}
 	if router == nil {
-		return nil, fmt.Errorf("no router with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no router with name=%q,namespace=%q found", name, namespace)
 	}
 	return router, nil
 }

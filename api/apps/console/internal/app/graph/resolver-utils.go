@@ -32,7 +32,7 @@ func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
 
 	var err error
 	if len(errMsgs) != 0 {
-		err = errors.NewE(fmt.Errorf("%v", strings.Join(errMsgs, ",")))
+		err = errors.NewE(errors.Newf("%v", strings.Join(errMsgs, ",")))
 	}
 
 	return domain.ConsoleContext{
@@ -65,7 +65,7 @@ func (r *queryResolver) getNamespaceFromProjectID(ctx context.Context, project m
 			return project.Value, nil
 		}
 	default:
-		return "", fmt.Errorf("invalid project type %q", project.Type)
+		return "", errors.Newf("invalid project type %q", project.Type)
 	}
 }
 
@@ -105,6 +105,6 @@ func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, pro
 	case model.WorkspaceOrEnvIDTypeWorkspaceTargetNamespace:
 		return scope.Value, nil
 	default:
-		return "", fmt.Errorf("invalid scope type %q", scope.Type)
+		return "", errors.Newf("invalid scope type %q", scope.Type)
 	}
 }

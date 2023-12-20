@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -37,7 +37,7 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 		return nil, err
 	}
 	if mres == nil {
-		return nil, fmt.Errorf(
+		return nil, errors.Newf(
 			"no managed resource with name=%q,namespace=%q found",
 			name,
 			namespace,

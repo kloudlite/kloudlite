@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -31,7 +31,7 @@ func (d *domain) findImagePullSecret(ctx ConsoleContext, namespace, name string)
 	}
 
 	if ips == nil {
-		return nil, fmt.Errorf("no image-pull-secret with name=%q, namespace=%q found", name, namespace)
+		return nil, errors.Newf("no image-pull-secret with name=%q, namespace=%q found", name, namespace)
 	}
 	return ips, nil
 }

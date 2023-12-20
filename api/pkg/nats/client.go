@@ -3,6 +3,7 @@ package nats
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/pkg/logging"
@@ -42,7 +43,7 @@ type ClientOpts struct {
 
 func NewClient(url string, opts ClientOpts) (*Client, error) {
 	if opts.Name == "" {
-		return nil, fmt.Errorf("opts.name is required")
+		return nil, errors.Newf("opts.name is required")
 	}
 
 	if opts.Logger == nil {

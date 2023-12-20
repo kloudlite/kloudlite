@@ -44,7 +44,7 @@ func (d domain) AddRoleBinding(ctx context.Context, rb entities.RoleBinding) (*e
 	}
 
 	if exists != nil {
-		return nil, fmt.Errorf("role binding for (userId=%s, ResourceRef=%s) already exists", rb.UserId, rb.ResourceRef)
+		return nil, errors.Newf("role binding for (userId=%s, ResourceRef=%s) already exists", rb.UserId, rb.ResourceRef)
 	}
 
 	nrb, err := d.rbRepo.Create(ctx, &rb)
@@ -66,7 +66,7 @@ func (s domain) findRoleBinding(ctx context.Context, userId repos.ID, resourceRe
 	}
 
 	if rb == nil {
-		return nil, fmt.Errorf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
+		return nil, errors.Newf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
 	}
 
 	return rb, nil
@@ -74,7 +74,7 @@ func (s domain) findRoleBinding(ctx context.Context, userId repos.ID, resourceRe
 
 func (d domain) RemoveRoleBinding(ctx context.Context, userId repos.ID, resourceRef string) error {
 	if userId == "" || resourceRef == "" {
-		return fmt.Errorf("userId or resourceRef is empty, rejecting")
+		return errors.Newf("userId or resourceRef is empty, rejecting")
 	}
 
 	rb, err := d.findRoleBinding(ctx, userId, resourceRef)
@@ -109,7 +109,7 @@ func (d domain) UpdateRoleBinding(ctx context.Context, rb entities.RoleBinding) 
 		return nil, err
 	}
 	if currRb == nil {
-		return nil, fmt.Errorf("role binding for (userId=%q,  ResourceRef=%q, ResourceType=%q) not found", rb.UserId, rb.ResourceRef, rb.ResourceType)
+		return nil, errors.Newf("role binding for (userId=%q,  ResourceRef=%q, ResourceType=%q) not found", rb.UserId, rb.ResourceRef, rb.ResourceType)
 	}
 
 	currRb.Role = rb.Role

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/apps/iam/internal/entities"
 	"github.com/kloudlite/api/pkg/grpc"
 	"strings"
@@ -36,7 +35,7 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 		return nil, err
 	}
 	if rb == nil {
-		return nil, fmt.Errorf("role binding for (userId=%q,  ResourceRef=%q, ResourceType=%q) not found", in.UserId, in.ResourceRef, in.ResourceType)
+		return nil, errors.Newf("role binding for (userId=%q,  ResourceRef=%q, ResourceType=%q) not found", in.UserId, in.ResourceRef, in.ResourceType)
 	}
 
 	rb.Role = t.Role(in.Role)
@@ -61,7 +60,7 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 		return nil, err
 	}
 	if rb == nil {
-		return nil, fmt.Errorf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
+		return nil, errors.Newf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
 	}
 	return rb, nil
 }
@@ -81,7 +80,7 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 //	//	return nil, err
 //	//}
 //	//return &iam.ConfirmMembershipOut{}, nil
-//	return nil, fmt.Errorf("not implemented")
+//	return nil, errors.Newf("not implemented")
 //}
 
 //func (s *GrpcService) InviteMembership(ctx context.Context, in *iam.AddMembershipIn) (*iam.AddMembershipOut, error) {
@@ -184,7 +183,7 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 	}
 
 	if rbs == nil {
-		return nil, fmt.Errorf("no rolebinding found for (userId=%s, resourceRefs=%s)", in.UserId, strings.Join(in.ResourceRefs, ","))
+		return nil, errors.Newf("no rolebinding found for (userId=%s, resourceRefs=%s)", in.UserId, strings.Join(in.ResourceRefs, ","))
 	}
 
 	for i := range rbs {
@@ -244,7 +243,7 @@ func (s *GrpcService) AddMembership(ctx context.Context, in *iam.AddMembershipIn
 
 func (s *GrpcService) RemoveMembership(ctx context.Context, in *iam.RemoveMembershipIn) (*iam.RemoveMembershipOut, error) {
 	if in.UserId == "" || in.ResourceRef == "" {
-		return nil, fmt.Errorf("userId or resourceRef is empty, rejecting")
+		return nil, errors.Newf("userId or resourceRef is empty, rejecting")
 	}
 
 	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)

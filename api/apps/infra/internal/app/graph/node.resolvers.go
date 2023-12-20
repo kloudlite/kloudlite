@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -18,7 +18,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *nodeResolver) CreationTime(ctx context.Context, obj *entities.Node) (string, error) {
 	if obj == nil || obj.CreationTime.IsZero() {
-		return "", fmt.Errorf("node is nil")
+		return "", errors.Newf("node is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -26,7 +26,7 @@ func (r *nodeResolver) CreationTime(ctx context.Context, obj *entities.Node) (st
 // ID is the resolver for the id field.
 func (r *nodeResolver) ID(ctx context.Context, obj *entities.Node) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("node is nil")
+		return "", errors.Newf("node is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -43,7 +43,7 @@ func (r *nodeResolver) Spec(ctx context.Context, obj *entities.Node) (*model.Git
 // UpdateTime is the resolver for the updateTime field.
 func (r *nodeResolver) UpdateTime(ctx context.Context, obj *entities.Node) (string, error) {
 	if obj == nil || obj.UpdateTime.IsZero() {
-		return "", fmt.Errorf("node is nil")
+		return "", errors.Newf("node is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
