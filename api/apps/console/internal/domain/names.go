@@ -21,7 +21,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name": name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if p == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -44,7 +44,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if p == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -67,7 +67,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if a == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -90,7 +90,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if c == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -113,7 +113,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if s == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -136,7 +136,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if r == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -159,7 +159,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if r == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil
@@ -182,7 +182,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"metadata.name":      name,
 				})
 				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
+					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 				}
 				if r == nil {
 					return &CheckNameAvailabilityOutput{Result: true}, nil

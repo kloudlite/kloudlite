@@ -14,7 +14,7 @@ import (
 
 func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := repos.Filter{
@@ -34,7 +34,7 @@ func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (
 		"metadata.name":      name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if exSecret == nil {
 		return nil, errors.Newf("no secret with name=%s,namespace=%s found", name, namespace)
@@ -44,7 +44,7 @@ func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (
 
 func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findSecret(ctx, namespace, name)
 }
@@ -53,12 +53,12 @@ func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*
 
 func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, secret.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	secret.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	secret.IncrementRecordVersion()
@@ -77,13 +77,13 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &s.Secret, s.RecordVersion); err != nil {
-		return s, err
+		return s, errors.NewE(err)
 	}
 
 	return s, nil
@@ -91,17 +91,17 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 
 func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, secret.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	secret.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	exSecret, err := d.findSecret(ctx, secret.Namespace, secret.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if exSecret.Type != secret.Type {
@@ -125,11 +125,11 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 
 	upSecret, err := d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upSecret.Secret, upSecret.RecordVersion); err != nil {
-		return upSecret, err
+		return upSecret, errors.NewE(err)
 	}
 
 	return upSecret, nil
@@ -137,17 +137,17 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 
 func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	exSecret, err := d.findSecret(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	exSecret.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, exSecret.RecordVersion)
 	if _, err := d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &exSecret.Secret)
@@ -156,11 +156,11 @@ func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string)
 func (d *domain) OnDeleteSecretMessage(ctx ConsoleContext, secret entities.Secret) error {
 	exSecret, err := d.findSecret(ctx, secret.Namespace, secret.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(secret.Annotations, exSecret.RecordVersion); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.secretRepo.DeleteById(ctx, exSecret.Id)
@@ -169,7 +169,7 @@ func (d *domain) OnDeleteSecretMessage(ctx ConsoleContext, secret entities.Secre
 func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secret) error {
 	exSecret, err := d.findSecret(ctx, secret.Namespace, secret.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(secret.Annotations)
@@ -192,7 +192,7 @@ func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secre
 	exSecret.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnApplySecretError(ctx ConsoleContext, errMsg, namespace, name string) error {
@@ -206,17 +206,17 @@ func (d *domain) OnApplySecretError(ctx ConsoleContext, errMsg, namespace, name 
 	exSecret.SyncStatus.Error = &errMsg
 
 	_, err := d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncSecret(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	exSecret, err := d.findSecret(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncK8sResource(ctx, exSecret.SyncStatus.Action, &exSecret.Secret, exSecret.RecordVersion)

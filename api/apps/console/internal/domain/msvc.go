@@ -12,7 +12,7 @@ import (
 
 func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedService], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
@@ -31,7 +31,7 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 		"metadata.name":      name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if msvc == nil {
 		return nil, errors.Newf("no secret with name=%q,namespace=%q found", name, namespace)
@@ -41,7 +41,7 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 
 func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.ManagedService, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findMSvc(ctx, namespace, name)
 }
@@ -50,12 +50,12 @@ func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name st
 
 func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, msvc.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	msvc.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &msvc.ManagedService); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	msvc.IncrementRecordVersion()
@@ -75,13 +75,13 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	if err != nil {
 		if d.msvcRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &m.ManagedService, m.RecordVersion); err != nil {
-		return m, err
+		return m, errors.NewE(err)
 	}
 
 	return m, nil
@@ -89,17 +89,17 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 
 func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, msvc.Namespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	msvc.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &msvc.ManagedService); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	m.IncrementRecordVersion()
@@ -118,11 +118,11 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 
 	upMSvc, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &upMSvc.ManagedService, upMSvc.RecordVersion); err != nil {
-		return upMSvc, err
+		return upMSvc, errors.NewE(err)
 	}
 
 	return upMSvc, nil
@@ -130,16 +130,16 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 
 func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	m, err := d.findMSvc(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	m.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, m.RecordVersion)
 	if _, err := d.msvcRepo.UpdateById(ctx, m.Id, m); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.deleteK8sResource(ctx, &m.ManagedService)
@@ -148,7 +148,7 @@ func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name
 func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error {
 	exMsvc, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(msvc.Annotations, exMsvc.RecordVersion); err != nil {
@@ -161,7 +161,7 @@ func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities
 func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error {
 	exMsvc, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	annotatedVersion, err := d.parseRecordVersionFromAnnotations(msvc.Annotations)
@@ -186,7 +186,7 @@ func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities
 	exMsvc.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.msvcRepo.UpdateById(ctx, exMsvc.Id, exMsvc)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
@@ -199,17 +199,17 @@ func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, n
 	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.Error = &errMsg
 	_, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) ResyncManagedService(ctx ConsoleContext, namespace, name string) error {
 	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	c, err := d.findMSvc(ctx, namespace, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.ManagedService, c.RecordVersion)

@@ -42,7 +42,7 @@ func (d *Impl) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPa
 	hook, err := github.ParseWebHook(eventType, hookBody)
 	if err != nil {
 		d.logger.Infof("bad webhook body, dropping message ...")
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	switch h := hook.(type) {
@@ -80,7 +80,7 @@ func (d *Impl) getAccessTokenByUserId(ctx context.Context, provider string, user
 		Provider: accTokenOut.Provider,
 		Token:    &oauth2.Token{AccessToken: accTokenOut.OauthToken.AccessToken, TokenType: accTokenOut.OauthToken.TokenType, RefreshToken: accTokenOut.OauthToken.RefreshToken, Expiry: time.UnixMilli(accTokenOut.OauthToken.Expiry)},
 		Data:     map[string]any{},
-	}, err
+	}, errors.NewE(err)
 }
 
 func (d *Impl) GithubInstallationToken(ctx context.Context, repoUrl string) (string, error) {
@@ -90,11 +90,11 @@ func (d *Impl) GithubInstallationToken(ctx context.Context, repoUrl string) (str
 func (d *Impl) GithubListInstallations(ctx context.Context, userId repos.ID, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
 	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	i, err := d.github.ListInstallations(ctx, token, pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	res := make([]*entities.GithubInstallation, len(i))
@@ -124,7 +124,7 @@ func (d *Impl) GithubListInstallations(ctx context.Context, userId repos.ID, pag
 func (d *Impl) GithubListRepos(ctx context.Context, userId repos.ID, installationId int64, pagination *types.Pagination) (*entities.GithubListRepository, error) {
 	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	i, err := d.github.ListRepos(ctx, token, installationId, pagination)
@@ -165,14 +165,14 @@ func (d *Impl) GithubListRepos(ctx context.Context, userId repos.ID, installatio
 	return &entities.GithubListRepository{
 		TotalCount:   i.TotalCount,
 		Repositories: repositories,
-	}, err
+	}, errors.NewE(err)
 }
 
 func (d *Impl) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
 
 	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	i, err := d.github.SearchRepos(ctx, token, q, org, pagination)
@@ -226,7 +226,7 @@ func getString(s *string) string {
 func (d *Impl) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
 	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	i, err := d.github.ListBranches(ctx, token, repoUrl, pagination)
@@ -240,7 +240,7 @@ func (d *Impl) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl 
 		}
 	}
 
-	return branches, err
+	return branches, errors.NewE(err)
 }
 
 func (d *Impl) GithubAddWebhook(ctx context.Context, userId repos.ID, repoUrl string) (repos.ID, error) {
