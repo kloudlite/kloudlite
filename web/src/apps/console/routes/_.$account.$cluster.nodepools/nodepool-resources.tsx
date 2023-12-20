@@ -1,10 +1,4 @@
-import {
-  CodeSimple,
-  PencilLine,
-  Trash,
-  Cpu,
-  ChevronDown,
-} from '@jengaicons/react';
+import { PencilLine, Trash, Cpu } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -32,10 +26,10 @@ import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link } from '@remix-run/react';
-import { listRender } from '~/console/components/commons';
+import { IStatus, listRender } from '~/console/components/commons';
 import AnimateHide from '~/components/atoms/animate-hide';
 import HandleNodePool from './handle-nodepool';
-import { findNodePlan, findNodePlanWithCategory } from './nodepool-utils';
+import { findNodePlanWithCategory } from './nodepool-utils';
 
 const RESOURCE_NAME = 'nodepool';
 type BaseType = ExtractNodeType<INodepools>;
@@ -54,9 +48,11 @@ const parseItem = (item: BaseType) => {
 const ExtraButton = ({
   onDelete,
   onEdit,
+  status: _,
 }: {
   onDelete: () => void;
   onEdit: () => void;
+  status: IStatus;
 }) => {
   return (
     <ResourceExtraAction
@@ -107,7 +103,7 @@ const ListDetail = (
 ) => {
   const { item, open, onDelete, onEdit } = props;
   const { name, id } = parseItem(item);
-  const { minCount, maxCount, targetCount, cloudProvider, aws } = item.spec;
+  const { minCount, maxCount, cloudProvider, aws } = item.spec;
   const keyPrefix = `${RESOURCE_NAME}-${id}`;
   const lR = listRender({ keyPrefix, resource: item });
 
@@ -157,6 +153,9 @@ const ListDetail = (
         return null;
     }
   };
+
+  const statusRender = lR.statusRender({ className: 'w-[180px]' });
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex flex-row items-center">
@@ -175,7 +174,7 @@ const ListDetail = (
           <ListItem data={parseProviderInfo()} />
         </div>
         <div className="flex-grow flex items-center justify-center">
-          {lR.statusRender({ className: 'w-[180px]' }).render()}
+          {statusRender.render()}
         </div>
         {/* <div className="flex flex-row gap-2xl items-center pl-3xl pr-xl mr-3xl border-border-disabled border-r w-[160px] min-w-[160px]">
           <div className="flex flex-col gap-sm">
@@ -199,6 +198,7 @@ const ListDetail = (
         <ExtraButton
           onDelete={() => onDelete(item)}
           onEdit={() => onEdit(item)}
+          status={statusRender.status}
         />
       </div>
 

@@ -1,6 +1,6 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { generateKey, titleCase } from '~/components/utils';
+import { cn, generateKey, titleCase } from '~/components/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -87,6 +87,7 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
       {items.map((item, index) => {
         const { name, id, provider, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
         return (
           <Grid.Column
             key={id}
@@ -111,6 +112,7 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                   </div>
                 ),
               },
+              lR.statusRender({ className: '' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
@@ -136,11 +138,23 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
         const { name, id, provider } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         const lR = listRender({ keyPrefix, resource: item });
+        const statusRender = lR.statusRender({
+          className: 'w-[180px] mr-[50px]',
+        });
+
         return (
           <List.Row
             key={id}
-            className="!p-3xl"
-            to={`/${account}/${id}/overview`}
+            className={cn(
+              '!p-3xl',
+              statusRender.status === 'notready'
+                ? '!cursor-default hover:!bg-surface-basic-default'
+                : ''
+            )}
+            // to={`/${account}/${id}/overview`}
+            {...(statusRender.status !== 'notready'
+              ? { to: `/${account}/${id}/overview` }
+              : {})}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -153,7 +167,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                   />
                 ),
               },
-              lR.statusRender({ className: 'w-[180px] mr-[50px]' }),
+              statusRender,
               {
                 key: generateKey(keyPrefix, `${provider}`),
                 className: 'w-[150px] text-start',

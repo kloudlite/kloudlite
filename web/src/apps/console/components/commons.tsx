@@ -120,7 +120,7 @@ interface IUpdateMeta {
 }
 
 // Component for Status parsing
-type IStatus = 'deleting' | 'none';
+export type IStatus = 'deleting' | 'notready' | 'none';
 
 interface IStatusMeta {
   markedForDeletion?: boolean;
@@ -141,7 +141,9 @@ type ICommonMeta = IUpdateMeta & IStatusMeta;
 const parseStatusComponent = ({ status }: { status: IStatus }) => {
   switch (status) {
     case 'deleting':
-      return <div className="bodySm text-text-soft">Deleting...</div>;
+      return <div className="bodySm text-text-soft pulsable">Deleting...</div>;
+    case 'notready':
+      return <div className="bodySm text-text-soft pulsable">Not Ready</div>;
     default:
       return null;
   }
@@ -152,6 +154,8 @@ export const parseStatus = (item: IStatusMeta) => {
 
   if (item.markedForDeletion) {
     status = 'deleting';
+  } else if (!item.status?.isReady) {
+    status = 'notready';
   }
 
   return { status, component: parseStatusComponent({ status }) };
@@ -183,6 +187,7 @@ export const listRender = ({
         key: generateKey(keyPrefix, 'status'),
         className,
         render: () => parseStatus(resource).component,
+        status: parseStatus(resource).status,
       };
     },
   };

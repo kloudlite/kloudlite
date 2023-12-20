@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { CopySimple } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { useLoaderData, useOutletContext } from '@remix-run/react';
+import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
@@ -15,16 +15,12 @@ import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
 import { awsRegions } from '~/console/dummy/consts';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import {
-  ICluster,
-  IClusters,
-} from '~/console/server/gql/queries/cluster-queries';
+import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import {
   ConsoleApiType,
   GQLServerHandler,
 } from '~/console/server/gql/saved-queries';
 import {
-  ExtractNodeType,
   ensureResource,
   parseName,
   parseNodes,
@@ -95,6 +91,7 @@ const SettingGeneral = () => {
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
   const reload = useReload();
   const api = useConsoleApi();
+  const navigate = useNavigate();
 
   const { copy } = useClipboard({
     onSuccess() {
@@ -277,6 +274,7 @@ const SettingGeneral = () => {
             reload();
             toast.success(`Cluster deleted successfully`);
             setDeleteCluster(false);
+            navigate(`/${account}/clusters`);
           } catch (err) {
             handleError(err);
           }

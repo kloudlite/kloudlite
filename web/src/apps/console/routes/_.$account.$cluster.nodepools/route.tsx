@@ -12,8 +12,6 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import { parseName } from '~/console/server/r-utils/common';
-import { SubHeaderTitle } from '~/console/components/commons';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
@@ -39,11 +37,9 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const ClusterDetail = () => {
+const Nodepools = () => {
   const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
-
-  const { cluster, account } = useOutletContext<IClusterContext>();
 
   return (
     <>
@@ -60,6 +56,9 @@ const ClusterDetail = () => {
             return null;
           }
           const { pageInfo, totalCount } = nodePoolData;
+
+          console.log(nodepools);
+
           return (
             <Wrapper
               header={{
@@ -115,4 +114,4 @@ const ClusterDetail = () => {
   );
 };
 
-export default ClusterDetail;
+export default Nodepools;
