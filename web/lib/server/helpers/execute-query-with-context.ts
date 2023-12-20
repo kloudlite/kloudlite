@@ -97,7 +97,7 @@ export const ExecuteQueryWithContext = (
         }
         return { ...resp.data, data };
       } catch (err) {
-        console.error('ErrorIn:', apiName);
+        console.error('ErrorIn:', apiName, err);
         if ((err as AxiosError).response) {
           return (err as AxiosError).response?.data;
         }
