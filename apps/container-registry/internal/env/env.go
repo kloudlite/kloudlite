@@ -44,6 +44,7 @@ type Env struct {
 
 	JobBuildNamespace string `env:"JOB_BUILD_NAMESPACE" required:"true"`
 	SessionKVBucket   string `env:"SESSION_KV_BUCKET" required:"true"`
+	IsDev             bool
 }
 
 func LoadEnv() (*Env, error) {
