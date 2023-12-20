@@ -168,8 +168,9 @@ func (r *Reconciler) ensureDnsSvcAndReady(req *rApi.Request[*wgv1.Dns]) stepResu
 			}
 		}
 
-		if dns != nil {
+		if dns != nil && (obj.Spec.DNS == nil || *obj.Spec.DNS != dns.Spec.ClusterIP) {
 			obj.Spec.DNS = &dns.Spec.ClusterIP
+			return r.Update(ctx, obj)
 		}
 
 		return nil
@@ -195,11 +196,19 @@ func (r *Reconciler) ensureDnsConfigReady(req *rApi.Request[*wgv1.Dns]) stepResu
 		return req.CheckFailed(ConfigReady, check, err.Error())
 	}
 
-	upsertRewriteRules := func(devices *wgv1.DeviceList) error {
-		kubeDns, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
-		if err != nil {
-			return err
+	kubeDns, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+	if err != nil {
+		return failed(err)
+	}
+
+	if obj.Spec.MainDns == nil || *obj.Spec.MainDns == kubeDns.Spec.ClusterIP {
+		obj.Spec.MainDns = &kubeDns.Spec.ClusterIP
+		if err := r.Update(ctx, obj); err != nil {
+			return failed(err)
 		}
+	}
+
+	upsertRewriteRules := func(devices *wgv1.DeviceList) error {
 
 		rewriteRules := ""
 		d := make([]string, 0)
@@ -255,6 +264,8 @@ func (r *Reconciler) ensureDnsConfigReady(req *rApi.Request[*wgv1.Dns]) stepResu
 			if err := upsertRewriteRules(&wgv1.DeviceList{}); err != nil {
 				return err
 			}
+
+			return fmt.Errorf("config was missing, created now")
 		}
 
 		var devices wgv1.DeviceList
