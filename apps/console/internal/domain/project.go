@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -33,7 +34,7 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get project")
+		return nil, errors.Newf("unauthorized to get project")
 	}
 
 	filter := repos.Filter{"accountName": accountName}
@@ -55,7 +56,7 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 		return nil, err
 	}
 	if prj == nil {
-		return nil, fmt.Errorf("no project with name=%q found", name)
+		return nil, errors.Newf("no project with name=%q found", name)
 	}
 	return prj, nil
 }
@@ -70,7 +71,7 @@ func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace strin
 		return nil, err
 	}
 	if prj == nil {
-		return nil, fmt.Errorf("no project with targetNamespace=%q found", targetNamespace)
+		return nil, errors.Newf("no project with targetNamespace=%q found", targetNamespace)
 	}
 	return prj, nil
 }
@@ -89,7 +90,7 @@ func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project,
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get project")
+		return nil, errors.Newf("unauthorized to get project")
 	}
 
 	return d.findProject(ctx, name)
@@ -110,7 +111,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to create Project")
+		return nil, errors.Newf("unauthorized to create Project")
 	}
 
 	project.EnsureGVK()
@@ -197,7 +198,7 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete project")
+		return errors.Newf("unauthorized to delete project")
 	}
 
 	prj, err := d.findProject(ctx, name)
@@ -227,7 +228,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to update project %q", project.Name)
+		return nil, errors.Newf("unauthorized to update project %q", project.Name)
 	}
 
 	project.EnsureGVK()
@@ -339,7 +340,7 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to update project %q", name)
+		return errors.Newf("unauthorized to update project %q", name)
 	}
 
 	p, err := d.findProject(ctx, name)

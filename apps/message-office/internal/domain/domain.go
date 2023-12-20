@@ -2,8 +2,7 @@ package domain
 
 import (
 	"context"
-	"fmt"
-
+	"github.com/kloudlite/api/pkg/errors"
 	"go.uber.org/fx"
 
 	"github.com/kloudlite/api/apps/message-office/internal/env"
@@ -30,7 +29,7 @@ func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, ac
 	}
 
 	if r == nil {
-		return fmt.Errorf("invalid access token")
+		return errors.Newf("invalid access token")
 	}
 
 	return nil
@@ -38,7 +37,7 @@ func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, ac
 
 func (d *domain) getClusterToken(ctx context.Context, accountName string, clusterName string) (string, error) {
 	if accountName == "" || clusterName == "" {
-		return "", fmt.Errorf("accountName and/or clusterName cannot be empty")
+		return "", errors.Newf("accountName and/or clusterName cannot be empty")
 	}
 	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"accountName": accountName, "clusterName": clusterName})
 	if err != nil {
@@ -80,7 +79,7 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*Acce
 	}
 
 	if mot == nil {
-		return nil, fmt.Errorf("no such cluster token found")
+		return nil, errors.Newf("no such cluster token found")
 	}
 
 	if mot.Granted != nil && *mot.Granted {
@@ -100,7 +99,7 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*Acce
 	}
 
 	if record == nil {
-		return nil, fmt.Errorf("failed to upsert into accessToken collection")
+		return nil, errors.Newf("failed to upsert into accessToken collection")
 	}
 
 	mot.Granted = fn.New(true)

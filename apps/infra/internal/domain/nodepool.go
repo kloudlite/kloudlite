@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -134,7 +135,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	np, err := d.nodePoolRepo.Create(ctx, &nodepool)
 	if err != nil {
 		if d.nodePoolRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("nodepool with name %q already exists", nodepool.Name)
+			return nil, errors.Newf("nodepool with name %q already exists", nodepool.Name)
 		}
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 	}
 
 	if np.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("nodepool %q (clusterName=%q) is marked for deletion, aborting update", nodePool.Name, clusterName)
+		return nil, errors.Newf("nodepool %q (clusterName=%q) is marked for deletion, aborting update", nodePool.Name, clusterName)
 	}
 
 	np.IncrementRecordVersion()
@@ -199,7 +200,7 @@ func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName s
 	}
 
 	if np.IsMarkedForDeletion() {
-		return fmt.Errorf("nodepool %q (clusterName=%q) is already marked for deletion", poolName, clusterName)
+		return errors.Newf("nodepool %q (clusterName=%q) is already marked for deletion", poolName, clusterName)
 	}
 
 	np.MarkedForDeletion = fn.New(true)
@@ -243,7 +244,7 @@ func (d *domain) findNodePool(ctx InfraContext, clusterName string, poolName str
 		return nil, err
 	}
 	if np == nil {
-		return nil, fmt.Errorf("nodepool with name %q not found", clusterName)
+		return nil, errors.Newf("nodepool with name %q not found", clusterName)
 	}
 	return np, nil
 }

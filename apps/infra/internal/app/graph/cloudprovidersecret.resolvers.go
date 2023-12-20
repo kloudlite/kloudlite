@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -21,7 +21,7 @@ import (
 // Aws is the resolver for the aws field.
 func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials, error) {
 	if obj == nil || obj.CreationTime.IsZero() {
-		return nil, fmt.Errorf("CloudProviderSecret object is nil")
+		return nil, errors.Newf("CloudProviderSecret object is nil")
 	}
 	return &model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials{
 		AccessKey:                  obj.AWS.AccessKey,
@@ -43,7 +43,7 @@ func (r *cloudProviderSecretResolver) CloudProviderName(ctx context.Context, obj
 // CreationTime is the resolver for the creationTime field.
 func (r *cloudProviderSecretResolver) CreationTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error) {
 	if obj == nil || obj.CreationTime.IsZero() {
-		return "", fmt.Errorf("CloudProviderSecret object is nil")
+		return "", errors.Newf("CloudProviderSecret object is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -51,7 +51,7 @@ func (r *cloudProviderSecretResolver) CreationTime(ctx context.Context, obj *ent
 // ID is the resolver for the id field.
 func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.CloudProviderSecret) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("CloudProviderSecret object is nil")
+		return "", errors.Newf("CloudProviderSecret object is nil")
 	}
 
 	return string(obj.Id), nil
@@ -60,7 +60,7 @@ func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.Clou
 // UpdateTime is the resolver for the updateTime field.
 func (r *cloudProviderSecretResolver) UpdateTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error) {
 	if obj == nil || obj.UpdateTime.IsZero() {
-		return "", fmt.Errorf("CloudProviderSecret object is nil")
+		return "", errors.Newf("CloudProviderSecret object is nil")
 	}
 
 	return obj.UpdateTime.Format(time.RFC3339), nil
@@ -74,7 +74,7 @@ func (r *cloudProviderSecretInResolver) Aws(ctx context.Context, obj *entities.C
 // CloudProviderName is the resolver for the cloudProviderName field.
 func (r *cloudProviderSecretInResolver) CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret, data model.GithubComKloudliteOperatorApisCommonTypesCloudProvider) error {
 	if !data.IsValid() {
-		return fmt.Errorf("invalid cloud provider name")
+		return errors.Newf("invalid cloud provider name")
 	}
 	obj.CloudProviderName = ct.CloudProvider(parser.RestoreSanitizedPackagePath(data.String()))
 	return nil

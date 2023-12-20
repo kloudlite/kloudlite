@@ -98,7 +98,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 
 		default:
 			fmt.Println("provider not supported", hook.GitProvider)
-			return fmt.Errorf("provider %s not supported", hook.GitProvider)
+			return errors.Newf("provider %s not supported", hook.GitProvider)
 		}
 
 		for _, build := range builds {

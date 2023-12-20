@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -40,7 +40,7 @@ func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*en
 		return nil, err
 	}
 	if app == nil {
-		return nil, fmt.Errorf("no app with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no app with name=%q,namespace=%q found", name, namespace)
 	}
 	return app, nil
 }

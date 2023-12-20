@@ -2,9 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
-
 	proto_rpc "github.com/kloudlite/api/apps/tenant-agent/internal/proto-rpc"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc/metadata"
 )
@@ -24,7 +23,7 @@ type vectorGrpcProxyServer struct {
 
 func (v *vectorGrpcProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushEventsRequest) (*proto_rpc.PushEventsResponse, error) {
 	if v.realVectorClient == nil {
-		return nil, fmt.Errorf("vector client is not yet connected to message-office")
+		return nil, errors.Newf("vector client is not yet connected to message-office")
 	}
 
 	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", v.accessToken))
@@ -44,7 +43,7 @@ func (v *vectorGrpcProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.P
 
 func (v *vectorGrpcProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.HealthCheckRequest) (*proto_rpc.HealthCheckResponse, error) {
 	if v.realVectorClient == nil {
-		return nil, fmt.Errorf("vector client is not yet connected to message-office")
+		return nil, errors.Newf("vector client is not yet connected to message-office")
 	}
 
 	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", v.accessToken))

@@ -44,7 +44,7 @@ func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string, err erro
 	re := regexp.MustCompile("https://(.+)/(.+)/(.+)")
 
 	if !re.MatchString(repoUrl) {
-		return "", "", fmt.Errorf("invalid repository url")
+		return "", "", errors.Newf("invalid repository url")
 	}
 
 	matches := re.FindStringSubmatch(repoUrl)
@@ -90,12 +90,12 @@ func (gh *githubI) AddRepoWebhook(ctx context.Context, accToken *entities.Access
 	//
 	// return fn.New(entities.GithubWebhookId(*hook.ID)), nil
 
-	return nil, fmt.Errorf("not implemented")
+	return nil, errors.Newf("not implemented")
 }
 
 func (gh *githubI) AddWebhook(ctx context.Context, accToken *entities.AccessToken, repoUrl string, webhookUrl string) (*entities.GithubWebhookId, error) {
 	// TODO:: we migrated to GitHub app webhook, which allows us to skip creating github repository webhooks, now
-	return nil, fmt.Errorf("not implemented")
+	return nil, errors.Newf("not implemented")
 }
 
 // Callback implements domain.Github.
@@ -281,7 +281,7 @@ func fxGithub[T githubOptions]() fx.Option {
 				}
 
 				if _, err := os.Stat(ghAppPKFile); err != nil {
-					return nil, fmt.Errorf("github privaate key file (path='%s') does not exist", ghAppPKFile)
+					return nil, errors.Newf("github privaate key file (path='%s') does not exist", ghAppPKFile)
 				}
 
 				// ioutil.ReadFile(name string)

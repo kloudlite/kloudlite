@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
@@ -24,7 +22,7 @@ func (d *domain) findInvitation(ctx context.Context, accountName string, invitat
 	}
 
 	if inv == nil {
-		return nil, fmt.Errorf("no invitation found with id=%s", invitationId)
+		return nil, errors.Newf("no invitation found with id=%s", invitationId)
 	}
 
 	return inv, nil
@@ -41,7 +39,7 @@ func (d *domain) findInvitationByInviteToken(ctx context.Context, accountName st
 	}
 
 	if inv == nil {
-		return nil, fmt.Errorf("no invitation found, with given invite token")
+		return nil, errors.Newf("no invitation found, with given invite token")
 	}
 
 	return inv, nil
@@ -177,7 +175,7 @@ func (d *domain) AcceptInvitation(ctx UserContext, accountName string, inviteTok
 	}
 
 	if inv.Accepted != nil || inv.Rejected != nil {
-		return false, fmt.Errorf("invitation already accepted or rejected, won't process further")
+		return false, errors.Newf("invitation already accepted or rejected, won't process further")
 	}
 
 	inv.Accepted = fn.New(true)
@@ -199,7 +197,7 @@ func (d *domain) RejectInvitation(ctx UserContext, accountName string, inviteTok
 	}
 
 	if inv.Accepted != nil || inv.Rejected != nil {
-		return false, fmt.Errorf("invitation already accepted or rejected, won't process further")
+		return false, errors.Newf("invitation already accepted or rejected, won't process further")
 	}
 
 	inv.Rejected = fn.New(true)

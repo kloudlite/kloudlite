@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -34,7 +34,7 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 		return nil, err
 	}
 	if msvc == nil {
-		return nil, fmt.Errorf("no secret with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no secret with name=%q,namespace=%q found", name, namespace)
 	}
 	return msvc, nil
 }

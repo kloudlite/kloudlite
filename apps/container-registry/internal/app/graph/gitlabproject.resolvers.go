@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
@@ -16,7 +16,7 @@ import (
 // CreatedAt is the resolver for the created_at field.
 func (r *gitlabProjectResolver) CreatedAt(ctx context.Context, obj *entities.GitlabProject) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("Object is nil")
+		return nil, errors.Newf("Object is nil")
 	}
 	if obj.CreatedAt == nil {
 		return nil, nil
@@ -29,7 +29,7 @@ func (r *gitlabProjectResolver) CreatedAt(ctx context.Context, obj *entities.Git
 // LastActivityAt is the resolver for the last_activity_at field.
 func (r *gitlabProjectResolver) LastActivityAt(ctx context.Context, obj *entities.GitlabProject) (*string, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("Object is nil")
+		return nil, errors.Newf("Object is nil")
 	}
 	if obj.LastActivityAt == nil {
 		return nil, nil

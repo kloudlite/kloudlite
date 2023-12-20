@@ -1,9 +1,8 @@
 package domain
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -33,7 +32,7 @@ func (d *domain) findNode(ctx InfraContext, clusterName string, nodeName string)
 	}
 
 	if node == nil {
-		return nil, fmt.Errorf("no node with name %q found in cluster %q", nodeName, clusterName)
+		return nil, errors.Newf("no node with name %q found in cluster %q", nodeName, clusterName)
 	}
 
 	return node, nil

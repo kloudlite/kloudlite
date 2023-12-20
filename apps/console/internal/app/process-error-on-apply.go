@@ -3,8 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-
+	"github.com/kloudlite/api/pkg/errors"
 	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -78,7 +77,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		default:
 			{
-				return fmt.Errorf("console apply error reader does not acknowledge resource with kind (%s)", kind)
+				return errors.Newf("console apply error reader does not acknowledge resource with kind (%s)", kind)
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"net/http"
 	"strings"
 	"time"
@@ -50,7 +51,7 @@ func (s *server) Listen(addr string) error {
 
 	select {
 	case status := <-errChannel:
-		return fmt.Errorf("could not start server because %v", status.Error())
+		return errors.Newf("could not start server because %v", status.Error())
 	case <-ctx.Done():
 		s.Logger.Infof("Http Server started @ (addr: %q)", addr)
 	}

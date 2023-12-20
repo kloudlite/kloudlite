@@ -15,7 +15,7 @@ func getUserId(ctx context.Context) (repos.ID, error) {
 	session, ok := ctx.Value("user-session").(*common.AuthSession)
 
 	if !ok {
-		return "", errors.NewE(fmt.Errorf("context values %q is missing", "user-session"))
+		return "", errors.NewE(errors.Newf("context values %q is missing", "user-session"))
 	}
 
 	return session.UserId, nil
@@ -36,7 +36,7 @@ func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
 
 	var err error
 	if len(errMsgs) != 0 {
-		err = errors.NewE(fmt.Errorf("%v", strings.Join(errMsgs, ",")))
+		err = errors.NewE(errors.Newf("%v", strings.Join(errMsgs, ",")))
 	}
 
 	return domain.RegistryContext{

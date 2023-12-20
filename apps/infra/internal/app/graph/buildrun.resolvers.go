@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -18,7 +18,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *buildRunResolver) CreationTime(ctx context.Context, obj *entities.BuildRun) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("build-run/creation-time is nil")
+		return "", errors.Newf("build-run/creation-time is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -26,7 +26,7 @@ func (r *buildRunResolver) CreationTime(ctx context.Context, obj *entities.Build
 // ID is the resolver for the id field.
 func (r *buildRunResolver) ID(ctx context.Context, obj *entities.BuildRun) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("build run is nil")
+		return "", errors.Newf("build run is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -43,7 +43,7 @@ func (r *buildRunResolver) Spec(ctx context.Context, obj *entities.BuildRun) (*m
 // UpdateTime is the resolver for the updateTime field.
 func (r *buildRunResolver) UpdateTime(ctx context.Context, obj *entities.BuildRun) (string, error) {
 	if obj == nil || obj.UpdateTime.IsZero() {
-		return "", fmt.Errorf("build-run-resolver/update-time is nil")
+		return "", errors.Newf("build-run-resolver/update-time is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }

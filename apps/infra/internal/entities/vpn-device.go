@@ -1,9 +1,8 @@
 package entities
 
 import (
-	"fmt"
-
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	wireguardV1 "github.com/kloudlite/operator/apis/wireguard/v1"
@@ -48,7 +47,7 @@ func ValidateVPNDevice(d *VPNDevice) error {
 	}
 
 	if len(errMsgs) > 0 {
-		return fmt.Errorf("%v", errMsgs)
+		return errors.Newf("%v", errMsgs)
 	}
 	return nil
 }

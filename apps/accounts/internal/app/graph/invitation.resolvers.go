@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
@@ -16,7 +16,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *invitationResolver) CreationTime(ctx context.Context, obj *entities.Invitation) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("invitation obj is nil")
+		return "", errors.Newf("invitation obj is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -24,7 +24,7 @@ func (r *invitationResolver) CreationTime(ctx context.Context, obj *entities.Inv
 // ID is the resolver for the id field.
 func (r *invitationResolver) ID(ctx context.Context, obj *entities.Invitation) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("invitation obj is nil")
+		return "", errors.Newf("invitation obj is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -32,7 +32,7 @@ func (r *invitationResolver) ID(ctx context.Context, obj *entities.Invitation) (
 // UpdateTime is the resolver for the updateTime field.
 func (r *invitationResolver) UpdateTime(ctx context.Context, obj *entities.Invitation) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("invitation obj is nil")
+		return "", errors.Newf("invitation obj is nil")
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -29,14 +28,14 @@ type githubI struct {
 
 func (gh *githubI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
 	if !gh.enabled {
-		return nil, fmt.Errorf("github oauth is disabled")
+		return nil, errors.Newf("github oauth is disabled")
 	}
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
 	if !gh.enabled {
-		return "", fmt.Errorf("github oauth is disabled")
+		return "", errors.Newf("github oauth is disabled")
 	}
 	csrfToken := fn.Must(fn.CleanerNanoid(32))
 	b64state, err := fn.ToBase64UrlFromJson(map[string]string{"csrf": csrfToken, "state": state})
@@ -51,7 +50,7 @@ func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
 
 func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error) {
 	if !gh.enabled {
-		return nil, nil, fmt.Errorf("github oauth is disabled")
+		return nil, nil, errors.Newf("github oauth is disabled")
 	}
 
 	token, err := gh.cfg.Exchange(ctx, code)
@@ -69,7 +68,7 @@ func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.Us
 
 func (gh *githubI) GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (string, error) {
 	if !gh.enabled {
-		return "", fmt.Errorf("github oauth is disabled")
+		return "", errors.Newf("github oauth is disabled")
 	}
 
 	emails, _, err := gh.ghCliForUser(ctx, token).Users.ListEmails(

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"io"
 	"os"
 	"strconv"
@@ -58,7 +59,7 @@ type domain struct {
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
-	return fmt.Errorf(
+	return errors.Newf(
 		"%s (namespace=%s, name=%s) already marked for deletion",
 		label,
 		namespace,
@@ -130,7 +131,7 @@ func (d *domain) resyncK8sResource(ctx ConsoleContext, action types.SyncAction, 
 		}
 	default:
 		{
-			return fmt.Errorf("unknown sync action %q", action)
+			return errors.Newf("unknown sync action %q", action)
 		}
 	}
 }
@@ -138,7 +139,7 @@ func (d *domain) resyncK8sResource(ctx ConsoleContext, action types.SyncAction, 
 func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
 	annotatedVersion, ok := annotations[constants.RecordVersionKey]
 	if !ok {
-		return 0, fmt.Errorf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
+		return 0, errors.Newf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
 	}
 
 	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
@@ -156,7 +157,7 @@ func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) error
 	}
 
 	if annVersion != rv {
-		return fmt.Errorf("record version mismatch, expected %d, got %d", rv, annVersion)
+		return errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
 	}
 
 	return nil
@@ -180,7 +181,7 @@ func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to mutate resources in project %q", prj.Name)
+		return errors.Newf("unauthorized to mutate resources in project %q", prj.Name)
 	}
 	return nil
 }
@@ -208,7 +209,7 @@ func (d *domain) canMutateResourcesInWorkspace(ctx ConsoleContext, targetNamespa
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to mutate resources in workspace %q", wsp.Name)
+		return errors.Newf("unauthorized to mutate resources in workspace %q", wsp.Name)
 	}
 	return nil
 }
@@ -231,7 +232,7 @@ func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to read resources in project %q", ws.Spec.ProjectName)
+		return errors.Newf("unauthorized to read resources in project %q", ws.Spec.ProjectName)
 	}
 	return nil
 }
@@ -254,7 +255,7 @@ func (d *domain) canReadResourcesInProject(ctx ConsoleContext, targetNamespace s
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to read resources in project %q", prj.Name)
+		return errors.Newf("unauthorized to read resources in project %q", prj.Name)
 	}
 	return nil
 }
@@ -271,7 +272,7 @@ func (d *domain) canMutateSecretsInAccount(ctx context.Context, userId string, a
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to mutate secrets in account %q", accountName)
+		return errors.Newf("unauthorized to mutate secrets in account %q", accountName)
 	}
 	return nil
 }
@@ -288,7 +289,7 @@ func (d *domain) canReadSecretsFromAccount(ctx context.Context, userId string, a
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to read secrets from account  %q", accountName)
+		return errors.Newf("unauthorized to read secrets from account  %q", accountName)
 	}
 	return nil
 }
@@ -307,7 +308,7 @@ func (d *domain) checkProjectAccess(ctx ConsoleContext, projectName string, acti
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to access project %q", projectName)
+		return errors.Newf("unauthorized to access project %q", projectName)
 	}
 	return nil
 }
@@ -327,7 +328,7 @@ func (d *domain) checkWorkspaceAccess(ctx ConsoleContext, projectName string, wo
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to access workspace %q", workspaceName)
+		return errors.Newf("unauthorized to access workspace %q", workspaceName)
 	}
 	return nil
 }
@@ -347,7 +348,7 @@ func (d *domain) checkEnvironmentAccess(ctx ConsoleContext, projectName string, 
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to access environment %q", environmentName)
+		return errors.Newf("unauthorized to access environment %q", environmentName)
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"regexp"
 	"time"
 
@@ -38,7 +39,7 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 	}
 
 	if c == nil {
-		return "", fmt.Errorf("credential not found")
+		return "", errors.Newf("credential not found")
 	}
 
 	if err := d.cacheClient.SetWithExpiry(ctx, username+"::"+accountname, []byte(c.TokenKey), time.Minute*5); err != nil {
@@ -46,7 +47,7 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 	}
 
 	if c == nil {
-		return "", fmt.Errorf("credential not found")
+		return "", errors.Newf("credential not found")
 	}
 
 	return c.TokenKey, nil
@@ -55,7 +56,7 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 
 	if username == KL_ADMIN {
-		return "", fmt.Errorf("invalid credential name, %s is reserved", KL_ADMIN)
+		return "", errors.Newf("invalid credential name, %s is reserved", KL_ADMIN)
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -71,7 +72,7 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 	}
 
 	if !co.Status {
-		return "", fmt.Errorf("unauthorized to get credentials")
+		return "", errors.Newf("unauthorized to get credentials")
 	}
 
 	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
@@ -82,7 +83,7 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 		return "", err
 	}
 	if c == nil {
-		return "", fmt.Errorf("credential not found")
+		return "", errors.Newf("credential not found")
 	}
 
 	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", c.Expiration.Value, c.Expiration.Unit))
@@ -114,7 +115,7 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to check username availability")
+		return nil, errors.Newf("unauthorized to check username availability")
 	}
 
 	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
@@ -152,11 +153,11 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 	re := regexp.MustCompile(pattern)
 
 	if !re.MatchString(credential.UserName) {
-		return nil, fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
+		return nil, errors.Newf("invalid credential name, must be lowercase alphanumeric with underscore")
 	}
 
 	if credential.UserName == KL_ADMIN {
-		return nil, fmt.Errorf("invalid credential name, %s is reserved", KL_ADMIN)
+		return nil, errors.Newf("invalid credential name, %s is reserved", KL_ADMIN)
 	}
 
 	key := Nonce(12)
@@ -192,7 +193,7 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get credentials")
+		return nil, errors.Newf("unauthorized to get credentials")
 	}
 
 	filter := repos.Filter{"accountName": ctx.AccountName}
@@ -215,7 +216,7 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete credentials")
+		return errors.Newf("unauthorized to delete credentials")
 	}
 
 	err = d.credentialRepo.DeleteOne(ctx, repos.Filter{

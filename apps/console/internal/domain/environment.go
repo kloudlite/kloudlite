@@ -1,9 +1,9 @@
 package domain
 
 import (
-	"fmt"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -21,7 +21,7 @@ func (d *domain) findEnvironment(ctx ConsoleContext, namespace, name string) (*e
 		return nil, err
 	}
 	if ws == nil {
-		return nil, fmt.Errorf("no environment with name=%q, namespace=%q found", name, namespace)
+		return nil, errors.Newf("no environment with name=%q, namespace=%q found", name, namespace)
 	}
 	return ws, nil
 }

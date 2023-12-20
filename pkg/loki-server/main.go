@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kloudlite/api/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -132,7 +133,7 @@ func (l *lokiClient) Ping(ctx context.Context) error {
 		return err
 	}
 	if r.StatusCode != http.StatusOK {
-		return fmt.Errorf("loki server is not ready, ping check failed with status code: %d", r.StatusCode)
+		return errors.Newf("loki server is not ready, ping check failed with status code: %d", r.StatusCode)
 	}
 	return nil
 }

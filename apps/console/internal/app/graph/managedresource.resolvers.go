@@ -6,7 +6,7 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *managedResourceResolver) CreationTime(ctx context.Context, obj *entities.ManagedResource) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,7 +27,7 @@ func (r *managedResourceResolver) CreationTime(ctx context.Context, obj *entitie
 // ID is the resolver for the id field.
 func (r *managedResourceResolver) ID(ctx context.Context, obj *entities.ManagedResource) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return string(obj.Id), nil
 }
@@ -44,7 +44,7 @@ func (r *managedResourceResolver) Spec(ctx context.Context, obj *entities.Manage
 // UpdateTime is the resolver for the updateTime field.
 func (r *managedResourceResolver) UpdateTime(ctx context.Context, obj *entities.ManagedResource) (string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
+		return "", errors.Newf("resource is nil")
 	}
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
 }
@@ -58,7 +58,7 @@ func (r *managedResourceInResolver) Metadata(ctx context.Context, obj *entities.
 // Spec is the resolver for the spec field.
 func (r *managedResourceInResolver) Spec(ctx context.Context, obj *entities.ManagedResource, data *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn) error {
 	if obj == nil {
-		return fmt.Errorf("resource is nil")
+		return errors.Newf("resource is nil")
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }
