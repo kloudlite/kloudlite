@@ -78,7 +78,7 @@ func (gh *githubI) GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (st
 		},
 	)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	for i := range emails {

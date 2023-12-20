@@ -25,7 +25,7 @@ func (d *domain) findAccount(ctx context.Context, name string) (*entities.Accoun
 		"metadata.name": name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if result == nil {
@@ -38,15 +38,15 @@ func (d *domain) findAccount(ctx context.Context, name string) (*entities.Accoun
 func (d *domain) applyAccountOnCluster(ctx context.Context, account *entities.Account) error {
 	b, err := json.Marshal(account.Account)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	y, err := yaml.JSONToYAML(b)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.k8sClient.ApplyYAML(ctx, y); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -58,7 +58,7 @@ func (d *domain) ListAccounts(ctx UserContext) ([]*entities.Account, error) {
 		ResourceType: string(iamT.ResourceAccount),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	accountNames := make([]string, len(out.RoleBindings))
@@ -73,7 +73,7 @@ func (d *domain) ListAccounts(ctx UserContext) ([]*entities.Account, error) {
 
 func (d *domain) GetAccount(ctx UserContext, name string) (*entities.Account, error) {
 	if err := d.checkAccountAccess(ctx, name, ctx.UserId, iamT.GetAccount); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findAccount(ctx, name)
 }
@@ -81,7 +81,7 @@ func (d *domain) GetAccount(ctx UserContext, name string) (*entities.Account, er
 func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName string, targetNamespace string) error {
 	if err := d.k8sClient.Get(ctx, fn.NN("", targetNamespace), &corev1.Namespace{}); err != nil {
 		if !apiErrors.IsNotFound(err) {
-			return err
+			return errors.NewE(err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName stri
 			},
 		},
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -111,7 +111,7 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 	}
 
 	if err := d.k8sClient.ValidateObject(ctx, &account.Account); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	account.IsActive = fn.New(true)
@@ -124,36 +124,36 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 
 	acc, err := d.accountRepo.Create(ctx, &account)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.addMembership(ctx, acc.Name, ctx.UserId, iamT.RoleAccountOwner); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.ensureNamespaceForAccount(ctx, account.Name, *account.Spec.TargetNamespace); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyAccountOnCluster(ctx, acc); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return acc, nil
 }
 
 func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
 	if err := d.checkAccountAccess(ctx, account.Name, ctx.UserId, iamT.UpdateAccount); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	account.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &account.Account); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	acc, err := d.findAccount(ctx, account.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if acc.IsActive != nil && !*acc.IsActive {
@@ -179,28 +179,28 @@ func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*enti
 
 	uAcc, err := d.accountRepo.UpdateById(ctx, acc.Id, acc)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyAccountOnCluster(ctx, uAcc); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return uAcc, nil
 }
 
 func (d *domain) DeleteAccount(ctx UserContext, name string) (bool, error) {
 	if err := d.checkAccountAccess(ctx, name, ctx.UserId, iamT.DeleteAccount); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	account, err := d.findAccount(ctx, name)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	account.MarkedForDeletion = fn.New(true)
 	if _, err := d.accountRepo.UpdateById(ctx, account.Id, account); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil
@@ -209,15 +209,15 @@ func (d *domain) DeleteAccount(ctx UserContext, name string) (bool, error) {
 func (d *domain) ResyncAccount(ctx UserContext, name string) error {
 	acc, err := d.findAccount(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.ensureNamespaceForAccount(ctx, acc.Name, *acc.Spec.TargetNamespace); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.applyAccountOnCluster(ctx, acc); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -225,12 +225,12 @@ func (d *domain) ResyncAccount(ctx UserContext, name string) error {
 
 func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 	if err := d.checkAccountAccess(ctx, name, ctx.UserId, iamT.ActivateAccount); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	account, err := d.findAccount(ctx, name)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if account.IsActive != nil && *account.IsActive {
@@ -240,7 +240,7 @@ func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 	account.IsActive = fn.New(true)
 
 	if _, err := d.accountRepo.UpdateById(ctx, account.Id, account); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil
@@ -248,12 +248,12 @@ func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 
 func (d *domain) DeactivateAccount(ctx UserContext, name string) (bool, error) {
 	if err := d.checkAccountAccess(ctx, name, ctx.UserId, iamT.DeactivateAccount); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	account, err := d.findAccount(ctx, name)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if account.IsActive != nil && !*account.IsActive {
@@ -263,7 +263,7 @@ func (d *domain) DeactivateAccount(ctx UserContext, name string) (bool, error) {
 	account.IsActive = fn.New(false)
 
 	if _, err := d.accountRepo.UpdateById(ctx, account.Id, account); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	return true, nil

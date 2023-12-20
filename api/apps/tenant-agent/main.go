@@ -48,7 +48,7 @@ func (g *grpcHandler) handleErrorOnApply(err error, msg t.AgentMessage) error {
 		Object:      msg.Object,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return g.errorsCli.Send(&messages.ErrorData{Message: b})
@@ -141,20 +141,20 @@ func (g *grpcHandler) ensureAccessToken() error {
 		ClusterToken: g.ev.ClusterToken,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	g.logger.Infof("valid access token has been obtained, persisting it in k8s secret (%s/%s)...", g.ev.AccessTokenSecretNamespace, g.ev.AccessTokenSecretName)
 
 	s, err := g.yamlClient.Client().CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Get(context.TODO(), g.ev.AccessTokenSecretName, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	s.Data["ACCESS_TOKEN"] = []byte(out.AccessToken)
 	_, err = g.yamlClient.Client().CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Update(context.TODO(), s, metav1.UpdateOptions{})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	g.ev.AccessToken = out.AccessToken
@@ -163,7 +163,7 @@ func (g *grpcHandler) ensureAccessToken() error {
 		// need to restart resource watcher
 		d, err := g.yamlClient.Client().AppsV1().Deployments(g.ev.ResourceWatcherNamespace).Get(ctx, g.ev.ResourceWatcherName, metav1.GetOptions{})
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 		podLabelSelector := metav1.LabelSelector{}
 		for k, v := range d.Spec.Selector.MatchLabels {
@@ -187,7 +187,7 @@ func (g *grpcHandler) run() error {
 
 	errorsCli, err := g.msgDispatchCli.ReceiveErrors(outgoingCtx)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	g.errorsCli = errorsCli
@@ -195,30 +195,30 @@ func (g *grpcHandler) run() error {
 	g.logger.Infof("asking message office to start sending actions")
 	msgActionsCli, err := g.msgDispatchCli.SendActions(outgoingCtx, &messages.Empty{})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	for {
 		if err := ctx.Err(); err != nil {
 			g.logger.Infof("connection context cancelled, will retry now...")
-			return err
+			return errors.NewE(err)
 		}
 
 		var msg t.AgentMessage
 		a, err := msgActionsCli.Recv()
 		if err != nil {
 			g.logger.Errorf(err, "[ERROR] while receiving message")
-			return err
+			return errors.NewE(err)
 		}
 
 		if err := json.Unmarshal(a.Message, &msg); err != nil {
 			g.logger.Errorf(err, "[ERROR] while json unmarshal")
-			return err
+			return errors.NewE(err)
 		}
 
 		if err := g.handleMessage(msg); err != nil {
 			g.logger.Errorf(err, "[ERROR] while handling message")
-			return err
+			return errors.NewE(err)
 		}
 	}
 }

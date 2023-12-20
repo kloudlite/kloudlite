@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/nats"
 
 	"go.uber.org/fx"
@@ -37,7 +38,6 @@ func (e *fm) GetHttpCors() string {
 	return e.CorsOrigins
 }
 
-
 func (e *fm) GetMongoConfig() (url string, dbName string) {
 	return e.MongoUri, e.MongoDbName
 }
@@ -64,7 +64,7 @@ var Module fx.Option = fx.Module(
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return nats.NewJetstreamClient(nc)
@@ -77,9 +77,7 @@ var Module fx.Option = fx.Module(
 		},
 	),
 
-
-
-	fx.Provide(func(e *env.Env,logger logging.Logger) httpServer.Server {
+	fx.Provide(func(e *env.Env, logger logging.Logger) httpServer.Server {
 		corsOrigins := "https://studio.apollographql.com"
 		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
 	}),
