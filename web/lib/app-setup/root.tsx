@@ -29,6 +29,7 @@ import { TopBar } from '~/components/organisms/top-bar';
 import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
+import { isDev } from '../client/helpers/log';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -96,9 +97,14 @@ export function ErrorBoundary() {
 
   if (error instanceof Error) {
     return (
-      <ErrorWrapper message={error.message}>
+      <ErrorWrapper message={error.name}>
         <code>
-          {typeof error.stack === 'string'
+          {/* eslint-disable-next-line no-nested-ternary */}
+          {isDev
+            ? typeof error.stack === 'string'
+              ? error.stack
+              : JSON.stringify(error.stack, null, 2)
+            : typeof error.stack === 'string'
             ? error.stack
             : JSON.stringify(error.stack, null, 2)}
         </code>
