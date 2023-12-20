@@ -72,7 +72,7 @@ func NewServer(args ServerArgs) Server {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			args.Logger.Errorf(err)
-			return err
+			return errors.NewE(err)
 		},
 	})
 	app.Use(

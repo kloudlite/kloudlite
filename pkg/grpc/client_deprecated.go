@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -11,7 +12,7 @@ import (
 func NewInsecureClient(grpcUrl string) (*grpc.ClientConn, error) {
 	conn, err := grpc.Dial(grpcUrl, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return conn, nil
 }

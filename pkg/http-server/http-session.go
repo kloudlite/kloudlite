@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,7 +36,7 @@ func NewSessionMiddleware(
 			get, err := repo.Get(ctx.Context(), key)
 			if err != nil {
 				if !repo.ErrNoRecord(err) {
-					return err
+					return errors.NewE(err)
 				}
 			}
 

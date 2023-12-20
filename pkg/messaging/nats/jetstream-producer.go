@@ -3,6 +3,7 @@ package nats
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/pkg/messaging/types"
@@ -31,7 +32,7 @@ func (c *JetstreamProducer) Stop(ctx context.Context) error {
 func (c *JetstreamProducer) ProduceAsync(ctx context.Context, msg types.ProduceMsg) error {
 	pa, err := c.client.Jetstream.PublishAsync(msg.Subject, msg.Payload)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	go func() {
@@ -49,7 +50,7 @@ func (c *JetstreamProducer) ProduceAsync(ctx context.Context, msg types.ProduceM
 // Produce implements messaging.Producer.
 func (c *JetstreamProducer) Produce(ctx context.Context, msg types.ProduceMsg) error {
 	_, err := c.client.Jetstream.Publish(ctx, msg.Subject, msg.Payload)
-	return err
+	return errors.NewE(err)
 }
 
 func NewJetstreamProducer(jc *nats.JetstreamClient) *JetstreamProducer {

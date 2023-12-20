@@ -27,17 +27,17 @@ func (r *redisRepo[T]) Get(c context.Context, key string) (T, error) {
 	get, err := r.cli.Get(c, key)
 	if err != nil {
 		var x T
-		return x, err
+		return x, errors.NewE(err)
 	}
 	var value T
 	err = json.Unmarshal(get, &value)
-	return value, err
+	return value, errors.NewE(err)
 }
 
 func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error {
 	marshal, err := json.Marshal(value)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	err = r.cli.SetWithExpiry(c, key, marshal, duration)
 	if err != nil {
