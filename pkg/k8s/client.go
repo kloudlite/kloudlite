@@ -122,8 +122,9 @@ func (c *clientHandler) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 	if scheme == nil {
 		scheme = runtime.NewScheme()
-		clientgoscheme.AddToScheme(scheme)
 	}
+
+	clientgoscheme.AddToScheme(scheme)
 
 	c, err := client.New(cfg, client.Options{
 		Scheme: scheme,

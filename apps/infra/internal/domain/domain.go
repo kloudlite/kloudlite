@@ -2,9 +2,10 @@ package domain
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
-	"strconv"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
@@ -21,8 +22,6 @@ import (
 	types "github.com/kloudlite/api/pkg/types"
 )
 
-
-
 type domain struct {
 	logger logging.Logger
 	env    *env.Env
@@ -37,9 +36,9 @@ type domain struct {
 	pvcRepo         repos.DbRepo[*entities.PersistentVolumeClaim]
 	buildRunRepo    repos.DbRepo[*entities.BuildRun]
 
-	//k8sClient k8s.Client
+	// k8sClient k8s.Client
 
-	//producer messaging.Producer
+	// producer messaging.Producer
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -47,8 +46,6 @@ type domain struct {
 	resDispatcher               ResourceDispatcher
 	k8sClient                   k8s.Client
 }
-
-
 
 func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
 	switch action {
@@ -156,19 +153,19 @@ var Module = fx.Module("domain",
 			logger logging.Logger,
 		) Domain {
 			return &domain{
-				logger: logger,
-				env:    env,
-				clusterRepo:     clusterRepo,
-				byocClusterRepo: byocClusterRepo,
-				nodeRepo:        nodeRepo,
-				nodePoolRepo:    nodePoolRepo,
-				secretRepo:      secretRepo,
-				domainEntryRepo: domainNameRepo,
-				vpnDeviceRepo:   vpnDeviceRepo,
-				pvcRepo:         pvcRepo,
-				buildRunRepo:    buildRunRepo,
-				resDispatcher :  resourceDispatcher,
-				k8sClient: k8sClient,
+				logger:                      logger,
+				env:                         env,
+				clusterRepo:                 clusterRepo,
+				byocClusterRepo:             byocClusterRepo,
+				nodeRepo:                    nodeRepo,
+				nodePoolRepo:                nodePoolRepo,
+				secretRepo:                  secretRepo,
+				domainEntryRepo:             domainNameRepo,
+				vpnDeviceRepo:               vpnDeviceRepo,
+				pvcRepo:                     pvcRepo,
+				buildRunRepo:                buildRunRepo,
+				resDispatcher:               resourceDispatcher,
+				k8sClient:                   k8sClient,
 				iamClient:                   iamClient,
 				accountsSvc:                 accountsSvc,
 				messageOfficeInternalClient: msgOfficeInternalClient,
