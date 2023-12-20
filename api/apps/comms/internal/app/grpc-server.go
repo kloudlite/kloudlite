@@ -37,7 +37,7 @@ func (r *commsSvc) sendSupportEmail(ctx context.Context, subject string, toEmail
 		HtmlText:         htmlContent,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func (r *commsSvc) SendAccountMemberInviteEmail(ctx context.Context, input *comm
 	}
 
 	if err := r.sendSupportEmail(ctx, r.accountInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &comms.Void{}, nil
 }
@@ -95,7 +95,7 @@ func (r *commsSvc) SendProjectMemberInviteEmail(ctx context.Context, input *comm
 	}
 
 	if err := r.sendSupportEmail(ctx, r.projectInviteEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &comms.Void{}, nil
@@ -123,7 +123,7 @@ func (r *commsSvc) SendPasswordResetEmail(ctx context.Context, input *comms.Pass
 	}
 
 	if err := r.sendSupportEmail(ctx, r.resetPasswordEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &comms.Void{}, nil
@@ -150,7 +150,7 @@ func (r *commsSvc) SendWelcomeEmail(ctx context.Context, input *comms.WelcomeEma
 	}
 
 	if err := r.sendSupportEmail(ctx, r.welcomeEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &comms.Void{}, nil
@@ -178,7 +178,7 @@ func (r *commsSvc) SendVerificationEmail(ctx context.Context, input *comms.Verif
 	}
 
 	if err := r.sendSupportEmail(ctx, r.userVerificationEmail.Subject, input.Email, input.Name, plainText.String(), html.String()); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &comms.Void{}, nil
 }

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/message-office/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/message-office/internal/app/graph/model"
@@ -16,7 +17,7 @@ func (r *bYOCClusterResolver) ClusterToken(ctx context.Context, obj *model.BYOCC
 	if obj.ClusterToken == "" {
 		t, err := r.Domain.GenClusterToken(ctx, obj.Spec.AccountName, obj.Metadata.Name)
 		if err != nil {
-			return "", err
+			return "", errors.NewE(err)
 		}
 		return t, nil
 	}
@@ -28,7 +29,7 @@ func (r *clusterResolver) ClusterToken(ctx context.Context, obj *model.Cluster) 
 	if obj.ClusterToken == "" {
 		t, err := r.Domain.GenClusterToken(ctx, obj.Spec.AccountName, obj.Metadata.Name)
 		if err != nil {
-			return "", err
+			return "", errors.NewE(err)
 		}
 		return t, nil
 	}

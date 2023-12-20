@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/domain"
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/env"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
@@ -34,7 +35,7 @@ var Module = fx.Module("app",
 		})
 	}),
 
-	fx.Invoke(func(consumer EventLogConsumer, logr logging.Logger, d domain.Domain) error{
+	fx.Invoke(func(consumer EventLogConsumer, logr logging.Logger, d domain.Domain) error {
 		if err := consumer.Consume(func(msg *types.ConsumeMsg) error {
 			logger := logr.WithName("audit-events")
 			logger.Infof("started processing")
@@ -44,19 +45,19 @@ var Module = fx.Module("app",
 
 			var el domain.EventLog
 			if err := json.Unmarshal(msg.Payload, &el); err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			event, err := d.PushEvent(context.TODO(), &el)
 			if err != nil {
-				return err
+				return errors.NewE(err)
 			}
 
 			logger.WithKV("event-id", event.Id).Infof("pushed event to mongo")
 			return nil
 		}, types.ConsumeOpts{}); err != nil {
 			logr.Errorf(err, "error consuming messages")
-			return err
+			return errors.NewE(err)
 		}
 		return nil
 	}),

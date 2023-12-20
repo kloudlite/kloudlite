@@ -32,7 +32,7 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if rb == nil {
 		return nil, errors.Newf("role binding for (userId=%q,  ResourceRef=%q, ResourceType=%q) not found", in.UserId, in.ResourceRef, in.ResourceType)
@@ -41,7 +41,7 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 	rb.Role = t.Role(in.Role)
 
 	if _, err = s.rbRepo.UpdateById(ctx, rb.Id, rb); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &iam.UpdateMembershipOut{
@@ -57,7 +57,7 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if rb == nil {
 		return nil, errors.Newf("role binding for (userId=%s,  ResourceRef=%s) not found", userId, resourceRef)
@@ -126,7 +126,7 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 func (s *GrpcService) GetMembership(ctx context.Context, in *iam.GetMembershipIn) (*iam.GetMembershipOut, error) {
 	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &iam.GetMembershipOut{
 		UserId:      rb.UserId,
@@ -248,7 +248,7 @@ func (s *GrpcService) RemoveMembership(ctx context.Context, in *iam.RemoveMember
 
 	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := s.rbRepo.DeleteById(ctx, rb.Id); err != nil {

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 
 	proto_rpc "github.com/kloudlite/api/apps/message-office/internal/app/proto-rpc"
 	"github.com/kloudlite/api/apps/message-office/internal/domain"
@@ -21,7 +22,7 @@ type vectorProxyServer struct {
 func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushEventsRequest) (*proto_rpc.PushEventsResponse, error) {
 	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, v.tokenHashingSecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	logger := v.logger.WithKV("accountName", accountName, "clusterName", clusterName)
@@ -32,7 +33,7 @@ func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushE
 	per, err := v.realVectorClient.PushEvents(ctx, msg)
 	if err != nil {
 		logger.Errorf(err)
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return per, nil
 }
@@ -40,7 +41,7 @@ func (v *vectorProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushE
 func (v *vectorProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.HealthCheckRequest) (*proto_rpc.HealthCheckResponse, error) {
 	accountName, clusterName, err := validateAndDecodeFromGrpcContext(ctx, v.tokenHashingSecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	logger := v.logger.WithKV("accountName", accountName, "clusterName", clusterName)
@@ -51,7 +52,7 @@ func (v *vectorProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.Heal
 	hcr, err := v.realVectorClient.HealthCheck(ctx, msg)
 	if err != nil {
 		logger.Errorf(err)
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return hcr, nil
 }

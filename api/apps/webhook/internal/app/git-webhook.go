@@ -79,7 +79,7 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 				// Repo *github.Repository `json:"repository,omitempty"`
 			}
 			if err := json.Unmarshal(hookBody, &evt); err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 			return evt.Repo.HtmlUrl, nil
 		}
@@ -90,7 +90,7 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 				Repo gitlab.Repository `json:"repository"`
 			}
 			if err := json.Unmarshal(hookBody, &ev); err != nil {
-				return "", err
+				return "", errors.NewE(err)
 			}
 
 			return ev.Repo.GitHTTPURL, nil
@@ -127,7 +127,7 @@ func LoadGitWebhook() fx.Option {
 
 					repoUrl, err := gitRepoUrl(gitProvider, ctx.Body())
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 					logger = logger.WithKV("provider", gitProvider, "repo", repoUrl, "user-agent", ctx.GetReqHeaders()["User-Agent"])
 					logger.Infof("received webhook")
@@ -143,7 +143,7 @@ func LoadGitWebhook() fx.Option {
 					}
 					b, err := json.Marshal(gitHook)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 
 					err = producer.Produce(ctx.Context(), types2.ProduceMsg{
@@ -151,7 +151,7 @@ func LoadGitWebhook() fx.Option {
 						Payload: b,
 					})
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 
 					if err != nil {
