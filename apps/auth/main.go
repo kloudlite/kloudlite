@@ -22,7 +22,12 @@ func main() {
 		fx.NopLogger,
 		fn.FxErrorHandler(),
 		fx.Provide(func() (*env.Env, error) {
-			return env.LoadEnv()
+			if e, err := env.LoadEnv(); err!=nil {
+				return nil, err
+			} else {
+				e.IsDev = isDev
+				return e, nil
+			}
 		}),
 		fx.Provide(
 			func() (logging.Logger, error) {

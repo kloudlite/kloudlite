@@ -21,6 +21,7 @@ type Env struct {
 	AuthGrpcAddr              string `env:"AUTH_GRPC_ADDR" required:"true"`
 	SessionKVBucket           string `env:"SESSION_KV_BUCKET" required:"true"`
 	NatsURL                   string `env:"NATS_URL" required:"true"`
+	IsDev                     bool
 }
 
 func LoadEnv() (*Env, error) {
