@@ -3,6 +3,7 @@ package framework
 import (
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/app"
 	"github.com/kloudlite/api/apps/worker-audit-logging/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
 	repos "github.com/kloudlite/api/pkg/repos"
@@ -12,11 +13,6 @@ import (
 type redpandaCfg struct {
 	ev *env.Env
 }
-
-
-
-
-
 
 type eventsDbCfg struct {
 	ev *env.Env
@@ -38,7 +34,7 @@ var Module fx.Option = fx.Module("framework",
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		return nats.NewJetstreamClient(nc)
 	}),

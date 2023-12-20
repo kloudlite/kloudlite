@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
@@ -23,7 +24,7 @@ func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAcc
 		UserId:  repos.ID(in.UserId),
 	}, in.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	isActive := false

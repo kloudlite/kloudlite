@@ -32,7 +32,7 @@ type domain struct {
 
 func (d domain) AddRoleBinding(ctx context.Context, rb entities.RoleBinding) (*entities.RoleBinding, error) {
 	if err := rb.Validate(); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	exists, err := d.rbRepo.FindOne(ctx, repos.Filter{
@@ -40,7 +40,7 @@ func (d domain) AddRoleBinding(ctx context.Context, rb entities.RoleBinding) (*e
 		"resource_ref": rb.ResourceRef,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if exists != nil {
@@ -49,7 +49,7 @@ func (d domain) AddRoleBinding(ctx context.Context, rb entities.RoleBinding) (*e
 
 	nrb, err := d.rbRepo.Create(ctx, &rb)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return nrb, nil
 }
@@ -62,7 +62,7 @@ func (s domain) findRoleBinding(ctx context.Context, userId repos.ID, resourceRe
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if rb == nil {
@@ -79,7 +79,7 @@ func (d domain) RemoveRoleBinding(ctx context.Context, userId repos.ID, resource
 
 	rb, err := d.findRoleBinding(ctx, userId, resourceRef)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.rbRepo.DeleteById(ctx, rb.Id); err != nil {
@@ -106,7 +106,7 @@ func (d domain) UpdateRoleBinding(ctx context.Context, rb entities.RoleBinding) 
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if currRb == nil {
 		return nil, errors.Newf("role binding for (userId=%q,  ResourceRef=%q, ResourceType=%q) not found", rb.UserId, rb.ResourceRef, rb.ResourceType)
@@ -158,7 +158,7 @@ func (d domain) Can(ctx context.Context, userId repos.ID, resourceRefs []string,
 	)
 
 	if err != nil {
-		return false, UnAuthorizedError{debugMsg: "db repository find() call error", parentErr: err}
+		return false, UnAuthorizedError{debugMsg: "db repository find() call error", parentErr: errors.NewE(err)}
 	}
 
 	if rbs == nil {

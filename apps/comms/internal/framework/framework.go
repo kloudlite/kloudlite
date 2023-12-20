@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/apps/comms/internal/app"
 	"github.com/kloudlite/api/apps/comms/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/mail"
@@ -44,7 +45,7 @@ var Module = fx.Module(
 				select {
 				case <-tctx.Done():
 				case err := <-errCh:
-					return err
+					return errors.NewE(err)
 				}
 
 				return nil
