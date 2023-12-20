@@ -42,7 +42,7 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 	if opts.Logger == nil {
 		lgr, err := logging.New(&logging.Options{Name: "grpc-server", Dev: false})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		opts.Logger = lgr
 	}

@@ -23,12 +23,12 @@ func RestConfigFromEnv(envVar string) (*rest.Config, error) {
 	return clientcmd.BuildConfigFromKubeconfigGetter("", func() (*api.Config, error) {
 		b, err := os.ReadFile(kcfgPath)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		var kubeconfig api.Config
 		if err := json.Unmarshal(b, &kubeconfig); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return &kubeconfig, nil
@@ -39,10 +39,9 @@ func RestConfigFromKubeConfig(b []byte) (*rest.Config, error) {
 	return clientcmd.BuildConfigFromKubeconfigGetter("", func() (*api.Config, error) {
 		var kubeconfig api.Config
 		if err := json.Unmarshal(b, &kubeconfig); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		return &kubeconfig, nil
 	})
 }
-

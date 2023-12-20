@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"github.com/kloudlite/api/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -21,7 +22,7 @@ func (g *grpcClient) Close() error {
 func NewGrpcClient(serverAddr string) (Client, error) {
 	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &grpcClient{ClientConn: conn}, nil
 }

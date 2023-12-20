@@ -28,7 +28,7 @@ func (c *RedisClient) Connect(ctx context.Context) error {
 func (c *RedisClient) Disconnect(context.Context) error {
 	err := c.client.Close()
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	c.client = nil
 	return nil
@@ -57,7 +57,7 @@ func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
 	status := c.client.Get(ctx, c.getKey(key))
 	err := status.Err()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return []byte(status.Val()), nil
 }

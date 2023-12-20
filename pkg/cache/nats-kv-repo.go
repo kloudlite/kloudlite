@@ -29,7 +29,7 @@ func (v *Value[T]) isExpired() bool {
 }
 
 func (r *natsKVRepo[T]) Set(c context.Context, _key string, value T) error {
-	key:=sanitiseKey(_key)
+	key := sanitiseKey(_key)
 	v := Value[T]{
 		Data: value,
 	}
@@ -38,17 +38,17 @@ func (r *natsKVRepo[T]) Set(c context.Context, _key string, value T) error {
 		return errors.NewEf(err, "failed to marshal value")
 	}
 	if _, err := r.keyValue.Put(c, key, b); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
 
 func (r *natsKVRepo[T]) Get(c context.Context, _key string) (T, error) {
-	key:= sanitiseKey(_key)
+	key := sanitiseKey(_key)
 	get, err := r.keyValue.Get(c, key)
 	if err != nil {
 		var x T
-		return x, err
+		return x, errors.NewE(err)
 	}
 	var value Value[T]
 	err = json.Unmarshal(get.Value(), &value)
@@ -60,7 +60,7 @@ func (r *natsKVRepo[T]) Get(c context.Context, _key string) (T, error) {
 		}()
 		return value.Data, errors.New("Key is expired")
 	}
-	return value.Data, err
+	return value.Data, errors.NewE(err)
 }
 
 func sanitiseKey(key string) string {
@@ -78,7 +78,7 @@ func (r *natsKVRepo[T]) SetWithExpiry(c context.Context, _key string, value T, d
 		return errors.NewEf(err, "failed to marshal value")
 	}
 	if _, err := r.keyValue.Put(c, key, b); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -88,12 +88,12 @@ func (r *natsKVRepo[T]) Drop(c context.Context, key string) error {
 }
 
 func (r *natsKVRepo[T]) ErrNoRecord(err error) bool {
-	return  errors.Is(err, jetstream.ErrKeyNotFound)
+	return errors.Is(err, jetstream.ErrKeyNotFound)
 }
 
 func NewNatsKVRepo[T any](ctx context.Context, bucketName string, jc *nats.JetstreamClient) (Repo[T], error) {
 	if value, err := jc.Jetstream.KeyValue(ctx, bucketName); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	} else {
 		return &natsKVRepo[T]{
 			value,

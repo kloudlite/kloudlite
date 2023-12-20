@@ -2,6 +2,7 @@ package mail
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
@@ -20,7 +21,7 @@ func (s SendgridMailer) SendEmail(ctx context.Context, email Email) error {
 			email.PlainText, email.HtmlText,
 		),
 	); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }

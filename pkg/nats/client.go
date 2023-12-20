@@ -53,7 +53,7 @@ func NewClient(url string, opts ClientOpts) (*Client, error) {
 			Dev:  true,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 
@@ -134,7 +134,7 @@ func NewClient(url string, opts ClientOpts) (*Client, error) {
 
 	nc, err := nats.Connect(url, connectOpts...)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &Client{

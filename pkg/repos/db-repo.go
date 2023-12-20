@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"encoding/base64"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/functions"
 	"time"
 )
@@ -118,7 +119,7 @@ type IndexField struct {
 func CursorFromBase64(b string) (Cursor, error) {
 	b2, err := base64.StdEncoding.DecodeString(b)
 	if err != nil {
-		return Cursor(""), err
+		return Cursor(""), errors.NewE(err)
 	}
 	return Cursor(b2), nil
 }

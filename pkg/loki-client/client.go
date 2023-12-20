@@ -28,12 +28,12 @@ func parseLastTimestamp(data *LogResult) (*uint64, error) {
 		for _, values := range result.Values {
 			val, err := strconv.ParseUint(values[0], 10, 64)
 			if err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 			if val > lastTimestamp {
 				val, err := strconv.ParseUint(values[0], 10, 64)
 				if err != nil {
-					return nil, err
+					return nil, errors.NewE(err)
 				}
 				lastTimestamp = val
 			}
@@ -46,12 +46,12 @@ func parseLastTimestamp(data *LogResult) (*uint64, error) {
 func doRequest(req *http.Request) ([]byte, error) {
 	get, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	all, err := io.ReadAll(get.Body)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return all, nil
@@ -89,7 +89,7 @@ func (l *lokiClient) createLokiHttpRequest(filter QueryArgs) (*http.Request, err
 
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/loki/api/v1/query_range", l.url.Host), nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if l.opts.BasicAuth != nil {
@@ -108,7 +108,7 @@ func (l *lokiClient) GetLogs(args QueryArgs) ([]byte, error) {
 
 	req, err := l.createLokiHttpRequest(args)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if l.opts.Logger != nil {
@@ -117,18 +117,18 @@ func (l *lokiClient) GetLogs(args QueryArgs) ([]byte, error) {
 
 	b, err := doRequest(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if args.PreWriteFunc != nil {
 		var result LogResult
 		if err := json.Unmarshal(b, &result); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		b2, err := args.PreWriteFunc(&result)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		return b2, nil
 	}
@@ -141,7 +141,7 @@ func (l *lokiClient) TailLogs(args QueryArgs, writer io.WriteCloser) error {
 
 	req, err := l.createLokiHttpRequest(args)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	for {
@@ -151,30 +151,30 @@ func (l *lokiClient) TailLogs(args QueryArgs, writer io.WriteCloser) error {
 
 		b, err := doRequest(req)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		var result LogResult
 		if err := json.Unmarshal(b, &result); err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		lt, err := parseLastTimestamp(&result)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		if _, err := func() (int, error) {
 			if args.PreWriteFunc != nil {
 				b2, err := args.PreWriteFunc(&result)
 				if err != nil {
-					return 0, err
+					return 0, errors.NewE(err)
 				}
 				return writer.Write(b2)
 			}
 			return writer.Write(b)
 		}(); err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		qp := req.URL.Query()
@@ -191,11 +191,11 @@ func (l *lokiClient) TailLogs(args QueryArgs, writer io.WriteCloser) error {
 func (l *lokiClient) Ping(ctx context.Context) error {
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/ready", l.url.Host), nil)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	r, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if r.StatusCode != http.StatusOK {
 		return errors.Newf("loki server is not ready, ping check failed with status code: %d", r.StatusCode)
@@ -210,7 +210,7 @@ func (l *lokiClient) Close() {
 func NewLokiClient(httpAddr string, opts ClientOpts) (LokiClient, error) {
 	u, err := url.Parse(httpAddr)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ctx, cf := context.WithCancel(context.TODO())

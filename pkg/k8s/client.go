@@ -60,7 +60,7 @@ func (c *clientHandler) ValidateObject(ctx context.Context, obj client.Object) e
 	crd, err := c.kclientset.ApiextensionsV1().CustomResourceDefinitions().Get(ctx,
 		fmt.Sprintf("%s.%s", fn.RegularPlural(gvk.Kind), gvk.Group), metav1.GetOptions{})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	var props apiExtensionsV1.JSONSchemaProps = crd.Spec.Versions[0].Schema.OpenAPIV3Schema.Properties["metadata"]
@@ -86,14 +86,14 @@ func (c *clientHandler) ValidateObject(ctx context.Context, obj client.Object) e
 
 	b, err := json.Marshal(crd.Spec.Versions[0].Schema.OpenAPIV3Schema)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	schemaLoader := gojsonschema.NewBytesLoader(b)
 
 	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if !result.Valid() {
@@ -109,7 +109,7 @@ func (c *clientHandler) ValidateObject(ctx context.Context, obj client.Object) e
 // ApplyYAML implements Client.
 func (c *clientHandler) ApplyYAML(ctx context.Context, yamls ...[]byte) error {
 	if _, err := c.yamlclient.ApplyYAML(ctx, yamls...); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -130,17 +130,17 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 		Mapper: nil,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	clientset, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	yamlclient, err := kubectl.NewYAMLClient(cfg)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &clientHandler{

@@ -2,6 +2,7 @@ package awss3
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"hash/fnv"
 	"io"
 	"os"
@@ -28,7 +29,7 @@ func (a awsS3) DeleteFile(fileKey string) error {
 		Key:    aws.String(fileKey),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -42,7 +43,7 @@ func (a awsS3) createBucket() error {
 		Bucket: aws.String(a.bucketName),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -56,7 +57,7 @@ func (a awsS3) IsFileExists(fileKey string) error {
 	if err != nil {
 		// If the file does not exist or there is an error, handle the error
 		// fmt.Println(err)
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -66,7 +67,7 @@ func (a awsS3) checkS3Created() error {
 		Bucket: aws.String(a.bucketName),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -84,7 +85,7 @@ func getS3Client(accessKey, accessSecret string) (*s3.S3, error) {
 		Credentials: credentials.NewStaticCredentials(accessKey, accessSecret, ""),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return s3.New(sess), nil
@@ -102,7 +103,7 @@ func (a awsS3) DownloadFile(filePath, fileKey string) error {
 
 	file, err := os.Create(filePath)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	defer file.Close()
 
@@ -112,13 +113,13 @@ func (a awsS3) DownloadFile(filePath, fileKey string) error {
 		Key:    aws.String(fileKey),
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	// Write the downloaded file data to the file
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -130,7 +131,7 @@ func (a awsS3) UploadFile(filePath, fileKey string) error {
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	defer file.Close()
 
@@ -140,7 +141,7 @@ func (a awsS3) UploadFile(filePath, fileKey string) error {
 		Body:   file,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return nil
@@ -155,7 +156,7 @@ func hash(s string) uint32 {
 func NewAwsS3Client(accessKey, accessSec, bucketName string) (AwsS3, error) {
 	svc, err := getS3Client(accessKey, accessSec)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	a := awsS3{
@@ -163,7 +164,7 @@ func NewAwsS3Client(accessKey, accessSec, bucketName string) (AwsS3, error) {
 		bucketName: fmt.Sprintf("kloudlite-%s-%d", bucketName, hash(bucketName)),
 	}
 	if err := a.createBucketIfNotCreated(); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return a, nil
