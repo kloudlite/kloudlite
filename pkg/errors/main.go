@@ -50,6 +50,9 @@ func Newf(msg string, a ...any) error {
 }
 
 func NewE(err error) error {
+	if err == nil {
+		return nil
+	}
 	return tracerr.Wrap(err)
 }
 

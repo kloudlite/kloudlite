@@ -36,7 +36,7 @@ func (r *routerResolver) ID(ctx context.Context, obj *entities.Router) (string, 
 func (r *routerResolver) Spec(ctx context.Context, obj *entities.Router) (*model.GithubComKloudliteOperatorApisCrdsV1RouterSpec, error) {
 	m := &model.GithubComKloudliteOperatorApisCrdsV1RouterSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }

@@ -34,7 +34,7 @@ type gitlabI struct {
 func (gl *gitlabI) AddWebhook(ctx context.Context, token *entities.AccessToken, repoId string) (*int, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	// webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
 
@@ -74,10 +74,10 @@ func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *entities.AccessToke
 
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	_, err = client.Projects.DeleteProjectHook(gl.getRepoId(repoUrl), int(hookId))
-	return err
+	return errors.NewE(err)
 }
 
 // GetLatestCommit implements domain.Gitlab.
@@ -104,7 +104,7 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *entities.AccessToken
 
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	branches, _, err := client.Branches.ListBranches(
 		repoId, &gitlab.ListBranchesOptions{
@@ -113,7 +113,7 @@ func (gl *gitlabI) ListBranches(ctx context.Context, token *entities.AccessToken
 		},
 	)
 
-	return branches, err
+	return branches, errors.NewE(err)
 }
 
 func (gl *gitlabI) getToken(_ context.Context, token *entities.AccessToken) (*oauth2.Token, error) {
@@ -126,7 +126,7 @@ func (gl *gitlabI) getToken(_ context.Context, token *entities.AccessToken) (*oa
 func (gl *gitlabI) getClient(ctx context.Context, token *entities.AccessToken) (*gitlab.Client, error) {
 	t, err := gl.getToken(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	client, err := gitlab.NewOAuthClient(t.AccessToken)
 	if err != nil {
@@ -149,7 +149,7 @@ func buildListOptions(p *types.Pagination) gitlab.ListOptions {
 func (gl *gitlabI) ListGroups(ctx context.Context, token *entities.AccessToken, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	groups, _, err := client.Groups.ListGroups(
@@ -162,14 +162,14 @@ func (gl *gitlabI) ListGroups(ctx context.Context, token *entities.AccessToken, 
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	grs := make([]*entities.GitlabGroup, 0, len(groups)+1)
 
 	user, _, err := client.Users.CurrentUser()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	grs = append(grs, &entities.GitlabGroup{Id: fmt.Sprintf("%d", user.ID), FullName: user.Name, AvatarUrl: user.AvatarURL})
@@ -190,7 +190,7 @@ func (gl *gitlabI) ListGroups(ctx context.Context, token *entities.AccessToken, 
 func (gl *gitlabI) ListRepos(ctx context.Context, token *entities.AccessToken, gid string, query *string, pagination *types.Pagination) ([]*gitlab.Project, error) {
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	user, _, err := client.Users.CurrentUser()
@@ -207,7 +207,7 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *entities.AccessToken, g
 			},
 		)
 
-		return projects, err
+		return projects, errors.NewE(err)
 	}
 
 	projects, _, err := client.Groups.ListGroupProjects(
@@ -219,7 +219,7 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *entities.AccessToken, g
 		},
 	)
 
-	return projects, err
+	return projects, errors.NewE(err)
 }
 
 // RepoToken implements domain.Gitlab.
