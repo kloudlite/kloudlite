@@ -34,7 +34,7 @@ func main() {
 	nodepool.RegisterInto(mgr)
 
 	// kloudlite resource status updates
-	resourceWatcher.RegisterInto(mgr, false)
+	resourceWatcher.RegisterInto(mgr, true)
 
 	mgr.Start()
 }
