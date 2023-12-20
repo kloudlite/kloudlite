@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -74,7 +75,6 @@ var Module = fx.Module(
 		return NewResourceDispatcher(p)
 	}),
 
-
 	fx.Invoke(func(lf fx.Lifecycle, producer SendTargetClusterMessagesProducer) {
 		lf.Append(fx.Hook{
 			OnStop: func(ctx context.Context) error {
@@ -93,8 +93,8 @@ var Module = fx.Module(
 		infra.RegisterInfraServer(gserver, srv)
 	}),
 
-	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveInfraUpdatesConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventErrorOnApply)
+	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveResourceUpdatesConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventResourceUpdate)
 
 		consumerName := "infra:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
@@ -108,10 +108,10 @@ var Module = fx.Module(
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveInfraUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go processInfraUpdates(consumer, d, logger)
+				go processResourceUpdates(consumer, d, logger)
 				return nil
 			},
 			OnStop: func(ctx context.Context) error {
@@ -121,7 +121,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.InfraReceiver, common.EventErrorOnApply)
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
 
 		consumerName := "infra:error-on-apply"
 
