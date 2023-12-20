@@ -82,7 +82,7 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 
 		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/loki/api/v1/query_range", l.url.Host), nil)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		if l.opts.BasicAuth != nil {
@@ -93,13 +93,13 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 
 		get, err := http.DefaultClient.Do(request)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 		all, _ := ioutil.ReadAll(get.Body)
 		var data logResult
 		err = json.Unmarshal(all, &data)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 		// fmt.Printf("DATA: %+v\n", data)
 		// connection.WriteMessage(websocket.TextMessage, all)
@@ -109,7 +109,7 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 				if values[0] > lastTimeStamp {
 					val, err := strconv.ParseUint(values[0], 10, 64)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 					lastTimeStamp = fmt.Sprintf("%v", val+1)
 				}
@@ -126,11 +126,11 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 func (l *lokiClient) Ping(ctx context.Context) error {
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/ready", l.url.Host), nil)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	r, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	if r.StatusCode != http.StatusOK {
 		return errors.Newf("loki server is not ready, ping check failed with status code: %d", r.StatusCode)
@@ -145,7 +145,7 @@ func (l *lokiClient) Close() {
 func NewLokiClient(httpAddr string, opts ClientOpts) (LokiClient, error) {
 	u, err := url.Parse(httpAddr)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ctx, cf := context.WithCancel(context.TODO())

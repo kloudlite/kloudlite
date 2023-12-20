@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -37,7 +38,7 @@ func (kvm KeyValueManager) CreateStore(ctx context.Context, store string, args C
 		Storage:      jetstream.FileStorage,
 		Replicas:     args.Replicas,
 	})
-	return err
+	return errors.NewE(err)
 }
 
 func (kvm KeyValueManager) DeleteStore(ctx context.Context, store string) error {
