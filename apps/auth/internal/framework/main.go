@@ -79,9 +79,9 @@ var Module fx.Option = fx.Module(
 
 
 
-	fx.Provide(func(logger logging.Logger) httpServer.Server {
+	fx.Provide(func(e *env.Env,logger logging.Logger) httpServer.Server {
 		corsOrigins := "https://studio.apollographql.com"
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {

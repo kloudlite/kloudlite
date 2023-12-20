@@ -2,10 +2,11 @@ package errors
 
 import (
 	"fmt"
+
+	"github.com/ztrue/tracerr"
 	"net/http"
 
 	"github.com/pkg/errors"
-	"github.com/yext/yerrors"
 )
 
 func HandleErr(e *error) {
@@ -34,7 +35,7 @@ func Is(err error, target error) bool {
 }
 
 func NewEf(err error, msg string, args ...any) error {
-	return yerrors.WrapFrame(yerrors.Errorf("%s while %s", fmt.Sprintf(msg, args...), err.Error()), 1)
+	return tracerr.Wrap(fmt.Errorf("%s while %s", fmt.Sprintf(msg, args...), err.Error()))
 }
 
 func ErrMarshal(err error) error {
@@ -43,17 +44,17 @@ func ErrMarshal(err error) error {
 
 func Newf(msg string, a ...any) error {
 	if len(a) > 0 {
-		return yerrors.WrapFrame(yerrors.Errorf(msg, a...), 1)
+		return tracerr.Wrap(fmt.Errorf(msg, a...))
 	}
-	return yerrors.New(msg)
+	return tracerr.New(msg)
 }
 
 func NewE(err error) error {
-	return yerrors.Wrap(err)
+	return tracerr.Wrap(err)
 }
 
 func New(msg string) error {
-	return yerrors.Wrap(yerrors.New(msg))
+	return tracerr.Wrap(tracerr.New(msg))
 }
 
 var NotLoggedIn error = fmt.Errorf("%d Not LoggedIn", http.StatusUnauthorized)

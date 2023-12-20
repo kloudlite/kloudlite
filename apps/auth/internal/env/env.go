@@ -6,11 +6,11 @@ import (
 )
 
 type Env struct {
-	MongoUri      string `env:"MONGO_URI" required:"true"`
-	MongoDbName   string `env:"MONGO_DB_NAME" required:"true"`
-	Port          uint16 `env:"PORT" required:"true"`
-	GrpcPort      uint16 `env:"GRPC_PORT" required:"true"`
-	CorsOrigins   string `env:"ORIGINS"`
+	MongoUri    string `env:"MONGO_URI" required:"true"`
+	MongoDbName string `env:"MONGO_DB_NAME" required:"true"`
+	Port        uint16 `env:"PORT" required:"true"`
+	GrpcPort    uint16 `env:"GRPC_PORT" required:"true"`
+	CorsOrigins string `env:"ORIGINS"`
 
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
@@ -38,11 +38,12 @@ type Env struct {
 	GoogleCallbackUrl   string `env:"GOOGLE_CALLBACK_URL" required:"false"`
 	GoogleScopes        string `env:"GOOGLE_SCOPES" required:"false"`
 
-	CommsService    string `env:"COMMS_SERVICE" required:"true"`
-	NatsURL         string `env:"NATS_URL" required:"true"`
-	SessionKVBucket string `env:"SESSION_KV_BUCKET" required:"true"`
-	VerifyTokenKVBucket string `env:"VERIFY_TOKEN_KV_BUCKET" required:"true"`
+	CommsService               string `env:"COMMS_SERVICE" required:"true"`
+	NatsURL                    string `env:"NATS_URL" required:"true"`
+	SessionKVBucket            string `env:"SESSION_KV_BUCKET" required:"true"`
+	VerifyTokenKVBucket        string `env:"VERIFY_TOKEN_KV_BUCKET" required:"true"`
 	ResetPasswordTokenKVBucket string `env:"RESET_PASSWORD_TOKEN_KV_BUCKET" required:"true"`
+	IsDev                      bool
 }
 
 func (ev *Env) validateEnv() error {
