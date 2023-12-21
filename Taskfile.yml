@@ -100,19 +100,8 @@ tasks:
         task yaml:crds > {{.OutputDir}}/crds-kloudlite.yml
         popd 2>&1 > /dev/null
 
-        # pushd {{.HelmOperatorDir}} 2>&1 >/dev/null
-        # task yaml:crds > {{.OutputDir}}/helm-operator-crds.yml
-        # popd 2>&1 > /dev/null
-
         # cert manager CRDs
         curl -L0 https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.crds.yaml > {{.OutputDir}}/crds-cert-manager.yml
-
-        # redpanda CRDs
-        # curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.RedpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_clusters.yaml > {{.OutputDir}}/crds-redpanda.yml
-
-        # redpanda CRDs
-        # kubectl kustomize https://github.com/redpanda-data/redpanda//src/go/k8s/config/crd > {{.OutputDir}}/crds-redpanda.yml
-
 
   test-release-script:
     dir: .
