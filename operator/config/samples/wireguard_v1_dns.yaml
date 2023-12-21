@@ -1,7 +1,0 @@
-apiVersion: wireguard.kloudlite.io/v1
-kind: Dns
-metadata:
-  name: dns-sample
-  namespace: wg-platform
-spec:
-  # TODO(user): Add fields here
