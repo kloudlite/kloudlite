@@ -35,7 +35,7 @@ func (r *persistentVolumeClaimResolver) ID(ctx context.Context, obj *entities.Pe
 func (r *persistentVolumeClaimResolver) Spec(ctx context.Context, obj *entities.PersistentVolumeClaim) (*model.K8sIoAPICoreV1PersistentVolumeClaimSpec, error) {
 	var m model.K8sIoAPICoreV1PersistentVolumeClaimSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }
@@ -44,7 +44,7 @@ func (r *persistentVolumeClaimResolver) Spec(ctx context.Context, obj *entities.
 func (r *persistentVolumeClaimResolver) Status(ctx context.Context, obj *entities.PersistentVolumeClaim) (*model.K8sIoAPICoreV1PersistentVolumeClaimStatus, error) {
 	var m model.K8sIoAPICoreV1PersistentVolumeClaimStatus
 	if err := fn.JsonConversion(obj.Status, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }

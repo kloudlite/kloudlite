@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/kloudlite/api/pkg/errors"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"os"
 	"time"
@@ -40,7 +41,7 @@ func main() {
 
 		fx.Provide(func() (*env.Env, error) {
 			if e, err := env.LoadEnv(); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			} else {
 				e.IsDev = isDev
 				return e, nil
