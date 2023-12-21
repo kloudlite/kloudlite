@@ -21,7 +21,7 @@ func (d *domain) GetPVC(ctx InfraContext, clusterName string, buildRunName strin
 		"metadata.name": buildRunName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if pvc == nil {
@@ -37,7 +37,7 @@ func (d *domain) OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc en
 		"accountName":        ctx.AccountName,
 		"clusterName":        clusterName,
 	}, &pvc); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func (d *domain) OnPVCDeleteMessage(ctx InfraContext, clusterName string, pvc en
 		"accountName":        ctx.AccountName,
 		"clusterName":        clusterName,
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }

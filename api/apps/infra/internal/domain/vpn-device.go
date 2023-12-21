@@ -27,7 +27,7 @@ func (d *domain) GetVPNDevice(ctx InfraContext, clusterName string, deviceName s
 func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
 	device.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	device.IncrementRecordVersion()
@@ -46,13 +46,13 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 	if err != nil {
 		if d.vpnDeviceRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, errors.NewE(err)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return nDevice, nil
 }
@@ -60,12 +60,12 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
 	device.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currDevice.IncrementRecordVersion()
@@ -85,11 +85,11 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device en
 
 	nDevice, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, &device)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return nDevice, nil
 }
@@ -101,7 +101,7 @@ func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string
 		"metadata.name": name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if device == nil {
@@ -119,12 +119,12 @@ func (d *domain) GetWgConfigForDevice(ctx InfraContext, clusterName string, devi
 func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error {
 	device, err := d.findVPNDevice(ctx, clusterName, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	device.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, device.RecordVersion)
 	if _, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, device); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &device.Device)
 }
@@ -132,7 +132,7 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	currDevice.SyncStatus.State = t.SyncStateErroredAtAgent
@@ -140,13 +140,13 @@ func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, nam
 	currDevice.SyncStatus.Error = &errMsg
 
 	_, err = d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.matchRecordVersion(device.Annotations, currDevice.RecordVersion); err != nil {
@@ -168,17 +168,17 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 	currDevice.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.matchRecordVersion(device.Annotations, currDevice.RecordVersion); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.vpnDeviceRepo.DeleteById(ctx, currDevice.Id)

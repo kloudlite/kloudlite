@@ -39,7 +39,7 @@ func (r *vPNDeviceResolver) Spec(ctx context.Context, obj *entities.VPNDevice) (
 	}
 	var m model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }
@@ -56,7 +56,7 @@ func (r *vPNDeviceResolver) UpdateTime(ctx context.Context, obj *entities.VPNDev
 func (r *vPNDeviceResolver) WireguardConfig(ctx context.Context, obj *entities.VPNDevice) (*model.KloudliteIoPkgTypesEncodedString, error) {
 	var m model.KloudliteIoPkgTypesEncodedString
 	if err := fn.JsonConversion(obj.WireguardConfig, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }
