@@ -149,5 +149,5 @@ jobs:
 
 
           upx ./app
-          task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:$version_string"
-          task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:commit-${GITHUB_SHA}"
+          task go-container-build Image="ghcr.io/kloudlite/operators/${{matrix.name}}:$version_string"
+          task go-container-build Image="ghcr.io/kloudlite/operators/${{matrix.name}}:commit-${GITHUB_SHA}"
