@@ -1,28 +1,16 @@
 {{- $rewriteRules := get . "rewrite-rules"}}
-{{- $dnsIp := get . "dns-ip"}}
-{{- $devices := get . "devices"}}
 {{- $namespace := get . "namespace"}}
+{{- $name := get . "name"}}
+{{- $labels := get . "labels"}}
+{{- $ownerRefs := get . "ownerRefs"}}
 
 apiVersion: v1
 data:
-  devices: |
-    {{ $devices | toJson }}
-  Corefile: |
-    .:53 {
-        errors
-        health
-        ready
-
-        {{ $rewriteRules }}
-
-        forward . {{ $dnsIp }}
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
-    import /etc/coredns/custom/*.server
+  Corefile: |+
+{{ $rewriteRules | indent 4 }}
 kind: ConfigMap
 metadata:
-  name: coredns
+  name: "wg-dns-{{ $name }}"
   namespace: {{ $namespace }}
+  labels: {{ $labels | toJson }}
+  ownerReferences: {{ $ownerRefs| toJson}}
