@@ -21,6 +21,14 @@ jobs:
         app:
           - auth
           - console
+          - website
+        include:
+          - app: auth
+            dockerFile: Dockerfile
+          - app: console
+            dockerFile: Dockerfile
+          - app: website
+            dockerFile: Dockerfile.website
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
@@ -47,5 +55,5 @@ jobs:
           branch_name=${GITHUB_REF#refs/heads/}
           version_string="v${branch_name#release-}-nightly"
           
-          docker build --build-arg APP=${{matrix.app}} . -t ghcr.io/kloudlite/platform/web/${{matrix.app}}:$version_string --push
-          docker build --build-arg APP=${{matrix.app}} . -t ghcr.io/kloudlite/platform/web/${{matrix.app}}:commit-${GITHUB_SHA} --push
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/platform/web/${{matrix.app}}:$version_string --push
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/platform/web/${{matrix.app}}:commit-${GITHUB_SHA} --push
