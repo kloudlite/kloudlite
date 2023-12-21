@@ -214,9 +214,6 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-	// isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
-	// isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
-
 	ws, proj, err := r.findProjectAndWorkspaceForNs(ctx, obj.Namespace)
 	if err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error())

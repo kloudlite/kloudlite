@@ -41,6 +41,7 @@
             protoc-gen-go-grpc
 
             # build tools
+            gnumake
             podman
             upx
           ];
