@@ -12,6 +12,10 @@ func main() {
 	flag.BoolVar(&runningOnTenant, "running-on-tenant", false, "--running-on-tenant")
 
 	mgr := operator.New("resource-watcher")
-	controller.RegisterInto(mgr, runningOnTenant)
+	f := controller.RegisterInto(mgr, runningOnTenant)
+	if f != nil {
+		go f()
+	}
+
 	mgr.Start()
 }

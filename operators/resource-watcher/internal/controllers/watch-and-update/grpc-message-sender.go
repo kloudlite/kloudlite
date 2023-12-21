@@ -14,10 +14,12 @@ import (
 )
 
 type grpcMsgSender struct {
-	// errCh               chan error
-	resourceMessagesCli messages.MessageDispatchService_ReceiveResourceUpdatesClient
-	infraMessagesCli    messages.MessageDispatchService_ReceiveInfraUpdatesClient
-	logger              logging.Logger
+	getResourceMessagesCli func() (messages.MessageDispatchService_ReceiveResourceUpdatesClient, error)
+	rmc                    messages.MessageDispatchService_ReceiveResourceUpdatesClient
+	getInfraMessagesCli    func() (messages.MessageDispatchService_ReceiveInfraUpdatesClient, error)
+	imc                    messages.MessageDispatchService_ReceiveInfraUpdatesClient
+
+	logger logging.Logger
 }
 
 // DispatchInfraUpdates implements MessageSender.
@@ -27,13 +29,30 @@ func (g *grpcMsgSender) DispatchInfraUpdates(ctx context.Context, ru t.ResourceU
 		return err
 	}
 
-	if err = g.infraMessagesCli.Send(&messages.InfraUpdate{Message: b}); err != nil {
-		// g.errCh <- err
+	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
+	defer cf()
+
+	errCh := make(chan error, 1)
+	execCh := make(chan struct{}, 1)
+	go func() {
+		if err = g.imc.Send(&messages.InfraUpdate{Message: b}); err != nil {
+			// replace streaming client
+			g.imc, err = g.getInfraMessagesCli()
+			errCh <- err
+			return
+		}
+		execCh <- struct{}{}
+	}()
+
+	select {
+	case <-dctx.Done():
+		return dctx.Err()
+	case <-execCh:
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+		return nil
+	case err := <-errCh:
 		return err
 	}
-
-	g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
-	return nil
 }
 
 // DispatchResourceUpdates implements MessageSender.
@@ -43,13 +62,31 @@ func (g *grpcMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.Resour
 		return err
 	}
 
-	if err = g.resourceMessagesCli.Send(&messages.ResourceUpdate{Message: b}); err != nil {
-		// g.errCh <- err
+	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
+	defer cf()
+
+	errCh := make(chan error, 1)
+	execCh := make(chan struct{}, 1)
+
+	go func() {
+		if err = g.rmc.Send(&messages.ResourceUpdate{Message: b}); err != nil {
+			// replace streaming client
+			g.rmc, err = g.getResourceMessagesCli()
+			errCh <- err
+			return
+		}
+		execCh <- struct{}{}
+	}()
+
+	select {
+	case <-dctx.Done():
+		return dctx.Err()
+	case <-execCh:
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+		return nil
+	case err := <-errCh:
 		return err
 	}
-
-	g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
-	return nil
 }
 
 func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger logging.Logger, runningOnTenant bool) (MessageSender, error) {
@@ -62,37 +99,47 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 		return ev.PlatformAccessToken
 	}
 
-	validationOut, err := msgDispatchCli.ValidateAccessToken(context.TODO(), &messages.ValidateAccessTokenIn{
+	validationOut, err := msgDispatchCli.ValidateAccessToken(ctx, &messages.ValidateAccessTokenIn{
 		AccountName: ev.AccountName,
 		ClusterName: ev.ClusterName,
 		AccessToken: getAccessToken(),
 	})
-
-	if err != nil || validationOut == nil || !validationOut.Valid {
-		logger.Infof("accessToken is invalid, requesting new accessToken")
-	}
-
-	if validationOut != nil && validationOut.Valid {
-		logger.Infof("accessToken is valid, proceeding with it")
-	}
-
-	outgoingCtx := metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", getAccessToken()))
-
-	resourceMessagesCli, err := msgDispatchCli.ReceiveResourceUpdates(outgoingCtx)
 	if err != nil {
-		logger.Errorf(err, "ReceiveResourceUpdates")
 		return nil, err
 	}
 
-	infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(outgoingCtx)
+	if validationOut == nil || !validationOut.Valid {
+		logger.Infof("accessToken is invalid, aborting")
+		return nil, err
+	}
+
+	outgoingCtx := func() context.Context {
+		return metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", getAccessToken()))
+	}
+
+	getResourceMessagesCli := func() (messages.MessageDispatchService_ReceiveResourceUpdatesClient, error) {
+		return msgDispatchCli.ReceiveResourceUpdates(outgoingCtx())
+	}
+
+	getInfraMessagesCli := func() (messages.MessageDispatchService_ReceiveInfraUpdatesClient, error) {
+		return msgDispatchCli.ReceiveInfraUpdates(outgoingCtx())
+	}
+
+	rmc, err := getResourceMessagesCli()
 	if err != nil {
-		logger.Errorf(err, "ReceiveInfraUpdates")
+		return nil, err
+	}
+
+	imc, err := getInfraMessagesCli()
+	if err != nil {
 		return nil, err
 	}
 
 	return &grpcMsgSender{
-		logger:              logger,
-		resourceMessagesCli: resourceMessagesCli,
-		infraMessagesCli:    infraMessagesCli,
+		logger:                 logger,
+		getResourceMessagesCli: getResourceMessagesCli,
+		rmc:                    rmc,
+		imc:                    imc,
+		getInfraMessagesCli:    getInfraMessagesCli,
 	}, nil
 }
