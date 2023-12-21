@@ -277,6 +277,10 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 
 		if found {
 			pr.Edges[i].Node.Status = c.Status
+			pr.Edges[i].Node.Spec.Output = c.Spec.Output
+			if _, err := d.clusterRepo.UpdateById(ctx, pr.Edges[i].Node.Id, pr.Edges[i].Node); err != nil {
+				return nil, err
+			}
 		}
 
 		if !found && pr.Edges[i].Node.MarkedForDeletion != nil && *pr.Edges[i].Node.MarkedForDeletion {
@@ -309,6 +313,10 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 
 	if found {
 		c.Status = clus.Status
+		c.Spec.Output = clus.Spec.Output
+		if _, err := d.clusterRepo.UpdateById(ctx, c.Id, c); err != nil {
+			return nil, err
+		}
 	}
 
 	if !found && c.MarkedForDeletion != nil && *c.MarkedForDeletion {
@@ -353,7 +361,9 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		UserEmail: ctx.UserEmail,
 	}
 
-	clus.Spec = cluster.Spec
+  // FIXME: no update for cluster spec
+	// clus.Spec = cluster.Spec
+
 	clus.Labels = cluster.Labels
 	clus.Annotations = cluster.Annotations
 	clus.SyncStatus = t.GenSyncStatus(t.SyncActionApply, clus.RecordVersion)

@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ReceiveInfraUpdatesConsumer messaging.Consumer
+type ReceiveResourceUpdatesConsumer messaging.Consumer
 
 func gvk(obj client.Object) string {
 	val := obj.GetObjectKind().GroupVersionKind().String()
@@ -36,7 +36,7 @@ var (
 	buildrunGVK = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
 )
 
-func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	readMsg := func(msg *msgTypes.ConsumeMsg) error {
 		logger.Debugf("processing msg timestamp %s", msg.Timestamp.Format(time.RFC3339))
 
