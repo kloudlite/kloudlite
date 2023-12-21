@@ -66,6 +66,41 @@ spec:
           limits:
             memory: "10Mi"
             # cpu: "200m"
+
+      # this is for coredns
+      - args:
+        - -conf
+        - /etc/coredns/Corefile
+        image: rancher/mirrored-coredns-coredns:1.9.1
+        imagePullPolicy: IfNotPresent
+        name: coredns
+        resources:
+          limits:
+            # cpu: 100m
+            memory: 20Mi
+          requests:
+            # cpu: 100m
+            memory: 20Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/coredns
+          name: config-volume
+          readOnly: true
+        - mountPath: /etc/coredns/custom
+          name: custom-config-volume
+          readOnly: true
+
+      # end of coredns
+
       volumes:
         - name: sysctl
           secret:
@@ -83,3 +118,24 @@ spec:
           hostPath:
             path: /lib/modules
             type: Directory
+
+        # for coredns
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: Corefile
+              path: Corefile
+            name: "wg-dns-{{$name}}"
+          name: config-volume
+        - configMap:
+            defaultMode: 420
+            name: coredns-custom
+            optional: true
+          name: custom-config-volume
+
+      # for coredns
+      dnsPolicy: Default
+      priorityClassName: system-cluster-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30

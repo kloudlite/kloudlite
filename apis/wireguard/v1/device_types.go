@@ -13,15 +13,19 @@ type Port struct {
 
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	AccountName string  `json:"accountName"`
-	ClusterName string  `json:"clusterName"`
-	Ports       []Port  `json:"ports,omitempty"`
-	Dns         *string `json:"dns,omitempty"`
+	AccountName     string  `json:"accountName"`
+	ClusterName     string  `json:"clusterName"`
+	Ports           []Port  `json:"ports,omitempty"`
+	DeviceNamespace *string `json:"deviceNamespace,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Namespaced
+//+kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/active\\.namespace",name=Active_Ns,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Device is the Schema for the devices API
 type Device struct {
@@ -44,14 +48,21 @@ func (d *Device) GetStatus() *rApi.Status {
 
 func (d *Device) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.AccountNameKey: d.Spec.AccountName,
-		constants.ClusterNameKey: d.Spec.ClusterName,
+		constants.AccountNameKey:  d.Spec.AccountName,
+		constants.ClusterNameKey:  d.Spec.ClusterName,
+		constants.WGDeviceNameKey: d.Name,
 	}
 }
 
 func (d *Device) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.GVKKey: GroupVersion.WithKind("Device").String(),
+		"kloudlite.io/active.namespace": func() string {
+			if d.Spec.DeviceNamespace == nil {
+				return ""
+			}
+			return *d.Spec.DeviceNamespace
+		}(),
 	}
 }
 

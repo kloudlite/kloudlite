@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	myaml "sigs.k8s.io/yaml"
 
 	fn "github.com/kloudlite/operator/pkg/functions"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +30,7 @@ import (
 )
 
 type YAMLClient interface {
+	Apply(ctx context.Context, obj client.Object) ([]rApi.ResourceRef, error)
 	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error)
 	DeleteResource(ctx context.Context, obj client.Object) error
 	DeleteYAML(ctx context.Context, yamls ...[]byte) error
@@ -45,6 +47,15 @@ type yamlClient struct {
 
 func (yc *yamlClient) Client() *kubernetes.Clientset {
 	return yc.k8sClient
+}
+
+func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]rApi.ResourceRef, error) {
+	b, err := myaml.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return yc.ApplyYAML(ctx, b)
 }
 
 func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
