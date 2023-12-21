@@ -215,30 +215,30 @@ webhookSecrets:
 apps:
   authApi:
     # -- image (with tag) for auth api
-    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/auth:v1.0.5-nightly
   commsApi:
     # -- image (with tag) for comms api
-    image: ghcr.io/kloudlite/platform/apis/comms:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/comms:v1.0.5-nightly
 
   consoleApi:
     # -- image (with tag) for console api
-    image: ghcr.io/kloudlite/platform/apis/console:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/console:v1.0.5-nightly
     configuration:
       logsAndMetricsHttpPort: 9100
   accountsApi:
     # -- image (with tag) for accounts api
-    image: ghcr.io/kloudlite/platform/apis/accounts:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/accounts:v1.0.5-nightly
   iamApi:
     # -- image (with tag) for iam api
-    image: ghcr.io/kloudlite/platform/apis/iam:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/iam:v1.0.5-nightly
   infraApi:
     # -- image (with tag) for infra api
-    image: ghcr.io/kloudlite/platform/apis/infra:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/infra:v1.0.5-nightly
   gatewayApi:
-    image: ghcr.io/kloudlite/platform/apis/gateway:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/gateway:v1.0.5-nightly
   containerRegistryApi:
     # -- image (with tag) for container registry api
-    image: ghcr.io/kloudlite/platform/apis/container-registry:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/container-registry:v1.0.5-nightly
     configuration:
       # -- (number) port on which container registry event listener should listen
       eventListenerPort: 4001
@@ -255,13 +255,13 @@ apps:
       authorizerPort: 4000
   auditLoggingWorker:
     # -- image (with tag) for audit logging worker
-    image: ghcr.io/kloudlite/platform/apis/worker-audit-logging:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/worker-audit-logging:v1.0.5-nightly
   webhooksApi:
     # -- image (with tag) for webhooks api
-    image: ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/webhooks:v1.0.5-nightly
   messageOfficeApi:
     # -- image (with tag) for message office api
-    image: ghcr.io/kloudlite/platform/apis/message-office:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/message-office:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -277,11 +277,11 @@ apps:
   consoleWeb:
     enabled: true
     # -- image (with tag) for console web
-    image: ghcr.io/kloudlite/platform/web/console:v1.0.5-nightly
+    image: ghcr.io/kloudlite/web/console:v1.0.5-nightly
   authWeb:
     enabled: true
     # -- image (with tag) for auth web
-    image: ghcr.io/kloudlite/platform/web/auth:v1.0.5-nightly
+    image: ghcr.io/kloudlite/web/auth:v1.0.5-nightly
 
 operators:
   preferOperatorsOnMasterNodes: true
@@ -313,7 +313,7 @@ operators:
   wgOperator:
     enabled: false
     # -- wg operator image and tag
-    image: ghcr.io/kloudlite/operators/wireguard:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operator/wireguard:v1.0.5-nightly
     # -- wireguard configuration options
     configuration:
       # -- cluster pods CIDR range
