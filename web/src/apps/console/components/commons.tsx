@@ -1,10 +1,9 @@
-import { CopySimple, Info, Question } from '@jengaicons/react';
+import { CopySimple, Question } from '@jengaicons/react';
 import { ReactNode, useState } from 'react';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { generateKey, titleCase } from '~/components/utils';
-import { Badge } from '~/components/atoms/badge';
 import {
   Kloudlite__Io___Pkg___Types__SyncStatusState as SyncState,
   Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncAction,
@@ -136,7 +135,7 @@ interface IStatusMeta {
   };
 }
 
-type IResourceType = 'nodepool'
+type IResourceType = 'nodepool';
 
 type ICommonMeta = IUpdateMeta & IStatusMeta;
 
@@ -146,25 +145,31 @@ const parseStatusComponent = ({ status }: { status: IStatus }) => {
       return <div className="bodySm text-text-soft pulsable">Deleting...</div>;
     case 'notready':
       return <div className="bodySm text-text-soft pulsable">Not Ready</div>;
-    case 'notready':
+    case 'syncing':
       return <div className="bodySm text-text-soft pulsable">Syncing</div>;
     default:
       return null;
   }
 };
 
-export const parseStatus = ({item, type}:{item: IStatusMeta, type?:IResourceType}) => {
+export const parseStatus = ({
+  item,
+  type,
+}: {
+  item: IStatusMeta;
+  type?: IResourceType;
+}) => {
   let status: IStatus = 'none';
 
   if (item.markedForDeletion) {
     status = 'deleting';
   } else if (!item.status?.isReady) {
-    switch(type){
+    switch (type) {
       case 'nodepool':
-        status = 'syncing'
+        status = 'syncing';
         break;
       default:
-        status = 'notready'
+        status = 'notready';
     }
   }
 
@@ -192,12 +197,18 @@ export const listRender = ({
         ),
       };
     },
-    statusRender: ({ className, type }: { className: string, type?:IResourceType }) => {
+    statusRender: ({
+      className,
+      type,
+    }: {
+      className: string;
+      type?: IResourceType;
+    }) => {
       return {
         key: generateKey(keyPrefix, 'status'),
         className,
-        render: () => parseStatus({item:resource, type}).component,
-        status: parseStatus({item:resource, type}).status,
+        render: () => parseStatus({ item: resource, type }).component,
+        status: parseStatus({ item: resource, type }).status,
       };
     },
   };
