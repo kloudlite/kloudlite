@@ -120,7 +120,7 @@ interface IUpdateMeta {
 }
 
 // Component for Status parsing
-export type IStatus = 'deleting' | 'notready' | 'none';
+export type IStatus = 'deleting' | 'notready' | 'syncing' | 'none';
 
 interface IStatusMeta {
   markedForDeletion?: boolean;
@@ -136,6 +136,8 @@ interface IStatusMeta {
   };
 }
 
+type IResourceType = 'nodepool'
+
 type ICommonMeta = IUpdateMeta & IStatusMeta;
 
 const parseStatusComponent = ({ status }: { status: IStatus }) => {
@@ -144,18 +146,26 @@ const parseStatusComponent = ({ status }: { status: IStatus }) => {
       return <div className="bodySm text-text-soft pulsable">Deleting...</div>;
     case 'notready':
       return <div className="bodySm text-text-soft pulsable">Not Ready</div>;
+    case 'notready':
+      return <div className="bodySm text-text-soft pulsable">Syncing</div>;
     default:
       return null;
   }
 };
 
-export const parseStatus = (item: IStatusMeta) => {
+export const parseStatus = ({item, type}:{item: IStatusMeta, type?:IResourceType}) => {
   let status: IStatus = 'none';
 
   if (item.markedForDeletion) {
     status = 'deleting';
   } else if (!item.status?.isReady) {
-    status = 'notready';
+    switch(type){
+      case 'nodepool':
+        status = 'syncing'
+        break;
+      default:
+        status = 'notready'
+    }
   }
 
   return { status, component: parseStatusComponent({ status }) };
@@ -182,12 +192,12 @@ export const listRender = ({
         ),
       };
     },
-    statusRender: ({ className }: { className: string }) => {
+    statusRender: ({ className, type }: { className: string, type?:IResourceType }) => {
       return {
         key: generateKey(keyPrefix, 'status'),
         className,
-        render: () => parseStatus(resource).component,
-        status: parseStatus(resource).status,
+        render: () => parseStatus({item:resource, type}).component,
+        status: parseStatus({item:resource, type}).status,
       };
     },
   };

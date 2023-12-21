@@ -117,8 +117,7 @@ const ListDetail = (
     }
     return (
       <div className="truncate">
-        {/* {minCount} - {maxCount} nodes */}
-        99 - 99 nodes
+        {minCount} - {maxCount} nodes
       </div>
     );
   };
@@ -154,7 +153,7 @@ const ListDetail = (
     }
   };
 
-  const statusRender = lR.statusRender({ className: 'w-[180px]' });
+  const statusRender = lR.statusRender({ className: 'w-[180px]', type:'nodepool' });
 
   return (
     <div className="w-full flex flex-col">
