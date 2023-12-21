@@ -24,7 +24,10 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
     headers: ctx.request?.headers,
   }).whoAmI();
 
-  if (whoAmI.errors && whoAmI.errors[0].message === 'user not logged in') {
+  if (
+    whoAmI.errors &&
+    whoAmI.errors[0].message === 'input: auth_me user not logged in'
+  ) {
     return redirect(`${authBaseUrl}/login`);
   }
 
