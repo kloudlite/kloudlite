@@ -2,10 +2,11 @@ package controller
 
 import (
 	"context"
-	"log"
 	"time"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -63,49 +64,86 @@ func RegisterInto(mgr operator.Operator, runningOnTenant bool) {
 
 	logger := logging.NewOrDie(&logging.Options{Name: "resource-watcher", Dev: mgr.Operator().IsDev})
 
-	errCh := make(chan error)
-
 	watchAndUpdateReconciler := &watchAndUpdate.Reconciler{
-		Name: "resource-watcher",
-		Env:  ev,
+		Name:      "resource-watcher",
+		Env:       ev,
+		MsgSender: nil,
 	}
-
-	go func() {
-		for {
-			logger.Infof("connecting to grpc addr: %s", ev.GrpcAddr)
-
-			cc, err := libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
-				SecureConnect: runningOnTenant,
-				Timeout:       100 * time.Second,
-			})
-			if err != nil {
-				logger.Infof("failed to connect to grpc addr: %s, will be retrying in %d seconds", ev.GrpcAddr, 2)
-				<-time.After(2 * time.Second)
-				continue
-			}
-
-			logger.Infof("grpc connection successfull")
-
-			msgSender, err := watchAndUpdate.NewGRPCMessageSender(context.TODO(), cc, ev, logger, runningOnTenant)
-			if err != nil {
-				logger.Infof("Failed to create grpc message sender: %v", err)
-				<-time.After(2 * time.Second)
-				continue
-			}
-
-			watchAndUpdateReconciler.MsgSender = msgSender
-
-			connState := cc.GetState()
-			for connState != connectivity.Ready && connState != connectivity.Shutdown {
-				log.Printf("Connection lost, trying to reconnect")
-				errCh <- err
-			}
-			<-errCh
-			cc.Close()
-		}
-	}()
 
 	mgr.RegisterControllers(
 		watchAndUpdateReconciler,
 	)
+
+	ping := func(cc *grpc.ClientConn) error {
+		ctx, cf := context.WithTimeout(context.TODO(), 500*time.Millisecond)
+		defer cf()
+		msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
+		_, err := msgDispatchCli.Ping(ctx, &messages.Empty{})
+		if err != nil {
+			logger.Infof("ping failed, client is disconnected")
+			return err
+		}
+		logger.Debugf("ping is successfull, client is connected")
+		return nil
+	}
+
+	connectGrpc := func(logger logging.Logger) error {
+		logger.Infof("connecting to addr: %s", ev.GrpcAddr)
+
+		cc, err := libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
+			SecureConnect: runningOnTenant,
+			Timeout:       10 * time.Second,
+		})
+		if err != nil {
+			logger.Infof("failed to connect to grpc addr: %s", ev.GrpcAddr)
+			return err
+		}
+
+		for {
+			connState := cc.GetState()
+			logger.Infof("waiting for connection to become %s, current: %s", connectivity.Ready, connState.String())
+			if connState == connectivity.Ready {
+				logger.Infof("Connected to GRPC server")
+				break
+			}
+			<-time.After(2 * time.Second)
+		}
+
+		if err := ping(cc); err != nil {
+			return err
+		}
+
+		logger.Infof("successfully connected to grpc server at %s", ev.GrpcAddr)
+
+		ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
+		defer cf()
+		msgSender, err := watchAndUpdate.NewGRPCMessageSender(ctx, cc, ev, logger, runningOnTenant)
+		if err != nil {
+			logger.Infof("Failed to create grpc message sender: %v", err)
+			return err
+		}
+
+		watchAndUpdateReconciler.MsgSender = msgSender
+
+		defer func() {
+			cc.Close()
+			watchAndUpdateReconciler.MsgSender = nil
+			logger.Infof("closed grpc connection")
+		}()
+
+		for {
+			if err := ping(cc); err != nil {
+				return err
+			}
+			<-time.After(2 * time.Second)
+		}
+	}
+
+	go func() {
+		logger := logger.WithKV("component", "grpc-client")
+		for {
+			connectGrpc(logger)
+			<-time.After(2 * time.Second)
+		}
+	}()
 }
