@@ -22,7 +22,7 @@ import (
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -79,7 +79,7 @@ func (r *kloudlite__io___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx co
 func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Annotations, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -109,7 +109,7 @@ func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.Object
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Labels, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -118,7 +118,7 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
 	if err := fn.JsonConversion(data, &m); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	obj.SetAnnotations(m)
 	return nil
@@ -128,7 +128,7 @@ func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta
 func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
 	var m map[string]string
 	if err := fn.JsonConversion(data, &m); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	obj.SetLabels(m)
 	return nil

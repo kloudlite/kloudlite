@@ -16,7 +16,7 @@ import (
 func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entities.BYOCCluster, error) {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster, err := d.byocClusterRepo.FindOne(ctx, repos.Filter{
@@ -25,7 +25,7 @@ func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entitie
 		"metadata.namespace": accNs,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if cluster == nil {
 		return nil, errors.Newf("BYOC cluster with name %q not found", clusterName)
@@ -35,14 +35,14 @@ func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entitie
 
 func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster.EnsureGVK()
 	cluster.IncomingKafkaTopicName = common.GetKafkaTopicName(ctx.AccountName, cluster.Name)
 
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.BYOC); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster.IncrementRecordVersion()
@@ -60,12 +60,12 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	nCluster, err := d.byocClusterRepo.Create(ctx, &cluster)
 	if err != nil {
 		if d.clusterRepo.ErrAlreadyExists(err) {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 
 	if err := d.applyK8sResource(ctx, &nCluster.BYOC, nCluster.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	redpandaTopic := redpandaMsvcv1.Topic{
@@ -76,7 +76,7 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	redpandaTopic.EnsureGVK()
 
 	if err := d.applyK8sResource(ctx, &redpandaTopic, nCluster.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return nCluster, nil
@@ -84,12 +84,12 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 
 func (d *domain) ListBYOCClusters(ctx InfraContext, filters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BYOCCluster], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListClusters); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	f := repos.Filter{
@@ -101,24 +101,24 @@ func (d *domain) ListBYOCClusters(ctx InfraContext, filters map[string]repos.Mat
 
 func (d *domain) GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.GetCluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findBYOCCluster(ctx, name)
 }
 
 func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &cluster.BYOC); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	c, err := d.findBYOCCluster(ctx, cluster.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	c.IncrementRecordVersion()
@@ -133,11 +133,11 @@ func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 
 	uCluster, err := d.byocClusterRepo.UpdateById(ctx, c.Id, c)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &uCluster.BYOC, uCluster.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return uCluster, nil
@@ -145,12 +145,12 @@ func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 
 func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCluster); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	clus, err := d.findBYOCCluster(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if clus.IsMarkedForDeletion() {
@@ -161,7 +161,7 @@ func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
 	clus.SyncStatus = t.GetSyncStatusForDeletion(clus.Generation)
 	upC, err := d.byocClusterRepo.UpdateById(ctx, clus.Id, clus)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return d.deleteK8sResource(ctx, &upC.BYOC)
 }
@@ -169,11 +169,11 @@ func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
 func (d *domain) ResyncBYOCCluster(ctx InfraContext, name string) error {
 	clus, err := d.findBYOCCluster(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &clus.BYOC, clus.RecordVersion); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	redpandaTopic := redpandaMsvcv1.Topic{
@@ -191,7 +191,7 @@ func (d *domain) ResyncBYOCCluster(ctx InfraContext, name string) error {
 func (d *domain) OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
@@ -204,14 +204,14 @@ func (d *domain) OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.B
 func (d *domain) OnUpdateBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error {
 	c, err := d.findBYOCCluster(ctx, cluster.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	c.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
 
 	_, err = d.byocClusterRepo.UpdateById(ctx, c.Id, &cluster)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
