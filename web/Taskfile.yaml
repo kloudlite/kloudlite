@@ -35,7 +35,7 @@ tasks:
 
         case $(whoami) in
           "bikash")
-            URL_SUFFIX=1
+            URL_SUFFIX=""
             ;;
 
           "vision")
@@ -170,3 +170,12 @@ tasks:
       - docker push {{.IMAGE}}/auth:{{.tag}}
       - docker build --build-arg APP=console . -t {{.IMAGE}}/console:{{.tag}}
       - docker push {{.IMAGE}}/console:{{.tag}}
+  
+  docker-build-website:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    silent: false
+    cmds:
+      - cd ./src/design-system && mkdir -p out && pnpm local:release
+      - docker buildx build  --platform linux/amd64 . -t {{.tag}} -f Dockerfile.website

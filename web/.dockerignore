@@ -18,3 +18,5 @@
 src/generated/node_modules
 src/generated/plugin/node_modules
 src/design-system/node_modules
+src/apps/devdoc/node_modules
+src/apps/devdoc/.next
