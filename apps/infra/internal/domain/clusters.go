@@ -52,7 +52,7 @@ func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderS
 		ClusterName: clusterName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	secret.StringData = map[string]string{
@@ -65,7 +65,7 @@ func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderS
 func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error) {
 	cluster, err := d.findCluster(ctx, clusterName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if cluster.Spec.Output == nil {
@@ -74,7 +74,7 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 
 	kscrt := corev1.Secret{}
 	if err := d.k8sClient.Get(ctx.Context, fn.NN(cluster.Namespace, cluster.Spec.Output.SecretName), &kscrt); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	kubeconfig, ok := kscrt.Data[cluster.Spec.Output.KeyKubeconfig]
@@ -241,7 +241,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if err := d.applyK8sResource(ctx, &nCluster.Cluster, nCluster.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return nCluster, nil
@@ -249,12 +249,12 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListClusters); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	f := repos.Filter{
@@ -264,7 +264,7 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 
 	pr, err := d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	edges := make([]repos.RecordEdge[*entities.Cluster], 0, len(pr.Edges))
@@ -272,7 +272,7 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 	for i := range pr.Edges {
 		c, found, err := d.readClusterK8sResource(ctx, pr.Edges[i].Node.Namespace, pr.Edges[i].Node.Name)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 
 		if found {
@@ -285,7 +285,7 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 
 		if !found && pr.Edges[i].Node.MarkedForDeletion != nil && *pr.Edges[i].Node.MarkedForDeletion {
 			if err := d.clusterRepo.DeleteById(ctx, pr.Edges[i].Node.Id); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 			continue
 		}
@@ -298,17 +298,17 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 
 func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.GetCluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	c, err := d.findCluster(ctx, name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	clus, found, err := d.readClusterK8sResource(ctx, c.Namespace, c.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if found {
@@ -321,7 +321,7 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 
 	if !found && c.MarkedForDeletion != nil && *c.MarkedForDeletion {
 		if err := d.clusterRepo.DeleteById(ctx, c.Id); err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		return nil, nil
 	}
@@ -331,12 +331,12 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 
 func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCluster); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	cluster.EnsureGVK()
 	clus, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if clus.IsMarkedForDeletion() {
@@ -345,7 +345,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	cps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if cps.IsMarkedForDeletion() {
@@ -370,11 +370,11 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	uCluster, err := d.clusterRepo.UpdateById(ctx, clus.Id, clus)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, &uCluster.Cluster, uCluster.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return uCluster, nil
@@ -393,11 +393,11 @@ func (d *domain) readClusterK8sResource(ctx InfraContext, namespace string, name
 
 func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCluster); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	c, err := d.findCluster(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if c.MarkedForDeletion == nil || *c.MarkedForDeletion {
@@ -405,7 +405,7 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
 		upC, err := d.clusterRepo.UpdateById(ctx, c.Id, c)
 		if err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		return d.deleteK8sResource(ctx, &upC.Cluster)
@@ -417,7 +417,7 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
@@ -430,7 +430,7 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
 	c, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.matchRecordVersion(cluster.Annotations, c.RecordVersion); err != nil {
@@ -449,13 +449,13 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	c.Status = cluster.Status
 
 	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
-	return err
+	return errors.NewE(err)
 }
 
 func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cluster, error) {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
@@ -464,7 +464,7 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 		"metadata.namespace": accNs,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if cluster == nil {

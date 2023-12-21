@@ -28,7 +28,7 @@ type CheckNameAvailabilityOutput struct {
 func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if !fn.IsValidK8sResourceName(name) {
@@ -37,7 +37,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 
 	fromFindOneResult := func(data any, err error) (*CheckNameAvailabilityOutput, error) {
 		if err != nil {
-			return &CheckNameAvailabilityOutput{Result: false}, err
+			return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 		}
 
 		if data == nil {
@@ -56,7 +56,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				"metadata.namespace": accNs,
 			})
 
-			return fromFindOneResult(cp, err)
+			return fromFindOneResult(cp, errors.NewE(err))
 		}
 	case ResTypeProviderSecret:
 		{
@@ -66,7 +66,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				"metadata.namespace": accNs,
 			})
 
-			return fromFindOneResult(cp, err)
+			return fromFindOneResult(cp, errors.NewE(err))
 		}
 	case ResTypeNodePool:
 		{
@@ -80,7 +80,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				"metadata.name": name,
 			})
 
-			return fromFindOneResult(cp, err)
+			return fromFindOneResult(cp, errors.NewE(err))
 		}
 	case ResTypeVPNDevice:
 		{
@@ -94,7 +94,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				"metadata.name": name,
 			})
 
-			return fromFindOneResult(cp, err)
+			return fromFindOneResult(cp, errors.NewE(err))
 		}
 	default:
 		{

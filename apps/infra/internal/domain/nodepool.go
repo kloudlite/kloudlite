@@ -23,7 +23,7 @@ const tenantControllerNamespace = "kloudlite"
 
 func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateNodepool); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	nodepool.IncrementRecordVersion()
@@ -36,18 +36,18 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 
 	out, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	cluster, err := d.findCluster(ctx, clusterName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	// fetch cloud provider credentials, access key, and ps key
 	credsSecret := &corev1.Secret{}
 	if err := d.k8sClient.Get(ctx, fn.NN(cluster.Spec.CredentialsRef.Namespace, cluster.Spec.CredentialsRef.Name), credsSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	providerSecret := &corev1.Secret{
@@ -66,7 +66,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, providerSecret, 1); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	nodepool.Spec.IAC = clustersv1.InfrastuctureAsCode{
@@ -87,7 +87,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 
 	ps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	switch nodepool.Spec.CloudProvider {
@@ -133,7 +133,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 
 	nodepool.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &nodepool.NodePool); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	nodepool.IncrementRecordVersion()
 
@@ -142,11 +142,11 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		if d.nodePoolRepo.ErrAlreadyExists(err) {
 			return nil, errors.Newf("nodepool with name %q already exists", nodepool.Name)
 		}
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &np.NodePool, np.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return np, nil
@@ -154,17 +154,17 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 
 func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateNodepool); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	nodePool.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &nodePool.NodePool); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	np, err := d.findNodePool(ctx, clusterName, nodePool.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if np.IsMarkedForDeletion() {
@@ -192,11 +192,11 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 
 	unp, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.NodePool, unp.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return unp, nil
@@ -204,11 +204,11 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 
 func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteNodepool); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	np, err := d.findNodePool(ctx, clusterName, poolName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if np.IsMarkedForDeletion() {
@@ -219,25 +219,25 @@ func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName s
 	np.SyncStatus = t.GetSyncStatusForDeletion(np.Generation)
 	upC, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.NodePool)
 }
 
 func (d *domain) GetNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.GetNodepool); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	np, err := d.findNodePool(ctx, clusterName, poolName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return np, nil
 }
 
 func (d *domain) ListNodePools(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.NodePool], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListNodepools); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	filter := repos.Filter{
 		"accountName": ctx.AccountName,
@@ -253,7 +253,7 @@ func (d *domain) findNodePool(ctx InfraContext, clusterName string, poolName str
 		"metadata.name": poolName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if np == nil {
 		return nil, errors.Newf("nodepool with name %q not found", clusterName)
@@ -268,11 +268,11 @@ func (d *domain) ResyncNodePool(ctx InfraContext, clusterName string, poolName s
 		}
 		return nil
 	}(); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	np, err := d.findNodePool(ctx, clusterName, poolName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.resyncToTargetCluster(ctx, np.SyncStatus.Action, clusterName, &np.NodePool, np.RecordVersion)
@@ -297,7 +297,7 @@ func (d *domain) OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, n
 func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error {
 	np, err := d.findNodePool(ctx, clusterName, nodePool.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.matchRecordVersion(nodePool.Annotations, np.RecordVersion); err != nil {
@@ -312,7 +312,7 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 	np.SyncStatus.RecordVersion = np.RecordVersion
 
 	if _, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -321,7 +321,7 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
 	np, err := d.findNodePool(ctx, clusterName, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	np.SyncStatus.State = t.SyncStateErroredAtAgent
@@ -329,5 +329,5 @@ func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name
 	np.SyncStatus.Error = &errMsg
 
 	_, err = d.nodePoolRepo.UpdateById(ctx, np.Id, np)
-	return err
+	return errors.NewE(err)
 }

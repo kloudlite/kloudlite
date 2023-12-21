@@ -69,11 +69,11 @@ func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVer
 
 	b, err := fn.K8sObjToYAML(obj)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.k8sClient.ApplyYAML(ctx, b); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -81,11 +81,11 @@ func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVer
 func (d *domain) deleteK8sResource(ctx InfraContext, obj client.Object) error {
 	b, err := fn.K8sObjToYAML(obj)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if err := d.k8sClient.DeleteYAML(ctx, b); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -98,7 +98,7 @@ func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string
 
 	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
 	if err != nil {
-		return 0, err
+		return 0, errors.NewE(err)
 	}
 
 	return int(annVersion), nil
@@ -107,7 +107,7 @@ func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string
 func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error {
 	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if annVersion != rv {
@@ -120,7 +120,7 @@ func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error
 func (d *domain) getAccNamespace(ctx InfraContext, name string) (string, error) {
 	acc, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 	if !acc.IsActive {
 		return "", errors.Newf("account %q is not active", ctx.AccountName)

@@ -1,6 +1,9 @@
 package env
 
-import "github.com/codingconcepts/env"
+import (
+	"github.com/codingconcepts/env"
+	"github.com/kloudlite/api/pkg/errors"
+)
 
 type Env struct {
 	InfraDbUri  string `env:"MONGO_DB_URI" required:"true"`
@@ -39,7 +42,7 @@ type Env struct {
 func LoadEnv() (*Env, error) {
 	var ev Env
 	if err := env.Set(&ev); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &ev, nil
 }
