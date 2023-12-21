@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
@@ -44,7 +45,7 @@ var Module = fx.Module("framework",
 			Logger: logger,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		return nats.NewJetstreamClient(c)
 	}),
@@ -72,7 +73,7 @@ var Module = fx.Module("framework",
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				return nil
 			},

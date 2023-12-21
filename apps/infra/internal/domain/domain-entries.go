@@ -11,7 +11,7 @@ import (
 
 func (d *domain) ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListDomainEntries); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filters := map[string]any{
@@ -22,14 +22,14 @@ func (d *domain) ListDomainEntries(ctx InfraContext, search map[string]repos.Mat
 
 func (d *domain) GetDomainEntry(ctx InfraContext, domainName string) (*entities.DomainEntry, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.GetDomainEntry); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findDomainEntry(ctx, ctx.AccountName, domainName)
 }
 
 func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*entities.DomainEntry, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateDomainEntry); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	de.AccountName = ctx.AccountName
 	de.CreatedBy = common.CreatedOrUpdatedBy{
@@ -41,7 +41,7 @@ func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 
 	nde, err := d.domainEntryRepo.Create(ctx, &de)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return nde, nil
@@ -49,12 +49,12 @@ func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 
 func (d *domain) UpdateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*entities.DomainEntry, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateDomainEntry); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	existing, err := d.findDomainEntry(ctx, ctx.AccountName, de.DomainName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	existing.DisplayName = de.DisplayName
@@ -66,18 +66,18 @@ func (d *domain) UpdateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 
 	newDe, err := d.domainEntryRepo.UpdateById(ctx, existing.Id, existing)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return newDe, nil
 }
 
 func (d *domain) DeleteDomainEntry(ctx InfraContext, domainName string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteDomainEntry); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	entry, err := d.findDomainEntry(ctx, ctx.AccountName, domainName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.domainEntryRepo.DeleteById(ctx, entry.Id)
@@ -90,7 +90,7 @@ func (d *domain) findDomainEntry(ctx context.Context, accountName string, domain
 	}
 	one, err := d.domainEntryRepo.FindOne(ctx, filters)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if one == nil {

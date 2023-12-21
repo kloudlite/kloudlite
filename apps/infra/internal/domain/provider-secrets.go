@@ -45,7 +45,7 @@ func (d *domain) validateAWSAssumeRole(ctx context.Context, awsAccountId string,
 	sess, err := session.NewSession()
 	if err != nil {
 		d.logger.Errorf(err, "while creating new session")
-		return err
+		return errors.NewE(err)
 	}
 
 	svc := sts.New(sess)
@@ -57,7 +57,7 @@ func (d *domain) validateAWSAssumeRole(ctx context.Context, awsAccountId string,
 	})
 	if err != nil {
 		d.logger.Errorf(err, "while assuming role, and getting caller identity")
-		return err
+		return errors.NewE(err)
 	}
 
 	if resp.AssumedRoleUser.Arn != nil {
@@ -74,22 +74,22 @@ type AWSAccessValidationOutput struct {
 
 func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) (*AWSAccessValidationOutput, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	psecret, err := d.findProviderSecret(ctx, name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := psecret.Validate(); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.validateAWSAssumeRole(ctx, *psecret.AWS.AWSAccountId, psecret.AWS.CfParamExternalID, psecret.AWS.GetAssumeRoleRoleARN()); err != nil {
 		installationURL, err := generateAWSCloudformationTemplateUrl(*psecret.AWS, d.env)
 		if err != nil {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 		return &AWSAccessValidationOutput{
 			Result:          false,
@@ -100,7 +100,7 @@ func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) 
 	return &AWSAccessValidationOutput{
 		Result:          true,
 		InstallationURL: nil,
-	}, err
+	}, errors.NewE(err)
 }
 
 func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Secret {
@@ -140,19 +140,19 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Se
 
 func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	psecret.AccountName = ctx.AccountName
 	psecret.Namespace = accNs
 
 	if err := psecret.Validate(); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	psecret.IncrementRecordVersion()
@@ -180,7 +180,7 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudPr
 			}
 
 			if err := psecret.AWS.Validate(); err != nil {
-				return nil, err
+				return nil, errors.NewE(err)
 			}
 		}
 	default:
@@ -188,14 +188,14 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudPr
 	}
 	secret := corev1SecretFromProviderSecret(&psecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if err := d.applyK8sResource(ctx, secret, psecret.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	nSecret, err := d.secretRepo.Create(ctx, &psecret)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return nSecret, nil
@@ -203,16 +203,16 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudPr
 
 func (d *domain) UpdateProviderSecret(ctx InfraContext, ups entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCloudProviderSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := ups.Validate(); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currScrt, err := d.findProviderSecret(ctx, ups.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	currScrt.IncrementRecordVersion()
@@ -235,11 +235,11 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, ups entities.CloudProvid
 
 	uScrt, err := d.secretRepo.UpdateById(ctx, currScrt.Id, currScrt)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if err := d.applyK8sResource(ctx, corev1SecretFromProviderSecret(currScrt), uScrt.RecordVersion); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return uScrt, nil
@@ -247,11 +247,11 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, ups entities.CloudProvid
 
 func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCloudProviderSecret); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	cps, err := d.findProviderSecret(ctx, secretName)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	clusters, err := d.clusterRepo.Find(ctx, repos.Query{
@@ -261,7 +261,7 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 		},
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if len(clusters) > 0 {
@@ -269,19 +269,19 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 	}
 
 	if err := d.deleteK8sResource(ctx, corev1SecretFromProviderSecret(cps)); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return d.secretRepo.DeleteById(ctx, cps.Id)
 }
 
 func (d *domain) ListProviderSecrets(ctx InfraContext, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListCloudProviderSecrets); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := repos.Filter{
@@ -293,7 +293,7 @@ func (d *domain) ListProviderSecrets(ctx InfraContext, matchFilters map[string]r
 
 func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.GetCloudProviderSecret); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return d.findProviderSecret(ctx, name)
 }
@@ -301,7 +301,7 @@ func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.Clo
 func (d *domain) findProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
@@ -310,7 +310,7 @@ func (d *domain) findProviderSecret(ctx InfraContext, name string) (*entities.Cl
 		"metadata.name":      name,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if scrt == nil {

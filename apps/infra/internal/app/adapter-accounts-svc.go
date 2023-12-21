@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	errors2 "github.com/kloudlite/operator/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -25,7 +26,7 @@ func (as *accountsSvc) GetAccount(ctx context.Context, userId string, accountNam
 		if errors.Is(err, context.DeadlineExceeded) {
 			return nil, domain.ErrGRPCCall{Err: err}
 		}
-		return nil, err
+		return nil, errors2.NewE(err)
 	}
 
 	return out, nil

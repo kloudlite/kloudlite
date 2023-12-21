@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -22,7 +23,7 @@ type ErrGRPCCall struct {
 }
 
 func (e ErrGRPCCall) Error() string {
-	return fmt.Sprintf("grpc call failed with error: %v", e.Err)
+	return fmt.Sprintf("grpc call failed with error: %v", errors.NewE(e.Err))
 }
 
 func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action) error {
