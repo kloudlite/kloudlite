@@ -28,7 +28,7 @@ jobs:
           - app: console
             dockerFile: Dockerfile
           - app: website
-            dockerFile: Dockerfile.website
+            dockerFile: Dockerfile.devdoc
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
