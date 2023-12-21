@@ -1,6 +1,6 @@
-{{- $chartOpts := index .Values.helmCharts "cert-manager" }} 
-{{- if $chartOpts.enabled }}
+{{- $chartOpts := index .Values.certManager }}
 
+{{- if $chartOpts.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
@@ -14,11 +14,6 @@ spec:
   chartName: jetstack/cert-manager
   chartVersion: v1.11.0
 
-  jobVars:
-    backOffLimit: 1
-    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-    tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
-
   values:
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
     # @ignored
@@ -26,13 +21,10 @@ spec:
       - "--dns01-recursive-nameservers-only"
       - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
-    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-    tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
-
-    # -- cert-manager pod affinity
-    affinity:
-      nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 8 }}
-
+    {{- /* tolerations: {{ include "tolerations" . | nindent 6 }} */}}
+    tolerations: {{.Values.certManager.configuration.tolerations | default list | toYaml | nindent 6 }}
+    {{- /* nodeSelector: {{ include "node-selector" . | nindent 6 }} */}}
+    nodeSelector: {{.Values.certManager.configuration.nodeSelector | default dict | toYaml | nindent 6 }}
     podLabels: {{ include "pod-labels" . | nindent 6 }}
 
     startupapicheck:
@@ -54,10 +46,6 @@ spec:
 
     webhook:
       podLabels: {{ include "pod-labels" . | nindent 8 }}
-
-      affinity:
-        nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}
-
       # -- resource limits for cert-manager webhook pods
       resources:
         # -- resource limits for cert-manager webhook pods
@@ -74,10 +62,6 @@ spec:
 
     cainjector:
       podLabels: {{ include "pod-labels" . | nindent 8 }}
-
-      affinity:
-        nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}
-
       # -- resource limits for cert-manager cainjector pods
       resources:
         # -- resource limits for cert-manager webhook pods

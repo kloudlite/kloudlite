@@ -23,7 +23,7 @@ spec:
     tolerations:
       - operator: Exists
     {{- end }}
-  valuesYaml: |+
+  values:
     nameOverride: {{$chartOpts.name}}
 
     rbac:
