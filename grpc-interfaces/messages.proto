@@ -11,6 +11,8 @@ service MessageDispatchService {
   rpc ReceiveResourceUpdates (stream ResourceUpdate) returns (Empty) {}
   rpc ReceiveInfraUpdates (stream InfraUpdate) returns (Empty) {}
   rpc ReceiveClusterUpdates (stream ClusterUpdate) returns (Empty) {}
+
+  rpc Ping(Empty) returns (PingOutput) {}
 }
 
 message ValidateAccessTokenIn {
@@ -51,6 +53,10 @@ message InfraUpdate {
 
 message ClusterUpdate {
   bytes message = 1;
+}
+
+message PingOutput {
+  bool ok = 1;
 }
 
 message Empty {}
