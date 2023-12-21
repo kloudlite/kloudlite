@@ -21,11 +21,11 @@ import (
 func (r *clusterResolver) AdminKubeconfig(ctx context.Context, obj *entities.Cluster) (*model.EncodedValue, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	s, err := r.Domain.GetClusterAdminKubeconfig(ictx, obj.Name)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if s == nil {
@@ -42,7 +42,7 @@ func (r *clusterResolver) AdminKubeconfig(ctx context.Context, obj *entities.Clu
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.Domain.CreateCluster(ictx, cluster)
 }
@@ -51,7 +51,7 @@ func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entit
 func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.UpdateCluster(ictx, cluster)
@@ -61,10 +61,10 @@ func (r *mutationResolver) InfraUpdateCluster(ctx context.Context, cluster entit
 func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) (bool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteCluster(ictx, name); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -73,7 +73,7 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) 
 func (r *mutationResolver) InfraCreateBYOCCluster(ctx context.Context, byocCluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CreateBYOCCluster(ictx, byocCluster)
@@ -83,7 +83,7 @@ func (r *mutationResolver) InfraCreateBYOCCluster(ctx context.Context, byocClust
 func (r *mutationResolver) InfraUpdateBYOCCluster(ctx context.Context, byocCluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.UpdateBYOCCluster(ictx, byocCluster)
@@ -93,11 +93,11 @@ func (r *mutationResolver) InfraUpdateBYOCCluster(ctx context.Context, byocClust
 func (r *mutationResolver) InfraDeleteBYOCCluster(ctx context.Context, name string) (bool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.Domain.DeleteBYOCCluster(ictx, name); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -106,7 +106,7 @@ func (r *mutationResolver) InfraDeleteBYOCCluster(ctx context.Context, name stri
 func (r *mutationResolver) InfraCreateProviderSecret(ctx context.Context, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CreateProviderSecret(ictx, secret)
@@ -116,7 +116,7 @@ func (r *mutationResolver) InfraCreateProviderSecret(ctx context.Context, secret
 func (r *mutationResolver) InfraUpdateProviderSecret(ctx context.Context, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.UpdateProviderSecret(ictx, secret)
@@ -126,11 +126,11 @@ func (r *mutationResolver) InfraUpdateProviderSecret(ctx context.Context, secret
 func (r *mutationResolver) InfraDeleteProviderSecret(ctx context.Context, secretName string) (bool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.Domain.DeleteProviderSecret(ictx, secretName); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -139,7 +139,7 @@ func (r *mutationResolver) InfraDeleteProviderSecret(ctx context.Context, secret
 func (r *mutationResolver) InfraCreateDomainEntry(ctx context.Context, domainEntry entities.DomainEntry) (*entities.DomainEntry, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.Domain.CreateDomainEntry(ictx, domainEntry)
 }
@@ -148,7 +148,7 @@ func (r *mutationResolver) InfraCreateDomainEntry(ctx context.Context, domainEnt
 func (r *mutationResolver) InfraUpdateDomainEntry(ctx context.Context, domainEntry entities.DomainEntry) (*entities.DomainEntry, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.Domain.UpdateDomainEntry(ictx, domainEntry)
 }
@@ -157,10 +157,10 @@ func (r *mutationResolver) InfraUpdateDomainEntry(ctx context.Context, domainEnt
 func (r *mutationResolver) InfraDeleteDomainEntry(ctx context.Context, domainName string) (bool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteDomainEntry(ictx, domainName); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -169,7 +169,7 @@ func (r *mutationResolver) InfraDeleteDomainEntry(ctx context.Context, domainNam
 func (r *mutationResolver) InfraCreateNodePool(ctx context.Context, clusterName string, pool entities.NodePool) (*entities.NodePool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CreateNodePool(ictx, clusterName, pool)
@@ -179,7 +179,7 @@ func (r *mutationResolver) InfraCreateNodePool(ctx context.Context, clusterName 
 func (r *mutationResolver) InfraUpdateNodePool(ctx context.Context, clusterName string, pool entities.NodePool) (*entities.NodePool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.UpdateNodePool(ictx, clusterName, pool)
@@ -189,11 +189,11 @@ func (r *mutationResolver) InfraUpdateNodePool(ctx context.Context, clusterName 
 func (r *mutationResolver) InfraDeleteNodePool(ctx context.Context, clusterName string, poolName string) (bool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 
 	if err := r.Domain.DeleteNodePool(ictx, clusterName, poolName); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -202,7 +202,7 @@ func (r *mutationResolver) InfraDeleteNodePool(ctx context.Context, clusterName 
 func (r *mutationResolver) InfraCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CreateVPNDevice(cc, clusterName, vpnDevice)
@@ -212,7 +212,7 @@ func (r *mutationResolver) InfraCreateVPNDevice(ctx context.Context, clusterName
 func (r *mutationResolver) InfraUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.Domain.UpdateVPNDevice(cc, clusterName, vpnDevice)
 }
@@ -221,10 +221,10 @@ func (r *mutationResolver) InfraUpdateVPNDevice(ctx context.Context, clusterName
 func (r *mutationResolver) InfraDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteVPNDevice(cc, clusterName, deviceName); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -233,7 +233,7 @@ func (r *mutationResolver) InfraDeleteVPNDevice(ctx context.Context, clusterName
 func (r *queryResolver) InfraCheckNameAvailability(ctx context.Context, resType domain.ResType, clusterName *string, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.CheckNameAvailability(ictx, resType, clusterName, name)
@@ -243,7 +243,7 @@ func (r *queryResolver) InfraCheckNameAvailability(ctx context.Context, resType 
 func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.ClusterPaginatedRecords, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if pagination == nil {
@@ -272,7 +272,7 @@ func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.Sea
 
 	pClusters, err := r.Domain.ListClusters(ictx, filter, *pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ce := make([]*model.ClusterEdge, len(pClusters.Edges))
@@ -301,7 +301,7 @@ func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.Sea
 func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetCluster(ictx, name)
@@ -311,7 +311,7 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*enti
 func (r *queryResolver) InfraListBYOCClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOCClusterPaginatedRecords, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if pagination == nil {
@@ -339,7 +339,7 @@ func (r *queryResolver) InfraListBYOCClusters(ctx context.Context, search *model
 
 	pClusters, err := r.Domain.ListBYOCClusters(ictx, filter, *pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	bce := make([]*model.BYOCClusterEdge, len(pClusters.Edges))
@@ -368,7 +368,7 @@ func (r *queryResolver) InfraListBYOCClusters(ctx context.Context, search *model
 func (r *queryResolver) InfraGetBYOCCluster(ctx context.Context, name string) (*entities.BYOCCluster, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetBYOCCluster(ictx, name)
@@ -378,7 +378,7 @@ func (r *queryResolver) InfraGetBYOCCluster(ctx context.Context, name string) (*
 func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) (*model.NodePoolPaginatedRecords, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if pagination == nil {
@@ -395,7 +395,7 @@ func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName stri
 
 	pNodePools, err := r.Domain.ListNodePools(ictx, clusterName, filter, *pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	pe := make([]*model.NodePoolEdge, len(pNodePools.Edges))
@@ -424,7 +424,7 @@ func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName stri
 func (r *queryResolver) InfraGetNodePool(ctx context.Context, clusterName string, poolName string) (*entities.NodePool, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetNodePool(ictx, clusterName, poolName)
@@ -434,7 +434,7 @@ func (r *queryResolver) InfraGetNodePool(ctx context.Context, clusterName string
 func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *model.SearchProviderSecret, pagination *repos.CursorPagination) (*model.CloudProviderSecretPaginatedRecords, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if pagination == nil {
@@ -455,7 +455,7 @@ func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *mo
 
 	pSecrets, err := r.Domain.ListProviderSecrets(ictx, filter, *pagination)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	pe := make([]*model.CloudProviderSecretEdge, len(pSecrets.Edges))
@@ -484,7 +484,7 @@ func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *mo
 func (r *queryResolver) InfraGetProviderSecret(ctx context.Context, name string) (*entities.CloudProviderSecret, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetProviderSecret(ictx, name)
@@ -494,7 +494,7 @@ func (r *queryResolver) InfraGetProviderSecret(ctx context.Context, name string)
 func (r *queryResolver) InfraListDomainEntries(ctx context.Context, search *model.SearchDomainEntry, pagination *repos.CursorPagination) (*model.DomainEntryPaginatedRecords, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	filter := map[string]repos.MatchFilter{}
@@ -511,7 +511,7 @@ func (r *queryResolver) InfraListDomainEntries(ctx context.Context, search *mode
 
 	dEntries, err := r.Domain.ListDomainEntries(ictx, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	edges := make([]*model.DomainEntryEdge, len(dEntries.Edges))
@@ -540,7 +540,7 @@ func (r *queryResolver) InfraListDomainEntries(ctx context.Context, search *mode
 func (r *queryResolver) InfraGetDomainEntry(ctx context.Context, domainName string) (*entities.DomainEntry, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetDomainEntry(ictx, domainName)
@@ -550,12 +550,12 @@ func (r *queryResolver) InfraGetDomainEntry(ctx context.Context, domainName stri
 func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error) {
 	ictx, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	output, err := r.Domain.ValidateProviderSecretAWSAccess(ictx, cloudproviderName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &model.CheckAwsAccessOutput{
@@ -582,13 +582,13 @@ func (r *queryResolver) InfraListVPNDevices(ctx context.Context, clusterName *st
 	cc, err := toInfraContext(ctx)
 	if err != nil {
 		if cc.AccountName == "" {
-			return nil, err
+			return nil, errors.NewE(err)
 		}
 	}
 
 	devices, err := r.Domain.ListVPNDevices(cc, cc.AccountName, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ve := make([]*model.VPNDeviceEdge, len(devices.Edges))
@@ -617,7 +617,7 @@ func (r *queryResolver) InfraListVPNDevices(ctx context.Context, clusterName *st
 func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
@@ -633,12 +633,12 @@ func (r *queryResolver) InfraListBuildRuns(ctx context.Context, repoName string,
 
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	buildRuns, err := r.Domain.ListBuildRuns(cc, repoName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ve := make([]*model.BuildRunEdge, len(buildRuns.Edges))
@@ -667,7 +667,7 @@ func (r *queryResolver) InfraListBuildRuns(ctx context.Context, repoName string,
 func (r *queryResolver) InfraGetBuildRun(ctx context.Context, repoName string, buildRunName string) (*entities.BuildRun, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetBuildRun(cc, repoName, buildRunName)
@@ -684,12 +684,12 @@ func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, s
 
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	pvcs, err := r.Domain.ListPVCs(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	ve := make([]*model.PersistentVolumeClaimEdge, len(pvcs.Edges))
@@ -718,7 +718,7 @@ func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, s
 func (r *queryResolver) InfraGetPvc(ctx context.Context, clusterName string, name string) (*entities.PersistentVolumeClaim, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return r.Domain.GetPVC(cc, clusterName, name)

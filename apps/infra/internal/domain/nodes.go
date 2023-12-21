@@ -28,7 +28,7 @@ func (d *domain) findNode(ctx InfraContext, clusterName string, nodeName string)
 		"metadata.name": nodeName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if node == nil {
@@ -44,7 +44,7 @@ func (d *domain) OnNodeUpdateMessage(ctx InfraContext, clusterName string, node 
 		"clusterName":   clusterName,
 		"metadata.name": node.Name,
 	}, &node); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func (d *domain) OnNodeUpdateMessage(ctx InfraContext, clusterName string, node 
 func (d *domain) OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error {
 	n, err := d.findNode(ctx, clusterName, node.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	return d.nodeRepo.DeleteById(ctx, n.Id)

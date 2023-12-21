@@ -35,7 +35,7 @@ func (r *nodeResolver) ID(ctx context.Context, obj *entities.Node) (string, erro
 func (r *nodeResolver) Spec(ctx context.Context, obj *entities.Node) (*model.GithubComKloudliteOperatorApisClustersV1NodeSpec, error) {
 	var m model.GithubComKloudliteOperatorApisClustersV1NodeSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }
