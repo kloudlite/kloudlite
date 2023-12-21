@@ -1,17 +1,31 @@
-FROM node:20.8.1-alpine as node
-WORKDIR  /app
-
-COPY ./src/apps/devdoc ./src/apps/devdoc
-COPY ./src/design-system/tailwind-base.js ./src/design-system/tailwind-base.js
-COPY ./src/design-system/css-plugins ./src/design-system/css-plugins
-COPY ./src/design-system/css ./src/design-system/css
-COPY ./src/design-system/out ./src/design-system/out
-
-WORKDIR /app/src/apps/devdoc
-
+FROM node:20.8.1-alpine as base
+# RUN apk add g++ make py3-pip
 RUN npm i -g pnpm
+WORKDIR  /app
+COPY ./package.json ./package.json
+
+COPY ./src/generated/package.json ./src/generated/package.json
+COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
+
+RUN pnpm i
+
+# design system
+COPY ./src/design-system/ ./src/design-system/
+WORKDIR /app/src/design-system
 RUN pnpm i -p
+RUN pnpm local:release
 
-RUN npm run build
+# website
+WORKDIR /app
+COPY ./src/apps/devdoc ./src/apps/devdoc
+WORKDIR /app/src/apps/devdoc
+RUN pnpm i -p
+RUN pnpm build
 
-ENTRYPOINT pnpm start
+FROM node:20.8.1-alpine
+WORKDIR /app
+COPY --from=base /app/src/apps/devdoc/.next ./.next
+COPY --from=base /app/src/apps/devdoc/package.json ./package.json
+COPY --from=base /app/src/apps/devdoc/node_modules ./node_modules
+
+ENTRYPOINT npm run start
