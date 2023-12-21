@@ -3,4 +3,4 @@ FROM scratch
 WORKDIR /app
 ARG binpath
 COPY --from=local-builder --chown=1001 $binpath ./message-office
-CMD ["./message-office"]
+ENTRYPOINT ["./message-office"]
