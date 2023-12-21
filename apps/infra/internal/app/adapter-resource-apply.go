@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
@@ -19,7 +20,7 @@ type resourceDispatcherImpl struct {
 	producer messaging.Producer
 }
 
-func NewResourceDispatcher(producer SendTargetClusterMessagesProducer) domain.ResourceDispatcher{
+func NewResourceDispatcher(producer SendTargetClusterMessagesProducer) domain.ResourceDispatcher {
 	return &resourceDispatcherImpl{
 		producer,
 	}
@@ -35,7 +36,7 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, c
 
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	b, err := json.Marshal(t.AgentMessage{
@@ -45,7 +46,7 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, c
 		Object:      m,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	err = a.producer.Produce(ctx, msgTypes.ProduceMsg{
@@ -53,14 +54,13 @@ func (a *resourceDispatcherImpl) ApplyToTargetCluster(ctx domain.InfraContext, c
 		Payload: b,
 	})
 
-	return err
+	return errors.NewE(err)
 }
-
 
 func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.InfraContext, clusterName string, obj client.Object) error {
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	b, err := json.Marshal(t.AgentMessage{
@@ -70,7 +70,7 @@ func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.InfraContext
 		Object:      m,
 	})
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
@@ -78,5 +78,5 @@ func (d *resourceDispatcherImpl) DeleteFromTargetCluster(ctx domain.InfraContext
 		Payload: b,
 	})
 
-	return err
+	return errors.NewE(err)
 }

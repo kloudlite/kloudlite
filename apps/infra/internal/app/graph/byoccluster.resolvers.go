@@ -31,7 +31,7 @@ func (r *bYOCClusterResolver) HelmStatus(ctx context.Context, obj *entities.BYOC
 	}
 	var m map[string]any
 	if err := fn.JsonConversion(obj.HelmStatus, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
@@ -48,7 +48,7 @@ func (r *bYOCClusterResolver) ID(ctx context.Context, obj *entities.BYOCCluster)
 func (r *bYOCClusterResolver) Spec(ctx context.Context, obj *entities.BYOCCluster) (*model.GithubComKloudliteOperatorApisClustersV1BYOCSpec, error) {
 	var m model.GithubComKloudliteOperatorApisClustersV1BYOCSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }

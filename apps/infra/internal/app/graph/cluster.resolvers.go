@@ -40,7 +40,7 @@ func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*mod
 
 	var spec model.GithubComKloudliteOperatorApisClustersV1ClusterSpec
 	if err := fn.JsonConversion(&obj.Spec, &spec); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &spec, nil
 }

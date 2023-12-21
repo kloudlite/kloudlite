@@ -24,7 +24,7 @@ func (g *grpcServer) GetCluster(ctx context.Context, in *infra.GetClusterIn) (*i
 	}
 	c, err := g.d.GetCluster(infraCtx, in.ClusterName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if c == nil {
@@ -61,7 +61,7 @@ func (g *grpcServer) GetNodepool(ctx context.Context, in *infra.GetNodepoolIn) (
 	}
 	np, err := g.d.GetNodePool(infraCtx, in.ClusterName, in.NodepoolName)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if np == nil {
