@@ -1,5 +1,5 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{.Values.normalSvcAccount}}
+  name: {{.Values.global.normalSvcAccount}}
   namespace: {{.Release.Namespace}}

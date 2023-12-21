@@ -5,1379 +5,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: harborprojects.artifacts.kloudlite.io
-spec:
-  group: artifacts.kloudlite.io
-  names:
-    kind: HarborProject
-    listKind: HarborProjectList
-    plural: harborprojects
-    singular: harborproject
-  scope: Cluster
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: HarborProject is the Schema for the harborprojects API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties:
-              project:
-                properties:
-                  location:
-                    type: string
-                  name:
-                    type: string
-                required:
-                - location
-                - name
-                type: object
-              webhook:
-                properties:
-                  id:
-                    format: int64
-                    type: integer
-                  location:
-                    type: string
-                  name:
-                    type: string
-                type: object
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        required:
-        - spec
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: harboruseraccounts.artifacts.kloudlite.io
-spec:
-  group: artifacts.kloudlite.io
-  names:
-    kind: HarborUserAccount
-    listKind: HarborUserAccountList
-    plural: harboruseraccounts
-    singular: harboruseraccount
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .spec.harborProjectName
-      name: Harbor-Project
-      type: string
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: HarborUserAccount is the Schema for the harboruseraccounts API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: HarborUserAccountSpec defines the desired state of HarborUserAccount
-            properties:
-              accountName:
-                type: string
-              enabled:
-                default: true
-                type: boolean
-              harborProjectName:
-                type: string
-              permissions:
-                items:
-                  enum:
-                  - push-repository
-                  - pull-repository
-                  type: string
-                type: array
-              targetSecret:
-                type: string
-            required:
-            - accountName
-            - harborProjectName
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        required:
-        - spec
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: managedclusters.cluster-setup.kloudlite.io
-spec:
-  group: cluster-setup.kloudlite.io
-  names:
-    kind: ManagedCluster
-    listKind: ManagedClusterList
-    plural: managedclusters
-    singular: managedcluster
-  scope: Cluster
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: ManagedCluster is the Schema for the managedclusters API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: ManagedClusterSpec defines the desired state of ManagedCluster
-            properties:
-              certManager:
-                properties:
-                  enabled:
-                    type: boolean
-                  namespace:
-                    default: helm-cert-manager
-                    type: string
-                  releaseName:
-                    default: cert-manager
-                    type: string
-                type: object
-              domain:
-                type: string
-              gitlabRunner:
-                properties:
-                  enabled:
-                    type: boolean
-                  namespace:
-                    default: helm-gitlab-runner
-                    type: string
-                  releaseName:
-                    default: gitlab-runner
-                    type: string
-                  runnerToken:
-                    type: string
-                required:
-                - runnerToken
-                type: object
-              kloudliteCreds:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              kloudliteOperators:
-                properties:
-                  acmeEmail:
-                    default: support@kloudlite.io
-                    type: string
-                  clusterIssuerName:
-                    default: kl-cert-issuer
-                    type: string
-                  clusterSvcAccount:
-                    default: kloudlite-cluster-svc-account
-                    type: string
-                  imagePullPolicy:
-                    default: Always
-                    type: string
-                  imageTag:
-                    default: v1.0.5
-                    type: string
-                  installationMode:
-                    enum:
-                    - development
-                    - production
-                    type: string
-                  namespace:
-                    default: kl-init-operators
-                    type: string
-                required:
-                - installationMode
-                type: object
-              loki:
-                properties:
-                  enabled:
-                    default: true
-                    type: boolean
-                  namespace:
-                    default: kl-init-monitoring
-                    type: string
-                  releaseName:
-                    default: loki
-                    type: string
-                  resources:
-                    properties:
-                      cpu:
-                        properties:
-                          max:
-                            pattern: '[\d]+m$'
-                            type: string
-                          min:
-                            pattern: '[\d]+m$'
-                            type: string
-                        required:
-                        - max
-                        - min
-                        type: object
-                      memory:
-                        pattern: '[\d]+Mi$'
-                        type: string
-                      storage:
-                        properties:
-                          size:
-                            pattern: '[\d]+(M|G)i$'
-                            type: string
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        type: object
-                    required:
-                    - cpu
-                    - memory
-                    type: object
-                  s3:
-                    properties:
-                      awsAccessKeyId:
-                        type: string
-                      awsSecretAccessKey:
-                        type: string
-                      bucketName:
-                        type: string
-                      endpoint:
-                        type: string
-                    required:
-                    - awsAccessKeyId
-                    - awsSecretAccessKey
-                    - bucketName
-                    - endpoint
-                    type: object
-                  url:
-                    type: string
-                required:
-                - resources
-                - s3
-                type: object
-              prometheus:
-                properties:
-                  enabled:
-                    default: true
-                    type: boolean
-                  namespace:
-                    default: kl-init-monitoring
-                    type: string
-                  releaseName:
-                    default: prometheus
-                    type: string
-                  resources:
-                    properties:
-                      cpu:
-                        properties:
-                          max:
-                            pattern: '[\d]+m$'
-                            type: string
-                          min:
-                            pattern: '[\d]+m$'
-                            type: string
-                        required:
-                        - max
-                        - min
-                        type: object
-                      memory:
-                        pattern: '[\d]+Mi$'
-                        type: string
-                      storage:
-                        properties:
-                          size:
-                            pattern: '[\d]+(M|G)i$'
-                            type: string
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        type: object
-                    required:
-                    - cpu
-                    - memory
-                    type: object
-                required:
-                - resources
-                type: object
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: primaryclusters.cluster-setup.kloudlite.io
-spec:
-  group: cluster-setup.kloudlite.io
-  names:
-    kind: PrimaryCluster
-    listKind: PrimaryClusterList
-    plural: primaryclusters
-    singular: primarycluster
-  scope: Cluster
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: PrimaryCluster is the Schema for the primaryclusters API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: PrimaryClusterSpec defines the desired state of PrimaryCluster
-            properties:
-              certManager:
-                properties:
-                  clusterIssuer:
-                    properties:
-                      acmeEmail:
-                        type: string
-                      cloudflare:
-                        properties:
-                          dnsNames:
-                            items:
-                              type: string
-                            type: array
-                          email:
-                            type: string
-                          secretKeyRef:
-                            properties:
-                              key:
-                                type: string
-                              name:
-                                type: string
-                              namespace:
-                                type: string
-                            required:
-                            - key
-                            - name
-                            type: object
-                        required:
-                        - dnsNames
-                        - email
-                        - secretKeyRef
-                        type: object
-                      ingressClass:
-                        type: string
-                      name:
-                        type: string
-                    required:
-                    - acmeEmail
-                    - ingressClass
-                    - name
-                    type: object
-                  nodeSelector:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  podLabels:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  tolerations:
-                    items:
-                      description: The pod this Toleration is attached to tolerates
-                        any taint that matches the triple <key,value,effect> using
-                        the matching operator <operator>.
-                      properties:
-                        effect:
-                          description: Effect indicates the taint effect to match.
-                            Empty means match all taint effects. When specified, allowed
-                            values are NoSchedule, PreferNoSchedule and NoExecute.
-                          type: string
-                        key:
-                          description: Key is the taint key that the toleration applies
-                            to. Empty means match all taint keys. If the key is empty,
-                            operator must be Exists; this combination means to match
-                            all values and all keys.
-                          type: string
-                        operator:
-                          description: Operator represents a key's relationship to
-                            the value. Valid operators are Exists and Equal. Defaults
-                            to Equal. Exists is equivalent to wildcard for value,
-                            so that a pod can tolerate all taints of a particular
-                            category.
-                          type: string
-                        tolerationSeconds:
-                          description: TolerationSeconds represents the period of
-                            time the toleration (which must be of effect NoExecute,
-                            otherwise this field is ignored) tolerates the taint.
-                            By default, it is not set, which means tolerate the taint
-                            forever (do not evict). Zero and negative values will
-                            be treated as 0 (evict immediately) by the system.
-                          format: int64
-                          type: integer
-                        value:
-                          description: Value is the taint value the toleration matches
-                            to. If the operator is Exists, the value should be empty,
-                            otherwise just a regular string.
-                          type: string
-                      type: object
-                    type: array
-                required:
-                - clusterIssuer
-                type: object
-              cloudflareCreds:
-                properties:
-                  dnsNames:
-                    items:
-                      type: string
-                    type: array
-                  email:
-                    type: string
-                  secretKeyRef:
-                    properties:
-                      key:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - key
-                    - name
-                    type: object
-                required:
-                - dnsNames
-                - email
-                - secretKeyRef
-                type: object
-              clusterId:
-                type: string
-              domain:
-                type: string
-              harborAdminCreds:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              imagePullSecrets:
-                items:
-                  properties:
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-              ingress:
-                properties:
-                  className:
-                    type: string
-                  nodeSelector:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  podLabels:
-                    additionalProperties:
-                      type: string
-                    type: object
-                  resources:
-                    properties:
-                      cpu:
-                        properties:
-                          max:
-                            pattern: '[\d]+m$'
-                            type: string
-                          min:
-                            pattern: '[\d]+m$'
-                            type: string
-                        required:
-                        - max
-                        - min
-                        type: object
-                      memory:
-                        pattern: '[\d]+Mi$'
-                        type: string
-                      storage:
-                        properties:
-                          size:
-                            pattern: '[\d]+(M|G)i$'
-                            type: string
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        type: object
-                    required:
-                    - cpu
-                    - memory
-                    type: object
-                  tolerations:
-                    items:
-                      description: The pod this Toleration is attached to tolerates
-                        any taint that matches the triple <key,value,effect> using
-                        the matching operator <operator>.
-                      properties:
-                        effect:
-                          description: Effect indicates the taint effect to match.
-                            Empty means match all taint effects. When specified, allowed
-                            values are NoSchedule, PreferNoSchedule and NoExecute.
-                          type: string
-                        key:
-                          description: Key is the taint key that the toleration applies
-                            to. Empty means match all taint keys. If the key is empty,
-                            operator must be Exists; this combination means to match
-                            all values and all keys.
-                          type: string
-                        operator:
-                          description: Operator represents a key's relationship to
-                            the value. Valid operators are Exists and Equal. Defaults
-                            to Equal. Exists is equivalent to wildcard for value,
-                            so that a pod can tolerate all taints of a particular
-                            category.
-                          type: string
-                        tolerationSeconds:
-                          description: TolerationSeconds represents the period of
-                            time the toleration (which must be of effect NoExecute,
-                            otherwise this field is ignored) tolerates the taint.
-                            By default, it is not set, which means tolerate the taint
-                            forever (do not evict). Zero and negative values will
-                            be treated as 0 (evict immediately) by the system.
-                          format: int64
-                          type: integer
-                        value:
-                          description: Value is the taint value the toleration matches
-                            to. If the operator is Exists, the value should be empty,
-                            otherwise just a regular string.
-                          type: string
-                      type: object
-                    type: array
-                required:
-                - className
-                - resources
-                type: object
-              loki:
-                properties:
-                  enabled:
-                    default: true
-                    type: boolean
-                  namespace:
-                    default: kl-init-monitoring
-                    type: string
-                  releaseName:
-                    default: loki
-                    type: string
-                  resources:
-                    properties:
-                      cpu:
-                        properties:
-                          max:
-                            pattern: '[\d]+m$'
-                            type: string
-                          min:
-                            pattern: '[\d]+m$'
-                            type: string
-                        required:
-                        - max
-                        - min
-                        type: object
-                      memory:
-                        pattern: '[\d]+Mi$'
-                        type: string
-                      storage:
-                        properties:
-                          size:
-                            pattern: '[\d]+(M|G)i$'
-                            type: string
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        type: object
-                    required:
-                    - cpu
-                    - memory
-                    type: object
-                  s3:
-                    properties:
-                      awsAccessKeyId:
-                        type: string
-                      awsSecretAccessKey:
-                        type: string
-                      bucketName:
-                        type: string
-                      endpoint:
-                        type: string
-                    required:
-                    - awsAccessKeyId
-                    - awsSecretAccessKey
-                    - bucketName
-                    - endpoint
-                    type: object
-                  url:
-                    type: string
-                required:
-                - resources
-                - s3
-                type: object
-              networking:
-                properties:
-                  dnsNames:
-                    items:
-                      type: string
-                    type: array
-                  edgeCNAME:
-                    type: string
-                type: object
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
-              oAuthCreds:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              operators:
-                properties:
-                  manifests:
-                    items:
-                      properties:
-                        artifacts:
-                          description: list of artifact names that we want to refer
-                          items:
-                            type: string
-                          type: array
-                        ghTokenSecret:
-                          properties:
-                            key:
-                              type: string
-                            name:
-                              type: string
-                            namespace:
-                              type: string
-                          required:
-                          - key
-                          - name
-                          type: object
-                        repo:
-                          description: Github Repo in form of <owner>/<rep-name>
-                          type: string
-                        tag:
-                          description: Github Release Tag
-                          type: string
-                      required:
-                      - ghTokenSecret
-                      - repo
-                      - tag
-                      type: object
-                    type: array
-                type: object
-              prometheus:
-                properties:
-                  enabled:
-                    default: true
-                    type: boolean
-                  namespace:
-                    default: kl-init-monitoring
-                    type: string
-                  releaseName:
-                    default: prometheus
-                    type: string
-                  resources:
-                    properties:
-                      cpu:
-                        properties:
-                          max:
-                            pattern: '[\d]+m$'
-                            type: string
-                          min:
-                            pattern: '[\d]+m$'
-                            type: string
-                        required:
-                        - max
-                        - min
-                        type: object
-                      memory:
-                        pattern: '[\d]+Mi$'
-                        type: string
-                      storage:
-                        properties:
-                          size:
-                            pattern: '[\d]+(M|G)i$'
-                            type: string
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        type: object
-                    required:
-                    - cpu
-                    - memory
-                    type: object
-                required:
-                - resources
-                type: object
-              redpanda:
-                properties:
-                  resources:
-                    properties:
-                      cpu:
-                        properties:
-                          max:
-                            pattern: '[\d]+m$'
-                            type: string
-                          min:
-                            pattern: '[\d]+m$'
-                            type: string
-                        required:
-                        - max
-                        - min
-                        type: object
-                      memory:
-                        pattern: '[\d]+Mi$'
-                        type: string
-                      storage:
-                        properties:
-                          size:
-                            pattern: '[\d]+(M|G)i$'
-                            type: string
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        type: object
-                    required:
-                    - cpu
-                    - memory
-                    type: object
-                  version:
-                    default: v22.1.6
-                    type: string
-                required:
-                - resources
-                type: object
-              secondaryClusterId:
-                type: string
-              sharedConstants:
-                properties:
-                  ImageJsEvalApi:
-                    type: string
-                  KafkaTopicBillingUpdates:
-                    type: string
-                  KafkaTopicGitWebhooks:
-                    type: string
-                  KafkaTopicPipelineRunUpdates:
-                    type: string
-                  KafkaTopicsStatusUpdates:
-                    type: string
-                  accountsWebDomain:
-                    type: string
-                  appAccountsWeb:
-                    type: string
-                  appAuditLoggingWorker:
-                    type: string
-                  appAuthApi:
-                    description: API
-                    type: string
-                  appAuthWeb:
-                    description: Web
-                    type: string
-                  appCiApi:
-                    type: string
-                  appCommsApi:
-                    type: string
-                  appConsoleApi:
-                    type: string
-                  appConsoleWeb:
-                    type: string
-                  appDnsApi:
-                    type: string
-                  appFinanceApi:
-                    type: string
-                  appGqlGatewayApi:
-                    type: string
-                  appIAMApi:
-                    type: string
-                  appInfraApi:
-                    type: string
-                  appJsEval:
-                    type: string
-                  appKlAgent:
-                    description: WORKERS
-                    type: string
-                  appSocketWeb:
-                    type: string
-                  appWebhooksApi:
-                    type: string
-                  authDbName:
-                    type: string
-                  authRedisName:
-                    type: string
-                  authWebDomain:
-                    description: Routers
-                    type: string
-                  ciDbName:
-                    type: string
-                  ciRedisName:
-                    type: string
-                  commsDbName:
-                    type: string
-                  consoleDbName:
-                    type: string
-                  consoleRedisName:
-                    type: string
-                  consoleWebDomain:
-                    type: string
-                  cookieDomain:
-                    type: string
-                  dnsDbName:
-                    type: string
-                  dnsRedisName:
-                    type: string
-                  eventsDbName:
-                    type: string
-                  financeDbName:
-                    type: string
-                  financeRedisName:
-                    type: string
-                  harborAdminCredsSecretName:
-                    type: string
-                  iamDbName:
-                    type: string
-                  iamRedisName:
-                    type: string
-                  imageAccountsWeb:
-                    type: string
-                  imageAuditLoggingWorker:
-                    type: string
-                  imageAuthApi:
-                    description: Images
-                    type: string
-                  imageAuthWeb:
-                    type: string
-                  imageCiApi:
-                    type: string
-                  imageCommsApi:
-                    type: string
-                  imageConsoleApi:
-                    type: string
-                  imageConsoleWeb:
-                    type: string
-                  imageDnsApi:
-                    type: string
-                  imageFinanceApi:
-                    type: string
-                  imageGqlGatewayApi:
-                    type: string
-                  imageIAMApi:
-                    type: string
-                  imageInfraApi:
-                    type: string
-                  imageKlAgent:
-                    type: string
-                  imageSocketWeb:
-                    type: string
-                  imageWebhooksApi:
-                    type: string
-                  infraDbName:
-                    type: string
-                  kafkaTopicEvents:
-                    type: string
-                  kafkaTopicHarborWebhooks:
-                    type: string
-                  lokiBasicAuthSecretName:
-                    type: string
-                  mongoSvcName:
-                    description: Mongo
-                    type: string
-                  oauthSecretName:
-                    description: Secrets
-                    type: string
-                  prometheusBasicAuthSecretName:
-                    type: string
-                  redisSvcName:
-                    description: Redis
-                    type: string
-                  redpandaAdminSecretName:
-                    type: string
-                  socketRedisName:
-                    type: string
-                  socketWebDomain:
-                    type: string
-                  statefulPriorityClass:
-                    type: string
-                  stripeSecretName:
-                    type: string
-                  subDomain:
-                    type: string
-                  webhookApiDomain:
-                    type: string
-                  webhookAuthzSecretName:
-                    type: string
-                type: object
-              shouldInstallSecondary:
-                type: boolean
-              storageClass:
-                type: string
-              stripeCreds:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-              tolerations:
-                additionalProperties:
-                  type: string
-                type: object
-              webhookAuthzCreds:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
-            required:
-            - cloudflareCreds
-            - clusterId
-            - domain
-            - imagePullSecrets
-            - ingress
-            - loki
-            - networking
-            - oAuthCreds
-            - operators
-            - prometheus
-            - redpanda
-            - stripeCreds
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: secondaryclusters.cluster-setup.kloudlite.io
-spec:
-  group: cluster-setup.kloudlite.io
-  names:
-    kind: SecondaryCluster
-    listKind: SecondaryClusterList
-    plural: secondaryclusters
-    singular: secondarycluster
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: SecondaryCluster is the Schema for the secondaryclusters API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties:
-              SharedConstants:
-                properties:
-                  appKlAgent:
-                    type: string
-                  imageKlAgent:
-                    type: string
-                  statefulPriorityClass:
-                    type: string
-                type: object
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
   name: accounts3buckets.clusters.kloudlite.io
 spec:
   group: clusters.kloudlite.io
@@ -1510,145 +137,6 @@ spec:
                   type: object
                 type: array
             type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: byocs.clusters.kloudlite.io
-spec:
-  group: clusters.kloudlite.io
-  names:
-    kind: BYOC
-    listKind: BYOCList
-    plural: byocs
-    singular: byoc
-  scope: Cluster
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .spec.accountName
-      name: AccountName
-      type: string
-    - jsonPath: .spec.provider
-      name: Provider
-      type: string
-    - jsonPath: .spec.region
-      name: Region
-      type: string
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: BYOC is the Schema for the byocs API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties:
-              accountName:
-                type: string
-              displayName:
-                type: string
-              incomingKafkaTopic:
-                type: string
-              ingressClasses:
-                items:
-                  type: string
-                type: array
-              provider:
-                type: string
-              publicIps:
-                items:
-                  type: string
-                type: array
-              region:
-                type: string
-              storageClasses:
-                items:
-                  type: string
-                type: array
-            required:
-            - accountName
-            - incomingKafkaTopic
-            - provider
-            - region
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true
@@ -2394,159 +882,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: accountrouters.crds.kloudlite.io
-spec:
-  group: crds.kloudlite.io
-  names:
-    kind: AccountRouter
-    listKind: AccountRouterList
-    plural: accountrouters
-    singular: accountrouter
-  scope: Namespaced
-  versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: AccountRouter is the Schema for the accountrouters API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: AccountRouterSpec defines the desired state of AccountRouter
-            properties:
-              accountRef:
-                type: string
-              controllerName:
-                type: string
-              defaultSSLCert:
-                properties:
-                  namespace:
-                    type: string
-                  secretName:
-                    type: string
-                required:
-                - secretName
-                type: object
-              https:
-                properties:
-                  clusterIssuer:
-                    type: string
-                  enabled:
-                    default: true
-                    type: boolean
-                  forceRedirect:
-                    type: boolean
-                required:
-                - enabled
-                type: object
-              maxBodySizeInMB:
-                default: 100
-                type: integer
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
-              rateLimit:
-                properties:
-                  connections:
-                    type: integer
-                  enabled:
-                    type: boolean
-                  rpm:
-                    type: integer
-                  rps:
-                    type: integer
-                type: object
-              region:
-                type: string
-              serviceType:
-                enum:
-                - ClusterIP
-                - LoadBalancer
-                type: string
-              wildcardDomains:
-                items:
-                  type: string
-                type: array
-            required:
-            - accountRef
-            - region
-            - serviceType
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
   name: accounts.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
@@ -3272,179 +1607,6 @@ spec:
                   type: object
                 type: array
             type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: edgerouters.crds.kloudlite.io
-spec:
-  group: crds.kloudlite.io
-  names:
-    kind: EdgeRouter
-    listKind: EdgeRouterList
-    plural: edgerouters
-    singular: edgerouter
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: EdgeRouter is the Schema for the edgerouters API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: EdgeRouterSpec defines the desired state of EdgeRouter
-            properties:
-              accountRef:
-                type: string
-              defaultSSLCert:
-                properties:
-                  namespace:
-                    type: string
-                  secretName:
-                    type: string
-                required:
-                - secretName
-                type: object
-              edgeName:
-                type: string
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
-              serviceType:
-                default: LoadBalancer
-                enum:
-                - ClusterIP
-                - LoadBalancer
-                type: string
-              tolerations:
-                items:
-                  description: The pod this Toleration is attached to tolerates any
-                    taint that matches the triple <key,value,effect> using the matching
-                    operator <operator>.
-                  properties:
-                    effect:
-                      description: Effect indicates the taint effect to match. Empty
-                        means match all taint effects. When specified, allowed values
-                        are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: Key is the taint key that the toleration applies
-                        to. Empty means match all taint keys. If the key is empty,
-                        operator must be Exists; this combination means to match all
-                        values and all keys.
-                      type: string
-                    operator:
-                      description: Operator represents a key's relationship to the
-                        value. Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod
-                        can tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: TolerationSeconds represents the period of time
-                        the toleration (which must be of effect NoExecute, otherwise
-                        this field is ignored) tolerates the taint. By default, it
-                        is not set, which means tolerate the taint forever (do not
-                        evict). Zero and negative values will be treated as 0 (evict
-                        immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: Value is the taint value the toleration matches
-                        to. If the operator is Exists, the value should be empty,
-                        otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
-              wildcardDomains:
-                items:
-                  type: string
-                type: array
-            required:
-            - accountRef
-            - edgeName
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true
@@ -4450,13 +2612,15 @@ spec:
                 type: string
               preUninstall:
                 type: string
-              valuesYaml:
-                type: string
+              values:
+                additionalProperties:
+                  x-kubernetes-preserve-unknown-fields: true
+                type: object
             required:
             - chartName
             - chartRepo
             - chartVersion
-            - valuesYaml
+            - values
             type: object
           status:
             description: HelmChartStatus defines the observed state of HelmChart
@@ -4646,9 +2810,15 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource-gvk
+      name: Resource_GVK
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -4675,32 +2845,43 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              mresKind:
-                properties:
-                  kind:
-                    type: string
-                required:
-                - kind
-                type: object
-              msvcRef:
+              resourceTemplate:
                 properties:
                   apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
-                    default: Service
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
-                  name:
-                    type: string
+                  msvcRef:
+                    properties:
+                      apiVersion:
+                        type: string
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                    - apiVersion
+                    - kind
+                    - name
+                    type: object
+                  spec:
+                    additionalProperties:
+                      x-kubernetes-preserve-unknown-fields: true
+                    type: object
                 required:
-                - apiVersion
-                - name
+                - msvcRef
+                - spec
                 type: object
             required:
-            - mresKind
-            - msvcRef
+            - resourceTemplate
             type: object
           status:
             properties:
@@ -4779,15 +2960,15 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.msvcKind.apiVersion
-      name: ~API
+    - jsonPath: .metadata.annotations.kloudlite\.io\/service-gvk
+      name: Service GVK
       type: string
-    - jsonPath: .spec.msvcKind.kind
-      name: ~Kind
-      type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -4814,66 +2995,29 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
-              inputs:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              msvcKind:
+              serviceTemplate:
                 properties:
                   apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
-                    default: Service
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
+                  spec:
+                    additionalProperties:
+                      x-kubernetes-preserve-unknown-fields: true
+                    type: object
                 required:
-                - apiVersion
+                - spec
                 type: object
-              nodeSelector:
-                additionalProperties:
-                  type: string
-                type: object
-              region:
-                type: string
-              tolerations:
-                items:
-                  description: The pod this Toleration is attached to tolerates any
-                    taint that matches the triple <key,value,effect> using the matching
-                    operator <operator>.
-                  properties:
-                    effect:
-                      description: Effect indicates the taint effect to match. Empty
-                        means match all taint effects. When specified, allowed values
-                        are NoSchedule, PreferNoSchedule and NoExecute.
-                      type: string
-                    key:
-                      description: Key is the taint key that the toleration applies
-                        to. Empty means match all taint keys. If the key is empty,
-                        operator must be Exists; this combination means to match all
-                        values and all keys.
-                      type: string
-                    operator:
-                      description: Operator represents a key's relationship to the
-                        value. Valid operators are Exists and Equal. Defaults to Equal.
-                        Exists is equivalent to wildcard for value, so that a pod
-                        can tolerate all taints of a particular category.
-                      type: string
-                    tolerationSeconds:
-                      description: TolerationSeconds represents the period of time
-                        the toleration (which must be of effect NoExecute, otherwise
-                        this field is ignored) tolerates the taint. By default, it
-                        is not set, which means tolerate the taint forever (do not
-                        evict). Zero and negative values will be treated as 0 (evict
-                        immediately) by the system.
-                      format: int64
-                      type: integer
-                    value:
-                      description: Value is the taint value the toleration matches
-                        to. If the operator is Exists, the value should be empty,
-                        otherwise just a regular string.
-                      type: string
-                  type: object
-                type: array
             required:
-            - msvcKind
+            - serviceTemplate
             type: object
           status:
             properties:
@@ -5145,8 +3289,6 @@ spec:
                 type: array
               https:
                 properties:
-                  clusterIssuer:
-                    type: string
                   enabled:
                     default: true
                     type: boolean
@@ -6482,14 +4624,20 @@ spec:
               msvcRef:
                 properties:
                   apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
                   name:
                     type: string
                 required:
-                - apiVersion
-                - kind
                 - name
                 type: object
             required:
@@ -6772,7 +4920,17 @@ spec:
     singular: clusterservice
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: ClusterService is the Schema for the clusterservices API
@@ -6792,8 +4950,33 @@ spec:
           spec:
             description: ClusterServiceSpec defines the desired state of ClusterService
             properties:
-              outputSecretName:
-                type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  helmSecret:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
+              replicas:
+                type: integer
               resources:
                 properties:
                   cpu:
@@ -6825,7 +5008,218 @@ spec:
                 - cpu
                 - memory
                 type: object
+              tolerations:
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
+              topologySpreadConstraints:
+                items:
+                  description: TopologySpreadConstraint specifies how to spread matching
+                    pods among the given topology.
+                  properties:
+                    labelSelector:
+                      description: LabelSelector is used to find matching pods. Pods
+                        that match this label selector are counted to determine the
+                        number of pods in their corresponding topology domain.
+                      properties:
+                        matchExpressions:
+                          description: matchExpressions is a list of label selector
+                            requirements. The requirements are ANDed.
+                          items:
+                            description: A label selector requirement is a selector
+                              that contains values, a key, and an operator that relates
+                              the key and values.
+                            properties:
+                              key:
+                                description: key is the label key that the selector
+                                  applies to.
+                                type: string
+                              operator:
+                                description: operator represents a key's relationship
+                                  to a set of values. Valid operators are In, NotIn,
+                                  Exists and DoesNotExist.
+                                type: string
+                              values:
+                                description: values is an array of string values.
+                                  If the operator is In or NotIn, the values array
+                                  must be non-empty. If the operator is Exists or
+                                  DoesNotExist, the values array must be empty. This
+                                  array is replaced during a strategic merge patch.
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - key
+                            - operator
+                            type: object
+                          type: array
+                        matchLabels:
+                          additionalProperties:
+                            type: string
+                          description: matchLabels is a map of {key,value} pairs.
+                            A single {key,value} in the matchLabels map is equivalent
+                            to an element of matchExpressions, whose key field is
+                            "key", the operator is "In", and the values array contains
+                            only "value". The requirements are ANDed.
+                          type: object
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    matchLabelKeys:
+                      description: "MatchLabelKeys is a set of pod label keys to select
+                        the pods over which spreading will be calculated. The keys
+                        are used to lookup values from the incoming pod labels, those
+                        key-value labels are ANDed with labelSelector to select the
+                        group of existing pods over which spreading will be calculated
+                        for the incoming pod. The same key is forbidden to exist in
+                        both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot
+                        be set when LabelSelector isn't set. Keys that don't exist
+                        in the incoming pod labels will be ignored. A null or empty
+                        list means only match against labelSelector. \n This is a
+                        beta field and requires the MatchLabelKeysInPodTopologySpread
+                        feature gate to be enabled (enabled by default)."
+                      items:
+                        type: string
+                      type: array
+                      x-kubernetes-list-type: atomic
+                    maxSkew:
+                      description: 'MaxSkew describes the degree to which pods may
+                        be unevenly distributed. When `whenUnsatisfiable=DoNotSchedule`,
+                        it is the maximum permitted difference between the number
+                        of matching pods in the target topology and the global minimum.
+                        The global minimum is the minimum number of matching pods
+                        in an eligible domain or zero if the number of eligible domains
+                        is less than MinDomains. For example, in a 3-zone cluster,
+                        MaxSkew is set to 1, and pods with the same labelSelector
+                        spread as 2/2/1: In this case, the global minimum is 1. |
+                        zone1 | zone2 | zone3 | |  P P  |  P P  |   P   | - if MaxSkew
+                        is 1, incoming pod can only be scheduled to zone3 to become
+                        2/2/2; scheduling it onto zone1(zone2) would make the ActualSkew(3-1)
+                        on zone1(zone2) violate MaxSkew(1). - if MaxSkew is 2, incoming
+                        pod can be scheduled onto any zone. When `whenUnsatisfiable=ScheduleAnyway`,
+                        it is used to give higher precedence to topologies that satisfy
+                        it. It''s a required field. Default value is 1 and 0 is not
+                        allowed.'
+                      format: int32
+                      type: integer
+                    minDomains:
+                      description: "MinDomains indicates a minimum number of eligible
+                        domains. When the number of eligible domains with matching
+                        topology keys is less than minDomains, Pod Topology Spread
+                        treats \"global minimum\" as 0, and then the calculation of
+                        Skew is performed. And when the number of eligible domains
+                        with matching topology keys equals or greater than minDomains,
+                        this value has no effect on scheduling. As a result, when
+                        the number of eligible domains is less than minDomains, scheduler
+                        won't schedule more than maxSkew Pods to those domains. If
+                        value is nil, the constraint behaves as if MinDomains is equal
+                        to 1. Valid values are integers greater than 0. When value
+                        is not nil, WhenUnsatisfiable must be DoNotSchedule. \n For
+                        example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains
+                        is set to 5 and pods with the same labelSelector spread as
+                        2/2/2: | zone1 | zone2 | zone3 | |  P P  |  P P  |  P P  |
+                        The number of domains is less than 5(MinDomains), so \"global
+                        minimum\" is treated as 0. In this situation, new pod with
+                        the same labelSelector cannot be scheduled, because computed
+                        skew will be 3(3 - 0) if new Pod is scheduled to any of the
+                        three zones, it will violate MaxSkew. \n This is a beta field
+                        and requires the MinDomainsInPodTopologySpread feature gate
+                        to be enabled (enabled by default)."
+                      format: int32
+                      type: integer
+                    nodeAffinityPolicy:
+                      description: "NodeAffinityPolicy indicates how we will treat
+                        Pod's nodeAffinity/nodeSelector when calculating pod topology
+                        spread skew. Options are: - Honor: only nodes matching nodeAffinity/nodeSelector
+                        are included in the calculations. - Ignore: nodeAffinity/nodeSelector
+                        are ignored. All nodes are included in the calculations. \n
+                        If this value is nil, the behavior is equivalent to the Honor
+                        policy. This is a beta-level feature default enabled by the
+                        NodeInclusionPolicyInPodTopologySpread feature flag."
+                      type: string
+                    nodeTaintsPolicy:
+                      description: "NodeTaintsPolicy indicates how we will treat node
+                        taints when calculating pod topology spread skew. Options
+                        are: - Honor: nodes without taints, along with tainted nodes
+                        for which the incoming pod has a toleration, are included.
+                        - Ignore: node taints are ignored. All nodes are included.
+                        \n If this value is nil, the behavior is equivalent to the
+                        Ignore policy. This is a beta-level feature default enabled
+                        by the NodeInclusionPolicyInPodTopologySpread feature flag."
+                      type: string
+                    topologyKey:
+                      description: TopologyKey is the key of node labels. Nodes that
+                        have a label with this key and identical values are considered
+                        to be in the same topology. We consider each <key, value>
+                        as a "bucket", and try to put balanced number of pods into
+                        each bucket. We define a domain as a particular instance of
+                        a topology. Also, we define an eligible domain as a domain
+                        whose nodes meet the requirements of nodeAffinityPolicy and
+                        nodeTaintsPolicy. e.g. If TopologyKey is "kubernetes.io/hostname",
+                        each Node is a domain of that topology. And, if TopologyKey
+                        is "topology.kubernetes.io/zone", each zone is a domain of
+                        that topology. It's a required field.
+                      type: string
+                    whenUnsatisfiable:
+                      description: 'WhenUnsatisfiable indicates how to deal with a
+                        pod if it doesn''t satisfy the spread constraint. - DoNotSchedule
+                        (default) tells the scheduler not to schedule it. - ScheduleAnyway
+                        tells the scheduler to schedule the pod in any location, but
+                        giving higher precedence to topologies that would help reduce
+                        the skew. A constraint is considered "Unsatisfiable" for an
+                        incoming pod if and only if every possible node assignment
+                        for that pod would violate "MaxSkew" on some topology. For
+                        example, in a 3-zone cluster, MaxSkew is set to 1, and pods
+                        with the same labelSelector spread as 3/1/1: | zone1 | zone2
+                        | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is
+                        set to DoNotSchedule, incoming pod can only be scheduled to
+                        zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on
+                        zone2(zone3) satisfies MaxSkew(1). In other words, the cluster
+                        can still be imbalanced, but scheduler won''t make it *more*
+                        imbalanced. It''s a required field.'
+                      type: string
+                  required:
+                  - maxSkew
+                  - topologyKey
+                  - whenUnsatisfiable
+                  type: object
+                type: array
             required:
+            - replicas
             - resources
             type: object
           status:
@@ -6905,9 +5299,15 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .metadata.annotations.kloudlite\.io\/msvc-gvk
+      name: Msvc GVK
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -6934,15 +5334,35 @@ spec:
               msvcRef:
                 properties:
                   apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
                   name:
                     type: string
                 required:
-                - apiVersion
-                - kind
                 - name
+                type: object
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - credentials
                 type: object
               resourceName:
                 type: string
@@ -7063,13 +5483,29 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              outputSecretName:
-                type: string
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  helmSecret:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
               region:
                 type: string
-              replicaCount:
-                default: 1
-                type: integer
               resources:
                 description: Storage      ct.Storage   `json:"storage"`
                 properties:
@@ -7436,14 +5872,20 @@ spec:
               msvcRef:
                 properties:
                   apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
                   name:
                     type: string
                 required:
-                - apiVersion
-                - kind
                 - name
                 type: object
               resourceName:
@@ -8036,14 +6478,20 @@ spec:
               msvcRef:
                 properties:
                   apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
                   name:
                     type: string
                 required:
-                - apiVersion
-                - kind
                 - name
                 type: object
               resourceName:
@@ -9447,6 +7895,350 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    controller-gen.kubebuilder.io/version: v0.12.0
+  name: lambda.serverless.kloudlite.io
+spec:
+  group: serverless.kloudlite.io
+  names:
+    kind: Lambda
+    listKind: LambdaList
+    plural: lambda
+    singular: lambda
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Lambda is the Schema for the lambdas API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LambdaSpec defines the desired state of Lambda
+            properties:
+              containers:
+                items:
+                  properties:
+                    args:
+                      items:
+                        type: string
+                      type: array
+                    command:
+                      items:
+                        type: string
+                      type: array
+                    env:
+                      items:
+                        properties:
+                          key:
+                            type: string
+                          optional:
+                            type: boolean
+                          refKey:
+                            type: string
+                          refName:
+                            type: string
+                          type:
+                            enum:
+                            - config
+                            - secret
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - key
+                        type: object
+                      type: array
+                    envFrom:
+                      items:
+                        properties:
+                          refName:
+                            type: string
+                          type:
+                            enum:
+                            - config
+                            - secret
+                            type: string
+                        required:
+                        - refName
+                        - type
+                        type: object
+                      type: array
+                    image:
+                      type: string
+                    imagePullPolicy:
+                      default: IfNotPresent
+                      type: string
+                    livenessProbe:
+                      properties:
+                        failureThreshold:
+                          type: integer
+                        httpGet:
+                          properties:
+                            httpHeaders:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                          required:
+                          - path
+                          - port
+                          type: object
+                        initialDelay:
+                          type: integer
+                        interval:
+                          type: integer
+                        shell:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        tcp:
+                          properties:
+                            port:
+                              type: integer
+                          required:
+                          - port
+                          type: object
+                        type:
+                          enum:
+                          - shell
+                          - httpGet
+                          - tcp
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    name:
+                      type: string
+                    readinessProbe:
+                      properties:
+                        failureThreshold:
+                          type: integer
+                        httpGet:
+                          properties:
+                            httpHeaders:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            path:
+                              type: string
+                            port:
+                              type: integer
+                          required:
+                          - path
+                          - port
+                          type: object
+                        initialDelay:
+                          type: integer
+                        interval:
+                          type: integer
+                        shell:
+                          properties:
+                            command:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        tcp:
+                          properties:
+                            port:
+                              type: integer
+                          required:
+                          - port
+                          type: object
+                        type:
+                          enum:
+                          - shell
+                          - httpGet
+                          - tcp
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    resourceCpu:
+                      properties:
+                        max:
+                          type: string
+                        min:
+                          type: string
+                      type: object
+                    resourceMemory:
+                      properties:
+                        max:
+                          type: string
+                        min:
+                          type: string
+                      type: object
+                    volumes:
+                      items:
+                        properties:
+                          items:
+                            items:
+                              properties:
+                                fileName:
+                                  type: string
+                                key:
+                                  type: string
+                              required:
+                              - key
+                              type: object
+                            type: array
+                          mountPath:
+                            type: string
+                          refName:
+                            type: string
+                          type:
+                            enum:
+                            - config
+                            - secret
+                            type: string
+                        required:
+                        - mountPath
+                        - refName
+                        - type
+                        type: object
+                      type: array
+                  required:
+                  - image
+                  - name
+                  type: object
+                type: array
+              maxScale:
+                default: 5
+                type: integer
+              minScale:
+                default: 1
+                type: integer
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              serviceAccount:
+                default: kloudlite-svc-account
+                type: string
+              targetRps:
+                default: 100
+                type: integer
+              tolerations:
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
+            type: object
+          status:
+            properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
   name: devices.wireguard.kloudlite.io
@@ -9499,6 +8291,104 @@ spec:
             required:
             - accountName
             - clusterName
+            type: object
+          status:
+            properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.12.0
+  name: dnsdnses.wireguard.kloudlite.io
+spec:
+  group: wireguard.kloudlite.io
+  names:
+    kind: Dns
+    listKind: DnsList
+    plural: dnsdnses
+    singular: dns
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Dns is the Schema for the dns API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DnsSpec defines the desired state of Dns
+            properties:
+              dns:
+                type: string
+              mainDns:
+                type: string
             type: object
           status:
             properties:

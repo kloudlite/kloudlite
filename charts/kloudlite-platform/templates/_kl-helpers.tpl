@@ -115,22 +115,8 @@ kloudlite.io/resource_component: {{$resourceComponent}}
 {{- end }}
 
 {{- end }}
-{{- /**/}}
-{{- /* {{- if $workspaceName }} */}}
-{{- /* kloudlite.io/workspace_name: "{{$workspaceName}}" */}}
-{{- /* {{- end }} */}}
-{{- /**/}}
-{{- /* {{- if $workspaceTargetNs }} */}}
-{{- /* kloudlite.io/workspace_target_ns: "{{$workspaceTargetNs}}" */}}
-{{- /* {{- end }} */}}
-{{- /**/}}
-{{- /* {{- if $projectName}} */}}
-{{- /* kloudlite.io/project_name: "{{$projectName}}" */}}
-{{- /* {{- end }} */}}
-{{- /**/}}
-{{- /* {{- if $projectTargetNs}} */}}
-{{- /* kloudlite.io/project_target_ns: "{{$projectTargetNs}}" */}}
-{{- /* {{- end }} */}}
-{{- /**/}}
-{{- /* {{- end -}} */}}
-{{- /* {{- end -}} */}}
+
+
+{{- define "msg-office-platform-access-token" -}}
+{{ printf "account=%s;cluster=%s;platform-token=%s" .Values.accountName .Values.clusterName .Values.apps.messageOfficeApi.configuration.platformAccessToken }}
+{{- end -}}

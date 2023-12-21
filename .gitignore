@@ -4,3 +4,6 @@
 _crds
 bin/
 .kube/
+.workdir
+.secrets
+tmp
