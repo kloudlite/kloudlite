@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/peer"
 )
 
@@ -26,7 +27,6 @@ func Connect(url string, opts ConnectOpts) (*grpc.ClientConn, error) {
 	if opts.SecureConnect {
 		conn, err := grpc.DialContext(ctx, url, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
 			InsecureSkipVerify: false,
-			// })), grpc.WithBlock())
 		})))
 		if err == nil {
 			return conn, nil
