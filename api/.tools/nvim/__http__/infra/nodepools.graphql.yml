@@ -6,6 +6,7 @@ global:
   providerSecretName: provider-sample
 
   clusterName: sample-cluster
+  # clusterName: teshdhr-797053
 ---
 
 label: Create Nodepool
@@ -150,13 +151,13 @@ query: |+
 variables:
   clusterName: "{{.clusterName}}"
   pool:
-    displayName: "safsadf"
+    displayName: "hello world"
     metadata:
       name: first
     spec:
-      minCount: 0
-      maxCount: 2
-      targetCount: 0
+      minCount: 1
+      maxCount: 1
+      targetCount: 1
       cloudProvider: "aws"
 
 ---
@@ -179,11 +180,13 @@ query: |+
           kind
           metadata {
             name
+            generation
           }
           recordVersion
           spec {
             minCount
             maxCount
+            targetCount
           }
           syncStatus {
             syncScheduledAt

@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"github.com/kloudlite/api/pkg/errors"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
