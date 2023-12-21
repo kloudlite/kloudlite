@@ -57,7 +57,7 @@ operators:
     name: kl-agent-operator
     # -- kloudlite resource watcher image name and tag
     image: 
-      repository: ghcr.io/kloudlite/operators/agent-operator
+      repository: ghcr.io/kloudlite/operator/agent
       # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
       tag: ""
       # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
@@ -83,7 +83,7 @@ operators:
     name: kl-wg-operator
     # -- wg operator image and tag
     image:
-      repository: ghcr.io/kloudlite/operators/wireguard
+      repository: ghcr.io/kloudlite/operator/wireguard
       # -- image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion
       tag: ""
       # -- image pull policy for kloudlite wireguard operator, default is .imagePullPolicy
