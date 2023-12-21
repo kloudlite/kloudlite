@@ -1,7 +1,6 @@
 package grpc
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -51,7 +50,7 @@ func NewGrpcServer(opts ServerOpts) (Server, error) {
 		grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 			p, ok := peer.FromContext(stream.Context())
 			if ok {
-				fmt.Printf("[Stream] New connection from %s", p.Addr.String())
+				opts.Logger.Debugf("[Stream] New connection from %s", p.Addr.String())
 			}
 			return handler(srv, stream)
 		}),
