@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	"strings"
 	"time"
 
@@ -86,7 +87,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain, 
 			{
 				var np entities.NodePool
 				if err := fn.JsonConversion(su.Object, &np); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnDeleteNodePoolMessage(dctx, su.ClusterName, np)
@@ -97,16 +98,16 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain, 
 			{
 				var device entities.VPNDevice
 				if err := fn.JsonConversion(su.Object, &device); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if v, ok := su.Object["resource-watcher-wireguard-config"]; ok {
 					b, err := json.Marshal(v)
 					if err != nil {
-						return err
+						return errors.NewE(err)
 					}
 					var encodedStr t.EncodedString
 					if err := json.Unmarshal(b, &encodedStr); err != nil {
-						return err
+						return errors.NewE(err)
 					}
 					device.WireguardConfig = encodedStr
 				}
@@ -119,7 +120,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain, 
 			{
 				var pvc entities.PersistentVolumeClaim
 				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnPVCDeleteMessage(dctx, su.ClusterName, pvc)
@@ -130,7 +131,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain, 
 			{
 				var buildRun entities.BuildRun
 				if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
-					return err
+					return errors.NewE(err)
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)

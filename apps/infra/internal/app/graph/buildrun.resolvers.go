@@ -35,7 +35,7 @@ func (r *buildRunResolver) ID(ctx context.Context, obj *entities.BuildRun) (stri
 func (r *buildRunResolver) Spec(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec, error) {
 	var m model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }

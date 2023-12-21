@@ -21,7 +21,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 
 		var errMsg t.AgentErrMessage
 		if err := json.Unmarshal(msg.Payload, &errMsg); err != nil {
-			return err
+			return errors.NewE(err)
 		}
 
 		obj := unstructured.Unstructured{Object: errMsg.Object}

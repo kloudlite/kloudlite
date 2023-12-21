@@ -36,7 +36,7 @@ func (r *nodePoolResolver) ID(ctx context.Context, obj *entities.NodePool) (stri
 func (r *nodePoolResolver) Spec(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec, error) {
 	var m model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }

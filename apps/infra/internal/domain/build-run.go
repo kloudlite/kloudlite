@@ -21,7 +21,7 @@ func (d *domain) GetBuildRun(ctx InfraContext, repoName string, buildRunName str
 		"spec.registry.repo.name": repoName,
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	if brun == nil {
@@ -37,7 +37,7 @@ func (d *domain) OnBuildRunUpdateMessage(ctx InfraContext, clusterName string, b
 		"accountName":        ctx.AccountName,
 		"clusterName":        clusterName,
 	}, &buildRun); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func (d *domain) OnBuildRunDeleteMessage(ctx InfraContext, clusterName string, b
 		"accountName":        ctx.AccountName,
 		"clusterName":        clusterName,
 	}); err != nil {
-		return err
+		return errors.NewE(err)
 	}
 	return nil
 }
