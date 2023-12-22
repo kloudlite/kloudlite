@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
+	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	"github.com/kloudlite/api/pkg/messaging/types"
-	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

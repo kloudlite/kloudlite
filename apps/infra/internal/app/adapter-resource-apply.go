@@ -3,13 +3,14 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/kloudlite/api/apps/infra/internal/domain"
+	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
-	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
