@@ -3,8 +3,9 @@ package app
 import (
 	"context"
 	"encoding/json"
+
+	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/pkg/errors"
-	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
