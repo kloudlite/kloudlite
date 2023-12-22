@@ -22,36 +22,10 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 )
 
-func RegisterInto(mgr operator.Operator, runningOnTenant bool) {
-	ev, err2 := func() (*env.Env, error) {
-		var ev env.Env
-
-		ce, err := env.GetCommonEnv()
-		if err != nil {
-			return nil, err
-		}
-
-		ev.CommonEnv = ce
-
-		if runningOnTenant {
-			te, err := env.GetTargetClusterEnvs()
-			if err != nil {
-				return nil, err
-			}
-			ev.RunningOnTenantClusterEnv = te
-		} else {
-			pe, err := env.GetPlatofmrClusterEnvs()
-			if err != nil {
-				return nil, err
-			}
-			ev.RunningOnPlatformEnv = pe
-		}
-
-		return &ev, nil
-	}()
-
-	if err2 != nil {
-		panic(err2)
+func RegisterInto(mgr operator.Operator) {
+	ev, err := env.GetEnv()
+	if err != nil {
+		panic(err)
 	}
 
 	mgr.AddToSchemes(
@@ -91,8 +65,8 @@ func RegisterInto(mgr operator.Operator, runningOnTenant bool) {
 		logger.Infof("connecting to addr: %s", ev.GrpcAddr)
 
 		cc, err := libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
-			SecureConnect: runningOnTenant,
-			Timeout:       10 * time.Second,
+			SecureConnect: ev.GrpcSecureConnect,
+			Timeout:       5 * time.Second,
 		})
 		if err != nil {
 			logger.Infof("failed to connect to grpc addr: %s", ev.GrpcAddr)
@@ -117,7 +91,7 @@ func RegisterInto(mgr operator.Operator, runningOnTenant bool) {
 
 		ctx, cf := context.WithTimeout(context.TODO(), 2*time.Second)
 		defer cf()
-		msgSender, err := watchAndUpdate.NewGRPCMessageSender(ctx, cc, ev, logger, runningOnTenant)
+		msgSender, err := watchAndUpdate.NewGRPCMessageSender(ctx, cc, ev, logger)
 		if err != nil {
 			logger.Infof("Failed to create grpc message sender: %v", err)
 			return err
