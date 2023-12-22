@@ -4254,7 +4254,7 @@ packages:
       lodash: 4.17.21
       mlly: 1.4.2
       outdent: 0.8.0
-      vite: 4.5.0(@types/node@16.18.64)
+      vite: 4.5.1(@types/node@16.18.64)
       vite-node: 0.28.5(@types/node@16.18.64)
     transitivePeerDependencies:
       - '@types/node'
@@ -10319,7 +10319,7 @@ packages:
       picocolors: 1.0.0
       source-map: 0.6.1
       source-map-support: 0.5.21
-      vite: 4.5.0(@types/node@16.18.64)
+      vite: 4.5.1(@types/node@16.18.64)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -10331,8 +10331,8 @@ packages:
       - terser
     dev: true
 
-  /vite@4.5.0(@types/node@16.18.64):
-    resolution: {integrity: sha512-ulr8rNLA6rkyFAlVWw2q5YJ91v098AFQ2R0PRFwPzREXOUJQPtFUG0t+/ZikhaOCDqFoDhN6/v8Sq0o4araFAw==}
+  /vite@4.5.1(@types/node@16.18.64):
+    resolution: {integrity: sha512-AXXFaAJ8yebyqzoNB9fu2pHoo/nWX+xZlaRwoeYUxEqBO+Zj4msE5G+BhGBll9lYEKv9Hfks52PAF2X7qDYXQA==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
