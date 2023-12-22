@@ -16,20 +16,7 @@ import (
 
 // Access is the resolver for the access field.
 func (r *credentialResolver) Access(ctx context.Context, obj *entities.Credential) (model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess, error) {
-	return model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess(obj.Access), nil
-}
-
-// CreatedBy is the resolver for the createdBy field.
-func (r *credentialResolver) CreatedBy(ctx context.Context, obj *entities.Credential) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("resource is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.CreatedBy.UserEmail,
-		UserID:    string(obj.CreatedBy.UserId),
-		UserName:  obj.CreatedBy.UserName,
-	}, nil
+	return model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess(obj.Access), nil
 }
 
 // CreationTime is the resolver for the creationTime field.
@@ -47,9 +34,9 @@ func (r *credentialResolver) Expiration(ctx context.Context, obj *entities.Crede
 		return nil, errors.Newf("resource is nil")
 	}
 
-	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration{
+	return &model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpiration{
 		Value: obj.Expiration.Value,
-		Unit:  model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit(obj.Expiration.Unit),
+		Unit:  model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit(obj.Expiration.Unit),
 	}, nil
 }
 
@@ -60,19 +47,6 @@ func (r *credentialResolver) ID(ctx context.Context, obj *entities.Credential) (
 	}
 
 	return string(obj.Id), nil
-}
-
-// LastUpdatedBy is the resolver for the lastUpdatedBy field.
-func (r *credentialResolver) LastUpdatedBy(ctx context.Context, obj *entities.Credential) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("resource is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.LastUpdatedBy.UserEmail,
-		UserID:    string(obj.LastUpdatedBy.UserId),
-		UserName:  obj.LastUpdatedBy.UserName,
-	}, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.

@@ -17,6 +17,7 @@ import (
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -48,6 +49,7 @@ type ResolverRoot interface {
 	GithubInstallation() GithubInstallationResolver
 	GithubListRepository() GithubListRepositoryResolver
 	GithubSearchRepository() GithubSearchRepositoryResolver
+	Github__com___kloudlite___api___common__CreatedOrUpdatedBy() Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver
 	GitlabProject() GitlabProjectResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -421,12 +423,10 @@ type ComplexityRoot struct {
 }
 
 type BuildResolver interface {
-	CreatedBy(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.Build) (string, error)
-	CredUser(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
+
 	ErrorMessages(ctx context.Context, obj *entities.Build) (map[string]interface{}, error)
 	ID(ctx context.Context, obj *entities.Build) (string, error)
-	LastUpdatedBy(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 
 	Source(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSource, error)
 	Spec(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec, error)
@@ -434,11 +434,9 @@ type BuildResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.Build) (string, error)
 }
 type BuildCacheKeyResolver interface {
-	CreatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.BuildCacheKey) (string, error)
 
 	ID(ctx context.Context, obj *entities.BuildCacheKey) (string, error)
-	LastUpdatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 
 	UpdateTime(ctx context.Context, obj *entities.BuildCacheKey) (string, error)
 	VolumeSizeInGb(ctx context.Context, obj *entities.BuildCacheKey) (float64, error)
@@ -446,11 +444,9 @@ type BuildCacheKeyResolver interface {
 type CredentialResolver interface {
 	Access(ctx context.Context, obj *entities.Credential) (model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess, error)
 
-	CreatedBy(ctx context.Context, obj *entities.Credential) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.Credential) (string, error)
 	Expiration(ctx context.Context, obj *entities.Credential) (*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpiration, error)
 	ID(ctx context.Context, obj *entities.Credential) (string, error)
-	LastUpdatedBy(ctx context.Context, obj *entities.Credential) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Credential) (string, error)
 }
@@ -469,6 +465,9 @@ type GithubListRepositoryResolver interface {
 }
 type GithubSearchRepositoryResolver interface {
 	Repositories(ctx context.Context, obj *entities.GithubSearchRepository) ([]*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubRepository, error)
+}
+type Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver interface {
+	UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error)
 }
 type GitlabProjectResolver interface {
 	CreatedAt(ctx context.Context, obj *entities.GitlabProject) (*string, error)
@@ -508,10 +507,8 @@ type QueryResolver interface {
 	CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error)
 }
 type RepositoryResolver interface {
-	CreatedBy(ctx context.Context, obj *entities.Repository) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.Repository) (string, error)
 	ID(ctx context.Context, obj *entities.Repository) (string, error)
-	LastUpdatedBy(ctx context.Context, obj *entities.Repository) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Repository) (string, error)
 }
@@ -3640,7 +3637,7 @@ func (ec *executionContext) _Build_createdBy(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Build().CreatedBy(rctx, obj)
+		return obj.CreatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3652,17 +3649,17 @@ func (ec *executionContext) _Build_createdBy(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Build_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Build",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -3736,7 +3733,7 @@ func (ec *executionContext) _Build_credUser(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Build().CredUser(rctx, obj)
+		return obj.CredUser, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3748,17 +3745,17 @@ func (ec *executionContext) _Build_credUser(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Build_credUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Build",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -3876,7 +3873,7 @@ func (ec *executionContext) _Build_lastUpdatedBy(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Build().LastUpdatedBy(rctx, obj)
+		return obj.LastUpdatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3888,17 +3885,17 @@ func (ec *executionContext) _Build_lastUpdatedBy(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Build_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Build",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -4299,7 +4296,7 @@ func (ec *executionContext) _BuildCacheKey_createdBy(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.BuildCacheKey().CreatedBy(rctx, obj)
+		return obj.CreatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4311,17 +4308,17 @@ func (ec *executionContext) _BuildCacheKey_createdBy(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BuildCacheKey_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BuildCacheKey",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -4483,7 +4480,7 @@ func (ec *executionContext) _BuildCacheKey_lastUpdatedBy(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.BuildCacheKey().LastUpdatedBy(rctx, obj)
+		return obj.LastUpdatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4495,17 +4492,17 @@ func (ec *executionContext) _BuildCacheKey_lastUpdatedBy(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BuildCacheKey_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BuildCacheKey",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -5449,7 +5446,7 @@ func (ec *executionContext) _Credential_createdBy(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Credential().CreatedBy(rctx, obj)
+		return obj.CreatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5461,17 +5458,17 @@ func (ec *executionContext) _Credential_createdBy(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Credential_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Credential",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -5639,7 +5636,7 @@ func (ec *executionContext) _Credential_lastUpdatedBy(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Credential().LastUpdatedBy(rctx, obj)
+		return obj.LastUpdatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5651,17 +5648,17 @@ func (ec *executionContext) _Credential_lastUpdatedBy(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Credential_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Credential",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -9551,7 +9548,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPICommonCreatedOrUpdatedBy) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9595,7 +9592,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common_
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPICommonCreatedOrUpdatedBy) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9609,7 +9606,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUp
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
+		return ec.resolvers.Github__com___kloudlite___api___common__CreatedOrUpdatedBy().UserID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9630,8 +9627,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common_
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___common__CreatedOrUpdatedBy",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -9639,7 +9636,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___common_
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPICommonCreatedOrUpdatedBy) (ret graphql.Marshaler) {
+func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14843,7 +14840,7 @@ func (ec *executionContext) _Repository_createdBy(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Repository().CreatedBy(rctx, obj)
+		return obj.CreatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14855,17 +14852,17 @@ func (ec *executionContext) _Repository_createdBy(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Repository_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -14983,7 +14980,7 @@ func (ec *executionContext) _Repository_lastUpdatedBy(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Repository().LastUpdatedBy(rctx, obj)
+		return obj.LastUpdatedBy, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14995,17 +14992,17 @@ func (ec *executionContext) _Repository_lastUpdatedBy(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy)
+	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Repository_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Repository",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
@@ -18101,25 +18098,12 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Build")
 		case "createdBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Build_createdBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Build_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "creationTime":
 			field := field
 
@@ -18141,25 +18125,12 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 
 			})
 		case "credUser":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Build_credUser(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Build_credUser(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "errorMessages":
 			field := field
 
@@ -18201,25 +18172,12 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 
 			})
 		case "lastUpdatedBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Build_lastUpdatedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Build_lastUpdatedBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "markedForDeletion":
 
 			out.Values[i] = ec._Build_markedForDeletion(ctx, field, obj)
@@ -18347,25 +18305,12 @@ func (ec *executionContext) _BuildCacheKey(ctx context.Context, sel ast.Selectio
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BuildCacheKey_createdBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BuildCacheKey_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "creationTime":
 			field := field
 
@@ -18414,25 +18359,12 @@ func (ec *executionContext) _BuildCacheKey(ctx context.Context, sel ast.Selectio
 
 			})
 		case "lastUpdatedBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BuildCacheKey_lastUpdatedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BuildCacheKey_lastUpdatedBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "markedForDeletion":
 
 			out.Values[i] = ec._BuildCacheKey_markedForDeletion(ctx, field, obj)
@@ -18726,25 +18658,12 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Credential_createdBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Credential_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "creationTime":
 			field := field
 
@@ -18806,25 +18725,12 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 
 			})
 		case "lastUpdatedBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Credential_lastUpdatedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Credential_lastUpdatedBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "markedForDeletion":
 
 			out.Values[i] = ec._Credential_markedForDeletion(ctx, field, obj)
@@ -19697,7 +19603,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___container___
 
 var github__com___kloudlite___api___common__CreatedOrUpdatedByImplementors = []string{"Github__com___kloudlite___api___common__CreatedOrUpdatedBy"}
 
-func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteAPICommonCreatedOrUpdatedBy) graphql.Marshaler {
+func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *common.CreatedOrUpdatedBy) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___api___common__CreatedOrUpdatedByImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19710,21 +19616,34 @@ func (ec *executionContext) _Github__com___kloudlite___api___common__CreatedOrUp
 			out.Values[i] = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "userId":
+			field := field
 
-			out.Values[i] = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "userName":
 
 			out.Values[i] = ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -20844,25 +20763,12 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "createdBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Repository_createdBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Repository_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "creationTime":
 			field := field
 
@@ -20904,25 +20810,12 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 
 			})
 		case "lastUpdatedBy":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Repository_lastUpdatedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Repository_lastUpdatedBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "markedForDeletion":
 
 			out.Values[i] = ec._Repository_markedForDeletion(ctx, field, obj)
@@ -21889,18 +21782,8 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___conta
 	return v
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPICommonCreatedOrUpdatedBy) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v common.CreatedOrUpdatedBy) graphql.Marshaler {
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPICommonCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteAPICommonCreatedOrUpdatedBy) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisDistributionV1BuildRunSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec) graphql.Marshaler {

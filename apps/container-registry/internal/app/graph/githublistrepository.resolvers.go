@@ -12,6 +12,7 @@ import (
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 // Repositories is the resolver for the repositories field.
@@ -20,13 +21,13 @@ func (r *githubListRepositoryResolver) Repositories(ctx context.Context, obj *en
 		return nil, errors.Newf("Repositories: obj is nil")
 	}
 
-	repositories := make([]*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository, len(obj.Repositories))
+	repositories := make([]*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubRepository, len(obj.Repositories))
 
 	for i, gr := range obj.Repositories {
-		repositories[i] = &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository{
+		repositories[i] = &model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubRepository{
 			Archived:          gr.Archived,
 			CloneURL:          gr.CloneURL,
-			CreatedAt:         getStringPtr(gr.CreatedAt.Format(time.RFC3339)),
+			CreatedAt:         fn.New(gr.CreatedAt.Format(time.RFC3339)),
 			DefaultBranch:     gr.DefaultBranch,
 			Description:       gr.Description,
 			Disabled:          gr.Disabled,
@@ -34,7 +35,7 @@ func (r *githubListRepositoryResolver) Repositories(ctx context.Context, obj *en
 			GitURL:            gr.GitURL,
 			GitignoreTemplate: gr.GitignoreTemplate,
 			HTMLURL:           gr.HTMLURL,
-			ID:                getInt(gr.ID),
+			ID:                fn.New(int(fn.DefaultIfNil(gr.ID))),
 			Language:          gr.Language,
 			MasterBranch:      gr.MasterBranch,
 			MirrorURL:         gr.MirrorURL,
@@ -48,10 +49,10 @@ func (r *githubListRepositoryResolver) Repositories(ctx context.Context, obj *en
 				return m
 			})(),
 			Private:    gr.Private,
-			PushedAt:   getStringPtr(gr.PushedAt.Format(time.RFC3339)),
+			PushedAt:   fn.New(gr.PushedAt.Format(time.RFC3339)),
 			Size:       gr.Size,
-			TeamID:     getInt(gr.TeamID),
-			UpdatedAt:  getStringPtr(gr.UpdatedAt.Format(time.RFC3339)),
+			TeamID:     fn.New(int(fn.DefaultIfNil(gr.TeamID))),
+			UpdatedAt:  fn.New(gr.UpdatedAt.Format(time.RFC3339)),
 			Visibility: gr.Visibility,
 			URL:        gr.URL,
 		}
@@ -66,13 +67,3 @@ func (r *Resolver) GithubListRepository() generated.GithubListRepositoryResolver
 }
 
 type githubListRepositoryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func getStringPtr(s string) *string {
-	return &s
-}

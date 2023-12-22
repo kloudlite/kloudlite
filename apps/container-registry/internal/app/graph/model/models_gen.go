@@ -126,12 +126,6 @@ type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubUserA
 	Type      *string `json:"type,omitempty"`
 }
 
-type GithubComKloudliteAPICommonCreatedOrUpdatedBy struct {
-	UserEmail string `json:"userEmail"`
-	UserID    string `json:"userId"`
-	UserName  string `json:"userName"`
-}
-
 type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
 	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
 	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`

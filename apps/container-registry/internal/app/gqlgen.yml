@@ -136,3 +136,6 @@ models:
     model:
       - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
 
+  Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
+    model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
+
