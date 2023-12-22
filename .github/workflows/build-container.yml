@@ -96,5 +96,5 @@ jobs:
           version_string="v${branch_name#release-}-nightly"
           
           cd .github/workflows/container-build
-          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}:$version_string"
-          task go-container-build Image="ghcr.io/kloudlite/platform/apis/${{matrix.app}}:commit-${GITHUB_SHA}"
+          task go-container-build Image="ghcr.io/kloudlite/api/${{matrix.app}}:$version_string"
+          task go-container-build Image="ghcr.io/kloudlite/api/${{matrix.app}}:commit-${GITHUB_SHA}"
