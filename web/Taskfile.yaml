@@ -164,7 +164,7 @@ tasks:
         msg: "var tag must have a value"
     silent: true
     vars:
-      IMAGE: ghcr.io/kloudlite/platform/web
+      IMAGE: ghcr.io/kloudlite/web
     cmds:
       - docker build --build-arg APP=auth . -t {{.IMAGE}}/auth:{{.tag}}
       - docker push {{.IMAGE}}/auth:{{.tag}}
