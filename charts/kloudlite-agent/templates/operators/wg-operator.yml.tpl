@@ -94,9 +94,7 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
-          command:
-            - /manager
-          
+
           env:
             - name: RECONCILE_PERIOD
               value: "30s"
