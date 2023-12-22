@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/common"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/constants"
 
-	t "github.com/kloudlite/operator/agent/types"
+	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
