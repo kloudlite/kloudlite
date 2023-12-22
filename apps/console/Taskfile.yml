@@ -10,8 +10,9 @@ tasks:
   gql:
     dir: ./internal/app
     cmds:
-      - go run  -tags dynamic github.com/99designs/gqlgen generate
-      # - rm ./graph/scalars.resolvers.go
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
+
 
   build:
     env:
@@ -25,24 +26,24 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - go build -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   k8s-schema:
     cmds:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/console/internal/entities.Project
-          --struct kloudlite.io/apps/console/internal/entities.Workspace
-          --struct kloudlite.io/apps/console/internal/entities.App
-          --struct kloudlite.io/apps/console/internal/entities.Secret
-          --struct kloudlite.io/apps/console/internal/entities.Config
-          --struct kloudlite.io/apps/console/internal/entities.Router
-          --struct kloudlite.io/apps/console/internal/entities.ManagedResource
-          --struct kloudlite.io/apps/console/internal/entities.ManagedService
-          --struct kloudlite.io/apps/console/internal/entities.MsvcTemplate
-          --struct kloudlite.io/pkg/repos.MatchFilter
-          --struct kloudlite.io/pkg/repos.CursorPagination
+          --struct github.com/kloudlite/api/apps/console/internal/entities.Project
+          --struct github.com/kloudlite/api/apps/console/internal/entities.Workspace
+          --struct github.com/kloudlite/api/apps/console/internal/entities.App
+          --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
+          --struct github.com/kloudlite/api/apps/console/internal/entities.Config
+          --struct github.com/kloudlite/api/apps/console/internal/entities.Router
+          --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
+          --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedService
+          --struct github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplate
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql

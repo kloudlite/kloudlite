@@ -3,7 +3,6 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ResType {
-    # byoc
     cluster
     # cloudprovider
     providersecret
@@ -65,9 +64,6 @@ type Query {
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
-    infra_listBYOCClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedInAndVerified @hasAccount
-
     # get node pools
     infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
@@ -96,11 +92,6 @@ type Mutation {
     infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
     infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
     # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-    # BYOC cluster
-    infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
-    infra_updateBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
-    infra_deleteBYOCCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
     infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount

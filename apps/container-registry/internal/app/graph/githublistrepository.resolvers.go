@@ -15,7 +15,7 @@ import (
 )
 
 // Repositories is the resolver for the repositories field.
-func (r *githubListRepositoryResolver) Repositories(ctx context.Context, obj *entities.GithubListRepository) ([]*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository, error) {
+func (r *githubListRepositoryResolver) Repositories(ctx context.Context, obj *entities.GithubListRepository) ([]*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubRepository, error) {
 	if obj == nil {
 		return nil, errors.Newf("Repositories: obj is nil")
 	}

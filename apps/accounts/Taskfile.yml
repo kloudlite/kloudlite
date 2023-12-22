@@ -11,6 +11,7 @@ tasks:
     dir: ./internal/app
     cmds:
       - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
 
   build:
     env:
@@ -24,7 +25,7 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - go build -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   run:
@@ -37,9 +38,9 @@ tasks:
     cmds:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/accounts/internal/entities.Account
-          --struct kloudlite.io/apps/accounts/internal/entities.Invitation
-          --struct kloudlite.io/apps/accounts/internal/entities.AccountMembership
+          --struct github.com/kloudlite/api/apps/accounts/internal/entities.Account
+          --struct github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
+          --struct github.com/kloudlite/api/apps/accounts/internal/entities.AccountMembership
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql

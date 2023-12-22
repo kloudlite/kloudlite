@@ -6,8 +6,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -19,11 +20,11 @@ import (
 )
 
 // Aws is the resolver for the aws field.
-func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials, error) {
+func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials, error) {
 	if obj == nil || obj.CreationTime.IsZero() {
 		return nil, errors.Newf("CloudProviderSecret object is nil")
 	}
-	return &model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials{
+	return &model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials{
 		AccessKey:                  obj.AWS.AccessKey,
 		AwsAccountID:               obj.AWS.AWSAccountId,
 		CfParamExternalID:          &obj.AWS.CfParamExternalID,
@@ -67,7 +68,7 @@ func (r *cloudProviderSecretResolver) UpdateTime(ctx context.Context, obj *entit
 }
 
 // Aws is the resolver for the aws field.
-func (r *cloudProviderSecretInResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn) error {
+func (r *cloudProviderSecretInResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn) error {
 	return fn.JsonConversion(data, &obj.AWS)
 }
 
@@ -95,5 +96,7 @@ func (r *Resolver) CloudProviderSecretIn() generated.CloudProviderSecretInResolv
 	return &cloudProviderSecretInResolver{r}
 }
 
-type cloudProviderSecretResolver struct{ *Resolver }
-type cloudProviderSecretInResolver struct{ *Resolver }
+type (
+	cloudProviderSecretResolver   struct{ *Resolver }
+	cloudProviderSecretInResolver struct{ *Resolver }
+)

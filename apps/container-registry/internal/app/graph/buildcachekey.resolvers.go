@@ -15,7 +15,7 @@ import (
 )
 
 // CreatedBy is the resolver for the createdBy field.
-func (r *buildCacheKeyResolver) CreatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *buildCacheKeyResolver) CreatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("buildCacheKey is nil")
 	}
@@ -45,7 +45,7 @@ func (r *buildCacheKeyResolver) ID(ctx context.Context, obj *entities.BuildCache
 }
 
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
-func (r *buildCacheKeyResolver) LastUpdatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *buildCacheKeyResolver) LastUpdatedBy(ctx context.Context, obj *entities.BuildCacheKey) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("buildCacheKey is nil")
 	}

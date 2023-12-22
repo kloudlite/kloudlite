@@ -1,12 +1,12 @@
 type DomainEntry @shareable {
   accountName: String!
   clusterName: String!
-  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   domainName: String!
   id: String!
-  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   recordVersion: Int!
   updateTime: Date!

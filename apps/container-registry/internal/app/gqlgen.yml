@@ -37,8 +37,8 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "kloudlite.io/pkg/errors"
-  # - "kloudlite.io/apps/wireguard/internal/domain/entities"
+  - "github.com/kloudlite/api/pkg/errors"
+  # - "github.com/kloudlite/api/apps/wireguard/internal/domain/entities"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -49,7 +49,7 @@ skip_validation: true
 models:
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -60,74 +60,74 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
 
   CRCheckNameAvailabilityOutput:
-    model: kloudlite.io/apps/container-registry/internal/domain.CheckNameAvailabilityOutput
+    model: github.com/kloudlite/api/apps/container-registry/internal/domain.CheckNameAvailabilityOutput
 
   Build: &build
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.Build
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Build
   BuildIn: *build
 
   BuildCacheKey: &buildcachekey
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.BuildCacheKey
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildCacheKey
   BuildCacheKeyIn: *buildcachekey
 
   GithubInstallation: 
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubInstallation
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubInstallation
 
   GithubListRepository:
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubListRepository
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubListRepository
 
   GithubSearchRepository:
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubSearchRepository
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubSearchRepository
 
   GitlabGroup:
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GitlabGroup
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabGroup
 
   GitlabProject:
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GitlabProject
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabProject
 
   GitBranch:
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GitBranch
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitBranch
 
   Pagination: &pagination
     model:
-      - kloudlite.io/pkg/types.Pagination
+      - github.com/kloudlite/api/pkg/types.Pagination
   PaginationIn: *pagination
 
   Credential: &credential
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.Credential
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Credential
   CredentialIn: *credential
 
   Repository: &repository
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.Repository
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Repository
   RepositoryIn: *repository
 
   Digest: &digest
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.Digest
+      - github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Digest
 
   MatchFilter: &match-filter-model
-    model: kloudlite.io/pkg/repos.MatchFilter
+    model: github.com/kloudlite/api/pkg/repos.MatchFilter
   MatchFilterIn: *match-filter-model
 
   MatchFilterMatchType:
-    model: kloudlite.io/pkg/repos.MatchType
+    model: github.com/kloudlite/api/pkg/repos.MatchType
 
   CursorPagination: &cursor-pagination-model
-    model: kloudlite.io/pkg/repos.CursorPagination
+    model: github.com/kloudlite/api/pkg/repos.CursorPagination
   CursorPaginationIn: *cursor-pagination-model
 
   CursorPaginationSortDirection: &cursor-pagination-sort-direction
-    model: kloudlite.io/pkg/repos.SortDirection
+    model: github.com/kloudlite/api/pkg/repos.SortDirection
 
   Overrides:
     model:

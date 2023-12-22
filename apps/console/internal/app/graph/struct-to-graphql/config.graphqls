@@ -2,19 +2,19 @@ type Config @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
   status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 

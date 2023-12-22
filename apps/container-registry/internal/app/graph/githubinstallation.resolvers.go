@@ -13,7 +13,7 @@ import (
 )
 
 // Account is the resolver for the account field.
-func (r *githubInstallationResolver) Account(ctx context.Context, obj *entities.GithubInstallation) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount, error) {
+func (r *githubInstallationResolver) Account(ctx context.Context, obj *entities.GithubInstallation) (*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubUserAccount, error) {
 	if obj == nil {
 		return nil, errors.Newf("Account: obj is nil")
 	}

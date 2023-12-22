@@ -60,6 +60,78 @@ type GithubBranch struct {
 	Protected *bool   `json:"protected,omitempty"`
 }
 
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpiration struct {
+	Unit  GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
+	Value int                                                                            `json:"value"`
+}
+
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationIn struct {
+	Unit  GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
+	Value int                                                                            `json:"value"`
+}
+
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSource struct {
+	Branch     string                                                                      `json:"branch"`
+	Provider   GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
+	Repository string                                                                      `json:"repository"`
+	WebhookID  *int                                                                        `json:"webhookId,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
+	Branch     string                                                                      `json:"branch"`
+	Provider   GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
+	Repository string                                                                      `json:"repository"`
+}
+
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubRepository struct {
+	Archived          *bool                  `json:"archived,omitempty"`
+	CloneURL          *string                `json:"cloneUrl,omitempty"`
+	CreatedAt         *string                `json:"createdAt,omitempty"`
+	DefaultBranch     *string                `json:"defaultBranch,omitempty"`
+	Description       *string                `json:"description,omitempty"`
+	Disabled          *bool                  `json:"disabled,omitempty"`
+	FullName          *string                `json:"fullName,omitempty"`
+	GitignoreTemplate *string                `json:"gitignoreTemplate,omitempty"`
+	GitURL            *string                `json:"gitUrl,omitempty"`
+	HTMLURL           *string                `json:"htmlUrl,omitempty"`
+	ID                *int                   `json:"id,omitempty"`
+	Language          *string                `json:"language,omitempty"`
+	MasterBranch      *string                `json:"masterBranch,omitempty"`
+	MirrorURL         *string                `json:"mirrorUrl,omitempty"`
+	Name              *string                `json:"name,omitempty"`
+	NodeID            *string                `json:"node_id,omitempty"`
+	Permissions       map[string]interface{} `json:"permissions,omitempty"`
+	Private           *bool                  `json:"private,omitempty"`
+	PushedAt          *string                `json:"pushedAt,omitempty"`
+	Size              *int                   `json:"size,omitempty"`
+	TeamID            *int                   `json:"team_id,omitempty"`
+	UpdatedAt         *string                `json:"updatedAt,omitempty"`
+	URL               *string                `json:"url,omitempty"`
+	Visibility        *string                `json:"visibility,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubUserAccount struct {
+	AvatarURL *string `json:"avatarUrl,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	Login     *string `json:"login,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
+	Type      *string `json:"type,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubUserAccountIn struct {
+	AvatarURL *string `json:"avatarUrl,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	Login     *string `json:"login,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
+	Type      *string `json:"type,omitempty"`
+}
+
+type GithubComKloudliteAPICommonCreatedOrUpdatedBy struct {
+	UserEmail string `json:"userEmail"`
+	UserID    string `json:"userId"`
+	UserName  string `json:"userName"`
+}
+
 type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
 	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
 	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
@@ -132,78 +204,6 @@ type GitlabBranch struct {
 	WebURL             string `json:"webUrl"`
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration struct {
-	Unit  KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
-	Value int                                                                  `json:"value"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationIn struct {
-	Unit  KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
-	Value int                                                                  `json:"value"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource struct {
-	Branch     string                                                            `json:"branch"`
-	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
-	Repository string                                                            `json:"repository"`
-	WebhookID  *int                                                              `json:"webhookId,omitempty"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
-	Branch     string                                                            `json:"branch"`
-	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
-	Repository string                                                            `json:"repository"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository struct {
-	Archived          *bool                  `json:"archived,omitempty"`
-	CloneURL          *string                `json:"cloneUrl,omitempty"`
-	CreatedAt         *string                `json:"createdAt,omitempty"`
-	DefaultBranch     *string                `json:"defaultBranch,omitempty"`
-	Description       *string                `json:"description,omitempty"`
-	Disabled          *bool                  `json:"disabled,omitempty"`
-	FullName          *string                `json:"fullName,omitempty"`
-	GitignoreTemplate *string                `json:"gitignoreTemplate,omitempty"`
-	GitURL            *string                `json:"gitUrl,omitempty"`
-	HTMLURL           *string                `json:"htmlUrl,omitempty"`
-	ID                *int                   `json:"id,omitempty"`
-	Language          *string                `json:"language,omitempty"`
-	MasterBranch      *string                `json:"masterBranch,omitempty"`
-	MirrorURL         *string                `json:"mirrorUrl,omitempty"`
-	Name              *string                `json:"name,omitempty"`
-	NodeID            *string                `json:"node_id,omitempty"`
-	Permissions       map[string]interface{} `json:"permissions,omitempty"`
-	Private           *bool                  `json:"private,omitempty"`
-	PushedAt          *string                `json:"pushedAt,omitempty"`
-	Size              *int                   `json:"size,omitempty"`
-	TeamID            *int                   `json:"team_id,omitempty"`
-	UpdatedAt         *string                `json:"updatedAt,omitempty"`
-	URL               *string                `json:"url,omitempty"`
-	Visibility        *string                `json:"visibility,omitempty"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount struct {
-	AvatarURL *string `json:"avatarUrl,omitempty"`
-	ID        *int    `json:"id,omitempty"`
-	Login     *string `json:"login,omitempty"`
-	NodeID    *string `json:"nodeId,omitempty"`
-	Type      *string `json:"type,omitempty"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccountIn struct {
-	AvatarURL *string `json:"avatarUrl,omitempty"`
-	ID        *int    `json:"id,omitempty"`
-	Login     *string `json:"login,omitempty"`
-	NodeID    *string `json:"nodeId,omitempty"`
-	Type      *string `json:"type,omitempty"`
-}
-
-type KloudliteIoCommonCreatedOrUpdatedBy struct {
-	UserEmail string `json:"userEmail"`
-	UserID    string `json:"userId"`
-	UserName  string `json:"userName"`
-}
-
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
 	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
@@ -238,182 +238,182 @@ type SearchRepos struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus string
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus string
 
 const (
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError   KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "error"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed  KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "failed"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle    KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "idle"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "pending"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued  KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "queued"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "running"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "success"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusError   GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "error"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed  GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "failed"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle    GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "idle"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusPending GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "pending"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued  GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "queued"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "running"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = "success"
 )
 
-var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus{
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess,
+var AllGithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus = []GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus{
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusError,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusPending,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess,
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) IsValid() bool {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus) IsValid() bool {
 	switch e {
-	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess:
+	case GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusError, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusPending, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess:
 		return true
 	}
 	return false
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) String() string {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus) String() string {
 	return string(e)
 }
 
-func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus(str)
+	*e = GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus", str)
 	}
 	return nil
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit string
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit string
 
 const (
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitD KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "d"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitH KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "h"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitM KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "m"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitW KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "w"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitY KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "y"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitD GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "d"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitH GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "h"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitM GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "m"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitW GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "w"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitY GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "y"
 )
 
-var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit{
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitD,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitH,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitM,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitW,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitY,
+var AllGithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit = []GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit{
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitD,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitH,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitM,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitW,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitY,
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) IsValid() bool {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit) IsValid() bool {
 	switch e {
-	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitD, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitH, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitM, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitW, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitY:
+	case GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitD, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitH, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitM, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitW, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnitY:
 		return true
 	}
 	return false
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) String() string {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit) String() string {
 	return string(e)
 }
 
-func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit(str)
+	*e = GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit", str)
 	}
 	return nil
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesExpirationUnit) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider string
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider string
 
 const (
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = "github"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = "gitlab"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProviderGithub GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider = "github"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider = "gitlab"
 )
 
-var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider{
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab,
+var AllGithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider = []GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider{
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProviderGithub,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab,
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) IsValid() bool {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider) IsValid() bool {
 	switch e {
-	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub, KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab:
+	case GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProviderGithub, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab:
 		return true
 	}
 	return false
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) String() string {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider) String() string {
 	return string(e)
 }
 
-func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(str)
+	*e = GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider", str)
 	}
 	return nil
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitProvider) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess string
+type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess string
 
 const (
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessRead      KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess = "read"
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess = "read_write"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccessRead      GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess = "read"
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess = "read_write"
 )
 
-var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess{
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessRead,
-	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite,
+var AllGithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess = []GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess{
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccessRead,
+	GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite,
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) IsValid() bool {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess) IsValid() bool {
 	switch e {
-	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessRead, KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite:
+	case GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccessRead, GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite:
 		return true
 	}
 	return false
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) String() string {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess) String() string {
 	return string(e)
 }
 
-func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess(str)
+	*e = GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__RepoAccess", str)
 	}
 	return nil
 }
 
-func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAccess) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

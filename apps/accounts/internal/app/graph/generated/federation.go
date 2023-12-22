@@ -88,7 +88,7 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 			switch resolverName {
 
 			case "findUserByID":
-				id0, err := ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, rep["id"])
+				id0, err := ec.unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, rep["id"])
 				if err != nil {
 					return fmt.Errorf(`unmarshalling param 0 for findUserByID(): %w`, err)
 				}

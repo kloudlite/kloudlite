@@ -39,18 +39,6 @@ type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
 }
 
-type Membership struct {
-	AccountName string `json:"accountName"`
-	Role        string `json:"role"`
-	UserID      string `json:"userId"`
-}
-
-type MembershipIn struct {
-	AccountName string `json:"accountName"`
-	Role        string `json:"role"`
-	UserID      string `json:"userId"`
-}
-
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
 	HasNextPage     *bool   `json:"hasNextPage,omitempty"`

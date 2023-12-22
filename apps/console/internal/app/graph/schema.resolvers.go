@@ -6,12 +6,11 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
-
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -508,7 +507,6 @@ func (r *queryResolver) CoreListWorkspaces(ctx context.Context, project model.Pr
 	}
 
 	namespace, err := r.getNamespaceFromProjectID(ctx, project)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

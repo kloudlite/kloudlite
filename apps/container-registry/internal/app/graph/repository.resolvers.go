@@ -15,7 +15,7 @@ import (
 )
 
 // CreatedBy is the resolver for the createdBy field.
-func (r *repositoryResolver) CreatedBy(ctx context.Context, obj *entities.Repository) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *repositoryResolver) CreatedBy(ctx context.Context, obj *entities.Repository) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("resource is nil")
 	}
@@ -46,7 +46,7 @@ func (r *repositoryResolver) ID(ctx context.Context, obj *entities.Repository) (
 }
 
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
-func (r *repositoryResolver) LastUpdatedBy(ctx context.Context, obj *entities.Repository) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *repositoryResolver) LastUpdatedBy(ctx context.Context, obj *entities.Repository) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("resource is nil")
 	}

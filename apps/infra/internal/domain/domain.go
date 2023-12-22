@@ -26,7 +26,6 @@ type domain struct {
 	logger logging.Logger
 	env    *env.Env
 
-	byocClusterRepo repos.DbRepo[*entities.BYOCCluster]
 	clusterRepo     repos.DbRepo[*entities.Cluster]
 	nodeRepo        repos.DbRepo[*entities.Node]
 	nodePoolRepo    repos.DbRepo[*entities.NodePool]
@@ -35,10 +34,6 @@ type domain struct {
 	vpnDeviceRepo   repos.DbRepo[*entities.VPNDevice]
 	pvcRepo         repos.DbRepo[*entities.PersistentVolumeClaim]
 	buildRunRepo    repos.DbRepo[*entities.BuildRun]
-
-	// k8sClient k8s.Client
-
-	// producer messaging.Producer
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -133,7 +128,6 @@ var Module = fx.Module("domain",
 	fx.Provide(
 		func(
 			env *env.Env,
-			byocClusterRepo repos.DbRepo[*entities.BYOCCluster],
 			clusterRepo repos.DbRepo[*entities.Cluster],
 			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
@@ -156,7 +150,6 @@ var Module = fx.Module("domain",
 				logger:                      logger,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
-				byocClusterRepo:             byocClusterRepo,
 				nodeRepo:                    nodeRepo,
 				nodePoolRepo:                nodePoolRepo,
 				secretRepo:                  secretRepo,

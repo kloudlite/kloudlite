@@ -1,6 +1,5 @@
 schema:
   - graph/*.graphqls
-  # - graph/crd-to-gql/*.graphqls
   - graph/struct-to-graphql/*.graphqls
 
 # Where should the generated server code go?
@@ -39,8 +38,7 @@ skip_mod_tidy: true
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "kloudlite.io/pkg/errors"
-  # - "kloudlite.io/apps/infra/internal/domain/entities"
+  - "github.com/kloudlite/api/pkg/errors"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -51,7 +49,7 @@ skip_validation: true
 models:
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
 
   Metadata: &metadata-model
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
@@ -67,19 +65,15 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
 
   Cluster: &cluster-model
-    model: kloudlite.io/apps/infra/internal/entities.Cluster
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Cluster
   ClusterIn: *cluster-model
 
-  BYOCCluster: &byoc-cluster-model
-    model: kloudlite.io/apps/infra/internal/entities.BYOCCluster
-  BYOCClusterIn: *byoc-cluster-model
-
   CloudProviderSecret: &provider-secret-model
-    model: kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
+    model: github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
   CloudProviderSecretIn: *provider-secret-model
 
   NodePool: &nodepool-model
-    model: kloudlite.io/apps/infra/internal/entities.NodePool
+    model: github.com/kloudlite/api/apps/infra/internal/entities.NodePool
     fields:
       nodes:
         resolver: true
@@ -87,53 +81,53 @@ models:
   NodePoolIn: *nodepool-model
 
   DomainEntry: &domain-entry-model
-    model: kloudlite.io/apps/infra/internal/entities.DomainEntry
+    model: github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
   DomainEntryIn: *domain-entry-model
 
   VPNDevice: &vpn-device-model
-    model: kloudlite.io/apps/infra/internal/entities.VPNDevice
+    model: github.com/kloudlite/api/apps/infra/internal/entities.VPNDevice
   VPNDeviceIn: *vpn-device-model
 
   BuildRun: &build-run-model
-    model: kloudlite.io/apps/infra/internal/entities.BuildRun
+    model: github.com/kloudlite/api/apps/infra/internal/entities.BuildRun
   BuildRunIn: *build-run-model
 
   PersistentVolumeClaim: &pvc-model
-    model: kloudlite.io/apps/infra/internal/entities.PersistentVolumeClaim
+    model: github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
   PersistentVolumeClaimIn: *pvc-model
 
   Node: &node-model
-    model: kloudlite.io/apps/infra/internal/entities.Node
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Node
   ResType:
-    model: kloudlite.io/apps/infra/internal/domain.ResType
+    model: github.com/kloudlite/api/apps/infra/internal/domain.ResType
 
   # PaginationQueryArgs:
-  #   model: kloudlite.io/pkg/repos.CursorPagination
+  #   model: github.com/kloudlite/api/pkg/repos.CursorPagination
 
   CheckNameAvailabilityOutput:
-    model: kloudlite.io/apps/infra/internal/domain.CheckNameAvailabilityOutput
+    model: github.com/kloudlite/api/apps/infra/internal/domain.CheckNameAvailabilityOutput
   
   MatchFilter: &match-filter-model
-    model: kloudlite.io/pkg/repos.MatchFilter
+    model: github.com/kloudlite/api/pkg/repos.MatchFilter
   MatchFilterIn: *match-filter-model
 
   MatchFilterMatchType:
-    model: kloudlite.io/pkg/repos.MatchType
+    model: github.com/kloudlite/api/pkg/repos.MatchType
 
   CursorPagination: &cursor-pagination-model
-    model: kloudlite.io/pkg/repos.CursorPagination
+    model: github.com/kloudlite/api/pkg/repos.CursorPagination
   CursorPaginationIn: *cursor-pagination-model
 
   CursorPaginationSortDirection: &cursor-pagination-sort-direction-model
-    model: kloudlite.io/pkg/repos.SortDirection
+    model: github.com/kloudlite/api/pkg/repos.SortDirection
   CursorPaginationSortDirectionIn: *cursor-pagination-sort-direction-model
 
-  Kloudlite__io___common__CreatedOrUpdatedBy:
-    model: kloudlite.io/common.CreatedOrUpdatedBy
+  Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
+    model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
 
-  Kloudlite__io___apps___infra___internal___entities__CloudProviderName: &cloudprovider-name
-    model: kloudlite.io/apps/infra/internal/entities.CloudProviderName
-  Kloudlite__io___apps___infra___internal___entities__CloudProviderNameIn: *cloudprovider-name
+  Github__com___kloudlite___api___apps___infra___internal___entities__CloudProviderName: &cloudprovider-name
+    model: github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderName
+  Github__com___kloudlite___api___apps___infra___internal___entities__CloudProviderNameIn: *cloudprovider-name
 
   Github__com___kloudlite___operator___pkg___operator__Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
@@ -143,14 +137,14 @@ models:
   Github__com___kloudlite___operator___pkg___operator__ResourceRef:
     model: github.com/kloudlite/operator/pkg/operator.ResourceRef
 
-  Kloudlite__io___pkg___types__SyncStatus: &sync-status-model
-    model: kloudlite.io/pkg/types.SyncStatus
+  Github__com___kloudlite___api___pkg___types__SyncStatus: &sync-status-model
+    model: github.com/kloudlite/api/pkg/types.SyncStatus
 
-  Kloudlite__io___pkg___types__SyncStatusState:
-    model: kloudlite.io/pkg/types.SyncState
+  Github__com___kloudlite___api___pkg___types__SyncStatusState:
+    model: github.com/kloudlite/api/pkg/types.SyncState
 
-  Kloudlite__io___pkg___types__SyncStatusAction:
-    model: kloudlite.io/pkg/types.SyncAction
+  Github__com___kloudlite___api___pkg___types__SyncStatusAction:
+    model: github.com/kloudlite/api/pkg/types.SyncAction
 
   # CheckAwsAccessOutput:
-  #   model: kloudlite.io/apps/infra/internal/domain.AWSAccessValidationOutput
+  #   model: github.com/kloudlite/api/apps/infra/internal/domain.AWSAccessValidationOutput

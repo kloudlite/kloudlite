@@ -1,6 +1,5 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  # - crd-to-gql/*.graphqls
   - graph/*.graphqls
   - graph/struct-to-graphql/*.graphqls
 
@@ -39,8 +38,7 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "kloudlite.io/pkg/errors"
-  # - "kloudlite.io/apps/wireguard/internal/domain/entities"
+  - "github.com/kloudlite/api/pkg/errors"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -49,11 +47,12 @@ autobind:
 # your liking
 
 skip_mod_tidy: true
+skip_validation: true
 
 models:
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -69,7 +68,7 @@ models:
       accountInvitations:
         resolver: true
   Account: &account-model
-    model: kloudlite.io/apps/accounts/internal/entities.Account
+    model: github.com/kloudlite/api/apps/accounts/internal/entities.Account
     fields:
       # accountMemberships:
       memberships:
@@ -78,7 +77,7 @@ models:
       #   resolver: true
   AccountIn: *account-model
   AccountMembership:
-    model: kloudlite.io/apps/accounts/internal/entities.AccountMembership
+    model: github.com/kloudlite/api/apps/accounts/internal/entities.AccountMembership
     fields:
       user:
         resolver: true
@@ -86,7 +85,7 @@ models:
     #     resolver: true
 
   Invitation: &invitation-model
-    model: kloudlite.io/apps/accounts/internal/entities.Invitation
+    model: github.com/kloudlite/api/apps/accounts/internal/entities.Invitation
   InvitationIn: *invitation-model
 
   Metadata: &metadata-model
@@ -97,11 +96,11 @@ models:
     model: github.com/kloudlite/operator/pkg/operator.Status
 
   AccountsCheckNameAvailabilityOutput:
-    model: kloudlite.io/apps/accounts/internal/domain.CheckNameAvailabilityOutput
+    model: github.com/kloudlite/api/apps/accounts/internal/domain.CheckNameAvailabilityOutput
 
-  Kloudlite__io___apps___iam___types__Role:
-    model: kloudlite.io/apps/iam/types.Role
+  Github__com___kloudlite___api___apps___iam___types__Role:
+    model: github.com/kloudlite/api/apps/iam/types.Role
   
-  Kloudlite__io___common__CreatedOrUpdatedBy:
-    model: kloudlite.io/common.CreatedOrUpdatedBy
+  Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
+    model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
 

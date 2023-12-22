@@ -162,7 +162,7 @@ type Query {
     core_resyncRouter(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
     core_listManagedServiceTemplates: [MsvcTemplate!]
-    core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry
+    core_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntry
 
     core_listManagedServices(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedServices, pq: CursorPaginationIn): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
     core_getManagedService(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
