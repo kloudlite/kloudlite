@@ -274,7 +274,7 @@ const SettingGeneral = () => {
             reload();
             toast.success(`Cluster deleted successfully`);
             setDeleteCluster(false);
-            navigate(`/${account}/clusters`);
+            navigate(`/${parseName(account)}/clusters`);
           } catch (err) {
             handleError(err);
           }
