@@ -39,6 +39,7 @@ func (d *domain) OnBuildRunUpdateMessage(ctx InfraContext, clusterName string, b
 	}, &buildRun); err != nil {
 		return errors.NewE(err)
 	}
+
 	return nil
 }
 
@@ -51,5 +52,6 @@ func (d *domain) OnBuildRunDeleteMessage(ctx InfraContext, clusterName string, b
 	}); err != nil {
 		return errors.NewE(err)
 	}
+	//d.natCli.Conn.Publish(fmt.Scan(buildRun.BuildRun, ))
 	return nil
 }

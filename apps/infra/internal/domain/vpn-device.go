@@ -16,7 +16,6 @@ func (d *domain) ListVPNDevices(ctx context.Context, accountName string, cluster
 	if clusterName != nil {
 		filter["clusterName"] = *clusterName
 	}
-
 	return d.vpnDeviceRepo.FindPaginated(ctx, d.vpnDeviceRepo.MergeMatchFilters(filter, search), pagination)
 }
 
@@ -49,6 +48,9 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 			return nil, errors.NewE(err)
 		}
 		return nil, errors.NewE(err)
+	}
+	if err:=d.natCli.Conn.Publish(d.vpnDeviceResUpdateSubject(nDevice), []byte("Deleted")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.vpnDeviceResUpdateSubject(nDevice))
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
@@ -86,6 +88,9 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device en
 	nDevice, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, &device)
 	if err != nil {
 		return nil, errors.NewE(err)
+	}
+	if err:=d.natCli.Conn.Publish(d.vpnDeviceResUpdateSubject(nDevice), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.vpnDeviceResUpdateSubject(nDevice))
 	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
@@ -126,6 +131,9 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	if _, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, device); err != nil {
 		return errors.NewE(err)
 	}
+	if err:=d.natCli.Conn.Publish(d.vpnDeviceResUpdateSubject(device), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.vpnDeviceResUpdateSubject(device))
+	}
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &device.Device)
 }
 
@@ -140,6 +148,9 @@ func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, nam
 	currDevice.SyncStatus.Error = &errMsg
 
 	_, err = d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
+	if err:=d.natCli.Conn.Publish(d.vpnDeviceResUpdateSubject(currDevice), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.vpnDeviceResUpdateSubject(currDevice))
+	}
 	return errors.NewE(err)
 }
 
@@ -168,6 +179,9 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 	currDevice.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
+	if err:=d.natCli.Conn.Publish(d.vpnDeviceResUpdateSubject(currDevice), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.vpnDeviceResUpdateSubject(currDevice))
+	}
 	return errors.NewE(err)
 }
 
@@ -181,5 +195,11 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, 
 		return errors.NewE(err)
 	}
 
-	return d.vpnDeviceRepo.DeleteById(ctx, currDevice.Id)
+	if err = d.vpnDeviceRepo.DeleteById(ctx, currDevice.Id); err != nil {
+		return errors.NewE(err)
+	}
+	if err:=d.natCli.Conn.Publish(d.vpnDeviceResUpdateSubject(currDevice), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.vpnDeviceResUpdateSubject(currDevice))
+	}
+	return nil
 }

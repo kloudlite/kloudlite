@@ -13,6 +13,7 @@ import (
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
+
 	mongoRepo "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
@@ -40,14 +41,14 @@ var Module = fx.Module("framework",
 
 	mongoRepo.NewMongoClientFx[*framework](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
-		c, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   "infra",
 			Logger: logger,
 		})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
+	}),
+
+	fx.Provide(func(c *nats.Client) (*nats.JetstreamClient, error) {
 		return nats.NewJetstreamClient(c)
 	}),
 

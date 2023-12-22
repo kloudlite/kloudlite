@@ -144,10 +144,14 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		}
 		return nil, errors.NewE(err)
 	}
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(&nodepool), []byte("Added")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.nodePoolResUpdateSubject(&nodepool), []byte("Added"))
+	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &np.NodePool, np.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
+
 
 	return np, nil
 }
@@ -194,6 +198,14 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(unp), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.nodePoolResUpdateSubject(unp), []byte("Added"))
+	}
+
+
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(unp), []byte("Added")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject  %q", d.nodePoolResUpdateSubject(unp))
+	}
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.NodePool, unp.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -220,6 +232,9 @@ func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName s
 	upC, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np)
 	if err != nil {
 		return errors.NewE(err)
+	}
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(upC), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.nodePoolResUpdateSubject(upC), []byte("Added"))
 	}
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.NodePool)
 }
@@ -291,7 +306,11 @@ func (d *domain) OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, n
 		return d.resyncToTargetCluster(ctx, np.SyncStatus.Action, clusterName, &np.NodePool, np.RecordVersion)
 	}
 
-	return d.nodePoolRepo.DeleteById(ctx, np.Id)
+	err := d.nodePoolRepo.DeleteById(ctx, np.Id)
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(np), []byte("Deleted")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.nodePoolResUpdateSubject(np))
+	}
+	return err
 }
 
 func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error {
@@ -314,6 +333,9 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 	if _, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np); err != nil {
 		return errors.NewE(err)
 	}
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(np), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.nodePoolResUpdateSubject(np))
+	}
 	return nil
 }
 
@@ -329,5 +351,8 @@ func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name
 	np.SyncStatus.Error = &errMsg
 
 	_, err = d.nodePoolRepo.UpdateById(ctx, np.Id, np)
+	if err:=d.natCli.Conn.Publish(d.nodePoolResUpdateSubject(np), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to subject %q", d.nodePoolResUpdateSubject(np))
+	}
 	return errors.NewE(err)
 }
