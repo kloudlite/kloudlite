@@ -10,22 +10,8 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
-	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 )
-
-// CreatedBy is the resolver for the createdBy field.
-func (r *repositoryResolver) CreatedBy(ctx context.Context, obj *entities.Repository) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("resource is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.CreatedBy.UserEmail,
-		UserID:    string(obj.CreatedBy.UserId),
-		UserName:  obj.CreatedBy.UserName,
-	}, nil
-}
 
 // CreationTime is the resolver for the creationTime field.
 func (r *repositoryResolver) CreationTime(ctx context.Context, obj *entities.Repository) (string, error) {
@@ -43,19 +29,6 @@ func (r *repositoryResolver) ID(ctx context.Context, obj *entities.Repository) (
 	}
 
 	return string(obj.Id), nil
-}
-
-// LastUpdatedBy is the resolver for the lastUpdatedBy field.
-func (r *repositoryResolver) LastUpdatedBy(ctx context.Context, obj *entities.Repository) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("resource is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.LastUpdatedBy.UserEmail,
-		UserID:    string(obj.LastUpdatedBy.UserId),
-		UserName:  obj.LastUpdatedBy.UserName,
-	}, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
