@@ -4,7 +4,7 @@ import (
 	{{- range $key, $value := .Imports}}
 	{{$value}} {{$key | quote}}
 	{{- end }}
-	"kloudlite.io/cmd/struct-to-graphql/pkg/parser"
+	"github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser"
 	"k8s.io/client-go/rest"
 	"os"
 	"golang.org/x/sync/errgroup"
