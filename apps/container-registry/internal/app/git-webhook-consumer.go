@@ -5,12 +5,13 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/messaging"
-	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"strings"
 
+	"github.com/kloudlite/api/pkg/messaging"
+	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+
+	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/container-registry-authorizer/admin"
-	t "github.com/kloudlite/operator/agent/types"
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
@@ -32,8 +33,10 @@ const (
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
 
-type GitWebhookConsumer messaging.Consumer
-type BuildRunProducer messaging.Producer
+type (
+	GitWebhookConsumer messaging.Consumer
+	BuildRunProducer   messaging.Producer
+)
 
 func getUniqueKey(build *entities.Build, hook *domain.GitWebhookPayload) string {
 	uid := fmt.Sprint(build.Id, hook.CommitHash)
