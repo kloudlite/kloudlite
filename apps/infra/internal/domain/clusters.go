@@ -244,6 +244,8 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
+	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Added"))
+
 	return nCluster, nil
 }
 
@@ -361,7 +363,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		UserEmail: ctx.UserEmail,
 	}
 
-  // FIXME: no update for cluster spec
+	// FIXME: no update for cluster spec
 	// clus.Spec = cluster.Spec
 
 	clus.Labels = cluster.Labels
@@ -376,6 +378,9 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	if err := d.applyK8sResource(ctx, &uCluster.Cluster, uCluster.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
+
+	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Updated"))
+	d.natCli.Conn.Publish(cluster.Cluster.Name, []byte("Updated"))
 
 	return uCluster, nil
 }
@@ -408,23 +413,31 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 			return errors.NewE(err)
 		}
 
-		return d.deleteK8sResource(ctx, &upC.Cluster)
+		deletedCluster := d.deleteK8sResource(ctx, &upC.Cluster)
+
+		d.natCli.Conn.Publish(c.Spec.AccountId, []byte("Deleted"))
+		d.natCli.Conn.Publish(name, []byte("Deleted"))
+
+		return deletedCluster
 	}
 
 	return nil
-}
 
+}
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
 	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
+	onDeletedClusterMessage := d.clusterRepo.DeleteOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.name":      cluster.Name,
 		"metadata.namespace": accNs,
 	})
+	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Updated"))
+	d.natCli.Conn.Publish(cluster.Cluster.Name, []byte("Updated"))
+
+	return onDeletedClusterMessage
 }
 
 func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
@@ -449,6 +462,8 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	c.Status = cluster.Status
 
 	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
+	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Updated"))
+	d.natCli.Conn.Publish(cluster.Cluster.Name, []byte("Updated"))
 	return errors.NewE(err)
 }
 
