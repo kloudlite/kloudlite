@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/pkg/nats"
 	"strconv"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -40,6 +41,7 @@ type domain struct {
 	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
 	resDispatcher               ResourceDispatcher
 	k8sClient                   k8s.Client
+	natCli                      *nats.Client
 }
 
 func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
@@ -143,11 +145,12 @@ var Module = fx.Module("domain",
 			iamClient iam.IAMClient,
 			accountsSvc AccountsSvc,
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
-
+			natCli *nats.Client,
 			logger logging.Logger,
 		) Domain {
 			return &domain{
 				logger:                      logger,
+				natCli:                      natCli,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
 				nodeRepo:                    nodeRepo,
