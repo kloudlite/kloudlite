@@ -26,7 +26,6 @@ func Connect(url string, opts ConnectOpts) (*grpc.ClientConn, error) {
 	if opts.SecureConnect {
 		conn, err := grpc.DialContext(ctx, url, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
 			InsecureSkipVerify: false,
-			// })), grpc.WithBlock())
 		})))
 		if err == nil {
 			return conn, nil

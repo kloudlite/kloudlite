@@ -19,8 +19,8 @@ spec:
     - jsonPath: .spec.accountName
       name: AccountName
       type: string
-    - jsonPath: .spec.messageQueueTopicName
-      name: QTopic
+    - jsonPath: .metadata.annotations.kloudlite\.io\/cluster\.job-ref
+      name: Job
       type: string
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At

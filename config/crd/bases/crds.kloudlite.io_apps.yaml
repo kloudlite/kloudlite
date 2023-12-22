@@ -16,12 +16,12 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.region
-      name: Region
-      type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .status.displayVars.intercepted
       name: Intercepted
       type: string

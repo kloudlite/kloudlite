@@ -76,7 +76,7 @@ const (
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -186,7 +186,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResul
 
 	if step := r.startNodepoolDeleteJob(req); !step.ShouldProceed() {
 		check.Status = false
-		check.Message = "waiting for cluster destroy job to finish execution"
+		check.Message = "waiting for nodepool delete job to finish execution"
 		if check != checks[checkName] {
 			checks[checkName] = check
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
