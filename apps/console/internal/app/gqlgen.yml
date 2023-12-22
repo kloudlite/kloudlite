@@ -40,8 +40,8 @@ skip_mod_tidy: true
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "kloudlite.io/pkg/errors"
-  # - "kloudlite.io/apps/wireguard/internal/domain/entities"
+  - "github.com/kloudlite/api/pkg/errors"
+  # - "github.com/kloudlite/api/apps/wireguard/internal/domain/entities"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -53,7 +53,7 @@ skip_validation: true
 models:
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -68,31 +68,31 @@ models:
   MetadataIn: *metadata-model
 
   Account: &account-model
-    model: kloudlite.io/apps/console/internal/entities.Account
+    model: github.com/kloudlite/api/apps/console/internal/entities.Account
   AccountIn: *account-model
 
   Project: &project-model
-    model: kloudlite.io/apps/console/internal/entities.Project
+    model: github.com/kloudlite/api/apps/console/internal/entities.Project
   ProjectIn: *project-model
 
   Workspace: &workspace-model
-    model: kloudlite.io/apps/console/internal/entities.Workspace
+    model: github.com/kloudlite/api/apps/console/internal/entities.Workspace
   WorkspaceIn: *workspace-model
 
   Secret: &secret-model
-    model: kloudlite.io/apps/console/internal/entities.Secret
+    model: github.com/kloudlite/api/apps/console/internal/entities.Secret
   SecretIn: *secret-model
 
   Config: &config-model
-    model: kloudlite.io/apps/console/internal/entities.Config
+    model: github.com/kloudlite/api/apps/console/internal/entities.Config
   ConfigIn: *config-model
 
   App: &app-model
-    model: kloudlite.io/apps/console/internal/entities.App
+    model: github.com/kloudlite/api/apps/console/internal/entities.App
   AppIn: *app-model
 
   Router: &router-model
-    model: kloudlite.io/apps/console/internal/entities.Router
+    model: github.com/kloudlite/api/apps/console/internal/entities.Router
   RouterIn: *router-model
 
   Patch: &patch-model
@@ -103,61 +103,61 @@ models:
     model: github.com/kloudlite/operator/pkg/operator.Check
 
   ManagedService: &managed-service-model
-    model: kloudlite.io/apps/console/internal/entities.ManagedService
+    model: github.com/kloudlite/api/apps/console/internal/entities.ManagedService
   ManagedServiceIn: *managed-service-model
 
   MsvcTemplate:
-    model: kloudlite.io/apps/console/internal/entities.MsvcTemplate
+    model: github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplate
 
   ManagedResource: &managed-resource-model
-    model: kloudlite.io/apps/console/internal/entities.ManagedResource
+    model: github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
 
   ImagePullSecret: &image-pull-secret-model
-    model: kloudlite.io/apps/console/internal/entities.ImagePullSecret
+    model: github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
   ImagePullSecretIn: *image-pull-secret-model
 
   Overrides: &overrides-model
     model: github.com/kloudlite/operator/apis/crds/v1.JsonPatch
   OverridesIn: *overrides-model
 
-  Kloudlite__io___pkg___types__SyncStatusAction:
-    model: kloudlite.io/pkg/types.SyncAction
+  Github__com___kloudlite___api___pkg___types__SyncStatusAction:
+    model: github.com/kloudlite/api/pkg/types.SyncAction
 
-  Kloudlite__io___pkg___types__SyncStatusState:
-    model: kloudlite.io/pkg/types.SyncState
+  Github__com___kloudlite___api___pkg___types__SyncStatusState:
+    model: github.com/kloudlite/api/pkg/types.SyncState
 
   ConsoleResType:
-    model: kloudlite.io/apps/console/internal/domain.ResType
+    model: github.com/kloudlite/api/apps/console/internal/domain.ResType
 
   ConsoleCheckNameAvailabilityOutput:
-    model: kloudlite.io/apps/console/internal/domain.CheckNameAvailabilityOutput
+    model: github.com/kloudlite/api/apps/console/internal/domain.CheckNameAvailabilityOutput
 
   MatchFilter: &match-filter-model
-    model: kloudlite.io/pkg/repos.MatchFilter
+    model: github.com/kloudlite/api/pkg/repos.MatchFilter
   MatchFilterIn: *match-filter-model
 
   MatchFilterMatchType:
-    model: kloudlite.io/pkg/repos.MatchType
+    model: github.com/kloudlite/api/pkg/repos.MatchType
 
   CursorPagination: &cursor-pagination-model
-    model: kloudlite.io/pkg/repos.CursorPagination
+    model: github.com/kloudlite/api/pkg/repos.CursorPagination
   CursorPaginationIn: *cursor-pagination-model
 
   CursorPaginationSortDirection: &cursor-pagination-sort-direction
-    model: kloudlite.io/pkg/repos.SortDirection
+    model: github.com/kloudlite/api/pkg/repos.SortDirection
 
-  Kloudlite__io___common__CreatedOrUpdatedBy:
-    model: kloudlite.io/common.CreatedOrUpdatedBy
+  Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
+    model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
 
-  Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry:
-    model: kloudlite.io/apps/console/internal/entities.MsvcTemplateEntry
+  Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntry:
+    model: github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplateEntry
 
   Github__com___kloudlite___operator___pkg___operator__Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
 
-  Kloudlite__io___pkg___types__SyncStatus: &sync-status-model
-    model: kloudlite.io/pkg/types.SyncStatus
-  Kloudlite__io___pkg___types__SyncStatusIn: *sync-status-model
+  Github__com___kloudlite___api___pkg___types__SyncStatus: &sync-status-model
+    model: github.com/kloudlite/api/pkg/types.SyncStatus
+  Github__com___kloudlite___api___pkg___types__SyncStatusIn: *sync-status-model
 
 

@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"encoding/base64"
-
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -64,39 +63,6 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) 
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteCluster(ictx, name); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// InfraCreateBYOCCluster is the resolver for the infra_createBYOCCluster field.
-func (r *mutationResolver) InfraCreateBYOCCluster(ctx context.Context, byocCluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.CreateBYOCCluster(ictx, byocCluster)
-}
-
-// InfraUpdateBYOCCluster is the resolver for the infra_updateBYOCCluster field.
-func (r *mutationResolver) InfraUpdateBYOCCluster(ctx context.Context, byocCluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.UpdateBYOCCluster(ictx, byocCluster)
-}
-
-// InfraDeleteBYOCCluster is the resolver for the infra_deleteBYOCCluster field.
-func (r *mutationResolver) InfraDeleteBYOCCluster(ctx context.Context, name string) (bool, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.DeleteBYOCCluster(ictx, name); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -305,73 +271,6 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*enti
 	}
 
 	return r.Domain.GetCluster(ictx, name)
-}
-
-// InfraListBYOCClusters is the resolver for the infra_listBYOCClusters field.
-func (r *queryResolver) InfraListBYOCClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOCClusterPaginatedRecords, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if pagination == nil {
-		pagination = &repos.DefaultCursorPagination
-	}
-
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-
-		if search.CloudProviderName != nil {
-			filter["spec.cloudProvider"] = *search.CloudProviderName
-		}
-
-		if search.Region != nil {
-			filter["spec.region"] = *search.Region
-		}
-
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-	}
-
-	pClusters, err := r.Domain.ListBYOCClusters(ictx, filter, *pagination)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	bce := make([]*model.BYOCClusterEdge, len(pClusters.Edges))
-	for i := range pClusters.Edges {
-		bce[i] = &model.BYOCClusterEdge{
-			Node:   pClusters.Edges[i].Node,
-			Cursor: pClusters.Edges[i].Cursor,
-		}
-	}
-
-	m := model.BYOCClusterPaginatedRecords{
-		Edges: bce,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pClusters.PageInfo.EndCursor,
-			HasNextPage:     pClusters.PageInfo.HasNextPage,
-			HasPreviousPage: pClusters.PageInfo.HasPrevPage,
-			StartCursor:     &pClusters.PageInfo.StartCursor,
-		},
-		TotalCount: int(pClusters.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// InfraGetBYOCCluster is the resolver for the infra_getBYOCCluster field.
-func (r *queryResolver) InfraGetBYOCCluster(ctx context.Context, name string) (*entities.BYOCCluster, error) {
-	ictx, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetBYOCCluster(ictx, name)
 }
 
 // InfraListNodePools is the resolver for the infra_listNodePools field.
@@ -730,7 +629,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

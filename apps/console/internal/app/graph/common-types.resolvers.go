@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -18,6 +19,51 @@ import (
 	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Fields is the resolver for the fields field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver) Fields(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesInputField, error) {
+	var m []*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesInputField
+	if err := fn.JsonConversion(obj.Fields, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
+}
+
+// Outputs is the resolver for the outputs field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver) Outputs(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesOutputField, error) {
+	var m []*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesOutputField
+	if err := fn.JsonConversion(obj.Fields, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
+}
+
+// Resources is the resolver for the resources field.
+func (r *github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver) Resources(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMresTemplate, error) {
+	var m []*model.GithubComKloudliteAPIAppsConsoleInternalEntitiesMresTemplate
+	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
+}
+
+// UserID is the resolver for the userId field.
+func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("obj is nil")
+	}
+	return string(obj.UserId), nil
+}
+
+// LastSyncedAt is the resolver for the lastSyncedAt field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
+}
+
+// SyncScheduledAt is the resolver for the syncScheduledAt field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
+}
 
 // Checks is the resolver for the checks field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
@@ -54,48 +100,6 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Re
 		return nil, errors.NewE(err)
 	}
 	return m, nil
-}
-
-// Fields is the resolver for the fields field.
-func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver) Fields(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.KloudliteIoAppsConsoleInternalEntitiesInputField, error) {
-	var m []*model.KloudliteIoAppsConsoleInternalEntitiesInputField
-	if err := fn.JsonConversion(obj.Fields, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return m, nil
-}
-
-// Outputs is the resolver for the outputs field.
-func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver) Outputs(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.KloudliteIoAppsConsoleInternalEntitiesOutputField, error) {
-	var m []*model.KloudliteIoAppsConsoleInternalEntitiesOutputField
-	if err := fn.JsonConversion(obj.Fields, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return m, nil
-}
-
-// Resources is the resolver for the resources field.
-func (r *kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver) Resources(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.KloudliteIoAppsConsoleInternalEntitiesMresTemplate, error) {
-	var m []*model.KloudliteIoAppsConsoleInternalEntitiesMresTemplate
-	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return m, nil
-}
-
-// UserID is the resolver for the userId field.
-func (r *kloudlite__io___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
-	return string(obj.UserId), nil
-}
-
-// LastSyncedAt is the resolver for the lastSyncedAt field.
-func (r *kloudlite__io___pkg___types__SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
-	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
-}
-
-// SyncScheduledAt is the resolver for the syncScheduledAt field.
-func (r *kloudlite__io___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
-	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
 }
 
 // Annotations is the resolver for the annotations field.
@@ -157,24 +161,24 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return nil
 }
 
+// Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntry returns generated.Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntry() generated.Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver {
+	return &github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver{r}
+}
+
+// Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
+	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
+}
+
+// Github__com___kloudlite___api___pkg___types__SyncStatus returns generated.Github__com___kloudlite___api___pkg___types__SyncStatusResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___pkg___types__SyncStatus() generated.Github__com___kloudlite___api___pkg___types__SyncStatusResolver {
+	return &github__com___kloudlite___api___pkg___types__SyncStatusResolver{r}
+}
+
 // Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
 func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
 	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
-}
-
-// Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry returns generated.Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver implementation.
-func (r *Resolver) Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry() generated.Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver {
-	return &kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver{r}
-}
-
-// Kloudlite__io___common__CreatedOrUpdatedBy returns generated.Kloudlite__io___common__CreatedOrUpdatedByResolver implementation.
-func (r *Resolver) Kloudlite__io___common__CreatedOrUpdatedBy() generated.Kloudlite__io___common__CreatedOrUpdatedByResolver {
-	return &kloudlite__io___common__CreatedOrUpdatedByResolver{r}
-}
-
-// Kloudlite__io___pkg___types__SyncStatus returns generated.Kloudlite__io___pkg___types__SyncStatusResolver implementation.
-func (r *Resolver) Kloudlite__io___pkg___types__SyncStatus() generated.Kloudlite__io___pkg___types__SyncStatusResolver {
-	return &kloudlite__io___pkg___types__SyncStatusResolver{r}
 }
 
 // Metadata returns generated.MetadataResolver implementation.
@@ -183,9 +187,9 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
+type github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntryResolver struct{ *Resolver }
+type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
+type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
-type kloudlite__io___apps___console___internal___entities__MsvcTemplateEntryResolver struct{ *Resolver }
-type kloudlite__io___common__CreatedOrUpdatedByResolver struct{ *Resolver }
-type kloudlite__io___pkg___types__SyncStatusResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

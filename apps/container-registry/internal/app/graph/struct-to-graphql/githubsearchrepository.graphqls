@@ -1,6 +1,6 @@
 type GithubSearchRepository @shareable {
   incompleteResults: Boolean
-  repositories: [Kloudlite__io___apps___container____registry___internal___domain___entities__GithubRepository]!
+  repositories: [Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubRepository]!
   total: Int
 }
 

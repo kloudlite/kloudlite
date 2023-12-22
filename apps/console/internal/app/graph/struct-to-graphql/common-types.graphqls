@@ -1,3 +1,58 @@
+type Github__com___kloudlite___api___apps___console___internal___entities__InputField @shareable {
+  defaultValue: Any
+  inputType: String!
+  label: String!
+  max: Float
+  min: Float
+  name: String!
+  required: Boolean
+  unit: String
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__MresTemplate @shareable {
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___console___internal___entities__InputField!]!
+  kind: String
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___console___internal___entities__OutputField!]!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntry @shareable {
+  active: Boolean!
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___console___internal___entities__InputField!]!
+  kind: String
+  logoUrl: String!
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___console___internal___entities__OutputField!]!
+  resources: [Github__com___kloudlite___api___apps___console___internal___entities__MresTemplate!]!
+}
+
+type Github__com___kloudlite___api___apps___console___internal___entities__OutputField @shareable {
+  description: String!
+  label: String!
+  name: String!
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
+  action: Github__com___kloudlite___api___pkg___types__SyncStatusAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncStatusState!
+  syncScheduledAt: Date
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer @shareable {
   args: [String!]
   command: [String!]
@@ -92,7 +147,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe @sharea
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Https @shareable {
-  clusterIssuer: String
   enabled: Boolean!
   forceRedirect: Boolean
 }
@@ -103,17 +157,24 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
-  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJson
-  mresKind: Github__com___kloudlite___operator___apis___crds___v1__mresKind!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTT!
+  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
-  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJson
-  msvcKind: Github__com___kloudlite___operator___apis___crds___v1__msvcKind!
-  nodeSelector: Map
-  region: String
-  tolerations: [K8s__io___api___core___v1__Toleration!]
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
+  apiVersion: String!
+  kind: String!
+  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef!
+  spec: Map!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRef @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
@@ -162,6 +223,12 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareabl
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
+  apiVersion: String!
+  kind: String!
+  spec: Map!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareable {
   command: [String!]
 }
@@ -174,21 +241,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec @share
   isEnvironment: Boolean
   projectName: String!
   targetNamespace: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__mresKind @shareable {
-  kind: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__msvcKind @shareable {
-  apiVersion: String!
-  kind: String!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTT @shareable {
-  apiVersion: String!
-  kind: String!
-  name: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -223,61 +275,6 @@ type K8s__io___api___core___v1__Toleration @shareable {
   operator: K8s__io___api___core___v1__TolerationOperator
   tolerationSeconds: Int
   value: String
-}
-
-type Kloudlite__io___apps___console___internal___entities__InputField @shareable {
-  defaultValue: Any
-  inputType: String!
-  label: String!
-  max: Float
-  min: Float
-  name: String!
-  required: Boolean
-  unit: String
-}
-
-type Kloudlite__io___apps___console___internal___entities__MresTemplate @shareable {
-  apiVersion: String
-  description: String!
-  displayName: String!
-  fields: [Kloudlite__io___apps___console___internal___entities__InputField!]!
-  kind: String
-  name: String!
-  outputs: [Kloudlite__io___apps___console___internal___entities__OutputField!]!
-}
-
-type Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry @shareable {
-  active: Boolean!
-  apiVersion: String
-  description: String!
-  displayName: String!
-  fields: [Kloudlite__io___apps___console___internal___entities__InputField!]!
-  kind: String
-  logoUrl: String!
-  name: String!
-  outputs: [Kloudlite__io___apps___console___internal___entities__OutputField!]!
-  resources: [Kloudlite__io___apps___console___internal___entities__MresTemplate!]!
-}
-
-type Kloudlite__io___apps___console___internal___entities__OutputField @shareable {
-  description: String!
-  label: String!
-  name: String!
-}
-
-type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
-  userEmail: String!
-  userId: String!
-  userName: String!
-}
-
-type Kloudlite__io___pkg___types__SyncStatus @shareable {
-  action: Kloudlite__io___pkg___types__SyncStatusAction!
-  error: String
-  lastSyncedAt: Date
-  recordVersion: Int!
-  state: Kloudlite__io___pkg___types__SyncStatusState!
-  syncScheduledAt: Date
 }
 
 type Metadata @shareable {
@@ -391,7 +388,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
-  clusterIssuer: String
   enabled: Boolean!
   forceRedirect: Boolean
 }
@@ -402,17 +398,22 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
-  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
-  mresKind: Github__com___kloudlite___operator___apis___crds___v1__mresKindIn!
-  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTTIn!
+  resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
-  inputs: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
-  msvcKind: Github__com___kloudlite___operator___apis___crds___v1__msvcKindIn!
-  nodeSelector: Map
-  region: String
-  tolerations: [K8s__io___api___core___v1__TolerationIn!]
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
+  msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
+  spec: Map!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn {
+  apiVersion: String!
+  kind: String!
+  name: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
@@ -459,6 +460,10 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
+  spec: Map!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
   command: [String!]
 }
@@ -471,25 +476,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
   isEnvironment: Boolean
   projectName: String!
   targetNamespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__mresKindIn {
-  kind: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__msvcKindIn {
-  apiVersion: String!
-  kind: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__msvcNamedRefTTIn {
-  apiVersion: String!
-  kind: String!
-  name: String!
-}
-
-input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
-  RawMessage: Any
 }
 
 input K8s__io___api___core___v1__TolerationIn {
@@ -505,6 +491,19 @@ input MetadataIn {
   labels: Map
   name: String!
   namespace: String
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncStatusAction {
+  APPLY
+  DELETE
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncStatusState {
+  APPLIED_AT_AGENT
+  ERRORED_AT_AGENT
+  IDLE
+  IN_QUEUE
+  RECEIVED_UPDATE_FROM_AGENT
 }
 
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
@@ -532,18 +531,5 @@ enum K8s__io___api___core___v1__TaintEffect {
 enum K8s__io___api___core___v1__TolerationOperator {
   Equal
   Exists
-}
-
-enum Kloudlite__io___pkg___types__SyncStatusAction {
-  APPLY
-  DELETE
-}
-
-enum Kloudlite__io___pkg___types__SyncStatusState {
-  APPLIED_AT_AGENT
-  ERRORED_AT_AGENT
-  IDLE
-  IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
 }
 

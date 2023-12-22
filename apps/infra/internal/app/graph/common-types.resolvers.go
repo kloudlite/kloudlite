@@ -6,8 +6,9 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -17,6 +18,30 @@ import (
 	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// UserID is the resolver for the userId field.
+func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
+	if obj == nil {
+		return "", errors.Newf("createdOrUpdatedBy is nil")
+	}
+	return string(obj.UserId), nil
+}
+
+// LastSyncedAt is the resolver for the lastSyncedAt field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	if obj == nil {
+		return nil, errors.Newf("syncStatus is nil")
+	}
+	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
+}
+
+// SyncScheduledAt is the resolver for the syncScheduledAt field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	if obj == nil {
+		return nil, errors.Newf("syncStatus is nil")
+	}
+	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
+}
 
 // Checks is the resolver for the checks field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
@@ -49,30 +74,6 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Me
 	return &model.GithubComKloudliteOperatorPkgRawJSONRawJSON{
 		RawMessage: obj.Message.RawMessage,
 	}, nil
-}
-
-// UserID is the resolver for the userId field.
-func (r *kloudlite__io___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
-	if obj == nil {
-		return "", errors.Newf("createdOrUpdatedBy is nil")
-	}
-	return string(obj.UserId), nil
-}
-
-// LastSyncedAt is the resolver for the lastSyncedAt field.
-func (r *kloudlite__io___pkg___types__SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
-	if obj == nil {
-		return nil, errors.Newf("syncStatus is nil")
-	}
-	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
-}
-
-// SyncScheduledAt is the resolver for the syncScheduledAt field.
-func (r *kloudlite__io___pkg___types__SyncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
-	if obj == nil {
-		return nil, errors.Newf("syncStatus is nil")
-	}
-	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
 }
 
 // Annotations is the resolver for the annotations field.
@@ -134,19 +135,19 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return nil
 }
 
+// Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
+	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
+}
+
+// Github__com___kloudlite___api___pkg___types__SyncStatus returns generated.Github__com___kloudlite___api___pkg___types__SyncStatusResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___pkg___types__SyncStatus() generated.Github__com___kloudlite___api___pkg___types__SyncStatusResolver {
+	return &github__com___kloudlite___api___pkg___types__SyncStatusResolver{r}
+}
+
 // Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
 func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
 	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
-}
-
-// Kloudlite__io___common__CreatedOrUpdatedBy returns generated.Kloudlite__io___common__CreatedOrUpdatedByResolver implementation.
-func (r *Resolver) Kloudlite__io___common__CreatedOrUpdatedBy() generated.Kloudlite__io___common__CreatedOrUpdatedByResolver {
-	return &kloudlite__io___common__CreatedOrUpdatedByResolver{r}
-}
-
-// Kloudlite__io___pkg___types__SyncStatus returns generated.Kloudlite__io___pkg___types__SyncStatusResolver implementation.
-func (r *Resolver) Kloudlite__io___pkg___types__SyncStatus() generated.Kloudlite__io___pkg___types__SyncStatusResolver {
-	return &kloudlite__io___pkg___types__SyncStatusResolver{r}
 }
 
 // Metadata returns generated.MetadataResolver implementation.
@@ -155,8 +156,10 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
-type kloudlite__io___common__CreatedOrUpdatedByResolver struct{ *Resolver }
-type kloudlite__io___pkg___types__SyncStatusResolver struct{ *Resolver }
-type metadataResolver struct{ *Resolver }
-type metadataInResolver struct{ *Resolver }
+type (
+	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver  struct{ *Resolver }
+	github__com___kloudlite___api___pkg___types__SyncStatusResolver     struct{ *Resolver }
+	github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
+	metadataResolver                                                    struct{ *Resolver }
+	metadataInResolver                                                  struct{ *Resolver }
+)

@@ -11,7 +11,7 @@ tasks:
     dir: ./internal/app
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
-      # - rm "./graph/scalars.resolvers.go"
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
 
   build:
     env:
@@ -25,27 +25,27 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -v -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - go build -v -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   k8s-schema:
     cmds:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GithubInstallation
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GitlabProject
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GitlabGroup
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GithubListRepository
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GithubSearchRepository
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GitBranch
-          --struct kloudlite.io/pkg/types.Pagination
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Credential
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Repository
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Digest
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Build
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.BuildCacheKey
-          --struct kloudlite.io/pkg/repos.MatchFilter
-          --struct kloudlite.io/pkg/repos.CursorPagination
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubInstallation
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabProject
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabGroup
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubListRepository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubSearchRepository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitBranch
+          --struct github.com/kloudlite/api/pkg/types.Pagination
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Credential
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Repository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Digest
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Build
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildCacheKey
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql

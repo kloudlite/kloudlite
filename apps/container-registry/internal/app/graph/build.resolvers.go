@@ -17,7 +17,7 @@ import (
 )
 
 // CreatedBy is the resolver for the createdBy field.
-func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
@@ -38,7 +38,7 @@ func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (
 }
 
 // CredUser is the resolver for the credUser field.
-func (r *buildResolver) CredUser(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *buildResolver) CredUser(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
@@ -78,7 +78,7 @@ func (r *buildResolver) ID(ctx context.Context, obj *entities.Build) (string, er
 }
 
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
-func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
@@ -91,7 +91,7 @@ func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) 
 }
 
 // Source is the resolver for the source field.
-func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource, error) {
+func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSource, error) {
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
@@ -167,7 +167,7 @@ func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.G
 }
 
 // Status is the resolver for the status field.
-func (r *buildResolver) Status(ctx context.Context, obj *entities.Build) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus, error) {
+func (r *buildResolver) Status(ctx context.Context, obj *entities.Build) (model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus, error) {
 	if obj == nil {
 		return "", errors.Newf("build is nil")
 	}
@@ -185,7 +185,7 @@ func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (st
 }
 
 // Source is the resolver for the source field.
-func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error {
+func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data *model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error {
 	if obj == nil {
 		return errors.Newf("build is nil")
 	}
