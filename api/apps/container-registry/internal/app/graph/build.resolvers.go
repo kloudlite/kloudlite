@@ -13,20 +13,7 @@ import (
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
-	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 )
-
-// CreatedBy is the resolver for the createdBy field.
-func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("build is nil")
-	}
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.CreatedBy.UserEmail,
-		UserID:    string(obj.CreatedBy.UserId),
-		UserName:  obj.CredUser.UserName,
-	}, nil
-}
 
 // CreationTime is the resolver for the creationTime field.
 func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (string, error) {
@@ -37,30 +24,13 @@ func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
 
-// CredUser is the resolver for the credUser field.
-func (r *buildResolver) CredUser(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("build is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.CredUser.UserEmail,
-		UserID:    string(obj.CredUser.UserId),
-		UserName:  obj.CredUser.UserName,
-	}, nil
-}
-
 // ErrorMessages is the resolver for the errorMessages field.
 func (r *buildResolver) ErrorMessages(ctx context.Context, obj *entities.Build) (map[string]interface{}, error) {
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
 
-	m := make(map[string]any)
-	if obj.ErrorMessages == nil {
-		return m, nil
-	}
-
+	var m map[string]any
 	if err := fn.JsonConversion(obj.ErrorMessages, &m); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -77,31 +47,17 @@ func (r *buildResolver) ID(ctx context.Context, obj *entities.Build) (string, er
 	return string(obj.Id), nil
 }
 
-// LastUpdatedBy is the resolver for the lastUpdatedBy field.
-func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPICommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, errors.Newf("build is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.LastUpdatedBy.UserEmail,
-		UserID:    string(obj.LastUpdatedBy.UserId),
-		UserName:  obj.CredUser.UserName,
-	}, nil
-}
-
 // Source is the resolver for the source field.
 func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSource, error) {
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
+	var m model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGitSource
+	if err := fn.JsonConversion(obj.Source, &m); err != nil {
+		return nil, err
+	}
 
-	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource{
-		Branch:     obj.Source.Branch,
-		Provider:   model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(obj.Source.Provider),
-		Repository: obj.Source.Repository,
-		WebhookID:  obj.Source.WebhookId,
-	}, nil
+	return &m, nil
 }
 
 // Spec is the resolver for the spec field.
@@ -109,61 +65,11 @@ func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.G
 	if obj == nil {
 		return nil, errors.Newf("build is nil")
 	}
-
-	getBuildOptions := func() (*model.GithubComKloudliteOperatorApisDistributionV1BuildOptions, error) {
-
-		if obj.Spec.BuildOptions == nil {
-			return nil, nil
-		}
-
-		bo := obj.Spec.BuildOptions
-
-		buildArgs := make(map[string]any)
-		if bo.BuildArgs != nil {
-			if err := fn.JsonConversion(bo.BuildArgs, &buildArgs); err != nil {
-				return nil, errors.NewE(err)
-			}
-		}
-
-		buildCtxs := make(map[string]any)
-		if bo.BuildArgs != nil {
-			if err := fn.JsonConversion(bo.BuildContexts, &buildCtxs); err != nil {
-				return nil, errors.NewE(err)
-			}
-		}
-
-		return &model.GithubComKloudliteOperatorApisDistributionV1BuildOptions{
-			BuildArgs:         buildArgs,
-			BuildContexts:     buildCtxs,
-			ContextDir:        bo.ContextDir,
-			DockerfileContent: bo.DockerfileContent,
-			DockerfilePath:    bo.DockerfilePath,
-			TargetPlatforms:   bo.TargetPlatforms,
-		}, nil
+	var m model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, err
 	}
-
-	bo, err := getBuildOptions()
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	spec := obj.Spec
-
-	return &model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec{
-		AccountName:  spec.AccountName,
-		BuildOptions: bo,
-		CacheKeyName: spec.CacheKeyName,
-		Registry: &model.GithubComKloudliteOperatorApisDistributionV1Registry{
-			Repo: &model.GithubComKloudliteOperatorApisDistributionV1Repo{
-				Name: spec.Registry.Repo.Name,
-				Tags: spec.Registry.Repo.Tags,
-			},
-		},
-		Resource: &model.GithubComKloudliteOperatorApisDistributionV1Resource{
-			CPU:        spec.Resource.Cpu,
-			MemoryInMb: spec.Resource.MemoryInMb,
-		},
-	}, nil
+	return &m, nil
 }
 
 // Status is the resolver for the status field.
@@ -172,7 +78,7 @@ func (r *buildResolver) Status(ctx context.Context, obj *entities.Build) (model.
 		return "", errors.Newf("build is nil")
 	}
 
-	return model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus(obj.Status), nil
+	return model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesBuildStatus(obj.Status), nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -190,13 +96,7 @@ func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data 
 		return errors.Newf("build is nil")
 	}
 
-	obj.Source = entities.GitSource{
-		Repository: data.Repository,
-		Branch:     data.Branch,
-		Provider:   entities.GitProvider(data.Provider),
-	}
-
-	return nil
+	return fn.JsonConversion(data, &obj.Source)
 }
 
 // Spec is the resolver for the spec field.
@@ -205,55 +105,7 @@ func (r *buildInResolver) Spec(ctx context.Context, obj *entities.Build, data *m
 		return errors.Newf("build is nil")
 	}
 
-	getBuildOptions := func() (*dbv1.BuildOptions, error) {
-
-		if data.BuildOptions == nil {
-			return nil, nil
-		}
-
-		bo := data.BuildOptions
-
-		buildArgs := make(map[string]string)
-		if bo.BuildArgs != nil {
-			if err := fn.JsonConversion(bo.BuildArgs, &buildArgs); err != nil {
-				return nil, errors.NewE(err)
-			}
-		}
-
-		buildCtxs := make(map[string]string)
-		if bo.BuildArgs != nil {
-			if err := fn.JsonConversion(bo.BuildContexts, &buildCtxs); err != nil {
-				return nil, errors.NewE(err)
-			}
-		}
-
-		return &dbv1.BuildOptions{
-			BuildArgs:         buildArgs,
-			BuildContexts:     buildCtxs,
-			ContextDir:        bo.ContextDir,
-			DockerfileContent: bo.DockerfileContent,
-			DockerfilePath:    bo.DockerfilePath,
-			TargetPlatforms:   bo.TargetPlatforms,
-		}, nil
-	}
-
-	bo, err := getBuildOptions()
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	obj.Spec = dbv1.BuildRunSpec{
-		CacheKeyName: data.CacheKeyName,
-		Registry: dbv1.Registry{
-			Repo: dbv1.Repo{Name: data.Registry.Repo.Name, Tags: data.Registry.Repo.Tags},
-		},
-		BuildOptions: bo,
-		Resource: dbv1.Resource{
-			Cpu:        data.Resource.CPU,
-			MemoryInMb: data.Resource.MemoryInMb,
-		},
-	}
-	return nil
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Build returns generated.BuildResolver implementation.

@@ -3,9 +3,10 @@ package domain
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"regexp"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -20,7 +21,6 @@ const (
 )
 
 func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname string) (string, error) {
-
 	if username == KL_ADMIN {
 		return accountname, nil
 	}
@@ -54,7 +54,6 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 }
 
 func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
-
 	if username == KL_ADMIN {
 		return "", errors.Newf("invalid credential name, %s is reserved", KL_ADMIN)
 	}
@@ -66,7 +65,6 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 		},
 		Action: string(iamT.GetAccount),
 	})
-
 	if err != nil {
 		return "", errors.NewE(err)
 	}
@@ -87,13 +85,11 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 	}
 
 	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", c.Expiration.Value, c.Expiration.Unit))
-
 	if err != nil {
 		return "", errors.NewE(err)
 	}
 
 	token, err := admin.GenerateToken(c.UserName, ctx.AccountName, string(c.Access), i, d.envs.RegistrySecretKey+c.TokenKey)
-
 	if err != nil {
 		return "", errors.NewE(err)
 	}
@@ -109,7 +105,6 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 		},
 		Action: string(iamT.GetAccount),
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -147,7 +142,6 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 
 // CreateCredential implements Domain.
 func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credential) (*entities.Credential, error) {
-
 	pattern := `^([a-z])[a-z0-9_]+$`
 
 	re := regexp.MustCompile(pattern)
@@ -179,7 +173,6 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 
 // ListCredentials implements Domain.
 func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Credential], error) {
-
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
@@ -187,7 +180,6 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 		},
 		Action: string(iamT.GetAccount),
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -202,7 +194,6 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 
 // DeleteCredential implements Domain.
 func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
-
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
@@ -210,7 +201,6 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 		},
 		Action: string(iamT.UpdateAccount),
 	})
-
 	if err != nil {
 		return errors.NewE(err)
 	}

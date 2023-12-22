@@ -10,6 +10,7 @@ import (
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 // Account is the resolver for the account field.
@@ -18,13 +19,12 @@ func (r *githubInstallationResolver) Account(ctx context.Context, obj *entities.
 		return nil, errors.Newf("Account: obj is nil")
 	}
 
-	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount{
-		AvatarURL: obj.Account.AvatarURL,
-		ID:        getInt(obj.Account.ID),
-		Login:     obj.Account.Login,
-		NodeID:    obj.Account.NodeID,
-		Type:      obj.Account.Type,
-	}, nil
+	var m model.GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubUserAccount
+	if err := fn.JsonConversion(obj.Account, &m); err != nil {
+		return nil, err
+	}
+
+	return &m, nil
 }
 
 // GithubInstallation returns generated.GithubInstallationResolver implementation.
@@ -33,16 +33,3 @@ func (r *Resolver) GithubInstallation() generated.GithubInstallationResolver {
 }
 
 type githubInstallationResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func getInt(i *int64) *int {
-	if i == nil {
-		return nil
-	}
-	return new(int)
-}
