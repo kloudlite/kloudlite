@@ -245,8 +245,8 @@ type JsonPatch struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".spec.region",name=Region,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.intercepted",name=Intercepted,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -260,7 +260,7 @@ type App struct {
 	// +kubebuilder:default=true
 	Enabled *bool `json:"enabled,omitempty"`
 
-  Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (app *App) EnsureGVK() {

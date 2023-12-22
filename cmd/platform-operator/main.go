@@ -26,8 +26,5 @@ func main() {
 	// kloudlite cluster management
 	clusters.RegisterInto(mgr)
 
-	// kloudlite resource status updates
-	// resourceWatcher.RegisterInto(mgr, false)
-
 	mgr.Start()
 }
