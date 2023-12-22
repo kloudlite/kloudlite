@@ -17,6 +17,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// UserID is the resolver for the userId field.
+func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
+	if obj == nil {
+		return "", errors.Newf("createdOrUpdatedBy is nil")
+	}
+	return string(obj.UserId), nil
+}
+
 // Checks is the resolver for the checks field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
@@ -60,14 +68,6 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Re
 		return nil, errors.NewE(err)
 	}
 	return m, nil
-}
-
-// UserID is the resolver for the userId field.
-func (r *kloudlite__io___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
-	if obj == nil {
-		return "", errors.Newf("createdOrUpdatedBy is nil")
-	}
-	return string(obj.UserId), nil
 }
 
 // Annotations is the resolver for the annotations field.
@@ -135,14 +135,14 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return fn.JsonConversion(data, &obj.Labels)
 }
 
+// Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
+	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
+}
+
 // Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
 func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
 	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
-}
-
-// Kloudlite__io___common__CreatedOrUpdatedBy returns generated.Kloudlite__io___common__CreatedOrUpdatedByResolver implementation.
-func (r *Resolver) Kloudlite__io___common__CreatedOrUpdatedBy() generated.Kloudlite__io___common__CreatedOrUpdatedByResolver {
-	return &kloudlite__io___common__CreatedOrUpdatedByResolver{r}
 }
 
 // Metadata returns generated.MetadataResolver implementation.
@@ -151,7 +151,7 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
+type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
-type kloudlite__io___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

@@ -7,21 +7,10 @@ import (
 	"io"
 	"strconv"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-type BYOCClusterEdge struct {
-	Cursor string                `json:"cursor"`
-	Node   *entities.BYOCCluster `json:"node"`
-}
-
-type BYOCClusterPaginatedRecords struct {
-	Edges      []*BYOCClusterEdge `json:"edges"`
-	PageInfo   *PageInfo          `json:"pageInfo"`
-	TotalCount int                `json:"totalCount"`
-}
 
 type BuildRunEdge struct {
 	Cursor string             `json:"cursor"`
@@ -75,6 +64,28 @@ type DomainEntryPaginatedRecords struct {
 type EncodedValue struct {
 	Value    string `json:"value"`
 	Encoding string `json:"encoding"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials struct {
+	AccessKey                  *string `json:"accessKey,omitempty"`
+	AwsAccountID               *string `json:"awsAccountId,omitempty"`
+	CfParamExternalID          *string `json:"cfParamExternalID,omitempty"`
+	CfParamInstanceProfileName *string `json:"cfParamInstanceProfileName,omitempty"`
+	CfParamRoleName            *string `json:"cfParamRoleName,omitempty"`
+	CfParamStackName           *string `json:"cfParamStackName,omitempty"`
+	CfParamTrustedArn          *string `json:"cfParamTrustedARN,omitempty"`
+	SecretKey                  *string `json:"secretKey,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn struct {
+	AccessKey    *string `json:"accessKey,omitempty"`
+	AwsAccountID *string `json:"awsAccountId,omitempty"`
+	SecretKey    *string `json:"secretKey,omitempty"`
+}
+
+type GithubComKloudliteAPIPkgTypesEncodedString struct {
+	Encoding string `json:"encoding"`
+	Value    string `json:"value"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfig struct {
@@ -165,28 +176,6 @@ type GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn struct {
 	CPUNode *GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn `json:"cpuNode,omitempty"`
 	GpuNode *GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn `json:"gpuNode,omitempty"`
 	Nodes   map[string]interface{}                                    `json:"nodes,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisClustersV1BYOCSpec struct {
-	AccountName        string   `json:"accountName"`
-	DisplayName        *string  `json:"displayName,omitempty"`
-	IncomingKafkaTopic string   `json:"incomingKafkaTopic"`
-	IngressClasses     []string `json:"ingressClasses,omitempty"`
-	Provider           string   `json:"provider"`
-	PublicIps          []string `json:"publicIps,omitempty"`
-	Region             string   `json:"region"`
-	StorageClasses     []string `json:"storageClasses,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisClustersV1BYOCSpecIn struct {
-	AccountName        string   `json:"accountName"`
-	DisplayName        *string  `json:"displayName,omitempty"`
-	IncomingKafkaTopic string   `json:"incomingKafkaTopic"`
-	IngressClasses     []string `json:"ingressClasses,omitempty"`
-	Provider           string   `json:"provider"`
-	PublicIps          []string `json:"publicIps,omitempty"`
-	Region             string   `json:"region"`
-	StorageClasses     []string `json:"storageClasses,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys struct {
@@ -371,17 +360,17 @@ type GithubComKloudliteOperatorApisDistributionV1ResourceIn struct {
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	AccountName string                                           `json:"accountName"`
-	ClusterName string                                           `json:"clusterName"`
-	DNS         *string                                          `json:"dns,omitempty"`
-	Ports       []*GithubComKloudliteOperatorApisWireguardV1Port `json:"ports,omitempty"`
+	AccountName     string                                           `json:"accountName"`
+	ClusterName     string                                           `json:"clusterName"`
+	DeviceNamespace *string                                          `json:"deviceNamespace,omitempty"`
+	Ports           []*GithubComKloudliteOperatorApisWireguardV1Port `json:"ports,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
-	AccountName string                                             `json:"accountName"`
-	ClusterName string                                             `json:"clusterName"`
-	DNS         *string                                            `json:"dns,omitempty"`
-	Ports       []*GithubComKloudliteOperatorApisWireguardV1PortIn `json:"ports,omitempty"`
+	AccountName     string                                             `json:"accountName"`
+	ClusterName     string                                             `json:"clusterName"`
+	DeviceNamespace *string                                            `json:"deviceNamespace,omitempty"`
+	Ports           []*GithubComKloudliteOperatorApisWireguardV1PortIn `json:"ports,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1Port struct {
@@ -463,21 +452,21 @@ type K8sIoAPICoreV1PersistentVolumeClaimSpecIn struct {
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatus struct {
-	AccessModes        []string                                        `json:"accessModes,omitempty"`
-	AllocatedResources map[string]interface{}                          `json:"allocatedResources,omitempty"`
-	Capacity           map[string]interface{}                          `json:"capacity,omitempty"`
-	Conditions         []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
-	Phase              *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
-	ResizeStatus       *string                                         `json:"resizeStatus,omitempty"`
+	AccessModes               []string                                        `json:"accessModes,omitempty"`
+	AllocatedResources        map[string]interface{}                          `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                  map[string]interface{}                          `json:"capacity,omitempty"`
+	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
+	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
-	AccessModes        []string                                          `json:"accessModes,omitempty"`
-	AllocatedResources map[string]interface{}                            `json:"allocatedResources,omitempty"`
-	Capacity           map[string]interface{}                            `json:"capacity,omitempty"`
-	Conditions         []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
-	Phase              *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
-	ResizeStatus       *string                                           `json:"resizeStatus,omitempty"`
+	AccessModes               []string                                          `json:"accessModes,omitempty"`
+	AllocatedResources        map[string]interface{}                            `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                  map[string]interface{}                            `json:"capacity,omitempty"`
+	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
+	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1ResourceClaim struct {
@@ -554,33 +543,6 @@ type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn struct {
 	Key      string                                              `json:"key"`
 	Operator K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator `json:"operator"`
 	Values   []string                                            `json:"values,omitempty"`
-}
-
-type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials struct {
-	AccessKey                  *string `json:"accessKey,omitempty"`
-	AwsAccountID               *string `json:"awsAccountId,omitempty"`
-	CfParamExternalID          *string `json:"cfParamExternalID,omitempty"`
-	CfParamInstanceProfileName *string `json:"cfParamInstanceProfileName,omitempty"`
-	CfParamRoleName            *string `json:"cfParamRoleName,omitempty"`
-	CfParamStackName           *string `json:"cfParamStackName,omitempty"`
-	CfParamTrustedArn          *string `json:"cfParamTrustedARN,omitempty"`
-	SecretKey                  *string `json:"secretKey,omitempty"`
-}
-
-type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn struct {
-	AccessKey    *string `json:"accessKey,omitempty"`
-	AwsAccountID *string `json:"awsAccountId,omitempty"`
-	SecretKey    *string `json:"secretKey,omitempty"`
-}
-
-type KloudliteIoAppsInfraInternalEntitiesHelmStatusVal struct {
-	IsReady *bool  `json:"isReady,omitempty"`
-	Message string `json:"message"`
-}
-
-type KloudliteIoPkgTypesEncodedString struct {
-	Encoding string `json:"encoding"`
-	Value    string `json:"value"`
 }
 
 type NodeEdge struct {

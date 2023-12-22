@@ -1,14 +1,14 @@
 type Account @shareable {
   apiVersion: String!
   contactEmail: String!
-  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   description: String
   displayName: String!
   id: String!
   isActive: Boolean
   kind: String!
-  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")

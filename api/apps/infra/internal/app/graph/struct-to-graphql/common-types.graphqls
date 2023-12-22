@@ -1,3 +1,34 @@
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials @shareable {
+  accessKey: String
+  awsAccountId: String
+  cfParamExternalID: String
+  cfParamInstanceProfileName: String
+  cfParamRoleName: String
+  cfParamStackName: String
+  cfParamTrustedARN: String
+  secretKey: String
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type Github__com___kloudlite___api___pkg___types__EncodedString @shareable {
+  encoding: String!
+  value: String!
+}
+
+type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
+  action: Github__com___kloudlite___api___pkg___types__SyncStatusAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncStatusState!
+  syncScheduledAt: Date
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
@@ -48,17 +79,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfi
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
   nodes: Map
   spotFleetTaggingRoleName: String!
-}
-
-type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec @shareable {
-  accountName: String!
-  displayName: String
-  incomingKafkaTopic: String!
-  ingressClasses: [String!]
-  provider: String!
-  publicIps: [String!]
-  region: String!
-  storageClasses: [String!]
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys @shareable {
@@ -181,7 +201,7 @@ type Github__com___kloudlite___operator___apis___distribution___v1__Resource @sh
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
   accountName: String!
   clusterName: String!
-  dns: String
+  deviceNamespace: String
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
 
@@ -239,10 +259,10 @@ type K8s__io___api___core___v1__PersistentVolumeClaimSpec @shareable {
 type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
   accessModes: [String!]
   allocatedResources: Map
+  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
-  resizeStatus: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim @shareable {
@@ -283,42 +303,6 @@ type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement @
   values: [String!]
 }
 
-type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials @shareable {
-  accessKey: String
-  awsAccountId: String
-  cfParamExternalID: String
-  cfParamInstanceProfileName: String
-  cfParamRoleName: String
-  cfParamStackName: String
-  cfParamTrustedARN: String
-  secretKey: String
-}
-
-type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal @shareable {
-  isReady: Boolean
-  message: String!
-}
-
-type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
-  userEmail: String!
-  userId: String!
-  userName: String!
-}
-
-type Kloudlite__io___pkg___types__EncodedString @shareable {
-  encoding: String!
-  value: String!
-}
-
-type Kloudlite__io___pkg___types__SyncStatus @shareable {
-  action: Kloudlite__io___pkg___types__SyncStatusAction!
-  error: String
-  lastSyncedAt: Date
-  recordVersion: Int!
-  state: Kloudlite__io___pkg___types__SyncStatusState!
-  syncScheduledAt: Date
-}
-
 type Metadata @shareable {
   annotations: Map
   creationTimestamp: Date!
@@ -334,6 +318,12 @@ type PageInfo @shareable {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  accessKey: String
+  awsAccountId: String
+  secretKey: String
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
@@ -372,17 +362,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConf
   cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
   nodes: Map
-}
-
-input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
-  accountName: String!
-  displayName: String
-  incomingKafkaTopic: String!
-  ingressClasses: [String!]
-  provider: String!
-  publicIps: [String!]
-  region: String!
-  storageClasses: [String!]
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
@@ -452,7 +431,7 @@ input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   accountName: String!
   clusterName: String!
-  dns: String
+  deviceNamespace: String
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
 
@@ -508,10 +487,10 @@ input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
 input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   accessModes: [String!]
   allocatedResources: Map
+  allocatedResourceStatuses: Map
   capacity: Map
   conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
-  resizeStatus: String
 }
 
 input K8s__io___api___core___v1__ResourceClaimIn {
@@ -552,17 +531,24 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementI
   values: [String!]
 }
 
-input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
-  accessKey: String
-  awsAccountId: String
-  secretKey: String
-}
-
 input MetadataIn {
   annotations: Map
   labels: Map
   name: String!
   namespace: String
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncStatusAction {
+  APPLY
+  DELETE
+}
+
+enum Github__com___kloudlite___api___pkg___types__SyncStatusState {
+  APPLIED_AT_AGENT
+  ERRORED_AT_AGENT
+  IDLE
+  IN_QUEUE
+  RECEIVED_UPDATE_FROM_AGENT
 }
 
 enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType {
@@ -610,18 +596,5 @@ enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator {
   Exists
   In
   NotIn
-}
-
-enum Kloudlite__io___pkg___types__SyncStatusAction {
-  APPLY
-  DELETE
-}
-
-enum Kloudlite__io___pkg___types__SyncStatusState {
-  APPLIED_AT_AGENT
-  ERRORED_AT_AGENT
-  IDLE
-  IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
 }
 

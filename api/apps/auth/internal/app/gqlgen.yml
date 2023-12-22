@@ -35,14 +35,16 @@ resolver:
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "kloudlite.io/pkg/errors"
-  # - "kloudlite.io/apps/wireguard/internal/domain/entities"
+  - "github.com/kloudlite/api/pkg/errors"
+  # - "github.com/kloudlite/api/apps/wireguard/internal/domain/entities"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
 # The first line in each type will be used as defaults for resolver arguments and
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
+
+skip_validation: true
 
 models:
   Json:
@@ -53,7 +55,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int

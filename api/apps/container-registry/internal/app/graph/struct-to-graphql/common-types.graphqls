@@ -1,3 +1,56 @@
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__Expiration @shareable {
+  unit: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit!
+  value: Int!
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource @shareable {
+  branch: String!
+  provider: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider!
+  repository: String!
+  webhookId: Int
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubRepository @shareable {
+  archived: Boolean
+  cloneUrl: String
+  createdAt: Date
+  defaultBranch: String
+  description: String
+  disabled: Boolean
+  fullName: String
+  gitignoreTemplate: String
+  gitUrl: String
+  htmlUrl: String
+  id: Int
+  language: String
+  masterBranch: String
+  mirrorUrl: String
+  name: String
+  node_id: String
+  permissions: Map
+  private: Boolean
+  pushedAt: Date
+  size: Int
+  team_id: Int
+  updatedAt: Date
+  url: String
+  visibility: String
+}
+
+type Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccount @shareable {
+  avatarUrl: String
+  id: Int
+  login: String
+  nodeId: String
+  type: String
+}
+
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
   buildArgs: Map
   buildContexts: Map
@@ -29,64 +82,30 @@ type Github__com___kloudlite___operator___apis___distribution___v1__Resource @sh
   memoryInMb: Int!
 }
 
-type Kloudlite__io___apps___container____registry___internal___domain___entities__Expiration @shareable {
-  unit: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit!
-  value: Int!
-}
-
-type Kloudlite__io___apps___container____registry___internal___domain___entities__GitSource @shareable {
-  branch: String!
-  provider: Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider!
-  repository: String!
-  webhookId: Int
-}
-
-type Kloudlite__io___apps___container____registry___internal___domain___entities__GithubRepository @shareable {
-  archived: Boolean
-  cloneUrl: String
-  createdAt: Date
-  defaultBranch: String
-  description: String
-  disabled: Boolean
-  fullName: String
-  gitignoreTemplate: String
-  gitUrl: String
-  htmlUrl: String
-  id: Int
-  language: String
-  masterBranch: String
-  mirrorUrl: String
-  name: String
-  node_id: String
-  permissions: Map
-  private: Boolean
-  pushedAt: Date
-  size: Int
-  team_id: Int
-  updatedAt: Date
-  url: String
-  visibility: String
-}
-
-type Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccount @shareable {
-  avatarUrl: String
-  id: Int
-  login: String
-  nodeId: String
-  type: String
-}
-
-type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
-  userEmail: String!
-  userId: String!
-  userName: String!
-}
-
 type PageInfo @shareable {
   endCursor: String
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationIn {
+  unit: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit!
+  value: Int!
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn {
+  branch: String!
+  provider: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider!
+  repository: String!
+}
+
+input Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GithubUserAccountIn {
+  avatarUrl: String
+  id: Int
+  login: String
+  nodeId: String
+  type: String
 }
 
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
@@ -119,26 +138,7 @@ input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn 
   memoryInMb: Int!
 }
 
-input Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationIn {
-  unit: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit!
-  value: Int!
-}
-
-input Kloudlite__io___apps___container____registry___internal___domain___entities__GitSourceIn {
-  branch: String!
-  provider: Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider!
-  repository: String!
-}
-
-input Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccountIn {
-  avatarUrl: String
-  id: Int
-  login: String
-  nodeId: String
-  type: String
-}
-
-enum Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus {
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus {
   error
   failed
   idle
@@ -148,7 +148,7 @@ enum Kloudlite__io___apps___container____registry___internal___domain___entities
   success
 }
 
-enum Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit {
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__ExpirationUnit {
   d
   h
   m
@@ -156,12 +156,12 @@ enum Kloudlite__io___apps___container____registry___internal___domain___entities
   y
 }
 
-enum Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider {
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitProvider {
   github
   gitlab
 }
 
-enum Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess {
+enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__RepoAccess {
   read
   read_write
 }

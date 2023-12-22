@@ -14,10 +14,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
-	gqlparser "github.com/vektah/gqlparser/v2"
-	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
 	"github.com/kloudlite/api/pkg/repos"
+	gqlparser "github.com/vektah/gqlparser/v2"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -726,7 +726,7 @@ func (ec *executionContext) field_Entity_findUserByID_args(ctx context.Context, 
 	var arg0 repos.ID
 	if tmp, ok := rawArgs["id"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, tmp)
+		arg0, err = ec.unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1164,7 +1164,7 @@ func (ec *executionContext) _Entity_findUserByID(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1350,7 +1350,7 @@ func (ec *executionContext) _Mutation_auth_login(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_auth_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1414,7 +1414,7 @@ func (ec *executionContext) _Mutation_auth_signup(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Session)
 	fc.Result = res
-	return ec.marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalOSession2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_auth_signup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1525,7 +1525,7 @@ func (ec *executionContext) _Mutation_auth_setMetadata(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_auth_setMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1604,7 +1604,7 @@ func (ec *executionContext) _Mutation_auth_clearMetadata(ctx context.Context, fi
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_auth_clearMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1672,7 +1672,7 @@ func (ec *executionContext) _Mutation_auth_verifyEmail(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Session)
 	fc.Result = res
-	return ec.marshalNSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalNSession2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_auth_verifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2003,7 +2003,7 @@ func (ec *executionContext) _Mutation_oAuth_login(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Session)
 	fc.Result = res
-	return ec.marshalNSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
+	return ec.marshalNSession2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_oAuth_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2210,7 +2210,7 @@ func (ec *executionContext) _Query_auth_me(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_auth_me(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2275,7 +2275,7 @@ func (ec *executionContext) _Query_auth_findByEmail(ctx context.Context, field g
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_auth_findByEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2406,7 +2406,7 @@ func (ec *executionContext) _Query_auth_getRemoteLogin(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.RemoteLogin)
 	fc.Result = res
-	return ec.marshalORemoteLogin2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐRemoteLogin(ctx, field.Selections, res)
+	return ec.marshalORemoteLogin2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐRemoteLogin(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_auth_getRemoteLogin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2464,7 +2464,7 @@ func (ec *executionContext) _Query_auth_listOAuthProviders(ctx context.Context, 
 	}
 	res := resTmp.([]*model.OAuthProviderStatus)
 	fc.Result = res
-	return ec.marshalOOAuthProviderStatus2ᚕᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatusᚄ(ctx, field.Selections, res)
+	return ec.marshalOOAuthProviderStatus2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatusᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_auth_listOAuthProviders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2831,7 +2831,7 @@ func (ec *executionContext) _Session_id(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Session_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2875,7 +2875,7 @@ func (ec *executionContext) _Session_userId(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Session_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3051,7 +3051,7 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 	}
 	res := resTmp.(repos.ID)
 	fc.Result = res
-	return ec.marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6312,13 +6312,13 @@ func (ec *executionContext) marshalNDate2string(ctx context.Context, sel ast.Sel
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
+func (ec *executionContext) unmarshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx context.Context, v interface{}) (repos.ID, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := repos.ID(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2kloudliteᚗioᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
+func (ec *executionContext) marshalNID2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐID(ctx context.Context, sel ast.SelectionSet, v repos.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -6349,7 +6349,7 @@ func (ec *executionContext) marshalNJson2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) marshalNOAuthProviderStatus2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatus(ctx context.Context, sel ast.SelectionSet, v *model.OAuthProviderStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNOAuthProviderStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatus(ctx context.Context, sel ast.SelectionSet, v *model.OAuthProviderStatus) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6359,11 +6359,11 @@ func (ec *executionContext) marshalNOAuthProviderStatus2ᚖkloudliteᚗioᚋapps
 	return ec._OAuthProviderStatus(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSession2kloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v model.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2githubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v model.Session) graphql.Marshaler {
 	return ec._Session(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
+func (ec *executionContext) marshalNSession2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6403,11 +6403,11 @@ func (ec *executionContext) marshalNURL2string(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalNUser2kloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -6822,7 +6822,7 @@ func (ec *executionContext) marshalOJson2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) marshalOOAuthProviderStatus2ᚕᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OAuthProviderStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOOAuthProviderStatus2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OAuthProviderStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6849,7 +6849,7 @@ func (ec *executionContext) marshalOOAuthProviderStatus2ᚕᚖkloudliteᚗioᚋa
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOAuthProviderStatus2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatus(ctx, sel, v[i])
+			ret[i] = ec.marshalNOAuthProviderStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐOAuthProviderStatus(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6885,14 +6885,14 @@ func (ec *executionContext) marshalOProviderDetail2map(ctx context.Context, sel 
 	return res
 }
 
-func (ec *executionContext) marshalORemoteLogin2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐRemoteLogin(ctx context.Context, sel ast.SelectionSet, v *model.RemoteLogin) graphql.Marshaler {
+func (ec *executionContext) marshalORemoteLogin2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐRemoteLogin(ctx context.Context, sel ast.SelectionSet, v *model.RemoteLogin) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._RemoteLogin(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
+func (ec *executionContext) marshalOSession2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx context.Context, sel ast.SelectionSet, v *model.Session) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6925,7 +6925,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

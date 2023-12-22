@@ -1,3 +1,9 @@
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__AccountSpec @shareable {
   targetNamespace: String
 }
@@ -28,12 +34,6 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
-type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
-  userEmail: String!
-  userId: String!
-  userName: String!
-}
-
 type Metadata @shareable {
   annotations: Map
   creationTimestamp: Date!
@@ -62,7 +62,7 @@ input MetadataIn {
   namespace: String
 }
 
-enum Kloudlite__io___apps___iam___types__Role {
+enum Github__com___kloudlite___api___apps___iam___types__Role {
   account_admin
   account_member
   account_owner

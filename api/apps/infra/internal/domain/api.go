@@ -30,16 +30,6 @@ type Domain interface {
 	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 
-	CreateBYOCCluster(ctx InfraContext, byocCluster entities.BYOCCluster) (*entities.BYOCCluster, error)
-	UpdateBYOCCluster(ctx InfraContext, byocCluster entities.BYOCCluster) (*entities.BYOCCluster, error)
-	DeleteBYOCCluster(ctx InfraContext, name string) error
-
-	ListBYOCClusters(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BYOCCluster], error)
-	GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error)
-
-	OnDeleteBYOCClusterMessage(ctx InfraContext, byocCluster entities.BYOCCluster) error
-	OnUpdateBYOCClusterMessage(ctx InfraContext, byocCluster entities.BYOCCluster) error
-
 	CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	UpdateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	DeleteProviderSecret(ctx InfraContext, secretName string) error

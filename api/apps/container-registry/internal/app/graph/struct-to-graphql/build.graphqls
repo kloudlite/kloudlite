@@ -1,16 +1,16 @@
 type Build @shareable {
-  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  credUser: Kloudlite__io___common__CreatedOrUpdatedBy!
+  credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   errorMessages: Map!
   id: String!
-  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
-  source: Kloudlite__io___apps___container____registry___internal___domain___entities__GitSource!
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource!
   spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec!
-  status: Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus!
+  status: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus!
   updateTime: Date!
 }
 
@@ -27,7 +27,7 @@ type BuildPaginatedRecords @shareable {
 
 input BuildIn {
   name: String!
-  source: Kloudlite__io___apps___container____registry___internal___domain___entities__GitSourceIn!
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn!
   spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn!
 }
 

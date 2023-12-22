@@ -11,12 +11,12 @@ type Invitation @shareable {
   updateTime: Date!
   userEmail: String
   userName: String
-  userRole: Kloudlite__io___apps___iam___types__Role!
+  userRole: Github__com___kloudlite___api___apps___iam___types__Role!
 }
 
 input InvitationIn {
   userEmail: String
   userName: String
-  userRole: Kloudlite__io___apps___iam___types__Role!
+  userRole: Github__com___kloudlite___api___apps___iam___types__Role!
 }
 
