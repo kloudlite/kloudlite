@@ -1,0 +1,44 @@
+name: build-gateway-image
+
+on:
+  repository_dispatch:
+    types:
+      - webhook
+  push:
+    paths:
+      - "apps/gateway/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  container-build:
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          branch_name=${GITHUB_REF#refs/heads/}
+          version_string="v${branch_name#release-}-nightly"
+          
+          cd apps/gateway
+          docker buildx build -t "ghcr.io/kloudlite/api/gateway:$version_string" -t "ghcr.io/kloudlite/api/gateway:commit-${GITHUB_SHA}" . --push
