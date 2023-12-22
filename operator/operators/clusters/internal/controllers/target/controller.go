@@ -157,6 +157,14 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 		obj.Spec.Output.JobNamespace = obj.Namespace
 	}
 
+	ann := obj.GetAnnotations()
+	annKey := "kloudlite.io/cluster.job-ref"
+	if _, ok := ann[annKey]; !ok {
+		hasUpdated = true
+		fn.MapSet(ann, annKey, fmt.Sprintf("%s/%s", obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName))
+		obj.SetAnnotations(ann)
+	}
+
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(checkName, check, err.Error())
