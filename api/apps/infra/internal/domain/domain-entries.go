@@ -43,6 +43,9 @@ func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	if err = d.natCli.Conn.Publish(d.domainResUpdateSubject(nde), []byte("Added")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", d.domainResUpdateSubject(nde))
+	}
 
 	return nde, nil
 }
@@ -68,6 +71,9 @@ func (d *domain) UpdateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	if err = d.natCli.Conn.Publish(d.domainResUpdateSubject(newDe), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", d.domainResUpdateSubject(newDe))
+	}
 	return newDe, nil
 }
 
@@ -80,7 +86,13 @@ func (d *domain) DeleteDomainEntry(ctx InfraContext, domainName string) error {
 		return errors.NewE(err)
 	}
 
-	return d.domainEntryRepo.DeleteById(ctx, entry.Id)
+	if err = d.domainEntryRepo.DeleteById(ctx, entry.Id); err != nil {
+		return err
+	}
+	if err = d.natCli.Conn.Publish(d.domainResUpdateSubject(entry), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", d.domainResUpdateSubject(entry))
+	}
+	return err
 }
 
 func (d *domain) findDomainEntry(ctx context.Context, accountName string, domainName string) (*entities.DomainEntry, error) {
