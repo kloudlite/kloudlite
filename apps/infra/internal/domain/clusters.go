@@ -244,7 +244,9 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Added"))
+	if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(nCluster), []byte("Added")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
+	}
 
 	return nCluster, nil
 }
@@ -379,11 +381,12 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Updated"))
-	d.natCli.Conn.Publish(cluster.Cluster.Name, []byte("Updated"))
-
+	if err:=d.natCli.Conn.Publish(d.clusterResUpdateSubject(&cluster), []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
+	}
 	return uCluster, nil
 }
+
 
 func (d *domain) readClusterK8sResource(ctx InfraContext, namespace string, name string) (cluster *clustersv1.Cluster, found bool, err error) {
 	var clus entities.Cluster
@@ -415,8 +418,9 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 
 		deletedCluster := d.deleteK8sResource(ctx, &upC.Cluster)
 
-		d.natCli.Conn.Publish(c.Spec.AccountId, []byte("Deleted"))
-		d.natCli.Conn.Publish(name, []byte("Deleted"))
+		if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(c), []byte("Update")); err != nil {
+			d.logger.Errorf(err, "failed to publish message to account %q", c.Cluster.Spec.AccountId)
+		}
 
 		return deletedCluster
 	}
@@ -434,8 +438,9 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 		"metadata.name":      cluster.Name,
 		"metadata.namespace": accNs,
 	})
-	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Updated"))
-	d.natCli.Conn.Publish(cluster.Cluster.Name, []byte("Updated"))
+	if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(&cluster), []byte("Delete")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
+	}
 
 	return onDeletedClusterMessage
 }
@@ -462,8 +467,9 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	c.Status = cluster.Status
 
 	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
-	d.natCli.Conn.Publish(cluster.Cluster.Spec.AccountId, []byte("Updated"))
-	d.natCli.Conn.Publish(cluster.Cluster.Name, []byte("Updated"))
+	if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(c) , []byte("Updated")); err != nil {
+		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
+	}
 	return errors.NewE(err)
 }
 
