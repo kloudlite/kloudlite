@@ -41,4 +41,4 @@ jobs:
           version_string="v${branch_name#release-}-nightly"
           
           cd apps/gateway
-          docker buildx build -f ./Containerfile.local -t "ghcr.io/kloudlite/api/gateway:$version_string" -t "ghcr.io/kloudlite/api/gateway:commit-${GITHUB_SHA}" . --push
+          docker buildx build -t "ghcr.io/kloudlite/api/gateway:$version_string" -t "ghcr.io/kloudlite/api/gateway:commit-${GITHUB_SHA}" . --push
