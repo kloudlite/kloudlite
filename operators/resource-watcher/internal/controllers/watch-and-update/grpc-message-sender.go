@@ -89,20 +89,13 @@ func (g *grpcMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.Resour
 	}
 }
 
-func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger logging.Logger, runningOnTenant bool) (MessageSender, error) {
+func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env, logger logging.Logger) (MessageSender, error) {
 	msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
-
-	getAccessToken := func() string {
-		if runningOnTenant {
-			return ev.AccessToken
-		}
-		return ev.PlatformAccessToken
-	}
 
 	validationOut, err := msgDispatchCli.ValidateAccessToken(ctx, &messages.ValidateAccessTokenIn{
 		AccountName: ev.AccountName,
 		ClusterName: ev.ClusterName,
-		AccessToken: getAccessToken(),
+		AccessToken: ev.AccessToken,
 	})
 	if err != nil {
 		return nil, err
@@ -114,7 +107,7 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 	}
 
 	outgoingCtx := func() context.Context {
-		return metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", getAccessToken()))
+		return metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", ev.AccessToken))
 	}
 
 	getResourceMessagesCli := func() (messages.MessageDispatchService_ReceiveResourceUpdatesClient, error) {

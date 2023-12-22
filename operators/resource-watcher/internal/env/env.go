@@ -7,49 +7,23 @@ import (
 )
 
 type Env struct {
-	CommonEnv
-	RunningOnPlatformEnv
-	RunningOnTenantClusterEnv
-}
-
-type CommonEnv struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD" required:"true"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 	AccountName             string        `env:"ACCOUNT_NAME" required:"true"`
 	ClusterName             string        `env:"CLUSTER_NAME" required:"true"`
 	GrpcAddr                string        `env:"GRPC_ADDR" required:"true"`
-}
+	GrpcSecureConnect       bool          `env:"GRPC_SECURE_CONNECT" required:"false"`
 
-type RunningOnPlatformEnv struct {
-	PlatformAccessToken string `env:"PLATFORM_ACCESS_TOKEN" required:"true"`
-}
-
-type RunningOnTenantClusterEnv struct {
 	AccessToken                    string `env:"ACCESS_TOKEN" required:"true"`
 	ClusterIdentitySecretName      string `env:"CLUSTER_IDENTITY_SECRET_NAME" required:"true"`
 	ClusterIdentitySecretNamespace string `env:"CLUSTER_IDENTITY_SECRET_NAMESPACE" required:"true"`
 }
 
-func GetCommonEnv() (CommonEnv, error) {
-	ev := CommonEnv{}
+func GetEnv() (*Env, error) {
+	ev := Env{}
+	ev.GrpcSecureConnect = true // default
 	if err := env.Set(&ev); err != nil {
-		return CommonEnv{}, err
+		return nil, err
 	}
-	return ev, nil
-}
-
-func GetPlatofmrClusterEnvs() (RunningOnPlatformEnv, error) {
-	ev := RunningOnPlatformEnv{}
-	if err := env.Set(&ev); err != nil {
-		return RunningOnPlatformEnv{}, err
-	}
-	return ev, nil
-}
-
-func GetTargetClusterEnvs() (RunningOnTenantClusterEnv, error) {
-	ev := RunningOnTenantClusterEnv{}
-	if err := env.Set(&ev); err != nil {
-		return RunningOnTenantClusterEnv{}, err
-	}
-	return ev, nil
+	return &ev, nil
 }
