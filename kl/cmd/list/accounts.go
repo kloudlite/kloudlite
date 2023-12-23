@@ -23,7 +23,7 @@ Examples:
   kl list accounts
 `,
 	Run: func(_ *cobra.Command, _ []string) {
-		err := listAcocunts()
+		err := listAccounts()
 		if err != nil {
 			common.PrintError(err)
 			return
@@ -31,7 +31,7 @@ Examples:
 	},
 }
 
-func listAcocunts() error {
+func listAccounts() error {
 	accounts, err := server.GetAccounts()
 
 	if err != nil {
@@ -42,7 +42,7 @@ func listAcocunts() error {
 		return errors.New("no accounts found")
 	}
 
-	accountId, _ := server.CurrentAccountId()
+	accountName, _ := server.CurrentAccountName()
 
 	header := table.Row{table.HeaderText("accounts"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)
@@ -50,17 +50,17 @@ func listAcocunts() error {
 	for _, a := range accounts {
 		rows = append(rows, table.Row{
 			func() string {
-				if a.Id == accountId {
-					return color.Text(fmt.Sprint("*", a.Name), 2)
+				if a.Metadata.Name == accountName {
+					return color.Text(fmt.Sprint("*", a.DisplayName), 2)
 				}
-				return a.Name
+				return a.DisplayName
 			}(),
 
 			func() string {
-				if a.Id == accountId {
-					return color.Text(a.Id, 2)
+				if a.Metadata.Name == accountName {
+					return color.Text(a.Metadata.Name, 2)
 				}
-				return a.Id
+				return a.Metadata.Name
 			}(),
 		})
 	}

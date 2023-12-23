@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/kloudlite/kl/lib/common"
@@ -16,8 +17,17 @@ type User struct {
 }
 
 type Account struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Metadata struct {
+		Name string `json:"name"`
+	}
+	DisplayName string `json:"displayName"`
+}
+
+type Cluster struct {
+	Metadata struct {
+		Name string `json:"name"`
+	}
+	DisplayName string `json:"displayName"`
 }
 
 type Project struct {
@@ -97,14 +107,14 @@ func Login(loginId string) error {
 			return err
 		}
 		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
-
 			file, err := GetContextFile()
 			if err != nil {
 				return err
 			}
-
-			file.Session = loginStatusResponse.RemoteLogin.AuthHeader
-
+			req, _ := http.NewRequest("GET", "/", nil)
+			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
+			cookie, _ := req.Cookie("hotspot-Session")
+			file.Session = cookie.Value
 			err = WriteContextFile(*file)
 			return err
 		}
@@ -121,20 +131,28 @@ func Login(loginId string) error {
 	}
 }
 
-func CurrentAccountId() (string, error) {
-
+func CurrentAccountName() (string, error) {
 	file, err := GetContextFile()
-
 	if err != nil {
 		return "", err
 	}
-
-	if file.AccountId == "" {
+	if file.AccountName == "" {
 		return "",
 			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
 	}
+	return file.AccountName, nil
+}
 
-	return file.AccountId, nil
+func CurrentClusterName() (string, error) {
+	file, err := GetContextFile()
+	if err != nil {
+		return "", err
+	}
+	if file.ClusterName == "" {
+		return "",
+			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
+	}
+	return file.ClusterName, nil
 }
 
 func CurrentDeviceId() (string, error) {
@@ -182,7 +200,7 @@ func getCookie() (string, error) {
 			errors.New("you are not logged in yet. please login using \"kl auth login\"")
 	}
 
-	return file.Session, nil
+	return file.GetCookieString(), nil
 }
 
 func GetAccounts() ([]Account, error) {
@@ -190,29 +208,62 @@ func GetAccounts() ([]Account, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	respData, err := klFetch("cli_getAccountMemeberships", map[string]any{}, &cookie)
-
+	respData, err := klFetch("cli_listAccounts", map[string]any{}, &cookie)
 	if err != nil {
 		return nil, err
 	}
-	type Response struct {
-		AuthMe struct {
-			AccountMemberships []struct {
-				Account Account `json:"account"`
-			} `json:"accountMemberships"`
-		} `json:"data"`
+	type AccList []Account
+	if fromResp, err := GetFromResp[AccList](respData); err != nil {
+		return nil, err
+	} else {
+		return *fromResp, nil
 	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
+}
+
+func GetClusters() ([]Cluster, error) {
+	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
-	accounts := make([]Account, len(resp.AuthMe.AccountMemberships))
-	for i, v := range resp.AuthMe.AccountMemberships {
-		accounts[i] = v.Account
+	respData, err := klFetch("cli_listClusters", map[string]any{
+		"query": map[string]any{
+			"first": 100,
+		},
+	}, &cookie)
+	if err != nil {
+		return nil, err
 	}
-	return accounts, nil
+	type ClusterList struct {
+		Edges []struct {
+			Node Cluster `json:"node"`
+		} `json:"edges"`
+	}
+	if fromResp, err := GetFromResp[ClusterList](respData); err != nil {
+		return nil, err
+	} else {
+		clusters := make([]Cluster, 0)
+		for _, edge := range fromResp.Edges {
+			clusters = append(clusters, edge.Node)
+		}
+		return clusters, nil
+	}
+}
+
+type Response[T any] struct {
+	Data   T       `json:"data"`
+	Errors []error `json:"errors"`
+}
+
+func GetFromResp[T any](respData []byte) (*T, error) {
+	var resp Response[T]
+	err := json.Unmarshal(respData, &resp)
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Errors) > 0 {
+		return nil, resp.Errors[0]
+	}
+	return &resp.Data, nil
 }
 
 func GetProjects(options ...common.Option) ([]Project, error) {
@@ -225,7 +276,7 @@ func GetProjects(options ...common.Option) ([]Project, error) {
 	}
 
 	if accountId == "" {
-		accountId, err = CurrentAccountId()
+		accountId, err = CurrentAccountName()
 
 		if err != nil {
 			return nil, err

@@ -13,6 +13,7 @@ var Cmd = &cobra.Command{
 
 func init() {
 	Cmd.AddCommand(accountsCmd)
+	Cmd.AddCommand(clustersCmd)
 	Cmd.AddCommand(projectsCmd)
 	Cmd.AddCommand(devicesCmd)
 	Cmd.AddCommand(configsCmd)

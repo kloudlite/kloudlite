@@ -15,12 +15,17 @@ import (
 )
 
 type KLContext struct {
-	ProjectId string
-	AccountId string
-	DeviceId  string
-	Session   string
-	KlFile    string
-	DNS       []string
+	ProjectId   string
+	AccountName string
+	DeviceId    string
+	Session     string
+	KlFile      string
+	DNS         []string
+	ClusterName string
+}
+
+func (f *KLContext) GetCookieString() string {
+	return fmt.Sprintf("kloudlite-account=%s;kloudlite-cluster=%s;hotspot-session=%s", f.AccountName, f.ClusterName, f.Session)
 }
 
 func getConfigFolder() (configFolder string, err error) {

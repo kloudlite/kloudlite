@@ -132,7 +132,7 @@ func ListDevices(args []string) error {
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId, _ := server.CurrentAccountId(); accountId != "" {
+	if accountId, _ := server.CurrentAccountName(); accountId != "" {
 		table.KVOutput("devices of", accountId, true)
 	}
 

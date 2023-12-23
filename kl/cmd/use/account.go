@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package use
 
@@ -22,7 +21,6 @@ var accountsCmd = &cobra.Command{
 Examples:
   # select account
   kl use account
-
 	# this will open selector where you can select one of the account accessible to you.
 
   # select account with account id
@@ -57,8 +55,8 @@ func SelectAccount(args []string) (string, error) {
 
 	if accountId != "" {
 		for _, a := range accounts {
-			if a.Id == accountId {
-				return a.Id, nil
+			if a.Metadata.Name == accountId {
+				return a.Metadata.Name, nil
 			}
 		}
 		return "", errors.New("you don't have access to this account")
@@ -67,7 +65,7 @@ func SelectAccount(args []string) (string, error) {
 	selectedIndex, err := fuzzyfinder.Find(
 		accounts,
 		func(i int) string {
-			return accounts[i].Name
+			return accounts[i].DisplayName
 		},
 		fuzzyfinder.WithPromptString("Use Account >"),
 	)
@@ -76,5 +74,5 @@ func SelectAccount(args []string) (string, error) {
 		return "", err
 	}
 
-	return accounts[selectedIndex].Id, nil
+	return accounts[selectedIndex].Metadata.Name, nil
 }

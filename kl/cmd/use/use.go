@@ -25,6 +25,7 @@ Examples:
 
 func init() {
 	Cmd.AddCommand(accountsCmd)
+	Cmd.AddCommand(clusterCmd)
 	Cmd.AddCommand(projectsCmd)
 	Cmd.AddCommand(deviceCmd)
 	Cmd.AddCommand(regionCmd)

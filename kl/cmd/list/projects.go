@@ -86,7 +86,7 @@ func listProjects(accountId string) error {
 	fmt.Println(table.Table(&header, rows))
 
 	if accountId == "" {
-		accountId, _ = server.CurrentAccountId()
+		accountId, _ = server.CurrentAccountName()
 	}
 
 	if accountId == "" {

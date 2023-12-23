@@ -29,7 +29,7 @@ func GetRegions(options ...common.Option) ([]Region, error) {
 
 	accountId := common.GetOption(options, "accountId")
 	if accountId == "" {
-		accountId, err = CurrentAccountId()
+		accountId, err = CurrentAccountName()
 
 		if err != nil {
 			return nil, err
