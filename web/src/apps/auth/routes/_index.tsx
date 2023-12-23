@@ -15,7 +15,7 @@ const restActions = async (ctx: IExtRemixCtx) => {
       const { data, errors } = await GQLServerHandler(
         ctx.request
       ).setRemoteAuthHeader({
-        loginId: cookie.get('cliLogin'),
+        loginId: cookie.get('cliLogin') || '',
         authHeader: ctx?.request?.headers?.get('cookie'),
       });
 
