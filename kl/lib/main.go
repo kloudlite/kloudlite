@@ -9,6 +9,7 @@ import (
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/server"
 )
 
@@ -26,6 +27,11 @@ func open(url string) error {
 		cmd = "xdg-open"
 	}
 	args = append(args, url)
+
+	fmt.Println("opening browser for login")
+	fmt.Println("if browser doesn't open automatically, please visit the following link")
+	fmt.Println(url)
+
 	return exec.Command(cmd, args...).Start()
 }
 
@@ -36,13 +42,28 @@ func Login() error {
 	}
 
 	link := fmt.Sprintf("%s/%s%s", constants.LoginUrl, "?loginId=", loginId)
-	err = open(link)
 
-	if err != nil {
-		return err
-	}
-	err = server.Login(loginId)
-	if err != nil {
+	// count := 0
+
+	// for {
+	// 	fmt.Println(color.Text(fmt.Sprintf("Color %d", count), count))
+	//
+	// 	count++
+	//
+	// 	if count > 255 {
+	// 		break
+	// 	}
+	// }
+
+	fmt.Println(color.Text("Opening browser for login in the browser to authenticate your account\n", 2))
+	fmt.Println(color.Text(link, 21))
+	fmt.Println("")
+
+	// if err = open(link); err != nil {
+	// 	return err
+	// }
+
+	if err = server.Login(loginId); err != nil {
 		return err
 	}
 	return nil

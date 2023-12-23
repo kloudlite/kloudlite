@@ -41,11 +41,16 @@ func Log(str string) {
 	fmt.Fprintf(os.Stderr, "%s\n", str)
 }
 
-func NewSpinner() *spinner.Spinner {
+func NewSpinner(msg ...string) *spinner.Spinner {
 	message := []string{}
 	sp := spinner.CharSets[11]
 	for _, v := range sp {
-		message = append(message, fmt.Sprintf("%s loading please wait...", v))
+		message = append(message, fmt.Sprintf("%s %s...", v, func() string {
+			if len(msg) == 0 {
+				return "loading please wait"
+			}
+			return msg[0]
+		}()))
 	}
 	return spinner.New(message, 100*time.Millisecond)
 }
