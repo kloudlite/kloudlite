@@ -1,10 +1,21 @@
 package constants
 
-const (
+import "os"
+
+var (
 	CMD_NAME = "kl"
-	// LoginUrl   = "https://auth.dev.kloudlite.io/cli-login"
-	LoginUrl = "https://auth.devc.kloudlite.io/cli-login"
-	// SERVER_URL = "https://console.dev.kloudlite.io/api/"
-	SERVER_URL = "https://auth.devc.kloudlite.io/api/"
-	//SERVER_URL = "https://console.local.kloudlite.io/api/"
+	LoginUrl = func() string {
+		if os.Getenv("BASE_URL") == "" {
+			return "https://auth.kloudlite.io/cli-login"
+		}
+
+		return os.Getenv("BASE_URL") + "/cli-login"
+	}()
+	SERVER_URL = func() string {
+		if os.Getenv("BASE_URL") == "" {
+			return "https://auth.kloudlite.io/api/"
+		}
+
+		return os.Getenv("BASE_URL") + "/api/"
+	}()
 )
