@@ -35,6 +35,15 @@ func open(url string) error {
 	return exec.Command(cmd, args...).Start()
 }
 
+func WhoAmI() error {
+	if u, err := server.GetCurrentUser(); err != nil {
+		return err
+	} else {
+		fmt.Println("You are logged in as " + color.Text(u.Name, 4) + " (" + color.Text(u.Email, 4) + ")")
+		return nil
+	}
+}
+
 func Login() error {
 	loginId, err := server.CreateRemoteLogin()
 	if err != nil {
@@ -43,25 +52,9 @@ func Login() error {
 
 	link := fmt.Sprintf("%s/%s%s", constants.LoginUrl, "?loginId=", loginId)
 
-	// count := 0
-
-	// for {
-	// 	fmt.Println(color.Text(fmt.Sprintf("Color %d", count), count))
-	//
-	// 	count++
-	//
-	// 	if count > 255 {
-	// 		break
-	// 	}
-	// }
-
 	fmt.Println(color.Text("Opening browser for login in the browser to authenticate your account\n", 2))
 	fmt.Println(color.Text(link, 21))
 	fmt.Println("")
-
-	// if err = open(link); err != nil {
-	// 	return err
-	// }
 
 	if err = server.Login(loginId); err != nil {
 		return err

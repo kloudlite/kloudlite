@@ -20,12 +20,11 @@ func init() {
 	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(get.Cmd)
 
-	rootCmd.AddCommand(auth.Cmd)
+	rootCmd.AddCommand(auth.LoginCmd)
+	rootCmd.AddCommand(auth.LogoutCmd)
+	rootCmd.AddCommand(auth.WhoAmICmd)
 
 	rootCmd.AddCommand(wg.Cmd)
-
-	// rootCmd.AddCommand(account.Cmd)
-	// rootCmd.AddCommand(project.Cmd)
 
 	rootCmd.AddCommand(runner.InitCommand)
 	rootCmd.AddCommand(runner.LoadCommand)
