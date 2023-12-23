@@ -11,19 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var accountsCmd = &cobra.Command{
-	Use:   "accounts",
-	Short: "list all the accounts accessible to you",
-	Long: `List Accounts
+var clustersCmd = &cobra.Command{
+	Use:   "clusters",
+	Short: "list all the clusters accessible to you",
+	Long: `List Clusters
 
-This command will help you to see list of all the accounts that's accessible to you. 
+This command will help you to see list of all the clusters that's accessible to you. 
 
 Examples:
-  # list accounts accessible to you
-  kl list accounts
+  # list clusters accessible to you
+  kl list clusters
 `,
 	Run: func(_ *cobra.Command, _ []string) {
-		err := listAcocunts()
+		err := listClusters()
 		if err != nil {
 			common.PrintError(err)
 			return
@@ -31,33 +31,33 @@ Examples:
 	},
 }
 
-func listAcocunts() error {
-	accounts, err := server.GetAccounts()
+func listClusters() error {
+	clusters, err := server.GetClusters()
 
 	if err != nil {
 		return err
 	}
 
-	if len(accounts) == 0 {
-		return errors.New("no accounts found")
+	if len(clusters) == 0 {
+		return errors.New("no clusters found")
 	}
 
-	accountName, _ := server.CurrentAccountName()
+	clusterName, _ := server.CurrentClusterName()
 
 	header := table.Row{table.HeaderText("accounts"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)
 
-	for _, a := range accounts {
+	for _, a := range clusters {
 		rows = append(rows, table.Row{
 			func() string {
-				if a.Metadata.Name == accountName {
+				if a.Metadata.Name == clusterName {
 					return color.Text(fmt.Sprint("*", a.DisplayName), 2)
 				}
 				return a.DisplayName
 			}(),
 
 			func() string {
-				if a.Metadata.Name == accountName {
+				if a.Metadata.Name == clusterName {
 					return color.Text(a.Metadata.Name, 2)
 				}
 				return a.Metadata.Name
@@ -66,12 +66,12 @@ func listAcocunts() error {
 	}
 
 	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(accounts), true)
+	table.TotalResults(len(clusters), true)
 
 	return nil
 }
 
 func init() {
-	accountsCmd.Aliases = append(accountsCmd.Aliases, "account")
-	accountsCmd.Aliases = append(accountsCmd.Aliases, "acc")
+	clustersCmd.Aliases = append(clustersCmd.Aliases, "cluster")
+	clustersCmd.Aliases = append(clustersCmd.Aliases, "clus")
 }

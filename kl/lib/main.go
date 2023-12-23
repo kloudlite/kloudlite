@@ -77,13 +77,25 @@ func Logout() error {
 	return os.RemoveAll(configFolder)
 }
 
-func SelectAccount(accountId string) error {
+func SelectAccount(accountName string) error {
 	file, err := server.GetContextFile()
 	if err != nil {
 		return err
 	}
 
-	file.AccountId = accountId
+	file.AccountName = accountName
+
+	err = server.WriteContextFile(*file)
+	return err
+}
+
+func SelectCluster(clusterName string) error {
+	file, err := server.GetContextFile()
+	if err != nil {
+		return err
+	}
+
+	file.ClusterName = clusterName
 
 	err = server.WriteContextFile(*file)
 	return err

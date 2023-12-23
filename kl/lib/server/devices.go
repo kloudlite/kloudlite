@@ -68,7 +68,7 @@ func GetDevices(options ...common.Option) ([]Device, error) {
 
 	accountId := common.GetOption(options, "accountId")
 	if accountId == "" {
-		accountId, err = CurrentAccountId()
+		accountId, err = CurrentAccountName()
 
 		if err != nil {
 			return nil, err
@@ -163,7 +163,7 @@ func CreateDevice(deviceName string) error {
 		return err
 	}
 
-	accId, err := CurrentAccountId()
+	accId, err := CurrentAccountName()
 	if err != nil {
 		return err
 	}

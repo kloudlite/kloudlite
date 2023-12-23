@@ -59,7 +59,7 @@ Examples:
 			fmt.Println("file already present")
 		}
 
-		accountId, _ := server.CurrentAccountId()
+		accountId, _ := server.CurrentAccountName()
 
 		if aId == "" && accountId == "" {
 			accountId, e := use.SelectAccount([]string{})
