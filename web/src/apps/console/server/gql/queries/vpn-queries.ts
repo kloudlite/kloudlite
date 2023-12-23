@@ -100,7 +100,6 @@ export const vpnQueries = (executor: IExecutor) => ({
               spec {
                 accountName
                 clusterName
-                dns
                 ports {
                   port
                   targetPort
@@ -179,7 +178,6 @@ export const vpnQueries = (executor: IExecutor) => ({
           spec {
             accountName
             clusterName
-            dns
             ports {
               port
               targetPort

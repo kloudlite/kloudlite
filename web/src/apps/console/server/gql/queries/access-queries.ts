@@ -177,7 +177,7 @@ export const accessQueries = (executor: IExecutor) => ({
       mutation Accounts_updateAccountMembership(
         $accountName: String!
         $memberId: ID!
-        $role: Kloudlite__io___apps___iam___types__Role!
+        $role: Github__com___kloudlite___api___apps___iam___types__Role!
       ) {
         accounts_updateAccountMembership(
           accountName: $accountName

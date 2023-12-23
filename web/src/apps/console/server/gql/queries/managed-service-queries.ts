@@ -188,21 +188,10 @@ export const managedServiceQueries = (executor: IExecutor) => ({
           }
           recordVersion
           spec {
-            inputs {
-              RawMessage
-            }
-            msvcKind {
+            serviceTemplate {
               apiVersion
               kind
-            }
-            nodeSelector
-            region
-            tolerations {
-              effect
-              key
-              operator
-              tolerationSeconds
-              value
+              spec
             }
           }
           status {
@@ -275,21 +264,10 @@ export const managedServiceQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
-                inputs {
-                  RawMessage
-                }
-                msvcKind {
+                serviceTemplate {
                   apiVersion
                   kind
-                }
-                nodeSelector
-                region
-                tolerations {
-                  effect
-                  key
-                  operator
-                  tolerationSeconds
-                  value
+                  spec
                 }
               }
               status {

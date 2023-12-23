@@ -23,11 +23,33 @@ import {
   AuthWhoAmIQueryVariables,
   AuthCheckOauthEnabledQuery,
   AuthCheckOauthEnabledQueryVariables,
+  AuthSetRemoteAuthHeaderMutation,
+  AuthSetRemoteAuthHeaderMutationVariables,
 } from '~/root/src/generated/gql/server';
+import { cliQueries } from './cli-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
+    ...cliQueries(executor),
+
+    setRemoteAuthHeader: executor(
+      gql`
+        mutation Auth_setRemoteAuthHeader(
+          $loginId: String!
+          $authHeader: String
+        ) {
+          auth_setRemoteAuthHeader(loginId: $loginId, authHeader: $authHeader)
+        }
+      `,
+      {
+        transformer(data: AuthSetRemoteAuthHeaderMutation) {
+          return data.auth_setRemoteAuthHeader;
+        },
+        vars(_: AuthSetRemoteAuthHeaderMutationVariables) {},
+      }
+    ),
+
     checkOauthEnabled: executor(
       gql`
         query Auth_listOAuthProviders {

@@ -30,13 +30,19 @@ export const withRPC = (
     try {
       if (!req.body.method) throw new Error('Handler Method not found');
 
-      const method = req.body.method.split('.').reduce((acc: any, item) => {
+      const dt = req.body.method.split('.');
+
+      const method = dt.reduce((acc: any, item) => {
         return acc[item];
       }, handler);
+
+      if (!method)
+        throw new Error(`Handler Method not found ${req.body.method}`);
 
       const response = await method(...(req.body.args || []));
       res.json(response);
     } catch (err) {
+      console.log('here');
       next(err as Error);
     }
   };
