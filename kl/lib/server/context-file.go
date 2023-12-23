@@ -25,7 +25,7 @@ type KLContext struct {
 }
 
 func (f *KLContext) GetCookieString() string {
-	return fmt.Sprintf("kloudlite-account=%s; kloudlite-cluster=%s; hotspot-session=%s", f.AccountName, f.ClusterName, f.Session)
+	return fmt.Sprintf("kloudlite-account=%s;kloudlite-cluster=%s;hotspot-session=%s", f.AccountName, f.ClusterName, f.Session)
 }
 
 func getConfigFolder() (configFolder string, err error) {

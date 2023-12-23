@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/create"
+	"github.com/kloudlite/kl/cmd/exec"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/intercept"
 	"github.com/kloudlite/kl/cmd/list"
@@ -23,6 +24,8 @@ func init() {
 	rootCmd.AddCommand(auth.LoginCmd)
 	rootCmd.AddCommand(auth.LogoutCmd)
 	rootCmd.AddCommand(auth.WhoAmICmd)
+
+	rootCmd.AddCommand(exec.ExecCmd)
 
 	rootCmd.AddCommand(wg.Cmd)
 

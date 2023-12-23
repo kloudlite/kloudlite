@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -209,7 +208,6 @@ func GetAccounts() ([]Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(cookie)
 	respData, err := klFetch("cli_listAccounts", map[string]any{}, &cookie)
 	if err != nil {
 		return nil, err
@@ -227,15 +225,27 @@ func GetClusters() ([]Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
-	respData, err := klFetch("cli_listClusters", map[string]any{}, &cookie)
+	respData, err := klFetch("cli_listClusters", map[string]any{
+		"query": map[string]any{
+			"first": 100,
+		},
+	}, &cookie)
 	if err != nil {
 		return nil, err
 	}
-	type ClusterList []Cluster
+	type ClusterList struct {
+		Edges []struct {
+			Node Cluster `json:"node"`
+		} `json:"edges"`
+	}
 	if fromResp, err := GetFromResp[ClusterList](respData); err != nil {
 		return nil, err
 	} else {
-		return *fromResp, nil
+		clusters := make([]Cluster, 0)
+		for _, edge := range fromResp.Edges {
+			clusters = append(clusters, edge.Node)
+		}
+		return clusters, nil
 	}
 }
 

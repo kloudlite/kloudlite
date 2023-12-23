@@ -44,7 +44,7 @@ func listClusters() error {
 
 	clusterName, _ := server.CurrentClusterName()
 
-	header := table.Row{table.HeaderText("accounts"), table.HeaderText("id")}
+	header := table.Row{table.HeaderText("Clusters"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)
 
 	for _, a := range clusters {
@@ -55,7 +55,6 @@ func listClusters() error {
 				}
 				return a.DisplayName
 			}(),
-
 			func() string {
 				if a.Metadata.Name == clusterName {
 					return color.Text(a.Metadata.Name, 2)

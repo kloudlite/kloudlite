@@ -23,7 +23,7 @@ Examples:
   kl list accounts
 `,
 	Run: func(_ *cobra.Command, _ []string) {
-		err := listAcocunts()
+		err := listAccounts()
 		if err != nil {
 			common.PrintError(err)
 			return
@@ -31,7 +31,7 @@ Examples:
 	},
 }
 
-func listAcocunts() error {
+func listAccounts() error {
 	accounts, err := server.GetAccounts()
 
 	if err != nil {
