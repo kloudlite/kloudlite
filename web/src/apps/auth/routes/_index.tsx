@@ -6,20 +6,22 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
-// @ts-ignore
 const restActions = async (ctx: IExtRemixCtx) => {
   const cookie = getCookie(ctx);
   if (cookie.get('cliLogin')) {
     try {
+      console.log('here', 'lskdfjsldfj');
+
       const { data, errors } = await GQLServerHandler(
         ctx.request
-        // @ts-ignore
       ).setRemoteAuthHeader({
         loginId: cookie.get('cliLogin'),
         authHeader: ctx?.request?.headers?.get('cookie'),
       });
+
       logger.log(data, 'loggedin');
       if (errors) {
+        console.log('here', errors);
         throw errors[0];
       }
 

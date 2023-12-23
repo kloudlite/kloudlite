@@ -33,7 +33,7 @@ export type Scalars = {
   URL: { input: any; output: any };
 };
 
-export type Kloudlite__Io___Apps___Iam___Types__Role =
+export type Github__Com___Kloudlite___Api___Apps___Iam___Types__Role =
   | 'account_admin'
   | 'account_member'
   | 'account_owner'
@@ -80,9 +80,11 @@ export type K8s__Io___Api___Core___V1__TaintEffect =
 
 export type K8s__Io___Api___Core___V1__TolerationOperator = 'Equal' | 'Exists';
 
-export type Kloudlite__Io___Pkg___Types__SyncStatusAction = 'APPLY' | 'DELETE';
+export type Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction =
+  | 'APPLY'
+  | 'DELETE';
 
-export type Kloudlite__Io___Pkg___Types__SyncStatusState =
+export type Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState =
   | 'APPLIED_AT_AGENT'
   | 'ERRORED_AT_AGENT'
   | 'IDLE'
@@ -175,10 +177,10 @@ export type SearchSecrets = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitProvider =
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider =
   'github' | 'gitlab';
 
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus =
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus =
   'error' | 'failed' | 'idle' | 'pending' | 'queued' | 'running' | 'success';
 
 export type SearchBuildCacheKeys = {
@@ -193,10 +195,10 @@ export type SearchCreds = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess =
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess =
   'read' | 'read_write';
 
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit =
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit =
   'd' | 'h' | 'm' | 'w' | 'y';
 
 export type SearchRepos = {
@@ -296,7 +298,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AccountSpecIn
 export type InvitationIn = {
   userEmail?: InputMaybe<Scalars['String']['input']>;
   userName?: InputMaybe<Scalars['String']['input']>;
-  userRole: Kloudlite__Io___Apps___Iam___Types__Role;
+  userRole: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
 };
 
 export type AppIn = {
@@ -475,22 +477,16 @@ export type ManagedResourceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn =
   {
-    inputs?: InputMaybe<Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn>;
-    mresKind: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresKindIn;
-    msvcRef: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefTtIn;
+    resourceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceTemplateIn;
   };
 
-export type Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceTemplateIn =
   {
-    RawMessage?: InputMaybe<Scalars['Any']['input']>;
+    msvcRef: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefIn;
+    spec: Scalars['Map']['input'];
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresKindIn =
-  {
-    kind: Scalars['String']['input'];
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefTtIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefIn =
   {
     apiVersion: Scalars['String']['input'];
     kind: Scalars['String']['input'];
@@ -506,17 +502,12 @@ export type ManagedServiceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
   {
-    inputs?: InputMaybe<Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn>;
-    msvcKind: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcKindIn;
-    nodeSelector?: InputMaybe<Scalars['Map']['input']>;
-    region?: InputMaybe<Scalars['String']['input']>;
-    tolerations?: InputMaybe<Array<K8s__Io___Api___Core___V1__TolerationIn>>;
+    serviceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn;
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcKindIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn =
   {
-    apiVersion: Scalars['String']['input'];
-    kind: Scalars['String']['input'];
+    spec: Scalars['Map']['input'];
   };
 
 export type ProjectIn = {
@@ -569,7 +560,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn = {
 };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn = {
-  clusterIssuer?: InputMaybe<Scalars['String']['input']>;
   enabled: Scalars['Boolean']['input'];
   forceRedirect?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -601,14 +591,14 @@ export type SecretIn = {
 
 export type BuildIn = {
   name: Scalars['String']['input'];
-  source: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn;
+  source: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn;
   spec: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildRunSpecIn;
 };
 
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn =
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn =
   {
     branch: Scalars['String']['input'];
-    provider: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+    provider: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
     repository: Scalars['String']['input'];
   };
 
@@ -654,40 +644,21 @@ export type BuildCacheKeyIn = {
 };
 
 export type CredentialIn = {
-  access: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
-  expiration: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationIn;
+  access: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
+  expiration: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__ExpirationIn;
   name: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
 
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationIn =
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__ExpirationIn =
   {
-    unit: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
+    unit: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
     value: Scalars['Int']['input'];
   };
 
 export type RepositoryIn = {
   name: Scalars['String']['input'];
 };
-
-export type ByocClusterIn = {
-  accountName: Scalars['String']['input'];
-  displayName: Scalars['String']['input'];
-  metadata?: InputMaybe<MetadataIn>;
-  spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ByocSpecIn;
-};
-
-export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ByocSpecIn =
-  {
-    accountName: Scalars['String']['input'];
-    displayName?: InputMaybe<Scalars['String']['input']>;
-    incomingKafkaTopic: Scalars['String']['input'];
-    ingressClasses?: InputMaybe<Array<Scalars['String']['input']>>;
-    provider: Scalars['String']['input'];
-    publicIps?: InputMaybe<Array<Scalars['String']['input']>>;
-    region: Scalars['String']['input'];
-    storageClasses?: InputMaybe<Array<Scalars['String']['input']>>;
-  };
 
 export type ClusterIn = {
   displayName: Scalars['String']['input'];
@@ -783,13 +754,13 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGp
   };
 
 export type CloudProviderSecretIn = {
-  aws?: InputMaybe<Kloudlite__Io___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn>;
+  aws?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn>;
   cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
   displayName: Scalars['String']['input'];
   metadata: MetadataIn;
 };
 
-export type Kloudlite__Io___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn =
+export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn =
   {
     accessKey?: InputMaybe<Scalars['String']['input']>;
     awsAccountId?: InputMaybe<Scalars['String']['input']>;
@@ -806,7 +777,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSp
   {
     accountName: Scalars['String']['input'];
     clusterName: Scalars['String']['input'];
-    dns?: InputMaybe<Scalars['String']['input']>;
+    deviceNamespace?: InputMaybe<Scalars['String']['input']>;
     ports?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn>
     >;
@@ -820,7 +791,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn =
 
 export type AccountMembershipIn = {
   accountName: Scalars['String']['input'];
-  role: Kloudlite__Io___Apps___Iam___Types__Role;
+  role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
   userId: Scalars['String']['input'];
 };
 
@@ -836,6 +807,15 @@ export type EnvOrWorkspaceOrProjectIdType =
   | 'projectTargetNamespace'
   | 'workspaceName'
   | 'workspaceTargetNamespace';
+
+export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GithubUserAccountIn =
+  {
+    avatarUrl?: InputMaybe<Scalars['String']['input']>;
+    id?: InputMaybe<Scalars['Int']['input']>;
+    login?: InputMaybe<Scalars['String']['input']>;
+    nodeId?: InputMaybe<Scalars['String']['input']>;
+    type?: InputMaybe<Scalars['String']['input']>;
+  };
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePropsIn =
   {
@@ -869,6 +849,11 @@ export type Github__Com___Kloudlite___Operator___Pkg___Operator__StatusIn = {
     Array<Github__Com___Kloudlite___Operator___Pkg___Operator__ResourceRefIn>
   >;
 };
+
+export type Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn =
+  {
+    RawMessage?: InputMaybe<Scalars['Any']['input']>;
+  };
 
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn = {
   lastProbeTime?: InputMaybe<Scalars['Date']['input']>;
@@ -930,12 +915,12 @@ export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequir
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
   accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
   allocatedResources?: InputMaybe<Scalars['Map']['input']>;
+  allocatedResourceStatuses?: InputMaybe<Scalars['Map']['input']>;
   capacity?: InputMaybe<Scalars['Map']['input']>;
   conditions?: InputMaybe<
     Array<K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn>
   >;
   phase?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase>;
-  resizeStatus?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type K8s__Io___Apimachinery___Pkg___Api___Resource__Format =
@@ -945,21 +930,6 @@ export type K8s__Io___Apimachinery___Pkg___Api___Resource__Format =
 
 export type K8s__Io___Apimachinery___Pkg___Api___Resource__QuantityIn = {
   Format: K8s__Io___Apimachinery___Pkg___Api___Resource__Format;
-};
-
-export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GithubUserAccountIn =
-  {
-    avatarUrl?: InputMaybe<Scalars['String']['input']>;
-    id?: InputMaybe<Scalars['Int']['input']>;
-    login?: InputMaybe<Scalars['String']['input']>;
-    nodeId?: InputMaybe<Scalars['String']['input']>;
-    type?: InputMaybe<Scalars['String']['input']>;
-  };
-
-export type MembershipIn = {
-  accountName: Scalars['String']['input'];
-  role: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
 };
 
 export type NodeIn = {
@@ -1136,11 +1106,11 @@ export type ConsoleGetProjectQuery = {
     };
     syncStatus: {
       syncScheduledAt?: any;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       recordVersion: number;
       lastSyncedAt?: any;
       error?: string;
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
     };
   };
 };
@@ -1197,11 +1167,11 @@ export type ConsoleListProjectsQuery = {
         };
         syncStatus: {
           syncScheduledAt?: any;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           recordVersion: number;
           lastSyncedAt?: any;
           error?: string;
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
         };
       };
     }>;
@@ -1265,9 +1235,9 @@ export type ConsoleListClustersQuery = {
           syncScheduledAt?: any;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           error?: string;
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
         };
         status?: {
           lastReconcileTime?: any;
@@ -1404,11 +1374,11 @@ export type ConsoleGetClusterQuery = {
       }>;
     };
     syncStatus: {
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -1578,11 +1548,11 @@ export type ConsoleGetNodePoolQuery = {
       }>;
     };
     syncStatus: {
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -1665,11 +1635,11 @@ export type ConsoleListNodePoolsQuery = {
           }>;
         };
         syncStatus: {
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -1802,11 +1772,11 @@ export type ConsoleGetEnvironmentQuery = {
       }>;
     };
     syncStatus: {
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -1880,11 +1850,11 @@ export type ConsoleListEnvironmentsQuery = {
           }>;
         };
         syncStatus: {
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2008,11 +1978,11 @@ export type ConsoleGetAppQuery = {
     };
     syncStatus: {
       syncScheduledAt?: any;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       recordVersion: number;
       lastSyncedAt?: any;
       error?: string;
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
     };
   };
 };
@@ -2052,11 +2022,11 @@ export type ConsoleListAppsQuery = {
         };
         syncStatus: {
           syncScheduledAt?: any;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           recordVersion: number;
           lastSyncedAt?: any;
           error?: string;
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
         };
       };
     }>;
@@ -2166,11 +2136,11 @@ export type ConsoleListConfigsQuery = {
           }>;
         };
         syncStatus: {
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2243,11 +2213,11 @@ export type ConsoleListSecretsQuery = {
           }>;
         };
         syncStatus: {
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2353,7 +2323,6 @@ export type ConsoleListVpnDevicesQuery = {
         spec?: {
           accountName: string;
           clusterName: string;
-          dns?: string;
           ports?: Array<{ port?: number; targetPort?: number }>;
         };
         status?: {
@@ -2370,11 +2339,11 @@ export type ConsoleListVpnDevicesQuery = {
           }>;
         };
         syncStatus: {
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2414,7 +2383,6 @@ export type ConsoleGetVpnDeviceQuery = {
     spec?: {
       accountName: string;
       clusterName: string;
-      dns?: string;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
     status?: {
@@ -2431,11 +2399,11 @@ export type ConsoleGetVpnDeviceQuery = {
       }>;
     };
     syncStatus: {
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
     wireguardConfig?: { value: string; encoding: string };
@@ -2467,7 +2435,7 @@ export type ConsoleListInvitationsForAccountQuery = {
     updateTime: any;
     userEmail?: string;
     userName?: string;
-    userRole: Kloudlite__Io___Apps___Iam___Types__Role;
+    userRole: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
   }>;
 };
 
@@ -2477,7 +2445,7 @@ export type ConsoleListMembershipsForAccountQueryVariables = Exact<{
 
 export type ConsoleListMembershipsForAccountQuery = {
   accounts_listMembershipsForAccount?: Array<{
-    role: Kloudlite__Io___Apps___Iam___Types__Role;
+    role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
     user: { verified: boolean; name: string; joined: any; email: string };
   }>;
 };
@@ -2534,7 +2502,7 @@ export type ConsoleRejectInvitationMutation = {
 export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
   accountName: Scalars['String']['input'];
   memberId: Scalars['ID']['input'];
-  role: Kloudlite__Io___Apps___Iam___Types__Role;
+  role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
 }>;
 
 export type ConsoleUpdateAccountMembershipMutation = {
@@ -2675,19 +2643,7 @@ export type ConsoleGetManagedServiceQuery = {
       name: string;
       namespace?: string;
     };
-    spec: {
-      nodeSelector?: any;
-      region?: string;
-      inputs?: { RawMessage?: any };
-      msvcKind: { apiVersion: string; kind: string };
-      tolerations?: Array<{
-        effect?: K8s__Io___Api___Core___V1__TaintEffect;
-        key?: string;
-        operator?: K8s__Io___Api___Core___V1__TolerationOperator;
-        tolerationSeconds?: number;
-        value?: string;
-      }>;
-    };
+    spec: { serviceTemplate: { apiVersion: string; kind: string; spec: any } };
     status?: {
       checks?: any;
       isReady: boolean;
@@ -2701,11 +2657,11 @@ export type ConsoleGetManagedServiceQuery = {
       }>;
     };
     syncStatus: {
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -2745,17 +2701,7 @@ export type ConsoleListManagedServicesQuery = {
           namespace?: string;
         };
         spec: {
-          nodeSelector?: any;
-          region?: string;
-          inputs?: { RawMessage?: any };
-          msvcKind: { apiVersion: string; kind: string };
-          tolerations?: Array<{
-            effect?: K8s__Io___Api___Core___V1__TaintEffect;
-            key?: string;
-            operator?: K8s__Io___Api___Core___V1__TolerationOperator;
-            tolerationSeconds?: number;
-            value?: string;
-          }>;
+          serviceTemplate: { apiVersion: string; kind: string; spec: any };
         };
         status?: {
           checks?: any;
@@ -2770,11 +2716,11 @@ export type ConsoleListManagedServicesQuery = {
           }>;
         };
         syncStatus: {
-          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2827,9 +2773,12 @@ export type ConsoleGetManagedResourceQuery = {
       namespace?: string;
     };
     spec: {
-      inputs?: { RawMessage?: any };
-      mresKind: { kind: string };
-      msvcRef: { apiVersion: string; kind: string; name: string };
+      resourceTemplate: {
+        apiVersion: string;
+        kind: string;
+        spec: any;
+        msvcRef: { name: string; kind: string; apiVersion: string };
+      };
     };
     status?: {
       checks?: any;
@@ -2844,11 +2793,11 @@ export type ConsoleGetManagedResourceQuery = {
       }>;
     };
     syncStatus: {
-      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -2910,7 +2859,7 @@ export type ConsoleListCredQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        access: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
+        access: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
         accountName: string;
         creationTime: any;
         id: string;
@@ -2921,7 +2870,7 @@ export type ConsoleListCredQuery = {
         username: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         expiration: {
-          unit: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
+          unit: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
           value: number;
         };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -3228,14 +3177,14 @@ export type ConsoleListBuildsQuery = {
         id: string;
         markedForDeletion?: boolean;
         name: string;
-        status: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
+        status: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         credUser: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         source: {
           branch: string;
-          provider: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+          provider: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
           repository: string;
           webhookId?: number;
         };
@@ -3588,6 +3537,70 @@ export type ConsoleGetBuildRunQuery = {
       }>;
     };
   };
+};
+
+export type AuthCli_GetKubeConfigQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetKubeConfigQuery = {
+  infra_getCluster?: { adminKubeconfig?: { encoding: string; value: string } };
+};
+
+export type AuthCli_ListClustersQueryVariables = Exact<{
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListClustersQuery = {
+  infra_listClusters?: {
+    edges: Array<{ node: { displayName: string; metadata: { name: string } } }>;
+  };
+};
+
+export type AuthCli_ListAccountsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthCli_ListAccountsQuery = {
+  accounts_listAccounts?: Array<{
+    id: string;
+    displayName: string;
+    metadata?: { name: string };
+  }>;
+};
+
+export type AuthCli_GetCurrentUserQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthCli_GetCurrentUserQuery = {
+  auth_me?: { id: string; email: string; name: string };
+};
+
+export type AuthCli_CreateRemoteLoginMutationVariables = Exact<{
+  secret?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthCli_CreateRemoteLoginMutation = {
+  auth_createRemoteLogin: string;
+};
+
+export type AuthCli_GetRemoteLoginQueryVariables = Exact<{
+  loginId: Scalars['String']['input'];
+  secret: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetRemoteLoginQuery = {
+  auth_getRemoteLogin?: { authHeader?: string; status: string };
+};
+
+export type AuthSetRemoteAuthHeaderMutationVariables = Exact<{
+  loginId: Scalars['String']['input'];
+  authHeader?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthSetRemoteAuthHeaderMutation = {
+  auth_setRemoteAuthHeader: boolean;
 };
 
 export type AuthCheckOauthEnabledQueryVariables = Exact<{

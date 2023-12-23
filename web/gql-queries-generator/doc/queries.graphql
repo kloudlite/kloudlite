@@ -1446,7 +1446,6 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
         spec {
           accountName
           clusterName
-          dns
           ports {
             port
             targetPort
@@ -1516,7 +1515,6 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
     spec {
       accountName
       clusterName
-      dns
       ports {
         port
         targetPort
@@ -1617,7 +1615,7 @@ mutation consoleRejectInvitation($accountName: String!, $inviteToken: String!) {
   accounts_rejectInvitation(accountName: $accountName, inviteToken: $inviteToken)
 }
 
-mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite__io___apps___iam___types__Role!) {
+mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Github__com___kloudlite___api___apps___iam___types__Role!) {
   accounts_updateAccountMembership(
     accountName: $accountName
     memberId: $memberId
@@ -1763,21 +1761,10 @@ query consoleGetManagedService($project: ProjectId!, $scope: WorkspaceOrEnvId!, 
     }
     recordVersion
     spec {
-      inputs {
-        RawMessage
-      }
-      msvcKind {
+      serviceTemplate {
         apiVersion
         kind
-      }
-      nodeSelector
-      region
-      tolerations {
-        effect
-        key
-        operator
-        tolerationSeconds
-        value
+        spec
       }
     }
     status {
@@ -1841,21 +1828,10 @@ query consoleListManagedServices($project: ProjectId!, $scope: WorkspaceOrEnvId!
         }
         recordVersion
         spec {
-          inputs {
-            RawMessage
-          }
-          msvcKind {
+          serviceTemplate {
             apiVersion
             kind
-          }
-          nodeSelector
-          region
-          tolerations {
-            effect
-            key
-            operator
-            tolerationSeconds
-            value
+            spec
           }
         }
         status {
@@ -1931,16 +1907,15 @@ query consoleGetManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!,
     }
     recordVersion
     spec {
-      inputs {
-        RawMessage
-      }
-      mresKind {
-        kind
-      }
-      msvcRef {
+      resourceTemplate {
         apiVersion
         kind
-        name
+        msvcRef {
+          name
+          kind
+          apiVersion
+        }
+        spec
       }
     }
     status {
@@ -2701,6 +2676,61 @@ query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
     }
     updateTime
   }
+}
+
+query authCli_getKubeConfig($name: String!) {
+  infra_getCluster(name: $name) {
+    adminKubeconfig {
+      encoding
+      value
+    }
+  }
+}
+
+query authCli_listClusters($pagination: CursorPaginationIn) {
+  infra_listClusters(pagination: $pagination) {
+    edges {
+      node {
+        displayName
+        metadata {
+          name
+        }
+      }
+    }
+  }
+}
+
+query authCli_listAccounts {
+  accounts_listAccounts {
+    id
+    metadata {
+      name
+    }
+    displayName
+  }
+}
+
+query authCli_getCurrentUser {
+  auth_me {
+    id
+    email
+    name
+  }
+}
+
+mutation authCli_createRemoteLogin($secret: String) {
+  auth_createRemoteLogin(secret: $secret)
+}
+
+query authCli_getRemoteLogin($loginId: String!, $secret: String!) {
+  auth_getRemoteLogin(loginId: $loginId, secret: $secret) {
+    authHeader
+    status
+  }
+}
+
+mutation authSetRemoteAuthHeader($loginId: String!, $authHeader: String) {
+  auth_setRemoteAuthHeader(loginId: $loginId, authHeader: $authHeader)
 }
 
 query authCheckOauthEnabled {
