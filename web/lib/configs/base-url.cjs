@@ -42,6 +42,7 @@ const baseUrls = () => {
     cookieDomain,
     baseUrl: bUrl,
     githubAppName: 'kloudlite-dev',
+    socketUrl: `wss://socket${postFix}.${bUrl}/ws`,
   };
 };
 
@@ -52,6 +53,7 @@ const defaultConfig = {
   cookieDomain: baseUrls().cookieDomain,
   baseUrl: baseUrls().baseUrl,
   githubAppName: baseUrls().githubAppName,
+  socketUrl: baseUrls().socketUrl,
 };
 
 module.exports = defaultConfig;

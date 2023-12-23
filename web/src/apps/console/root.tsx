@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-no-useless-fragment */
 import Root, { links as baseLinks } from '~/lib/app-setup/root';
 import { ChildrenProps } from '~/components/types';
 import authStylesUrl from './styles/index.css';
@@ -17,12 +18,8 @@ export const links = () => {
 export { ErrorBoundary } from '~/lib/app-setup/root';
 
 const Layout = ({ children }: ChildrenProps) => {
-  return (
-    // <SSRProvider>
-    // eslint-disable-next-line react/jsx-no-useless-fragment
-    <>{children}</>
-    // </SSRProvider>
-  );
+  // return <SocketProvider>{children}</SocketProvider>;
+  return <>{children}</>;
 };
 
 const _Root = ({ ...props }) => {
