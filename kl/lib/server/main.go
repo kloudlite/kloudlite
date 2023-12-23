@@ -10,7 +10,9 @@ import (
 )
 
 type User struct {
-	UserId string `json:"userId"`
+	UserId string `json:"id"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
 }
 
 type Account struct {
@@ -189,9 +191,7 @@ func GetAccounts() ([]Account, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_getAccountMemeberships", map[string]any{
-		"secret": authSecret,
-	}, &cookie)
+	respData, err := klFetch("cli_getAccountMemeberships", map[string]any{}, &cookie)
 
 	if err != nil {
 		return nil, err
