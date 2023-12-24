@@ -3,7 +3,7 @@ package docker
 import (
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -28,7 +28,11 @@ func (d *docker) DeleteDigest(repoName string, refrence string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	if resp.StatusCode != 202 {
 		fmt.Println(uri)
@@ -36,7 +40,7 @@ func (d *docker) DeleteDigest(repoName string, refrence string) error {
 	}
 
 	// read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.NewE(err)
 	}

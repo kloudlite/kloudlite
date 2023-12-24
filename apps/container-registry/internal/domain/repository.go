@@ -157,7 +157,9 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 
 	// update if present else, ignore
 	e.Deleting = true
-	d.digestRepo.UpdateById(ctx, e.Id, e)
+	if _,err:=d.digestRepo.UpdateById(ctx, e.Id, e); err != nil {
+		d.logger.Errorf(err)
+	}
 
 	return nil
 }

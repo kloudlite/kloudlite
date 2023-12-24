@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -168,7 +167,7 @@ func queryProm(promAddr string, resType PromMetricsType, filters map[Observabili
 		return errors.Newf("incorrect status code, expected %d, got %d", http.StatusOK, resp.StatusCode)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return errors.NewE(err)
 	}

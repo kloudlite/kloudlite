@@ -312,6 +312,8 @@ func main() {
 			log.Printf("Connection lost, trying to reconnect...")
 			break
 		}
-		cc.Close()
+		if err = cc.Close(); err != nil {
+			log.Fatalf("Failed to close connection: %v", err)
+		}
 	}
 }

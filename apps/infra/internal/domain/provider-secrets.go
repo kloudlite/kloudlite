@@ -5,10 +5,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
-	"strings"
-
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
+	"strings"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -36,12 +35,18 @@ func generateAWSCloudformationTemplateUrl(args entities.AWSSecretCredentials, ev
 	}
 
 	result := bytes.NewBuffer(nil)
-	fmt.Fprintf(result, "https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?")
-	fmt.Fprint(result, strings.Join(qp, "&"))
+	_, err := fmt.Fprintf(result, "https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?")
+	if err != nil {
+		return "", errors.NewE(err)
+	}
+	_, err = fmt.Fprint(result, strings.Join(qp, "&"))
+	if err != nil {
+		return "", errors.NewE(err)
+	}
 	return result.String(), nil
 }
 
-func (d *domain) validateAWSAssumeRole(ctx context.Context, awsAccountId string, paramExternalId string, roleARN string) error {
+func (d *domain) validateAWSAssumeRole(_ context.Context, paramExternalId string, roleARN string) error {
 	sess, err := session.NewSession()
 	if err != nil {
 		d.logger.Errorf(err, "while creating new session")
@@ -86,7 +91,7 @@ func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) 
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.validateAWSAssumeRole(ctx, *psecret.AWS.AWSAccountId, psecret.AWS.CfParamExternalID, psecret.AWS.GetAssumeRoleRoleARN()); err != nil {
+	if err := d.validateAWSAssumeRole(ctx, psecret.AWS.CfParamExternalID, psecret.AWS.GetAssumeRoleRoleARN()); err != nil {
 		installationURL, err := generateAWSCloudformationTemplateUrl(*psecret.AWS, d.env)
 		if err != nil {
 			return nil, errors.NewE(err)
