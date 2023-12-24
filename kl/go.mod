@@ -1,6 +1,6 @@
 module github.com/kloudlite/kl
 
-go 1.18
+go 1.19
 
 require (
 	github.com/briandowns/spinner v1.23.0
