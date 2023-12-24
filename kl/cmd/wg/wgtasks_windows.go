@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	KL_WG_INTERFACE = "wgkl"
+	KlWgInterface = "wgkl"
 )
 
 func connect(verbose bool) error {
