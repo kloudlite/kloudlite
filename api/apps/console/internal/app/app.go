@@ -342,14 +342,26 @@ var Module = fx.Module("app",
 
 				fWebsocket.New(
 					func(conn *fWebsocket.Conn) {
-						defer conn.Close()
+						defer func() {
+							err := conn.Close()
+							if err != nil {
+								logger.Errorf(err, "while closing websocket connection")
+							}
+						}()
 
 						pr, pw := io.Pipe()
 
 						go func() {
 							// now read from pr, and write it to websocket conn
-							defer pr.Close()
-							defer conn.Close()
+							defer func() {
+								if err := pr.Close();err != nil {
+									logger.Errorf(err, "while closing websocket connection")
+								}
+								if err := conn.Close(); err != nil {
+									logger.Errorf(err, "while closing websocket connection")
+								}
+							}()
+
 
 							r := bufio.NewReader(pr)
 							msg := make([]byte, 0xffff)
@@ -357,23 +369,35 @@ var Module = fx.Module("app",
 								n, err := r.Read(msg)
 								if err != nil {
 									if err != io.EOF {
-										conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error()))
+										if err := conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error()));err != nil {
+											logger.Errorf(err, "while writing message to websocket connection")
+											return
+										}
 										return
 									}
 									if conn.Conn == nil {
 										break
 									}
-									conn.WriteMessage(fWebsocket.TextMessage, msg[:n])
+									if err:=conn.WriteMessage(fWebsocket.TextMessage, msg[:n]);err != nil {
+										logger.Errorf(err, "while writing message to websocket connection")
+										return
+									}
 									return
 								}
 
-								conn.WriteMessage(fWebsocket.TextMessage, msg[:n])
+								if err:=conn.WriteMessage(fWebsocket.TextMessage, msg[:n]);err != nil {
+									logger.Errorf(err, "while writing message to websocket connection")
+									return
+								}
 							}
 						}()
 
 						lokiQueryFilter, ok := conn.Locals("loki-query-filter").(*loki_client.QueryArgs)
 						if !ok {
-							conn.WriteMessage(fWebsocket.CloseMessage, []byte(fiber.ErrInternalServerError.Error()))
+							if err:=conn.WriteMessage(fWebsocket.CloseMessage, []byte(fiber.ErrInternalServerError.Error()));err != nil {
+								logger.Errorf(err, "while writing message to websocket connection")
+								return
+							}
 							return
 						}
 

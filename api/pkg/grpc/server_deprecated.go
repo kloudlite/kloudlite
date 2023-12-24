@@ -41,12 +41,11 @@ func NewGrpcServerFx[T ServerOptions]() fx.Option {
 							if err != nil {
 								return errors.NewEf(err, "could not listen to net/tcp server")
 							}
-							go func() error {
+							go func() {
 								err := server.Serve(listen)
 								if err != nil {
-									return errors.NewEf(err, "could not start grpc server ")
+									logger.Errorf(err, "could not start grpc server ")
 								}
-								return nil
 							}()
 							return nil
 						},

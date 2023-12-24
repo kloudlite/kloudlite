@@ -19,22 +19,22 @@ type EventTarget struct {
 	ResourceId   repos.ID               `json:"resourceId" bson:"resourceId"`
 }
 
-type status struct {
+type Status struct {
 	Value   string `json:"value" bson:"value"`
 	Message string `json:"message" bson:"message"`
 }
 
-func StatusOK() status {
-	return status{Value: "OK"}
+func StatusOK() Status {
+	return Status{Value: "OK"}
 }
 
-func StatusError(err error) status {
-	return status{Value: "ERROR", Message: err.Error()}
+func StatusError(err error) Status {
+	return Status{Value: "ERROR", Message: err.Error()}
 }
 
 type EventAction struct {
 	Action       constants.Action       `json:"action" bson:"action"`
-	Status       status                 `json:"status" bson:"status"`
+	Status       Status                 `json:"status" bson:"status"`
 	ResourceType constants.ResourceType `json:"resourceType" bson:"resourceType"`
 	ResourceId   repos.ID               `json:"resourceId" bson:"resourceId"`
 	Tags         map[string]string      `json:"tags" bson:"tags"`

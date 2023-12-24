@@ -90,10 +90,14 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Invoke(func(ev *env.Env, server app.InfraGrpcServer, lf fx.Lifecycle) {
+	fx.Invoke(func(ev *env.Env, server app.InfraGrpcServer, lf fx.Lifecycle, logger logging.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+				go func() {
+					if err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort)); err != nil {
+						logger.Errorf(err, "while starting grpc server")
+					}
+				}()
 				return nil
 			},
 			OnStop: func(context.Context) error {

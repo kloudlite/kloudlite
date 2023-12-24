@@ -58,10 +58,14 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, server app.InternalGrpcServer, ev *env.Env) {
+	fx.Invoke(func(lf fx.Lifecycle, logr logging.Logger, server app.InternalGrpcServer, ev *env.Env) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go server.Listen(fmt.Sprintf(":%d", ev.InternalGrpcPort))
+				go func() {
+					if err := server.Listen(fmt.Sprintf(":%d", ev.InternalGrpcPort)); err != nil {
+						logr.Errorf(err, "while starting internal grpc server")
+					}
+				}()
 				return nil
 			},
 			OnStop: func(context.Context) error {
@@ -77,10 +81,14 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, server app.ExternalGrpcServer, ev *env.Env) {
+	fx.Invoke(func(lf fx.Lifecycle,logr logging.Logger, server app.ExternalGrpcServer, ev *env.Env) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go server.Listen(fmt.Sprintf(":%d", ev.ExternalGrpcPort))
+				go func() {
+					if err:=server.Listen(fmt.Sprintf(":%d", ev.ExternalGrpcPort)); err!=nil{
+						logr.Errorf(err, "while starting external grpc server")
+					}
+				}()
 				return nil
 			},
 			OnStop: func(context.Context) error {

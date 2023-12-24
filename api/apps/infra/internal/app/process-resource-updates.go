@@ -146,10 +146,12 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 		}
 	}
 
-	consumer.Consume(readMsg, msgTypes.ConsumeOpts{
+	if err:=consumer.Consume(readMsg, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
 			logger.Errorf(err, "error while consuming message")
 			return nil
 		},
-	})
+	}); err != nil {
+		logger.Errorf(err, "error while consuming messages")
+	}
 }

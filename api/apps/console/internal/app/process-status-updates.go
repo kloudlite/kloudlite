@@ -183,10 +183,12 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		return nil
 	}
 
-	consumer.Consume(msgReader, msgTypes.ConsumeOpts{
+	if err:=consumer.Consume(msgReader, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
 			logger.Errorf(err, "received while reading messages, ignoring it")
 			return nil
 		},
-	})
+	}); err != nil {
+		logger.Errorf(err, "error while consuming messages")
+	}
 }

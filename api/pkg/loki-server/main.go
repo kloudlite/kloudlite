@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/pkg/errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,7 +16,6 @@ import (
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"github.com/gorilla/websocket"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"go.uber.org/fx"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -95,7 +94,7 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 		if err != nil {
 			return errors.NewE(err)
 		}
-		all, _ := ioutil.ReadAll(get.Body)
+		all, _ := io.ReadAll(get.Body)
 		var data logResult
 		err = json.Unmarshal(all, &data)
 		if err != nil {
@@ -118,7 +117,9 @@ func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, star
 		query.Set("start", lastTimeStamp)
 		query.Del("limit")
 		query.Del("end")
-		connection.WriteMessage(websocket.TextMessage, all)
+		if err = connection.WriteMessage(websocket.TextMessage, all); err != nil {
+			fmt.Println("[ERROR]", err)
+		}
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -165,50 +166,3 @@ type LokiClientOptions interface {
 	GetLogServerPort() uint64
 }
 
-func NewLogServerFx[T LokiClientOptions]() fx.Option {
-	return fx.Module(
-		"loki-server",
-		fx.Provide(
-			func() LogServer {
-				return fiber.New()
-			},
-		),
-		fx.Invoke(
-			func(o T, app LogServer, lifecycle fx.Lifecycle) {
-				var a *fiber.App
-				a = app
-				lifecycle.Append(
-					fx.Hook{
-						OnStart: func(ctx context.Context) error {
-							go a.Listen(fmt.Sprintf(":%v", o.GetLogServerPort()))
-							return nil
-						},
-						OnStop: func(ctx context.Context) error {
-							return a.Shutdown()
-						},
-					},
-				)
-			},
-		),
-		fx.Provide(
-			func(o T) (LokiClient, error) {
-				return NewLokiClient(o.GetLokiServerUrlAndOptions())
-			},
-		),
-		fx.Invoke(
-			func(app LogServer, lokiServer LokiClient) {
-				var a *fiber.App
-				a = app
-				a.Use(
-					"/", func(c *fiber.Ctx) error {
-						if fWebsocket.IsWebSocketUpgrade(c) {
-							c.Locals("allowed", true)
-							return c.Next()
-						}
-						return fiber.ErrUpgradeRequired
-					},
-				)
-			},
-		),
-	)
-}
