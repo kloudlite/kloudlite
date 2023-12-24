@@ -103,7 +103,7 @@ const HandleBackendResources = ({
         };
       }, {}),
     }),
-    onSubmit: async (val) => {
+    onSubmit: async (_) => {
       try {
         const { errors: e } = await api.createManagedResource({
           mres: {
@@ -113,17 +113,20 @@ const HandleBackendResources = ({
               namespace: parseTargetNs(workspace),
             },
             spec: {
-              mresKind: {
-                kind: selectedType?.resource.kind || '',
+              resourceTemplate: {
+                spec: ``,
+                msvcRef: {
+                  apiVersion: template.apiVersion || '',
+                  name: parseName(backendService),
+                  kind: template.kind!,
+                },
               },
-              msvcRef: {
-                apiVersion: template.apiVersion || '',
-                name: parseName(backendService),
-                kind: template.kind!,
-              },
-              inputs: {
-                ...val,
-              },
+              // mresKind: {
+              //   kind: selectedType?.resource.kind || '',
+              // },
+              // inputs: {
+              //   ...val,
+              // },
             },
           },
         });

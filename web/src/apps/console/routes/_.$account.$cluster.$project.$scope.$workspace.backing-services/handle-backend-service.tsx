@@ -325,13 +325,18 @@ const HandleBackendService = ({
                 annotations: {},
               },
               spec: {
-                msvcKind: {
-                  apiVersion: selectedService?.service.apiVersion || '',
-                  kind: selectedService?.service.kind || '',
+                serviceTemplate: {
+                  spec: {
+                    ...tempVal,
+                  },
                 },
-                inputs: {
-                  ...tempVal,
-                },
+                // msvcKind: {
+                //   apiVersion: selectedService?.service.apiVersion || '',
+                //   kind: selectedService?.service.kind || '',
+                // },
+                // inputs: {
+                //   ...tempVal,
+                // },
               },
             },
           });
