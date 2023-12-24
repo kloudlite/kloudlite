@@ -83,24 +83,24 @@ func resetDNS(verbose bool) error {
 }
 
 func setDeviceIp(deviceIp string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", KL_WG_INTERFACE, deviceIp, deviceIp), verbose)
+	return execCmd(fmt.Sprintf("ifconfig %s %s %s", KlWgInterface, deviceIp, deviceIp), verbose)
 }
 
 func startService(verbose bool) error {
-	err := execCmd(fmt.Sprintf("ip link add dev %s type wireguard", KL_WG_INTERFACE), verbose)
+	err := execCmd(fmt.Sprintf("ip link add dev %s type wireguard", KlWgInterface), verbose)
 	if err != nil {
 		return err
 	}
 
-	return execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", KL_WG_INTERFACE), verbose)
+	return execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", KlWgInterface), verbose)
 }
 
 func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ip -4 route add %s dev %s", ip, KL_WG_INTERFACE), verbose)
+	return execCmd(fmt.Sprintf("ip -4 route add %s dev %s", ip, KlWgInterface), verbose)
 }
 
 func stopService(verbose bool) error {
-	err := execCmd(fmt.Sprintf("ip link del dev %s", KL_WG_INTERFACE), verbose)
+	err := execCmd(fmt.Sprintf("ip link del dev %s", KlWgInterface), verbose)
 	if err != nil {
 		return err
 	}
