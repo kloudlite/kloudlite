@@ -17,6 +17,11 @@ func SyncKubeConfig() (*string, error) {
 
 	tmpFile := fmt.Sprintf("%s%s.config", tmpDir, name)
 
+	_, err = os.Stat(tmpFile)
+	if err == nil {
+		return &tmpFile, nil
+	}
+
 	config, err := getKubeConfig()
 	if err != nil {
 		return nil, err
