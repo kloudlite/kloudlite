@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"github.com/kloudlite/kl/cmd/use"
 	"net/http"
 	"time"
 
@@ -147,6 +148,10 @@ func CurrentClusterName() (string, error) {
 	file, err := GetContextFile()
 	if err != nil {
 		return "", err
+	}
+	if file.ClusterName == "" {
+		_, _ = use.SelectCluster([]string{})
+		return CurrentClusterName()
 	}
 	if file.ClusterName == "" {
 		return "",
