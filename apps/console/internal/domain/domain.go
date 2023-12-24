@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/logging"
 	"io"
 	"os"
 	"strconv"
@@ -36,6 +37,7 @@ type MessageDispatcher messaging.Producer
 
 type domain struct {
 	k8sClient k8s.Client
+	logger logging.Logger
 
 	producer MessageDispatcher
 
@@ -387,6 +389,7 @@ var Module = fx.Module("domain",
 		msvcRepo repos.DbRepo[*entities.ManagedService],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
+		logger logging.Logger,
 
 		ev *env.Env,
 	) (Domain, error) {
@@ -424,6 +427,7 @@ var Module = fx.Module("domain",
 
 			iamClient:   iamClient,
 			infraClient: infraClient,
+			logger:      logger,
 
 			projectRepo:     projectRepo,
 			workspaceRepo:   workspaceRepo,

@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	app := fx.New(
+	webApp := fx.New(
 		fx.NopLogger,
 		fx.Provide(
 			func() logging.Logger {
@@ -49,12 +49,12 @@ func main() {
 	ctx, cf := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cf()
 
-	if err := app.Start(ctx); err != nil {
+	if err := webApp.Start(ctx); err != nil {
 		logger.Errorf(err, "comms-api startup errors")
 		logger.Infof("EXITING as errors encountered during startup")
 		os.Exit(1)
 	}
 
 	common.PrintReadyBanner()
-	<-app.Done()
+	<-webApp.Done()
 }

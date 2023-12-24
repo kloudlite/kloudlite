@@ -403,12 +403,14 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
-		d.commsClient.SendWelcomeEmail(
+		if _,err:=d.commsClient.SendWelcomeEmail(
 			ctx, &comms.WelcomeEmailInput{
 				Email: user.Email,
 				Name:  user.Name,
 			},
-		)
+		); err != nil {
+			d.logger.Errorf(err)
+		}
 		if err != nil {
 			return nil, errors.NewEf(err, "could not create user (email=%s)", user.Email)
 		}

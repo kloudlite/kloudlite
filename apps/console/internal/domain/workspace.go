@@ -142,12 +142,14 @@ func (d *domain) createWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 		return nil, errors.NewE(err)
 	}
 
-	d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
+	if _,err:=d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
 		ResourceType: string(iamT.ResourceWorkspace),
 		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceWorkspace, nWs.Name),
 		Role:         string(iamT.RoleResourceOwner),
-	})
+	}); err != nil {
+		d.logger.Errorf(err, "error while adding membership")
+	}
 
 	if err := d.applyK8sResource(ctx, &nWs.Workspace, nWs.RecordVersion); err != nil {
 		return nil, errors.NewE(err)

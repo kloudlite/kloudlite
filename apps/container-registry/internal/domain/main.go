@@ -96,7 +96,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				}()
 
 				if len(digest.Tags) == 0 {
-					d.digestRepo.DeleteById(ctx, digest.Id)
+					if err:=d.digestRepo.DeleteById(ctx, digest.Id); err != nil {
+						d.logger.Errorf(err)
+					}
 				} else {
 					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
 					if err != nil {
@@ -165,7 +167,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				UserName: e.Actor.Name,
 			}
 
-			d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
+			if _,err:=d.repositoryRepo.UpdateById(ctx, ee.Id, ee); err != nil {
+				d.logger.Errorf(err)
+			}
 
 		case "DELETE":
 

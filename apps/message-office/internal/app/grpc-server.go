@@ -254,11 +254,13 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		<-server.Context().Done()
 		logger.Debugf("server context has been closed")
 		delete(g.consumers, key)
-		consumer.Stop(context.TODO())
+		if err := consumer.Stop(context.TODO()); err != nil {
+			logger.Errorf(err, "while stopping consumer")
+		}
 		logger.Infof("consumer is closed now")
 	}()
 
-	consumer.Consume(func(msg *types.ConsumeMsg) error {
+	if err:=consumer.Consume(func(msg *types.ConsumeMsg) error {
 		logger.WithKV("subject", msg.Subject).Infof("read message from consumer")
 		defer func() {
 			logger.WithKV("subject", msg.Subject).Infof("dispatched message to agent")
@@ -269,7 +271,9 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 			logger.Infof("error occurrred on agent side, while parsing/applying the message, ignoring as we don't want to block the queue")
 			return nil
 		},
-	})
+	}); err != nil {
+		logger.Errorf(err, "while consuming messages from consumer")
+	}
 
 	return nil
 }

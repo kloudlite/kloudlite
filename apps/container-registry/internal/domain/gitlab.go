@@ -28,14 +28,14 @@ func (d *Impl) GitlabListRepos(ctx context.Context, userId repos.ID, gid string,
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	repos, err := d.gitlab.ListRepos(ctx, token, gid, query, pagination)
+	gitRepos, err := d.gitlab.ListRepos(ctx, token, gid, query, pagination)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	res := make([]*entities.GitlabProject, len(repos))
+	res := make([]*entities.GitlabProject, len(gitRepos))
 
-	for i, r := range repos {
+	for i, r := range gitRepos {
 		res[i] = &entities.GitlabProject{
 			ID:                r.ID,
 			Description:       r.Description,

@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
 )
 
@@ -34,6 +35,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, env *env.Env,
+			logr logging.Logger,
 			sessionRepo cache.Repo[*common.AuthSession],
 		) {
 
@@ -60,7 +62,9 @@ var Module = fx.Module("app",
 				ctx := c.Context()
 
 				return websocket.New(func(sockConn *websocket.Conn) {
-					d.HandleWebSocket(ctx, sockConn)
+					if err := d.HandleWebSocket(ctx, sockConn); err != nil {
+						logr.Errorf(err, "while handling websocket")
+					}
 				})(c)
 			})
 

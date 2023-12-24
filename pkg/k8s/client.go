@@ -124,7 +124,9 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 		scheme = runtime.NewScheme()
 	}
 
-	clientgoscheme.AddToScheme(scheme)
+	if err := clientgoscheme.AddToScheme(scheme); err!= nil {
+		fmt.Println(err)
+	}
 
 	c, err := client.New(cfg, client.Options{
 		Scheme: scheme,
@@ -134,7 +136,7 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 		return nil, errors.NewE(err)
 	}
 
-	clientset, err := clientset.NewForConfig(cfg)
+	cs, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -146,7 +148,7 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 
 	return &clientHandler{
 		kclient:    c,
-		kclientset: clientset,
+		kclientset: cs,
 		yamlclient: yamlclient,
 	}, nil
 }

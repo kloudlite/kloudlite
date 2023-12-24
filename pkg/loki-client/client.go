@@ -137,7 +137,6 @@ func (l *lokiClient) GetLogs(args QueryArgs) ([]byte, error) {
 }
 
 func (l *lokiClient) TailLogs(args QueryArgs, writer io.WriteCloser) error {
-	defer writer.Close()
 
 	req, err := l.createLokiHttpRequest(args)
 	if err != nil {

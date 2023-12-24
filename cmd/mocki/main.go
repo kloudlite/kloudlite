@@ -38,7 +38,7 @@ func main() {
 	t := template.New("code_gen")
 	t.Funcs(sprig.TxtFuncMap())
 
-	t.Parse(`package {{ .Package }}
+	_, err =t.Parse(`package {{ .Package }}
 
 import (
   {{- range .Imports }}
@@ -74,6 +74,9 @@ func New{{.StructName}}() *{{.ReceiverStructName}} {
 	return &{{.ReceiverStructName}}{}
 }
 `)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	imports := make([]string, 0, len(info.Imports))
 	for _, v := range info.Imports {

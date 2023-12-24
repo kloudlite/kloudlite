@@ -212,7 +212,9 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 			return nil
 		}
 
-		d.gitlab.DeleteWebhook(ctx, at, string(b.Source.Repository), entities.GitlabWebhookId(*b.Source.WebhookId))
+		if err:=d.gitlab.DeleteWebhook(ctx, at, string(b.Source.Repository), entities.GitlabWebhookId(*b.Source.WebhookId));err!=nil {
+			d.logger.Errorf(err, "error while deleting webhook")
+		}
 	}
 
 	return nil

@@ -74,7 +74,9 @@ func NewSessionMiddleware(
 			context.WithValue(
 				ctx.UserContext(), "delete-session", func() {
 					if cookieValue != "" {
-						repo.Drop(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue))
+						if err := repo.Drop(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue)); err != nil {
+							fmt.Println("[ERROR]", err)
+						}
 					}
 				},
 			),

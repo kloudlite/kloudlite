@@ -105,7 +105,11 @@ func (a awsS3) DownloadFile(filePath, fileKey string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	defer file.Close()
+	defer func() {
+		if err:=file.Close(); err!=nil {
+			fmt.Printf("\n[#] error closing file %s\n", fileKey)
+		}
+	}()
 
 	// Download the file from S3
 	resp, err := a.svc.GetObject(&s3.GetObjectInput{
@@ -133,7 +137,11 @@ func (a awsS3) UploadFile(filePath, fileKey string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("\n[#] error closing file %s\n", fileKey)
+		}
+	}()
 
 	_, err = a.svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(a.bucketName),
@@ -149,7 +157,9 @@ func (a awsS3) UploadFile(filePath, fileKey string) error {
 
 func hash(s string) uint32 {
 	h := fnv.New32a()
-	h.Write([]byte(s))
+	if _, err := h.Write([]byte(s)); err != nil {
+		fmt.Printf("error hashing string %s\n", s)
+	}
 	return h.Sum32()
 }
 

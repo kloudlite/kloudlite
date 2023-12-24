@@ -23,11 +23,20 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 	cctx, err := jc.consumer.Consume(func(msg jetstream.Msg) {
 		mm, err := msg.Metadata()
 		if err != nil {
-			msg.Nak()
+			if err := msg.Nak(); err != nil {
+				jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+				return
+			}
 			return
 		}
 
-		msg.InProgress()
+		if err = msg.InProgress(); err != nil {
+			if err := msg.Nak(); err != nil {
+				jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+				return
+			}
+			return
+		}
 
 		if err := consumeFn(&types.ConsumeMsg{
 			Subject:   msg.Subject(),
@@ -36,19 +45,29 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 		}); err != nil {
 			if opts.OnError == nil {
 				jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
-				msg.Nak()
+				if err := msg.Nak(); err != nil {
+					jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+					return
+				}
 				return
 			}
 
 			if opts.OnError != nil {
 				if err := opts.OnError(err); err != nil {
-					msg.Nak()
+					jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+					if err := msg.Nak(); err != nil {
+						jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending NACK", msg.Subject())
+						return
+					}
 					return
 				}
 			}
 		}
 
-		msg.Ack()
+		if err := msg.Ack(); err != nil {
+			jc.client.Logger.Errorf(err, "while consuming message from subject: %s, sending ACK", msg.Subject())
+			return
+		}
 		jc.client.Logger.Infof("acknowledged message, stream: %s, consumer: %s", mm.Stream, mm.Consumer)
 	})
 	if err != nil {
@@ -61,8 +80,8 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	signal := <-quit
-	return errors.Newf("os signal: %s received, stopped consuming messages", signal)
+	s := <-quit
+	return errors.Newf("os signal: %s received, stopped consuming messages", s)
 }
 
 // Stop implements Consumer.
