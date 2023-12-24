@@ -30,8 +30,8 @@ const parseItem = (
 ) => {
   const template = getManagedTemplate({
     templates,
-    kind: item.spec.msvcKind.kind || '',
-    apiVersion: item.spec.msvcKind.apiVersion,
+    kind: item.spec.serviceTemplate.kind || '',
+    apiVersion: item.spec.serviceTemplate.apiVersion,
   });
   return {
     name: item?.displayName,

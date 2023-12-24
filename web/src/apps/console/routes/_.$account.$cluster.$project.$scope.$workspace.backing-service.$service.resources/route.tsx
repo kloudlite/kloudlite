@@ -120,8 +120,8 @@ const BackingResources = () => {
         template={
           getManagedTemplate({
             templates: managedTemplates,
-            kind: backendService.spec.msvcKind.kind || '',
-            apiVersion: backendService.spec.msvcKind.apiVersion,
+            kind: backendService.spec.serviceTemplate.kind || '',
+            apiVersion: backendService.spec.serviceTemplate.apiVersion,
           })!
         }
         setShow={setShowBackendResourceDialog}

@@ -6,8 +6,8 @@ import {
   Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProvider,
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
   ProjectId,
-  Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncStatusAction,
-  Kloudlite__Io___Pkg___Types__SyncStatusState as SyncStatusState,
+  Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction as SyncStatusAction,
+  Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState as SyncStatusState,
   WorkspaceOrEnvId,
 } from '~/root/src/generated/gql/server';
 

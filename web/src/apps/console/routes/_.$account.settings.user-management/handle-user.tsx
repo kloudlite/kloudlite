@@ -8,7 +8,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { Kloudlite__Io___Apps___Iam___Types__Role as Role } from '~/root/src/generated/gql/server';
+import { Github__Com___Kloudlite___Api___Apps___Iam___Types__Role as Role } from '~/root/src/generated/gql/server';
 import { parseName } from '~/console/server/r-utils/common';
 import { IAccountContext } from '../_.$account';
 
