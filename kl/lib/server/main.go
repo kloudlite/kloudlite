@@ -113,7 +113,7 @@ func Login(loginId string) error {
 			}
 			req, _ := http.NewRequest("GET", "/", nil)
 			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
-			cookie, _ := req.Cookie("hotspot-Session")
+			cookie, _ := req.Cookie("hotspot-session")
 			file.Session = cookie.Value
 			err = WriteContextFile(*file)
 			return err

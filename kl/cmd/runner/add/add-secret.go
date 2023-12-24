@@ -14,7 +14,7 @@ import (
 
 var addSecretCommand = &cobra.Command{
 	Use:   "secret",
-	Short: "add secret to your " + constants.CMD_NAME + "-config file by selection from the all the secrets available in selected project",
+	Short: "add secret to your " + constants.CmdName + "-config file by selection from the all the secrets available in selected project",
 	Long: `Add env from secret
 
 Using this command you are able to add a environment from the secret present on your project
@@ -49,7 +49,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
 		common.PrintError(err)
-		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -178,7 +178,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		common.PrintError(err)
 	}
 
-	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Name, selectedSecretKey.Key, constants.CMD_NAME)
+	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Name, selectedSecretKey.Key, constants.CmdName)
 	return nil
 }
 

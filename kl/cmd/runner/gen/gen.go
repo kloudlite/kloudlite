@@ -10,9 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var GenMountCommand = &cobra.Command{
+var MountCommand = &cobra.Command{
 	Use:   "gen",
-	Short: "add mount to your " + constants.CMD_NAME + "-config file by selection from the all the [ config | secret ] available selected project",
+	Short: "add mount to your " + constants.CmdName + "-config file by selection from the all the [ config | secret ] available selected project",
 	Long: `Add mount
 This command help you to add generated config so you can get your config or secret downloaded and dumped in a file.
 
@@ -27,7 +27,7 @@ Examples:
 		klFile, err := server.GetKlFile(nil)
 		if err != nil {
 			common.PrintError(err)
-			es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+			es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 			common.PrintError(fmt.Errorf(es))
 			return
 		}
@@ -175,6 +175,6 @@ func selectConfigMount(path string, klFile server.KLFileType, cmd *cobra.Command
 }
 
 func init() {
-	GenMountCommand.Flags().StringP("config", "", "", "config name")
-	GenMountCommand.Flags().StringP("secret", "", "", "secret name")
+	MountCommand.Flags().StringP("config", "", "", "config name")
+	MountCommand.Flags().StringP("secret", "", "", "secret name")
 }

@@ -13,7 +13,7 @@ import (
 
 var LoadCommand = &cobra.Command{
 	Use:   "load",
-	Short: "load environment variables and mount config files according to defined in " + constants.CMD_NAME + "-config file",
+	Short: "load environment variables and mount config files according to defined in " + constants.CmdName + "-config file",
 	Long: `Load Environment
 This command help you to load environments of the server according to you defined in your kl-config file.
 

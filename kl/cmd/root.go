@@ -9,8 +9,8 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   constants.CMD_NAME,
-	Short: constants.CMD_NAME + " is command line interface to interact with kloudlite environments",
+	Use:   constants.CmdName,
+	Short: constants.CmdName + " is command line interface to interact with kloudlite environments",
 	Long: `
 kl(Kloudlite Cli) will manage and attach to kloudlite environments.
 

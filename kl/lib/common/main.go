@@ -34,15 +34,15 @@ func MakeOption(key, value string) Option {
 }
 
 func PrintError(err error) {
-	fmt.Fprintf(os.Stderr, "%s\n", color.Text(err.Error(), 1))
+	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s\n", color.Text(err.Error(), 1)))
 }
 
 func Log(str string) {
-	fmt.Fprintf(os.Stderr, "%s\n", str)
+	_, _ = fmt.Fprintf(os.Stderr, "%s\n", str)
 }
 
 func NewSpinner(msg ...string) *spinner.Spinner {
-	message := []string{}
+	var message []string
 	sp := spinner.CharSets[11]
 	for _, v := range sp {
 		message = append(message, fmt.Sprintf("%s %s...", v, func() string {

@@ -2,7 +2,7 @@ package runner
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 
 	"github.com/kloudlite/kl/constants"
@@ -15,7 +15,7 @@ import (
 
 var ShowCommand = &cobra.Command{
 	Use:   "show",
-	Short: "print your " + constants.CMD_NAME + "-config file and current context",
+	Short: "print your " + constants.CmdName + "-config file and current context",
 	Long:  `Show kl-config`,
 	Run: func(_ *cobra.Command, _ []string) {
 
@@ -25,13 +25,13 @@ var ShowCommand = &cobra.Command{
 			return
 
 		}
-		contextFile, err := ioutil.ReadFile(path.Join(configFolder, "config"))
+		contextFile, err := os.ReadFile(path.Join(configFolder, "config"))
 		if err != nil {
 			common.PrintError(err)
 			return
 		}
 
-		file, err := ioutil.ReadFile(server.GetConfigPath())
+		file, err := os.ReadFile(server.GetConfigPath())
 		if err != nil {
 			common.PrintError(err)
 			return

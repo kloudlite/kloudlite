@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	ENV_WG_COMMAND   = "WG_COMMAND"
-	ENV_WG_HIDE_KEYS = "WG_HIDE_KEYS"
+	EnvWgCommand  = "WG_COMMAND"
+	EnvWgHideKeys = "WG_HIDE_KEYS"
 )
 
 type WgShowOptions struct {
@@ -29,7 +29,7 @@ type WgShowOptions struct {
 
 func getOptions() *WgShowOptions {
 	opts := WgShowOptions{}
-	opts.ShowKeys = os.Getenv(ENV_WG_HIDE_KEYS) == "never"
+	opts.ShowKeys = os.Getenv(EnvWgHideKeys) == "never"
 	opts.Interface = "all"
 	return &opts
 }

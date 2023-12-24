@@ -3,7 +3,6 @@ package mounter
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -27,7 +26,9 @@ func mountFile(_file, data, mountPath string) error {
 		}
 	}
 
-	ioutil.WriteFile(file, []byte(data), os.ModePerm)
+	if err := os.WriteFile(file, []byte(data), os.ModePerm); err != nil {
+		fmt.Println("error writing file", err)
+	}
 
 	return nil
 }

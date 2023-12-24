@@ -3,6 +3,7 @@ package wg
 import (
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -91,7 +92,7 @@ func configure(
 		return e
 	}
 
-	wgc, err := wgctrl.New()
+	wg, err := wgctrl.New()
 	if err != nil {
 		return err
 	}
@@ -100,7 +101,10 @@ func configure(
 		common.Log("[#] setting up connection")
 	}
 
-	wgc.ConfigureDevice(KL_WG_INTERFACE, cfg.Config)
+	err = wg.ConfigureDevice(KlWgInterface, cfg.Config)
+	if err != nil {
+		fmt.Printf("failed to configure device: %v", err)
+	}
 
 	for _, i2 := range cfg.Peers[0].AllowedIPs {
 		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), verbose)

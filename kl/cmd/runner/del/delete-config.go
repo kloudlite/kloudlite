@@ -12,7 +12,7 @@ import (
 
 var deleteConfigCommand = &cobra.Command{
 	Use:   "config",
-	Short: "remove one config environment from your " + constants.CMD_NAME + "-config",
+	Short: "remove one config environment from your " + constants.CmdName + "-config",
 	Long: `This command help you to delete environment that that is comming from config
 
 Examples:
@@ -33,7 +33,7 @@ func removeConfig() error {
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
 		common.PrintError(err)
-		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		common.PrintError(fmt.Errorf(es))
 	}
 
@@ -67,7 +67,7 @@ func removeConfig() error {
 
 		klFile.Configs = newConfigs
 
-		fmt.Printf("removed config %s form your %s-file\n", selectedConfig.Name, constants.CMD_NAME)
+		fmt.Printf("removed config %s form your %s-file\n", selectedConfig.Name, constants.CmdName)
 
 	} else {
 
@@ -93,7 +93,7 @@ func removeConfig() error {
 
 		klFile.Configs[selectedConfigIndex].Env = newEnvs
 
-		fmt.Printf("removed key %s/%s form your %s-file\n", selectedConfig.Name, selectedConfig.Name, constants.CMD_NAME)
+		fmt.Printf("removed key %s/%s form your %s-file\n", selectedConfig.Name, selectedConfig.Name, constants.CmdName)
 	}
 
 	err = server.WriteKLFile(*klFile)

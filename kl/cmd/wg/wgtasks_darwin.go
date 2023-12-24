@@ -21,14 +21,14 @@ import (
 )
 
 const (
-	KL_WG_INTERFACE = "utun1729"
+	KlWgInterface = "utun1729"
 )
 
 func connect(verbose bool) error {
 	success := false
 	defer func() {
 		if !success {
-			stopService(verbose)
+			_ = stopService(verbose)
 		}
 	}()
 
@@ -98,9 +98,9 @@ func removeDNSServer(networkService string, dnsServer string, verbose bool) erro
 		return d != dnsServer
 	})
 	if len(newDnsServers) == 0 {
-		execCmd(fmt.Sprintf("networksetup -setdnsservers %q empty", networkService), verbose)
+		_ = execCmd(fmt.Sprintf("networksetup -setdnsservers %q empty", networkService), verbose)
 	} else {
-		execCmd(fmt.Sprintf("networksetup -setdnsservers %q %s", networkService, strings.Join(newDnsServers, " ")), verbose)
+		_ = execCmd(fmt.Sprintf("networksetup -setdnsservers %q %s", networkService, strings.Join(newDnsServers, " ")), verbose)
 	}
 	return err
 }
@@ -157,19 +157,19 @@ func resetDNS(verbose bool) error {
 			}
 		}
 	}
-	server.SetActiveDns([]string{})
+	_ = server.SetActiveDns([]string{})
 	return nil
 }
 
 func setDeviceIp(deviceIp string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", KL_WG_INTERFACE, deviceIp, deviceIp), verbose)
+	return execCmd(fmt.Sprintf("ifconfig %s %s %s", KlWgInterface, deviceIp, deviceIp), verbose)
 }
 func startService(verbose bool) error {
-	t, err := tun.CreateTUN(KL_WG_INTERFACE, device.DefaultMTU)
+	t, err := tun.CreateTUN(KlWgInterface, device.DefaultMTU)
 	if err != nil {
 		return err
 	}
-	fileUAPI, err := ipc.UAPIOpen(KL_WG_INTERFACE)
+	fileUAPI, err := ipc.UAPIOpen(KlWgInterface)
 	if err != nil {
 		return err
 	}
@@ -177,12 +177,12 @@ func startService(verbose bool) error {
 	if verbose {
 		logger = device.NewLogger(
 			device.LogLevelSilent,
-			fmt.Sprintf("[%s]", KL_WG_INTERFACE),
+			fmt.Sprintf("[%s]", KlWgInterface),
 		)
 	} else {
 		logger = device.NewLogger(
 			device.LogLevelVerbose,
-			fmt.Sprintf("[%s]", KL_WG_INTERFACE),
+			fmt.Sprintf("[%s]", KlWgInterface),
 		)
 	}
 
@@ -190,19 +190,19 @@ func startService(verbose bool) error {
 	logger.Verbosef("Device started")
 	errs := make(chan error)
 	term := make(chan os.Signal, 1)
-	uapi, err := ipc.UAPIListen(KL_WG_INTERFACE, fileUAPI)
+	uapi, err := ipc.UAPIListen(KlWgInterface, fileUAPI)
 	if err != nil {
 		logger.Errorf("Failed to listen on uapi socket: %v", err)
 		os.Exit(1)
 	}
 	go func() {
 		for {
-			conn, err := uapi.Accept()
+			c, err := uapi.Accept()
 			if err != nil {
 				errs <- err
 				return
 			}
-			go d.IpcHandle(conn)
+			go d.IpcHandle(c)
 		}
 	}()
 
@@ -216,7 +216,7 @@ func startService(verbose bool) error {
 	case <-errs:
 	case <-d.Wait():
 	}
-	uapi.Close()
+	_ = uapi.Close()
 	d.Close()
 	logger.Verbosef("Shutting down")
 	return nil

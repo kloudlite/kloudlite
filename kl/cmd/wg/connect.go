@@ -26,7 +26,11 @@ func startServiceInBg() {
 		return
 	}
 
-	os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
+	err = os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
+	if err != nil {
+		common.PrintError(err)
+		return
+	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err = execCmd(fmt.Sprintf("chown %s %s", usr, configFolder+"/wgpid"),

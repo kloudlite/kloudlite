@@ -5,15 +5,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var AddCommand = &cobra.Command{
+var Command = &cobra.Command{
 	Use:   "add",
-	Short: "add [ secret | config | mres ] configuration to your " + constants.CMD_NAME + "-config file",
+	Short: "add [ secret | config | mres ] configuration to your " + constants.CmdName + "-config file",
 	Long:  `add an environment variable from secret,config or managed resource`,
 }
 
 func init() {
-	AddCommand.AddCommand(addConfigCommand)
-	AddCommand.AddCommand(addMresCommand)
-	AddCommand.AddCommand(addSecretCommand)
-	// AddCommand.AddCommand(addMountCommand)
+	Command.AddCommand(addConfigCommand)
+	Command.AddCommand(addMresCommand)
+	Command.AddCommand(addSecretCommand)
+	// Command.Command(addMountCommand)
 }

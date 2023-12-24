@@ -17,7 +17,7 @@ func HeaderText(text string) string {
 }
 
 func GetTableStyles() table.BoxStyle {
-	colorReset := color.ColorReset()
+	colorReset := color.Reset()
 	colorBorder := color.Color(borderColor)
 
 	return table.BoxStyle{

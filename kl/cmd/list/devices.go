@@ -24,7 +24,7 @@ Examples:
   kl list devices <accountId>
 `,
 	Run: func(_ *cobra.Command, args []string) {
-		err := ListDevices(args)
+		err := Devices(args)
 		if err != nil {
 			common.PrintError(err)
 			return
@@ -32,7 +32,7 @@ Examples:
 	},
 }
 
-func ListDevices(args []string) error {
+func Devices(args []string) error {
 
 	var devices []server.Device
 	var err error
@@ -94,7 +94,7 @@ func ListDevices(args []string) error {
 			}(),
 
 			strings.Join(func() []string {
-				ports := []string{}
+				var ports []string
 				for i, v := range a.Ports {
 					prt := fmt.Sprintf("%s%d:%d", func() string {
 						if (i+1)%3 == 0 {

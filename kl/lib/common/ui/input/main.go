@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func InputPrompt(o Options) (string, error) {
+func Prompt(o Options) (string, error) {
 	i := textinput.New()
 	i.Focus()
 	i.Prompt = o.Prompt
@@ -33,7 +33,7 @@ func InputPrompt(o Options) (string, error) {
 	m := tm.(model)
 
 	if m.aborted {
-		return "", fmt.Errorf("Aborted the program")
+		return "", fmt.Errorf("aborted the program")
 	}
 
 	return m.textinput.Value(), nil

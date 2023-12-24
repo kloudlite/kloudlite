@@ -12,7 +12,7 @@ import (
 
 var deleteSecretCommand = &cobra.Command{
 	Use:   "secret",
-	Short: "remove one secret environment from your " + constants.CMD_NAME + "-config",
+	Short: "remove one secret environment from your " + constants.CmdName + "-config",
 	Long: `This command help you to delete environment that that is comming from secret
 
 Examples:
@@ -34,7 +34,7 @@ func removeSecret() error {
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
 		common.PrintError(err)
-		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -68,7 +68,7 @@ func removeSecret() error {
 
 		klFile.Secrets = newSecrets
 
-		fmt.Printf("removed secret %s form your %s-file\n", selectedSecret.Name, constants.CMD_NAME)
+		fmt.Printf("removed secret %s form your %s-file\n", selectedSecret.Name, constants.CmdName)
 
 	} else {
 
@@ -94,7 +94,7 @@ func removeSecret() error {
 
 		klFile.Secrets[selectedSecretIndex].Env = newEnvs
 
-		fmt.Printf("removed key %s/%s form your %s-file\n", selectedSecret.Name, selectedSecret.Name, constants.CMD_NAME)
+		fmt.Printf("removed key %s/%s form your %s-file\n", selectedSecret.Name, selectedSecret.Name, constants.CmdName)
 	}
 
 	err = server.WriteKLFile(*klFile)

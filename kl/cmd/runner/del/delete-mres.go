@@ -34,7 +34,7 @@ func removeMreses() error {
 
 	if err != nil {
 		common.PrintError(err)
-		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -73,7 +73,7 @@ func removeMreses() error {
 		return err
 	}
 
-	fmt.Printf("removed mres %s from %s-file\n", selectedMres.Name, constants.CMD_NAME)
+	fmt.Printf("removed mres %s from %s-file\n", selectedMres.Name, constants.CmdName)
 
 	return nil
 }

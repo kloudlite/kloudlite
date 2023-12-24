@@ -63,8 +63,8 @@ func GetMreses() ([]*Mres, []mCategory, error) {
 
 	type Response struct {
 		Data struct {
-			ManagedSvc_listInstallations []*Mres               `json:"managedSvc_listInstallations"`
-			ManagedSvc_marketList        *MresMarketCategories `json:"managedSvc_marketList"`
+			ManagedSvcListInstallations []*Mres               `json:"managedSvc_listInstallations"`
+			ManagedSvcMarketList        *MresMarketCategories `json:"managedSvc_marketList"`
 		} `json:"data"`
 	}
 	var resp Response
@@ -73,6 +73,6 @@ func GetMreses() ([]*Mres, []mCategory, error) {
 		return nil, nil, err
 	}
 
-	return resp.Data.ManagedSvc_listInstallations,
-		resp.Data.ManagedSvc_marketList.Categories, nil
+	return resp.Data.ManagedSvcListInstallations,
+		resp.Data.ManagedSvcMarketList.Categories, nil
 }

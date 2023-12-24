@@ -8,7 +8,7 @@ import (
 	"os/exec"
 )
 
-var ExecCmd = &cobra.Command{
+var Command = &cobra.Command{
 	Use:   "exec",
 	Short: "exec to kloudlite",
 	Long: `This command let you login to the kloudlite.

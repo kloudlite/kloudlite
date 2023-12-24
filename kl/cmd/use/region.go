@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package use
 
 import (
@@ -14,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
 var regionCmd = &cobra.Command{
 	Use:   "region",
 	Short: "select region of selected device",

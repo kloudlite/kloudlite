@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// addCmd represents the list command
 var Cmd = &cobra.Command{
 	Use:   "intercept",
 	Short: "intercept an app with your device",

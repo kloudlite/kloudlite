@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -96,7 +95,7 @@ func WriteContextFile(fileObj KLContext) error {
 
 	cfile := path.Join(filePath, "config")
 
-	err = ioutil.WriteFile(cfile, file, 0644)
+	err = os.WriteFile(cfile, file, 0644)
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err = execCmd(fmt.Sprintf("chown %s %s", usr, cfile),
 			false); err != nil {
@@ -127,13 +126,13 @@ func GetContextFile() (*KLContext, error) {
 
 		ctx, _ := yaml.Marshal(KLContext{})
 
-		e := ioutil.WriteFile(filePath, ctx, os.ModePerm)
+		e := os.WriteFile(filePath, ctx, os.ModePerm)
 		if e != nil {
 			return nil, e
 		}
 	}
 
-	file, err := ioutil.ReadFile(filePath)
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -13,7 +13,7 @@ import (
 )
 
 func klFetch(method string, variables map[string]any, cookie *string) ([]byte, error) {
-	url := constants.SERVER_URL
+	url := constants.ServerURL
 	reqMethod := "POST"
 
 	marshal, err := json.Marshal(map[string]any{
@@ -50,15 +50,17 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 			return nil, err
 		}
 
-		body, e := ioutil.ReadAll(res.Body)
+		body, e := io.ReadAll(res.Body)
 		if e != nil {
 			return nil, e
 		}
 		return nil, errors.New(string(body))
 	}
-	defer res.Body.Close()
+	defer func() {
+		_ = res.Body.Close()
+	}()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

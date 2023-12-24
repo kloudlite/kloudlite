@@ -106,7 +106,7 @@ func deviceSelect(dId, dName string) (*server.Device, error) {
 		return nil, err
 	}
 
-	devices := []server.Device{}
+	var devices []server.Device
 	for _, d2 := range d {
 		if len(d2.Intercepted) > 0 {
 			devices = append(devices, d2)

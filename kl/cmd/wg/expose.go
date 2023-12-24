@@ -80,7 +80,10 @@ Examples:
 			fmt.Println("ports deleted")
 		}
 
-		list.ListDevices([]string{})
+		if err := list.Devices([]string{}); err != nil {
+			common.PrintError(err)
+			return
+		}
 
 	},
 }

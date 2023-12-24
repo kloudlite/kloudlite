@@ -13,10 +13,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// initCmd represents the init command
 var InitCommand = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize your " + constants.CMD_NAME + "-config file with some sample values",
+	Short: "Initialize your " + constants.CmdName + "-config file with some sample values",
 	Long: `kl init
 
 This command initialize a kl-config.

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/kloudlite/kl/lib/common"
@@ -65,7 +64,7 @@ func WriteKLFile(fileObj KLFileType) error {
 		return nil
 	}
 
-	err = ioutil.WriteFile(GetConfigPath(), file, 0644)
+	err = os.WriteFile(GetConfigPath(), file, 0644)
 	if err != nil {
 		common.PrintError(err)
 	}
@@ -79,7 +78,7 @@ func GetKlFile(filePath *string) (*KLFileType, error) {
 		filePath = &s
 	}
 
-	file, err := ioutil.ReadFile(*filePath)
+	file, err := os.ReadFile(*filePath)
 	if err != nil {
 		return nil, err
 	}

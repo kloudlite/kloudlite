@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -88,12 +87,15 @@ func generateDocs(cmd *cobra.Command, dir string) error {
 		fmt.Sprintf("%d-%s-%d", time.Now().Day(), time.Now().Month(), time.Now().Year()))
 
 	// fmt.Println(fileContent)
-	if err := ioutil.WriteFile(path.Join(dir, strings.ReplaceAll(cmd.CommandPath(), " ", "_")+".md"), []byte(fileContent), 0644); err != nil {
+	if err := os.WriteFile(path.Join(dir, strings.ReplaceAll(cmd.CommandPath(), " ", "_")+".md"), []byte(fileContent), 0644); err != nil {
 		return err
 	}
 
 	for _, c := range cmd.Commands() {
-		generateDocs(c, dir)
+		err := generateDocs(c, dir)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

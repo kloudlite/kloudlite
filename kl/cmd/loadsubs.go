@@ -25,7 +25,7 @@ func init() {
 	rootCmd.AddCommand(auth.LogoutCmd)
 	rootCmd.AddCommand(auth.WhoAmICmd)
 
-	rootCmd.AddCommand(exec.ExecCmd)
+	rootCmd.AddCommand(exec.Command)
 
 	rootCmd.AddCommand(wg.Cmd)
 
@@ -36,9 +36,9 @@ func init() {
 	rootCmd.AddCommand(intercept.Cmd)
 	rootCmd.AddCommand(intercept.LeaveCmd)
 
-	rootCmd.AddCommand(add.AddCommand)
+	rootCmd.AddCommand(add.Command)
 	rootCmd.AddCommand(del.DeleteCommand)
-	rootCmd.AddCommand(gen.GenMountCommand)
+	rootCmd.AddCommand(gen.MountCommand)
 
 	rootCmd.AddCommand(create.Cmd)
 }

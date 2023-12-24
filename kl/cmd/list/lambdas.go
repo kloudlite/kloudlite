@@ -46,7 +46,7 @@ func listlambdas(args []string) error {
 		l, err = server.GetApps(common.MakeOption("projectId", args[0]))
 	}
 
-	lambdas := []server.App{}
+	var lambdas []server.App
 	for _, a := range l {
 		if a.IsLambda {
 			lambdas = append(lambdas, a)

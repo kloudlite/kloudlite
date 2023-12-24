@@ -1,4 +1,3 @@
-// Depricated
 package del
 
 import (
@@ -13,7 +12,7 @@ import (
 
 var deleteMountCommand = &cobra.Command{
 	Use:   "mount",
-	Short: "remove one mount from your " + constants.CMD_NAME + "-config",
+	Short: "remove one mount from your " + constants.CmdName + "-config",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command.`,
 	Run: func(_ *cobra.Command, _ []string) {

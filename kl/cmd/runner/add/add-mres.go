@@ -12,7 +12,7 @@ import (
 
 var addMresCommand = &cobra.Command{
 	Use:   "mres",
-	Short: "add mres to your " + constants.CMD_NAME + "-config file by selection from the all the mres available selected project",
+	Short: "add mres to your " + constants.CmdName + "-config file by selection from the all the mres available selected project",
 	Long: `Add env from managed resource
 
 Using this command you are able to add a environment from the managed resource present on your project
@@ -40,7 +40,7 @@ func selectAndAddMres(cmd *cobra.Command) error {
 
 	if err != nil {
 		common.PrintError(err)
-		es := "please run '" + constants.CMD_NAME + " init' if you are not initialized the file already"
+		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -201,7 +201,7 @@ func selectAndAddMres(cmd *cobra.Command) error {
 		}
 	}
 
-	fmt.Printf("added mres %s/%s to your %s-file\n", selectedMsvc.Name, selectedMres.Name, constants.CMD_NAME)
+	fmt.Printf("added mres %s/%s to your %s-file\n", selectedMsvc.Name, selectedMres.Name, constants.CmdName)
 	return nil
 
 }
