@@ -58,8 +58,6 @@ func run(envs map[string]string, args []string) error {
 		cmd.Env = os.Environ()
 	}
 
-	fmt.Println(envs)
-
 	for k, v := range envs {
 		if len(args) == 0 {
 			fmt.Printf("%s=%q\n", k, v)

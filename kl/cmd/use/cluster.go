@@ -1,12 +1,8 @@
 package use
 
 import (
-	"errors"
-
 	"github.com/kloudlite/kl/lib"
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +20,7 @@ Examples:
   kl use cluster <clusterId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		clusterName, err := SelectCluster(args)
+		clusterName, err := common.SelectCluster(args)
 
 		if err != nil {
 			common.PrintError(err)
@@ -38,38 +34,4 @@ Examples:
 		}
 
 	},
-}
-
-func SelectCluster(args []string) (string, error) {
-	clusterName := ""
-	if len(args) >= 1 {
-		clusterName = args[0]
-	}
-	clusters, err := server.GetClusters()
-	if err != nil {
-		return "", err
-	}
-
-	if clusterName != "" {
-		for _, a := range clusters {
-			if a.Metadata.Name == clusterName {
-				return a.Metadata.Name, nil
-			}
-		}
-		return "", errors.New("you don't have access to this cluster")
-	}
-
-	selectedIndex, err := fuzzyfinder.Find(
-		clusters,
-		func(i int) string {
-			return clusters[i].DisplayName
-		},
-		fuzzyfinder.WithPromptString("Use Cluster >"),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return clusters[selectedIndex].Metadata.Name, nil
 }
