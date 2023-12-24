@@ -2,6 +2,7 @@ package exec
 
 import (
 	"fmt"
+	util "github.com/kloudlite/kl/cmd/util"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 	"os"
@@ -20,22 +21,37 @@ Example:
   visit your browser and approve there to access your account using this cli.
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		configPath, err := server.SyncKubeConfig()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		defer func() {
-			if err := os.Remove(*configPath); err != nil {
+		var fn func()
+		fn = func() {
+			configPath, err := server.SyncKubeConfig()
+			if err != nil {
+				switch err.Error() {
+				case "noSelectedAccount":
+					_, err := util.SelectAccount([]string{})
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					fn()
+				case "noSelectedCluster":
+					_, err := util.SelectCluster([]string{})
+					if err != nil {
+						fmt.Println(err)
+						return
+					}
+					fn()
+				default:
+					fmt.Println(err)
+				}
+				return
+			}
+			if err := run(map[string]string{
+				"KUBECONFIG": *configPath,
+			}, args); err != nil {
 				fmt.Println(err)
 			}
-		}()
-
-		if err := run(map[string]string{
-			"KUBECONFIG": *configPath,
-		}, args); err != nil {
-			fmt.Println(err)
 		}
+		fn()
 	},
 }
 

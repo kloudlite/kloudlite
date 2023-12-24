@@ -1,6 +1,7 @@
-package common
+package util
 
 import (
+	"github.com/kloudlite/kl/lib"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/pkg/errors"
@@ -13,6 +14,13 @@ func SelectCluster(args []string) (string, error) {
 	}
 	clusters, err := server.GetClusters()
 	if err != nil {
+		if err.Error() == "noSelectedAccount" {
+			_, err := SelectAccount([]string{})
+			if err != nil {
+				return "", err
+			}
+			return SelectCluster([]string{})
+		}
 		return "", err
 	}
 
@@ -30,12 +38,15 @@ func SelectCluster(args []string) (string, error) {
 		func(i int) string {
 			return clusters[i].DisplayName
 		},
-		fuzzyfinder.WithPromptString("Use Cluster >"),
+		fuzzyfinder.WithPromptString("Select Cluster > "),
 	)
 
 	if err != nil {
 		return "", err
 	}
 
+	if err = lib.SelectCluster(clusters[selectedIndex].Metadata.Name); err != nil {
+		return "", err
+	}
 	return clusters[selectedIndex].Metadata.Name, nil
 }

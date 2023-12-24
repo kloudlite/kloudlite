@@ -1,12 +1,8 @@
 package use
 
 import (
-	"errors"
-
-	"github.com/kloudlite/kl/lib"
+	"github.com/kloudlite/kl/cmd/util"
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -24,52 +20,12 @@ Examples:
   kl use account <accountId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		accountId, err := SelectAccount(args)
+		_, err := util.SelectAccount(args)
 
-		if err != nil {
-			common.PrintError(err)
-			return
-		}
-
-		err = lib.SelectAccount(accountId)
 		if err != nil {
 			common.PrintError(err)
 			return
 		}
 
 	},
-}
-
-func SelectAccount(args []string) (string, error) {
-	accountId := ""
-	if len(args) >= 1 {
-		accountId = args[0]
-	}
-	accounts, err := server.GetAccounts()
-	if err != nil {
-		return "", err
-	}
-
-	if accountId != "" {
-		for _, a := range accounts {
-			if a.Metadata.Name == accountId {
-				return a.Metadata.Name, nil
-			}
-		}
-		return "", errors.New("you don't have access to this account")
-	}
-
-	selectedIndex, err := fuzzyfinder.Find(
-		accounts,
-		func(i int) string {
-			return accounts[i].DisplayName
-		},
-		fuzzyfinder.WithPromptString("Use Account >"),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return accounts[selectedIndex].Metadata.Name, nil
 }

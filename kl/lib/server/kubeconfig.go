@@ -9,7 +9,6 @@ import (
 
 func SyncKubeConfig() (*string, error) {
 	name, err := CurrentClusterName()
-
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +34,10 @@ func SyncKubeConfig() (*string, error) {
 
 func getKubeConfig() (*string, error) {
 	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+	_, err = CurrentAccountName()
 	if err != nil {
 		return nil, err
 	}

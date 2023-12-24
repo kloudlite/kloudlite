@@ -137,8 +137,7 @@ func CurrentAccountName() (string, error) {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "",
-			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
+		return "", errors.New("noSelectedAccount")
 	}
 	return file.AccountName, nil
 }
@@ -149,8 +148,7 @@ func CurrentClusterName() (string, error) {
 		return "", err
 	}
 	if file.ClusterName == "" {
-		_, _ = common.SelectCluster([]string{})
-		return CurrentClusterName()
+		return "", errors.New("noSelectedCluster")
 	}
 	if file.ClusterName == "" {
 		return "",
@@ -225,6 +223,9 @@ func GetAccounts() ([]Account, error) {
 }
 
 func GetClusters() ([]Cluster, error) {
+	if _, err := CurrentAccountName(); err != nil {
+		return nil, err
+	}
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err

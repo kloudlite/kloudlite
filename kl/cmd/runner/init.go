@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/cmd/util"
 	"os"
 	"path"
 
@@ -61,7 +62,7 @@ Examples:
 		accountId, _ := server.CurrentAccountName()
 
 		if aId == "" && accountId == "" {
-			accountId, e := use.SelectAccount([]string{})
+			accountId, e := util.SelectAccount([]string{})
 
 			if e != nil {
 				common.PrintError(e)
