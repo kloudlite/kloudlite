@@ -1,19 +1,22 @@
+import Container from '~/auth/components/container';
+import { BrandLogo } from '~/components/branding/brand-logo';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 
 const cliLoggedIn = () => {
   return (
-    <div className="flex min-h-screen justify-center items-center">
-      <div className="flex flex-col items-center justify-center gap-5">
-        <h1 className="text-5xl text-center font-bold text-black">
-          <span className="text-primary-600">Logged in</span> Successfully
-        </h1>
-        <div className="font-medium w-full text-center text-2xl text-black tracking-wide">
-          Visit your terminal.
+    <Container>
+      <div className="flex flex-col gap-5xl">
+        <BrandLogo darkBg={false} size={60} />
+        <div className="flex flex-col gap-lg text-center max-w-[400px] items-center">
+          <h1 className="headingXl">
+            <span className="">Logged in</span> Successfully
+          </h1>
+          <div className="bodyMd text-text-strong">Visit your terminal.</div>
         </div>
       </div>
-    </div>
+    </Container>
   );
 };
 
