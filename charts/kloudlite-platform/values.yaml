@@ -17,6 +17,8 @@ global:
   # -- base domain for all routers exposed through this cluster
   baseDomain: 'platform.kloudlite.io'
 
+  secondaryDomain: 'khost.dev'
+
   # -- kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name
   accountName: 'kloudlite'
 
@@ -127,6 +129,20 @@ prometheus:
 nats:
   runAsCluster: false
   replicas: 1
+
+distribution:
+  domain: cr.khost.dev
+  secret: <distribution-secret>
+  tls:
+    enabled: true
+  s3:
+    enabled: false
+    bucketName: <distribution-s3-bucket-name>
+    endpoint: <distribution-s3-bucket-endpoint>
+    accessKey: <distribution-s3-bucket-access-key>
+    secretKey: <distribution-s3-bucket-secret-key>
+    region: <distribution-s3-bucket-region>
+
 mongo:
   rootPassword: <mongo-root-password>
   size: 2Gi
@@ -242,9 +258,6 @@ apps:
     configuration:
       # -- (number) port on which container registry event listener should listen
       eventListenerPort: 4001
-
-      registryHost: ""
-      registrySecret: ""
 
       buildClusterName: ""
       buildClusterAccountName: ""
