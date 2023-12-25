@@ -126,7 +126,7 @@ spec:
           value: {{.Values.apps.containerRegistryApi.configuration.buildClusterName}}
 
         - key: REGISTRY_HOST
-          value: {{.Values.apps.containerRegistryApi.configuration.registryHost | squote}}
+          value: container-registry.{{.Values.global.baseDomain}}
 
         - key: REGISTRY_SECRET_KEY
           value: {{.Values.apps.containerRegistryApi.configuration.registrySecret | squote}}
