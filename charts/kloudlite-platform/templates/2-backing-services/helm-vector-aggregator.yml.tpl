@@ -37,6 +37,16 @@ spec:
           type: vector
           version: "2"
       sinks:
+        nats:
+            type: nats
+            inputs: [vector]
+            address: nats://{{.Values.envVars.nats.url}}:4222
+            encoding:
+                codec: json
+                only_fields:
+                - message
+                - timestamp
+                timestamp_format: rfc3339
         prom_exporter:
           type: prometheus_exporter
           inputs: 
