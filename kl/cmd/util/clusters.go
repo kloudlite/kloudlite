@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func SelectCluster(args []string) (string, error) {
+func SelectCluster(args []string) (*ResourceData, error) {
 	clusterName := ""
 	if len(args) >= 1 {
 		clusterName = args[0]
@@ -19,20 +19,23 @@ func SelectCluster(args []string) (string, error) {
 		if err.Error() == "noSelectedAccount" {
 			_, err := SelectAccount([]string{})
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 			return SelectCluster([]string{})
 		}
-		return "", err
+		return nil, err
 	}
 
 	if clusterName != "" {
 		for _, a := range clusters {
 			if a.Metadata.Name == clusterName {
-				return a.Metadata.Name, nil
+				return &ResourceData{
+					Name:        a.Metadata.Name,
+					DisplayName: a.DisplayName,
+				}, nil
 			}
 		}
-		return "", errors.New("you don't have access to this cluster")
+		return nil, errors.New("you don't have access to this cluster")
 	}
 
 	selectedIndex, err := fuzzyfinder.Find(
@@ -50,11 +53,14 @@ func SelectCluster(args []string) (string, error) {
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if err = lib.SelectCluster(clusters[selectedIndex].Metadata.Name); err != nil {
-		return "", err
+		return nil, err
 	}
-	return clusters[selectedIndex].Metadata.Name, nil
+	return &ResourceData{
+		Name:        clusters[selectedIndex].Metadata.Name,
+		DisplayName: clusters[selectedIndex].DisplayName,
+	}, nil
 }

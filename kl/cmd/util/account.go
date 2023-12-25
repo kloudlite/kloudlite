@@ -7,7 +7,7 @@ import (
 	"github.com/ktr0731/go-fuzzyfinder"
 )
 
-func SelectAccount(args []string) (string, error) {
+func SelectAccount(args []string) (*ResourceData, error) {
 	persistSelectedAcc := func(accName string) error {
 		err := lib.SelectAccount(accName)
 		if err != nil {
@@ -21,19 +21,22 @@ func SelectAccount(args []string) (string, error) {
 	}
 	accounts, err := server.GetAccounts()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if accountId != "" {
 		for _, a := range accounts {
 			if a.Metadata.Name == accountId {
 				if err := persistSelectedAcc(a.Metadata.Name); err != nil {
-					return "", err
+					return nil, err
 				}
-				return a.Metadata.Name, nil
+				return &ResourceData{
+					Name:        a.Metadata.Name,
+					DisplayName: a.DisplayName,
+				}, nil
 			}
 		}
-		return "", errors.New("you don't have access to this account")
+		return nil, errors.New("you don't have access to this account")
 	}
 
 	selectedIndex, err := fuzzyfinder.Find(
@@ -45,11 +48,14 @@ func SelectAccount(args []string) (string, error) {
 	)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if err := persistSelectedAcc(accounts[selectedIndex].Metadata.Name); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return accounts[selectedIndex].Metadata.Name, nil
+	return &ResourceData{
+		Name:        accounts[selectedIndex].Metadata.Name,
+		DisplayName: accounts[selectedIndex].DisplayName,
+	}, nil
 }

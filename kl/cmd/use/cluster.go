@@ -29,6 +29,8 @@ Examples:
 			return
 		}
 
-		fmt.Println(text.Bold(text.Green("\nSelected cluster:")), text.Blue(clusterName))
+		fmt.Println(text.Bold(text.Green("\nSelected cluster:")),
+			text.Blue(fmt.Sprintf("%s (%s)", clusterName.DisplayName, clusterName.Name)),
+		)
 	},
 }

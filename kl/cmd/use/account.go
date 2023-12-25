@@ -30,6 +30,8 @@ Examples:
 			return
 		}
 
-		fmt.Println(text.Bold(text.Green("\nSelected account:")), text.Blue(accountName))
+		fmt.Println(text.Bold(text.Green("\nSelected account:")),
+			text.Blue(fmt.Sprintf("%s (%s)", accountName.DisplayName, accountName.Name)),
+		)
 	},
 }

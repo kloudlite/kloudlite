@@ -62,14 +62,14 @@ Examples:
 		accountId, _ := server.CurrentAccountName()
 
 		if aId == "" && accountId == "" {
-			accountId, e := util.SelectAccount([]string{})
+			acc, e := util.SelectAccount([]string{})
 
 			if e != nil {
 				common.PrintError(e)
 				return
 			}
 
-			e = lib.SelectAccount(accountId)
+			e = lib.SelectAccount(acc.Name)
 			if e != nil {
 				common.PrintError(e)
 				return

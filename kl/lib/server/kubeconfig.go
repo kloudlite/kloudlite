@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 )
 
 func SyncKubeConfig() (*string, error) {
@@ -12,9 +13,10 @@ func SyncKubeConfig() (*string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	tmpDir := os.TempDir()
 
-	tmpFile := fmt.Sprintf("%s%s.config", tmpDir, name)
+	tmpFile := path.Join(tmpDir, name)
 
 	_, err = os.Stat(tmpFile)
 	if err == nil {
