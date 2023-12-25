@@ -22,7 +22,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-max-temp-file-size: "0" 
     nginx.ingress.kubernetes.io/auth-url: http://container-registry-api.kl-core.svc.cluster.local:4000/auth?path=$request_uri&method=$request_method
 
-  name: {{ $name }}
+  name: distribution
 spec:
   {{ if .Values.distribution.tls.enabled }}
   tls:
@@ -37,7 +37,7 @@ spec:
       paths:
       - backend:
           service:
-            name: svc-{{ $name }}
+            name: distribution
             port:
               number: 80
         path: /(.*)
