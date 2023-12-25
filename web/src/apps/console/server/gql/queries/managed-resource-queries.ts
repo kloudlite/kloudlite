@@ -52,16 +52,15 @@ export const managedResourceQueries = (executor: IExecutor) => ({
           }
           recordVersion
           spec {
-            inputs {
-              RawMessage
-            }
-            mresKind {
-              kind
-            }
-            msvcRef {
+            resourceTemplate {
               apiVersion
               kind
-              name
+              msvcRef {
+                name
+                kind
+                apiVersion
+              }
+              spec
             }
           }
           status {

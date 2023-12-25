@@ -24,6 +24,8 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
     headers: ctx.request?.headers,
   }).whoAmI();
 
+  console.log('whoAmI', whoAmI);
+
   if (
     whoAmI.errors &&
     whoAmI.errors[0].message === 'input: auth_me user not logged in'
@@ -32,6 +34,7 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
   }
 
   if (!(whoAmI.data && whoAmI.data)) {
+    console.log('whoAmI', whoAmI, 'red');
     if (new URL(ctx.request.url).host === new URL(consoleBaseUrl).host) {
       const { pathname } = new URL(ctx.request.url);
       const history = cookie.get('url_history');

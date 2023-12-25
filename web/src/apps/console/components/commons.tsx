@@ -5,8 +5,8 @@ import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  Kloudlite__Io___Pkg___Types__SyncStatusState as SyncState,
-  Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncAction,
+  Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState as SyncState,
+  Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction as SyncAction,
 } from '~/root/src/generated/gql/server';
 import Tooltip from '~/components/atoms/tooltip';
 import { Link } from '@remix-run/react';
