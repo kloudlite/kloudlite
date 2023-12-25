@@ -22,9 +22,9 @@ import DeleteDialog from '../components/delete-dialog';
 import Grid from '../components/grid';
 import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
-import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { ISecrets } from '../server/gql/queries/secret-queries';
+import { IWorkspaceContext } from '../routes/_main+/$account+/$cluster+/$project+/$scope+/$workspace+/_layout';
 
 const RESOURCE_NAME = 'secret';
 type BaseType = ExtractNodeType<ISecrets>;

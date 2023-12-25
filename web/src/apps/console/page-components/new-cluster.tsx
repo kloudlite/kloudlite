@@ -13,7 +13,6 @@ import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { constDatas, awsRegions } from '../dummy/consts';
-import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
   IProviderSecret,
@@ -27,7 +26,9 @@ import {
   validateClusterCloudProvider,
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
-import { IAccountContext } from '../routes/_.$account';
+import { IAccountContext } from '../routes/_main+/$account+/_layout';
+import { FadeIn } from './util';
+
 
 type props =
   | {

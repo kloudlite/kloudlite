@@ -10,6 +10,7 @@ import {
   IGqlReturn,
   NN,
 } from '../../types/common';
+import logger from '../../client/helpers/log';
 
 const parseCookie = (cookieString: string) => {
   const [cookie] = cookieString.split(';');
@@ -127,6 +128,7 @@ export const ExecuteQueryWithContext = (
         };
       } finally {
         console.timeEnd(apiName);
+        console.trace(apiName);
       }
     };
 

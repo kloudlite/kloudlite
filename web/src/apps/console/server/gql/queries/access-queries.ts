@@ -4,10 +4,8 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleDeleteAccountInvitationMutation,
   ConsoleDeleteAccountInvitationMutationVariables,
-  ConsoleGetAccountQuery,
   ConsoleInviteMembersForAccountMutation,
   ConsoleInviteMembersForAccountMutationVariables,
-  ConsoleListAccountsQuery,
   ConsoleListInvitationsForAccountQuery,
   ConsoleListInvitationsForAccountQueryVariables,
   ConsoleListMembershipsForAccountQuery,
@@ -24,8 +22,6 @@ import {
   ConsoleDeleteAccountMembershipMutationVariables,
 } from '~/root/src/generated/gql/server';
 
-export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
-export type IAccount = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
 export type IInvites = NN<
   ConsoleListInvitationsForUserQuery['accounts_listInvitationsForUser']
 >;
