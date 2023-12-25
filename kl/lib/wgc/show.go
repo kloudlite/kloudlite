@@ -10,8 +10,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/common/ui/table"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -53,7 +53,7 @@ func Show(opts *WgShowOptions) (string, error) {
 			return "", err
 		}
 		for i := 0; i < len(devices); i++ {
-			// fmt.Println(color.Text(devices[i].Name, 2))
+			// fmt.Println(text.Colored(devices[i].Name, 2))
 			res += devices[i].Name
 		}
 	case "all":
@@ -85,10 +85,10 @@ func showDevice(dev wgtypes.Device, opts *WgShowOptions) error {
 	if opts.Option == "" {
 		showKeys := opts.ShowKeys
 		fmt.Println()
-		fmt.Println(color.Text("Interface:", 2), color.Text(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String()), 209))
-		table.KVOutput("  public key:", color.Text(dev.PublicKey.String(), 4), true)
+		fmt.Println(text.Colored("Interface:", 2), text.Colored(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String()), 209))
+		table.KVOutput("  public key:", text.Colored(dev.PublicKey.String(), 4), true)
 		table.KVOutput("  private key:", formatKey(dev.PrivateKey, showKeys), true)
-		table.KVOutput("  listening port:", color.Text(dev.ListenPort, 2), true)
+		table.KVOutput("  listening port:", text.Colored(dev.ListenPort, 2), true)
 		fmt.Println()
 
 		for _, peer := range dev.Peers {
@@ -172,15 +172,15 @@ func showPeers(peer wgtypes.Peer, showKeys bool) error {
   {{- end}} 
   %s {{ .LastHandshakeTime }}
   %s %s
-`, color.Text("peers: ", 3), color.Text("{{ .PublicKey }}", 4),
-		color.Text("endpoint = ", 5),
-		color.Text("allowed ips =", 5),
-		color.Text("preshared key =", 5),
-		color.Text("last handshake =", 5),
-		color.Text("transfer:", 5),
+`, text.Colored("peers: ", 3), text.Colored("{{ .PublicKey }}", 4),
+		text.Colored("endpoint = ", 5),
+		text.Colored("allowed ips =", 5),
+		text.Colored("preshared key =", 5),
+		text.Colored("last handshake =", 5),
+		text.Colored("transfer:", 5),
 		fmt.Sprintf("%s received, %s sent",
-			color.Text("{{ .ReceiveBytes }}", 2),
-			color.Text("{{ .TransmitBytes }}", 2)),
+			text.Colored("{{ .ReceiveBytes }}", 2),
+			text.Colored("{{ .TransmitBytes }}", 2)),
 	)
 	type tmplContent struct {
 		PublicKey         string
@@ -279,8 +279,8 @@ func fromNow(t2 time.Time) string {
 	ss := sf * 60
 
 	return fmt.Sprintf("%s hours %s minutes %s seconds ago",
-		color.Text(int(hs), 2),
-		color.Text(int(ms), 2),
-		color.Text(int(ss), 2),
+		text.Colored(int(hs), 2),
+		text.Colored(int(ms), 2),
+		text.Colored(int(ss), 2),
 	)
 }

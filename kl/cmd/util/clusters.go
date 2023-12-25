@@ -1,6 +1,8 @@
 package util
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/kl/lib"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
@@ -36,7 +38,13 @@ func SelectCluster(args []string) (string, error) {
 	selectedIndex, err := fuzzyfinder.Find(
 		clusters,
 		func(i int) string {
-			return clusters[i].DisplayName
+			return fmt.Sprintf("%s %s", clusters[i].DisplayName, func() string {
+				if clusters[i].Status.IsReady {
+					return ""
+				} else {
+					return "(Not Ready)"
+				}
+			}())
 		},
 		fuzzyfinder.WithPromptString("Select Cluster > "),
 	)

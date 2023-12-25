@@ -56,10 +56,18 @@ func getKubeConfig() (*string, error) {
 			Encoding string `json:"encoding"`
 			Value    string `json:"value"`
 		} `json:"adminKubeConfig"`
+		Status struct {
+			IsReady bool `json:"isReady"`
+		} `json:"status"`
 	}
 	if fromResp, err := GetFromResp[KubeConfig](respData); err != nil {
 		return nil, err
 	} else {
+
+		if !(*fromResp).Status.IsReady {
+			return nil, fmt.Errorf("cluster %s is not ready", currentCluster)
+		}
+
 		value := (*fromResp).AdminKubeConfig.Value
 		encoding := (*fromResp).AdminKubeConfig.Encoding
 		switch encoding {

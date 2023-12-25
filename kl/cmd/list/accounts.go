@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/common/ui/table"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -44,21 +44,21 @@ func listAccounts() error {
 
 	accountName, _ := server.CurrentAccountName()
 
-	header := table.Row{table.HeaderText("accounts"), table.HeaderText("id")}
+	header := table.Row{table.HeaderText("name"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)
 
 	for _, a := range accounts {
 		rows = append(rows, table.Row{
 			func() string {
 				if a.Metadata.Name == accountName {
-					return color.Text(fmt.Sprint("*", a.DisplayName), 2)
+					return text.Colored(fmt.Sprint("*", a.DisplayName), 2)
 				}
 				return a.DisplayName
 			}(),
 
 			func() string {
 				if a.Metadata.Name == accountName {
-					return color.Text(a.Metadata.Name, 2)
+					return text.Colored(a.Metadata.Name, 2)
 				}
 				return a.Metadata.Name
 			}(),

@@ -16,47 +16,6 @@ type User struct {
 	Name   string `json:"name"`
 }
 
-type Account struct {
-	Metadata struct {
-		Name string `json:"name"`
-	}
-	DisplayName string `json:"displayName"`
-}
-
-type Cluster struct {
-	Metadata struct {
-		Name string `json:"name"`
-	}
-	DisplayName string `json:"displayName"`
-}
-
-type Project struct {
-	Id          string `json:"id"`
-	ReadableId  string `json:"readableId"`
-	DisplayName string `json:"displayName"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type App struct {
-	IsLambda   bool   `json:"isLambda"`
-	Id         string `json:"id"`
-	Name       string `json:"name"`
-	ReadableId string `json:"readableId"`
-	Containers []struct {
-		Name    string `json:"name"`
-		EnvVars []struct {
-			Key   string `json:"key"`
-			Value struct {
-				Key   string `json:"key"`
-				Ref   string `json:"ref"`
-				Type  string `json:"type"`
-				Value string `json:"value"`
-			} `json:"value"`
-		} `json:"envVars"`
-	} `json:"containers"`
-}
-
 var authSecret string
 
 func CreateRemoteLogin() (loginId string, err error) {
@@ -131,32 +90,6 @@ func Login(loginId string) error {
 	}
 }
 
-func CurrentAccountName() (string, error) {
-	file, err := GetContextFile()
-	if err != nil {
-		return "", err
-	}
-	if file.AccountName == "" {
-		return "", errors.New("noSelectedAccount")
-	}
-	return file.AccountName, nil
-}
-
-func CurrentClusterName() (string, error) {
-	file, err := GetContextFile()
-	if err != nil {
-		return "", err
-	}
-	if file.ClusterName == "" {
-		return "", errors.New("noSelectedCluster")
-	}
-	if file.ClusterName == "" {
-		return "",
-			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
-	}
-	return file.ClusterName, nil
-}
-
 func CurrentDeviceId() (string, error) {
 
 	file, err := GetContextFile()
@@ -171,22 +104,6 @@ func CurrentDeviceId() (string, error) {
 	}
 
 	return file.DeviceId, nil
-}
-
-func CurrentProjectId() (string, error) {
-
-	file, err := GetContextFile()
-
-	if err != nil {
-		return "", err
-	}
-
-	if file.ProjectId == "" {
-		return "",
-			errors.New("no project is selected yet. please select one using \"kl use project\"")
-	}
-
-	return file.ProjectId, nil
 }
 
 func getCookie() (string, error) {
@@ -205,55 +122,6 @@ func getCookie() (string, error) {
 	return file.GetCookieString(), nil
 }
 
-func GetAccounts() ([]Account, error) {
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-	respData, err := klFetch("cli_listAccounts", map[string]any{}, &cookie)
-	if err != nil {
-		return nil, err
-	}
-	type AccList []Account
-	if fromResp, err := GetFromResp[AccList](respData); err != nil {
-		return nil, err
-	} else {
-		return *fromResp, nil
-	}
-}
-
-func GetClusters() ([]Cluster, error) {
-	if _, err := CurrentAccountName(); err != nil {
-		return nil, err
-	}
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-	respData, err := klFetch("cli_listClusters", map[string]any{
-		"query": map[string]any{
-			"first": 100,
-		},
-	}, &cookie)
-	if err != nil {
-		return nil, err
-	}
-	type ClusterList struct {
-		Edges []struct {
-			Node Cluster `json:"node"`
-		} `json:"edges"`
-	}
-	if fromResp, err := GetFromResp[ClusterList](respData); err != nil {
-		return nil, err
-	} else {
-		clusters := make([]Cluster, 0)
-		for _, edge := range fromResp.Edges {
-			clusters = append(clusters, edge.Node)
-		}
-		return clusters, nil
-	}
-}
-
 type Response[T any] struct {
 	Data   T       `json:"data"`
 	Errors []error `json:"errors"`
@@ -269,102 +137,6 @@ func GetFromResp[T any](respData []byte) (*T, error) {
 		return nil, resp.Errors[0]
 	}
 	return &resp.Data, nil
-}
-
-func GetProjects(options ...common.Option) ([]Project, error) {
-	accountId := common.GetOption(options, "accountId")
-
-	cookie, err := getCookie()
-
-	if err != nil {
-		return nil, err
-	}
-
-	if accountId == "" {
-		accountId, err = CurrentAccountName()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	respData, err := klFetch("cli_getProjects", map[string]any{
-		"accountId": accountId,
-	}, &cookie)
-
-	if err != nil {
-		return nil, err
-	}
-
-	type Response struct {
-		FinanceAccount struct {
-			Projects []Project `json:"projects"`
-		} `json:"data"`
-	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp.FinanceAccount.Projects, nil
-}
-
-func GetApps(options ...common.Option) ([]App, error) {
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-
-	projectId := common.GetOption(options, "projectId")
-	if projectId == "" {
-		projectId, err = CurrentProjectId()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	respData, err := klFetch("cli_getApps", map[string]any{
-		"projectId": projectId,
-	}, &cookie)
-
-	if err != nil {
-		return nil, err
-	}
-
-	type Response struct {
-		CoreApps []App `json:"data"`
-	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp.CoreApps, nil
-}
-
-func GetApp(appId string) (*App, error) {
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-
-	respData, err := klFetch("cli_getApp", map[string]any{
-		"appId": appId,
-	}, &cookie)
-
-	if err != nil {
-		return nil, err
-	}
-
-	type Response struct {
-		CoreApp App `json:"data"`
-	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return &resp.CoreApp, nil
 }
 
 func GetEnvs(appId string) (string, error) {

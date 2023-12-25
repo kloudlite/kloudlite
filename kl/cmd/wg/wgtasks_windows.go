@@ -3,8 +3,6 @@ package wg
 import (
 	"errors"
 	"net"
-
-	"github.com/kloudlite/kl/lib/common/ui/color"
 )
 
 const (
@@ -13,12 +11,12 @@ const (
 
 func connect(verbose bool) error {
 	return errors.New(
-		color.Text("This command is not available for windows, will be available soon", 209),
+		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
 }
 func disconnect(verbose bool) error {
 	return errors.New(
-		color.Text("This command is not available for windows, will be available soon", 209),
+		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
 }
 
@@ -35,7 +33,7 @@ func setDeviceIp(deviceIp string, verbose bool) error {
 
 func startService(verbose bool) error {
 	return errors.New(
-		color.Text("This command is not available for windows, will be available soon", 209),
+		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
 }
 
@@ -45,6 +43,6 @@ func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
 
 func stopService(verbose bool) error {
 	return errors.New(
-		color.Text("This command is not available for windows, will be available soon", 209),
+		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
 }

@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
 			common.Log(
-				color.Text("make sure you are running command with sudo", 209),
+				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
 		}

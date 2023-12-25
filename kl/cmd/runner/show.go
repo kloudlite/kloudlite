@@ -7,8 +7,8 @@ import (
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/common/ui/table"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -38,11 +38,11 @@ var ShowCommand = &cobra.Command{
 		}
 
 		common.Log(table.HeaderText("context:"))
-		common.Log(color.Text("---------------------------------------", 4))
+		common.Log(text.Colored("---------------------------------------", 4))
 		fmt.Println(string(contextFile))
 
 		common.Log(table.HeaderText("kl-config:"))
-		common.Log(color.Text("---------------------------------------", 4))
+		common.Log(text.Colored("---------------------------------------", 4))
 		fmt.Println(string(file))
 
 	},

@@ -1,8 +1,11 @@
 package use
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/kl/cmd/util"
 	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -20,10 +23,12 @@ Examples:
   kl use cluster <clusterId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		_, err := util.SelectCluster(args)
+		clusterName, err := util.SelectCluster(args)
 		if err != nil {
 			common.PrintError(err)
 			return
 		}
+
+		fmt.Println(text.Bold(text.Green("\nSelected cluster:")), text.Blue(clusterName))
 	},
 }

@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/common/ui/table"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -44,22 +44,29 @@ func listClusters() error {
 
 	clusterName, _ := server.CurrentClusterName()
 
-	header := table.Row{table.HeaderText("Clusters"), table.HeaderText("id")}
+	header := table.Row{table.HeaderText("name"), table.HeaderText("id"), table.HeaderText("ready")}
 	rows := make([]table.Row, 0)
 
 	for _, a := range clusters {
 		rows = append(rows, table.Row{
 			func() string {
 				if a.Metadata.Name == clusterName {
-					return color.Text(fmt.Sprint("*", a.DisplayName), 2)
+					return text.Colored(fmt.Sprint("*", a.DisplayName), 2)
 				}
 				return a.DisplayName
 			}(),
 			func() string {
 				if a.Metadata.Name == clusterName {
-					return color.Text(a.Metadata.Name, 2)
+					return text.Colored(a.Metadata.Name, 2)
 				}
 				return a.Metadata.Name
+			}(),
+
+			func() string {
+				if a.Metadata.Name == clusterName {
+					return text.Colored(a.Status.IsReady, 2)
+				}
+				return fmt.Sprint(a.Status.IsReady)
 			}(),
 		})
 	}

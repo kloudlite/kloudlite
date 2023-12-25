@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ Examples:
 
 		if euid := os.Geteuid(); euid != 0 {
 			common.Log(
-				color.Text("make sure you are running command with sudo", 209),
+				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
 		}
@@ -43,7 +43,7 @@ Examples:
 		}
 
 		if strings.TrimSpace(wgInterface) == "" {
-			common.Log(color.Text("[#] no devices connected yet", 209))
+			common.Log(text.Colored("[#] no devices connected yet", 209))
 		} else {
 			if err := disconnect(reconnectVerbose); err != nil {
 				common.PrintError(err)

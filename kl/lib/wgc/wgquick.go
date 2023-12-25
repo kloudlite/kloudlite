@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/lixiangzhong/dnsutil"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
@@ -278,12 +278,12 @@ func parsePeerLine(peerCfg *wgtypes.PeerConfig, lhs string, rhs string) error {
 				return nil, err
 			}
 			if len(a) == 0 {
-				common.Log(color.Text("defering to net.ResolveUDPAddr", 209))
+				common.Log(text.Colored("defering to net.ResolveUDPAddr", 209))
 				return net.ResolveUDPAddr("", rhs)
 			}
 			port, err := strconv.ParseInt(strings.Split(rhs, ":")[1], 10, 32)
 			if err != nil {
-				common.Log(color.Text("defering to net.ResolveUDPAddr", 209))
+				common.Log(text.Colored("defering to net.ResolveUDPAddr", 209))
 				return net.ResolveUDPAddr("", rhs)
 			}
 			return &net.UDPAddr{

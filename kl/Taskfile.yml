@@ -1,0 +1,9 @@
+version: 3
+
+tasks:
+  dev:
+    cmds:
+      - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && go build -o ./bin/kl main.go && echo '# build success' || exit"
+  build:
+    cmds:
+      - go build -o ./bin/kl main.go

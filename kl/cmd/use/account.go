@@ -1,8 +1,11 @@
 package use
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/kl/cmd/util"
 	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -20,12 +23,13 @@ Examples:
   kl use account <accountId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		_, err := util.SelectAccount(args)
+		accountName, err := util.SelectAccount(args)
 
 		if err != nil {
 			common.PrintError(err)
 			return
 		}
 
+		fmt.Println(text.Bold(text.Green("\nSelected account:")), text.Blue(accountName))
 	},
 }

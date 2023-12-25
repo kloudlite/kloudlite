@@ -9,7 +9,7 @@ import (
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
 )
 
@@ -39,7 +39,7 @@ func WhoAmI() error {
 	if u, err := server.GetCurrentUser(); err != nil {
 		return err
 	} else {
-		fmt.Println("You are logged in as " + color.Text(u.Name, 4) + " (" + color.Text(u.Email, 4) + ")")
+		fmt.Println("You are logged in as " + text.Colored(u.Name, 4) + " (" + text.Colored(u.Email, 4) + ")")
 		return nil
 	}
 }
@@ -52,8 +52,8 @@ func Login() error {
 
 	link := fmt.Sprintf("%s/%s%s", constants.LoginUrl, "?loginId=", loginId)
 
-	fmt.Println(color.Text("Opening browser for login in the browser to authenticate your account\n", 2))
-	fmt.Println(color.Text(link, 21))
+	fmt.Println(text.Colored("Opening browser for login in the browser to authenticate your account\n", 2))
+	fmt.Println(text.Colored(link, 21))
 	fmt.Println("")
 
 	if err = server.Login(loginId); err != nil {

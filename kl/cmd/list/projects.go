@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/common/ui/table"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -69,14 +69,14 @@ func listProjects(accountId string) error {
 		rows = append(rows, table.Row{
 			func() string {
 				if a.Id == projectId {
-					return color.Text(fmt.Sprint("*", a.Name), 2)
+					return text.Colored(fmt.Sprint("*", a.Name), 2)
 				}
 				return a.Name
 			}(),
 
 			func() string {
 				if a.Id == projectId {
-					return color.Text(a.Id, 2)
+					return text.Colored(a.Id, 2)
 				}
 				return a.Id
 			}(),

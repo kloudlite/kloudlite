@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/kloudlite/kl/lib/common/ui/color"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 )
 
 const (
@@ -12,13 +12,13 @@ const (
 	borderColor = 238
 )
 
-func HeaderText(text string) string {
-	return color.Text(text, headerColor)
+func HeaderText(txt string) string {
+	return text.Colored(txt, headerColor)
 }
 
 func GetTableStyles() table.BoxStyle {
-	colorReset := color.Reset()
-	colorBorder := color.Color(borderColor)
+	colorReset := text.Reset()
+	colorBorder := text.Color(borderColor)
 
 	return table.BoxStyle{
 		BottomLeft:       colorBorder + "└",
@@ -49,8 +49,8 @@ func TotalResults(length int, printIt bool) string {
 
 func KVOutput(k string, v interface{}, printIt bool) string {
 	result := fmt.Sprint(
-		color.Text(k, headerColor), " ",
-		color.Text(fmt.Sprintf("%v", v), 2),
+		text.Colored(k, headerColor), " ",
+		text.Colored(fmt.Sprintf("%v", v), 2),
 	)
 
 	if printIt {

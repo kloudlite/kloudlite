@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/color"
 	"github.com/kloudlite/kl/lib/common/ui/table"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -81,14 +81,14 @@ func Devices(args []string) error {
 
 			func() string {
 				if cDid == a.Id {
-					return color.Text(fmt.Sprintf("*%s, %s", a.Name, a.Id), 2)
+					return text.Colored(fmt.Sprintf("*%s, %s", a.Name, a.Id), 2)
 				}
 				return fmt.Sprintf("%s, %s", a.Name, a.Id)
 			}(),
 
 			func() string {
 				if cDid == a.Id {
-					return fmt.Sprintf("%s\n%s", color.Text(a.Region, 2), color.Text(getRegionName(a.Region), 2))
+					return fmt.Sprintf("%s\n%s", text.Colored(a.Region, 2), text.Colored(getRegionName(a.Region), 2))
 				}
 				return a.Region
 			}(),
@@ -100,7 +100,7 @@ func Devices(args []string) error {
 						if (i+1)%3 == 0 {
 
 							if cDid == a.Id {
-								return fmt.Sprint("\n", color.Color(2))
+								return fmt.Sprint("\n", text.Color(2))
 							}
 							return "\n"
 						}
@@ -115,7 +115,7 @@ func Devices(args []string) error {
 
 					ports = append(ports, func() string {
 						if cDid == a.Id {
-							return color.Text(prt, 2)
+							return text.Colored(prt, 2)
 						}
 						return prt
 					}())
@@ -123,7 +123,7 @@ func Devices(args []string) error {
 				return ports
 			}(), func() string {
 				if cDid == a.Id {
-					return color.Text(", ", 2)
+					return text.Colored(", ", 2)
 				}
 				return ", "
 			}()),
