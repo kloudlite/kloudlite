@@ -25,6 +25,9 @@ export const cliQueries = (executor: IExecutor) => ({
             encoding
             value
           }
+          status {
+            isReady
+          }
         }
       }
     `,
@@ -43,6 +46,9 @@ export const cliQueries = (executor: IExecutor) => ({
               metadata {
                 name
               }
+              status {
+                isReady
+              }
             }
           }
         }
@@ -59,7 +65,6 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Accounts_listAccounts {
         accounts_listAccounts {
-          id
           metadata {
             name
           }

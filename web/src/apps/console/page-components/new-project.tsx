@@ -23,14 +23,14 @@ import { IdSelector } from '../components/id-selector';
 import NoResultsFound from '../components/no-results-found';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { SearchBox } from '../components/search-box';
-import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
-import { INewProjectFromAccountLoader } from '../routes/_a.$a.new-project';
 import { parseName, parseNodes } from '../server/r-utils/common';
 import { keyconstants } from '../server/r-utils/key-constants';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
+import { INewProjectFromAccountLoader } from '../routes/_a+/_a.$a.new-project';
+import { FadeIn } from './util';
 
 const NewProject = () => {
   const { cluster: clusterName } = useParams();

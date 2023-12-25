@@ -622,7 +622,6 @@ ${url}`
       // eslint-disable-next-line new-cap
       wsclient = new sock.w3cwebsocket(url, '', '', {});
     } catch (err) {
-      setIsLoading(false);
       setErrors(
         `${(err as Error).message}
 An error occurred attempting to load the provided log.
@@ -630,6 +629,8 @@ Please check the URL and ensure it is reachable.
 ${url}`
       );
       return () => {};
+    } finally {
+      setIsLoading(false);
     }
     // wsclient.onopen = logger.log;
     // wsclient.onclose = logger.log;

@@ -34,7 +34,7 @@ export const DetailItem = ({
   return (
     <div className="flex flex-col gap-lg flex-1 min-w-[45%]">
       <div className="bodyMd-medium text-text-default">{title}</div>
-      <div className="bodyMd text-text-strong">{value}</div>
+      <div className="bodyMd text-text-strong w-fit">{value}</div>
     </div>
   );
 };
@@ -142,11 +142,11 @@ type ICommonMeta = IUpdateMeta & IStatusMeta;
 const parseStatusComponent = ({ status }: { status: IStatus }) => {
   switch (status) {
     case 'deleting':
-      return <div className="bodySm text-text-soft pulsable">Deleting...</div>;
+      return <div className="bodyMd text-text-soft pulsable">Deleting...</div>;
     case 'notready':
-      return <div className="bodySm text-text-soft pulsable">Not Ready</div>;
+      return <div className="bodyMd text-text-soft pulsable">Not Ready</div>;
     case 'syncing':
-      return <div className="bodySm text-text-soft pulsable">Syncing</div>;
+      return <div className="bodyMd text-text-soft pulsable">Syncing</div>;
     default:
       return null;
   }

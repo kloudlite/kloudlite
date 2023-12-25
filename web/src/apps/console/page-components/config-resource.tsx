@@ -15,7 +15,6 @@ import DeleteDialog from '../components/delete-dialog';
 import Grid from '../components/grid';
 import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
-import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { IConfigs } from '../server/gql/queries/config-queries';
 import {
@@ -25,6 +24,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '../server/r-utils/common';
+import { IWorkspaceContext } from '../routes/_main+/$account+/$cluster+/$project+/$scope+/$workspace+/_layout';
 
 const RESOURCE_NAME = 'config';
 type BaseType = ExtractNodeType<IConfigs>;

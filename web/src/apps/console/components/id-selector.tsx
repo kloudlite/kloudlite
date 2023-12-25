@@ -10,11 +10,11 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
-import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
+import { IWorkspaceContext } from '../routes/_main+/$account+/$cluster+/$project+/$scope+/$workspace+/_layout';
 
 interface IidSelector {
   name: string;

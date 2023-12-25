@@ -2684,6 +2684,9 @@ query authCli_getKubeConfig($name: String!) {
       encoding
       value
     }
+    status {
+      isReady
+    }
   }
 }
 
@@ -2695,6 +2698,9 @@ query authCli_listClusters($pagination: CursorPaginationIn) {
         metadata {
           name
         }
+        status {
+          isReady
+        }
       }
     }
   }
@@ -2702,7 +2708,6 @@ query authCli_listClusters($pagination: CursorPaginationIn) {
 
 query authCli_listAccounts {
   accounts_listAccounts {
-    id
     metadata {
       name
     }

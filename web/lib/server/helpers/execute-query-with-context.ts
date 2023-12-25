@@ -10,6 +10,7 @@ import {
   IGqlReturn,
   NN,
 } from '../../types/common';
+import logger from '../../client/helpers/log';
 
 const parseCookie = (cookieString: string) => {
   const [cookie] = cookieString.split(';');
@@ -112,11 +113,11 @@ export const ExecuteQueryWithContext = (
         return { ...resp.data, data };
       } catch (err) {
         if ((err as AxiosError).response) {
-          console.error('ErrorIn:', apiName, (err as Error).name);
+          console.trace('ErrorIn:', apiName, (err as Error).name);
           return (err as AxiosError).response?.data;
         }
 
-        console.error('ErrorIn:', apiName, (err as Error).message);
+        console.trace('ErrorIn:', apiName, (err as Error).message);
 
         return {
           errors: [

@@ -3544,7 +3544,10 @@ export type AuthCli_GetKubeConfigQueryVariables = Exact<{
 }>;
 
 export type AuthCli_GetKubeConfigQuery = {
-  infra_getCluster?: { adminKubeconfig?: { encoding: string; value: string } };
+  infra_getCluster?: {
+    adminKubeconfig?: { encoding: string; value: string };
+    status?: { isReady: boolean };
+  };
 };
 
 export type AuthCli_ListClustersQueryVariables = Exact<{
@@ -3553,7 +3556,13 @@ export type AuthCli_ListClustersQueryVariables = Exact<{
 
 export type AuthCli_ListClustersQuery = {
   infra_listClusters?: {
-    edges: Array<{ node: { displayName: string; metadata: { name: string } } }>;
+    edges: Array<{
+      node: {
+        displayName: string;
+        metadata: { name: string };
+        status?: { isReady: boolean };
+      };
+    }>;
   };
 };
 
@@ -3563,7 +3572,6 @@ export type AuthCli_ListAccountsQueryVariables = Exact<{
 
 export type AuthCli_ListAccountsQuery = {
   accounts_listAccounts?: Array<{
-    id: string;
     displayName: string;
     metadata?: { name: string };
   }>;
