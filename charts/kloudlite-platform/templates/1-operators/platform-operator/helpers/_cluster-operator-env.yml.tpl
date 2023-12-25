@@ -21,6 +21,9 @@ data:
       name: kloudlite-cloudflare
       key: api_token
 
+- name: NATS_URL
+  value: nats://nats:4222
+
 - name: CLOUDFLARE_ZONE_ID
   value: {{ required ".Values.operators.platformOperator.configuration.cluster.cloudflare.zoneId must be set" .Values.operators.platformOperator.configuration.cluster.cloudflare.zoneId}}
 
