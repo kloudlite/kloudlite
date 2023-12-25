@@ -5,7 +5,7 @@ import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { useAuthApi } from '../server/gql/api-provider';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
 
 export const decodeState = (str: string) =>
   Buffer.from(str, 'base64url').toString('utf8');

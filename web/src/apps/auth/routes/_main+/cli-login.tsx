@@ -8,7 +8,7 @@ import md5 from '~/root/lib/client/helpers/md5';
 import { Avatar } from '~/components/atoms/avatar';
 import { cn } from '~/components/utils';
 import { Power } from '@jengaicons/react';
-import { GQLServerHandler } from '../server/gql/saved-queries';
+import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 
 function CliLogin() {
   const { loginId, user } = useLoaderData();

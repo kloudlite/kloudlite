@@ -12,7 +12,7 @@ import { cn } from '~/components/utils';
 import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { useAuthApi } from '../server/gql/api-provider';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
 
 const ForgetPassword = () => {
   const { token } = useLoaderData();
