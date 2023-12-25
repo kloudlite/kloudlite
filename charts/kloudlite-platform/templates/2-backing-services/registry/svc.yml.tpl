@@ -4,8 +4,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-{{ $name }}
-  namespace: {{ $namespace }}
+  name: distribution
 spec:
   ports:
   - name: "registry"
