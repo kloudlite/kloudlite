@@ -19,7 +19,7 @@ import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { IProjectContext } from '../_.$account.$cluster.$project';
+import { IProjectContext } from '../_.$account.infra.$cluster.$project';
 
 export const updateProject = async ({
   api,

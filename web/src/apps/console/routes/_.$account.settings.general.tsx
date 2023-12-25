@@ -18,6 +18,7 @@ import { IAccount } from '../server/gql/queries/access-queries';
 import { ConsoleApiType } from '../server/gql/saved-queries';
 import { IAccountContext } from './_.$account';
 import { parseName } from '../server/r-utils/common';
+import SecondarySubHeader from '../components/secondary-sub-header';
 
 export const updateAccount = async ({
   api,
@@ -82,91 +83,102 @@ const SettingGeneral = () => {
   }, [account]);
 
   return (
-    <>
-      <SubNavAction deps={[values, isLoading]}>
-        {values.displayName !== account.displayName && (
-          <>
-            <Button
-              content="Discard"
-              variant="basic"
-              onClick={() => {
-                resetValues();
-              }}
-            />
-            <Button
-              content="Save changes"
-              variant="primary"
-              onClick={() => {
-                if (!isLoading) submit();
-              }}
-              loading={isLoading}
-            />
-          </>
-        )}
-      </SubNavAction>
+    <div className="flex flex-col gap-6xl">
+      <SecondarySubHeader
+        title="General"
+        action={
+          values.displayName !== account.displayName && (
+            <div className="flex flex-row gap-3xl items-center">
+              <Button
+                content="Discard"
+                variant="basic"
+                onClick={() => {
+                  resetValues();
+                }}
+              />
+              <Button
+                content="Save changes"
+                variant="primary"
+                onClick={() => {
+                  if (!isLoading) submit();
+                }}
+                loading={isLoading}
+              />
+            </div>
+          )
+        }
+      />
 
-      <Box title="Profile">
-        <div className="flex flex-row items-center gap-3xl">
-          <Avatar size="lg" color="one" image={<Buildings />} />{' '}
-          <Button content="Upload photo" variant="basic" />
-        </div>
-        <TextInput
-          label="Account name"
-          value={values.displayName}
-          onChange={handleChange('displayName')}
-        />
-        <div className="flex flex-row items-center gap-3xl">
-          <div className="flex-1">
-            <TextInput
-              label="Team URL"
-              value={`${consoleBaseUrl}/${parseName(account)}`}
-              message="This is your URL namespace within Kloudlite"
-              disabled
-              suffix={
-                <div className="flex justify-center items-center" title="Copy">
-                  <button
-                    onClick={() =>
-                      copy(`consoleBaseUrl}/${parseName(account)}`)
-                    }
-                    className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
-                    tabIndex={-1}
-                    aria-label="copy account url"
-                  >
-                    <CopySimple size={16} />
-                  </button>
-                </div>
-              }
-            />
+      <div className="flex flex-col gap-6xl">
+        <Box title="Profile">
+          <div className="flex flex-row items-center gap-3xl">
+            <Avatar size="lg" color="one" image={<Buildings />} />{' '}
+            <Button content="Upload photo" variant="basic" />
           </div>
-          <div className="flex-1">
-            <TextInput
-              value={parseName(account)}
-              label="Account ID"
-              message="Used when interacting with the Kloudlite API"
-              suffix={
-                <div className="flex justify-center items-center" title="Copy">
-                  <button
-                    onClick={() => copy(parseName(account))}
-                    className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
-                    tabIndex={-1}
-                    aria-label="copy account id"
+          <TextInput
+            label="Account name"
+            value={values.displayName}
+            onChange={handleChange('displayName')}
+          />
+          <div className="flex flex-row items-center gap-3xl">
+            <div className="flex-1">
+              <TextInput
+                label="Team URL"
+                value={`${consoleBaseUrl}/${parseName(account)}`}
+                message="This is your URL namespace within Kloudlite"
+                disabled
+                suffix={
+                  <div
+                    className="flex justify-center items-center"
+                    title="Copy"
                   >
-                    <CopySimple size={16} />
-                  </button>
-                </div>
-              }
-              disabled
-            />
+                    <button
+                      onClick={() =>
+                        copy(`consoleBaseUrl}/${parseName(account)}`)
+                      }
+                      className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
+                      tabIndex={-1}
+                      aria-label="copy account url"
+                    >
+                      <CopySimple size={16} />
+                    </button>
+                  </div>
+                }
+              />
+            </div>
+            <div className="flex-1">
+              <TextInput
+                value={parseName(account)}
+                label="Account ID"
+                message="Used when interacting with the Kloudlite API"
+                suffix={
+                  <div
+                    className="flex justify-center items-center"
+                    title="Copy"
+                  >
+                    <button
+                      onClick={() => copy(parseName(account))}
+                      className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
+                      tabIndex={-1}
+                      aria-label="copy account id"
+                    >
+                      <CopySimple size={16} />
+                    </button>
+                  </div>
+                }
+                disabled
+              />
+            </div>
           </div>
-        </div>
-      </Box>
+        </Box>
 
-      <DeleteContainer title="Delete Account" action={() => {}}>
-        Permanently remove your personal account and all of its contents from
-        the Kloudlite platform. This action is not reversible, so please
-        continue with caution.
-      </DeleteContainer>
-    </>
+        <DeleteContainer title="Delete Account" action={() => {}}>
+          Permanently remove your personal account and all of its contents from
+          the Kloudlite platform. This action is not reversible, so please
+          continue with caution.
+        </DeleteContainer>
+      </div>
+    </div>
   );
 };
 export default SettingGeneral;

@@ -104,35 +104,35 @@ const HandleBackendResources = ({
       }, {}),
     }),
     onSubmit: async (val) => {
-      try {
-        const { errors: e } = await api.createManagedResource({
-          mres: {
-            displayName: valuesFirst.displayName,
-            metadata: {
-              name: valuesFirst.name,
-              namespace: parseTargetNs(workspace),
-            },
-            spec: {
-              mresKind: {
-                kind: selectedType?.resource.kind || '',
-              },
-              msvcRef: {
-                apiVersion: template.apiVersion || '',
-                name: parseName(backendService),
-                kind: template.kind!,
-              },
-              inputs: {
-                ...val,
-              },
-            },
-          },
-        });
-        if (e) {
-          throw e[0];
-        }
-      } catch (err) {
-        handleError(err);
-      }
+      // try {
+      //   const { errors: e } = await api.createManagedResource({
+      //     mres: {
+      //       displayName: valuesFirst.displayName,
+      //       metadata: {
+      //         name: valuesFirst.name,
+      //         namespace: parseTargetNs(workspace),
+      //       },
+      //       spec: {
+      //         mresKind: {
+      //           kind: selectedType?.resource.kind || '',
+      //         },
+      //         msvcRef: {
+      //           apiVersion: template.apiVersion || '',
+      //           name: parseName(backendService),
+      //           kind: template.kind!,
+      //         },
+      //         inputs: {
+      //           ...val,
+      //         },
+      //       },
+      //     },
+      //   });
+      //   if (e) {
+      //     throw e[0];
+      //   }
+      // } catch (err) {
+      //   handleError(err);
+      // }
     },
   });
 

@@ -12,7 +12,7 @@ import { CommonTabs } from '../components/common-navbar-tabs';
 import { type IProject } from '../server/gql/queries/project-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
-import { IClusterContext } from './_.$account.$cluster';
+import { IClusterContext } from './_.$account.infra.$cluster';
 
 export interface IProjectContext extends IClusterContext {
   project: IProject;

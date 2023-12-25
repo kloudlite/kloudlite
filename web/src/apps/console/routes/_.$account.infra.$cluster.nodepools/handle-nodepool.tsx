@@ -21,7 +21,7 @@ import { IDialogBase } from '~/console/components/types.d';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { Switch } from '~/components/atoms/switch';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
-import { IClusterContext } from '../_.$account.$cluster';
+import { IClusterContext } from '../_.$account.infra.$cluster';
 
 type IDialog = IDialogBase<ExtractNodeType<INodepools>>;
 

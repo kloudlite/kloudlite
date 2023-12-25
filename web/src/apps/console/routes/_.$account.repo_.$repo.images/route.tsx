@@ -33,24 +33,6 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const Tabs = () => {
-  const { account } = useParams();
-  return (
-    <CommonTabs
-      backButton={{
-        to: `/${account}/container-registry/repos`,
-        label: 'Repos',
-      }}
-    />
-  );
-};
-
-export const handle = () => {
-  return {
-    navbar: <Tabs />,
-  };
-};
-
 const Images = () => {
   const { promise } = useLoaderData<typeof loader>();
   return (

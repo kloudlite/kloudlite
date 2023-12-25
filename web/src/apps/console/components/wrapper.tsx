@@ -56,7 +56,7 @@ const Wrapper = ({
         />
       )}
       {secondaryHeader && (
-        <div className="pb-3xl">
+        <div className="pb-6xl">
           <SecondarySubHeader
             title={secondaryHeader.title}
             action={secondaryHeader.action}

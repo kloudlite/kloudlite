@@ -33,6 +33,13 @@ import { UnsavedChangesProvider } from '~/root/lib/client/hooks/use-unsaved-chan
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx } from '~/root/lib/types/common';
+import {
+  Nodeless,
+  InfraAsCode,
+  CustomEnv,
+  Container as ContainerIcon,
+  GearSix,
+} from '@jengaicons/react';
 import HandleProfile from './handle-profile';
 
 const restActions = (ctx: IExtRemixCtx) => {
@@ -57,27 +64,43 @@ export const meta = () => {
 
 const AccountTabs = () => {
   const { account } = useParams();
+  const iconSize = 16;
   return (
     <CommonTabs
       baseurl={`/${account}`}
       tabs={[
+        // {
+        //   label: 'Projects',
+        //   to: '/projects',
+        //   value: '/projects',
+        // },
         {
-          label: 'Projects',
-          to: '/projects',
-          value: '/projects',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <InfraAsCode size={iconSize} />
+              Infrastructure
+            </span>
+          ),
+          to: '/infra',
+          value: '/infra',
         },
         {
-          label: 'Clusters',
-          to: '/clusters',
-          value: '/clusters',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <ContainerIcon size={iconSize} />
+              Packages
+            </span>
+          ),
+          to: '/packages/repos',
+          value: '/packages',
         },
         {
-          label: 'Container registry',
-          to: '/container-registry/repos',
-          value: '/container-registry',
-        },
-        {
-          label: 'Settings',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <GearSix size={iconSize} />
+              Settings
+            </span>
+          ),
           to: '/settings',
           value: '/settings',
         },
@@ -89,7 +112,7 @@ const AccountTabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/projects`}>
+    <LogoWrapper to={`/${account}/infra/clusters`}>
       <BrandLogo detailed />
     </LogoWrapper>
   );

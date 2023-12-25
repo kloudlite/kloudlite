@@ -1,7 +1,7 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
 import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import SidebarLayout from '../components/sidebar-layout';
-import { IProjectContext } from './_.$account.$cluster.$project';
+import { IProjectContext } from './_.$account.infra.$cluster.$project';
 
 const Settings = () => {
   const rootContext = useOutletContext<IProjectContext>();

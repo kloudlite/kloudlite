@@ -4,7 +4,7 @@ import { Key, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 
-type IResourceExtraItem =
+export type IResourceExtraItem =
   | {
       to?: string;
       linkProps?: {
@@ -24,15 +24,20 @@ type IResourceExtraItem =
 
 interface IResourceExtraAction {
   options: Array<IResourceExtraItem>;
+  disabled?: boolean;
 }
 
-const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
+const ResourceExtraAction = ({
+  options = [],
+  disabled,
+}: IResourceExtraAction) => {
   const [open, setOpen] = useState(false);
 
   return (
     <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <IconButton
+          disabled={disabled}
           variant="plain"
           icon={<DotsThreeVerticalFill />}
           selected={open}

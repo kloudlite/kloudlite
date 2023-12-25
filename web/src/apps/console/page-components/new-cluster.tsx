@@ -150,7 +150,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           throw e[0];
         }
         toast.success('cluster created successfully');
-        navigate(`/${accountName}/clusters`);
+        navigate(`/${accountName}/infra/clusters`);
       } catch (err) {
         handleError(err);
       }
@@ -383,7 +383,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         setShow={setShowUnsavedChanges}
         onSubmit={() => {
           setShowUnsavedChanges(false);
-          navigate(`/${accountName}/clusters`);
+          navigate(`/${accountName}/infra/clusters`);
         }}
       />
     </>

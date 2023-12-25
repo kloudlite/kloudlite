@@ -36,7 +36,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { mapper } from '~/components/utils';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { IClusterContext } from '../_.$account.$cluster';
+import { IClusterContext } from '../_.$account.infra.$cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -274,7 +274,7 @@ const SettingGeneral = () => {
             reload();
             toast.success(`Cluster deleted successfully`);
             setDeleteCluster(false);
-            navigate(`/${parseName(account)}/clusters`);
+            navigate(`/${parseName(account)}/infra/clusters`);
           } catch (err) {
             handleError(err);
           }

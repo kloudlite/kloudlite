@@ -63,7 +63,7 @@ const ClusterTabs = () => {
           value: '/settings',
         },
       ]}
-      baseurl={`/${account}/${cluster}`}
+      baseurl={`/${account}/infra/${cluster}`}
     />
   );
 };
@@ -78,7 +78,7 @@ const NetworkBreadcrum = ({
   return (
     <div className="flex flex-row items-center">
       <Breadcrum.Button
-        to={`/${account}/clusters`}
+        to={`/${account}/infra/clusters`}
         LinkComponent={Link}
         content={
           <div className="flex flex-row gap-md items-center">
@@ -87,7 +87,7 @@ const NetworkBreadcrum = ({
         }
       />
       <Breadcrum.Button
-        to={`/${account}/${parseName(cluster)}/overview/info`}
+        to={`/${account}/infra/${parseName(cluster)}/overview/info`}
         LinkComponent={Link}
         content={<span>{displayName}</span>}
       />
@@ -113,6 +113,7 @@ export const handle = ({
     navbar: <ClusterTabs />,
     breadcrum: () => <NetworkBreadcrum cluster={cluster} />,
     logo: <Logo />,
+    noLayout: true,
   };
 };
 
@@ -131,7 +132,7 @@ export const loader = async (ctx: IExtRemixCtx) => {
       cluster: data,
     });
   } catch (err) {
-    return redirect(`/${account}/clusters`);
+    return redirect(`/${account}/infra/clusters`);
   }
 };
 

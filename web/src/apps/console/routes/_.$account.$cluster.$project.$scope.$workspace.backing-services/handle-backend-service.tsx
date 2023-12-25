@@ -315,32 +315,32 @@ const HandleBackendService = ({
         const tempVal = { ...val };
         delete tempVal.name;
         delete tempVal.displayName;
-        try {
-          const { errors: e } = await api.createManagedService({
-            msvc: {
-              displayName: val.displayName,
-              metadata: {
-                name: val.name,
-                namespace: parseTargetNs(workspace),
-                annotations: {},
-              },
-              spec: {
-                msvcKind: {
-                  apiVersion: selectedService?.service.apiVersion || '',
-                  kind: selectedService?.service.kind || '',
-                },
-                inputs: {
-                  ...tempVal,
-                },
-              },
-            },
-          });
-          if (e) {
-            throw e[0];
-          }
-        } catch (err) {
-          handleError(err);
-        }
+        // try {
+        //   const { errors: e } = await api.createManagedService({
+        //     msvc: {
+        //       displayName: val.displayName,
+        //       metadata: {
+        //         name: val.name,
+        //         namespace: parseTargetNs(workspace),
+        //         annotations: {},
+        //       },
+        //       spec: {
+        //         msvcKind: {
+        //           apiVersion: selectedService?.service.apiVersion || '',
+        //           kind: selectedService?.service.kind || '',
+        //         },
+        //         inputs: {
+        //           ...tempVal,
+        //         },
+        //       },
+        //     },
+        //   });
+        //   if (e) {
+        //     throw e[0];
+        //   }
+        // } catch (err) {
+        //   handleError(err);
+        // }
       },
     });
 

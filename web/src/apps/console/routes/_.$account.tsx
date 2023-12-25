@@ -49,7 +49,7 @@ const AccountMenu = ({ account }: { account: IAccount }) => {
               key={name}
               onClick={() => {
                 if (accountName !== name) {
-                  navigate(`/${name}/projects`);
+                  navigate(`/${name}/infra/clusters`);
                 }
               }}
               active={accountName === name}

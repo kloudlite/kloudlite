@@ -212,7 +212,7 @@ const SettingUserManagement = () => {
 
   return (
     <div className="flex flex-col gap-8xl">
-      <div className="flex flex-col gap-3xl">
+      <div className="flex flex-col gap-6xl">
         <SecondarySubHeader
           title="User management"
           action={

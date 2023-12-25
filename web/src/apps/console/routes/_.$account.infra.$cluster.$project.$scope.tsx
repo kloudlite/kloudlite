@@ -7,7 +7,7 @@ import Breadcrum from '../components/breadcrum';
 import LogoWrapper from '../components/logo-wrapper';
 import { SCOPE } from '../page-components/new-scope';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
-import { IProjectContext } from './_.$account.$cluster.$project';
+import { IProjectContext } from './_.$account.infra.$cluster.$project';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);

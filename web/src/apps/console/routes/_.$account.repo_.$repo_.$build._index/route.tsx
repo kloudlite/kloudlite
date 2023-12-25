@@ -8,7 +8,6 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { defer } from '@remix-run/node';
 import fake from '~/root/fake-data-generator/fake';
-import BuildRunResources from '../_.$account.$cluster.storage/storage-resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {

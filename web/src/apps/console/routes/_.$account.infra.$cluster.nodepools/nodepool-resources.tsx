@@ -153,7 +153,10 @@ const ListDetail = (
     }
   };
 
-  const statusRender = lR.statusRender({ className: 'w-[180px]', type:'nodepool' });
+  const statusRender = lR.statusRender({
+    className: 'w-[180px]',
+    type: 'nodepool',
+  });
 
   return (
     <div className="w-full flex flex-col">

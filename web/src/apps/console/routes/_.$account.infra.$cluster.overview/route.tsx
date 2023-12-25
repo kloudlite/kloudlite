@@ -2,7 +2,7 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
-import { IClusterContext } from '../_.$account.$cluster';
+import { IClusterContext } from '../_.$account.infra.$cluster';
 
 const ClusterOverview = () => {
   const rootContext = useOutletContext<IClusterContext>();

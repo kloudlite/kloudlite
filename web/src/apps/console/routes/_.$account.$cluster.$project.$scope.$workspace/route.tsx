@@ -38,7 +38,7 @@ import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-ac
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Truncate, handleError } from '~/root/lib/utils/common';
-import { IProjectContext } from '../_.$account.$cluster.$project';
+import { IProjectContext } from '../_.$account.infra.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
   workspace: IWorkspace;

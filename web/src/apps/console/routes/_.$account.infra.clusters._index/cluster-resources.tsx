@@ -1,7 +1,7 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { cn, generateKey, titleCase } from '~/components/utils';
-import { listRender } from '~/console/components/commons';
+import { IStatus, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
@@ -63,10 +63,17 @@ const parseItem = (item: ExtractNodeType<IClusters>) => {
   };
 };
 
-const ExtraButton = ({ cluster }: { cluster: ExtractNodeType<IClusters> }) => {
+const ExtraButton = ({
+  cluster,
+  status,
+}: {
+  cluster: ExtractNodeType<IClusters>;
+  status: IStatus;
+}) => {
   const { account } = useParams();
   return (
     <ResourceExtraAction
+      disabled={status === 'deleting' || status === 'syncing'}
       options={[
         {
           label: 'Settings',
@@ -88,10 +95,11 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
         const { name, id, provider, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         const lR = listRender({ keyPrefix, resource: item });
+        const status = lR.statusRender({ className: '' });
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${id}/overview`}
+            to={`/${account}/infra/${id}/overview`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -99,7 +107,9 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton cluster={item} />}
+                    action={
+                      <ExtraButton status={status.status} cluster={item} />
+                    }
                   />
                 ),
               },
@@ -112,7 +122,7 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                   </div>
                 ),
               },
-              lR.statusRender({ className: '' }),
+              status,
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
@@ -138,6 +148,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
         const { name, id, provider } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         const lR = listRender({ keyPrefix, resource: item });
+
         const statusRender = lR.statusRender({
           className: 'w-[180px] mr-[50px]',
         });
@@ -147,13 +158,17 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
             key={id}
             className={cn(
               '!p-3xl',
-              statusRender.status === 'notready'
+              statusRender.status === 'notready' ||
+                statusRender.status === 'deleting'
                 ? '!cursor-default hover:!bg-surface-basic-default'
                 : ''
             )}
             // to={`/${account}/${id}/overview`}
-            {...(statusRender.status !== 'notready'
-              ? { to: `/${account}/${id}/overview` }
+            {...(!(
+              statusRender.status === 'notready' ||
+              statusRender.status === 'deleting'
+            )
+              ? { to: `/${account}/infra/${id}/overview` }
               : {})}
             columns={[
               {
@@ -176,7 +191,9 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
               lR.authorRender({ className: 'w-[180px]' }),
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton cluster={item} />,
+                render: () => (
+                  <ExtraButton status={statusRender.status} cluster={item} />
+                ),
               },
             ]}
           />

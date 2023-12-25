@@ -15,7 +15,7 @@ import fake from '~/root/fake-data-generator/fake';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
-import { IClusterContext } from '../_.$account.$cluster';
+import { IClusterContext } from '../_.$account.infra.$cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);

@@ -3,7 +3,7 @@ import Popup from '~/components/molecule/popup';
 import { CopyButton, DetailItem } from '~/console/components/commons';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
-import { IClusterContext } from '../_.$account.$cluster';
+import { IClusterContext } from '../_.$account.infra.$cluster';
 
 const DomainDetailPopup = ({
   visible,

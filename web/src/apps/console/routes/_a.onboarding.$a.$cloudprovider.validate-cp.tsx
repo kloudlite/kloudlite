@@ -232,7 +232,7 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
         setShow={setShowUnsavedChanges}
         onSubmit={() => {
           setShowUnsavedChanges(false);
-          navigate(`/${parseName(account)}/clusters`);
+          navigate(`/${parseName(account)}/infra/clusters`);
         }}
       />
     </>

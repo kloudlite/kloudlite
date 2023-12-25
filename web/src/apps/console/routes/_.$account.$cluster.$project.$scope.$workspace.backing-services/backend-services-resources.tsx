@@ -25,14 +25,14 @@ import { getManagedTemplate } from '~/console/utils/commons';
 const RESOURCE_NAME = 'backend service';
 
 const parseItem = (
-  item: ExtractNodeType<IManagedServices>,
-  templates: IManagedServiceTemplates
+  item: ExtractNodeType<IManagedServices>
+  // templates: IManagedServiceTemplates
 ) => {
-  const template = getManagedTemplate({
-    templates,
-    kind: item.spec.msvcKind.kind || '',
-    apiVersion: item.spec.msvcKind.apiVersion,
-  });
+  // const template = getManagedTemplate({
+  //   templates,
+  //   kind: item.spec.msvcKind.kind || '',
+  //   apiVersion: item.spec.msvcKind.apiVersion,
+  // });
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -41,7 +41,8 @@ const parseItem = (
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
-    logo: template?.logoUrl,
+    logo: '',
+    // logo: template?.logoUrl,
   };
 };
 
@@ -55,7 +56,10 @@ const GridView = ({
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, type, logo, updateInfo } = parseItem(item, templates);
+        const { name, id, type, logo, updateInfo } = parseItem(
+          item
+          // templates
+        );
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -115,7 +119,10 @@ const ListView = ({
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, type, logo, updateInfo } = parseItem(item, templates);
+        const { name, id, type, logo, updateInfo } = parseItem(
+          item
+          // templates
+        );
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
 
         return (

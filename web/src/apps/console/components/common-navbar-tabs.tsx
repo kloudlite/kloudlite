@@ -1,7 +1,7 @@
 import { ChevronLeft } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useContext } from 'react';
+import { ReactNode, useContext, useState } from 'react';
 import ScrollArea from '~/components/atoms/scroll-area';
 import Tabs from '~/components/atoms/tabs';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -10,7 +10,7 @@ import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 
 interface CommonTabsProps {
   tabs?: {
-    label: string;
+    label: ReactNode | ((active: boolean) => ReactNode);
     to: string;
     value: string;
   }[];
@@ -30,6 +30,8 @@ export const CommonTabs = ({
 
   const context = useContext(TopBarContext);
   const { isSticked } = context || {};
+
+  const [activeTab, setActiveTab] = useState(`/${activePath.split('/')[1]}`);
 
   return (
     <div className="flex flex-row items-center">
@@ -68,6 +70,7 @@ export const CommonTabs = ({
             value={`/${activePath.split('/')[1]}`}
             fitted
             LinkComponent={Link}
+            onChange={(tab) => setActiveTab(tab)}
           >
             {tabs.map(({ value, to, label }) => {
               return <Tabs.Tab {...{ value, to, label }} key={value} />;

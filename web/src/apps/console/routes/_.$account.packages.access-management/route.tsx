@@ -12,6 +12,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import CredResources from './cred-resources';
 import HandleCrCred from './handle-cr-cred';
 import Tools from './tools';
@@ -51,18 +52,21 @@ const ContainerRegistryAccessManagement = () => {
         {({ credentials }) => {
           const creds = credentials.edges?.map(({ node }) => node);
           return (
-            <>
-              {creds.length > 0 && (
-                <SubNavAction deps={[creds.length]}>
-                  <Button
-                    content="Create new credential"
-                    variant="primary"
-                    onClick={() => {
-                      setVisible(true);
-                    }}
-                  />
-                </SubNavAction>
-              )}
+            <div className="flex flex-col gap-6xl">
+              <SecondarySubHeader
+                title="Container registry"
+                action={
+                  creds.length > 0 && (
+                    <Button
+                      content="Create new credential"
+                      variant="primary"
+                      onClick={() => {
+                        setVisible(true);
+                      }}
+                    />
+                  )
+                }
+              />
               <Wrapper
                 empty={{
                   is: creds?.length === 0,
@@ -85,7 +89,7 @@ const ContainerRegistryAccessManagement = () => {
               >
                 <CredResources items={creds} />
               </Wrapper>
-            </>
+            </div>
           );
         }}
       </LoadingComp>

@@ -4,7 +4,6 @@ import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import SubNavAction from '~/console/components/sub-nav-action';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
@@ -12,6 +11,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import HandleRepo from './handle-repo';
 import RepoResources from './repo-resources';
 import Tools from './tools';
@@ -51,9 +51,10 @@ const ContainerRegistryRepos = () => {
           const repos = repository.edges?.map(({ node }) => node);
 
           return (
-            <>
-              {repos.length > 0 && (
-                <SubNavAction deps={[repos.length]}>
+            <div className="flex flex-col gap-6xl">
+              <SecondarySubHeader
+                title="Container registry"
+                action={
                   <Button
                     content="Create new repository"
                     variant="primary"
@@ -61,8 +62,8 @@ const ContainerRegistryRepos = () => {
                       setVisible(true);
                     }}
                   />
-                </SubNavAction>
-              )}
+                }
+              />
               <Wrapper
                 empty={{
                   is: repos?.length === 0,
@@ -85,7 +86,7 @@ const ContainerRegistryRepos = () => {
               >
                 <RepoResources items={repos} />
               </Wrapper>
-            </>
+            </div>
           );
         }}
       </LoadingComp>
