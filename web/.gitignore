@@ -26,5 +26,6 @@ dist-ssr
 .cache
 public/**
 !public/package.json
+.tmp
 
 tsconfig-compile.tsbuildinfo
