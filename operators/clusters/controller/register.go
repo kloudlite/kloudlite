@@ -14,7 +14,6 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func RegisterInto(mgr operator.Operator) {
@@ -61,10 +60,8 @@ func RegisterInto(mgr operator.Operator) {
 
 	mgr.RegisterControllers(
 		&target.ClusterReconciler{
-			Client: nil,
-			Scheme: &runtime.Scheme{},
-			Env:    ev,
-			Name:   "clusters:target",
+			Env:  ev,
+			Name: "clusters:target",
 			NotifyOnClusterUpdate: func(ctx context.Context, obj *clustersv1.Cluster) error {
 				var m map[string]any
 				b, err := json.Marshal(obj)
