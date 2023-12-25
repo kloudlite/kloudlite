@@ -4,7 +4,6 @@ import SidebarLayout from '~/console/components/sidebar-layout';
 import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { IClusterContext } from '../_layout';
 
-
 const ClusterOverview = () => {
   const rootContext = useOutletContext<IClusterContext>();
   const subNavAction = useSubNavData();

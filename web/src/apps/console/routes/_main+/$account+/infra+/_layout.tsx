@@ -3,12 +3,10 @@ import SidebarLayout from '~/console/components/sidebar-layout';
 import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { useHandleFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 
-
 const Infra = () => {
   const rootContext = useOutletContext();
   const subNavAction = useSubNavData();
   const noLayout = useHandleFromMatches('noLayout', null);
-  console.log(noLayout);
 
   if (noLayout) {
     return <Outlet context={rootContext} />;
