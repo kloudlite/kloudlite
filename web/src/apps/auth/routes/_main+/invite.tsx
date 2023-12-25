@@ -7,7 +7,7 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import { redirectWithContext } from '~/root/lib/app-setup/with-contxt';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { IExtRemixCtx } from '~/root/lib/types/common';
-import Container from '../components/container';
+import Container from '../../components/container';
 
 export const loader = async (ctx: IExtRemixCtx) => {
   const loggedIn = await assureNotLoggedIn(ctx);

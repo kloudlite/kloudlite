@@ -6,7 +6,7 @@ import {
   useLoaderData,
 } from '@remix-run/react';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
-import { GQLServerHandler } from '../server/gql/saved-queries';
+import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 
 export type IProviderContext = {
   githubLoginUrl: string;

@@ -21,8 +21,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import Container from '../components/container';
-import { IProviderContext } from './_auth._providers';
+import Container from '../../components/container';
+import { IProviderContext } from './_layout';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;

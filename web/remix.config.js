@@ -1,3 +1,8 @@
+import { flatRoutes } from 'remix-flat-routes';
+
+/**
+ * @type {import("@remix-run/dev").AppConfig}
+ */
 export default {
   appDirectory: `src/apps/${process.env.APP}`,
   assetsBuildDirectory: `public/${process.env.APP}/assets`,
@@ -19,5 +24,10 @@ export default {
     v2_dev: {
       port: Number(process.env.PORT) + 4000,
     },
+  },
+  routes: async (defineRoutes) => {
+    return flatRoutes('routes', defineRoutes, {
+      appDir: `src/apps/${process.env.APP}`,
+    });
   },
 };

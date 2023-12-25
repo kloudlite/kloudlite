@@ -17,9 +17,9 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
-import Container from '../components/container';
-import { useAuthApi } from '../server/gql/api-provider';
-import { IProviderContext } from './_auth._providers';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
+import Container from '../../components/container';
+import { IProviderContext } from './_layout';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;

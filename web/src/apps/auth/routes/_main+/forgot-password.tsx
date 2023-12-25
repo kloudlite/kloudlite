@@ -9,8 +9,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
-import Container from '../components/container';
-import { useAuthApi } from '../server/gql/api-provider';
+import { useAuthApi } from '~/auth/server/gql/api-provider';
+import Container from '../../components/container';
 
 const ForgetPassword = () => {
   const api = useAuthApi();
