@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	networkingv1 "k8s.io/api/networking/v1"
 	"strings"
 	"time"
 
@@ -92,7 +93,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				}
 			}
 		}
-
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "wireguard.kloudlite.io"):
 		{
 			switch obj.GetObjectKind().GroupVersionKind().Kind {
@@ -125,7 +125,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				}
 			}
 		}
-
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
 			if err := r.MsgSender.DispatchResourceUpdates(mctx, t.ResourceUpdate{
@@ -138,8 +137,13 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 		}
 	default:
 		{
-			logger.Infof("ignoring resource status update, as it does not belong to group kloudlite.io")
-			return ctrl.Result{}, nil
+			if err := r.MsgSender.DispatchResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			}); err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 	}
 
@@ -218,6 +222,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})
 
+	nativeWatchList := []client.Object{
+		&corev1.PersistentVolumeClaim{},
+		&corev1.PersistentVolume{},
+		&networkingv1.Ingress{},
+	}
+
 	watchList := []client.Object{
 		&crdsv1.Project{},
 		&crdsv1.App{},
@@ -231,12 +241,21 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 		&clustersv1.Cluster{},
 		&clustersv1.NodePool{},
-		// &clustersv1.Node{},
 
-		&corev1.PersistentVolumeClaim{},
 		&wireguardv1.Device{},
 	}
-
+	for _, object := range nativeWatchList {
+		builder.Watches(
+			object,
+			handler.EnqueueRequestsFromMapFunc(
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
+					return []reconcile.Request{
+						{NamespacedName: fn.NN(obj.GetNamespace(), obj.GetName())},
+					}
+				},
+			),
+		)
+	}
 	for _, object := range watchList {
 		builder.Watches(
 			object,
@@ -246,12 +265,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					if !ok {
 						return nil
 					}
-
 					b64Group := base64.StdEncoding.EncodeToString([]byte(v))
 					if len(b64Group) == 0 {
 						return nil
 					}
-
 					wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
 					if err != nil {
 						return nil
