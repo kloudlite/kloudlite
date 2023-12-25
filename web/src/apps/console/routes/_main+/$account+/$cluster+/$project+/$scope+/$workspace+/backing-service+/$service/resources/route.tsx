@@ -15,11 +15,14 @@ import { getManagedTemplate } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 
+import {
+  ensureAccountSet,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import HandleBackendResources from './handle-backend-resources';
 import ManagedResources from './managed-resources';
 import Tools from './tools';
-import { ensureAccountSet, ensureClusterSet } from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { IManagedServiceContext } from '../_index';
 
 export const loader = async (ctx: IRemixCtx) => {
