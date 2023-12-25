@@ -2,6 +2,7 @@ package wg
 
 import (
 	"errors"
+	"github.com/kloudlite/kl/lib/common/ui/text"
 	"net"
 )
 
