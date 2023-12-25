@@ -24,6 +24,12 @@ data:
 - name: NATS_URL
   value: nats://nats:4222
 
+- name: NATS_STREAM
+  value: {{.Values.envVars.nats.streams.resourceSync}}
+
+- name: NATS_CLUSTER_UPDATE_SUBJECT_FORMAT
+  value: "resource-sync.%s.%s.platform.kloudlite-infra.resource-update"
+
 - name: CLOUDFLARE_ZONE_ID
   value: {{ required ".Values.operators.platformOperator.configuration.cluster.cloudflare.zoneId must be set" .Values.operators.platformOperator.configuration.cluster.cloudflare.zoneId}}
 
