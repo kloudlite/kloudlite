@@ -332,10 +332,10 @@ devDependencies:
     specifier: ^0.6.4
     version: 0.6.4(@remix-run/dev@1.19.3)
   tailwindcss:
-    specifier: ^3.4.0
+    specifier: ^3.3.2
     version: 3.4.0
   typescript:
-    specifier: ^5.3.3
+    specifier: ^5.1.6
     version: 5.3.3
   typescript-json-schema:
     specifier: ^0.62.0
@@ -3864,7 +3864,7 @@ packages:
     peerDependencies:
       '@remix-run/dev': ^1.15.0 || ^2.0.0
     dependencies:
-      '@remix-run/dev': 1.19.3(@remix-run/serve@1.19.3)(@types/node@16.18.64)
+      '@remix-run/dev': 1.19.3(@remix-run/serve@1.19.3)(@types/node@16.18.68)
       minimatch: 7.4.6
     dev: true
 
@@ -6590,7 +6590,7 @@ packages:
       '@types/glob': 7.2.0
       array-union: 2.1.0
       dir-glob: 3.0.1
-      fast-glob: 3.2.11
+      fast-glob: 3.3.2
       glob: 7.2.3
       ignore: 5.3.0
       merge2: 1.4.1
@@ -9322,7 +9322,7 @@ packages:
     peerDependencies:
       '@remix-run/dev': ^1.15.0 || ^2
     dependencies:
-      '@remix-run/dev': 1.19.3(@remix-run/serve@1.19.3)(@types/node@16.18.64)
+      '@remix-run/dev': 1.19.3(@remix-run/serve@1.19.3)(@types/node@16.18.68)
       '@remix-run/v1-route-convention': 0.1.4(@remix-run/dev@1.19.3)
       fs-extra: 11.2.0
       minimatch: 5.1.6
