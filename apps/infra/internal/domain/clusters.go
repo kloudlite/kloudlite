@@ -271,8 +271,6 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 		return nil, errors.NewE(err)
 	}
 
-	edges := make([]repos.RecordEdge[*entities.Cluster], 0, len(pr.Edges))
-	pr.Edges = edges
 	return pr, nil
 }
 
