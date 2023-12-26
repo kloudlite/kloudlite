@@ -14,7 +14,7 @@ var LoginCmd = &cobra.Command{
 	Long: `This command let you login to the kloudlite.
 Example:
   # Login to kloudlite
-  kl auth login 
+  kl login 
 
   when you execute the above command a link will be opened on your browser. 
   visit your browser and approve there to access your account using this cli.

@@ -32,8 +32,8 @@ curl https://i.jpillora.com/kloudlite/kl | bash
 To login and logout you can use the following commands.
 
 ```sh
-kl auth login
-kl auth logout
+kl login
+kl logout
 ```
 
 ### Initialize your workspace

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/kloudlite/kl/cmd/auth"
+	"github.com/kloudlite/kl/cmd/cluster"
 	"github.com/kloudlite/kl/cmd/create"
-	"github.com/kloudlite/kl/cmd/exec"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/intercept"
 	"github.com/kloudlite/kl/cmd/list"
@@ -16,6 +16,9 @@ import (
 )
 
 func init() {
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
+	rootCmd.AddCommand(DocsCmd)
 
 	rootCmd.AddCommand(list.Cmd)
 	rootCmd.AddCommand(use.Cmd)
@@ -25,7 +28,7 @@ func init() {
 	rootCmd.AddCommand(auth.LogoutCmd)
 	rootCmd.AddCommand(auth.WhoAmICmd)
 
-	rootCmd.AddCommand(exec.Command)
+	rootCmd.AddCommand(cluster.Command)
 
 	rootCmd.AddCommand(wg.Cmd)
 

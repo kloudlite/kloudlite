@@ -121,5 +121,5 @@ func printSecret(secretId string, cmd *cobra.Command) error {
 }
 
 func init() {
-	secretCmd.Flags().StringP("output", "o", "table", "json | yaml")
+	secretCmd.Flags().StringP("output", "o", "table", "output format (table|json|yaml)")
 }

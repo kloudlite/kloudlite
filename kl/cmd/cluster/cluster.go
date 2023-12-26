@@ -1,4 +1,4 @@
-package exec
+package cluster
 
 import (
 	"fmt"
@@ -10,20 +10,43 @@ import (
 )
 
 var Command = &cobra.Command{
-	Use:   "exec",
-	Short: "exec to kloudlite",
+	Use:   "cluster",
+	Short: "get access of your cluster",
 	Long: `This command let you login to the kloudlite.
 Example:
-  # Login to kloudlite
-  kl exec -- bash 
+  # get detail about selected account
+  kl cluster
+
+
+  # exec new shell with kubeconfig env
+  kl cluster -- bash
+
+  # exec any kubernetes command
+  kl cluster -- k9s
+  kl cluster -- kubectl get pods
+  kl cluster -- kubectl apply -f deployment.yaml
 
   when you execute the above command a link will be opened on your browser. 
   visit your browser and approve there to access your account using this cli.
 	`,
-	Run: func(_ *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		var fn func()
 		fn = func() {
-			configPath, err := server.SyncKubeConfig()
+
+			accountName := cmd.Flag("account").Value.String()
+			clusterName := cmd.Flag("cluster").Value.String()
+
+			configPath, err := server.SyncKubeConfig(func() *string {
+				if accountName == "" {
+					return nil
+				}
+				return &accountName
+			}(), func() *string {
+				if clusterName == "" {
+					return nil
+				}
+				return &clusterName
+			}())
 			if err != nil {
 				switch err.Error() {
 				case "noSelectedAccount":
@@ -56,9 +79,7 @@ Example:
 }
 
 func run(envs map[string]string, args []string) error {
-
 	var cmd *exec.Cmd
-
 	if len(args) > 0 {
 		argsWithoutProg := args[1:]
 		cmd = exec.Command(args[0], argsWithoutProg...)
@@ -87,4 +108,9 @@ func run(envs map[string]string, args []string) error {
 	}
 
 	return cmd.Run()
+}
+
+func init() {
+	Command.Flags().StringP("cluster", "o", "", "cluster name")
+	Command.Flags().StringP("account", "a", "", "account name")
 }

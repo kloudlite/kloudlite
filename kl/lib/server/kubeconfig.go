@@ -8,14 +8,25 @@ import (
 	"path"
 )
 
-func SyncKubeConfig() (*string, error) {
-	name, err := CurrentClusterName()
+func SyncKubeConfig(accName, clustName *string) (*string, error) {
+	name := ""
+	var err error
+
+	if accName == nil {
+		name, err = CurrentClusterName()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		name = *accName
+	}
+
+	config, err := getKubeConfig(accName, clustName)
 	if err != nil {
 		return nil, err
 	}
 
 	tmpDir := os.TempDir()
-
 	tmpFile := path.Join(tmpDir, name)
 
 	_, err = os.Stat(tmpFile)
@@ -23,10 +34,6 @@ func SyncKubeConfig() (*string, error) {
 		return &tmpFile, nil
 	}
 
-	config, err := getKubeConfig()
-	if err != nil {
-		return nil, err
-	}
 	if err := os.WriteFile(tmpFile, []byte(*config), 0644); err != nil {
 		log.Fatal(err)
 	}
@@ -34,25 +41,37 @@ func SyncKubeConfig() (*string, error) {
 	return &tmpFile, nil
 }
 
-func getKubeConfig() (*string, error) {
+func getKubeConfig(accName, clusterName *string) (*string, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
-	_, err = CurrentAccountName()
-	if err != nil {
-		return nil, err
+
+	if accName == nil {
+		_, err = CurrentAccountName()
+		if err != nil {
+			return nil, err
+		}
 	}
-	currentCluster, err := CurrentClusterName()
-	if err != nil {
-		return nil, err
+
+	var currentCluster string
+
+	if clusterName == nil {
+		currentCluster, err = CurrentClusterName()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		currentCluster = *clusterName
 	}
+
 	respData, err := klFetch("cli_getKubeConfig", map[string]any{
 		"name": currentCluster,
 	}, &cookie)
 	if err != nil {
 		return nil, err
 	}
+
 	type KubeConfig struct {
 		AdminKubeConfig struct {
 			Encoding string `json:"encoding"`

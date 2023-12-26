@@ -10,6 +10,7 @@ import (
 
 	"github.com/kloudlite/kl/lib/common"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
 func code(str string, lang string) string {
@@ -101,35 +102,56 @@ func generateDocs(cmd *cobra.Command, dir string) error {
 	return nil
 }
 
-func runDocGen(cmd *cobra.Command, _ []string) {
+func runDocGen(cmd *cobra.Command, _ []string) error {
 
 	if _, er := os.Stat("./docs"); errors.Is(er, os.ErrNotExist) {
 		err := os.MkdirAll("./docs", 0644)
 		if err != nil {
-			common.PrintError(err)
-			return
+			return err
 		}
 
 	} else {
 		err := os.RemoveAll("./docs")
 
 		if err != nil {
-			common.PrintError(err)
-			return
+			return err
 		}
 
 		err = os.MkdirAll("./docs", os.ModePerm)
 		if er != nil {
-			common.PrintError(err)
-			return
+			return err
 		}
 	}
 
-	// if err := doc.GenMarkdownTree(cmd, "./docs"); err != nil {
-	// 	common.PrintError(err)
-	// }
+	if err := doc.GenMarkdownTree(cmd, "./docs"); err != nil {
+		return err
+	}
 
 	if err := generateDocs(cmd, "./docs"); err != nil {
-		common.PrintError(err)
+		return err
 	}
+	return nil
+}
+
+var DocsCmd = &cobra.Command{
+	Hidden: true,
+	Use:    "docs",
+	Short:  "generate docs for kloudlite cli",
+	Long: `This command let you generate docs for kloudlite cli.
+
+Example:
+  # generate docs for kloudlite cli
+  kl docs
+
+  when you execute the above command a link will be opened on your browser. 
+  visit your browser and approve there to access your account using this cli.
+	`,
+	Run: func(_ *cobra.Command, args []string) {
+		if err := runDocGen(rootCmd, args); err != nil {
+			common.PrintError(err)
+			return
+		}
+
+		fmt.Println("successfully generated docs")
+	},
 }
