@@ -1,0 +1,22 @@
+version: 3
+
+tasks:
+  build:
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - mkdir -p ./bin
+      - go build -ldflags="-s -w" -o ./bin/runner .
+
+  help:
+    summary: |+
+      to run as primaryMaster, create a `/runner-config.yml` file, with following contents:
+          ```
+            runAs: primaryMaster
+            primaryMaster:
+              publicIP: <ip-address>
+              token: sample
+              nodeName: k8s-master-1
+          ```
