@@ -788,9 +788,7 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	check.Status = true
 	if check != checks[ServerReady] {
 		checks[ServerReady] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
+		return req.UpdateStatus()
 	}
 	return req.Next()
 }

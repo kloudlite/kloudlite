@@ -119,7 +119,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*mysqlMsvcv1.Database]) stepResu
 		return step
 	}
 
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(DBUserDeleted, check, err.Error()).Err(nil)
 	}
@@ -153,7 +153,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mysqlMsvcv1.Database]) st
 	check := rApi.Check{Generation: obj.Generation}
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
+		ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
 			metav1.TypeMeta{
 				Kind:       obj.Spec.MsvcRef.Kind,
 				APIVersion: obj.Spec.MsvcRef.APIVersion,
@@ -202,7 +202,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mysqlMsvcv1.Database]) step
 	}
 
 	// msvc output ref
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}

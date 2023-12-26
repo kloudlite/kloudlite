@@ -87,4 +87,5 @@ resources:
 - distribution_v1_build.yaml
 - distribution_v1_buildrun.yaml
 - wireguard_v1_dns.yaml
+- crds_v1_clustermanagedservice.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

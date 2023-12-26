@@ -39,7 +39,8 @@ func (b *Bucket) GetStatus() *rApi.Status {
 
 func (b *Bucket) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.MsvcNameKey: b.Spec.MsvcRef.Name,
+		constants.MsvcNameKey:      b.Spec.MsvcRef.Name,
+		constants.MsvcNamespaceKey: b.Spec.MsvcRef.Namespace,
 	}
 }
 

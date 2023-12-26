@@ -39,7 +39,8 @@ func (db *Database) GetStatus() *rApi.Status {
 
 func (db *Database) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.MsvcNameKey: db.Spec.MsvcRef.Name,
+		constants.MsvcNameKey:      db.Spec.MsvcRef.Name,
+		constants.MsvcNamespaceKey: db.Spec.MsvcRef.Namespace,
 	}
 }
 
