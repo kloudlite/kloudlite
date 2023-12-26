@@ -19,7 +19,6 @@ import (
 func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(clustersv1.AddToScheme)
-	// mgr.RegisterWebhooks(&clustersv1.Cluster{})
 
 	logger := mgr.Operator().Logger
 
@@ -75,7 +74,24 @@ func RegisterInto(mgr operator.Operator) {
 				accountName := obj.Spec.AccountName
 				clusterName := obj.Name
 
-				msg, err := json.Marshal(types.ResourceUpdate{AccountName: accountName, ClusterName: clusterName, Object: m})
+				if obj.GetDeletionTimestamp() == nil {
+					m[types.ResourceStatusKey] = types.ResourceStatusUpdated
+				}
+
+				if obj.GetDeletionTimestamp() != nil {
+					m[types.ResourceStatusKey] = func() types.ResourceStatus {
+						if types.HasOtherKloudliteFinalizers(obj) {
+							return types.ResourceStatusDeleting
+						}
+						return types.ResourceStatusDeleted
+					}()
+				}
+
+				msg, err := json.Marshal(types.ResourceUpdate{
+					AccountName: accountName,
+					ClusterName: clusterName,
+					Object:      m,
+				})
 				if err != nil {
 					return err
 				}

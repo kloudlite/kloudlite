@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	networkingv1 "k8s.io/api/networking/v1"
 	"strings"
 	"time"
 
@@ -20,10 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
-	wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -37,30 +32,35 @@ import (
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	logger      logging.Logger
-	Name        string
-	Env         *env.Env
-	accessToken string
-	MsgSender   MessageSender
+	Scheme       *runtime.Scheme
+	logger       logging.Logger
+	Name         string
+	Env          *env.Env
+	accessToken  string
+	MsgSender    MessageSender
 }
 
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
-	obj.SetManagedFields(nil)
-
-	// mctx, cf := context.WithTimeout(ctx, 100*time.Second)
-	_ = time.Second
-	mctx, cf := context.WithCancel(ctx)
+func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) (ctrl.Result, error) {
+	mctx, cf := func() (context.Context, context.CancelFunc) {
+		if r.Env.IsDev {
+			return context.WithCancel(context.TODO())
+		}
+		return context.WithTimeout(ctx, 2*time.Second)
+	}()
 	defer cf()
 
+	belongsTo := func(group string) bool {
+		return strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, group)
+	}
+
 	switch {
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
+	case belongsTo("infra.kloudlite.io"):
 		{
-			if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -68,32 +68,17 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				return ctrl.Result{}, err
 			}
 		}
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
+	case belongsTo("clusters.kloudlite.io"):
 		{
-			switch obj.GetObjectKind().GroupVersionKind().Kind {
-			case "Cluster":
-				{
-					if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
-						ClusterName: obj.GetName(),
-						AccountName: obj.Object["spec"].(map[string]any)["accountName"].(string),
-						Object:      obj.Object,
-					}); err != nil {
-						return ctrl.Result{}, err
-					}
-				}
-			default:
-				{
-					if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
-						ClusterName: r.Env.ClusterName,
-						AccountName: r.Env.AccountName,
-						Object:      obj.Object,
-					}); err != nil {
-						return ctrl.Result{}, err
-					}
-				}
+			if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			}); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "wireguard.kloudlite.io"):
+	case belongsTo("wireguard.kloudlite.io"):
 		{
 			switch obj.GetObjectKind().GroupVersionKind().Kind {
 			case "Device":
@@ -111,7 +96,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 						}
 					}
 
-					if err := r.MsgSender.DispatchInfraUpdates(mctx, t.ResourceUpdate{
+					if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
 						ClusterName: r.Env.ClusterName,
 						AccountName: r.Env.AccountName,
 						Object:      obj.Object,
@@ -125,9 +110,9 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				}
 			}
 		}
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
+	case belongsTo("kloudlite.io"):
 		{
-			if err := r.MsgSender.DispatchResourceUpdates(mctx, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -135,30 +120,48 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				return ctrl.Result{}, err
 			}
 		}
-	default:
-		{
-			if err := r.MsgSender.DispatchResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
-			}
+	case belongsTo(""):
+		if err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			ClusterName: r.Env.ClusterName,
+			AccountName: r.Env.AccountName,
+			Object:      obj.Object,
+		}); err != nil {
+			return ctrl.Result{}, err
 		}
-	}
-
-	if obj.GetDeletionTimestamp() != nil {
-		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-			return r.RemoveWatcherFinalizer(mctx, obj)
-		}
-		return ctrl.Result{}, nil
-	}
-
-	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-		return r.AddWatcherFinalizer(mctx, obj)
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
+	obj.SetManagedFields(nil)
+
+	if obj.GetDeletionTimestamp() != nil {
+		// resource is about to be deleted
+		if t.HasOtherKloudliteFinalizers(obj) {
+			// 1. send deleting event
+			obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleting
+			return r.dispatchEvent(ctx, obj)
+		}
+
+		// 2. send deleted event
+		obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
+		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
+			if rr, err := r.RemoveWatcherFinalizer(ctx, obj); err != nil {
+				return rr, err
+			}
+		}
+		return r.dispatchEvent(ctx, obj)
+	}
+
+	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
+		if rr, err := r.AddWatcherFinalizer(ctx, obj); err != nil {
+			return rr, err
+		}
+	}
+
+	obj.Object[t.ResourceStatusKey] = t.ResourceStatusUpdated
+	return r.dispatchEvent(ctx, obj)
 }
 
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers,verbs=get;list;watch;create;update;patch;delete
@@ -213,6 +216,19 @@ func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Obje
 	return ctrl.Result{}, r.Update(ctx, obj)
 }
 
+type WatchResource struct {
+	metav1.TypeMeta `json:",inline"`
+}
+
+func NewWatchResource(apiVersion string, kind string) WatchResource {
+	return WatchResource{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       kind,
+			APIVersion: apiVersion,
+		},
+	}
+}
+
 // SetupWithManager sets up the controllers with the Manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
@@ -220,55 +236,36 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.logger = logger.WithName(r.Name).WithKV("accountName", r.Env.AccountName).WithKV("clusterName", r.Env.ClusterName)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
-	builder.For(&crdsv1.Project{})
+	builder.For(&corev1.Node{})
 
-	nativeWatchList := []client.Object{
-		&corev1.PersistentVolumeClaim{},
-		&corev1.PersistentVolume{},
-		&networkingv1.Ingress{},
+	watchList := []WatchResource{
+		NewWatchResource("crds.kloudlite.io/v1", "Project"),
+		NewWatchResource("crds.kloudlite.io/v1", "App"),
+		NewWatchResource("crds.kloudlite.io/v1", "ManagedService"),
+		NewWatchResource("crds.kloudlite.io/v1", "ManagedResource"),
+		NewWatchResource("crds.kloudlite.io/v1", "Workspace"),
+		NewWatchResource("crds.kloudlite.io/v1", "Router"),
+		NewWatchResource("clusters.kloudlite.io/v1", "NodePool"),
+		NewWatchResource("wireguard.kloudlite.io/v1", "Device"),
+
+		// native resources
+		NewWatchResource("v1", "PersistentVolumeClaim"),
+		NewWatchResource("v1", "PersistentVolume"),
+		NewWatchResource("networking.k8s.io/v1", "Ingress"),
 	}
 
-	watchList := []client.Object{
-		&crdsv1.Project{},
-		&crdsv1.App{},
-		&serverlessv1.Lambda{},
-		&crdsv1.ManagedService{},
-		&crdsv1.ManagedResource{},
-		&crdsv1.Router{},
-		&crdsv1.Workspace{},
-		&crdsv1.Config{},
-		&crdsv1.Secret{},
-
-		&clustersv1.Cluster{},
-		&clustersv1.NodePool{},
-
-		&wireguardv1.Device{},
-	}
-	for _, object := range nativeWatchList {
+	for i := range watchList {
 		builder.Watches(
-			object,
+			fn.NewUnstructured(watchList[i].TypeMeta),
 			handler.EnqueueRequestsFromMapFunc(
-				func(ctx context.Context, obj client.Object) []reconcile.Request {
-					return []reconcile.Request{
-						{NamespacedName: fn.NN(obj.GetNamespace(), obj.GetName())},
-					}
-				},
-			),
-		)
-	}
-	for _, object := range watchList {
-		builder.Watches(
-			object,
-			handler.EnqueueRequestsFromMapFunc(
-				func(ctx context.Context, obj client.Object) []reconcile.Request {
-					v, ok := obj.GetAnnotations()[constants.GVKKey]
-					if !ok {
-						return nil
-					}
-					b64Group := base64.StdEncoding.EncodeToString([]byte(v))
+				func(_ context.Context, obj client.Object) []reconcile.Request {
+					gvk := watchList[i].GetObjectKind().GroupVersionKind().String()
+
+					b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
 					if len(b64Group) == 0 {
 						return nil
 					}
+
 					wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
 					if err != nil {
 						return nil
