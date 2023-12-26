@@ -1,22 +1,18 @@
-## kl use region
+## kl use help
 
-select region of selected device
+Help about any command
 
 ### Synopsis
 
 ```
-Select region
-Examples:
-  # select region of selected device
-  kl use region
-	
+Help provides help for any command in the application.
+Simply type use help [path to command] for full details.
 ```
 
 ### Options
 
 ```
-  -h, --help   help for region
-  -h, --help   help for region
+  -h, --help   help for help
 ```
 
 ### SEE ALSO
