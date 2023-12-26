@@ -39,7 +39,7 @@ variable "backup_to_s3" {
 
   validation {
     error_message = "when backup_to_s3 is enabled, all the following variables must be set: aws_access_key, aws_secret_key, bucket_name, bucket_region, bucket_folder"
-    condition     = var.backup_to_s3.enabled == false || alltrue([
+    condition = var.backup_to_s3.enabled == false || alltrue([
       var.backup_to_s3.bucket_name != "",
       var.backup_to_s3.bucket_region != "",
       var.backup_to_s3.bucket_folder != "",
@@ -54,7 +54,7 @@ variable "restore_from_latest_snapshot" {
 
 variable "cloudflare" {
   description = "cloudflare related parameters"
-  type        = object({
+  type = object({
     enabled   = bool
     api_token = optional(string)
     zone_id   = optional(string)
@@ -63,7 +63,7 @@ variable "cloudflare" {
 
   validation {
     error_message = "if enabled, all mandatory Cloudflare bucket details are specified"
-    condition     = var.cloudflare == null || (var.cloudflare.enabled == true && alltrue([
+    condition = var.cloudflare == null || (var.cloudflare.enabled == true && alltrue([
       var.cloudflare.api_token != "",
       var.cloudflare.zone_id != "",
       var.cloudflare.domain != "",
@@ -73,7 +73,7 @@ variable "cloudflare" {
 
 variable "master_nodes" {
   description = "k3s masters configuration"
-  type        = map(object({
+  type = map(object({
     role              = string
     public_ip         = string
     node_labels       = map(string)
@@ -84,7 +84,7 @@ variable "master_nodes" {
 
 variable "kloudlite_params" {
   description = "kloudlite related parameters"
-  type        = object({
+  type = object({
     release            = string
     install_crds       = optional(bool, true)
     install_csi_driver = optional(bool, false)
@@ -92,7 +92,7 @@ variable "kloudlite_params" {
 
     install_agent       = optional(bool, false)
     install_autoscalers = optional(bool, true)
-    agent_vars          = optional(object({
+    agent_vars = optional(object({
       account_name             = string
       cluster_name             = string
       cluster_token            = string
@@ -130,3 +130,4 @@ variable "cloudprovider_name" {
 variable "cloudprovider_region" {
   type = string
 }
+

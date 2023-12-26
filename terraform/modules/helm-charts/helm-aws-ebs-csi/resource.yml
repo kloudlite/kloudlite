@@ -15,7 +15,7 @@ spec:
     tolerations:
       - operator: Exists
 
-  valuesYaml: |+
+  values:
     customLabels:
       kloudlite.io/installed-by: "kloudlite-iac"
     storageClasses: ${jsonencode(tf_storage_classes)}

@@ -31,10 +31,9 @@ spec:
     tolerations:
       - operator: "Exists"
 
-  valuesYaml: |+
+  values:
     kloudliteRelease: ${var.kloudlite_release}
     nodeSelector: ${jsonencode(var.spot_nodes_selector)}
-
 EOF
     destination = "manifests/spot-termination-handler.helm.yml"
     permissions = "0755"

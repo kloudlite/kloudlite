@@ -17,7 +17,7 @@ spec:
     backOffLimit: 1
     tolerations: ${jsonencode(helm_job_tolerations)}
 
-  valuesYaml: |+
+  values:
     imagePullPolicy: Always
 
     accountName: ${kloudlite_account_name}

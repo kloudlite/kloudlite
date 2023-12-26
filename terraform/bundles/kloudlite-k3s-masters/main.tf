@@ -27,7 +27,7 @@ module "constants" {
 }
 
 module "k3s-masters" {
-  source       = "../../modules/k3s/k3s-master"
+  source = "../../modules/k3s/k3s-master"
   backup_to_s3 = {
     enabled = var.backup_to_s3.enabled
 
@@ -37,7 +37,7 @@ module "k3s-masters" {
   }
   cluster_internal_dns_host       = var.cluster_internal_dns_host
   restore_from_latest_s3_snapshot = var.restore_from_latest_snapshot
-  master_nodes                    = {
+  master_nodes = {
     for k, v in var.master_nodes : k => {
       role : v.role,
       public_ip : v.public_ip,
@@ -45,7 +45,7 @@ module "k3s-masters" {
     }
   }
   public_dns_host = var.public_dns_host
-  ssh_params      = {
+  ssh_params = {
     user        = var.ssh_username
     private_key = var.ssh_private_key
   }
@@ -81,7 +81,7 @@ module "kloudlite-crds" {
   source            = "../../modules/kloudlite/crds"
   kloudlite_release = var.kloudlite_params.release
   depends_on        = [module.k3s-masters.kubeconfig_with_public_host]
-  ssh_params        = {
+  ssh_params = {
     public_ip   = module.k3s-masters.k3s_primary_public_ip
     username    = var.ssh_username
     private_key = var.ssh_private_key
@@ -134,10 +134,10 @@ EOF
 }
 
 module "nvidia-container-runtime" {
-  count             = var.enable_nvidia_gpu_support ? 1 : 0
-  source            = "../../modules/nvidia-container-runtime"
-  depends_on        = [module.kloudlite-crds, module.kloudlite-namespace]
-  ssh_params        = local.master_ssh_params
+  count      = var.enable_nvidia_gpu_support ? 1 : 0
+  source     = "../../modules/nvidia-container-runtime"
+  depends_on = [module.kloudlite-crds, module.kloudlite-namespace]
+  ssh_params = local.master_ssh_params
   gpu_node_selector = {
     (module.constants.node_labels.node_has_gpu) : "true"
   }
