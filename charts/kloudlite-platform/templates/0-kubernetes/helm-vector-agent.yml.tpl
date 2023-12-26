@@ -1,4 +1,4 @@
-{{- $chartOpts := index .Values.vectorAgent }}
+{{- $chartOpts := .Values.vectorAgent }}
 
 {{- if $chartOpts.enabled }}
 
@@ -146,7 +146,7 @@ spec:
           inputs:
             - kubernetes_logs
             - kubelet_metrics_exporter
-          address: {{(index .Values.helmCharts "vector").name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:6000
+          address: {{.Values.vector.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:6000
 
 {{- end }}
 
