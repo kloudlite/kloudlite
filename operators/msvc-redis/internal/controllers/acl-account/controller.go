@@ -112,7 +112,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepRe
 	check := rApi.Check{Generation: obj.Generation}
 
 	// msvc output ref
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		req.Logger.Infof("msvc output does not exist, i.e. msvc does not exist, so no need keeping mres, so finalizing it")
 		return req.Finalize()
@@ -159,7 +159,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) 
 	defer req.LogPostCheck(IsOwnedByMsvc)
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
+		ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
 			metav1.TypeMeta{
 				Kind:       obj.Spec.MsvcRef.Kind,
 				APIVersion: obj.Spec.MsvcRef.APIVersion,
@@ -202,7 +202,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 	}
 
 	// msvc output ref
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error()).Err(nil)
 	}
@@ -220,8 +220,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 				"namespace":  obj.Namespace,
 				"owner-refs": obj.GetOwnerReferences(),
 				"labels": map[string]string{
-					constants.MsvcNameKey:  obj.Spec.MsvcRef.Name,
-					constants.IsMresOutput: "true",
+					constants.MsvcNamespaceKey: obj.Spec.MsvcRef.Namespace,
+					constants.MsvcNameKey:      obj.Spec.MsvcRef.Name,
+					constants.IsMresOutput:     "true",
 				},
 				"string-data": types.MresOutput{
 					Hosts:    msvcOutput.Hosts,
