@@ -18,7 +18,7 @@ spec:
     tolerations:
       - operator: "Exists"
 
-  valuesYaml: |+
+  values:
     preferOperatorsOnMasterNodes: true
     # tolerate any taints
     tolerations:
