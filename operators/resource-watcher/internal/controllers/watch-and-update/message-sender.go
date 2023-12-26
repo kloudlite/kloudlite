@@ -7,7 +7,6 @@ import (
 )
 
 type MessageSender interface {
-	DispatchResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
-	DispatchInfraUpdates(ctx context.Context, stu t.ResourceUpdate) error
+	DispatchConsoleResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
+	DispatchInfraResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error
 }
-
