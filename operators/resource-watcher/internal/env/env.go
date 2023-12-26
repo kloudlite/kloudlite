@@ -8,6 +8,7 @@ import (
 
 type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD" required:"true"`
+	IsDev                   bool          `env:"IS_DEV"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 	AccountName             string        `env:"ACCOUNT_NAME" required:"true"`
 	ClusterName             string        `env:"CLUSTER_NAME" required:"true"`

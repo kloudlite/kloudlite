@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
+	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -22,8 +23,8 @@ type grpcMsgSender struct {
 	logger logging.Logger
 }
 
-// DispatchInfraUpdates implements MessageSender.
-func (g *grpcMsgSender) DispatchInfraUpdates(ctx context.Context, ru t.ResourceUpdate) error {
+// DispatchInfraResourceUpdates implements MessageSender.
+func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
 	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
@@ -55,8 +56,8 @@ func (g *grpcMsgSender) DispatchInfraUpdates(ctx context.Context, ru t.ResourceU
 	}
 }
 
-// DispatchResourceUpdates implements MessageSender.
-func (g *grpcMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
+// DispatchConsoleResourceUpdates implements MessageSender.
+func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t.ResourceUpdate) error {
 	b, err := json.Marshal(ru)
 	if err != nil {
 		return err
@@ -102,7 +103,8 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 	}
 
 	if validationOut == nil || !validationOut.Valid {
-		logger.Infof("accessToken is invalid, aborting")
+		err := errors.Newf("accessToken is invalid, aborting")
+		logger.Error(err)
 		return nil, err
 	}
 
