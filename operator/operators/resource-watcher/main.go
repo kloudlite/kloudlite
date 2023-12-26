@@ -8,9 +8,6 @@ import (
 )
 
 func main() {
-	var runningOnTenant bool
-	flag.BoolVar(&runningOnTenant, "running-on-tenant", false, "--running-on-tenant")
-
 	mgr := operator.New("resource-watcher")
 	controller.RegisterInto(mgr)
 	mgr.Start()
