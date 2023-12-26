@@ -22,13 +22,13 @@ data:
       key: api_token
 
 - name: NATS_URL
-  value: nats://nats:4222
+  value: {{.Values.envVars.nats.url}}
 
 - name: NATS_STREAM
-  value: {{.Values.envVars.nats.streams.resourceSync}}
+  value: {{.Values.envVars.nats.streams.resourceSync.name}}
 
 - name: NATS_CLUSTER_UPDATE_SUBJECT_FORMAT
-  value: "resource-sync.%s.%s.platform.kloudlite-infra.resource-update"
+  value: "{{.Values.envVars.nats.streams.resourceSync.name}}.account-%s.cluster-%s.platform.kloudlite-infra.resource-update"
 
 - name: CLOUDFLARE_ZONE_ID
   value: {{ required ".Values.operators.platformOperator.configuration.cluster.cloudflare.zoneId must be set" .Values.operators.platformOperator.configuration.cluster.cloudflare.zoneId}}

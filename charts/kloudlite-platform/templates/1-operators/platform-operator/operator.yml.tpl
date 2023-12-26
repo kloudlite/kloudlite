@@ -81,10 +81,10 @@ spec:
 
             - name: MAX_CONCURRENT_RECONCILES
               value: "5"
+
             {{ include "project-operator-env" . | nindent 12 }}
             {{ include "cluster-operator-env" . | nindent 12 }}
             {{ include "router-operator-env" . | nindent 12 }}
-
 
           livenessProbe:
             httpGet:

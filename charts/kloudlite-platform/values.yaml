@@ -108,15 +108,18 @@ loki:
       awsSecretAccessKey: <loki-s3-aws-secret-access-key>
       region: <loki-s3-bucket-region>
       bucketName: <loki-s3-bucket-name>
+
 vector:
   enabled: true
   name: vector
+
 grafana:
   enabled: true
   name: grafana
   configuration:
     volumeSize: 2Gi
     nodeSelector: {}
+
 prometheus:
   enabled: true
   name: prometheus
@@ -126,6 +129,7 @@ prometheus:
       nodeSelector: {}
     alertmanager:
       volumeSize: 2Gi
+
 nats:
   runAsCluster: false
   replicas: 1
