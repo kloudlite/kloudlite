@@ -43,6 +43,8 @@ type ClusterReconciler struct {
 
 	templateClusterJob        []byte
 	templateRBACForClusterJob []byte
+
+	NotifyOnClusterUpdate func(ctx context.Context, obj *clustersv1.Cluster) error
 }
 
 func (r *ClusterReconciler) GetName() string {
@@ -51,7 +53,6 @@ func (r *ClusterReconciler) GetName() string {
 
 func getBucketFilePath(baseDir string, accountName string, clusterName string) string {
 	return filepath.Join(baseDir, "account-"+accountName, "cluster-"+clusterName+".tfstate")
-	// return fmt.Sprintf(baseDir, "kloudlite/account-%s/cluster-%s.tfstate", accountName, clusterName)
 }
 
 const (
@@ -84,42 +85,48 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	req.LogPreReconcile()
 	defer req.LogPostReconcile()
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
+	notifyAndExit := func(step stepResult.Result) (ctrl.Result, error) {
+		if err := r.NotifyOnClusterUpdate(ctx, req.Object); err != nil {
+			return ctrl.Result{}, err
+		}
 		return step.ReconcilerResponse()
+	}
+
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return notifyAndExit(step)
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
-			return x.ReconcilerResponse()
+			return notifyAndExit(x)
 		}
 		return ctrl.Result{}, nil
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return notifyAndExit(step)
 	}
 
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return notifyAndExit(step)
 	}
 
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return notifyAndExit(step)
 	}
 
 	if step := r.ensureJobRBAC(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return notifyAndExit(step)
 	}
 
-	// if step := r.ensureMessageQueueTopic(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
 	if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
+		return notifyAndExit(step)
 	}
 
 	req.Object.Status.IsReady = true
+	if err := r.NotifyOnClusterUpdate(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -174,7 +181,7 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 
 	check.Status = true
 	if check != obj.Status.Checks[checkName] {
-		obj.Status.Checks[checkName] = check
+		fn.MapSet(obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -196,10 +203,7 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 		check.Status = false
 		check.Message = "cluster job failed"
 		if check != obj.Status.Checks[checkName] {
-			if obj.Status.Checks == nil {
-				obj.Status.Checks = map[string]rApi.Check{}
-			}
-			obj.Status.Checks[checkName] = check
+			fn.MapSet(obj.Status.Checks, checkName, check)
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 				return sr
 			}

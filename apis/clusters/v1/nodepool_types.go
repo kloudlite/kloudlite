@@ -8,6 +8,7 @@ import (
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // +kubebuilder:validation:Enum=ec2;spot;
@@ -71,6 +72,9 @@ type NodePoolSpec struct {
 	MinCount int `json:"minCount"`
 	// +kubebuilder:validation:Minimum=0
 	TargetCount int `json:"targetCount"`
+
+	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	NodeTaints []corev1.Taint    `json:"nodeTaints,omitempty"`
 
 	IAC InfrastuctureAsCode `json:"iac" graphql:"noinput"`
 
