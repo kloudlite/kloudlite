@@ -11,12 +11,17 @@ type Port struct {
 	TargetPort int32 `json:"targetPort,omitempty"`
 }
 
+// type NodeSelector struct {
+// 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
+// }
+
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	AccountName     string  `json:"accountName"`
-	ClusterName     string  `json:"clusterName"`
-	Ports           []Port  `json:"ports,omitempty"`
-	DeviceNamespace *string `json:"deviceNamespace,omitempty"`
+	AccountName     string            `json:"accountName"`
+	ClusterName     string            `json:"clusterName"`
+	Ports           []Port            `json:"ports,omitempty"`
+	DeviceNamespace *string           `json:"deviceNamespace,omitempty"`
+	NodeSelector    map[string]string `json:"nodeSelector,omitempty"`
 }
 
 //+kubebuilder:object:root=true
