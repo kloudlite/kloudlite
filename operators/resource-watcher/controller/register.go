@@ -28,6 +28,8 @@ func RegisterInto(mgr operator.Operator) {
 		panic(err)
 	}
 
+	ev.IsDev = mgr.Operator().IsDev
+
 	mgr.AddToSchemes(
 		crdsv1.AddToScheme,
 		mongodbMsvcv1.AddToScheme, mysqlMsvcv1.AddToScheme, redisMsvcv1.AddToScheme,
