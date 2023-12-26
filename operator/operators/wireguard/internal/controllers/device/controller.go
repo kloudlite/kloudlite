@@ -835,7 +835,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&corev1.ConfigMap{},
 		&corev1.Service{},
 		&appsv1.Deployment{},
-		&wgv1.Device{},
 	}
 
 	for _, object := range watchList {
