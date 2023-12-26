@@ -272,30 +272,6 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 	}
 
 	edges := make([]repos.RecordEdge[*entities.Cluster], 0, len(pr.Edges))
-
-	for i := range pr.Edges {
-		c, found, err := d.readClusterK8sResource(ctx, pr.Edges[i].Node.Namespace, pr.Edges[i].Node.Name)
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-
-		if found {
-			pr.Edges[i].Node.Status = c.Status
-			pr.Edges[i].Node.Spec.Output = c.Spec.Output
-			if _, err := d.clusterRepo.UpdateById(ctx, pr.Edges[i].Node.Id, pr.Edges[i].Node); err != nil {
-				return nil, err
-			}
-		}
-
-		if !found && pr.Edges[i].Node.MarkedForDeletion != nil && *pr.Edges[i].Node.MarkedForDeletion {
-			if err := d.clusterRepo.DeleteById(ctx, pr.Edges[i].Node.Id); err != nil {
-				return nil, errors.NewE(err)
-			}
-			continue
-		}
-		edges = append(edges, pr.Edges[i])
-	}
-
 	pr.Edges = edges
 	return pr, nil
 }
@@ -308,26 +284,6 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 	c, err := d.findCluster(ctx, name)
 	if err != nil {
 		return nil, errors.NewE(err)
-	}
-
-	clus, found, err := d.readClusterK8sResource(ctx, c.Namespace, c.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if found {
-		c.Status = clus.Status
-		c.Spec.Output = clus.Spec.Output
-		if _, err := d.clusterRepo.UpdateById(ctx, c.Id, c); err != nil {
-			return nil, err
-		}
-	}
-
-	if !found && c.MarkedForDeletion != nil && *c.MarkedForDeletion {
-		if err := d.clusterRepo.DeleteById(ctx, c.Id); err != nil {
-			return nil, errors.NewE(err)
-		}
-		return nil, nil
 	}
 
 	return c, nil
