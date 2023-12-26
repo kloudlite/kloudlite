@@ -113,7 +113,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*influxdbMsvcv1.Bucket]) s
 	check := rApi.Check{Generation: obj.Generation}
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
+		ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
 			metav1.TypeMeta{
 				Kind:       obj.Spec.MsvcRef.Kind,
 				APIVersion: obj.Spec.MsvcRef.APIVersion,
@@ -157,7 +157,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*influxdbMsvcv1.Bucket])
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}

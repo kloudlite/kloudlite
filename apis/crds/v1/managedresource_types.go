@@ -14,6 +14,7 @@ type MsvcNamedRef struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type mresKind struct {

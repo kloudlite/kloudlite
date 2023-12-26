@@ -5,19 +5,19 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: managedresources.crds.kloudlite.io
+  name: clustermanagedservices.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: ManagedResource
-    listKind: ManagedResourceList
-    plural: managedresources
-    singular: managedresource
-  scope: Namespaced
+    kind: ClusterManagedService
+    listKind: ClusterManagedServiceList
+    plural: clustermanagedservices
+    singular: clustermanagedservice
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.annotations.kloudlite\.io\/resource-gvk
-      name: Resource_GVK
+    - jsonPath: .metadata.annotations.kloudlite\.io\/service-gvk
+      name: Service GVK
       type: string
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
@@ -31,16 +31,14 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ManagedResource is the Schema for the managedresources API
+        description: ClusterManagedService is the Schema for the clustermanagedservices
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
-          enabled:
-            default: true
-            type: boolean
           kind:
             description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
@@ -49,48 +47,40 @@ spec:
           metadata:
             type: object
           spec:
-            description: ManagedResourceSpec defines the desired state of ManagedResource
+            description: ClusterManagedServiceSpec defines the desired state of ClusterManagedService
             properties:
-              resourceTemplate:
+              msvcSpec:
+                description: ManagedServiceSpec defines the desired state of ManagedService
                 properties:
-                  apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                    type: string
-                  kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                    type: string
-                  msvcRef:
+                  serviceTemplate:
                     properties:
                       apiVersion:
+                        description: 'APIVersion defines the versioned schema of this
+                          representation of an object. Servers should convert recognized
+                          schemas to the latest internal value, and may reject unrecognized
+                          values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                         type: string
                       kind:
+                        description: 'Kind is a string value representing the REST
+                          resource this object represents. Servers may infer this
+                          from the endpoint the client submits requests to. Cannot
+                          be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                         type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
+                      spec:
+                        additionalProperties:
+                          x-kubernetes-preserve-unknown-fields: true
+                        type: object
                     required:
-                    - apiVersion
-                    - kind
-                    - name
-                    - namespace
-                    type: object
-                  spec:
-                    additionalProperties:
-                      x-kubernetes-preserve-unknown-fields: true
+                    - spec
                     type: object
                 required:
-                - msvcRef
-                - spec
+                - serviceTemplate
                 type: object
+              namespace:
+                type: string
             required:
-            - resourceTemplate
+            - msvcSpec
+            - namespace
             type: object
           status:
             properties:
@@ -144,8 +134,6 @@ spec:
                   type: object
                 type: array
             type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true
