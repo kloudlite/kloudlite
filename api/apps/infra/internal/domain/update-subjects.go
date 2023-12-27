@@ -14,7 +14,6 @@ func (d *domain) clusterResUpdateSubject(cluster *entities.Cluster) string {
 		cluster.Cluster.Name)
 }
 
-
 func (d *domain) nodePoolResUpdateSubject(nodePool *entities.NodePool) string {
 	return fmt.Sprint(
 		"res-updates.",
@@ -23,6 +22,17 @@ func (d *domain) nodePoolResUpdateSubject(nodePool *entities.NodePool) string {
 		"cluster.",
 		nodePool.ClusterName, ".",
 		"node-pool.", nodePool.Name,
+	)
+}
+
+func (d *domain) clusterManagedServiceUpdateSubject(cmsvc *entities.ClusterManagedService) string {
+	return fmt.Sprint(
+		"res-updates.",
+		"account.",
+		cmsvc.AccountName, ".",
+		"cluster.",
+		cmsvc.ClusterName, ".",
+		"cluster-managed-service.", cmsvc.Name,
 	)
 }
 
@@ -37,7 +47,6 @@ func (d *domain) domainResUpdateSubject(domainEntry *entities.DomainEntry) strin
 	)
 }
 
-
 func (d *domain) vpnDeviceResUpdateSubject(device *entities.VPNDevice) string {
 	return fmt.Sprint(
 		"res-updates.",
@@ -48,7 +57,6 @@ func (d *domain) vpnDeviceResUpdateSubject(device *entities.VPNDevice) string {
 		"vpn-device.", device.Name,
 	)
 }
-
 
 func (d *domain) pvcResUpdateSubject(pvc *entities.PersistentVolumeClaim) string {
 	return fmt.Sprint(
