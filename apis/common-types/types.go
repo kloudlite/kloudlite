@@ -76,6 +76,7 @@ const (
 type MsvcRef struct {
 	metav1.TypeMeta `json:",inline"`
 	Name            string `json:"name"`
+	Namespace       string `json:"namespace"`
 }
 
 type SecretRef struct {

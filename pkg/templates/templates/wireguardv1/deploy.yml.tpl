@@ -1,6 +1,5 @@
 {{- $name := get . "name"}}
 {{- $namespace := get . "namespace"}}
-{{- $isMaster := get . "isMaster"}}
 {{- $ownerRefs := get . "ownerRefs"}}
 
 {{- $tolerations := get . "tolerations" |default list }}
@@ -31,10 +30,7 @@ spec:
         kloudlite.io/pod-type: wireguard-server
         kloudlite.io/device: {{$name}}
     spec:
-      {{- if $isMaster }}
-      nodeSelector:
-        node-role.kubernetes.io/master: "true"
-      {{ end }}
+      nodeSelector: {{$nodeSelector | toJson}}
       tolerations: {{$tolerations | toJson}}
       containers:
       - name: wireguard

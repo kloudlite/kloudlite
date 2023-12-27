@@ -768,11 +768,11 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 
 			// created or update wg deployment
 			if b, err := templates.Parse(templates.Wireguard.Deploy, map[string]any{
-				"name":        obj.Name,
-				"isMaster":    true,
-				"namespace":   r.Env.DeviceInfoNamespace,
-				"ownerRefs":   []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"tolerations": []corev1.Toleration{{Operator: "Exists"}},
+				"name":          obj.Name,
+				"namespace":     r.Env.DeviceInfoNamespace,
+				"ownerRefs":     []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"tolerations":   []corev1.Toleration{{Operator: "Exists"}},
+				"node-selector": obj.Spec.NodeSelector,
 			}); err != nil {
 				return err
 			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
@@ -788,9 +788,7 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	check.Status = true
 	if check != checks[ServerReady] {
 		checks[ServerReady] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
+		return req.UpdateStatus()
 	}
 	return req.Next()
 }

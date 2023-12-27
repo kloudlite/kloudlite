@@ -54,6 +54,10 @@ spec:
                 type: string
               deviceNamespace:
                 type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               ports:
                 items:
                   properties:
