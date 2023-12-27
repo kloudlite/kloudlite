@@ -50,7 +50,7 @@ func (m *ManagedService) GetStatus() *rApi.Status {
 
 func (m *ManagedService) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		"kloudlite.io/msvc.name": m.Name,
+		constants.MsvcNameKey: m.Name,
 	}
 }
 

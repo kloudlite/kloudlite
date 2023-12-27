@@ -50,6 +50,8 @@ const (
 	RealMresReady   string = "real-mres-ready"
 	MsvcIsOwner     string = "msvc-is-owner"
 	DefaultsPatched string = "defaults-patched"
+
+	// TODO: needs to delete this step
 	OwnedByMsvc     string = "owned-by-msvc"
 )
 
@@ -90,9 +92,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return req.Done().ReconcilerResponse()
 	}
 
-	if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.ensureRealMresCreated(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -126,7 +128,7 @@ func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource
 	defer req.LogPostCheck(OwnedByMsvc)
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{},
+		ctx, r.Client, fn.NN(obj.Spec.ResourceTemplate.MsvcRef.Namespace, obj.Spec.ResourceTemplate.MsvcRef.Name), &crdsv1.ManagedService{},
 	)
 	if err != nil {
 		return req.CheckFailed(OwnedByMsvc, check, err.Error())
