@@ -8,6 +8,7 @@ import (
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
 	msvcAndMres "github.com/kloudlite/operator/operators/msvc-n-mres/controller"
 
+	distribution "github.com/kloudlite/operator/operators/distribution/controller"
 	msvcRedis "github.com/kloudlite/operator/operators/msvc-redis/controller"
 	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
@@ -34,6 +35,8 @@ func main() {
 
 	// kloudlite resource status updates
 	resourceWatcher.RegisterInto(mgr)
+
+	distribution.RegisterInto(mgr)
 
 	mgr.Start()
 }
