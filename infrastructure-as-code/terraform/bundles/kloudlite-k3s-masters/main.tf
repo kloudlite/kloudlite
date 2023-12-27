@@ -144,17 +144,6 @@ module "nvidia-container-runtime" {
   gpu_node_tolerations = module.constants.gpu_node_tolerations
 }
 
-#module "kloudlite-operators" {
-#  count             = var.kloudlite_params.install_operators ? 1 : 0
-#  source            = "../../modules/kloudlite/helm-kloudlite-operators"
-#  depends_on        = [module.kloudlite-crds, module.kloudlite-namespace]
-#  kloudlite_release = var.kloudlite_params.release
-#  node_selector     = {}
-#  ssh_params        = local.master_ssh_params
-#  release_name      = "kl-operators"
-#  release_namespace = local.kloudlite_namespace
-#}
-
 module "kloudlite-agent" {
   count                              = var.kloudlite_params.install_agent ? 1 : 0
   source                             = "../../modules/kloudlite/helm-kloudlite-agent"

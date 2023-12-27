@@ -49,13 +49,13 @@ spec:
               # -- container image pull policy
               imagePullPolicy: Always
 
-              # -- (string ⚠️  **Required**) kloudlite account name
+              # -- (string) kloudlite account name
               accountName: ${kloudlite_account_name}
 
-              # -- (string ⚠️  **Required**) kloudlite cluster name
+              # -- (strin) kloudlite cluster name
               clusterName: ${kloudlite_cluster_name}
 
-              # -- (string ⚠️  **Required**) kloudlite issued cluster token
+              # -- (string) kloudlite issued cluster token
               clusterToken: ${kloudlite_cluster_token}
 
               # -- (string) kloudlite issued access token (if already have)
@@ -91,10 +91,8 @@ spec:
                 name: kl-agent
                 # -- kloudlite agent image name and tag
                 image:
-                  repository: ghcr.io/kloudlite/agents/kl-agent
-                  # -- image tag for kloudlite agent, by default uses kloudlite_release
+                  repository:  ghcr.io/kloudlite/api/tenant-agent
                   tag: ""
-                  # -- image pull policy for kloudlite agent, default is .imagePullPolicy
                   pullPolicy: ""
                 nodeSelector: {}
                 tolerations: []
@@ -109,10 +107,8 @@ spec:
                   name: kl-agent-operator
                   # -- kloudlite resource watcher image name and tag
                   image:
-                    repository: ghcr.io/kloudlite/operators/agent-operator
-                    # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
+                    repository: ghcr.io/kloudlite/operator/agent
                     tag: ""
-                    # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
                     pullPolicy: ""
                   tolerations: []
                   nodeSelector: {}
@@ -135,10 +131,8 @@ spec:
                   name: kl-wg-operator
                   # -- wg operator image and tag
                   image:
-                    repository: ghcr.io/kloudlite/operators/wireguard
-                    # -- image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion
+                    repository: ghcr.io/kloudlite/operator/wireguard
                     tag: ""
-                    # -- image pull policy for kloudlite wireguard operator, default is .imagePullPolicy
                     pullPolicy: ""
 
                   tolerations: []

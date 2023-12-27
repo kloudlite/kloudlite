@@ -35,7 +35,7 @@ module "ssh-rsa-key" {
 }
 
 resource "null_resource" "save_ssh_key" {
-  count      = length(var.save_ssh_key_to_path) > 0? 1 : 0
+  count      = length(var.save_ssh_key_to_path) > 0 ? 1 : 0
   depends_on = [module.ssh-rsa-key]
 
   provisioner "local-exec" {
@@ -87,7 +87,7 @@ module "k3s-templates" {
 module "aws-ec2-nodepool" {
   source     = "../../modules/aws/aws-ec2-nodepool"
   depends_on = [null_resource.variable_validations]
-  for_each   = {for np_name, np_config in var.ec2_nodepools : np_name => np_config}
+  for_each   = { for np_name, np_config in var.ec2_nodepools : np_name => np_config }
 
   tracker_id           = "${var.tracker_id}-${each.key}"
   ami                  = each.value.image_id
@@ -99,13 +99,13 @@ module "aws-ec2-nodepool" {
   root_volume_type     = each.value.root_volume_type
   security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
-  nodes                = {
+  nodes = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
         tf_public_ip            = "not-known"
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
-        tf_node_taints          = concat([],
+        tf_node_taints = concat([],
           each.value.node_taints != null ? each.value.node_taints : [],
           each.value.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
         )
@@ -133,7 +133,7 @@ module "aws-ec2-nodepool" {
 module "aws-spot-nodepool" {
   source                       = "../../modules/aws/aws-spot-nodepool"
   depends_on                   = [null_resource.variable_validations]
-  for_each                     = {for np_name, np_config in var.spot_nodepools : np_name => np_config}
+  for_each                     = { for np_name, np_config in var.spot_nodepools : np_name => np_config }
   tracker_id                   = "${var.tracker_id}-${each.key}"
   ami                          = each.value.image_id
   availability_zone            = each.value.availability_zone
@@ -145,13 +145,13 @@ module "aws-spot-nodepool" {
   ssh_key_name                 = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   cpu_node                     = each.value.cpu_node
   gpu_node                     = each.value.gpu_node
-  nodes                        = {
+  nodes = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
         tf_public_ip            = "not-known"
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
-        tf_node_taints          = concat([],
+        tf_node_taints = concat([],
           each.value.node_taints != null ? each.value.node_taints : [],
           each.value.gpu_node != null ? module.constants.gpu_node_taints : [],
         )

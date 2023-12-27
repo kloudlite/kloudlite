@@ -109,7 +109,7 @@ locals {
 }
 
 module "k3s-primary-master" {
-  source = "../../modules/k3s/k3s-primary-master"
+  source = "../../modules/k3s/__deprecated__/k3s-primary-master"
 
   node_name           = local.primary_master_node_name
   public_dns_host = var.k3s_server_dns_hostname
@@ -140,7 +140,7 @@ module "k3s-primary-master" {
 }
 
 module "k3s-secondary-master" {
-  source = "../../modules/k3s/k3s-secondary-master"
+  source = "../../modules/k3s/__deprecated__/k3s-secondary-master"
 
   k3s_token                = module.k3s-primary-master.k3s_token
   primary_master_public_ip = module.k3s-primary-master.public_ip
@@ -192,7 +192,7 @@ module "cloudflare-dns" {
 }
 
 module "k3s-agents" {
-  source = "../../modules/k3s/k3s-agent"
+  source = "../../modules/k3s/__deprecated__/k3s-agent"
 
   agent_nodes = {
     for node_name, node_cfg in local.agent_nodes : node_name => {
@@ -215,7 +215,7 @@ module "k3s-agents" {
 
 module "k3s-agents-on-aws-spot-fleets" {
   count  = var.spot_settings.enabled ? 1 : 0
-  source = "../../modules/k3s/k3s-agents-on-aws-spot-fleets"
+  source = "../../modules/k3s/__deprecated__/k3s-agents-on-aws-spot-fleets"
 
   aws_ami                 = var.aws_ami
   aws_nvidia_gpu_ami      = var.aws_nvidia_gpu_ami

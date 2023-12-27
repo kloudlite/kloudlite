@@ -24,7 +24,7 @@ module "ssh-rsa-key" {
 }
 
 resource "null_resource" "save_ssh_key" {
-  count = length(var.save_ssh_key_to_path) > 0? 1 : 0
+  count = length(var.save_ssh_key_to_path) > 0 ? 1 : 0
 
   provisioner "local-exec" {
     quiet   = true
@@ -60,7 +60,7 @@ module "aws-security-groups" {
 
 module "k3s-master-instances" {
   source               = "../../modules/aws/ec2-node"
-  for_each             = {for name, cfg in var.k3s_masters.nodes : name => cfg}
+  for_each             = { for name, cfg in var.k3s_masters.nodes : name => cfg }
   ami                  = var.k3s_masters.image_id
   availability_zone    = each.value.availability_zone
   instance_type        = var.k3s_masters.instance_type
@@ -75,23 +75,6 @@ module "k3s-master-instances" {
   tracker_id           = var.tracker_id
 }
 
-#module "k3s-master-instances2" {
-#  source               = "../../modules/aws/aws-ec2-nodepool"
-#  depends_on           = [null_resource.variable_validations]
-#  instance_type        = var.k3s_masters.instance_type
-#  iam_instance_profile = var.k3s_masters.iam_instance_profile
-#  nodes                = {
-#    for name, cfg in var.k3s_masters.nodes : name =>{ last_recreated_at : cfg.last_recreated_at }
-#  }
-#  nvidia_gpu_enabled = var.k3s_masters.nvidia_gpu_enabled
-#  root_volume_size   = var.k3s_masters.root_volume_size
-#  root_volume_type   = var.k3s_masters.root_volume_type
-#  security_groups    = module.aws-security-groups.sg_for_k3s_masters_names
-#  ssh_key_name       = aws_key_pair.k3s_nodes_ssh_key.key_name
-#  tracker_id         = var.tracker_id
-#  ami                = var.k3s_masters.image_id
-#}
-
 module "kloudlite-k3s-masters" {
   source                    = "../kloudlite-k3s-masters"
   backup_to_s3              = var.k3s_masters.backup_to_s3
@@ -99,7 +82,7 @@ module "kloudlite-k3s-masters" {
   cluster_internal_dns_host = var.k3s_masters.cluster_internal_dns_host
   enable_nvidia_gpu_support = var.enable_nvidia_gpu_support
   kloudlite_params          = var.kloudlite_params
-  master_nodes              = {
+  master_nodes = {
     for name, cfg in var.k3s_masters.nodes : name => {
       role : cfg.role,
       public_ip : module.k3s-master-instances[name].public_ip,
@@ -127,9 +110,9 @@ module "kloudlite-k3s-masters" {
 }
 
 module "helm-aws-ebs-csi" {
-  count           = var.kloudlite_params.install_csi_driver ? 1 : 0
-  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
-  depends_on      = [module.kloudlite-k3s-masters]
+  count      = var.kloudlite_params.install_csi_driver ? 1 : 0
+  source     = "../../modules/helm-charts/helm-aws-ebs-csi"
+  depends_on = [module.kloudlite-k3s-masters]
   storage_classes = {
     "sc-xfs" : {
       volume_type = "gp3"
@@ -143,7 +126,7 @@ module "helm-aws-ebs-csi" {
   controller_node_selector = module.constants.master_node_selector
   controller_tolerations   = module.constants.master_node_tolerations
   daemonset_node_selector  = module.constants.agent_node_selector
-  ssh_params               = {
+  ssh_params = {
     public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
     username    = var.k3s_masters.image_ssh_username
     private_key = module.ssh-rsa-key.private_key
@@ -154,7 +137,7 @@ module "aws-k3s-spot-termination-handler" {
   source              = "../../modules/kloudlite/spot-termination-handler"
   depends_on          = [module.kloudlite-k3s-masters.kubeconfig]
   spot_nodes_selector = module.constants.spot_node_selector
-  ssh_params          = {
+  ssh_params = {
     public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
     username    = var.k3s_masters.image_ssh_username
     private_key = module.ssh-rsa-key.private_key
