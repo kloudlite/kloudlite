@@ -184,37 +184,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @sha
   spec: Map!
 }
 
-type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
-  buildArgs: Map
-  buildContexts: Map
-  contextDir: String
-  dockerfileContent: String
-  dockerfilePath: String
-  targetPlatforms: [String!]
-}
-
-type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec @shareable {
-  accountName: String!
-  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
-  cacheKeyName: String
-  registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
-  resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
-}
-
-type Github__com___kloudlite___operator___apis___distribution___v1__Registry @shareable {
-  repo: Github__com___kloudlite___operator___apis___distribution___v1__Repo!
-}
-
-type Github__com___kloudlite___operator___apis___distribution___v1__Repo @shareable {
-  name: String!
-  tags: [String!]!
-}
-
-type Github__com___kloudlite___operator___apis___distribution___v1__Resource @shareable {
-  cpu: Int!
-  memoryInMb: Int!
-}
-
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
   accountName: String!
   clusterName: String!
@@ -438,36 +407,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   spec: Map!
 }
 
-input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
-  buildArgs: Map
-  buildContexts: Map
-  contextDir: String
-  dockerfileContent: String
-  dockerfilePath: String
-  targetPlatforms: [String!]
-}
-
-input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
-  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
-  cacheKeyName: String
-  registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
-  resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
-}
-
-input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn {
-  repo: Github__com___kloudlite___operator___apis___distribution___v1__RepoIn!
-}
-
-input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn {
-  name: String!
-  tags: [String!]!
-}
-
-input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
-  cpu: Int!
-  memoryInMb: Int!
-}
-
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   accountName: String!
   clusterName: String!
@@ -479,30 +418,6 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
 input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   port: Int
   targetPort: Int
-}
-
-input Github__com___kloudlite___operator___pkg___operator__CheckIn {
-  generation: Int
-  message: String
-  status: Boolean!
-}
-
-input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
-  name: String!
-  namespace: String!
-}
-
-input Github__com___kloudlite___operator___pkg___operator__StatusIn {
-  checks: Map
-  isReady: Boolean!
-  lastReadyGeneration: Int
-  lastReconcileTime: Date
-  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
-  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
-}
-
-input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
-  RawMessage: Any
 }
 
 input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {

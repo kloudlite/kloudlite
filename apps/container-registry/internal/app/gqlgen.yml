@@ -47,6 +47,10 @@ autobind:
 # your liking
 skip_validation: true
 models:
+  Metadata: &metadata-model
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+  MetadataIn: *metadata-model
+
   ID:
     model:
       - github.com/kloudlite/api/pkg/repos.ID
@@ -125,6 +129,10 @@ models:
   CursorPagination: &cursor-pagination-model
     model: github.com/kloudlite/api/pkg/repos.CursorPagination
   CursorPaginationIn: *cursor-pagination-model
+
+  BuildRun: &build-run-model
+    model: github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildRun
+  BuildRunIn: *build-run-model
 
   CursorPaginationSortDirection: &cursor-pagination-sort-direction
     model: github.com/kloudlite/api/pkg/repos.SortDirection
