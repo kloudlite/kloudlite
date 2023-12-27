@@ -83,45 +83,17 @@ func nodePoolResUpdateSubject(nodePool *entities.NodePool) string {
 }
 
 func domainResUpdateSubject(domainEntry *entities.DomainEntry) string {
-	return fmt.Sprint(
-		"res-updates.",
-		"account.",
-		domainEntry.AccountName, ".",
-		"cluster.",
-		domainEntry.ClusterName, ".",
-		"domain.", domainEntry.DomainName,
-	)
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.domain.%s", domainEntry.AccountName, domainEntry.ClusterName, domainEntry.DomainName)
 }
 
 func vpnDeviceResUpdateSubject(device *entities.VPNDevice) string {
-	return fmt.Sprint(
-		"res-updates.",
-		"account.",
-		device.AccountName, ".",
-		"cluster.",
-		device.ClusterName, ".",
-		"vpn-device.", device.Name,
-	)
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.vpn-device.%s", device.AccountName, device.ClusterName, device.Name )
 }
 
 func pvcResUpdateSubject(pvc *entities.PersistentVolumeClaim) string {
-	return fmt.Sprint(
-		"res-updates.",
-		"account.",
-		pvc.AccountName, ".",
-		"cluster.",
-		pvc.ClusterName, ".",
-		"vpn-device.", pvc.Name,
-	)
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.vpn-device.%s", pvc.AccountName,pvc.ClusterName, pvc.Name, )
 }
 
 func clusterManagedServiceUpdateSubject(cmsvc *entities.ClusterManagedService) string {
-	return fmt.Sprint(
-		"res-updates.",
-		"account.",
-		cmsvc.AccountName, ".",
-		"cluster.",
-		cmsvc.ClusterName, ".",
-		"cluster-managed-service.", cmsvc.Name,
-	)
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.cluster-managed-service.%s", cmsvc.AccountName, cmsvc.ClusterName, cmsvc.Name )
 }
