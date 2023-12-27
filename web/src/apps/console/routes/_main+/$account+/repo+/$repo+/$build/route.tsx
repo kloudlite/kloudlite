@@ -30,11 +30,11 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Tabs = () => {
-  const { account, repo } = useParams();
+  const { account } = useParams();
   return (
     <CommonTabs
       backButton={{
-        to: `/${account}/repo/${repo}/builds/`,
+        to: `/${account}/packages/`,
         label: 'Build configs',
       }}
     />

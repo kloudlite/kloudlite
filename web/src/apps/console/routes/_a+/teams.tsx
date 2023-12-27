@@ -178,12 +178,18 @@ const Accounts = () => {
   };
 
   return (
-    <RawWrapper
-      title={`Welcome ${(user?.name || '').split(' ')[0] || ''}! Select your
-    Team.`}
-      subtitle="Select an account to proceed to console screens."
-      rightChildren={
-        <FadeIn notForm>
+    <div className="min-h-screen max-w-[1024px] bg-surface-basic-default p-10xl">
+      <div className="max-w-[568px] flex flex-col gap-7xl">
+        <div className="flex flex-col gap-xl">
+          <div className="heading3xl text-text-default">
+            Welcome {(user?.name || '').split(' ')[0] || ''}! <br />
+            Select your account.
+          </div>
+          <div className="bodyLg text-text-default">
+            Select an account to proceed to console screens.
+          </div>
+        </div>
+        <div className="flex flex-col gap-3xl">
           <DynamicPagination
             {...{
               hasNext,
@@ -304,8 +310,17 @@ const Accounts = () => {
               content="Try a different email"
             />
           </div>
-        </FadeIn>
-      }
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <RawWrapper
+      title={`Welcome ${(user?.name || '').split(' ')[0] || ''}! Select your
+    Team.`}
+      subtitle="Select an account to proceed to console screens."
+      rightChildren={<FadeIn notForm />}
     />
   );
 };

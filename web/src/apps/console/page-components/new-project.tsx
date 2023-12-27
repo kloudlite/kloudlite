@@ -29,7 +29,7 @@ import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
-import { INewProjectFromAccountLoader } from '../routes/_a+/_a.$a.new-project';
+import { INewProjectFromAccountLoader } from '../routes/_a+/$a+/new-project';
 import { FadeIn } from './util';
 
 const NewProject = () => {

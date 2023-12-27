@@ -10,10 +10,10 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import AlertModal from '~/console/components/alert-modal';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
+import { FadeIn } from '~/console/page-components/util';
 import BuildDetails from './build-details';
 import RepoSelector from './repo-selector';
 import ConfigureRepo from './configure-git-repo';
-import { FadeIn } from '../../../../../page-components/util';
 
 const NewBuild = () => {
   const navigate = useNavigate();

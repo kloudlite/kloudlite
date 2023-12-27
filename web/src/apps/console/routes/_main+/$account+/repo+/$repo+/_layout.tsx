@@ -2,8 +2,8 @@ import { Link, Outlet, useOutletContext, useParams } from '@remix-run/react';
 import { ChevronRight } from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
 import { constants } from '~/console/server/utils/constants';
-import { IProjectContext } from './$cluster+/$project+/_layout';
 import Wrapper from '~/console/components/wrapper';
+import { IProjectContext } from '../../$cluster+/$project+/_layout';
 
 const NetworkBreadcrum = () => {
   const { repo, account } = useParams();
