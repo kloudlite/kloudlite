@@ -2,11 +2,12 @@ package app
 
 import (
 	"context"
+	"net/url"
+
 	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/errors"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
-	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
@@ -68,6 +69,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Digest]("tags", "tag", entities.TagIndexes),
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
 	repos.NewFxMongoRepo[*entities.BuildCacheKey]("build-caches", "build-cache", entities.BuildCacheKeyIndexes),
+	repos.NewFxMongoRepo[*entities.BuildRun]("build_runs", "build_run", entities.BuildRunIndices),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (GitWebhookConsumer, error) {
 		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
