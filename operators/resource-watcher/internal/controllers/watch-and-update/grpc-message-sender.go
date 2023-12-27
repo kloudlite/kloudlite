@@ -20,7 +20,42 @@ type grpcMsgSender struct {
 	getInfraMessagesCli    func() (messages.MessageDispatchService_ReceiveInfraUpdatesClient, error)
 	imc                    messages.MessageDispatchService_ReceiveInfraUpdatesClient
 
+	getCRMessagesCli func() (messages.MessageDispatchService_ReceiveContainerRegistryUpdatesClient, error)
+	crmc             messages.MessageDispatchService_ReceiveContainerRegistryUpdatesClient
+
 	logger logging.Logger
+}
+
+func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error {
+	b, err := json.Marshal(stu)
+	if err != nil {
+		return err
+	}
+
+	dctx, cf := context.WithTimeout(ctx, 1*time.Second)
+	defer cf()
+
+	errCh := make(chan error, 1)
+	execCh := make(chan struct{}, 1)
+	go func() {
+		if err = g.crmc.Send(&messages.ContainerRegistryUpdate{Message: b}); err != nil {
+			// replace streaming client
+			g.crmc, err = g.getCRMessagesCli()
+			errCh <- err
+			return
+		}
+		execCh <- struct{}{}
+	}()
+
+	select {
+	case <-dctx.Done():
+		return dctx.Err()
+	case <-execCh:
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }
 
 // DispatchInfraResourceUpdates implements MessageSender.
@@ -116,6 +151,10 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 		return msgDispatchCli.ReceiveResourceUpdates(outgoingCtx())
 	}
 
+	getContainerRegistryMessagesCli := func() (messages.MessageDispatchService_ReceiveContainerRegistryUpdatesClient, error) {
+		return msgDispatchCli.ReceiveContainerRegistryUpdates(outgoingCtx())
+	}
+
 	getInfraMessagesCli := func() (messages.MessageDispatchService_ReceiveInfraUpdatesClient, error) {
 		return msgDispatchCli.ReceiveInfraUpdates(outgoingCtx())
 	}
@@ -130,11 +169,18 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 		return nil, err
 	}
 
+	crmc, err := getContainerRegistryMessagesCli()
+	if err != nil {
+		return nil, err
+	}
+
 	return &grpcMsgSender{
 		logger:                 logger,
 		getResourceMessagesCli: getResourceMessagesCli,
 		rmc:                    rmc,
 		imc:                    imc,
+		crmc:                   crmc,
 		getInfraMessagesCli:    getInfraMessagesCli,
+		getCRMessagesCli:       getContainerRegistryMessagesCli,
 	}, nil
 }
