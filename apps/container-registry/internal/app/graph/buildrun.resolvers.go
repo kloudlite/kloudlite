@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -43,7 +42,20 @@ func (r *buildRunResolver) Spec(ctx context.Context, obj *entities.BuildRun) (*m
 
 // Status is the resolver for the status field.
 func (r *buildRunResolver) Status(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
+	var m model.GithubComKloudliteOperatorPkgOperatorStatus
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return &m, nil
+}
+
+// SyncStatus is the resolver for the syncStatus field.
+func (r *buildRunResolver) SyncStatus(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteAPIPkgTypesSyncStatus, error) {
+	var m model.GithubComKloudliteAPIPkgTypesSyncStatus
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return &m, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
