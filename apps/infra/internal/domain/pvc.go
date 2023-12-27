@@ -39,9 +39,7 @@ func (d *domain) OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc en
 	}, &pvc); err != nil {
 		return errors.NewE(err)
 	}
-	if err:=d.natCli.Conn.Publish(d.pvcResUpdateSubject(&pvc), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.pvcResUpdateSubject(&pvc))
-	}
+	d.resourceEventPublisher.PublishPvcResEvent(&pvc, PublishUpdate)
 	return nil
 }
 
@@ -54,8 +52,6 @@ func (d *domain) OnPVCDeleteMessage(ctx InfraContext, clusterName string, pvc en
 	}); err != nil {
 		return errors.NewE(err)
 	}
-	if err:=d.natCli.Conn.Publish(d.pvcResUpdateSubject(&pvc), []byte("Deleted")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.pvcResUpdateSubject(&pvc))
-	}
+	d.resourceEventPublisher.PublishPvcResEvent(&pvc, PublishDelete)
 	return nil
 }

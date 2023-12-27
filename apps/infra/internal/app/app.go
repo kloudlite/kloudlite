@@ -82,6 +82,10 @@ var Module = fx.Module(
 		})
 	}),
 
+	fx.Provide(func(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
+		return NewResourceEventPublisher(cli, logger)
+	}),
+
 	domain.Module,
 
 	fx.Provide(func(d domain.Domain) infra.InfraServer {

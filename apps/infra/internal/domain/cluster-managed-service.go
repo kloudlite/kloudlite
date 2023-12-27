@@ -116,9 +116,7 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 	if cms, err := d.clusterManagedServiceRepo.Create(ctx, &service); err != nil {
 		return nil, errors.NewE(err)
 	} else {
-		if err := d.natCli.Conn.Publish(d.clusterManagedServiceUpdateSubject(&service), []byte("Added")); err != nil {
-			d.logger.Errorf(err, "failed to publish message to subject %q", d.clusterManagedServiceUpdateSubject(&service), []byte("Added"))
-		}
+		d.resourceEventPublisher.PublishCMSEvent(&service, PublishAdd)
 
 		return cms, nil
 	}
@@ -161,9 +159,7 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName strin
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.natCli.Conn.Publish(d.clusterManagedServiceUpdateSubject(unp), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.clusterManagedServiceUpdateSubject(unp), []byte("Updated"))
-	}
+	d.resourceEventPublisher.PublishCMSEvent(unp, PublishUpdate)
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, unp, unp.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -193,9 +189,7 @@ func (d *domain) DeleteClusterManagedService(ctx InfraContext, clusterName strin
 		return errors.NewE(err)
 	}
 
-	if err := d.natCli.Conn.Publish(d.clusterManagedServiceUpdateSubject(upC), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.clusterManagedServiceUpdateSubject(upC), []byte("Added"))
-	}
+	d.resourceEventPublisher.PublishCMSEvent(upC, PublishUpdate)
 
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.ClusterManagedService)
 }
@@ -211,9 +205,7 @@ func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName
 	svc.SyncStatus.Error = &errMsg
 
 	_, err = d.clusterManagedServiceRepo.UpdateById(ctx, svc.Id, svc)
-	if err := d.natCli.Conn.Publish(d.clusterManagedServiceUpdateSubject(svc), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.clusterManagedServiceUpdateSubject(svc))
-	}
+	d.resourceEventPublisher.PublishCMSEvent(svc, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -229,9 +221,7 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterN
 	}
 
 	err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id)
-	if err := d.natCli.Conn.Publish(d.clusterManagedServiceUpdateSubject(svc), []byte("Deleted")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.clusterManagedServiceUpdateSubject(svc))
-	}
+	d.resourceEventPublisher.PublishCMSEvent(svc, PublishDelete)
 	return err
 }
 func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error {
@@ -254,8 +244,6 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 	if _, err := d.clusterManagedServiceRepo.UpdateById(ctx, svc.Id, svc); err != nil {
 		return errors.NewE(err)
 	}
-	if err := d.natCli.Conn.Publish(d.clusterManagedServiceUpdateSubject(svc), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to subject %q", d.clusterManagedServiceUpdateSubject(svc))
-	}
+	d.resourceEventPublisher.PublishCMSEvent(svc, PublishUpdate)
 	return nil
 }
