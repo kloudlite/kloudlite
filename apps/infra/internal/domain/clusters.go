@@ -244,9 +244,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(nCluster), []byte("Added")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
-	}
+	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishAdd)
 
 	return nCluster, nil
 }
@@ -335,9 +333,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.natCli.Conn.Publish(d.clusterResUpdateSubject(&cluster), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
-	}
+	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishUpdate)
 	return uCluster, nil
 }
 
@@ -371,9 +367,7 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 
 		deletedCluster := d.deleteK8sResource(ctx, &upC.Cluster)
 
-		if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(c), []byte("Update")); err != nil {
-			d.logger.Errorf(err, "failed to publish message to account %q", c.Cluster.Spec.AccountId)
-		}
+		d.resourceEventPublisher.PublishClusterEvent(c, PublishUpdate)
 
 		return deletedCluster
 	}
@@ -392,9 +386,7 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 		"metadata.name":      cluster.Name,
 		"metadata.namespace": accNs,
 	})
-	if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(&cluster), []byte("Delete")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
-	}
+	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishDelete)
 
 	return onDeletedClusterMessage
 }
@@ -421,9 +413,7 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	c.Status = cluster.Status
 
 	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
-	if err = d.natCli.Conn.Publish(d.clusterResUpdateSubject(c), []byte("Updated")); err != nil {
-		d.logger.Errorf(err, "failed to publish message to account %q", cluster.Cluster.Spec.AccountId)
-	}
+	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishUpdate)
 	return errors.NewE(err)
 }
 
