@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/google/go-github/v45/github"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
@@ -37,4 +38,23 @@ type Gitlab interface {
 	GetRepoId(repoUrl string) string
 	GetLatestCommit(ctx context.Context, token *entities.AccessToken, repoUrl string, branchName string) (string, error)
 	GetTriggerWebhookUrl() string
+}
+
+type ResourceDispatcher interface {
+	ApplyToTargetCluster(ctx RegistryContext, clusterName string, obj client.Object, recordVersion int) error
+	DeleteFromTargetCluster(ctx RegistryContext, clusterName string, obj client.Object) error
+}
+
+
+
+type PublishMsg string
+
+const (
+	PublishAdd    PublishMsg = "added"
+	PublishDelete PublishMsg = "deleted"
+	PublishUpdate PublishMsg = "updated"
+)
+
+type ResourceEventPublisher interface {
+	PublishBuildRunEvent(cluster *entities.BuildRun, msg PublishMsg)
 }

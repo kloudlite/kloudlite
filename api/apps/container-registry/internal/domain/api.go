@@ -79,8 +79,9 @@ type Domain interface {
 
 	ListBuildRuns(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
 	GetBuildRun(ctx RegistryContext, repoName string, runName string) (*entities.BuildRun, error)
-	OnBuildRunUpdateMessage(ctx RegistryContext, clusterName string, buildRun entities.BuildRun) error
-	OnBuildRunDeleteMessage(ctx RegistryContext, clusterName string, buildRun entities.BuildRun) error
-
+	OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun) error
+	OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.BuildRun) error
+	OnBuildRunApplyErrorMessage(ctx RegistryContext, clusterName string,name string, errorMsg string) error
 	ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
+	CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string) error
 }

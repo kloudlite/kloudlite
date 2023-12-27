@@ -72,7 +72,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.BuildRun]("build_runs", "build_run", entities.BuildRunIndices),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (GitWebhookConsumer, error) {
-		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		topic := string(common.GitWebhookTopicName)
 		consumerName := "container-reg:git-webhooks"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.NatsStream,
@@ -88,6 +88,75 @@ var Module = fx.Module("app",
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) BuildRunProducer {
 		return msg_nats.NewJetstreamProducer(jc)
 	}),
+
+	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ReceiveResourceUpdatesConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ContainerRegistryReceiver, common.EventResourceUpdate)
+
+		consumerName := "cr:resource-updates"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer receives container registry resource updates, processes them, and keeps our Database updated about things happening in the cluster",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go processResourceUpdates(consumer, d, logger)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(jsc *nats.JetstreamClient, ev *env.Env) (ErrorOnApplyConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+
+		consumerName := "cr:error-on-apply"
+
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.NatsStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer receives container registry resource apply error on agent, processes them, and keeps our Database updated about why the resource apply failed at agent",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go ProcessErrorOnApply(consumer, logger, d)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(jsc *nats.JetstreamClient, logger logging.Logger) SendTargetClusterMessagesProducer {
+		return msg_nats.NewJetstreamProducer(jsc)
+	}),
+
+	fx.Provide(func(targetMessageProducer SendTargetClusterMessagesProducer) domain.ResourceDispatcher {
+		return NewResourceDispatcher(targetMessageProducer)
+	}),
+
+	fx.Provide(func(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
+		return NewResourceEventPublisher(cli, logger)
+	}),
+
+
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -106,7 +175,6 @@ var Module = fx.Module("app",
 	}),
 
 	fxGithub[*venv](),
-
 	fxGitlab[*venv](),
 
 	fx.Invoke(

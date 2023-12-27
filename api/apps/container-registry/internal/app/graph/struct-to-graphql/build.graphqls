@@ -1,4 +1,6 @@
 type Build @shareable {
+  accountName: String!
+  buildClusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -26,6 +28,7 @@ type BuildPaginatedRecords @shareable {
 }
 
 input BuildIn {
+  buildClusterName: String!
   name: String!
   source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn!
   spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn!
