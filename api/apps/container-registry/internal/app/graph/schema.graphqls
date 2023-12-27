@@ -13,6 +13,10 @@ input  SearchBuilds {
   text: MatchFilterIn
 }
 
+input SearchBuildRuns {
+  text: MatchFilterIn
+}
+
 input SearchBuildCacheKeys {
   text: MatchFilterIn
 }
@@ -43,6 +47,10 @@ type Query {
   cr_listGitlabRepositories(groupId:String!, query:String, pagination:PaginationIn) : [GitlabProject!] @isLoggedInAndVerified
   cr_listGitlabBranches(repoId:String!, query:String, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
   cr_listBuildCacheKeys(pq:CursorPaginationIn, search: SearchBuildCacheKeys) : BuildCacheKeyPaginatedRecords @isLoggedInAndVerified @hasAccount
+
+  
+  cr_listBuildRuns(repoName: String!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_getBuildRun(repoName: String!, buildRunName: String!): BuildRun @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
