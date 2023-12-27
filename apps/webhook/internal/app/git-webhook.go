@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/messaging"
 	types2 "github.com/kloudlite/api/pkg/messaging/types"
 	"net/http"
@@ -37,7 +38,7 @@ func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
 	cHash := "sha256=" + hex.EncodeToString(hash.Sum(nil))
 
 	ghSignature := headers["X-Hub-Signature-256"]
-	if len(cHash) != len(ghSignature) || cHash != ghSignature[0] {
+	if len(cHash) != len(ghSignature[0]) || cHash != ghSignature[0] {
 		return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", ghSignature)
 	}
 	return true, nil
@@ -101,7 +102,8 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 
 func LoadGitWebhook() fx.Option {
 	return fx.Invoke(
-		func(app *fiber.App, envVars *env.Env, producer messaging.Producer, logr logging.Logger) error {
+		func(server httpServer.Server, envVars *env.Env, producer messaging.Producer, logr logging.Logger) error {
+			app := server.Raw()
 			app.Post(
 				"/git/:provider", func(ctx *fiber.Ctx) error {
 					logger := logr.WithName("git-webhook")
