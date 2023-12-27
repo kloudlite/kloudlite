@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"strings"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -128,17 +129,17 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc)
 			}
-		case buildrunGVK.String():
-			{
-				var buildRun entities.BuildRun
-				if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
-					return errors.NewE(err)
-				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)
-				}
-				return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
-			}
+		// case buildrunGVK.String():
+		// 	{
+		// 		var buildRun entities.BuildRun
+		// 		if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
+		// 			return errors.NewE(err)
+		// 		}
+		// 		if obj.GetDeletionTimestamp() != nil {
+		// 			return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)
+		// 		}
+		// 		return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
+		// 	}
 
 		case clusterMsvcGVK.String():
 			{

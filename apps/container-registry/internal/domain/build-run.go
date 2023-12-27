@@ -1,20 +1,20 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
-func (d *domain) ListBuildRuns(ctx InfraContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
+func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
 	filter := repos.Filter{
 		"accountName":             ctx.AccountName,
 		"spec.registry.repo.name": repoName,
 	}
-	return d.buildRunRepo.FindPaginated(ctx, d.nodePoolRepo.MergeMatchFilters(filter, matchFilters), pagination)
+	return d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
 
-func (d *domain) GetBuildRun(ctx InfraContext, repoName string, buildRunName string) (*entities.BuildRun, error) {
+func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName string) (*entities.BuildRun, error) {
 	brun, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
 		"accountName":             ctx.AccountName,
 		"metadata.name":           buildRunName,
@@ -30,7 +30,7 @@ func (d *domain) GetBuildRun(ctx InfraContext, repoName string, buildRunName str
 	return brun, nil
 }
 
-func (d *domain) OnBuildRunUpdateMessage(ctx InfraContext, clusterName string, buildRun entities.BuildRun) error {
+func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, clusterName string, buildRun entities.BuildRun) error {
 	if _, err := d.buildRunRepo.Upsert(ctx, repos.Filter{
 		"metadata.name":      buildRun.Name,
 		"metadata.namespace": buildRun.Namespace,
@@ -43,7 +43,7 @@ func (d *domain) OnBuildRunUpdateMessage(ctx InfraContext, clusterName string, b
 	return nil
 }
 
-func (d *domain) OnBuildRunDeleteMessage(ctx InfraContext, clusterName string, buildRun entities.BuildRun) error {
+func (d *Impl) OnBuildRunDeleteMessage(ctx RegistryContext, clusterName string, buildRun entities.BuildRun) error {
 	if err := d.buildRunRepo.DeleteOne(ctx, repos.Filter{
 		"metadata.name":      buildRun.Name,
 		"metadata.namespace": buildRun.Namespace,

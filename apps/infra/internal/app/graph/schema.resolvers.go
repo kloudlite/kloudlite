@@ -552,57 +552,6 @@ func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName strin
 	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
 
-// InfraListBuildRuns is the resolver for the infra_listBuildRuns field.
-func (r *queryResolver) InfraListBuildRuns(ctx context.Context, repoName string, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-	}
-
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	buildRuns, err := r.Domain.ListBuildRuns(cc, repoName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	ve := make([]*model.BuildRunEdge, len(buildRuns.Edges))
-	for i := range buildRuns.Edges {
-		ve[i] = &model.BuildRunEdge{
-			Node:   buildRuns.Edges[i].Node,
-			Cursor: buildRuns.Edges[i].Cursor,
-		}
-	}
-
-	m := model.BuildRunPaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &buildRuns.PageInfo.EndCursor,
-			HasNextPage:     buildRuns.PageInfo.HasNextPage,
-			HasPreviousPage: buildRuns.PageInfo.HasPrevPage,
-			StartCursor:     &buildRuns.PageInfo.StartCursor,
-		},
-		TotalCount: int(buildRuns.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// InfraGetBuildRun is the resolver for the infra_getBuildRun field.
-func (r *queryResolver) InfraGetBuildRun(ctx context.Context, repoName string, buildRunName string) (*entities.BuildRun, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetBuildRun(cc, repoName, buildRunName)
-}
-
 // InfraListPVCs is the resolver for the infra_listPVCs field.
 func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) (*model.PersistentVolumeClaimPaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
