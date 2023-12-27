@@ -38,7 +38,7 @@ func validateGithubHook(ctx *fiber.Ctx, envVars *env.Env) (bool, error) {
 	cHash := "sha256=" + hex.EncodeToString(hash.Sum(nil))
 
 	ghSignature := headers["X-Hub-Signature-256"]
-	if len(cHash) != len(ghSignature) || cHash != ghSignature[0] {
+	if len(cHash) != len(ghSignature[0]) || cHash != ghSignature[0] {
 		return false, errors.Newf("signature (%s) is invalid, sorry would need to drop the message", ghSignature)
 	}
 	return true, nil
