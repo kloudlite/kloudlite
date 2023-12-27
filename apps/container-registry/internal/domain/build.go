@@ -66,6 +66,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	return d.buildRepo.Create(ctx, &entities.Build{
 		Spec:          build.Spec,
 		Name:          build.Name,
+		AccountName: ctx.AccountName,
 		CreatedBy:     common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
 		LastUpdatedBy: common.CreatedOrUpdatedBy{},
 		Source:        entities.GitSource{Repository: build.Source.Repository, Branch: build.Source.Branch, Provider: build.Source.Provider, WebhookId: webhookId},

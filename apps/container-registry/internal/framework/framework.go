@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/errors"
-
 	"github.com/kloudlite/api/pkg/nats"
 
 	app "github.com/kloudlite/api/apps/container-registry/internal/app"
@@ -49,17 +47,16 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
-		name := "container-registry:jetstream-client"
-		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
+	fx.Provide(func(logger logging.Logger, ev *env.Env) (*nats.Client, error){
+		name := "container-registry:nats-client"
+		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,
 			Logger: logger,
 		})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
+	}),
 
-		return nats.NewJetstreamClient(nc)
+	fx.Provide(func(client *nats.Client) (*nats.JetstreamClient, error) {
+		return nats.NewJetstreamClient(client)
 	}),
 
 	fx.Provide(

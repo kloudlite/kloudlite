@@ -34,9 +34,12 @@ type Impl struct {
 
 	authClient auth.AuthClient
 
-	github Github
-	gitlab Gitlab
+	github                 Github
+	gitlab                 Gitlab
+	resourceEventPublisher ResourceEventPublisher
+	dispatcher             ResourceDispatcher
 }
+
 
 func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
 	l := logger.WithName("registry-event")
@@ -217,6 +220,8 @@ var Module = fx.Module(
 			authClient auth.AuthClient,
 			github Github,
 			gitlab Gitlab,
+			resourceEventPublisher ResourceEventPublisher,
+			dispatcher ResourceDispatcher,
 		) (Domain, error) {
 			return &Impl{
 				repositoryRepo: repositoryRepo,
@@ -232,6 +237,8 @@ var Module = fx.Module(
 				authClient:     authClient,
 				github:         github,
 				gitlab:         gitlab,
+				resourceEventPublisher: resourceEventPublisher,
+				dispatcher: dispatcher,
 			}, nil
 		}),
 )
