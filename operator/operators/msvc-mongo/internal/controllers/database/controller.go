@@ -97,6 +97,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureChecks(AccessCredsReady,DBUserReady,IsOwnedByMsvc,DBUserDeleted,DefaultsPatched); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -105,9 +109,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconOwnership(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.reconOwnership(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.reconDBCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -116,6 +120,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
 }
+
+// type MsvcMeta struct {
+// 	Name      string
+// 	Namespace string
+// }
+//
+// func getMsvcMeta(res *crdsv1.ManagedResource) MsvcMeta {
+// 	return MsvcMeta{
+// 		Name:      res.Spec.ResourceTemplate.MsvcRef.Namespace,
+// 		Namespace: res.Spec.ResourceTemplate.MsvcRef.Name,
+// 	}
+// }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
@@ -192,7 +208,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) 
 	defer req.LogPostCheck(IsOwnedByMsvc)
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
+		ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
 			metav1.TypeMeta{
 				Kind:       obj.Spec.MsvcRef.Kind,
 				APIVersion: obj.Spec.MsvcRef.APIVersion,
@@ -225,7 +241,7 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 	switch obj.Spec.MsvcRef.Kind {
 	case "StandaloneService":
 		{
-			msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.GetNamespace(), obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
+			msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.StandaloneService{})
 			if err != nil {
 				return "", "", err
 			}
@@ -244,7 +260,7 @@ func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMs
 		}
 	case "ClusterService":
 		{
-			msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.GetNamespace(), obj.Spec.MsvcRef.Name), &mongodbMsvcv1.ClusterService{})
+			msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), &mongodbMsvcv1.ClusterService{})
 			if err != nil {
 				return "", "", err
 			}

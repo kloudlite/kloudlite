@@ -31,7 +31,7 @@
             mongosh
 
             # kubernetes specific tools
-            k9s
+            # k9s
             kubectl
             kubernetes-helm
 
