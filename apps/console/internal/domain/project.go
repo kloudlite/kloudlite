@@ -134,6 +134,9 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.Spec.AccountName = ctx.AccountName
 	project.Spec.ClusterName = ctx.ClusterName
+	if project.Spec.TargetNamespace == "" {
+		project.Spec.TargetNamespace = fmt.Sprintf("prj-%s", project.Name)
+	}
 
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
@@ -143,6 +146,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		}
 		return nil, errors.NewE(err)
 	}
+
+	d.resourceEventPublisher.PublishProjectEvent(prj, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
@@ -210,6 +215,7 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 	if _, err := d.projectRepo.UpdateById(ctx, prj.Id, prj); err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishProjectEvent(prj, PublishUpdate)
 
 	return d.deleteK8sResource(ctx, &prj.Project)
 }
@@ -261,6 +267,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishProjectEvent(upProject, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, &upProject.Project, upProject.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -279,7 +286,12 @@ func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Pro
 		return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project, p.RecordVersion)
 	}
 
-	return d.projectRepo.DeleteById(ctx, p.Id)
+	err = d.projectRepo.DeleteById(ctx, p.Id)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishProjectEvent(p, PublishDelete)
+	return nil
 }
 
 func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Project) error {
@@ -310,6 +322,7 @@ func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Pro
 	exProject.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
+	d.resourceEventPublisher.PublishProjectEvent(exProject, PublishUpdate)
 	return errors.NewE(err)
 }
 

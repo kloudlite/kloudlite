@@ -87,6 +87,7 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 		}
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishMresEvent(&mres, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, &m.ManagedResource, 0); err != nil {
 		return m, errors.NewE(err)
@@ -129,6 +130,8 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.Managed
 		return nil, errors.NewE(err)
 	}
 
+	d.resourceEventPublisher.PublishMresEvent(upMres, PublishUpdate)
+
 	if err := d.applyK8sResource(ctx, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
 		return upMres, errors.NewE(err)
 	}
@@ -150,6 +153,7 @@ func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, nam
 	if _, err := d.mresRepo.UpdateById(ctx, m.Id, m); err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishMresEvent(m, PublishUpdate)
 
 	return d.deleteK8sResource(ctx, &m.ManagedResource)
 }
@@ -164,7 +168,12 @@ func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entitie
 		return d.resyncK8sResource(ctx, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
-	return d.mresRepo.DeleteById(ctx, exMres.Id)
+	err = d.mresRepo.DeleteById(ctx, exMres.Id)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishMresEvent(exMres, PublishDelete)
+	return nil
 }
 
 func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
@@ -195,6 +204,7 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 	exMres.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.mresRepo.UpdateById(ctx, exMres.Id, exMres)
+	d.resourceEventPublisher.PublishMresEvent(exMres, PublishUpdate)
 	return errors.NewE(err)
 }
 

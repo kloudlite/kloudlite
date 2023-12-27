@@ -37,7 +37,7 @@ type MessageDispatcher messaging.Producer
 
 type domain struct {
 	k8sClient k8s.Client
-	logger logging.Logger
+	logger    logging.Logger
 
 	producer MessageDispatcher
 
@@ -57,8 +57,9 @@ type domain struct {
 
 	envVars *env.Env
 
-	msvcTemplates    []*entities.MsvcTemplate
-	msvcTemplatesMap map[string]map[string]*entities.MsvcTemplateEntry
+	msvcTemplates          []*entities.MsvcTemplate
+	msvcTemplatesMap       map[string]map[string]*entities.MsvcTemplateEntry
+	resourceEventPublisher ResourceEventPublisher
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
@@ -390,6 +391,7 @@ var Module = fx.Module("domain",
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		logger logging.Logger,
+		resourceEventPublisher ResourceEventPublisher,
 
 		ev *env.Env,
 	) (Domain, error) {
@@ -441,8 +443,9 @@ var Module = fx.Module("domain",
 
 			envVars: ev,
 
-			msvcTemplates:    templates,
-			msvcTemplatesMap: msvcTemplatesMap,
+			msvcTemplates:          templates,
+			msvcTemplatesMap:       msvcTemplatesMap,
+			resourceEventPublisher: resourceEventPublisher,
 		}, nil
 	}),
 )
