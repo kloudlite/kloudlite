@@ -141,8 +141,9 @@ func (d *domain) createWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 		}
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishWorkspaceEvent(nWs, PublishAdd)
 
-	if _,err:=d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
+	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
 		ResourceType: string(iamT.ResourceWorkspace),
 		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceWorkspace, nWs.Name),
@@ -198,6 +199,7 @@ func (d *domain) updateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishWorkspaceEvent(upWs, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, &upWs.Workspace, upWs.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -225,6 +227,7 @@ func (d *domain) deleteWorkspace(ctx ConsoleContext, namespace string, name stri
 	if _, err := d.workspaceRepo.UpdateById(ctx, ws.Id, ws); err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishWorkspaceEvent(ws, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, &ws.Workspace); err != nil {
 		return errors.NewE(err)
@@ -265,7 +268,12 @@ func (d *domain) OnDeleteWorkspaceMessage(ctx ConsoleContext, ws entities.Worksp
 		return errors.NewE(err)
 	}
 
-	return d.workspaceRepo.DeleteById(ctx, exWs.Id)
+	err = d.workspaceRepo.DeleteById(ctx, exWs.Id)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishWorkspaceEvent(exWs, PublishDelete)
+	return nil
 }
 
 func (d *domain) OnUpdateWorkspaceMessage(ctx ConsoleContext, ws entities.Workspace) error {
@@ -299,6 +307,7 @@ func (d *domain) OnUpdateWorkspaceMessage(ctx ConsoleContext, ws entities.Worksp
 	exWs.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.workspaceRepo.UpdateById(ctx, exWs.Id, exWs)
+	d.resourceEventPublisher.PublishWorkspaceEvent(exWs, PublishUpdate)
 	return errors.NewE(err)
 }
 

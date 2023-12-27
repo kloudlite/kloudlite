@@ -80,6 +80,7 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		}
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishRouterEvent(&router, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, &r.Router, 0); err != nil {
 		return r, errors.NewE(err)
@@ -121,6 +122,7 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishRouterEvent(upRouter, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, &upRouter.Router, upRouter.RecordVersion); err != nil {
 		return upRouter, errors.NewE(err)
@@ -143,6 +145,7 @@ func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string)
 	if _, err := d.routerRepo.UpdateById(ctx, r.Id, r); err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishRouterEvent(r, PublishUpdate)
 
 	return d.deleteK8sResource(ctx, &r.Router)
 }
@@ -157,7 +160,12 @@ func (d *domain) OnDeleteRouterMessage(ctx ConsoleContext, router entities.Route
 		return errors.NewE(err)
 	}
 
-	return d.routerRepo.DeleteById(ctx, exRouter.Id)
+	err = d.routerRepo.DeleteById(ctx, exRouter.Id)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishRouterEvent(exRouter, PublishDelete)
+	return nil
 }
 
 func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Router) error {
@@ -188,6 +196,7 @@ func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Route
 	exRouter.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.routerRepo.UpdateById(ctx, exRouter.Id, exRouter)
+	d.resourceEventPublisher.PublishRouterEvent(exRouter, PublishUpdate)
 	return errors.NewE(err)
 }
 
