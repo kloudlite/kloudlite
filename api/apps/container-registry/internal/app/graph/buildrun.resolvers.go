@@ -6,12 +6,13 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
-	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
-	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
-	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
 )
 
@@ -38,6 +39,11 @@ func (r *buildRunResolver) Spec(ctx context.Context, obj *entities.BuildRun) (*m
 		return nil, errors.NewE(err)
 	}
 	return &m, nil
+}
+
+// Status is the resolver for the status field.
+func (r *buildRunResolver) Status(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
 // UpdateTime is the resolver for the updateTime field.

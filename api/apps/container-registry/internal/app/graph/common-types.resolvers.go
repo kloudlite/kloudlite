@@ -10,6 +10,7 @@ import (
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/common"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // UserID is the resolver for the userId field.
@@ -21,9 +22,47 @@ func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) Use
 	return string(obj.UserId), nil
 }
 
+// Annotations is the resolver for the annotations field.
+func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented: Annotations - annotations"))
+}
+
+// CreationTimestamp is the resolver for the creationTimestamp field.
+func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
+	panic(fmt.Errorf("not implemented: CreationTimestamp - creationTimestamp"))
+}
+
+// DeletionTimestamp is the resolver for the deletionTimestamp field.
+func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
+	panic(fmt.Errorf("not implemented: DeletionTimestamp - deletionTimestamp"))
+}
+
+// Labels is the resolver for the labels field.
+func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented: Labels - labels"))
+}
+
+// Annotations is the resolver for the annotations field.
+func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
+	panic(fmt.Errorf("not implemented: Annotations - annotations"))
+}
+
+// Labels is the resolver for the labels field.
+func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
+	panic(fmt.Errorf("not implemented: Labels - labels"))
+}
+
 // Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
 func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
 	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
 }
 
+// Metadata returns generated.MetadataResolver implementation.
+func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResolver{r} }
+
+// MetadataIn returns generated.MetadataInResolver implementation.
+func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
+
 type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
+type metadataResolver struct{ *Resolver }
+type metadataInResolver struct{ *Resolver }

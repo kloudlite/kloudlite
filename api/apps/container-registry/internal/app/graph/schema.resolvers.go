@@ -503,6 +503,57 @@ func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.Curs
 	return m, nil
 }
 
+// CrListBuildRuns is the resolver for the cr_listBuildRuns field.
+func (r *queryResolver) CrListBuildRuns(ctx context.Context, repoName string, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	buildRuns, err := r.Domain.ListBuildRuns(cc, repoName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ve := make([]*model.BuildRunEdge, len(buildRuns.Edges))
+	for i := range buildRuns.Edges {
+		ve[i] = &model.BuildRunEdge{
+			Node:   buildRuns.Edges[i].Node,
+			Cursor: buildRuns.Edges[i].Cursor,
+		}
+	}
+
+	m := model.BuildRunPaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &buildRuns.PageInfo.EndCursor,
+			HasNextPage:     buildRuns.PageInfo.HasNextPage,
+			HasPreviousPage: buildRuns.PageInfo.HasPrevPage,
+			StartCursor:     &buildRuns.PageInfo.StartCursor,
+		},
+		TotalCount: int(buildRuns.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// CrGetBuildRun is the resolver for the cr_getBuildRun field.
+func (r *queryResolver) CrGetBuildRun(ctx context.Context, repoName string, buildRunName string) (*entities.BuildRun, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetBuildRun(cc, repoName, buildRunName)
+}
+
 // Mutation returns generated1.MutationResolver implementation.
 func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationResolver{r} }
 

@@ -48,10 +48,6 @@ input SearchVPNDevices {
     markedForDeletion: MatchFilterIn
 }
 
-input SearchBuildRuns {
-  text: MatchFilterIn
-}
-
 input SearchPersistentVolumeClaims {
   text: MatchFilterIn
 }
@@ -83,9 +79,6 @@ type Query {
 
     infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
-
-    infra_listBuildRuns(repoName: String!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getBuildRun(repoName: String!, buildRunName: String!): BuildRun @isLoggedInAndVerified @hasAccount
 
     infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount

@@ -3,9 +3,10 @@ package domain
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"regexp"
 	"strings"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
@@ -25,6 +26,7 @@ type Impl struct {
 	buildRepo      repos.DbRepo[*entities.Build]
 	buildCacheRepo repos.DbRepo[*entities.BuildCacheKey]
 	digestRepo     repos.DbRepo[*entities.Digest]
+	buildRunRepo   repos.DbRepo[*entities.BuildRun]
 	iamClient      iam.IAMClient
 	envs           *env.Env
 	logger         logging.Logger
@@ -96,7 +98,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				}()
 
 				if len(digest.Tags) == 0 {
-					if err:=d.digestRepo.DeleteById(ctx, digest.Id); err != nil {
+					if err := d.digestRepo.DeleteById(ctx, digest.Id); err != nil {
 						d.logger.Errorf(err)
 					}
 				} else {
@@ -167,7 +169,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				UserName: e.Actor.Name,
 			}
 
-			if _,err:=d.repositoryRepo.UpdateById(ctx, ee.Id, ee); err != nil {
+			if _, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee); err != nil {
 				d.logger.Errorf(err)
 			}
 
@@ -209,6 +211,7 @@ var Module = fx.Module(
 			buildRepo repos.DbRepo[*entities.Build],
 			buildCacheRepo repos.DbRepo[*entities.BuildCacheKey],
 			tagRepo repos.DbRepo[*entities.Digest],
+			buildRunRepo repos.DbRepo[*entities.BuildRun],
 			iamClient iam.IAMClient,
 			cacheClient cache.BinaryDataRepo,
 			authClient auth.AuthClient,
@@ -225,6 +228,7 @@ var Module = fx.Module(
 				cacheClient:    cacheClient,
 				buildRepo:      buildRepo,
 				buildCacheRepo: buildCacheRepo,
+				buildRunRepo:   buildRunRepo,
 				authClient:     authClient,
 				github:         github,
 				gitlab:         gitlab,
