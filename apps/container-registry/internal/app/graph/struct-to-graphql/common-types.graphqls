@@ -82,6 +82,42 @@ type Github__com___kloudlite___operator___apis___distribution___v1__Resource @sh
   memoryInMb: Int!
 }
 
+type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
+  name: String!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
+  RawMessage: Any
+}
+
+type Metadata @shareable {
+  annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
+  generation: Int!
+  labels: Map
+  name: String!
+  namespace: String
+}
+
 type PageInfo @shareable {
   endCursor: String
   hasNextPage: Boolean
@@ -136,6 +172,37 @@ input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn {
 input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
   cpu: Int!
   memoryInMb: Int!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
+  RawMessage: Any
+}
+
+input MetadataIn {
+  annotations: Map
+  labels: Map
+  name: String!
+  namespace: String
 }
 
 enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus {

@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"flag"
+	"runtime/trace"
+
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"github.com/kloudlite/api/pkg/errors"
-	"runtime/trace"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/framework"
 	"github.com/kloudlite/api/common"

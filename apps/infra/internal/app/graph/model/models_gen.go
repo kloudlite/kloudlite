@@ -12,17 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type BuildRunEdge struct {
-	Cursor string             `json:"cursor"`
-	Node   *entities.BuildRun `json:"node"`
-}
-
-type BuildRunPaginatedRecords struct {
-	Edges      []*BuildRunEdge `json:"edges"`
-	PageInfo   *PageInfo       `json:"pageInfo"`
-	TotalCount int             `json:"totalCount"`
-}
-
 type CheckAwsAccessOutput struct {
 	Result          bool    `json:"result"`
 	InstallationURL *string `json:"installationUrl,omitempty"`
@@ -341,67 +330,6 @@ type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
 	Spec map[string]interface{} `json:"spec"`
 }
 
-type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
-	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
-	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
-	ContextDir        *string                `json:"contextDir,omitempty"`
-	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
-	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
-	TargetPlatforms   []string               `json:"targetPlatforms,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn struct {
-	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
-	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
-	ContextDir        *string                `json:"contextDir,omitempty"`
-	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
-	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
-	TargetPlatforms   []string               `json:"targetPlatforms,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
-	AccountName  string                                                    `json:"accountName"`
-	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
-	CacheKeyName *string                                                   `json:"cacheKeyName,omitempty"`
-	Registry     *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
-	Resource     *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
-	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
-	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
-	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
-	Resource     *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1Registry struct {
-	Repo *GithubComKloudliteOperatorApisDistributionV1Repo `json:"repo"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1RegistryIn struct {
-	Repo *GithubComKloudliteOperatorApisDistributionV1RepoIn `json:"repo"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1Repo struct {
-	Name string   `json:"name"`
-	Tags []string `json:"tags"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1RepoIn struct {
-	Name string   `json:"name"`
-	Tags []string `json:"tags"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1Resource struct {
-	CPU        int `json:"cpu"`
-	MemoryInMb int `json:"memoryInMb"`
-}
-
-type GithubComKloudliteOperatorApisDistributionV1ResourceIn struct {
-	CPU        int `json:"cpu"`
-	MemoryInMb int `json:"memoryInMb"`
-}
-
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
 	AccountName     string                                           `json:"accountName"`
 	ClusterName     string                                           `json:"clusterName"`
@@ -428,31 +356,7 @@ type GithubComKloudliteOperatorApisWireguardV1PortIn struct {
 	TargetPort *int `json:"targetPort,omitempty"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
-	Generation *int    `json:"generation,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Status     bool    `json:"status"`
-}
-
-type GithubComKloudliteOperatorPkgOperatorResourceRefIn struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
-	Checks              map[string]interface{}                                `json:"checks,omitempty"`
-	IsReady             bool                                                  `json:"isReady"`
-	LastReadyGeneration *int                                                  `json:"lastReadyGeneration,omitempty"`
-	LastReconcileTime   *string                                               `json:"lastReconcileTime,omitempty"`
-	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSONIn        `json:"message,omitempty"`
-	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRefIn `json:"resources,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
-}
-
-type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
 }
 
@@ -647,10 +551,6 @@ type PersistentVolumeClaimPaginatedRecords struct {
 	Edges      []*PersistentVolumeClaimEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount int                          `json:"totalCount"`
-}
-
-type SearchBuildRuns struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchCluster struct {

@@ -33,6 +33,17 @@ type BuildPaginatedRecords struct {
 	TotalCount int          `json:"totalCount"`
 }
 
+type BuildRunEdge struct {
+	Cursor string             `json:"cursor"`
+	Node   *entities.BuildRun `json:"node"`
+}
+
+type BuildRunPaginatedRecords struct {
+	Edges      []*BuildRunEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
 type CredentialEdge struct {
 	Cursor string               `json:"cursor"`
 	Node   *entities.Credential `json:"node"`
@@ -187,6 +198,56 @@ type GithubComKloudliteOperatorApisDistributionV1ResourceIn struct {
 	MemoryInMb int `json:"memoryInMb"`
 }
 
+type GithubComKloudliteOperatorPkgOperatorCheck struct {
+	Generation *int    `json:"generation,omitempty"`
+	Message    *string `json:"message,omitempty"`
+	Status     bool    `json:"status"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
+	Generation *int    `json:"generation,omitempty"`
+	Message    *string `json:"message,omitempty"`
+	Status     bool    `json:"status"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorResourceRefIn struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorStatus struct {
+	Checks              map[string]interface{}                              `json:"checks,omitempty"`
+	IsReady             bool                                                `json:"isReady"`
+	LastReadyGeneration *int                                                `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                             `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON        `json:"message,omitempty"`
+	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRef `json:"resources,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
+	Checks              map[string]interface{}                                `json:"checks,omitempty"`
+	IsReady             bool                                                  `json:"isReady"`
+	LastReadyGeneration *int                                                  `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                               `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSONIn        `json:"message,omitempty"`
+	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRefIn `json:"resources,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
+	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
+	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
 type GitlabBranch struct {
 	CanPush            bool   `json:"canPush"`
 	Default            bool   `json:"default"`
@@ -217,6 +278,10 @@ type RepositoryPaginatedRecords struct {
 }
 
 type SearchBuildCacheKeys struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchBuildRuns struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 

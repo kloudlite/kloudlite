@@ -2,8 +2,9 @@ package domain
 
 import (
 	"fmt"
-	"github.com/kloudlite/api/pkg/nats"
 	"strconv"
+
+	"github.com/kloudlite/api/pkg/nats"
 
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
@@ -35,7 +36,6 @@ type domain struct {
 	secretRepo                repos.DbRepo[*entities.CloudProviderSecret]
 	vpnDeviceRepo             repos.DbRepo[*entities.VPNDevice]
 	pvcRepo                   repos.DbRepo[*entities.PersistentVolumeClaim]
-	buildRunRepo              repos.DbRepo[*entities.BuildRun]
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -140,7 +140,6 @@ var Module = fx.Module("domain",
 			domainNameRepo repos.DbRepo[*entities.DomainEntry],
 			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
-			buildRunRepo repos.DbRepo[*entities.BuildRun],
 			resourceDispatcher ResourceDispatcher,
 
 			k8sClient k8s.Client,
@@ -164,7 +163,6 @@ var Module = fx.Module("domain",
 				domainEntryRepo:             domainNameRepo,
 				vpnDeviceRepo:               vpnDeviceRepo,
 				pvcRepo:                     pvcRepo,
-				buildRunRepo:                buildRunRepo,
 				resDispatcher:               resourceDispatcher,
 				k8sClient:                   k8sClient,
 				iamClient:                   iamClient,

@@ -92,10 +92,6 @@ models:
     model: github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService
   ClusterManagedServiceIn: *cluster-managed-service
 
-  BuildRun: &build-run-model
-    model: github.com/kloudlite/api/apps/infra/internal/entities.BuildRun
-  BuildRunIn: *build-run-model
-
   PersistentVolumeClaim: &pvc-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
   PersistentVolumeClaimIn: *pvc-model
