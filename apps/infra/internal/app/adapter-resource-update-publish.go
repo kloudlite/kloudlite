@@ -63,23 +63,11 @@ func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.R
 }
 
 func clusterResUpdateSubject(cluster *entities.Cluster) string {
-	return fmt.Sprint(
-		"res-updates.",
-		"account.",
-		cluster.Cluster.Spec.AccountName, ".",
-		"cluster.",
-		cluster.Cluster.Name)
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s", cluster.AccountName, cluster.Cluster.Name)
 }
 
 func nodePoolResUpdateSubject(nodePool *entities.NodePool) string {
-	return fmt.Sprint(
-		"res-updates.",
-		"account.",
-		nodePool.AccountName, ".",
-		"cluster.",
-		nodePool.ClusterName, ".",
-		"node-pool.", nodePool.Name,
-	)
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.node-pool.%s", nodePool.AccountName, nodePool.ClusterName, nodePool.Name)
 }
 
 func domainResUpdateSubject(domainEntry *entities.DomainEntry) string {
@@ -87,13 +75,13 @@ func domainResUpdateSubject(domainEntry *entities.DomainEntry) string {
 }
 
 func vpnDeviceResUpdateSubject(device *entities.VPNDevice) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.vpn-device.%s", device.AccountName, device.ClusterName, device.Name )
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.vpn-device.%s", device.AccountName, device.ClusterName, device.Name)
 }
 
 func pvcResUpdateSubject(pvc *entities.PersistentVolumeClaim) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.vpn-device.%s", pvc.AccountName,pvc.ClusterName, pvc.Name, )
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.vpn-device.%s", pvc.AccountName, pvc.ClusterName, pvc.Name)
 }
 
 func clusterManagedServiceUpdateSubject(cmsvc *entities.ClusterManagedService) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.cluster-managed-service.%s", cmsvc.AccountName, cmsvc.ClusterName, cmsvc.Name )
+	return fmt.Sprintf("res-updates.account.%s.cluster.%s.cluster-managed-service.%s", cmsvc.AccountName, cmsvc.ClusterName, cmsvc.Name)
 }

@@ -83,6 +83,10 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) La
 		return nil, errors.Newf("obj is nil")
 	}
 
+	if obj.LastReconcileTime == nil {
+		return nil, nil
+	}
+
 	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
 }
 
