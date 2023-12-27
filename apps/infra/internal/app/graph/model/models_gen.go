@@ -44,6 +44,17 @@ type ClusterEdge struct {
 	Node   *entities.Cluster `json:"node"`
 }
 
+type ClusterManagedServiceEdge struct {
+	Cursor string                          `json:"cursor"`
+	Node   *entities.ClusterManagedService `json:"node"`
+}
+
+type ClusterManagedServicePaginatedRecords struct {
+	Edges      []*ClusterManagedServiceEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount int                          `json:"totalCount"`
+}
+
 type ClusterPaginatedRecords struct {
 	Edges      []*ClusterEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -245,6 +256,8 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
 	Iac           *GithubComKloudliteOperatorApisClustersV1InfrastuctureAsCode `json:"iac"`
 	MaxCount      int                                                          `json:"maxCount"`
 	MinCount      int                                                          `json:"minCount"`
+	NodeLabels    map[string]interface{}                                       `json:"nodeLabels,omitempty"`
+	NodeTaints    []*K8sIoAPICoreV1Taint                                       `json:"nodeTaints,omitempty"`
 	TargetCount   int                                                          `json:"targetCount"`
 }
 
@@ -253,6 +266,8 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn struct {
 	CloudProvider GithubComKloudliteOperatorApisCommonTypesCloudProvider       `json:"cloudProvider"`
 	MaxCount      int                                                          `json:"maxCount"`
 	MinCount      int                                                          `json:"minCount"`
+	NodeLabels    map[string]interface{}                                       `json:"nodeLabels,omitempty"`
+	NodeTaints    []*K8sIoAPICoreV1TaintIn                                     `json:"nodeTaints,omitempty"`
 	TargetCount   int                                                          `json:"targetCount"`
 }
 
@@ -296,6 +311,34 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRef struct {
 type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Name      string  `json:"name"`
 	Namespace *string `json:"namespace,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
+	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
+	Namespace string                                                  `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
+	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
+	Namespace string                                                    `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
+	APIVersion string                 `json:"apiVersion"`
+	Kind       string                 `json:"kind"`
+	Spec       map[string]interface{} `json:"spec"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
+	Spec map[string]interface{} `json:"spec"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
@@ -363,6 +406,7 @@ type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
 	AccountName     string                                           `json:"accountName"`
 	ClusterName     string                                           `json:"clusterName"`
 	DeviceNamespace *string                                          `json:"deviceNamespace,omitempty"`
+	NodeSelector    map[string]interface{}                           `json:"nodeSelector,omitempty"`
 	Ports           []*GithubComKloudliteOperatorApisWireguardV1Port `json:"ports,omitempty"`
 }
 
@@ -370,6 +414,7 @@ type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
 	AccountName     string                                             `json:"accountName"`
 	ClusterName     string                                             `json:"clusterName"`
 	DeviceNamespace *string                                            `json:"deviceNamespace,omitempty"`
+	NodeSelector    map[string]interface{}                             `json:"nodeSelector,omitempty"`
 	Ports           []*GithubComKloudliteOperatorApisWireguardV1PortIn `json:"ports,omitempty"`
 }
 
@@ -489,6 +534,20 @@ type K8sIoAPICoreV1ResourceRequirementsIn struct {
 	Requests map[string]interface{}           `json:"requests,omitempty"`
 }
 
+type K8sIoAPICoreV1Taint struct {
+	Effect    K8sIoAPICoreV1TaintEffect `json:"effect"`
+	Key       string                    `json:"key"`
+	TimeAdded *string                   `json:"timeAdded,omitempty"`
+	Value     *string                   `json:"value,omitempty"`
+}
+
+type K8sIoAPICoreV1TaintIn struct {
+	Effect    K8sIoAPICoreV1TaintEffect `json:"effect"`
+	Key       string                    `json:"key"`
+	TimeAdded *string                   `json:"timeAdded,omitempty"`
+	Value     *string                   `json:"value,omitempty"`
+}
+
 type K8sIoAPICoreV1TypedLocalObjectReference struct {
 	APIGroup *string `json:"apiGroup,omitempty"`
 	Kind     string  `json:"kind"`
@@ -599,6 +658,11 @@ type SearchCluster struct {
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	Region            *repos.MatchFilter `json:"region,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchClusterManagedService struct {
+	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
+	Text    *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchDomainEntry struct {
@@ -887,6 +951,49 @@ func (e *K8sIoAPICoreV1PersistentVolumeClaimPhase) UnmarshalGQL(v interface{}) e
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimPhase) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1TaintEffect string
+
+const (
+	K8sIoAPICoreV1TaintEffectNoExecute        K8sIoAPICoreV1TaintEffect = "NoExecute"
+	K8sIoAPICoreV1TaintEffectNoSchedule       K8sIoAPICoreV1TaintEffect = "NoSchedule"
+	K8sIoAPICoreV1TaintEffectPreferNoSchedule K8sIoAPICoreV1TaintEffect = "PreferNoSchedule"
+)
+
+var AllK8sIoAPICoreV1TaintEffect = []K8sIoAPICoreV1TaintEffect{
+	K8sIoAPICoreV1TaintEffectNoExecute,
+	K8sIoAPICoreV1TaintEffectNoSchedule,
+	K8sIoAPICoreV1TaintEffectPreferNoSchedule,
+}
+
+func (e K8sIoAPICoreV1TaintEffect) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1TaintEffectNoExecute, K8sIoAPICoreV1TaintEffectNoSchedule, K8sIoAPICoreV1TaintEffectPreferNoSchedule:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1TaintEffect) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1TaintEffect) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1TaintEffect(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__TaintEffect", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1TaintEffect) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

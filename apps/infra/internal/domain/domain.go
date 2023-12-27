@@ -27,14 +27,15 @@ type domain struct {
 	logger logging.Logger
 	env    *env.Env
 
-	clusterRepo     repos.DbRepo[*entities.Cluster]
-	nodeRepo        repos.DbRepo[*entities.Node]
-	nodePoolRepo    repos.DbRepo[*entities.NodePool]
-	domainEntryRepo repos.DbRepo[*entities.DomainEntry]
-	secretRepo      repos.DbRepo[*entities.CloudProviderSecret]
-	vpnDeviceRepo   repos.DbRepo[*entities.VPNDevice]
-	pvcRepo         repos.DbRepo[*entities.PersistentVolumeClaim]
-	buildRunRepo    repos.DbRepo[*entities.BuildRun]
+	clusterRepo               repos.DbRepo[*entities.Cluster]
+	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
+	nodeRepo                  repos.DbRepo[*entities.Node]
+	nodePoolRepo              repos.DbRepo[*entities.NodePool]
+	domainEntryRepo           repos.DbRepo[*entities.DomainEntry]
+	secretRepo                repos.DbRepo[*entities.CloudProviderSecret]
+	vpnDeviceRepo             repos.DbRepo[*entities.VPNDevice]
+	pvcRepo                   repos.DbRepo[*entities.PersistentVolumeClaim]
+	buildRunRepo              repos.DbRepo[*entities.BuildRun]
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -131,6 +132,7 @@ var Module = fx.Module("domain",
 		func(
 			env *env.Env,
 			clusterRepo repos.DbRepo[*entities.Cluster],
+			clustermanagedserviceRepo repos.DbRepo[*entities.ClusterManagedService],
 			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
@@ -153,6 +155,7 @@ var Module = fx.Module("domain",
 				natCli:                      natCli,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
+				clusterManagedServiceRepo:   clustermanagedserviceRepo,
 				nodeRepo:                    nodeRepo,
 				nodePoolRepo:                nodePoolRepo,
 				secretRepo:                  secretRepo,
