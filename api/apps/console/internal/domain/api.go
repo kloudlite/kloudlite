@@ -191,3 +191,20 @@ type Domain interface {
 
 	ResyncImagePullSecret(ctx ConsoleContext, namespace, name string) error
 }
+
+type PublishMsg string
+
+const (
+	PublishAdd    PublishMsg = "added"
+	PublishDelete PublishMsg = "deleted"
+	PublishUpdate PublishMsg = "updated"
+)
+
+type ResourceEventPublisher interface {
+	PublishAppEvent(app *entities.App, msg PublishMsg)
+	PublishMresEvent(mres *entities.ManagedResource, msg PublishMsg)
+	PublishMsvcEvent(msvc *entities.ManagedService, msg PublishMsg)
+	PublishProjectEvent(project *entities.Project, msg PublishMsg)
+	PublishRouterEvent(router *entities.Router, msg PublishMsg)
+	PublishWorkspaceEvent(workspace *entities.Workspace, msg PublishMsg)
+}

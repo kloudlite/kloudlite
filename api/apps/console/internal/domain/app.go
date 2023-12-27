@@ -93,6 +93,8 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 		return nil, err
 	}
 
+	d.resourceEventPublisher.PublishAppEvent(&app, PublishAdd)
+
 	if err := d.applyK8sResource(ctx, &nApp.App, nApp.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -115,6 +117,7 @@ func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) er
 	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishAppEvent(app, PublishUpdate)
 
 	return d.deleteK8sResource(ctx, &app.App)
 }
@@ -153,6 +156,7 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishAppEvent(upApp, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, &upApp.App, upApp.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -192,6 +196,7 @@ func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error 
 	exApp.SyncStatus.LastSyncedAt = time.Now()
 
 	_, err = d.appRepo.UpdateById(ctx, exApp.Id, exApp)
+	d.resourceEventPublisher.PublishAppEvent(exApp, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -205,7 +210,13 @@ func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error 
 		return errors.NewE(err)
 	}
 
-	return d.appRepo.DeleteById(ctx, a.Id)
+	err = d.appRepo.DeleteById(ctx, a.Id)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishAppEvent(a, PublishDelete)
+
+	return nil
 }
 
 func (d *domain) OnApplyAppError(ctx ConsoleContext, errMsg string, namespace string, name string) error {

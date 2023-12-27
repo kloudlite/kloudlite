@@ -354,7 +354,7 @@ var Module = fx.Module("app",
 						go func() {
 							// now read from pr, and write it to websocket conn
 							defer func() {
-								if err := pr.Close();err != nil {
+								if err := pr.Close(); err != nil {
 									logger.Errorf(err, "while closing websocket connection")
 								}
 								if err := conn.Close(); err != nil {
@@ -362,14 +362,13 @@ var Module = fx.Module("app",
 								}
 							}()
 
-
 							r := bufio.NewReader(pr)
 							msg := make([]byte, 0xffff)
 							for {
 								n, err := r.Read(msg)
 								if err != nil {
 									if err != io.EOF {
-										if err := conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error()));err != nil {
+										if err := conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error())); err != nil {
 											logger.Errorf(err, "while writing message to websocket connection")
 											return
 										}
@@ -378,14 +377,14 @@ var Module = fx.Module("app",
 									if conn.Conn == nil {
 										break
 									}
-									if err:=conn.WriteMessage(fWebsocket.TextMessage, msg[:n]);err != nil {
+									if err := conn.WriteMessage(fWebsocket.TextMessage, msg[:n]); err != nil {
 										logger.Errorf(err, "while writing message to websocket connection")
 										return
 									}
 									return
 								}
 
-								if err:=conn.WriteMessage(fWebsocket.TextMessage, msg[:n]);err != nil {
+								if err := conn.WriteMessage(fWebsocket.TextMessage, msg[:n]); err != nil {
 									logger.Errorf(err, "while writing message to websocket connection")
 									return
 								}
@@ -394,7 +393,7 @@ var Module = fx.Module("app",
 
 						lokiQueryFilter, ok := conn.Locals("loki-query-filter").(*loki_client.QueryArgs)
 						if !ok {
-							if err:=conn.WriteMessage(fWebsocket.CloseMessage, []byte(fiber.ErrInternalServerError.Error()));err != nil {
+							if err := conn.WriteMessage(fWebsocket.CloseMessage, []byte(fiber.ErrInternalServerError.Error())); err != nil {
 								logger.Errorf(err, "while writing message to websocket connection")
 								return
 							}
@@ -530,6 +529,10 @@ var Module = fx.Module("app",
 			return infra.NewInfraClient(conn)
 		},
 	),
+
+	fx.Provide(func(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
+		return NewResourceEventPublisher(cli, logger)
+	}),
 
 	domain.Module,
 

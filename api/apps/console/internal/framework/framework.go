@@ -35,17 +35,15 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.JetstreamClient, error) {
-		name := "accounts:jetstream-client"
-		nc, err := nats.NewClient(ev.NatsURL, nats.ClientOpts{
-			Name:   name,
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   "console",
 			Logger: logger,
 		})
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
+	}),
 
-		return nats.NewJetstreamClient(nc)
+	fx.Provide(func(c *nats.Client) (*nats.JetstreamClient, error) {
+		return nats.NewJetstreamClient(c)
 	}),
 
 	fx.Provide(
