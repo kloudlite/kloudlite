@@ -11,6 +11,7 @@ type Env struct {
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
 
 	BuildNameSpace string `env:"BUILD_NAMESPACE" required:"true"`
+	IsDev          bool
 }
 
 func GetEnvOrDie() *Env {
