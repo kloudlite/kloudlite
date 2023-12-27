@@ -5,8 +5,8 @@ import "fmt"
 type topicName string
 
 const (
-	GitWebhookTopicName topicName = "webhooks.git"
-	AuditEventLogTopicName topicName = "audit.event-log"
+	GitWebhookTopicName topicName = "events.webhooks.git"
+	AuditEventLogTopicName topicName = "events.audit.event-log"
 )
 
 
