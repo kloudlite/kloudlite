@@ -6,9 +6,8 @@ package graph
 
 import (
 	"context"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
@@ -96,7 +95,5 @@ func (r *Resolver) CloudProviderSecretIn() generated.CloudProviderSecretInResolv
 	return &cloudProviderSecretInResolver{r}
 }
 
-type (
-	cloudProviderSecretResolver   struct{ *Resolver }
-	cloudProviderSecretInResolver struct{ *Resolver }
-)
+type cloudProviderSecretResolver struct{ *Resolver }
+type cloudProviderSecretInResolver struct{ *Resolver }

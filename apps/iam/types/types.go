@@ -65,6 +65,13 @@ const (
 	GetCluster    Action = "get-cluster"
 	UpdateCluster Action = "update-cluster"
 
+	// cluster managed services
+	CreateClusterManagedService Action = "create-cluster-managed-service"
+	DeleteClusterManagedService Action = "delete-cluster-managed-service"
+	ListClusterManagedServices  Action = "list-cluster-managed-services"
+	GetClusterManagedService    Action = "get-cluster-managed-service"
+	UpdateClusterManagedService Action = "update-cluster-managed-service"
+
 	// nodepools
 	CreateNodepool Action = "create-nodepool"
 	DeleteNodepool Action = "delete-nodepool"

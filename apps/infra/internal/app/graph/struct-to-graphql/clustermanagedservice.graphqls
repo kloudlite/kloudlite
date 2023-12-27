@@ -1,0 +1,31 @@
+type ClusterManagedService @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  updateTime: Date!
+}
+
+type ClusterManagedServiceEdge @shareable {
+  cursor: String!
+  node: ClusterManagedService!
+}
+
+type ClusterManagedServicePaginatedRecords @shareable {
+  edges: [ClusterManagedServiceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ClusterManagedServiceIn {
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn
+}
+

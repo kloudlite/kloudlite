@@ -56,6 +56,10 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 			{
 				return d.OnVPNDeviceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
 			}
+		case clusterMsvcGVK.String():
+			{
+				return d.OnClusterManagedServiceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+			}
 		default:
 			{
 				return errors.Newf("infra error-on-apply reader does not acknowledge resource with kind (%s)", kind)

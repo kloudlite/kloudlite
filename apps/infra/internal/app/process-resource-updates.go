@@ -29,11 +29,12 @@ func gvk(obj client.Object) string {
 }
 
 var (
-	clusterGVK  = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
-	nodepoolGVK = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
-	deviceGVK   = fn.GVK("wireguard.kloudlite.io/v1", "Device")
-	pvcGVK      = fn.GVK("v1", "PersistentVolumeClaim")
-	buildrunGVK = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
+	clusterGVK     = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
+	nodepoolGVK    = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
+	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
+	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
+	buildrunGVK    = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
+	clusterMsvcGVK = fn.GVK("clusters.kloudlite.io/v1", "ClusterManagedService")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
@@ -138,6 +139,19 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
 			}
+
+		case clusterMsvcGVK.String():
+			{
+				var svc entities.ClusterManagedService
+				if err := fn.JsonConversion(su.Object, &svc); err != nil {
+					return errors.NewE(err)
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnClusterManagedServiceDeleteMessage(dctx, su.ClusterName, svc)
+				}
+				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, svc)
+			}
+
 		default:
 			{
 				mLogger.Infof("infra status updates consumer does not acknowledge the gvk %s", gvk(&obj))
@@ -146,7 +160,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 		}
 	}
 
-	if err:=consumer.Consume(readMsg, msgTypes.ConsumeOpts{
+	if err := consumer.Consume(readMsg, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
 			logger.Errorf(err, "error while consuming message")
 			return nil

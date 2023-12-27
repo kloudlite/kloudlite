@@ -140,6 +140,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @sh
   iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
   maxCount: Int!
   minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__Taint!]
   targetCount: Int!
 }
 
@@ -165,6 +167,21 @@ type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef @
 type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
   name: String!
   namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec @shareable {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  namespace: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
+  apiVersion: String!
+  kind: String!
+  spec: Map!
 }
 
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
@@ -202,6 +219,7 @@ type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @sha
   accountName: String!
   clusterName: String!
   deviceNamespace: String
+  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
 
@@ -273,6 +291,13 @@ type K8s__io___api___core___v1__ResourceRequirements @shareable {
   claims: [K8s__io___api___core___v1__ResourceClaim!]
   limits: Map
   requests: Map
+}
+
+type K8s__io___api___core___v1__Taint @shareable {
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
 }
 
 type K8s__io___api___core___v1__TypedLocalObjectReference @shareable {
@@ -377,6 +402,8 @@ input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn 
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   maxCount: Int!
   minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__TaintIn!]
   targetCount: Int!
 }
 
@@ -396,6 +423,19 @@ input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
 input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   name: String!
   namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
+  spec: Map!
 }
 
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
@@ -432,6 +472,7 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   accountName: String!
   clusterName: String!
   deviceNamespace: String
+  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
 
@@ -501,6 +542,13 @@ input K8s__io___api___core___v1__ResourceRequirementsIn {
   claims: [K8s__io___api___core___v1__ResourceClaimIn!]
   limits: Map
   requests: Map
+}
+
+input K8s__io___api___core___v1__TaintIn {
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
 }
 
 input K8s__io___api___core___v1__TypedLocalObjectReferenceIn {
@@ -583,6 +631,12 @@ enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
   Bound
   Lost
   Pending
+}
+
+enum K8s__io___api___core___v1__TaintEffect {
+  NoExecute
+  NoSchedule
+  PreferNoSchedule
 }
 
 enum K8s__io___apimachinery___pkg___api___resource__Format {

@@ -84,4 +84,14 @@ type Domain interface {
 	GetBuildRun(ctx InfraContext, repoName string, runName string) (*entities.BuildRun, error)
 	OnBuildRunUpdateMessage(ctx InfraContext, clusterName string, buildRun entities.BuildRun) error
 	OnBuildRunDeleteMessage(ctx InfraContext, clusterName string, buildRun entities.BuildRun) error
+
+	ListClusterManagedServices(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
+	GetClusterManagedService(ctx InfraContext, clusterName string, serviceName string) (*entities.ClusterManagedService, error)
+	CreateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	UpdateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	DeleteClusterManagedService(ctx InfraContext, clusterName string, name string) error
+
+	OnClusterManagedServiceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
+	OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
 }
