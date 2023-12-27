@@ -114,7 +114,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 	}
 
 	defer func() {
-		if err:=c.Close(); err!=nil {
+		if err := c.Close(); err != nil {
 			d.logger.Warnf("websocket close: %w", err)
 		}
 	}()
@@ -233,6 +233,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 					}
 				}
 			}
+
 			sub, err := d.natsClient.Conn.Subscribe(rd.Topic, func(m *mnats.Msg) {
 
 				rmessage := MessageResponse{
@@ -248,6 +249,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 				}
 
 			})
+
 			if err != nil {
 
 				if c != nil {
@@ -261,6 +263,7 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 
 				continue
 			}
+
 			if c != nil {
 				if err := c.WriteJSON(MessageResponse{
 					Type:    MessageTypeInfo,
