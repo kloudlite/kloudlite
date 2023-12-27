@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/messaging"
 	types2 "github.com/kloudlite/api/pkg/messaging/types"
 	"net/http"
@@ -101,7 +102,8 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 
 func LoadGitWebhook() fx.Option {
 	return fx.Invoke(
-		func(app *fiber.App, envVars *env.Env, producer messaging.Producer, logr logging.Logger) error {
+		func(server httpServer.Server, envVars *env.Env, producer messaging.Producer, logr logging.Logger) error {
+			app := server.Raw()
 			app.Post(
 				"/git/:provider", func(ctx *fiber.Ctx) error {
 					logger := logr.WithName("git-webhook")
