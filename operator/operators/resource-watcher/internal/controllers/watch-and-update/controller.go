@@ -32,12 +32,12 @@ import (
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme       *runtime.Scheme
-	logger       logging.Logger
-	Name         string
-	Env          *env.Env
-	accessToken  string
-	MsgSender    MessageSender
+	Scheme      *runtime.Scheme
+	logger      logging.Logger
+	Name        string
+	Env         *env.Env
+	accessToken string
+	MsgSender   MessageSender
 }
 
 func (r *Reconciler) GetName() string {
@@ -108,6 +108,16 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				{
 					return ctrl.Result{}, nil
 				}
+			}
+		}
+	case belongsTo("distribution.kloudlite.io"):
+		{
+			if err := r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			}); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
 	case belongsTo("kloudlite.io"):
@@ -247,6 +257,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		NewWatchResource("crds.kloudlite.io/v1", "Router"),
 		NewWatchResource("clusters.kloudlite.io/v1", "NodePool"),
 		NewWatchResource("wireguard.kloudlite.io/v1", "Device"),
+		NewWatchResource("distribution.kloudlite.io/v1", "BuildRun"),
 
 		// native resources
 		NewWatchResource("v1", "PersistentVolumeClaim"),
