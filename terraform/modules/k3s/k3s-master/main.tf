@@ -9,7 +9,6 @@ locals {
   ])
 }
 
-
 resource "random_password" "k3s_server_token" {
   length  = 64
   special = false
