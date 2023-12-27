@@ -43,6 +43,7 @@ type domain struct {
 	resDispatcher               ResourceDispatcher
 	k8sClient                   k8s.Client
 	natCli                      *nats.Client
+	resourceEventPublisher      ResourceEventPublisher
 }
 
 func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
@@ -149,6 +150,7 @@ var Module = fx.Module("domain",
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 			natCli *nats.Client,
 			logger logging.Logger,
+			resourceEventPublisher ResourceEventPublisher,
 		) Domain {
 			return &domain{
 				logger:                      logger,
@@ -168,6 +170,7 @@ var Module = fx.Module("domain",
 				iamClient:                   iamClient,
 				accountsSvc:                 accountsSvc,
 				messageOfficeInternalClient: msgOfficeInternalClient,
+				resourceEventPublisher:      resourceEventPublisher,
 			}
 		}),
 )
