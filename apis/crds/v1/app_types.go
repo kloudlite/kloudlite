@@ -247,7 +247,7 @@ type JsonPatch struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.displayVars.intercepted",name=Intercepted,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/intercept\\.toDevice",name=Intercepted,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -284,6 +284,12 @@ func (app *App) GetEnsuredLabels() map[string]string {
 func (app *App) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("App").String(),
+		"kloudlite.io/intercept.toDevice": func() string {
+			if app.Spec.Intercept != nil && app.Spec.Intercept.Enabled {
+				return app.Spec.Intercept.ToDevice
+			}
+			return ""
+		}(),
 	}
 }
 
