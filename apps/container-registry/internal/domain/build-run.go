@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 	"strings"
-	"time"
 )
 
 func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
@@ -78,8 +77,7 @@ func (d *Impl) OnBuildRunApplyErrorMessage(ctx RegistryContext,clusterName strin
 		return errors.NewE(err)
 	}
 
-	buildRun.SyncStatus.State = t.SyncStateErroredAtAgent
-	buildRun.SyncStatus.LastSyncedAt = time.Now()
+	buildRun.SyncStatus = t.GenSyncStatus(t.SyncActionApply, buildRun.RecordVersion)
 	buildRun.SyncStatus.Error = &errorMsg
 
 	_, err = d.buildRunRepo.UpdateById(ctx, buildRun.Id, buildRun)

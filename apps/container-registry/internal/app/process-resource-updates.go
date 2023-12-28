@@ -27,7 +27,7 @@ func gvk(obj client.Object) string {
 }
 
 var (
-	buildRunGVK     = fn.GVK("clusters.kloudlite.io/v1", "BuildRun")
+	buildRunGVK     = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
