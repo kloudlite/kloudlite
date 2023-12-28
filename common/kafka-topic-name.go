@@ -5,10 +5,9 @@ import "fmt"
 type topicName string
 
 const (
-	GitWebhookTopicName topicName = "events.webhooks.git"
+	GitWebhookTopicName    topicName = "events.webhooks.git"
 	AuditEventLogTopicName topicName = "events.audit.event-log"
 )
-
 
 func GetKafkaTopicName(accountName string, clusterName string) string {
 	return fmt.Sprintf("kl-send-to-acc-%s-clus-%s", accountName, clusterName)
@@ -28,9 +27,9 @@ const (
 type messageReceiver string
 
 const (
-	ConsoleReceiver messageReceiver = "kloudlite-console"
-	InfraReceiver   messageReceiver = "kloudlite-infra"
-	ContainerRegistryReceiver   messageReceiver = "kloudlite-cr"
+	ConsoleReceiver           messageReceiver = "kloudlite-console"
+	InfraReceiver             messageReceiver = "kloudlite-infra"
+	ContainerRegistryReceiver messageReceiver = "kloudlite-cr"
 )
 
 func GetPlatformClusterMessagingTopic(accountName string, clusterName string, controller messageReceiver, ev platformEvent) string {
@@ -39,4 +38,3 @@ func GetPlatformClusterMessagingTopic(accountName string, clusterName string, co
 	}
 	return fmt.Sprintf("resource-sync.account-%s.cluster-%s.platform.%s.%s", accountName, clusterName, controller, ev)
 }
-
