@@ -1,0 +1,47 @@
+name: build-installer-images
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release*
+    paths:
+      - "installer/Dockerfile"
+      - ".github/workflows/**"
+
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-builds:
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+
+          branch_name=${GITHUB_REF#refs/heads/}
+          version_string="v${branch_name#release-}-nightly"
+          
+          cd installer
+          docker build . -t "ghcr.io/kloudlite/kl/installer:$version_string" --push
+          docker build . -t "ghcr.io/kloudlite/kl/installer:commit-${GITHUB_SHA}" --push
