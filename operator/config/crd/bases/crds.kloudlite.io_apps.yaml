@@ -22,7 +22,7 @@ spec:
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
       type: string
-    - jsonPath: .status.displayVars.intercepted
+    - jsonPath: .metadata.annotations.kloudlite\.io\/intercept\.toDevice
       name: Intercepted
       type: string
     - jsonPath: .status.displayVars.frozen
