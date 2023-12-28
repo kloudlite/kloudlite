@@ -29,6 +29,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+const ClusterScopeNamespace = "kloudlite-cluster-scope"
+
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
@@ -191,6 +193,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 	}
 
 	gvk, err := wName.ParseGroup()
+	fmt.Println(gvk.Group)
 	if err != nil {
 		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
 		return ctrl.Result{}, nil
@@ -266,27 +269,37 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	for i := range watchList {
-		builder.Watches(
-			fn.NewUnstructured(watchList[i].TypeMeta),
-			handler.EnqueueRequestsFromMapFunc(
-				func(_ context.Context, obj client.Object) []reconcile.Request {
-					gvk := watchList[i].GetObjectKind().GroupVersionKind().String()
+		func(obj WatchResource) {
+			fmt.Println(obj.APIVersion, obj.Kind)
+			builder.Watches(
+				fn.NewUnstructured(obj.TypeMeta),
+				handler.EnqueueRequestsFromMapFunc(
+					func(_ context.Context, obj client.Object) []reconcile.Request {
+						gvk := obj.GetObjectKind().GroupVersionKind().String()
 
-					b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
-					if len(b64Group) == 0 {
-						return nil
-					}
+						b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
+						if len(b64Group) == 0 {
+							return nil
+						}
 
-					wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
-					if err != nil {
-						return nil
-					}
-					return []reconcile.Request{
-						{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
-					}
-				},
-			),
-		)
+						wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
+						if err != nil {
+							return nil
+						}
+						if obj.GetNamespace() == "" {
+							return []reconcile.Request{
+								{NamespacedName: fn.NN(ClusterScopeNamespace, wName)},
+							}
+						} else {
+							return []reconcile.Request{
+								{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
+							}
+						}
+					},
+				),
+			)
+
+		}(watchList[i])
 	}
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
