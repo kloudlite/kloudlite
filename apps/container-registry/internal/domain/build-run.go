@@ -2,7 +2,6 @@ package domain
 
 import (
 	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/pkg/errors"
@@ -11,9 +10,10 @@ import (
 	"github.com/kloudlite/container-registry-authorizer/admin"
 	common_types "github.com/kloudlite/operator/apis/common-types"
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	"sigs.k8s.io/yaml"
 	"strings"
 	"time"
 )
@@ -23,7 +23,8 @@ func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters 
 		"accountName":             ctx.AccountName,
 		"spec.registry.repo.name": repoName,
 	}
-	return d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, matchFilters), pagination)
+	paginated, err := d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, matchFilters), pagination)
+	return paginated, err
 }
 
 func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName string) (*entities.BuildRun, error) {
@@ -161,7 +162,7 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 		},
 	})
 	brRaw := distributionv1.BuildRun{}
-	err = json.Unmarshal(b, &brRaw)
+	err = yaml.Unmarshal(b, &brRaw)
 	if err != nil {
 		d.logger.Errorf(err, "could not unmarshal build run")
 		return errors.NewE(err)

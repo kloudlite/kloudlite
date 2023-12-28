@@ -7,6 +7,9 @@ package graph
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/common"
@@ -24,32 +27,72 @@ func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) Use
 
 // Annotations is the resolver for the annotations field.
 func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented: Annotations - annotations"))
+	if obj == nil {
+		return nil, fmt.Errorf("obj is nil")
+	}
+	var m map[string]interface{}
+	if err := fn.JsonConversion(obj.Annotations, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
 }
 
 // CreationTimestamp is the resolver for the creationTimestamp field.
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
-	panic(fmt.Errorf("not implemented: CreationTimestamp - creationTimestamp"))
+	if obj == nil {
+		return "", errors.Newf("build-run/creation-time is nil")
+	}
+	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
 
 // DeletionTimestamp is the resolver for the deletionTimestamp field.
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
-	panic(fmt.Errorf("not implemented: DeletionTimestamp - deletionTimestamp"))
+	if obj == nil {
+		return nil, errors.Newf("build-run/deletion-time is nil")
+	}
+	if obj.DeletionTimestamp == nil {
+		return nil, nil
+	}
+	format := obj.DeletionTimestamp.Time.Format(time.RFC3339)
+	return &format, nil
 }
 
 // Labels is the resolver for the labels field.
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented: Labels - labels"))
+	if obj == nil {
+		return nil, fmt.Errorf("obj is nil")
+	}
+	var m map[string]interface{}
+	if err := fn.JsonConversion(obj.Labels, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
 }
 
 // Annotations is the resolver for the annotations field.
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
-	panic(fmt.Errorf("not implemented: Annotations - annotations"))
+	if obj == nil {
+		return fmt.Errorf("obj is nil")
+	}
+	var m map[string]string
+	if err := fn.JsonConversion(data, &m); err != nil {
+		return errors.NewE(err)
+	}
+	obj.Annotations = m
+	return nil
 }
 
 // Labels is the resolver for the labels field.
 func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
-	panic(fmt.Errorf("not implemented: Labels - labels"))
+	if obj == nil {
+		return fmt.Errorf("obj is nil")
+	}
+	var m map[string]string
+	if err := fn.JsonConversion(data, &m); err != nil {
+		return errors.NewE(err)
+	}
+	obj.Labels = m
+	return nil
 }
 
 // Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.

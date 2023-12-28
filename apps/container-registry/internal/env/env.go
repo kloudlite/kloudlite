@@ -24,8 +24,9 @@ type Env struct {
 	GithubScopes string `env:"GITHUB_SCOPES" required:"true"`
 
 	// NATS:start
-	NatsURL    string `env:"NATS_URL" required:"true"`
-	NatsStream string `env:"NATS_STREAM" required:"true"`
+	NatsURL            string `env:"NATS_URL" required:"true"`
+	ResourceNatsStream string `env:"RESOURCE_NATS_STREAM" required:"true"`
+	EventsNatsStream string `env:"EVENTS_NATS_STREAM" required:"true"`
 	// NATS:end
 
 	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
