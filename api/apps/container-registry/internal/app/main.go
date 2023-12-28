@@ -73,17 +73,35 @@ var Module = fx.Module("app",
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (GitWebhookConsumer, error) {
 		topic := string(common.GitWebhookTopicName)
-		consumerName := "container-reg:git-webhooks"
+		consumerName := "cr:git-webhook"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.EventsNatsStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
 				Description:    "this consumer reads message from a subject dedicated to errors, that occurred when the resource was applied at the agent",
-				FilterSubjects: []string{topic},
+				FilterSubjects: []string{
+					topic,
+				},
 			},
 		})
 	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer GitWebhookConsumer, d domain.Domain, logr logging.Logger) {
+			lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				go func() {
+					err := processGitWebhooks(ctx, d, consumer, logr)
+					if err != nil {
+						logr.Errorf(err, "could not process git webhooks")
+					}
+				}()
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return nil
+			},
+		})	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) BuildRunProducer {
 		return msg_nats.NewJetstreamProducer(jc)
@@ -94,7 +112,7 @@ var Module = fx.Module("app",
 
 		consumerName := "cr:resource-updates"
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.ResourceNatsStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -122,7 +140,7 @@ var Module = fx.Module("app",
 		consumerName := "cr:error-on-apply"
 
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jsc, msg_nats.JetstreamConsumerArgs{
-			Stream: ev.NatsStream,
+			Stream: ev.ResourceNatsStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
@@ -292,21 +310,4 @@ var Module = fx.Module("app",
 	}),
 
 	domain.Module,
-
-	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain, consumer GitWebhookConsumer, producer BuildRunProducer, logr logging.Logger, envs *env.Env) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				go func() {
-					err := processGitWebhooks(ctx, d, consumer, producer, logr, envs)
-					if err != nil {
-						logr.Errorf(err, "could not process git webhooks")
-					}
-				}()
-				return nil
-			},
-			OnStop: func(ctx context.Context) error {
-				return nil
-			},
-		})
-	}),
 )

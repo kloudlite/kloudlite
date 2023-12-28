@@ -504,6 +504,8 @@ type ComplexityRoot struct {
 }
 
 type BuildResolver interface {
+	AccountName(ctx context.Context, obj *entities.Build) (string, error)
+
 	CreationTime(ctx context.Context, obj *entities.Build) (string, error)
 
 	ErrorMessages(ctx context.Context, obj *entities.Build) (map[string]interface{}, error)
@@ -4292,7 +4294,7 @@ func (ec *executionContext) _Build_accountName(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return ec.resolvers.Build().AccountName(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4313,8 +4315,8 @@ func (ec *executionContext) fieldContext_Build_accountName(ctx context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "Build",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -21404,12 +21406,25 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Build")
 		case "accountName":
+			field := field
 
-			out.Values[i] = ec._Build_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Build_accountName(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "buildClusterName":
 
 			out.Values[i] = ec._Build_buildClusterName(ctx, field, obj)

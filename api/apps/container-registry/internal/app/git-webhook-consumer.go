@@ -8,7 +8,6 @@ import (
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain"
-	"github.com/kloudlite/api/apps/container-registry/internal/env"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
@@ -26,7 +25,7 @@ type (
 )
 
 
-func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhookConsumer, producer BuildRunProducer, logr logging.Logger, envs *env.Env) error {
+func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhookConsumer, logr logging.Logger) error {
 	err := consumer.Consume(func(msg *msgTypes.ConsumeMsg) error {
 		logger := logr.WithName("ci-webhook")
 		logger.Infof("started processing")
@@ -126,7 +125,7 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 				UserId:      "sys-user:error-on-apply-worker",
 				UserEmail:   "",
 				UserName:    "",
-				AccountName: build.AccountName,
+				AccountName: build.Spec.AccountName,
 			}
 
 			err := d.CreateBuildRun(dctx, build, hook, pullToken)
@@ -135,7 +134,12 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 			}
 		}
 		return nil
-	}, msgTypes.ConsumeOpts{})
+	}, msgTypes.ConsumeOpts{
+		OnError: func(err error) error {
+			logr.Errorf(err, "error while consuming message")
+			return nil
+		},
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
