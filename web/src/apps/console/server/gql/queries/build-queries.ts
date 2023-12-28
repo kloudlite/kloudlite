@@ -36,6 +36,7 @@ export const buildQueries = (executor: IExecutor) => ({
                 userName
               }
               creationTime
+              buildClusterName
               credUser {
                 userEmail
                 userId
@@ -94,7 +95,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListBuildsQuery) => data.cr_listBuilds,
-      vars(_: ConsoleListBuildsQueryVariables) {},
+      vars(_: ConsoleListBuildsQueryVariables) { },
     }
   ),
   createBuild: executor(
@@ -107,7 +108,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleCreateBuildMutation) => data.cr_addBuild,
-      vars(_: ConsoleCreateBuildMutationVariables) {},
+      vars(_: ConsoleCreateBuildMutationVariables) { },
     }
   ),
   updateBuild: executor(
@@ -120,7 +121,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleUpdateBuildMutation) => data.cr_updateBuild,
-      vars(_: ConsoleUpdateBuildMutationVariables) {},
+      vars(_: ConsoleUpdateBuildMutationVariables) { },
     }
   ),
   deleteBuild: executor(
@@ -131,7 +132,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleDeleteBuildMutation) => data.cr_deleteBuild,
-      vars(_: ConsoleDeleteBuildMutationVariables) {},
+      vars(_: ConsoleDeleteBuildMutationVariables) { },
     }
   ),
 });

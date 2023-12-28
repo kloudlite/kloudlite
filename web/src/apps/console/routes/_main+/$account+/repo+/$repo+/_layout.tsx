@@ -2,8 +2,9 @@ import { Link, Outlet, useOutletContext, useParams } from '@remix-run/react';
 import { ChevronRight } from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
 import { constants } from '~/console/server/utils/constants';
-import { IProjectContext } from './$cluster+/$project+/_layout';
-import Wrapper from '~/console/components/wrapper';
+import SidebarLayout from '~/console/components/sidebar-layout';
+import { useHandleFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import { IProjectContext } from '../../$cluster+/$project+/_layout';
 
 const NetworkBreadcrum = () => {
   const { repo, account } = useParams();
@@ -18,7 +19,11 @@ const NetworkBreadcrum = () => {
           </div>
         }
       />
-      <Breadcrum.Button content={<span>{repo}</span>} />
+      <Breadcrum.Button
+        to={`/${account}/repo/${repo}`}
+        LinkComponent={Link}
+        content={<span>{repo}</span>}
+      />
     </div>
   );
 };
@@ -32,26 +37,31 @@ export const handle = () => {
 
 const Repo = () => {
   const rootContext = useOutletContext<IProjectContext>();
+  const { repo } = useParams();
+  const noLayout = useHandleFromMatches('noLayout', null);
+
+  if (noLayout) {
+    return <Outlet context={rootContext} />;
+  }
   return (
-    // <SidebarLayout
-    //   navItems={[
-    //     { label: 'Images', value: 'images' },
-    //     { label: 'Builds', value: 'builds' },
-    //     { label: 'Build caches', value: 'buildcaches' },
-    //   ]}
-    //   parentPath={`/${repo}`}
-    //   headerTitle={repo || ''}
-    //   headerActions={subNavAction.data}
-    // >
-    //   <Outlet context={{ ...rootContext }} />
-    // </SidebarLayout>
-    <Wrapper
-      header={{
-        title: 'Images',
-      }}
+    <SidebarLayout
+      navItems={[
+        { label: 'Images', value: 'images' },
+        { label: 'Builds', value: 'builds' },
+        { label: 'Build caches', value: 'buildcaches' },
+      ]}
+      parentPath={`/${repo}`}
+      headerTitle={repo || ''}
     >
       <Outlet context={{ ...rootContext }} />
-    </Wrapper>
+    </SidebarLayout>
+    // <Wrapper
+    //   header={{
+    //     title: 'Images',
+    //   }}
+    // >
+    //   <Outlet context={{ ...rootContext }} />
+    // </Wrapper>
   );
 };
 

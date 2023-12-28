@@ -11,6 +11,7 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
 import Tools from './tools';
@@ -65,16 +66,19 @@ const Builds = () => {
           const builds = buildData.edges?.map(({ node }) => node);
 
           return (
-            <>
-              <SubNavAction deps={[]}>
-                <Button
-                  content="Create build"
-                  variant="primary"
-                  onClick={() => {
-                    setVisible(true);
-                  }}
-                />
-              </SubNavAction>
+            <div className="flex flex-col gap-3xl">
+              <SecondarySubHeader
+                title="Builds"
+                action={
+                  <Button
+                    content="Create build"
+                    variant="primary"
+                    onClick={() => {
+                      setVisible(true);
+                    }}
+                  />
+                }
+              />
               <Wrapper
                 empty={{
                   is: builds.length === 0,
@@ -90,7 +94,7 @@ const Builds = () => {
               >
                 <BuildResources items={builds} />
               </Wrapper>
-            </>
+            </div>
           );
         }}
       </LoadingComp>

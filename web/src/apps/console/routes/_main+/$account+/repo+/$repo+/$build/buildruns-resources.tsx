@@ -19,10 +19,10 @@ import {
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useParams } from '@remix-run/react';
-import { IPvcs } from '~/console/server/gql/queries/pvc-queries';
+import { IBuildRuns } from '~/console/server/gql/queries/build-run-queries';
 
-const RESOURCE_NAME = 'storage';
-type BaseType = ExtractNodeType<IPvcs>;
+const RESOURCE_NAME = 'build run';
+type BaseType = ExtractNodeType<IBuildRuns>;
 
 const parseItem = (item: BaseType) => {
   return {
@@ -77,13 +77,13 @@ const GridView = ({ items, onDelete }: IResource) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ExtraButton
-                        onDelete={() => {
-                          onDelete(item);
-                        }}
-                      />
-                    }
+                    // action={
+                    //   <ExtraButton
+                    //     onDelete={() => {
+                    //       onDelete(item);
+                    //     }}
+                    //   />
+                    // }
                   />
                 ),
               },
@@ -123,16 +123,16 @@ const ListView = ({ items, onDelete }: IResource) => {
                   <ListBody data={`Last Updated ${updateInfo.time}`} />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
-                  />
-                ),
-              },
+              // {
+              //   key: generateKey(keyPrefix, 'action'),
+              //   render: () => (
+              //     <ExtraButton
+              //       onDelete={() => {
+              //         onDelete(item);
+              //       }}
+              //     />
+              //   ),
+              // },
             ]}
           />
         );
@@ -141,7 +141,7 @@ const ListView = ({ items, onDelete }: IResource) => {
   );
 };
 
-const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
+const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -190,4 +190,4 @@ const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default StorageResources;
+export default BuildRunResources;

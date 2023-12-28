@@ -8,17 +8,17 @@ import {
   ConsoleGetBuildRunQueryVariables,
 } from '~/root/src/generated/gql/server';
 
-export type IBuildRuns = NN<ConsoleListBuildRunsQuery['infra_listBuildRuns']>;
+export type IBuildRuns = NN<ConsoleListBuildRunsQuery['cr_listBuildRuns']>;
 
 export const buildRunQueries = (executor: IExecutor) => ({
   listBuildRuns: executor(
     gql`
-      query Infra_listBuildRuns(
+      query Cr_listBuildRuns(
         $repoName: String!
         $search: SearchBuildRuns
         $pq: CursorPaginationIn
       ) {
-        infra_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
+        cr_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
           edges {
             cursor
             node {
@@ -85,15 +85,14 @@ export const buildRunQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleListBuildRunsQuery) =>
-        data.infra_listBuildRuns,
+      transformer: (data: ConsoleListBuildRunsQuery) => data.cr_listBuildRuns,
       vars(_: ConsoleListBuildRunsQueryVariables) {},
     }
   ),
   getBuildRun: executor(
     gql`
-      query Infra_getBuildRun($repoName: String!, $buildRunName: String!) {
-        infra_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
+      query Cr_getBuildRun($repoName: String!, $buildRunName: String!) {
+        cr_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
           clusterName
           creationTime
           markedForDeletion
@@ -148,7 +147,7 @@ export const buildRunQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleGetBuildRunQuery) => data.infra_getBuildRun,
+      transformer: (data: ConsoleGetBuildRunQuery) => data.cr_getBuildRun,
       vars(_: ConsoleGetBuildRunQueryVariables) {},
     }
   ),

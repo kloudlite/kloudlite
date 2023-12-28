@@ -1,19 +1,17 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import { ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { useState } from 'react';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { validateCloudProvider } from '~/console/server/r-utils/common';
-import RawWrapper, { TitleBox } from '~/console/components/raw-wrapper';
-import { FadeIn } from '~/console/page-components/util';
 import { IdSelector } from '~/console/components/id-selector';
+import ProgressWrapper from '~/console/components/progress-wrapper';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -81,61 +79,21 @@ const NewCloudProvider = () => {
   });
 
   const progressItems = [
-    { label: 'Create Team', active: true, id: 1, completed: false },
     {
-      label: 'Invite your Team Members',
-      active: true,
-      id: 2,
-      completed: false,
+      label: 'Create Team',
+      active: false,
+      completed: true,
     },
     {
       label: 'Add your Cloud Provider',
       active: true,
-      id: 3,
       completed: false,
-    },
-    {
-      label: 'Validate Cloud Provider',
-      active: false,
-      id: 4,
-      completed: false,
-    },
-    {
-      label: 'Setup First Cluster',
-      active: false,
-      id: 5,
-      completed: false,
-    },
-    // {
-    //   label: 'Create your project',
-    //   active: false,
-    //   id: 5,
-    //   completed: false,
-    // },
-  ];
-
-  const pItems = useMapper(progressItems, (i) => {
-    return {
-      value: i.id,
-      item: {
-        ...i,
-      },
-    };
-  });
-
-  return (
-    <RawWrapper
-      onProgressClick={() => {}}
-      title="Integrate Cloud Provider"
-      subtitle="Kloudlite will help you to develop and deploy cloud native
-    applications easily."
-      progressItems={pItems}
-      rightChildren={
-        <FadeIn onSubmit={handleSubmit}>
-          <TitleBox
-            title="Cloud provider details"
-            subtitle="A cloud provider offers remote computing resources and services over the internet."
-          />
+      children: (
+        <form className="py-3xl flex flex-col gap-3xl" onSubmit={handleSubmit}>
+          <div className="bodyMd text-text-soft">
+            A cloud provider offers remote computing resources and services over
+            the internet.
+          </div>
           <div className="flex flex-col">
             <TextInput
               label="Name"
@@ -181,24 +139,38 @@ const NewCloudProvider = () => {
               )}
             </div>
           </div>
-          <div className="flex flex-row gap-xl justify-end">
-            <Button
-              variant="outline"
-              content="Back"
-              prefix={<ArrowLeft />}
-              size="lg"
-            />
+          <div className="flex flex-row gap-xl justify-start">
             <Button
               loading={isLoading}
               type="submit"
               variant="primary"
               content="Continue"
               suffix={<ArrowRight />}
-              size="lg"
             />
           </div>
-        </FadeIn>
-      }
+        </form>
+      ),
+    },
+    {
+      label: 'Validate Cloud Provider',
+      active: false,
+      completed: false,
+    },
+    {
+      label: 'Setup First Cluster',
+      active: false,
+      completed: false,
+    },
+  ];
+
+  return (
+    <ProgressWrapper
+      title="Setup your account!"
+      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
+  teams"
+      progressItems={{
+        items: progressItems,
+      }}
     />
   );
 };

@@ -141,7 +141,7 @@ const ListView = ({ items, onDelete }: IResource) => {
   );
 };
 
-const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
+const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -190,4 +190,4 @@ const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default BuildRunResources;
+export default StorageResources;

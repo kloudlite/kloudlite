@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Plus, X } from '@jengaicons/react';
+import { ArrowRight, Plus, X } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -6,51 +6,20 @@ import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import { usePagination } from '~/components/molecule/pagination';
 import { toast } from '~/components/molecule/toast';
-import { titleCase, useMapper } from '~/components/utils';
-import { ListBody, ListItem } from '~/console/components/console-list-components';
+import { titleCase } from '~/components/utils';
+import {
+  ListBody,
+  ListItem,
+} from '~/console/components/console-list-components';
 import DynamicPagination from '~/console/components/dynamic-pagination';
 import List from '~/console/components/list';
-import RawWrapper, { TitleBox } from '~/console/components/raw-wrapper';
+import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ACCOUNT_ROLES } from '~/console/utils/commons';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { Github__Com___Kloudlite___Api___Apps___Iam___Types__Role as Role } from '~/root/src/generated/gql/server';
-
-const progressItems = [
-  { label: 'Create Team', active: true, id: 1, completed: false },
-  {
-    label: 'Invite your Team Members',
-    active: true,
-    id: 2,
-    completed: false,
-  },
-  {
-    label: 'Add your Cloud Provider',
-    active: false,
-    id: 3,
-    completed: false,
-  },
-  {
-    label: 'Validate Cloud Provider',
-    active: false,
-    id: 4,
-    completed: false,
-  },
-  {
-    label: 'Setup First Cluster',
-    active: false,
-    id: 5,
-    completed: false,
-  },
-  // {
-  //   label: 'Create your project',
-  //   active: false,
-  //   id: 5,
-  //   completed: false,
-  // },
-];
 
 const InviteTeam = () => {
   const { a: accountName } = useParams();
@@ -64,15 +33,6 @@ const InviteTeam = () => {
   const [inviteMembers, setInviteMembers] = useState<
     { userEmail: string; userRole: Role }[]
   >([]);
-
-  const items = useMapper(progressItems, (i) => {
-    return {
-      value: i.id,
-      item: {
-        ...i,
-      },
-    };
-  });
 
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
@@ -140,19 +100,19 @@ const InviteTeam = () => {
     }
   };
 
-  return (
-    <RawWrapper
-      title="Collaborate, Invite, Achieve Together!"
-      subtitle="Simplify Collaboration and Enhance Productivity with Kloudlite
-    teams."
-      progressItems={items}
-      rightChildren={
-        <div className="flex flex-col p-3xl gap-6xl justify-center">
+  const progressItems = [
+    {
+      label: 'Create Team',
+      active: true,
+      completed: false,
+    },
+    {
+      label: 'Invite your Team Members',
+      active: false,
+      completed: false,
+      children: (
+        <div className="flex flex-col py-3xl gap-6xl justify-center">
           <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
-            <TitleBox
-              title="Invite teammates"
-              subtitle="Invite teammates to collaborate and contribute."
-            />
             <div className="flex flex-col gap-xl">
               <div className="flex gap-2xl">
                 <div className="flex-1">
@@ -241,16 +201,10 @@ const InviteTeam = () => {
               })}
             </List.Root>
           </DynamicPagination>
-          <div className="flex flex-row gap-xl justify-end">
-            <Button
-              variant="outline"
-              content="Back"
-              prefix={<ArrowLeft />}
-              size="lg"
-            />
+          <div className="flex flex-row gap-xl justify-start">
             <Button
               variant="primary"
-              content="Continue"
+              content="Next"
               suffix={<ArrowRight />}
               size="lg"
               loading={inviting}
@@ -258,7 +212,28 @@ const InviteTeam = () => {
             />
           </div>
         </div>
-      }
+      ),
+    },
+    {
+      label: 'Add your Cloud Provider',
+      active: false,
+      completed: false,
+    },
+    {
+      label: 'Setup First Cluster',
+      active: false,
+      completed: false,
+    },
+  ];
+
+  return (
+    <ProgressWrapper
+      title="Setup your account!"
+      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
+  teams"
+      progressItems={{
+        items: progressItems,
+      }}
     />
   );
 };

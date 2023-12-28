@@ -34,11 +34,10 @@ import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import {
-  Nodeless,
   InfraAsCode,
-  CustomEnv,
   Container as ContainerIcon,
   GearSix,
+  Project,
 } from '@jengaicons/react';
 import HandleProfile from './handle-profile';
 
@@ -69,11 +68,16 @@ const AccountTabs = () => {
     <CommonTabs
       baseurl={`/${account}`}
       tabs={[
-        // {
-        //   label: 'Projects',
-        //   to: '/projects',
-        //   value: '/projects',
-        // },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <Project size={iconSize} />
+              Projects
+            </span>
+          ),
+          to: '/projects',
+          value: '/projects',
+        },
         {
           label: (
             <span className="flex flex-row items-center gap-lg">

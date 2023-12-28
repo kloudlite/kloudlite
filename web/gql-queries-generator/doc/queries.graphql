@@ -2292,6 +2292,7 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
           userName
         }
         creationTime
+        buildClusterName
         credUser {
           userEmail
           userId
@@ -2557,7 +2558,7 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
 }
 
 query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
-  infra_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
+  cr_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -2624,7 +2625,7 @@ query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: Cu
 }
 
 query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
-  infra_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
+  cr_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
     clusterName
     creationTime
     markedForDeletion

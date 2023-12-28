@@ -1,13 +1,11 @@
 import { Key, ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
-import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import ProgressTracker, {
-  ProgressItemProps,
-} from '~/components/organisms/progress-tracker';
-import { cn } from '~/components/utils';
 
-interface IRawWrapper<I = any, V = any, C = number | string> {
+import { cn } from '~/components/utils';
+import ProgressTracker from './console-progress-tracker';
+
+interface IRawWrapper<V = any> {
   title: string;
   subtitle: string;
   badge?: {
@@ -15,12 +13,12 @@ interface IRawWrapper<I = any, V = any, C = number | string> {
     subtitle?: string;
     image?: ReactNode;
   };
-  progressItems?: ProgressItemProps<I & { id: C; label: ReactNode }, V>[];
+  progressItems?: any;
   onProgressClick?: (value: V) => void;
   onCancel?: () => void;
   rightChildren: ReactNode;
 }
-function RawWrapper<I = any, V = any, C = number | string>({
+function RawWrapper<V = any>({
   title,
   subtitle,
   progressItems,
@@ -28,7 +26,7 @@ function RawWrapper<I = any, V = any, C = number | string>({
   onCancel,
   badge,
   rightChildren,
-}: IRawWrapper<I, V, C>) {
+}: IRawWrapper<V>) {
   return (
     <div className="min-h-screen flex flex-row">
       <div className="min-h-full flex flex-col bg-surface-basic-subdued px-11xl pt-11xl pb-10xl">
@@ -64,22 +62,10 @@ function RawWrapper<I = any, V = any, C = number | string>({
             {progressItems && (
               <ProgressTracker.Root
                 items={progressItems}
-                onClick={(v) => {
-                  onProgressClick(v);
+                onClick={() => {
+                  // onProgressClick(v);
                 }}
-              >
-                {(item) => {
-                  return (
-                    <ProgressTracker.Item
-                      key={item.id as Key}
-                      active={item.active}
-                      completed={item.completed}
-                    >
-                      {item.label}
-                    </ProgressTracker.Item>
-                  );
-                }}
-              </ProgressTracker.Root>
+              />
             )}
           </div>
 

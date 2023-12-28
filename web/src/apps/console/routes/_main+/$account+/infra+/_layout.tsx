@@ -14,7 +14,7 @@ const Infra = () => {
   return (
     <SidebarLayout
       navItems={[
-        { label: 'k8s Clusters', value: 'clusters' },
+        { label: 'Clusters', value: 'clusters' },
         { label: 'VMs', value: 'vms' },
       ]}
       parentPath="/infra"

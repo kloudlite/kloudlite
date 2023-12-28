@@ -1,4 +1,4 @@
-import { Plus, PlusFill } from '@jengaicons/react';
+import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
@@ -8,11 +8,11 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
-import ClusterResources from './cluster-resources';
-import Tools from './tools';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import Tools from './tools';
+import ClusterResources from './cluster-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -131,7 +131,7 @@ const Clusters = () => {
         return (
           <div className="flex flex-col gap-6xl">
             <SecondarySubHeader
-              title="K8s Clusters"
+              title="Clusters"
               action={
                 <Button
                   content="Create cluster"
