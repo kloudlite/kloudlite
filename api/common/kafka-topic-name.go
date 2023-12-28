@@ -30,6 +30,7 @@ type messageReceiver string
 const (
 	ConsoleReceiver messageReceiver = "kloudlite-console"
 	InfraReceiver   messageReceiver = "kloudlite-infra"
+	ContainerRegistryReceiver messageReceiver = "kloudlite-container-registry"
 )
 
 func GetPlatformClusterMessagingTopic(accountName string, clusterName string, controller messageReceiver, ev platformEvent) string {
