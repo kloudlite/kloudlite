@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
+	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 )
 
 func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {
@@ -62,11 +63,14 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		}
 	}
 
-	build.Spec.AccountName = ctx.AccountName
+
 	return d.buildRepo.Create(ctx, &entities.Build{
-		Spec:          build.Spec,
+		Spec: func() dbv1.BuildRunSpec{
+			build.Spec.AccountName = ctx.AccountName
+			return build.Spec
+		}(),
 		Name:          build.Name,
-		AccountName: ctx.AccountName,
+		BuildClusterName: build.BuildClusterName,
 		CreatedBy:     common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
 		LastUpdatedBy: common.CreatedOrUpdatedBy{},
 		Source:        entities.GitSource{Repository: build.Source.Repository, Branch: build.Source.Branch, Provider: build.Source.Provider, WebhookId: webhookId},
@@ -96,10 +100,13 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 	if err := validateBuild(build); err != nil {
 		return nil, errors.NewE(err)
 	}
-
 	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
-		Spec:          build.Spec,
+		Spec: func() dbv1.BuildRunSpec{
+			build.Spec.AccountName = ctx.AccountName
+			return build.Spec
+		}(),
 		Name:          build.Name,
+		BuildClusterName: build.BuildClusterName,
 		CreatedBy:     common.CreatedOrUpdatedBy{},
 		LastUpdatedBy: common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
 		Source:        build.Source,

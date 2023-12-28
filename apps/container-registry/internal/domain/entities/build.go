@@ -38,9 +38,8 @@ type Build struct {
 	Name             string                    `json:"name"`
 	CreatedBy        common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
 	LastUpdatedBy    common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
-	AccountName 	string `json:"accountName" graphql:"noinput"`
-	BuildClusterName 	string `json:"buildClusterName"`
 
+	BuildClusterName 	string `json:"buildClusterName"`
 	Spec dbv1.BuildRunSpec `json:"spec"`
 
 	Source GitSource `json:"source"`

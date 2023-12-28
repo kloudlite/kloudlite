@@ -48,7 +48,7 @@ var Module = fx.Module("framework",
 	mongoDb.NewMongoClientFx[*fm](),
 
 	fx.Provide(func(logger logging.Logger, ev *env.Env) (*nats.Client, error){
-		name := "container-registry:nats-client"
+		name := "cr"
 		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
 			Name:   name,
 			Logger: logger,

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -14,6 +15,11 @@ import (
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
 )
+
+// AccountName is the resolver for the accountName field.
+func (r *buildResolver) AccountName(ctx context.Context, obj *entities.Build) (string, error) {
+	panic(fmt.Errorf("not implemented: AccountName - accountName"))
+}
 
 // CreationTime is the resolver for the creationTime field.
 func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (string, error) {
