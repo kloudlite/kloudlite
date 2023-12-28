@@ -82,7 +82,7 @@ type Domain interface {
 
 	ResyncEnvironment(ctx ConsoleContext, namespace, name string) error
 
-	ListWorkspaces(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error)
+	//ListWorkspaces(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error)
 	GetWorkspace(ctx ConsoleContext, namespace, name string) (*entities.Workspace, error)
 
 	CreateWorkspace(ctx ConsoleContext, env entities.Workspace) (*entities.Workspace, error)
