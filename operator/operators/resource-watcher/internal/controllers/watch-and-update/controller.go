@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	v1 "github.com/kloudlite/operator/apis/crds/v1"
 	"strings"
 	"time"
 
@@ -86,7 +87,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			case "Device":
 				{
 					deviceConfig := &corev1.Secret{}
-					if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
+					if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
 						r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
 						deviceConfig = nil
 					}
@@ -270,7 +271,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for i := range watchList {
 		func(obj WatchResource) {
-			fmt.Println(obj.APIVersion, obj.Kind)
 			builder.Watches(
 				fn.NewUnstructured(obj.TypeMeta),
 				handler.EnqueueRequestsFromMapFunc(
@@ -301,6 +301,15 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 		}(watchList[i])
 	}
+
+	builder.Watches(
+		&v1.Secret{},
+		handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, object client.Object) []reconcile.Request {
+				return nil
+			},
+		),
+	)
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
