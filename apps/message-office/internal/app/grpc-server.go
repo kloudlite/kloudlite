@@ -432,11 +432,9 @@ func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_
 	}
 }
 
-<<<<<<< HEAD
-func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDispatchService_ReceiveContainerRegistryUpdatesServer) error{
-=======
+
 func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDispatchService_ReceiveContainerRegistryUpdatesServer) error {
->>>>>>> f7367714ddaf2a203e68c6a88d8af36192d3db9c
+
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return klErrors.NewE(err)
@@ -450,11 +448,7 @@ func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDisp
 	}
 }
 
-<<<<<<< HEAD
 
-
-=======
->>>>>>> f7367714ddaf2a203e68c6a88d8af36192d3db9c
 func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger logging.Logger) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
 		UnimplementedMessageDispatchServiceServer: messages.UnimplementedMessageDispatchServiceServer{},
