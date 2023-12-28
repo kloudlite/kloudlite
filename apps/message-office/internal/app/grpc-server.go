@@ -387,6 +387,33 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 	return nil
 }
 
+func (g *grpcServer) processCRUpdate(ctx context.Context, accountName string, clusterName string, msg *messages.ContainerRegistryUpdate) (err error) {
+	g.infraUpdatesCounter++
+	logger := g.logger.WithKV("accountName", accountName).WithKV("clusterName", clusterName).WithKV("component", "container-registry-update")
+
+	logger.Infof("[%v] received cr update", g.infraUpdatesCounter)
+	defer func() {
+		if err != nil {
+			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed cr update", g.infraUpdatesCounter))
+			logger.Errorf(err)
+			return
+		}
+		logger.Infof("[%v] processed cr update", g.infraUpdatesCounter)
+	}()
+
+	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ContainerRegistryReceiver, common.EventResourceUpdate)
+	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
+		Subject: msgTopic,
+		Payload: msg.Message,
+	}); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", msgTopic))
+	}
+
+	logger.Infof("[%v] processed cr update", g.infraUpdatesCounter)
+	return nil
+}
+
+
 // ReceiveInfraUpdates implements messages.MessageDispatchServiceServer
 func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) (err error) {
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
@@ -401,6 +428,22 @@ func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_
 		_ = g.processInfraUpdate(server.Context(), accountName, clusterName, statusMsg)
 	}
 }
+
+func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDispatchService_ReceiveContainerRegistryUpdatesServer) error{
+	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
+	if err != nil {
+		return klErrors.NewE(err)
+	}
+	for {
+		statusMsg, err := server.Recv()
+		if err != nil {
+			return klErrors.NewE(err)
+		}
+		_ = g.processCRUpdate(server.Context(), accountName, clusterName, statusMsg)
+	}
+}
+
+
 
 func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger logging.Logger) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
