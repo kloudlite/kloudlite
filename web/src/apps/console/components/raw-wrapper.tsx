@@ -62,8 +62,8 @@ function RawWrapper<V = any>({
             {progressItems && (
               <ProgressTracker.Root
                 items={progressItems}
-                onClick={(v) => {
-                  onProgressClick(v);
+                onClick={() => {
+                  // onProgressClick(v);
                 }}
               />
             )}

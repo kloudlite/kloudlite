@@ -13,7 +13,7 @@ import AnimateHide from '~/components/atoms/animate-hide';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { cn, uuid } from '~/components/utils';
+import { cn, useMapper, uuid } from '~/components/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
@@ -27,7 +27,12 @@ import Popup from '~/components/molecule/popup';
 import GitRepoSelector from '~/console/components/git-repo-selector';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IBuilds } from '~/console/server/gql/queries/build-queries';
-import { ExtractNodeType } from '~/console/server/r-utils/common';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 
 interface IKeyValuePair {
   onChange?(
@@ -216,10 +221,37 @@ const BuildPlatforms = ({
 };
 
 type IDialog = IDialogBase<ExtractNodeType<IBuilds>>;
+
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
+
+  const { data: clusters, error: errorCluster } = useCustomSwr(
+    '/clusters',
+    async () => api.listClusters({})
+  );
+
+  const clusterData = useMapper(parseNodes(clusters), (item) => {
+    console.log(errorCluster);
+
+    return {
+      label: item.displayName,
+      value: parseName(item),
+      render: () => (
+        <div className="flex flex-col">
+          <div>{item.displayName}</div>
+          <div className="bodySm text-text-soft">{parseName(item)}</div>
+        </div>
+      ),
+    };
+  });
+
+  useEffect(() => {
+    if (errorCluster) {
+      toast.error('Error loading clusters.');
+    }
+  }, [errorCluster]);
 
   const [source, setSource] = useState<ISource | null>(null);
 
@@ -253,6 +285,7 @@ const Root = (props: IDialog) => {
               label: t,
               value: t,
             })) || [],
+          buildClusterName: '',
           repository: repo,
           advanceOptions: isAdvanceOptions(props.data.spec.buildOptions),
           ...props.data.spec.buildOptions,
@@ -261,6 +294,7 @@ const Root = (props: IDialog) => {
       : {
           name: '',
           tags: [],
+          buildClusterName: '',
           advanceOptions: false,
           repository: repo,
           buildArgs: {},
@@ -271,6 +305,7 @@ const Root = (props: IDialog) => {
         },
     validationSchema: Yup.object({
       name: Yup.string().required(),
+      buildClusterName: Yup.string().required(),
       tags: Yup.array()
         .required()
         .test('is-valid', 'Tags is required', (value) => {
@@ -302,6 +337,7 @@ const Root = (props: IDialog) => {
             const { errors: e } = await api.createBuild({
               build: {
                 name: val.name,
+                buildClusterName: val.buildClusterName,
                 source: {
                   branch: source.branch!,
                   repository: source.repo!,
@@ -343,6 +379,7 @@ const Root = (props: IDialog) => {
               crUpdateBuildId: props.data.id,
               build: {
                 name: val.name,
+                buildClusterName: val.buildClusterName,
                 source: {
                   branch: source.branch!,
                   repository: source.repo!,
@@ -468,6 +505,21 @@ const Root = (props: IDialog) => {
                     error={!!errors.tags}
                     message={errors.tags}
                   />
+
+                  <Select
+                    label="Clusters"
+                    size="md"
+                    value={clusterData.find(
+                      (cd) => cd.value === values.buildClusterName
+                    )}
+                    options={async () => clusterData}
+                    onChange={(val) => {
+                      handleChange('buildClusterName')(dummyEvent(val.value));
+                    }}
+                    error={!!errors.buildClusterName}
+                    message={errors.buildClusterName}
+                  />
+
                   <Checkbox
                     label="Advance options"
                     checked={values.advanceOptions}

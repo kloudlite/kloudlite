@@ -8,11 +8,10 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import Wip from '~/console/components/wip';
-import ProjectResources from './project-resources';
-import Tools from './tools';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import ProjectResources from './project-resources';
+import Tools from './tools';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -72,7 +71,7 @@ export const loader = (ctx: IRemixCtx) => {
 };
 
 const Projects = () => {
-  return <Wip />;
+  // return <Wip />;
 
   const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();

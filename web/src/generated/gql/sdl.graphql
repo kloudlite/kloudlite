@@ -95,6 +95,8 @@ type AppPaginatedRecords {
 }
 
 type Build {
+  accountName: String!
+  buildClusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -147,6 +149,7 @@ type BuildEdge {
 }
 
 input BuildIn {
+  buildClusterName: String!
   name: String!
   source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn!
   spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn!
@@ -161,6 +164,7 @@ type BuildPaginatedRecords {
 type BuildRun {
   accountName: String!
   apiVersion: String!
+  buildName: String!
   clusterName: String!
   creationTime: Date!
   id: String!
@@ -170,6 +174,7 @@ type BuildRun {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -255,6 +260,42 @@ input ClusterIn {
   displayName: String!
   metadata: MetadataIn!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
+}
+
+type ClusterManagedService {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ClusterManagedServiceEdge {
+  cursor: String!
+  node: ClusterManagedService!
+}
+
+input ClusterManagedServiceIn {
+  displayName: String!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn
+}
+
+type ClusterManagedServicePaginatedRecords {
+  edges: [ClusterManagedServiceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type ClusterPaginatedRecords {
@@ -825,6 +866,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
   iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
   maxCount: Int!
   minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__Taint!]
   targetCount: Int!
 }
 
@@ -833,6 +876,8 @@ input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn 
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   maxCount: Int!
   minCount: Int!
+  nodeLabels: Map
+  nodeTaints: [K8s__io___api___core___v1__TaintIn!]
   targetCount: Int!
 }
 
@@ -975,6 +1020,16 @@ input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn {
   enabled: Boolean!
   secretName: String
   username: String
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  namespace: String!
 }
 
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
@@ -1337,6 +1392,7 @@ type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec {
   accountName: String!
   clusterName: String!
   deviceNamespace: String
+  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
 
@@ -1344,6 +1400,7 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   accountName: String!
   clusterName: String!
   deviceNamespace: String
+  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
 
@@ -1634,10 +1691,24 @@ enum K8s__io___api___core___v1__SecretType {
   Opaque
 }
 
+type K8s__io___api___core___v1__Taint {
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
+}
+
 enum K8s__io___api___core___v1__TaintEffect {
   NoExecute
   NoSchedule
   PreferNoSchedule
+}
+
+input K8s__io___api___core___v1__TaintIn {
+  effect: K8s__io___api___core___v1__TaintEffect!
+  key: String!
+  timeAdded: Date
+  value: String
 }
 
 type K8s__io___api___core___v1__Toleration {
@@ -1920,16 +1991,19 @@ type Mutation {
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   cr_updateBuildCacheKey(buildCacheKey: BuildCacheKeyIn!, id: ID!): BuildCacheKey
   infra_createCluster(cluster: ClusterIn!): Cluster
+  infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   infra_deleteCluster(name: String!): Boolean!
+  infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
   infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean!
   infra_updateCluster(cluster: ClusterIn!): Cluster
+  infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
@@ -2152,8 +2226,10 @@ type Query {
   core_resyncWorkspace(name: String!, project: ProjectId!): Boolean!
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_getBuild(id: ID!): Build
+  cr_getBuildRun(buildRunName: String!, repoName: String!): BuildRun
   cr_getCredToken(username: String!): String!
   cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys): BuildCacheKeyPaginatedRecords
+  cr_listBuildRuns(pq: CursorPaginationIn, repoName: String!, search: SearchBuildRuns): BuildRunPaginatedRecords
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
   cr_listDigests(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): DigestPaginatedRecords
@@ -2167,14 +2243,14 @@ type Query {
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
   infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
-  infra_getBuildRun(buildRunName: String!, repoName: String!): BuildRun
   infra_getCluster(name: String!): Cluster
+  infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService
   infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool
   infra_getProviderSecret(name: String!): CloudProviderSecret
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice
-  infra_listBuildRuns(pq: CursorPaginationIn, repoName: String!, search: SearchBuildRuns): BuildRunPaginatedRecords
+  infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
   infra_listNodePools(clusterName: String!, pagination: CursorPaginationIn, search: SearchNodepool): NodePoolPaginatedRecords
@@ -2283,6 +2359,11 @@ input SearchCluster {
   cloudProviderName: MatchFilterIn
   isReady: MatchFilterIn
   region: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchClusterManagedService {
+  isReady: MatchFilterIn
   text: MatchFilterIn
 }
 

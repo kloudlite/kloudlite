@@ -4,6 +4,7 @@ import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
+  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
@@ -32,6 +33,7 @@ const parseItem = (item: BaseType) => {
     name: item.name,
     id: item.id,
     status: item.status,
+    cluster: item.buildClusterName,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
@@ -123,7 +125,7 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, status, updateInfo } = parseItem(item);
+        const { name, id, status, updateInfo, cluster } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -135,6 +137,11 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
                 key: generateKey(keyPrefix, 0),
                 className: 'flex-1',
                 render: () => <ListTitle title={name} />,
+              },
+              {
+                key: generateKey(keyPrefix, 'cluster'),
+                className: 'flex-1',
+                render: () => <ListBody data={cluster} />,
               },
               {
                 key: generateKey(keyPrefix, id, index, 'status'),

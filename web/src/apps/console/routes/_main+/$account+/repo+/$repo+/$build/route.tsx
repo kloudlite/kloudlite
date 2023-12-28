@@ -1,6 +1,6 @@
 import Wrapper from '~/console/components/wrapper';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
-import { useLoaderData, useParams } from '@remix-run/react';
+import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -8,7 +8,10 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { defer } from '@remix-run/node';
 import fake from '~/root/fake-data-generator/fake';
+import Breadcrum from '~/console/components/breadcrum';
+import { ChevronRight } from '@jengaicons/react';
 import Tools from './tools';
+import BuildRunResources from './buildruns-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -23,6 +26,7 @@ export const loader = async (ctx: IRemixCtx) => {
     if (errors) {
       throw errors[0];
     }
+    console.log(data);
     return { buildRunData: data };
   });
 
@@ -41,9 +45,26 @@ const Tabs = () => {
   );
 };
 
+const NetworkBreadcrum = () => {
+  const { build } = useParams();
+  return (
+    <div className="flex flex-row items-center">
+      <Breadcrum.Button
+        content={
+          <div className="flex flex-row gap-md items-center">
+            <ChevronRight size={14} /> {build}
+          </div>
+        }
+      />
+    </div>
+  );
+};
+
 export const handle = () => {
   return {
     navbar: <Tabs />,
+    noLayout: true,
+    breadcrum: () => <NetworkBreadcrum />,
   };
 };
 
@@ -66,11 +87,11 @@ const BuildRuns = () => {
         return (
           <Wrapper
             header={{
-              title: 'Storage',
+              title: 'Buildruns',
             }}
             empty={{
               is: buildruns.length === 0,
-              title: 'This is where you’ll manage your storage',
+              title: 'This is where you’ll manage your buildruns',
               content: '',
             }}
             pagination={{
@@ -79,7 +100,7 @@ const BuildRuns = () => {
             }}
             tools={<Tools />}
           >
-            {/* <BuildRunResources items={buildruns} /> */}
+            <BuildRunResources items={buildruns} />
           </Wrapper>
         );
       }}

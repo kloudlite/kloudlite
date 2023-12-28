@@ -187,6 +187,10 @@ export type SearchBuildCacheKeys = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
+export type SearchBuildRuns = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type SearchBuilds = {
   text?: InputMaybe<MatchFilterIn>;
 };
@@ -238,7 +242,8 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
   | 'Lost'
   | 'Pending';
 
-export type SearchBuildRuns = {
+export type SearchClusterManagedService = {
+  isReady?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -590,6 +595,7 @@ export type SecretIn = {
 };
 
 export type BuildIn = {
+  buildClusterName: Scalars['String']['input'];
   name: Scalars['String']['input'];
   source: Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn;
   spec: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildRunSpecIn;
@@ -693,6 +699,18 @@ export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretR
     namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
+export type ClusterManagedServiceIn = {
+  displayName: Scalars['String']['input'];
+  metadata?: InputMaybe<MetadataIn>;
+  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManagedServiceSpecIn>;
+};
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManagedServiceSpecIn =
+  {
+    msvcSpec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
+    namespace: Scalars['String']['input'];
+  };
+
 export type DomainEntryIn = {
   clusterName: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
@@ -711,6 +729,8 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolS
     cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
     maxCount: Scalars['Int']['input'];
     minCount: Scalars['Int']['input'];
+    nodeLabels?: InputMaybe<Scalars['Map']['input']>;
+    nodeTaints?: InputMaybe<Array<K8s__Io___Api___Core___V1__TaintIn>>;
     targetCount: Scalars['Int']['input'];
   };
 
@@ -753,6 +773,13 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGp
     instanceTypes: Array<Scalars['String']['input']>;
   };
 
+export type K8s__Io___Api___Core___V1__TaintIn = {
+  effect: K8s__Io___Api___Core___V1__TaintEffect;
+  key: Scalars['String']['input'];
+  timeAdded?: InputMaybe<Scalars['Date']['input']>;
+  value?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type CloudProviderSecretIn = {
   aws?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn>;
   cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
@@ -778,6 +805,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSp
     accountName: Scalars['String']['input'];
     clusterName: Scalars['String']['input'];
     deviceNamespace?: InputMaybe<Scalars['String']['input']>;
+    nodeSelector?: InputMaybe<Scalars['Map']['input']>;
     ports?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn>
     >;
@@ -3173,6 +3201,7 @@ export type ConsoleListBuildsQuery = {
       cursor: string;
       node: {
         creationTime: any;
+        buildClusterName: string;
         errorMessages: any;
         id: string;
         markedForDeletion?: boolean;
@@ -3433,7 +3462,7 @@ export type ConsoleListBuildRunsQueryVariables = Exact<{
 }>;
 
 export type ConsoleListBuildRunsQuery = {
-  infra_listBuildRuns?: {
+  cr_listBuildRuns?: {
     totalCount: number;
     edges: Array<{
       cursor: string;
@@ -3495,7 +3524,7 @@ export type ConsoleGetBuildRunQueryVariables = Exact<{
 }>;
 
 export type ConsoleGetBuildRunQuery = {
-  infra_getBuildRun?: {
+  cr_getBuildRun?: {
     clusterName: string;
     creationTime: any;
     markedForDeletion?: boolean;

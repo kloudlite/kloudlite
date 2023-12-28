@@ -106,7 +106,7 @@ const Accounts = () => {
 
   useEffect(() => {
     setItems(formatData());
-  }, [accounts]);
+  }, [accounts, invites]);
 
   const api = useConsoleApi();
   const navigate = useNavigate();
@@ -194,7 +194,7 @@ const Accounts = () => {
             {...{
               hasNext,
               hasPrevious,
-              hasItems: accounts.length > 0,
+              hasItems: accounts.length > 0 || invites.length > 0,
               noItemsMessage: '0 teammates to invite.',
               onNext,
               onPrev,
@@ -209,6 +209,8 @@ const Accounts = () => {
           >
             <List.Root plain linkComponent={Link}>
               {page.map((account, index) => {
+                console.log('here....', account);
+
                 const name = parseName(account);
                 const { isInvite, displayName, inviteToken } = account;
                 return (
@@ -313,15 +315,6 @@ const Accounts = () => {
         </div>
       </div>
     </div>
-  );
-
-  return (
-    <RawWrapper
-      title={`Welcome ${(user?.name || '').split(' ')[0] || ''}! Select your
-    Team.`}
-      subtitle="Select an account to proceed to console screens."
-      rightChildren={<FadeIn notForm />}
-    />
   );
 };
 

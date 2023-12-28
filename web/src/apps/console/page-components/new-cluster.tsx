@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
+import { ArrowRight } from '@jengaicons/react';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
@@ -9,9 +9,7 @@ import { mapper, useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
-import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { constDatas, awsRegions } from '../dummy/consts';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -27,7 +25,6 @@ import {
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { IAccountContext } from '../routes/_main+/$account+/_layout';
-import { FadeIn } from './util';
 import ProgressWrapper from '../components/progress-wrapper';
 
 type props =
@@ -330,7 +327,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   return (
     <ProgressWrapper
-      title="Setup your account!"
+      title={isOnboarding ? 'Setup your account!' : 'Let’s create new cluster.'}
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
       progressItems={{
