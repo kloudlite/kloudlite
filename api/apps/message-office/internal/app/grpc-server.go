@@ -41,6 +41,7 @@ type (
 
 		resourceUpdatesCounter int64
 		infraUpdatesCounter    int64
+		crUpdatesCounter       int64
 		errorMessagesCounter   int64
 		clusterUpdatesCounter  int64
 	}
@@ -260,7 +261,7 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		logger.Infof("consumer is closed now")
 	}()
 
-	if err:=consumer.Consume(func(msg *types.ConsumeMsg) error {
+	if err := consumer.Consume(func(msg *types.ConsumeMsg) error {
 		logger.WithKV("subject", msg.Subject).Infof("read message from consumer")
 		defer func() {
 			logger.WithKV("subject", msg.Subject).Infof("dispatched message to agent")
@@ -388,17 +389,19 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 }
 
 func (g *grpcServer) processCRUpdate(ctx context.Context, accountName string, clusterName string, msg *messages.ContainerRegistryUpdate) (err error) {
-	g.infraUpdatesCounter++
+
+	g.crUpdatesCounter++
 	logger := g.logger.WithKV("accountName", accountName).WithKV("clusterName", clusterName).WithKV("component", "container-registry-update")
 
-	logger.Infof("[%v] received cr update", g.infraUpdatesCounter)
+	logger.Infof("[%v] received cr update", g.crUpdatesCounter)
 	defer func() {
 		if err != nil {
-			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed cr update", g.infraUpdatesCounter))
+			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed cr update", g.crUpdatesCounter))
 			logger.Errorf(err)
 			return
 		}
-		logger.Infof("[%v] processed cr update", g.infraUpdatesCounter)
+		logger.Infof("[%v] processed cr update", g.crUpdatesCounter)
+
 	}()
 
 	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ContainerRegistryReceiver, common.EventResourceUpdate)
@@ -409,10 +412,10 @@ func (g *grpcServer) processCRUpdate(ctx context.Context, accountName string, cl
 		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", msgTopic))
 	}
 
-	logger.Infof("[%v] processed cr update", g.infraUpdatesCounter)
+
+	logger.Infof("[%v] processed cr update", g.crUpdatesCounter)
 	return nil
 }
-
 
 // ReceiveInfraUpdates implements messages.MessageDispatchServiceServer
 func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) (err error) {
@@ -429,7 +432,11 @@ func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_
 	}
 }
 
+<<<<<<< HEAD
 func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDispatchService_ReceiveContainerRegistryUpdatesServer) error{
+=======
+func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDispatchService_ReceiveContainerRegistryUpdatesServer) error {
+>>>>>>> f7367714ddaf2a203e68c6a88d8af36192d3db9c
 	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
 	if err != nil {
 		return klErrors.NewE(err)
@@ -443,8 +450,11 @@ func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDisp
 	}
 }
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> f7367714ddaf2a203e68c6a88d8af36192d3db9c
 func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger logging.Logger) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
 		UnimplementedMessageDispatchServiceServer: messages.UnimplementedMessageDispatchServiceServer{},
