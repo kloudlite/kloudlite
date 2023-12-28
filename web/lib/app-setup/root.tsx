@@ -30,6 +30,7 @@ import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
 import { isDev } from '../client/helpers/log';
+import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -156,7 +157,7 @@ const Root = ({
 }: {
   Wrapper: (prop: { children: ReactNode }) => JSX.Element;
 }) => {
-  const { NODE_ENV, DEVELOPER, URL_SUFFIX, BASE_URL } = useLoaderData();
+  const env = useLoaderData();
 
   return (
     <html lang="en" className="bg-surface-basic-subdued text-text-default">
@@ -184,15 +185,7 @@ const Root = ({
         <script
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
-            __html: `
-${BASE_URL ? `window.BASE_URL = ${`'${BASE_URL}'`}` : ''}
-${
-  NODE_ENV === 'development'
-    ? `window.DEVELOPER = ${`'${DEVELOPER}'`}`
-    : `window.NODE_ENV = ${`'${NODE_ENV}'`}`
-}
-${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
-               `,
+            __html: getClientEnv(env),
           }}
         />
         <LiveReload port={443} />
@@ -212,23 +205,7 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
 };
 
 export const loader = () => {
-  // if (ctx?.request?.headers?.get('referer')) {
-  //   return redirect(ctx.request.url);
-  // }
-
-  const nodeEnv = process.env.NODE_ENV;
-  return {
-    NODE_ENV: nodeEnv,
-    ...(nodeEnv === 'development'
-      ? { PORT: Number(process.env.PORT), DEVELOPER: process.env.DEVELOPER }
-      : {}),
-
-    ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
-    ...(process.env.BASE_URL ? { BASE_URL: process.env.BASE_URL } : {}),
-    ...(process.env.GATEWAY_URL
-      ? { GATEWAY_URL: process.env.GATEWAY_URL }
-      : {}),
-  };
+  return getServerEnv();
 };
 
 export const headers: HeadersFunction = ({
@@ -243,20 +220,6 @@ export const headers: HeadersFunction = ({
     'Cache-Control': 'max-age=300, s-maxage=3600',
   };
 };
-
-// params of shouldRevalidate
-//   {
-//   actionResult,
-//   currentParams,
-//   currentUrl,
-//   defaultShouldRevalidate,
-//   formAction,
-//   formData,
-//   formEncType,
-//   formMethod,
-//   nextParams,
-//   nextUrl,
-// }
 
 export const shouldRevalidate = () => false;
 

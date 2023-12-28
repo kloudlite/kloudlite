@@ -1,6 +1,5 @@
 import { defer } from '@remix-run/node';
-import { useLoaderData, useParams } from '@remix-run/react';
-import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import { useLoaderData } from '@remix-run/react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';

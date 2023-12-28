@@ -25,7 +25,7 @@ import {
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { REGISTRY_HOST } from '~/root/lib/configs/env';
+import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 
 const RESOURCE_NAME = 'credential';
@@ -88,10 +88,10 @@ const RegistryUrlView = () => {
         <div
           className="cursor-pointer flex flex-row items-center gap-lg truncate"
           onClick={() => {
-            copy(REGISTRY_HOST);
+            copy(registryHost);
           }}
         >
-          <span className="truncate">{REGISTRY_HOST}</span>
+          <span className="truncate">{registryHost}</span>
           <span>
             <Copy size={16} />
           </span>

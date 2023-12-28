@@ -1,9 +1,9 @@
 import { Link, Outlet, useOutletContext, useParams } from '@remix-run/react';
 import { ChevronRight } from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
-import { constants } from '~/console/server/utils/constants';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import { useHandleFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { IProjectContext } from '../../$cluster+/$project+/_layout';
 
 const NetworkBreadcrum = () => {
@@ -28,9 +28,21 @@ const NetworkBreadcrum = () => {
   );
 };
 
+const Tabs = () => {
+  const { account } = useParams();
+  return (
+    <CommonTabs
+      backButton={{
+        to: `/${account}/container-registry/repos`,
+        label: 'Repos',
+      }}
+    />
+  );
+};
+
 export const handle = () => {
   return {
-    navbar: constants.nan,
+    navbar: <Tabs />,
     breadcrum: () => <NetworkBreadcrum />,
   };
 };
@@ -48,7 +60,7 @@ const Repo = () => {
       navItems={[
         { label: 'Images', value: 'images' },
         { label: 'Builds', value: 'builds' },
-        { label: 'Build caches', value: 'buildcaches' },
+        // { label: 'Build caches', value: 'buildcaches' },
       ]}
       parentPath={`/${repo}`}
       headerTitle={repo || ''}

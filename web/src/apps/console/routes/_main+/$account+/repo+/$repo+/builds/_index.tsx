@@ -1,10 +1,8 @@
 import { defer } from '@remix-run/node';
-import { useLoaderData, useParams } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import SubNavAction from '~/console/components/sub-nav-action';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
@@ -36,24 +34,6 @@ export const loader = async (ctx: IRemixCtx) => {
   });
 
   return defer({ promise });
-};
-
-const Tabs = () => {
-  const { account } = useParams();
-  return (
-    <CommonTabs
-      backButton={{
-        to: `/${account}/container-registry/repos`,
-        label: 'Repos',
-      }}
-    />
-  );
-};
-
-export const handle = () => {
-  return {
-    navbar: <Tabs />,
-  };
 };
 
 const Builds = () => {
