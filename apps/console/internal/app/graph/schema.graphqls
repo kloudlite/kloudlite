@@ -136,7 +136,7 @@ type Query {
     core_getImagePullSecret(project: ProjectId!, scope: WorkspaceOrEnvId, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
     core_resyncImagePullSecret(project: ProjectId!, scope: WorkspaceOrEnvId, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-    core_listWorkspaces(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    # core_listWorkspaces(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
     # core_listWorkspaces(namespace: String!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
     core_getWorkspace(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
     core_resyncWorkspace(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
