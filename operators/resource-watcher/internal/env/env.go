@@ -12,6 +12,7 @@ type Env struct {
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
 	AccountName             string        `env:"ACCOUNT_NAME" required:"true"`
 	ClusterName             string        `env:"CLUSTER_NAME" required:"true"`
+	DeviceInfoNamespace     string        `env:"DEVICE_INFO_NAMESPACE"`
 	GrpcAddr                string        `env:"GRPC_ADDR" required:"true"`
 	GrpcSecureConnect       bool          `env:"GRPC_SECURE_CONNECT" required:"false"`
 
