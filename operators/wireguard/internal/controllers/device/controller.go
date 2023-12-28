@@ -428,7 +428,7 @@ func (r *Reconciler) generateDeviceConfig(req *rApi.Request[*wgv1.Device]) (devC
 			DeviceIp:        string(ip),
 			DevicePvtKey:    string(priv),
 			ServerPublicKey: string(serverPublicKey),
-			ServerEndpoint: fmt.Sprintf("%s.%s.%s:%d", obj.Spec.ClusterName, obj.Spec.AccountName, func() string {
+			ServerEndpoint: fmt.Sprintf("%s:%d", func() string {
 				if r.Env.DnsHostedZone != "" {
 					return r.Env.DnsHostedZone
 				}
