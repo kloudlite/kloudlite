@@ -3,4 +3,4 @@ FROM gcr.io/distroless/static-debian11:nonroot
 WORKDIR /app
 ARG APP
 COPY --from=builder --chown=1001 $APP ./iam
-CMD ["./iam"]
+ENTRYPOINT ["./iam"]
