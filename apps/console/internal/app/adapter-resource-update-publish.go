@@ -27,13 +27,6 @@ func (r *ResourceEventPublisherImpl) PublishMresEvent(mres *entities.ManagedReso
 	}
 }
 
-func (r *ResourceEventPublisherImpl) PublishMsvcEvent(msvc *entities.ManagedService, msg domain.PublishMsg) {
-	subject := msvcUpdateSubject(msvc)
-	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
-		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
-	}
-}
-
 func (r *ResourceEventPublisherImpl) PublishProjectEvent(project *entities.Project, msg domain.PublishMsg) {
 	subject := projectUpdateSubject(project)
 	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
@@ -68,10 +61,6 @@ func appUpdateSubject(app *entities.App) string {
 
 func mresUpdateSubject(mres *entities.ManagedResource) string {
 	return fmt.Sprintf("res-updates.account.%s.cluster.%s.mres.%s", mres.AccountName, mres.ClusterName, mres.Name)
-}
-
-func msvcUpdateSubject(msvc *entities.ManagedService) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.msvc.%s", msvc.AccountName, msvc.ClusterName, msvc.Name)
 }
 
 func projectUpdateSubject(project *entities.Project) string {

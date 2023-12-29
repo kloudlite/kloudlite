@@ -68,10 +68,6 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			{
 				return d.OnApplyRouterError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
 			}
-		case "ManagedService":
-			{
-				return d.OnApplyManagedServiceError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
-			}
 		case "ManagedResource":
 			{
 				return d.OnApplyManagedResourceError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName())
@@ -83,7 +79,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		}
 	}
 
-	if err:=consumer.Consume(msgReader, msgTypes.ConsumeOpts{
+	if err := consumer.Consume(msgReader, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
 			logger.Errorf(err, "received while reading messages, ignoring it")
 			return nil
