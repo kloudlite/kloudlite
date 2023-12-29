@@ -4,13 +4,20 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 
+	fn "github.com/kloudlite/operator/pkg/functions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type ServiceTemplate struct {
-	metav1.TypeMeta `json:",inline"`
-	Spec            map[string]apiextensionsv1.JSON `json:"spec"`
+	Kind       string                          `json:"kind"`
+	APIVersion string                          `json:"apiVersion"`
+	Spec       map[string]apiextensionsv1.JSON `json:"spec"`
+}
+
+func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {
+	return fn.ParseGVK(s.APIVersion, s.Kind)
 }
 
 // ManagedServiceSpec defines the desired state of ManagedService
