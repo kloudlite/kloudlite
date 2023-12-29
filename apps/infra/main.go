@@ -71,7 +71,8 @@ func main() {
 
 	ctx, cancel := func() (context.Context, context.CancelFunc) {
 		if isDev {
-			return context.WithCancel(context.TODO())
+			// return context.WithCancel(context.TODO())
+			return context.WithTimeout(context.TODO(), 10 * time.Second)
 		}
 		return context.WithTimeout(context.Background(), 2*time.Second)
 	}()

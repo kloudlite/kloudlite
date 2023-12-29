@@ -184,9 +184,13 @@ type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @sha
   spec: Map!
 }
 
+type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @shareable {
+  host: String
+  target: String
+}
+
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
-  accountName: String!
-  clusterName: String!
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
   deviceNamespace: String
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
@@ -407,9 +411,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   spec: Map!
 }
 
+input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn {
+  host: String
+  target: String
+}
+
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  accountName: String!
-  clusterName: String!
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
   deviceNamespace: String
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]

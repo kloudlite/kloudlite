@@ -57,4 +57,3 @@ func GetSyncStatusForDeletion(generation int64) SyncStatus {
 		State:           SyncStateInQueue,
 	}
 }
-
