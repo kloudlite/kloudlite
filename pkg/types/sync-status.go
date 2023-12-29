@@ -29,6 +29,9 @@ const (
 	SyncStateAppliedAtAgent          SyncState = "APPLIED_AT_AGENT"
 	SyncStateErroredAtAgent          SyncState = "ERRORED_AT_AGENT"
 	SyncStateReceivedUpdateFromAgent SyncState = "RECEIVED_UPDATE_FROM_AGENT"
+	SyncStateUpdatedAtAgent          SyncState = "UPDATED_AT_AGENT"
+	SyncStateDeletingAtAgent         SyncState = "DELETING_AT_AGENT"
+	SyncStateDeletedAtAgent          SyncState = "DELETED_AT_AGENT"
 )
 
 func GenSyncStatus(action SyncAction, recordVersion int) SyncStatus {
