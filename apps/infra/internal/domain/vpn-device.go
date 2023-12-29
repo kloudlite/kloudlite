@@ -2,13 +2,12 @@ package domain
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *domain) ListVPNDevices(ctx context.Context, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error) {
@@ -131,14 +130,14 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &device.Device)
 }
 
-func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
+func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	currDevice.SyncStatus.State = t.SyncStateErroredAtAgent
-	currDevice.SyncStatus.LastSyncedAt = time.Now()
+	currDevice.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	currDevice.SyncStatus.Error = &errMsg
 
 	_, err = d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
@@ -146,7 +145,7 @@ func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, nam
 	return errors.NewE(err)
 }
 
-func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error {
+func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -165,10 +164,15 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 
 	currDevice.WireguardConfig = device.WireguardConfig
 
-	currDevice.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	currDevice.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
 	currDevice.SyncStatus.RecordVersion = currDevice.RecordVersion
 	currDevice.SyncStatus.Error = nil
-	currDevice.SyncStatus.LastSyncedAt = time.Now()
+	currDevice.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
 	d.resourceEventPublisher.PublishVpnDeviceEvent(currDevice, PublishUpdate)

@@ -2,9 +2,8 @@ package domain
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -301,7 +300,7 @@ func (d *domain) OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, n
 	return err
 }
 
-func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error {
+func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	np, err := d.findNodePool(ctx, clusterName, nodePool.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -313,8 +312,13 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 
 	np.Status = nodePool.Status
 
-	np.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	np.SyncStatus.LastSyncedAt = time.Now()
+	np.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	np.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	np.SyncStatus.Error = nil
 	np.SyncStatus.RecordVersion = np.RecordVersion
 
@@ -326,14 +330,14 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 }
 
 // OnNodepoolApplyError implements Domain.
-func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
+func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
 	np, err := d.findNodePool(ctx, clusterName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	np.SyncStatus.State = t.SyncStateErroredAtAgent
-	np.SyncStatus.LastSyncedAt = time.Now()
+	np.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	np.SyncStatus.Error = &errMsg
 
 	_, err = d.nodePoolRepo.UpdateById(ctx, np.Id, np)

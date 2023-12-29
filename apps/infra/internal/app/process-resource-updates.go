@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"k8s.io/utils/strings/slices"
 	"strings"
 	"time"
 
@@ -35,7 +34,6 @@ var (
 	nodepoolGVK    = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
-	buildrunGVK    = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
 	clusterMsvcGVK = fn.GVK("clusters.kloudlite.io/v1", "ClusterManagedService")
 )
 
@@ -74,6 +72,11 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
+		resStatus, ok := su.Object[types.ResourceStatusKey].(types.ResourceStatus)
+		if !ok {
+			return errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
+		}
+
 		switch gvkStr {
 		case clusterGVK.String():
 			{
@@ -81,10 +84,11 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if err := fn.JsonConversion(su.Object, &clus); err != nil {
 					return err
 				}
-				if obj.GetDeletionTimestamp() != nil {
+
+				if resStatus == types.ResourceStatusDeleted {
 					return d.OnDeleteClusterMessage(dctx, clus)
 				}
-				return d.OnUpdateClusterMessage(dctx, clus)
+				return d.OnUpdateClusterMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case nodepoolGVK.String():
 			{
@@ -92,10 +96,11 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if err := fn.JsonConversion(su.Object, &np); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
+
+				if resStatus == types.ResourceStatusDeleted {
 					return d.OnDeleteNodePoolMessage(dctx, su.ClusterName, np)
 				}
-				return d.OnUpdateNodePoolMessage(dctx, su.ClusterName, np)
+				return d.OnUpdateNodePoolMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case deviceGVK.String():
 			{
@@ -103,6 +108,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if err := fn.JsonConversion(su.Object, &device); err != nil {
 					return errors.NewE(err)
 				}
+
 				if v, ok := su.Object["resource-watcher-wireguard-config"]; ok {
 					b, err := json.Marshal(v)
 					if err != nil {
@@ -114,10 +120,11 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					}
 					device.WireguardConfig = encodedStr
 				}
-				if obj.GetDeletionTimestamp() != nil && (!slices.Contains(obj.GetFinalizers(), "finalizers.kloudlite.io/watch") && !slices.Contains(obj.GetFinalizers(), "finalizers.kloudlite.io/status-watcher")) {
+
+				if resStatus == types.ResourceStatusDeleted {
 					return d.OnVPNDeviceDeleteMessage(dctx, su.ClusterName, device)
 				}
-				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device)
+				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case pvcGVK.String():
 			{
@@ -125,22 +132,12 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
+
+				if resStatus == types.ResourceStatusDeleted {
 					return d.OnPVCDeleteMessage(dctx, su.ClusterName, pvc)
 				}
-				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc)
+				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
-		// case buildrunGVK.String():
-		// 	{
-		// 		var buildRun entities.BuildRun
-		// 		if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
-		// 			return errors.NewE(err)
-		// 		}
-		// 		if obj.GetDeletionTimestamp() != nil {
-		// 			return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)
-		// 		}
-		// 		return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
-		// 	}
 
 		case clusterMsvcGVK.String():
 			{
@@ -148,10 +145,11 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				if err := fn.JsonConversion(su.Object, &svc); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
+
+				if resStatus == types.ResourceStatusDeleted {
 					return d.OnClusterManagedServiceDeleteMessage(dctx, su.ClusterName, svc)
 				}
-				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, svc)
+				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, svc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		default:
