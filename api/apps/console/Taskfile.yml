@@ -40,14 +40,13 @@ tasks:
           --struct github.com/kloudlite/api/apps/console/internal/entities.Config
           --struct github.com/kloudlite/api/apps/console/internal/entities.Router
           --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
-          --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedService
           --struct github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplate
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Workspace,App,Secret,Config,Router,ManagedResource,ManagedService
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Workspace,App,Secret,Config,Router,ManagedResource
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
