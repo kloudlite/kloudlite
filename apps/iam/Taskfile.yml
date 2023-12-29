@@ -9,7 +9,7 @@ includes:
     dir: ../../grpc-interfaces/
 
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+  ImagePrefix: "ghcr.io/kloudlite/api"
 
 tasks:
   proto:
