@@ -10,7 +10,6 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -98,7 +97,13 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 	service.ClusterName = clusterName
 	service.SyncStatus = t.GenSyncStatus(t.SyncActionApply, service.RecordVersion)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &crdsv1.ClusterManagedService{}, 1); err != nil {
+	service.EnsureGVK()
+
+	if err := d.k8sClient.ValidateObject(ctx, &service.ClusterManagedService); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &service.ClusterManagedService, 1); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -149,7 +154,7 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName strin
 
 	d.resourceEventPublisher.PublishCMSEvent(unp, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, unp, unp.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.ClusterManagedService, unp.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 

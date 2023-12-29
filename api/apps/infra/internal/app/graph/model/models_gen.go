@@ -9,6 +9,7 @@ import (
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -302,6 +303,16 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1ChartRepo struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ChartRepoIn struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
 	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
 	Namespace string                                                  `json:"namespace"`
@@ -310,6 +321,55 @@ type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
 type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
 	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
 	Namespace string                                                    `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
+	ChartName     string                                         `json:"chartName"`
+	ChartRepo     *GithubComKloudliteOperatorApisCrdsV1ChartRepo `json:"chartRepo"`
+	ChartVersion  string                                         `json:"chartVersion"`
+	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVars   `json:"jobVars,omitempty"`
+	PostInstall   *string                                        `json:"postInstall,omitempty"`
+	PostUninstall *string                                        `json:"postUninstall,omitempty"`
+	PreInstall    *string                                        `json:"preInstall,omitempty"`
+	PreUninstall  *string                                        `json:"preUninstall,omitempty"`
+	Values        map[string]interface{}                         `json:"values"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
+	ChartName     string                                           `json:"chartName"`
+	ChartRepo     *GithubComKloudliteOperatorApisCrdsV1ChartRepoIn `json:"chartRepo"`
+	ChartVersion  string                                           `json:"chartVersion"`
+	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVarsIn   `json:"jobVars,omitempty"`
+	PostInstall   *string                                          `json:"postInstall,omitempty"`
+	PostUninstall *string                                          `json:"postUninstall,omitempty"`
+	PreInstall    *string                                          `json:"preInstall,omitempty"`
+	PreUninstall  *string                                          `json:"preUninstall,omitempty"`
+	Values        map[string]interface{}                           `json:"values"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
+	Checks              map[string]interface{}                       `json:"checks,omitempty"`
+	IsReady             bool                                         `json:"isReady"`
+	LastReadyGeneration *int                                         `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                      `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON `json:"message,omitempty"`
+	ReleaseNotes        string                                       `json:"releaseNotes"`
+	ReleaseStatus       string                                       `json:"releaseStatus"`
+	Resources           []*operator.ResourceRef                      `json:"resources,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1JobVars struct {
+	Affinity     *K8sIoAPICoreV1Affinity     `json:"affinity,omitempty"`
+	BackOffLimit *int                        `json:"backOffLimit,omitempty"`
+	NodeSelector map[string]interface{}      `json:"nodeSelector,omitempty"`
+	Tolerations  []*K8sIoAPICoreV1Toleration `json:"tolerations,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1JobVarsIn struct {
+	Affinity     *K8sIoAPICoreV1AffinityIn     `json:"affinity,omitempty"`
+	BackOffLimit *int                          `json:"backOffLimit,omitempty"`
+	NodeSelector map[string]interface{}        `json:"nodeSelector,omitempty"`
+	Tolerations  []*K8sIoAPICoreV1TolerationIn `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
@@ -327,7 +387,9 @@ type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	Spec map[string]interface{} `json:"spec"`
+	APIVersion string                 `json:"apiVersion"`
+	Kind       string                 `json:"kind"`
+	Spec       map[string]interface{} `json:"spec"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1CNameRecord struct {
@@ -366,6 +428,69 @@ type GithubComKloudliteOperatorApisWireguardV1PortIn struct {
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type HelmReleaseEdge struct {
+	Cursor string                `json:"cursor"`
+	Node   *entities.HelmRelease `json:"node"`
+}
+
+type HelmReleasePaginatedRecords struct {
+	Edges      []*HelmReleaseEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
+}
+
+type K8sIoAPICoreV1Affinity struct {
+	NodeAffinity    *K8sIoAPICoreV1NodeAffinity    `json:"nodeAffinity,omitempty"`
+	PodAffinity     *K8sIoAPICoreV1PodAffinity     `json:"podAffinity,omitempty"`
+	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinity `json:"podAntiAffinity,omitempty"`
+}
+
+type K8sIoAPICoreV1AffinityIn struct {
+	NodeAffinity    *K8sIoAPICoreV1NodeAffinityIn    `json:"nodeAffinity,omitempty"`
+	PodAffinity     *K8sIoAPICoreV1PodAffinityIn     `json:"podAffinity,omitempty"`
+	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinityIn `json:"podAntiAffinity,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeAffinity struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1PreferredSchedulingTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  *K8sIoAPICoreV1NodeSelector              `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeAffinityIn struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1PreferredSchedulingTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  *K8sIoAPICoreV1NodeSelectorIn              `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelector struct {
+	NodeSelectorTerms []*K8sIoAPICoreV1NodeSelectorTerm `json:"nodeSelectorTerms"`
+}
+
+type K8sIoAPICoreV1NodeSelectorIn struct {
+	NodeSelectorTerms []*K8sIoAPICoreV1NodeSelectorTermIn `json:"nodeSelectorTerms"`
+}
+
+type K8sIoAPICoreV1NodeSelectorRequirement struct {
+	Key      string                             `json:"key"`
+	Operator K8sIoAPICoreV1NodeSelectorOperator `json:"operator"`
+	Values   []string                           `json:"values,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelectorRequirementIn struct {
+	Key      string                             `json:"key"`
+	Operator K8sIoAPICoreV1NodeSelectorOperator `json:"operator"`
+	Values   []string                           `json:"values,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelectorTerm struct {
+	MatchExpressions []*K8sIoAPICoreV1NodeSelectorRequirement `json:"matchExpressions,omitempty"`
+	MatchFields      []*K8sIoAPICoreV1NodeSelectorRequirement `json:"matchFields,omitempty"`
+}
+
+type K8sIoAPICoreV1NodeSelectorTermIn struct {
+	MatchExpressions []*K8sIoAPICoreV1NodeSelectorRequirementIn `json:"matchExpressions,omitempty"`
+	MatchFields      []*K8sIoAPICoreV1NodeSelectorRequirementIn `json:"matchFields,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimCondition struct {
@@ -426,6 +551,50 @@ type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
 	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
 }
 
+type K8sIoAPICoreV1PodAffinity struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAffinityIn struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAffinityTerm struct {
+	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"labelSelector,omitempty"`
+	Namespaces        []string                                     `json:"namespaces,omitempty"`
+	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"namespaceSelector,omitempty"`
+	TopologyKey       string                                       `json:"topologyKey"`
+}
+
+type K8sIoAPICoreV1PodAffinityTermIn struct {
+	LabelSelector     *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"labelSelector,omitempty"`
+	Namespaces        []string                                       `json:"namespaces,omitempty"`
+	NamespaceSelector *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"namespaceSelector,omitempty"`
+	TopologyKey       string                                         `json:"topologyKey"`
+}
+
+type K8sIoAPICoreV1PodAntiAffinity struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PodAntiAffinityIn struct {
+	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTermIn `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
+	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
+}
+
+type K8sIoAPICoreV1PreferredSchedulingTerm struct {
+	Preference *K8sIoAPICoreV1NodeSelectorTerm `json:"preference"`
+	Weight     int                             `json:"weight"`
+}
+
+type K8sIoAPICoreV1PreferredSchedulingTermIn struct {
+	Preference *K8sIoAPICoreV1NodeSelectorTermIn `json:"preference"`
+	Weight     int                               `json:"weight"`
+}
+
 type K8sIoAPICoreV1ResourceClaim struct {
 	Name string `json:"name"`
 }
@@ -460,6 +629,22 @@ type K8sIoAPICoreV1TaintIn struct {
 	Value     *string                   `json:"value,omitempty"`
 }
 
+type K8sIoAPICoreV1Toleration struct {
+	Effect            *K8sIoAPICoreV1TaintEffect        `json:"effect,omitempty"`
+	Key               *string                           `json:"key,omitempty"`
+	Operator          *K8sIoAPICoreV1TolerationOperator `json:"operator,omitempty"`
+	TolerationSeconds *int                              `json:"tolerationSeconds,omitempty"`
+	Value             *string                           `json:"value,omitempty"`
+}
+
+type K8sIoAPICoreV1TolerationIn struct {
+	Effect            *K8sIoAPICoreV1TaintEffect        `json:"effect,omitempty"`
+	Key               *string                           `json:"key,omitempty"`
+	Operator          *K8sIoAPICoreV1TolerationOperator `json:"operator,omitempty"`
+	TolerationSeconds *int                              `json:"tolerationSeconds,omitempty"`
+	Value             *string                           `json:"value,omitempty"`
+}
+
 type K8sIoAPICoreV1TypedLocalObjectReference struct {
 	APIGroup *string `json:"apiGroup,omitempty"`
 	Kind     string  `json:"kind"`
@@ -484,6 +669,16 @@ type K8sIoAPICoreV1TypedObjectReferenceIn struct {
 	Kind      string  `json:"kind"`
 	Name      string  `json:"name"`
 	Namespace *string `json:"namespace,omitempty"`
+}
+
+type K8sIoAPICoreV1WeightedPodAffinityTerm struct {
+	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTerm `json:"podAffinityTerm"`
+	Weight          int                            `json:"weight"`
+}
+
+type K8sIoAPICoreV1WeightedPodAffinityTermIn struct {
+	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTermIn `json:"podAffinityTerm"`
+	Weight          int                              `json:"weight"`
 }
 
 type K8sIoApimachineryPkgAPIResourceQuantity struct {
@@ -576,6 +771,11 @@ type SearchClusterManagedService struct {
 type SearchDomainEntry struct {
 	ClusterName *repos.MatchFilter `json:"clusterName,omitempty"`
 	Text        *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchHelmRelease struct {
+	Text    *repos.MatchFilter `json:"text,omitempty"`
+	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
 }
 
 type SearchNodepool struct {
@@ -778,6 +978,55 @@ func (e K8sIoAPICoreV1ConditionStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type K8sIoAPICoreV1NodeSelectorOperator string
+
+const (
+	K8sIoAPICoreV1NodeSelectorOperatorDoesNotExist K8sIoAPICoreV1NodeSelectorOperator = "DoesNotExist"
+	K8sIoAPICoreV1NodeSelectorOperatorExists       K8sIoAPICoreV1NodeSelectorOperator = "Exists"
+	K8sIoAPICoreV1NodeSelectorOperatorGt           K8sIoAPICoreV1NodeSelectorOperator = "Gt"
+	K8sIoAPICoreV1NodeSelectorOperatorIn           K8sIoAPICoreV1NodeSelectorOperator = "In"
+	K8sIoAPICoreV1NodeSelectorOperatorLt           K8sIoAPICoreV1NodeSelectorOperator = "Lt"
+	K8sIoAPICoreV1NodeSelectorOperatorNotIn        K8sIoAPICoreV1NodeSelectorOperator = "NotIn"
+)
+
+var AllK8sIoAPICoreV1NodeSelectorOperator = []K8sIoAPICoreV1NodeSelectorOperator{
+	K8sIoAPICoreV1NodeSelectorOperatorDoesNotExist,
+	K8sIoAPICoreV1NodeSelectorOperatorExists,
+	K8sIoAPICoreV1NodeSelectorOperatorGt,
+	K8sIoAPICoreV1NodeSelectorOperatorIn,
+	K8sIoAPICoreV1NodeSelectorOperatorLt,
+	K8sIoAPICoreV1NodeSelectorOperatorNotIn,
+}
+
+func (e K8sIoAPICoreV1NodeSelectorOperator) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1NodeSelectorOperatorDoesNotExist, K8sIoAPICoreV1NodeSelectorOperatorExists, K8sIoAPICoreV1NodeSelectorOperatorGt, K8sIoAPICoreV1NodeSelectorOperatorIn, K8sIoAPICoreV1NodeSelectorOperatorLt, K8sIoAPICoreV1NodeSelectorOperatorNotIn:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1NodeSelectorOperator) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1NodeSelectorOperator) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1NodeSelectorOperator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__NodeSelectorOperator", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1NodeSelectorOperator) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type K8sIoAPICoreV1PersistentVolumeClaimConditionType string
 
 const (
@@ -902,6 +1151,47 @@ func (e *K8sIoAPICoreV1TaintEffect) UnmarshalGQL(v interface{}) error {
 }
 
 func (e K8sIoAPICoreV1TaintEffect) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1TolerationOperator string
+
+const (
+	K8sIoAPICoreV1TolerationOperatorEqual  K8sIoAPICoreV1TolerationOperator = "Equal"
+	K8sIoAPICoreV1TolerationOperatorExists K8sIoAPICoreV1TolerationOperator = "Exists"
+)
+
+var AllK8sIoAPICoreV1TolerationOperator = []K8sIoAPICoreV1TolerationOperator{
+	K8sIoAPICoreV1TolerationOperatorEqual,
+	K8sIoAPICoreV1TolerationOperatorExists,
+}
+
+func (e K8sIoAPICoreV1TolerationOperator) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1TolerationOperatorEqual, K8sIoAPICoreV1TolerationOperatorExists:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1TolerationOperator) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1TolerationOperator) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1TolerationOperator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__TolerationOperator", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1TolerationOperator) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

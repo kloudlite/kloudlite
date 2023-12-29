@@ -68,6 +68,10 @@ models:
     model: github.com/kloudlite/api/apps/infra/internal/entities.Cluster
   ClusterIn: *cluster-model
 
+  HelmRelease: &helmrelease-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.HelmRelease
+  HelmReleaseIn: *helmrelease-model
+
   CloudProviderSecret: &provider-secret-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
   CloudProviderSecretIn: *provider-secret-model
