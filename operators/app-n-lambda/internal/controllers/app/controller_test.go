@@ -1,9 +1,9 @@
 package app_test
 
 import (
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"strings"
 
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
