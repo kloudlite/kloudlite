@@ -1,14 +1,11 @@
 package env
 
 import (
-	"time"
-
 	"github.com/codingconcepts/env"
 )
 
 type Env struct {
-	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
-	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
+	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
 
 	CloudProviderName   string `env:"CLOUD_PROVIDER_NAME" required:"true"`
 	CloudProviderRegion string `env:"CLOUD_PROVIDER_REGION" required:"true"`
