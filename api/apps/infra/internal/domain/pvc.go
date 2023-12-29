@@ -4,6 +4,8 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *domain) ListPVCs(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolumeClaim], error) {
@@ -30,7 +32,17 @@ func (d *domain) GetPVC(ctx InfraContext, clusterName string, buildRunName strin
 	return pvc, nil
 }
 
-func (d *domain) OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim) error {
+func (d *domain) OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	pvc.SyncStatus = t.SyncStatus{
+		LastSyncedAt: opts.MessageTimestamp,
+		State: func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+	}
+
 	if _, err := d.pvcRepo.Upsert(ctx, repos.Filter{
 		"metadata.name":      pvc.Name,
 		"metadata.namespace": pvc.Namespace,

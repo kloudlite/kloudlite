@@ -2,9 +2,11 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 type InfraContext struct {
@@ -13,6 +15,10 @@ type InfraContext struct {
 	UserEmail   string
 	UserName    string
 	AccountName string
+}
+
+type UpdateAndDeleteOpts struct {
+	MessageTimestamp time.Time
 }
 
 type Domain interface {
@@ -28,7 +34,7 @@ type Domain interface {
 	GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error)
 
 	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
-	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error
+	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	UpdateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
@@ -54,8 +60,8 @@ type Domain interface {
 	GetNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error)
 
 	OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
-	OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
-	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 
 	ListNodes(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error)
 	GetNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error)
@@ -71,13 +77,13 @@ type Domain interface {
 	UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
 	DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error
 
-	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
-	OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
+	OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	ListPVCs(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolumeClaim], error)
 	GetPVC(ctx InfraContext, clusterName string, pvcName string) (*entities.PersistentVolumeClaim, error)
-	OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim) error
+	OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnPVCDeleteMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim) error
 
 	ListClusterManagedServices(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
@@ -86,7 +92,7 @@ type Domain interface {
 	UpdateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	DeleteClusterManagedService(ctx InfraContext, clusterName string, name string) error
 
-	OnClusterManagedServiceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnClusterManagedServiceApplyError(ctx InfraContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
 	OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
 
