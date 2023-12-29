@@ -7,11 +7,13 @@ package graph
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
-	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -224,6 +226,21 @@ func (r *mutationResolver) InfraDeleteClusterManagedService(ctx context.Context,
 		return false, errors.NewE(err)
 	}
 	return true, nil
+}
+
+// InfraCreateHelmRelease is the resolver for the infra_createHelmRelease field.
+func (r *mutationResolver) InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
+	panic(fmt.Errorf("not implemented: InfraCreateHelmRelease - infra_createHelmRelease"))
+}
+
+// InfraUpdateHelmRelease is the resolver for the infra_updateHelmRelease field.
+func (r *mutationResolver) InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
+	panic(fmt.Errorf("not implemented: InfraUpdateHelmRelease - infra_updateHelmRelease"))
+}
+
+// InfraDeleteHelmRelease is the resolver for the infra_deleteHelmRelease field.
+func (r *mutationResolver) InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error) {
+	panic(fmt.Errorf("not implemented: InfraDeleteHelmRelease - infra_deleteHelmRelease"))
 }
 
 // InfraCheckNameAvailability is the resolver for the infra_checkNameAvailability field.
@@ -661,6 +678,66 @@ func (r *queryResolver) InfraGetClusterManagedService(ctx context.Context, clust
 	}
 
 	return r.Domain.GetClusterManagedService(ictx, clusterName, name)
+}
+
+// InfraListHelmReleases is the resolver for the infra_listHelmReleases field.
+func (r *queryResolver) InfraListHelmReleases(ctx context.Context, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) (*model.HelmReleasePaginatedRecords, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if pagination == nil {
+		pagination = &repos.DefaultCursorPagination
+	}
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search != nil {
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pRelease, err := r.Domain.ListHelmReleases(ictx, clusterName, filter, *pagination)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ce := make([]*model.HelmReleaseEdge, len(pRelease.Edges))
+	for i := range pRelease.Edges {
+		ce[i] = &model.HelmReleaseEdge{
+			Node:   pRelease.Edges[i].Node,
+			Cursor: pRelease.Edges[i].Cursor,
+		}
+	}
+
+	m := model.HelmReleasePaginatedRecords{
+		Edges: ce,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pRelease.PageInfo.EndCursor,
+			HasNextPage:     pRelease.PageInfo.HasNextPage,
+			HasPreviousPage: pRelease.PageInfo.HasPrevPage,
+			StartCursor:     &pRelease.PageInfo.StartCursor,
+		},
+		TotalCount: int(pRelease.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetHelmRelease is the resolver for the infra_getHelmRelease field.
+func (r *queryResolver) InfraGetHelmRelease(ctx context.Context, clusterName string, name string) (*entities.HelmRelease, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetHelmRelease(ictx, clusterName, name)
 }
 
 // Mutation returns generated.MutationResolver implementation.

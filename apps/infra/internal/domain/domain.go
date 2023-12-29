@@ -28,6 +28,7 @@ type domain struct {
 
 	clusterRepo               repos.DbRepo[*entities.Cluster]
 	clusterManagedServiceRepo repos.DbRepo[*entities.ClusterManagedService]
+	helmReleaseRepo           repos.DbRepo[*entities.HelmRelease]
 	nodeRepo                  repos.DbRepo[*entities.Node]
 	nodePoolRepo              repos.DbRepo[*entities.NodePool]
 	domainEntryRepo           repos.DbRepo[*entities.DomainEntry]
@@ -138,6 +139,7 @@ var Module = fx.Module("domain",
 			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
 			resourceDispatcher ResourceDispatcher,
+			helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
 
 			k8sClient k8s.Client,
 
@@ -164,6 +166,7 @@ var Module = fx.Module("domain",
 				accountsSvc:                 accountsSvc,
 				messageOfficeInternalClient: msgOfficeInternalClient,
 				resourceEventPublisher:      resourceEventPublisher,
+				helmReleaseRepo:             helmReleaseRepo,
 			}
 		}),
 )
