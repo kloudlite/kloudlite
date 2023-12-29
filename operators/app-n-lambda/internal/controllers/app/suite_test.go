@@ -8,7 +8,7 @@ import (
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
 	"github.com/kloudlite/operator/pkg/logging"
 
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	// artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
@@ -20,12 +20,12 @@ func TestAPIs(t *testing.T) {
 	RunSpecs(t, "Controller Suite")
 }
 
-var schemes = AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme)
+var schemes = AddToSchemes(crdsv1.AddToScheme)
 var reconciler *app.Reconciler
 
 var _ = BeforeSuite(
 	func() {
-		SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), DefaultEnvTest)
+		SetupKubernetes(AddToSchemes(crdsv1.AddToScheme), DefaultEnvTest)
 		reconciler = &app.Reconciler{
 			Client: Suite.K8sClient,
 			Scheme: Suite.Scheme,
@@ -38,7 +38,7 @@ var _ = BeforeSuite(
 				Dev:  true,
 			}),
 			Name:       "app",
-			YamlClient: Suite.K8sYamlClient,
+			YamlClient: *Suite.K8sYamlClient,
 		}
 	},
 )

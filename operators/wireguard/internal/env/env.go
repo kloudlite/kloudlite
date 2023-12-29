@@ -18,7 +18,7 @@ type Env struct {
 	DnsHostedZone string `env:"DNS_HOSTED_ZONE"`
 
 	ClusterInternalDns  string `env:"CLUSTER_INTERNAL_DNS"`
-	DeviceInfoNamespace string `env:"DEVICE_INFO_NAMESPACE"`
+	DeviceInfoNamespace string `env:"DEVICE_INFO_NAMESPACE" default:"device-info"`
 }
 
 func GetEnvOrDie() *Env {

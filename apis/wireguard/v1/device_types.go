@@ -15,13 +15,21 @@ type Port struct {
 // 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
 // }
 
+//	type DnsRecord struct {
+//		Host string `json:"host,omitempty"`
+//		CName string `json:"cname,omitempty"`
+//	}
+type CNameRecord struct {
+	Host   string `json:"host,omitempty"`
+	Target string `json:"target,omitempty"`
+}
+
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	AccountName     string            `json:"accountName"`
-	ClusterName     string            `json:"clusterName"`
 	Ports           []Port            `json:"ports,omitempty"`
 	DeviceNamespace *string           `json:"deviceNamespace,omitempty"`
 	NodeSelector    map[string]string `json:"nodeSelector,omitempty"`
+	CNameRecords    []CNameRecord     `json:"cnameRecords,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -53,8 +61,6 @@ func (d *Device) GetStatus() *rApi.Status {
 
 func (d *Device) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.AccountNameKey:  d.Spec.AccountName,
-		constants.ClusterNameKey:  d.Spec.ClusterName,
 		constants.WGDeviceNameKey: d.Name,
 	}
 }

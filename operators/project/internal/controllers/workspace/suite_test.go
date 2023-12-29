@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	// artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/logging"
@@ -21,7 +21,7 @@ func TestController(t *testing.T) {
 var reconciler *Reconciler
 
 var _ = BeforeSuite(func() {
-	SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), DefaultEnvTest)
+	SetupKubernetes(AddToSchemes(crdsv1.AddToScheme), DefaultEnvTest)
 
 	reconciler = &Reconciler{
 		Client: nil,
@@ -30,19 +30,18 @@ var _ = BeforeSuite(func() {
 			ReconcilePeriod:         30 * time.Second,
 			MaxConcurrentReconciles: 1,
 
-			ProjectCfgName:    "project-config",
-			DockerSecretName:  "harbor-docker-secret",
-			AdminRoleName:     "harbor-admin-role",
-			SvcAccountName:    "kloudlite-svc-account",
-			AccountRouterName: "account-router",
+			// ProjectCfgName:    "project-config",
+			// DockerSecretName:  "harbor-docker-secret",
+			// AdminRoleName:     "harbor-admin-role",
+			SvcAccountName: "kloudlite-svc-account",
+			// AccountRouterName: "account-router",
 		},
 		logger: logging.NewOrDie(&logging.Options{
 			Name: "env",
 			Dev:  true,
 		}),
 		Name:       "env",
-		yamlClient: Suite.K8sYamlClient,
-		recorder:   nil,
+		yamlClient: *Suite.K8sYamlClient,
 	}
 
 })

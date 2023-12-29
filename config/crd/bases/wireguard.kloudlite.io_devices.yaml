@@ -48,10 +48,17 @@ spec:
           spec:
             description: DeviceSpec defines the desired state of Device
             properties:
-              accountName:
-                type: string
-              clusterName:
-                type: string
+              cnameRecords:
+                items:
+                  description: type DnsRecord struct { Host string `json:"host,omitempty"`
+                    CName string `json:"cname,omitempty"` }
+                  properties:
+                    host:
+                      type: string
+                    target:
+                      type: string
+                  type: object
+                type: array
               deviceNamespace:
                 type: string
               nodeSelector:
@@ -69,9 +76,6 @@ spec:
                       type: integer
                   type: object
                 type: array
-            required:
-            - accountName
-            - clusterName
             type: object
           status:
             properties:
