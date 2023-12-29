@@ -54,21 +54,14 @@ spec:
               cpu: 5m
               memory: 10Mi
 
-        - command:
-            - /manager
-          args:
+        - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
           env:
-            - name: RECONCILE_PERIOD
-              value: "30s"
-
             - name: MAX_CONCURRENT_RECONCILES
               value: "5"
 
-            {{- /* CLUSTER_INTERNAL_DNS="cluster.local" */}}
-            {{- /* SVC_ACCOUNT_NAME="kloudlite-svc-account" */}}
             - name: CLUSTER_INTERNAL_DNS
               value: {{.Values.clusterInternalDNS}}
 
@@ -126,6 +119,10 @@ spec:
               value: "env-route-switcher"
             - name: WORKSPACE_ROUTE_SWITCHER_PORT
               value: "80"
+
+            {{- /* for buildrun */}}
+            - name: BUILD_NAMESPACE
+              value: {{.Release.Namespace}}
 
           image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
           imagePullPolicy: {{.Values.operators.agentOperator.image.pullPolicy | default .Values.imagePullPolicy}}

@@ -69,13 +69,9 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
-          command:
-            - /app/app
           image: {{.Values.operators.platformOperator.image}}
           imagePullPolicy: {{.Values.global.imagePullPolicy }}
           env:
-            - name: RECONCILE_PERIOD
-              value: 30s
             - name: SVC_ACCOUNT_NAME
               value: "kloudlite-svc-account"
 
