@@ -33,6 +33,7 @@ func gvk(obj client.Object) string {
 var (
 	clusterGVK     = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
 	nodepoolGVK    = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
+	helmreleaseGVK = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
 	buildrunGVK    = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
@@ -130,17 +131,29 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc)
 			}
-		// case buildrunGVK.String():
-		// 	{
-		// 		var buildRun entities.BuildRun
-		// 		if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
-		// 			return errors.NewE(err)
-		// 		}
-		// 		if obj.GetDeletionTimestamp() != nil {
-		// 			return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)
-		// 		}
-		// 		return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
-		// 	}
+			// case buildrunGVK.String():
+			// 	{
+			// 		var buildRun entities.BuildRun
+			// 		if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
+			// 			return errors.NewE(err)
+			// 		}
+			// 		if obj.GetDeletionTimestamp() != nil {
+			// 			return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)
+			// 		}
+			// 		return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
+			// 	}
+
+		case helmreleaseGVK.String():
+			{
+				var hr entities.HelmRelease
+				if err := fn.JsonConversion(su.Object, &hr); err != nil {
+					return errors.NewE(err)
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnHelmReleaseDeleteMessage(dctx, su.ClusterName, hr)
+				}
+				return d.OnHelmReleaseUpdateMessage(dctx, su.ClusterName, hr)
+			}
 
 		case clusterMsvcGVK.String():
 			{

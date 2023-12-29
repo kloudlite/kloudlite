@@ -72,6 +72,13 @@ const (
 	GetClusterManagedService    Action = "get-cluster-managed-service"
 	UpdateClusterManagedService Action = "update-cluster-managed-service"
 
+	// helm releases
+	CreateHelmRelease Action = "create-helm-release"
+	DeleteHelmRelease Action = "delete-helm-release"
+	ListHelmReleases  Action = "list-helm-releases"
+	GetHelmRelease    Action = "get-helm-release"
+	UpdateHelmRelease Action = "update-helm-release"
+
 	// nodepools
 	CreateNodepool Action = "create-nodepool"
 	DeleteNodepool Action = "delete-nodepool"

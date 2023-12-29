@@ -89,4 +89,14 @@ type Domain interface {
 	OnClusterManagedServiceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
 	OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
 	OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
+
+	ListHelmReleases(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmRelease], error)
+	GetHelmRelease(ctx InfraContext, clusterName string, serviceName string) (*entities.HelmRelease, error)
+	CreateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
+	UpdateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
+
+	DeleteHelmRelease(ctx InfraContext, clusterName string, name string) error
+	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
+	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
 }
