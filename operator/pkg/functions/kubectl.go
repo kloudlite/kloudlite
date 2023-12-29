@@ -10,13 +10,15 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kloudlite/operator/pkg/errors"
 
-	"github.com/gobuffalo/flect"
 	"strings"
+
+	"github.com/gobuffalo/flect"
 )
 
 func Kubectl(args ...string) (stdout *bytes.Buffer, err error) {
@@ -193,6 +195,15 @@ func IsOwner(obj client.Object, ownerRef metav1.OwnerReference) bool {
 		}
 	}
 	return false
+}
+
+func ParseGVK(apiVersion string, kind string) schema.GroupVersionKind {
+	gv, _ := schema.ParseGroupVersion(apiVersion)
+	return schema.GroupVersionKind{
+		Group:   gv.Group,
+		Version: gv.Version,
+		Kind:    kind,
+	}
 }
 
 func GVK(obj client.Object) metav1.GroupVersionKind {
