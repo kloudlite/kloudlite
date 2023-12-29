@@ -189,14 +189,18 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ClusterMa
 			}
 
 			if updated {
-				req.UpdateStatus()
+				obj.Status.Message = m.Status.Message
+				if step := req.UpdateStatus(); !step.ShouldProceed() {
+					_, err := step.ReconcilerResponse()
+					return err
+				}
 				if err := r.Update(ctx, obj); err != nil {
 					return err
 				}
 			}
 
 			if !m.Status.IsReady {
-				return fmt.Errorf(string(m.Status.Message.RawMessage))
+				return fmt.Errorf("managed service %q is not ready", m.Name)
 			}
 		}
 
