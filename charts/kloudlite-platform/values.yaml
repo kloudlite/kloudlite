@@ -113,6 +113,11 @@ vector:
   enabled: true
   name: vector
 
+kubeapps:
+  enabled: true
+  name: kubeapps
+
+
 grafana:
   enabled: true
   name: grafana
@@ -228,6 +233,8 @@ webhookSecrets:
   gitlabSecret: <webhook-authz-gitlab-secret>
   # -- webhook authz secret for GitHub webhooks
   githubSecret: <webhook-authz-github-secret>
+  githubAuthzSecret: <webhook-authz-github-authz-secret>
+  authzSecret: <webhook-authz-github-authz-secret>
   # -- webhook authz secret for kloudlite internal calls
   kloudliteSecret: <webhook-authz-kloudlite-secret>
 
@@ -236,6 +243,10 @@ apps:
   authApi:
     # -- image (with tag) for auth api
     image: ghcr.io/kloudlite/api/auth:v1.0.5-nightly
+  klInstaller:
+    # -- image (with tag) for comms api
+    image: ghcr.io/kloudlite/kl/installer:v1.0.5-nightly
+
   commsApi:
     # -- image (with tag) for comms api
     image: ghcr.io/kloudlite/api/comms:v1.0.5-nightly
@@ -262,12 +273,13 @@ apps:
     configuration:
       # -- (number) port on which container registry event listener should listen
       eventListenerPort: 4001
+      registrySecret: <registry-secret>
 
       buildClusterName: ""
       buildClusterAccountName: ""
 
       # -- namespace, in which build runs should be created
-      jobBuildNamespace: {.Release.Namespace}
+      jobBuildNamespace: "kloudlite"
 
       authorizerPort: 4000
   auditLoggingWorker:
@@ -275,7 +287,7 @@ apps:
     image: ghcr.io/kloudlite/api/worker-audit-logging:v1.0.5-nightly
   webhooksApi:
     # -- image (with tag) for webhooks api
-    image: ghcr.io/kloudlite/api/webhooks:v1.0.5-nightly
+    image: ghcr.io/kloudlite/api/webhook:v1.0.5-nightly
   messageOfficeApi:
     # -- image (with tag) for message office api
     image: ghcr.io/kloudlite/api/message-office:v1.0.5-nightly
