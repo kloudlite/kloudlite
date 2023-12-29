@@ -110,6 +110,14 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ClusterManagedSer
 		return req.CheckFailed(NSCreated, check, err.Error())
 	}
 
+	if obj.Spec.Namespace == "" {
+		obj.Spec.Namespace = fmt.Sprintf("%s-%s", "cmsvc-", obj.Name)
+
+		if err := r.Update(ctx, obj); err != nil {
+			return failed(err)
+		}
+	}
+
 	if _, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.Namespace), &corev1.Namespace{}); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
