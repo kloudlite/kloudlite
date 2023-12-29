@@ -126,7 +126,7 @@ spec:
           value: {{.Values.apps.containerRegistryApi.configuration.buildClusterName}}
 
         - key: REGISTRY_HOST
-          value: container-registry.{{.Values.global.baseDomain}}
+          value: registry.{{ .Values.global.baseDomain }}
 
         - key: REGISTRY_SECRET_KEY
           value: {{.Values.apps.containerRegistryApi.configuration.registrySecret | squote}}
@@ -137,8 +137,11 @@ spec:
         - key: NATS_URL
           value: {{.Values.envVars.nats.url}}
 
-        - key: NATS_STREAM
+        - key: RESOURCE_NATS_STREAM
           value: {{.Values.envVars.nats.streams.resourceSync.name}}
+
+        - key: EVENTS_NATS_STREAM
+          value: {{.Values.envVars.nats.streams.events.name}}
 
         - key: SESSION_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.sessionKVBucketName}}
