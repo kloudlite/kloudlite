@@ -246,36 +246,6 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, namespace strin
 	return true, nil
 }
 
-// CoreCreateManagedService is the resolver for the core_createManagedService field.
-func (r *mutationResolver) CoreCreateManagedService(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.CreateManagedService(cc, msvc)
-}
-
-// CoreUpdateManagedService is the resolver for the core_updateManagedService field.
-func (r *mutationResolver) CoreUpdateManagedService(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.UpdateManagedService(cc, msvc)
-}
-
-// CoreDeleteManagedService is the resolver for the core_deleteManagedService field.
-func (r *mutationResolver) CoreDeleteManagedService(ctx context.Context, namespace string, name string) (bool, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.DeleteManagedService(cc, namespace, name); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
 // CoreCreateManagedResource is the resolver for the core_createManagedResource field.
 func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	cc, err := toConsoleContext(ctx)
@@ -482,60 +452,6 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, project m
 		return false, errors.NewE(err)
 	}
 	return true, nil
-}
-
-// CoreListWorkspaces is the resolver for the core_listWorkspaces field.
-func (r *queryResolver) CoreListWorkspaces(ctx context.Context, project model.ProjectID, search *model.SearchWorkspaces, pq *repos.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-		if search.ProjectName != nil {
-			filter["spec.projectName"] = *search.ProjectName
-		}
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-		if search.MarkedForDeletion != nil {
-			filter["markedForDeletion"] = *search.MarkedForDeletion
-		}
-	}
-
-	namespace, err := r.getNamespaceFromProjectID(ctx, project)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	pw, err := r.Domain.ListWorkspaces(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	we := make([]*model.WorkspaceEdge, len(pw.Edges))
-	for i := range pw.Edges {
-		we[i] = &model.WorkspaceEdge{
-			Node:   pw.Edges[i].Node,
-			Cursor: pw.Edges[i].Cursor,
-		}
-	}
-
-	m := model.WorkspacePaginatedRecords{
-		Edges: we,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pw.PageInfo.EndCursor,
-			HasNextPage:     pw.PageInfo.HasNextPage,
-			HasPreviousPage: pw.PageInfo.HasPrevPage,
-			StartCursor:     &pw.PageInfo.StartCursor,
-		},
-		TotalCount: int(pw.TotalCount),
-	}
-
-	return &m, nil
 }
 
 // CoreGetWorkspace is the resolver for the core_getWorkspace field.
@@ -973,98 +889,6 @@ func (r *queryResolver) CoreResyncRouter(ctx context.Context, project model.Proj
 	}
 
 	if err := r.Domain.ResyncRouter(cc, namespace, name); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// CoreListManagedServiceTemplates is the resolver for the core_listManagedServiceTemplates field.
-func (r *queryResolver) CoreListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error) {
-	return r.Domain.ListManagedSvcTemplates()
-}
-
-// CoreGetManagedServiceTemplate is the resolver for the core_getManagedServiceTemplate field.
-func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, category string, name string) (*entities.MsvcTemplateEntry, error) {
-	return r.Domain.GetManagedSvcTemplate(category, name)
-}
-
-// CoreListManagedServices is the resolver for the core_listManagedServices field.
-func (r *queryResolver) CoreListManagedServices(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchManagedServices, pq *repos.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-		if search.MarkedForDeletion != nil {
-			filter["markedForDeletion"] = *search.MarkedForDeletion
-		}
-	}
-
-	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	pMsvcs, err := r.Domain.ListManagedServices(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	msvcEdges := make([]*model.ManagedServiceEdge, len(pMsvcs.Edges))
-	for i := range pMsvcs.Edges {
-		msvcEdges[i] = &model.ManagedServiceEdge{
-			Node:   pMsvcs.Edges[i].Node,
-			Cursor: pMsvcs.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ManagedServicePaginatedRecords{
-		Edges: msvcEdges,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pMsvcs.PageInfo.EndCursor,
-			HasNextPage:     pMsvcs.PageInfo.HasNextPage,
-			HasPreviousPage: pMsvcs.PageInfo.HasPrevPage,
-			StartCursor:     &pMsvcs.PageInfo.StartCursor,
-		},
-		TotalCount: int(pMsvcs.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// CoreGetManagedService is the resolver for the core_getManagedService field.
-func (r *queryResolver) CoreGetManagedService(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.ManagedService, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetManagedService(cc, namespace, name)
-}
-
-// CoreResyncManagedService is the resolver for the core_resyncManagedService field.
-func (r *queryResolver) CoreResyncManagedService(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.ResyncManagedService(cc, namespace, name); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil

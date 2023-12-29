@@ -28,7 +28,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 	configGVK := fn.GVK("crds.kloudlite.io/v1", "Config")
 	secretGVK := fn.GVK("crds.kloudlite.io/v1", "Secret")
 	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
-	managedServiceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedService")
 	managedResourceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
@@ -155,17 +154,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return d.OnDeleteRouterMessage(dctx, r)
 				}
 				return d.OnUpdateRouterMessage(dctx, r)
-			}
-		case managedServiceGVK.String():
-			{
-				var msvc entities.ManagedService
-				if err := fn.JsonConversion(ru.Object, &msvc); err != nil {
-					return errors.NewE(err)
-				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteManagedServiceMessage(dctx, msvc)
-				}
-				return d.OnUpdateManagedServiceMessage(dctx, msvc)
 			}
 		case managedResourceGVK.String():
 			{

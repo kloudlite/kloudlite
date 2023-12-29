@@ -279,14 +279,6 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
 	ResourceTemplate *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
-	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
 	APIVersion string                                            `json:"apiVersion"`
 	Kind       string                                            `json:"kind"`
@@ -303,12 +295,14 @@ type GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Probe struct {
@@ -401,16 +395,6 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
 	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
-	APIVersion string                 `json:"apiVersion"`
-	Kind       string                 `json:"kind"`
-	Spec       map[string]interface{} `json:"spec"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
-	Spec map[string]interface{} `json:"spec"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1ShellProbe struct {
 	Command []string `json:"command,omitempty"`
 }
@@ -494,17 +478,6 @@ type ManagedResourcePaginatedRecords struct {
 	TotalCount int                    `json:"totalCount"`
 }
 
-type ManagedServiceEdge struct {
-	Cursor string                   `json:"cursor"`
-	Node   *entities.ManagedService `json:"node"`
-}
-
-type ManagedServicePaginatedRecords struct {
-	Edges      []*ManagedServiceEdge `json:"edges"`
-	PageInfo   *PageInfo             `json:"pageInfo"`
-	TotalCount int                   `json:"totalCount"`
-}
-
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
 	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
@@ -569,12 +542,6 @@ type SearchManagedResources struct {
 	ManagedServiceName *repos.MatchFilter `json:"managedServiceName,omitempty"`
 	IsReady            *repos.MatchFilter `json:"isReady,omitempty"`
 	MarkedForDeletion  *repos.MatchFilter `json:"markedForDeletion,omitempty"`
-}
-
-type SearchManagedServices struct {
-	Text              *repos.MatchFilter `json:"text,omitempty"`
-	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
-	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchProjects struct {

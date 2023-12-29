@@ -1,38 +1,36 @@
-type ManagedService @shareable {
+type HelmRelease @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
-  enabled: Boolean
   id: String!
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
-  status: Github__com___kloudlite___operator___pkg___operator__Status
+  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec
+  status: Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
-type ManagedServiceEdge @shareable {
+type HelmReleaseEdge @shareable {
   cursor: String!
-  node: ManagedService!
+  node: HelmRelease!
 }
 
-type ManagedServicePaginatedRecords @shareable {
-  edges: [ManagedServiceEdge!]!
+type HelmReleasePaginatedRecords @shareable {
+  edges: [HelmReleaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input ManagedServiceIn {
+input HelmReleaseIn {
   displayName: String!
-  enabled: Boolean
   metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
 }
 

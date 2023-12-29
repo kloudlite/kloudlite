@@ -2,10 +2,11 @@ package domain
 
 import (
 	"context"
+	"time"
+
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"time"
 )
 
 type InfraContext struct {
@@ -94,4 +95,14 @@ type Domain interface {
 	OnClusterManagedServiceApplyError(ctx InfraContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
 	OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+
+	ListHelmReleases(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmRelease], error)
+	GetHelmRelease(ctx InfraContext, clusterName string, serviceName string) (*entities.HelmRelease, error)
+	CreateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
+	UpdateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
+
+	DeleteHelmRelease(ctx InfraContext, clusterName string, name string) error
+	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
+	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
 }
