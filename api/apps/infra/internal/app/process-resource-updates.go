@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/utils/strings/slices"
 	"strings"
 	"time"
 
@@ -113,7 +114,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					}
 					device.WireguardConfig = encodedStr
 				}
-				if obj.GetDeletionTimestamp() != nil {
+				if obj.GetDeletionTimestamp() != nil && (!slices.Contains(obj.GetFinalizers(), "finalizers.kloudlite.io/watch") && !slices.Contains(obj.GetFinalizers(), "finalizers.kloudlite.io/status-watcher")) {
 					return d.OnVPNDeviceDeleteMessage(dctx, su.ClusterName, device)
 				}
 				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device)
