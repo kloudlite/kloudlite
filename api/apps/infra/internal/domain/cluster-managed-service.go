@@ -14,20 +14,13 @@ import (
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.ListClusterManagedServices); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	f := repos.Filter{
-		"clusterName":        clusterName,
-		"accountName":        ctx.AccountName,
-		"metadata.namespace": accNs,
+		"clusterName": clusterName,
+		"accountName": ctx.AccountName,
 	}
 
 	pr, err := d.clusterManagedServiceRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
@@ -61,7 +54,6 @@ func (d *domain) findClusterManagedService(ctx InfraContext, clusterName string,
 }
 
 func (d *domain) GetClusterManagedService(ctx InfraContext, clusterName string, serviceName string) (*entities.ClusterManagedService, error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.GetClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -75,14 +67,11 @@ func (d *domain) GetClusterManagedService(ctx InfraContext, clusterName string, 
 }
 
 func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	service.IncrementRecordVersion()
-
-	// ctx.AccountName
 
 	service.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -97,7 +86,6 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 		"accountName":   ctx.AccountName,
 		"metadata.name": service.Name,
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -108,6 +96,7 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 
 	service.AccountName = ctx.AccountName
 	service.ClusterName = clusterName
+	service.SyncStatus = t.GenSyncStatus(t.SyncActionApply, service.RecordVersion)
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &crdsv1.ClusterManagedService{}, 1); err != nil {
 		return nil, errors.NewE(err)
@@ -133,7 +122,6 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName strin
 	}
 
 	cms, err := d.findClusterManagedService(ctx, clusterName, service.Name)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -224,6 +212,7 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterN
 	d.resourceEventPublisher.PublishCMSEvent(svc, PublishDelete)
 	return err
 }
+
 func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error {
 	svc, err := d.findClusterManagedService(ctx, clusterName, service.Name)
 	if err != nil {

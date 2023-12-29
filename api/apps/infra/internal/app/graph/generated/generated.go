@@ -394,9 +394,13 @@ type ComplexityRoot struct {
 		Spec       func(childComplexity int) int
 	}
 
+	Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord struct {
+		Host   func(childComplexity int) int
+		Target func(childComplexity int) int
+	}
+
 	Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec struct {
-		AccountName     func(childComplexity int) int
-		ClusterName     func(childComplexity int) int
+		CnameRecords    func(childComplexity int) int
 		DeviceNamespace func(childComplexity int) int
 		NodeSelector    func(childComplexity int) int
 		Ports           func(childComplexity int) int
@@ -2250,19 +2254,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate.Spec(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.accountName":
-		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.AccountName == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.host":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.Host == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.AccountName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.Host(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.clusterName":
-		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ClusterName == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.target":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.Target == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ClusterName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.Target(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.cnameRecords":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.CnameRecords == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.CnameRecords(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.deviceNamespace":
 		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.DeviceNamespace == nil {
@@ -3787,6 +3798,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeClaimConditionIn,
@@ -4295,9 +4307,13 @@ type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @sha
   spec: Map!
 }
 
+type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @shareable {
+  host: String
+  target: String
+}
+
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
-  accountName: String!
-  clusterName: String!
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
   deviceNamespace: String
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
@@ -4518,9 +4534,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   spec: Map!
 }
 
+input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn {
+  host: String
+  target: String
+}
+
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  accountName: String!
-  clusterName: String!
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
   deviceNamespace: String
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
@@ -14873,8 +14893,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_accountName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_host(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1CNameRecord) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_host(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14887,26 +14907,23 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___wiregua
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return obj.Host, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_host(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -14917,8 +14934,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_clusterName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_target(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1CNameRecord) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_target(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14931,31 +14948,75 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___wiregua
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterName, nil
+		return obj.Target, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_target(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CnameRecords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorApisWireguardV1CNameRecord)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecord2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "host":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_host(ctx, field)
+			case "target":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_target(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord", field.Name)
 		},
 	}
 	return fc, nil
@@ -25025,10 +25086,8 @@ func (ec *executionContext) fieldContext_VPNDevice_spec(ctx context.Context, fie
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_accountName(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_clusterName(ctx, field)
+			case "cnameRecords":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field)
 			case "deviceNamespace":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field)
 			case "nodeSelector":
@@ -28288,6 +28347,42 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisWireguardV1CNameRecordIn, error) {
+	var it model.GithubComKloudliteOperatorApisWireguardV1CNameRecordIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"host", "target"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "host":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("host"))
+			it.Host, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "target":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("target"))
+			it.Target, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn, error) {
 	var it model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn
 	asMap := map[string]interface{}{}
@@ -28295,26 +28390,18 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"accountName", "clusterName", "deviceNamespace", "nodeSelector", "ports"}
+	fieldsInOrder := [...]string{"cnameRecords", "deviceNamespace", "nodeSelector", "ports"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "accountName":
+		case "cnameRecords":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "clusterName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-			it.ClusterName, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cnameRecords"))
+			it.CnameRecords, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -31785,6 +31872,35 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return out
 }
 
+var github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordImplementors = []string{"Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisWireguardV1CNameRecord) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord")
+		case "host":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_host(ctx, field, obj)
+
+		case "target":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_target(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecImplementors = []string{"Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) graphql.Marshaler {
@@ -31795,20 +31911,10 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___wiregua
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec")
-		case "accountName":
+		case "cnameRecords":
 
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_accountName(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "clusterName":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_clusterName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "deviceNamespace":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field, obj)
@@ -35125,6 +35231,21 @@ func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecord2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecord(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1CNameRecord) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisWireguardV1CNameRecordIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___wireguard___v1__Port2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1Port(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1Port) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -36300,6 +36421,73 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	}
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecord2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisWireguardV1CNameRecord) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecord2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecord(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordInᚄ(ctx context.Context, v interface{}) ([]*model.GithubComKloudliteOperatorApisWireguardV1CNameRecordIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.GithubComKloudliteOperatorApisWireguardV1CNameRecordIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) graphql.Marshaler {
