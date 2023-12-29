@@ -50,15 +50,15 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 		switch obj.GroupVersionKind().String() {
 		case nodepoolGVK.String():
 			{
-				return d.OnNodepoolApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+				return d.OnNodepoolApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case deviceGVK.String():
 			{
-				return d.OnVPNDeviceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+				return d.OnVPNDeviceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case clusterMsvcGVK.String():
 			{
-				return d.OnClusterManagedServiceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+				return d.OnClusterManagedServiceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case helmreleaseGVK.String():
 			{

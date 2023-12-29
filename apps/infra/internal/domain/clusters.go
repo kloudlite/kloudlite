@@ -2,10 +2,9 @@ package domain
 
 import (
 	"fmt"
-	"time"
-
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -391,7 +390,7 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 	return onDeletedClusterMessage
 }
 
-func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
+func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	c, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -405,10 +404,15 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	c.Annotations = cluster.Annotations
 	c.Spec = cluster.Spec
 
-	c.SyncStatus.LastSyncedAt = time.Now()
+	c.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	c.SyncStatus.Error = nil
 	c.SyncStatus.RecordVersion = c.RecordVersion
-	c.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	c.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
 
 	c.Status = cluster.Status
 
