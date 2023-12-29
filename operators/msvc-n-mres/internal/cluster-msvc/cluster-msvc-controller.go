@@ -111,7 +111,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ClusterManagedSer
 	}
 
 	if obj.Spec.Namespace == "" {
-		obj.Spec.Namespace = fmt.Sprintf("cmsvc-%s", "", obj.Name)
+		obj.Spec.Namespace = fmt.Sprintf("cmsvc-%s", obj.Name)
 
 		if err := r.Update(ctx, obj); err != nil {
 			return failed(err)
