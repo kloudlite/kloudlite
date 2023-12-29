@@ -51,6 +51,8 @@ func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.Bu
 	}, &buildRun); err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishBuildRunEvent(&buildRun, PublishAdd)
+
 	return nil
 }
 
@@ -63,15 +65,15 @@ func (d *Impl) OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.Bu
 	}); err != nil {
 		return errors.NewE(err)
 	}
-	//d.natCli.Conn.Publish(fmt.Scan(buildRun.BuildRun, ))
+	d.resourceEventPublisher.PublishBuildRunEvent(&buildRun, PublishDelete)
 	return nil
 }
 
-func (d *Impl) OnBuildRunApplyErrorMessage(ctx RegistryContext,clusterName string, name string, errorMsg string) error{
+func (d *Impl) OnBuildRunApplyErrorMessage(ctx RegistryContext, clusterName string, name string, errorMsg string) error {
 	buildRun, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
-		"accountName": ctx.AccountName,
+		"accountName":   ctx.AccountName,
 		"metadata.name": name,
-		"clusterName":  clusterName,
+		"clusterName":   clusterName,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -90,7 +92,7 @@ func getUniqueKey(build *entities.Build, hook *GitWebhookPayload) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(uid)))
 }
 
-func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string) error{
+func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string) error {
 	uniqueKey := getUniqueKey(build, hook)
 	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
 	if err != nil {
@@ -166,8 +168,8 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 		return errors.NewE(err)
 	}
 	br := entities.BuildRun{
-		BuildRun: brRaw,
-		BuildName: build.Name,
+		BuildRun:   brRaw,
+		BuildName:  build.Name,
 		SyncStatus: t.SyncStatus{},
 	}
 	br.AccountName = build.Spec.AccountName
@@ -196,4 +198,3 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 	}
 	return nil
 }
-
