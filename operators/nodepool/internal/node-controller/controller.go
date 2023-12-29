@@ -81,7 +81,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 }
 
 func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) stepResult.Result {

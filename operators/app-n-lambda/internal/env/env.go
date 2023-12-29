@@ -1,15 +1,12 @@
 package env
 
 import (
-	"time"
-
 	"github.com/codingconcepts/env"
 )
 
 type Env struct {
-	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
-	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
-	ClusterInternalDNS      string        `env:"CLUSTER_INTERNAL_DNS"`
+	MaxConcurrentReconciles int    `env:"MAX_CONCURRENT_RECONCILES"`
+	ClusterInternalDNS      string `env:"CLUSTER_INTERNAL_DNS"`
 }
 
 func GetEnvOrDie() *Env {
