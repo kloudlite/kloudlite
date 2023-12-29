@@ -60,6 +60,10 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 			{
 				return d.OnClusterManagedServiceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
+		case helmreleaseGVK.String():
+			{
+				return d.OnHelmReleaseApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+			}
 		default:
 			{
 				return errors.Newf("infra error-on-apply reader does not acknowledge resource with kind (%s)", kind)
