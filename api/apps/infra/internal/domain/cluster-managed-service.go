@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"time"
-
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
@@ -11,6 +9,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -182,14 +181,14 @@ func (d *domain) DeleteClusterManagedService(ctx InfraContext, clusterName strin
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.ClusterManagedService)
 }
 
-func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
+func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error {
 	svc, err := d.findClusterManagedService(ctx, clusterName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	svc.SyncStatus.State = t.SyncStateErroredAtAgent
-	svc.SyncStatus.LastSyncedAt = time.Now()
+	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	svc.SyncStatus.Error = &errMsg
 
 	_, err = d.clusterManagedServiceRepo.UpdateById(ctx, svc.Id, svc)
@@ -213,7 +212,7 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterN
 	return err
 }
 
-func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error {
+func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	svc, err := d.findClusterManagedService(ctx, clusterName, service.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -225,8 +224,13 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 
 	svc.Status = service.Status
 
-	svc.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	svc.SyncStatus.LastSyncedAt = time.Now()
+	svc.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	svc.SyncStatus.Error = nil
 	svc.SyncStatus.RecordVersion = svc.RecordVersion
 
