@@ -25,7 +25,12 @@ func (d *Impl) AddBuildCache(ctx RegistryContext, buildCache entities.BuildCache
 	}
 
 	buildCache.AccountName = ctx.AccountName
-	return d.buildCacheRepo.Create(ctx, &buildCache)
+	buildCacheRepoCreated, err := d.buildCacheRepo.Create(ctx, &buildCache)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishBuildCacheEvent(buildCacheRepoCreated, PublishAdd)
+	return buildCacheRepoCreated, nil
 }
 
 func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
@@ -56,7 +61,12 @@ func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache ent
 	back.DisplayName = buildCache.DisplayName
 	back.AccountName = ctx.AccountName
 
-	return d.buildCacheRepo.UpdateById(ctx, id, back)
+	buildCacheRepoUpdated, err := d.buildCacheRepo.UpdateById(ctx, id, back)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishBuildCacheEvent(buildCacheRepoUpdated, PublishUpdate)
+	return buildCacheRepoUpdated, nil
 }
 
 func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
@@ -96,7 +106,12 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 		return errors.Newf("build cache is in use, please delete all builds that use this cache first")
 	}
 
-	return d.buildCacheRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": id})
+	err = d.buildCacheRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": id})
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishBuildCacheEvent(back, PublishDelete)
+	return nil
 }
 
 func (d *Impl) ListBuildCaches(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildCacheKey], error) {

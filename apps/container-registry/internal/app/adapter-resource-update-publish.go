@@ -20,6 +20,13 @@ func (r *ResourceEventPublisherImpl) PublishBuildRunEvent(buildrun *entities.Bui
 	}
 }
 
+func (r *ResourceEventPublisherImpl) PublishBuildCacheEvent(buildCache *entities.BuildCacheKey, msg domain.PublishMsg) {
+	subject := clusterBuildCacheUpdateSubject(buildCache)
+	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
+		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
+	}
+}
+
 func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
 	return &ResourceEventPublisherImpl{
 		cli,
@@ -27,11 +34,18 @@ func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.R
 	}
 }
 
-
 func clusterBuildRunUpdateSubject(buildRun *entities.BuildRun) string {
 	return fmt.Sprintf("res-updates.account.%s.cluster.%s.repo.%s.build-config.%s.build-run.%s",
 		buildRun.AccountName,
 		buildRun.ClusterName,
 		buildRun.Spec.Registry.Repo.Name,
-		buildRun.Spec.BuildOptions, )
+		buildRun.Spec.BuildOptions)
+}
+
+func clusterBuildCacheUpdateSubject(buildCache *entities.BuildCacheKey) string {
+	return fmt.Sprintf("res-updates.account.%s.displayName.%s.name.%s",
+		buildCache.AccountName,
+		buildCache.DisplayName,
+		buildCache.Name,
+	)
 }

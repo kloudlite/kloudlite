@@ -45,8 +45,6 @@ type ResourceDispatcher interface {
 	DeleteFromTargetCluster(ctx RegistryContext, clusterName string, obj client.Object) error
 }
 
-
-
 type PublishMsg string
 
 const (
@@ -57,4 +55,5 @@ const (
 
 type ResourceEventPublisher interface {
 	PublishBuildRunEvent(cluster *entities.BuildRun, msg PublishMsg)
+	PublishBuildCacheEvent(buildcache *entities.BuildCacheKey, msg PublishMsg)
 }
