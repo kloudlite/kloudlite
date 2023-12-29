@@ -2,6 +2,8 @@ package image_pull_secret
 
 import (
 	"context"
+	"time"
+
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -9,7 +11,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
@@ -74,7 +75,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Secret]) stepResult.Result {

@@ -43,7 +43,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=configs/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &crdsv1.Config{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Config{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -75,7 +75,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Config]) stepResult.Result {
