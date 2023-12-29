@@ -147,29 +147,6 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeManagedService:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				r, err := d.msvcRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if r == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
 	case ResTypeManagedResource:
 		{
 			if namespace == nil {

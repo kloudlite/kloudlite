@@ -147,23 +147,10 @@ type Domain interface {
 
 	ResyncRouter(ctx ConsoleContext, namespace, name string) error
 
-	ListManagedServices(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedService], error)
-	GetManagedService(ctx ConsoleContext, namespace, name string) (*entities.ManagedService, error)
-
-	CreateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error)
-	UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error)
-	DeleteManagedService(ctx ConsoleContext, namespace, name string) error
-
 	// Managed Service Templates
 
 	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
 	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
-
-	OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, namespace string, name string) error
-	OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error
-	OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error
-
-	ResyncManagedService(ctx ConsoleContext, namespace, name string) error
 
 	ListManagedResources(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	GetManagedResource(ctx ConsoleContext, namespace, name string) (*entities.ManagedResource, error)
@@ -203,7 +190,6 @@ const (
 type ResourceEventPublisher interface {
 	PublishAppEvent(app *entities.App, msg PublishMsg)
 	PublishMresEvent(mres *entities.ManagedResource, msg PublishMsg)
-	PublishMsvcEvent(msvc *entities.ManagedService, msg PublishMsg)
 	PublishProjectEvent(project *entities.Project, msg PublishMsg)
 	PublishRouterEvent(router *entities.Router, msg PublishMsg)
 	PublishWorkspaceEvent(workspace *entities.Workspace, msg PublishMsg)

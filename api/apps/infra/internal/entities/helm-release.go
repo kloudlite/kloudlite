@@ -7,10 +7,9 @@ import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 )
 
-type ManagedService struct {
+type HelmRelease struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-
-	crdsv1.ManagedService   `json:",inline" graphql:"uri=k8s://managedservices.crds.kloudlite.io"`
+	crdsv1.HelmChart `json:",inline" graphql:"uri=k8s://helmcharts.crds.kloudlite.io"`
 
 	common.ResourceMetadata `json:",inline"`
 
@@ -20,7 +19,7 @@ type ManagedService struct {
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-var MsvcIndexes = []repos.IndexField{
+var HelmReleaseIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
@@ -30,14 +29,14 @@ var MsvcIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
+			{Key: "accountName", Value: repos.IndexAsc},
 			{Key: "clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "metadata.name", Value: repos.IndexAsc},
 		},
 	},
 }

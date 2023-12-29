@@ -51,7 +51,6 @@ type domain struct {
 	configRepo      repos.DbRepo[*entities.Config]
 	secretRepo      repos.DbRepo[*entities.Secret]
 	routerRepo      repos.DbRepo[*entities.Router]
-	msvcRepo        repos.DbRepo[*entities.ManagedService]
 	mresRepo        repos.DbRepo[*entities.ManagedResource]
 	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
 
@@ -387,7 +386,6 @@ var Module = fx.Module("domain",
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
 		routerRepo repos.DbRepo[*entities.Router],
-		msvcRepo repos.DbRepo[*entities.ManagedService],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		logger logging.Logger,
@@ -437,7 +435,6 @@ var Module = fx.Module("domain",
 			configRepo:      configRepo,
 			routerRepo:      routerRepo,
 			secretRepo:      secretRepo,
-			msvcRepo:        msvcRepo,
 			mresRepo:        mresRepo,
 			pullSecretsRepo: ipsRepo,
 

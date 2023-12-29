@@ -32,6 +32,7 @@ func gvk(obj client.Object) string {
 var (
 	clusterGVK     = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
 	nodepoolGVK    = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
+	helmreleaseGVK = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
 	clusterMsvcGVK = fn.GVK("clusters.kloudlite.io/v1", "ClusterManagedService")

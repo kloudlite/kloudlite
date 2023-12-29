@@ -9,6 +9,7 @@ enum ResType {
     # edge
     nodepool
     vpn_device
+    helm_release
 }
 
 type CheckNameAvailabilityOutput {
@@ -30,6 +31,11 @@ input SearchClusterManagedService {
 
 input SearchNodepool {
     text: MatchFilterIn
+}
+
+input SearchHelmRelease {
+    text: MatchFilterIn
+    isReady: MatchFilterIn
 }
 
 input SearchProviderSecret {
@@ -85,6 +91,9 @@ type Query {
 
     infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
+
+    infra_listHelmReleases(clusterName: String!, search: SearchHelmRelease, pagination: CursorPaginationIn): HelmReleasePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -113,6 +122,10 @@ type Mutation {
     infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
     infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
     infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
+    infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
+    infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 # extend type VPNDevice {
