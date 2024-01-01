@@ -8,17 +8,17 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
-type Project struct {
+type Env struct {
 	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
 	Status      Status   `json:"status"`
 }
 
-type ProjectList struct {
-	Edges Edges[Project] `json:"edges"`
+type EnvList struct {
+	Edges Edges[Env] `json:"edges"`
 }
 
-func ListProjects(options ...fn.Option) ([]Project, error) {
+func ListEnvs(options ...fn.Option) ([]Env, error) {
 	accountName := fn.GetOption(options, "accountName")
 	clusterName := fn.GetOption(options, "clusterName")
 
@@ -40,16 +40,25 @@ func ListProjects(options ...fn.Option) ([]Project, error) {
 		}
 	}
 
+	projectName, err := client.CurrentProjectName()
+	if err != nil {
+		return nil, err
+	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_listProjects", map[string]any{
+	respData, err := klFetch("cli_listEnvironments", map[string]any{
 		"pq": map[string]any{
 			"orderBy":       "name",
 			"sortDirection": "ASC",
 			"first":         99999999,
+		},
+		"project": map[string]any{
+			"type":  "name",
+			"value": projectName,
 		},
 	}, &cookie)
 
@@ -57,39 +66,55 @@ func ListProjects(options ...fn.Option) ([]Project, error) {
 		return nil, err
 	}
 
-	if fromResp, err := GetFromRespForEdge[Project](respData); err != nil {
+	if fromResp, err := GetFromRespForEdge[Env](respData); err != nil {
 		return nil, err
 	} else {
 		return fromResp, nil
 	}
 }
 
-func SelectProject(projectName string) (*Project, error) {
-	projects, err := ListProjects()
+func SelectEnv(envName string) (*Env, error) {
+
+	persistSelectedEnv := func(envName string) error {
+		err := client.SelectEnv(envName)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	envs, err := ListEnvs()
 	if err != nil {
 		return nil, err
 	}
 
-	if projectName != "" {
-		for _, a := range projects {
-			if a.Metadata.Name == projectName {
+	if envName != "" {
+		for _, a := range envs {
+			if a.Metadata.Name == envName {
+				if err := persistSelectedEnv(a.Metadata.Name); err != nil {
+					return nil, err
+				}
 				return &a, nil
 			}
 		}
 		return nil, errors.New("you don't have access to this account")
 	}
 
-	project, err := fzf.FindOne(
-		projects,
-		func(project Project) string {
-			return project.DisplayName
+	env, err := fzf.FindOne(
+		envs,
+		func(env Env) string {
+			return env.DisplayName
 		},
-		fzf.WithPrompt("Select Project > "),
+		fzf.WithPrompt("Select Environment > "),
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return project, nil
+	if err := persistSelectedEnv(env.Metadata.Name); err != nil {
+		return nil, err
+	}
+
+	return env, nil
 }

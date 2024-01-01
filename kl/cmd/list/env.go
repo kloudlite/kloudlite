@@ -3,8 +3,10 @@ package list
 import (
 	"errors"
 	"fmt"
+
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
@@ -22,48 +24,53 @@ Examples:
   # list environments accessible to you
   kl list envs
 `,
-	Run: func(_ *cobra.Command, _ []string) {
-		err := listClusters()
+	Run: func(_ *cobra.Command, args []string) {
+		err := listEnvironments(args)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listEnvironments() error {
-	clusters, err := server.GetClusters()
+func listEnvironments(args []string) error {
 
+	pName := ""
+	if len(args) >= 1 {
+		pName = args[0]
+	}
+
+	envs, err := server.ListEnvs(fn.MakeOption("projectName", pName))
 	if err != nil {
 		return err
 	}
 
-	if len(clusters) == 0 {
-		return errors.New("no clusters found")
+	if len(envs) == 0 {
+		return errors.New("no environments found")
 	}
 
-	clusterName, _ := server.CurrentClusterName()
+	envName, _ := client.CurrentEnvName()
 
-	header := table.Row{table.HeaderText("name"), table.HeaderText("id"), table.HeaderText("ready")}
+	header := table.Row{table.HeaderText("DisplayName"), table.HeaderText("Name"), table.HeaderText("ready")}
 	rows := make([]table.Row, 0)
 
-	for _, a := range clusters {
+	for _, a := range envs {
 		rows = append(rows, table.Row{
 			func() string {
-				if a.Metadata.Name == clusterName {
+				if a.Metadata.Name == envName {
 					return text.Colored(fmt.Sprint("*", a.DisplayName), 2)
 				}
 				return a.DisplayName
 			}(),
 			func() string {
-				if a.Metadata.Name == clusterName {
+				if a.Metadata.Name == envName {
 					return text.Colored(a.Metadata.Name, 2)
 				}
 				return a.Metadata.Name
 			}(),
 
 			func() string {
-				if a.Metadata.Name == clusterName {
+				if a.Metadata.Name == envName {
 					return text.Colored(a.Status.IsReady, 2)
 				}
 				return fmt.Sprint(a.Status.IsReady)
@@ -72,13 +79,13 @@ func listEnvironments() error {
 	}
 
 	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(clusters), true)
+	table.TotalResults(len(envs), true)
 
 	return nil
 }
 
 func init() {
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "enviroments")
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "env")
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "envs")
+	envsCmd.Aliases = append(clustersCmd.Aliases, "enviroments")
+	envsCmd.Aliases = append(clustersCmd.Aliases, "env")
+	envsCmd.Aliases = append(clustersCmd.Aliases, "envs")
 }

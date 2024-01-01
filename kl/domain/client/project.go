@@ -1,19 +1,29 @@
 package client
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 func CurrentProjectName() (string, error) {
 
-	file, err := GetContextFile()
-
+	kfile, err := GetKlFile(nil)
 	if err != nil {
 		return "", err
 	}
 
-	if file.ProjectId == "" {
-		return "",
-			errors.New("no project is selected yet. please select one using \"kl use project\"")
+	returnErr :=
+		errors.New("can't get current project from you kl file. please initialize your project using \"kl init\" first.")
+
+	if kfile.Project == "" {
+		return "", returnErr
 	}
 
-	return file.ProjectId, nil
+	s := strings.Split(kfile.Project, "/")
+
+	if len(s) != 2 {
+		return "", returnErr
+	}
+
+	return s[1], nil
 }

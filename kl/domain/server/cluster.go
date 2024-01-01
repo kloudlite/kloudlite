@@ -2,7 +2,11 @@ package server
 
 import (
 	"errors"
-	util2 "github.com/kloudlite/kl/domain/client"
+	"fmt"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 type Check struct {
@@ -20,23 +24,8 @@ type Cluster struct {
 	} `json:"status"`
 }
 
-func CurrentClusterName() (string, error) {
-	file, err := util2.GetContextFile()
-	if err != nil {
-		return "", err
-	}
-	if file.ClusterName == "" {
-		return "", errors.New("noSelectedCluster")
-	}
-	if file.ClusterName == "" {
-		return "",
-			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
-	}
-	return file.ClusterName, nil
-}
-
-func GetClusters() ([]Cluster, error) {
-	if _, err := util2.CurrentAccountName(); err != nil {
+func ListClusters() ([]Cluster, error) {
+	if _, err := client.CurrentAccountName(); err != nil {
 		return nil, err
 	}
 	cookie, err := getCookie()
@@ -68,4 +57,52 @@ func GetClusters() ([]Cluster, error) {
 		}
 		return clusters, nil
 	}
+}
+
+func SelectCluster(clusterName string) (*Cluster, error) {
+	clusters, err := ListClusters()
+	if err != nil {
+		if err.Error() == "noSelectedAccount" {
+			_, err := SelectAccount("")
+			if err != nil {
+				return nil, err
+			}
+			return SelectCluster("")
+		}
+		return nil, err
+	}
+
+	if clusterName != "" {
+		for _, a := range clusters {
+			if a.Metadata.Name == clusterName {
+				return &a, nil
+			}
+		}
+		return nil, errors.New("you don't have access to this cluster")
+	}
+
+	c, err := fzf.FindOne(clusters,
+		func(item Cluster) string {
+			return fmt.Sprintf("%s (%s) %s",
+				item.DisplayName, item.Metadata.Name,
+
+				func() string {
+					if !item.Status.IsReady {
+						return "not ready to use"
+					}
+					return ""
+				}(),
+			)
+		},
+		fzf.WithPrompt(text.Green("Select Cluster > ")),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := client.SelectCluster(c.Metadata.Name); err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }

@@ -17,17 +17,14 @@ func CurrentClusterName() (string, error) {
 	return file.ClusterName, nil
 }
 
-func CurrentAccountName() (string, error) {
+func SelectCluster(clusterName string) error {
 	file, err := GetContextFile()
 	if err != nil {
-		return "", err
+		return err
 	}
-	if file.AccountName == "" {
-		return "", errors.New("noSelectedCluster")
-	}
-	if file.AccountName == "" {
-		return "",
-			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
-	}
-	return file.AccountName, nil
+
+	file.ClusterName = clusterName
+
+	err = WriteContextFile(*file)
+	return err
 }

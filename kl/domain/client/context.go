@@ -11,13 +11,14 @@ import (
 )
 
 type KLContext struct {
-	ProjectId   string   `yaml:"projectId"`
-	AccountName string   `yaml:"accountName"`
-	DeviceId    string   `yaml:"deviceId"`
-	Session     string   `yaml:"session"`
-	KlFile      string   `yaml:"klFile"`
-	DNS         []string `yaml:"dns"`
-	ClusterName string   `yaml:"clusterName"`
+	ProjectId    string            `yaml:"projectId"`
+	AccountName  string            `yaml:"accountName"`
+	DeviceId     string            `yaml:"deviceId"`
+	Session      string            `yaml:"session"`
+	KlFile       string            `yaml:"klFile"`
+	DNS          []string          `yaml:"dns"`
+	ClusterName  string            `yaml:"clusterName"`
+	SelectedEnvs map[string]string `yaml:"selectedEnvs"`
 }
 
 func (f *KLContext) GetCookieString() string {

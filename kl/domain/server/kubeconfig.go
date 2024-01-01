@@ -14,7 +14,7 @@ func SyncKubeConfig(accName, clustName *string) (*string, error) {
 	var err error
 
 	if accName == nil {
-		name, err = CurrentClusterName()
+		name, err = client.CurrentClusterName()
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +58,7 @@ func getKubeConfig(accName, clusterName *string) (*string, error) {
 	var currentCluster string
 
 	if clusterName == nil {
-		currentCluster, err = CurrentClusterName()
+		currentCluster, err = client.CurrentClusterName()
 		if err != nil {
 			return nil, err
 		}

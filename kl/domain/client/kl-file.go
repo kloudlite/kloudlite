@@ -36,7 +36,7 @@ type MountType struct {
 
 type KLFileType struct {
 	Version string    `json:"version"`
-	Name    string    `json:"name"`
+	Project string    `json:"projectName"`
 	Mres    []ResType `json:"mres"`
 	Configs []ResType `json:"configs"`
 	Secrets []ResType `json:"secrets"`

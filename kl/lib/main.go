@@ -77,30 +77,6 @@ func Logout() error {
 	return os.RemoveAll(configFolder)
 }
 
-func SelectAccount(accountName string) error {
-	file, err := client.GetContextFile()
-	if err != nil {
-		return err
-	}
-
-	file.AccountName = accountName
-
-	err = client.WriteContextFile(*file)
-	return err
-}
-
-func SelectCluster(clusterName string) error {
-	file, err := client.GetContextFile()
-	if err != nil {
-		return err
-	}
-
-	file.ClusterName = clusterName
-
-	err = client.WriteContextFile(*file)
-	return err
-}
-
 func SelectProject(projectId string) error {
 
 	file, err := client.GetContextFile()

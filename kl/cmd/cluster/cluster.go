@@ -2,11 +2,11 @@ package cluster
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
 
-	"github.com/kloudlite/kl/cmd/common"
+	"github.com/kloudlite/kl/domain/server"
+
 	"github.com/spf13/cobra"
 )
 
@@ -51,14 +51,14 @@ Example:
 			if err != nil {
 				switch err.Error() {
 				case "noSelectedAccount":
-					_, err := common_cmd.SelectAccount([]string{})
+					_, err := server.SelectAccount("")
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
 					fn()
 				case "noSelectedCluster":
-					_, err := common_cmd.SelectCluster([]string{})
+					_, err := server.SelectCluster("")
 					if err != nil {
 						fmt.Println(err)
 						return
