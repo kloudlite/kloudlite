@@ -39,7 +39,7 @@ tasks:
             ;;
 
           "vision")
-            URL_SUFFIX=""
+            URL_SUFFIX="-vision"
             ;;
 
           *)

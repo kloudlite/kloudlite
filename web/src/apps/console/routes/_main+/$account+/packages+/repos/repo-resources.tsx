@@ -22,7 +22,7 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { REGISTRY_HOST } from '~/root/lib/configs/env';
+import { gatewayUrl } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 
 type BaseType = ExtractNodeType<IRepos>;
@@ -63,7 +63,7 @@ const RepoUrlView = ({ name }: { name: string }) => {
       toast.success('Registry url copied successfully.');
     },
   });
-  const url = `${REGISTRY_HOST}/${account}/${name}`;
+  const url = `${gatewayUrl}/${account}/${name}`;
   return (
     <ListBody
       data={
