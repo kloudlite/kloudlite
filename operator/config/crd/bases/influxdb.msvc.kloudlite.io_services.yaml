@@ -79,8 +79,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
