@@ -835,6 +835,100 @@ type VPNDevicePaginatedRecords struct {
 	TotalCount int              `json:"totalCount"`
 }
 
+type GithubComKloudliteAPIPkgTypesSyncAction string
+
+const (
+	GithubComKloudliteAPIPkgTypesSyncActionApply  GithubComKloudliteAPIPkgTypesSyncAction = "APPLY"
+	GithubComKloudliteAPIPkgTypesSyncActionDelete GithubComKloudliteAPIPkgTypesSyncAction = "DELETE"
+)
+
+var AllGithubComKloudliteAPIPkgTypesSyncAction = []GithubComKloudliteAPIPkgTypesSyncAction{
+	GithubComKloudliteAPIPkgTypesSyncActionApply,
+	GithubComKloudliteAPIPkgTypesSyncActionDelete,
+}
+
+func (e GithubComKloudliteAPIPkgTypesSyncAction) IsValid() bool {
+	switch e {
+	case GithubComKloudliteAPIPkgTypesSyncActionApply, GithubComKloudliteAPIPkgTypesSyncActionDelete:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteAPIPkgTypesSyncAction) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteAPIPkgTypesSyncAction) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteAPIPkgTypesSyncAction(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___types__SyncAction", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteAPIPkgTypesSyncAction) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteAPIPkgTypesSyncState string
+
+const (
+	GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "APPLIED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "DELETED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent         GithubComKloudliteAPIPkgTypesSyncState = "DELETING_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "ERRORED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateIDLe                    GithubComKloudliteAPIPkgTypesSyncState = "IDLE"
+	GithubComKloudliteAPIPkgTypesSyncStateInQueue                 GithubComKloudliteAPIPkgTypesSyncState = "IN_QUEUE"
+	GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent GithubComKloudliteAPIPkgTypesSyncState = "RECEIVED_UPDATE_FROM_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "UPDATED_AT_AGENT"
+)
+
+var AllGithubComKloudliteAPIPkgTypesSyncState = []GithubComKloudliteAPIPkgTypesSyncState{
+	GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateIDLe,
+	GithubComKloudliteAPIPkgTypesSyncStateInQueue,
+	GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent,
+}
+
+func (e GithubComKloudliteAPIPkgTypesSyncState) IsValid() bool {
+	switch e {
+	case GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent, GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStateIDLe, GithubComKloudliteAPIPkgTypesSyncStateInQueue, GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent, GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteAPIPkgTypesSyncState) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteAPIPkgTypesSyncState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteAPIPkgTypesSyncState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___types__SyncState", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteAPIPkgTypesSyncState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type GithubComKloudliteOperatorApisClustersV1AWSPoolType string
 
 const (
