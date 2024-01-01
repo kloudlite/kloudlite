@@ -3,17 +3,17 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"github.com/kloudlite/api/pkg/errors"
-	"strings"
-
+	"fmt"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"strings"
 )
 
 type ResourceUpdateConsumer messaging.Consumer
@@ -70,10 +70,29 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			return nil
 		}
 
-		kind := obj.GetObjectKind().GroupVersionKind().String()
-		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:status-updater", ru.AccountName, ru.ClusterName)
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName, ru.ClusterName)
 
-		switch kind {
+		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
+
+		resStatus, err := func() (types.ResourceStatus, error) {
+			v, ok := ru.Object[types.ResourceStatusKey]
+			if !ok {
+				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
+			}
+			s, ok := v.(string)
+			if !ok {
+				return "", errors.NewE(fmt.Errorf("field value %v is not a string", v))
+			}
+
+			return types.ResourceStatus(s), nil
+		}()
+		if err != nil {
+			return err
+		}
+
+		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
+
+		switch gvkStr {
 		case projectGVK.String():
 			{
 				var p entities.Project
@@ -81,23 +100,23 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteProjectMessage(dctx, p)
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnProjectDeleteMessage(dctx, p)
 				}
-				return d.OnUpdateProjectMessage(dctx, p)
+				return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
 			}
 
 		case workspaceGVK.String():
 			{
-				var p entities.Workspace
-				if err := fn.JsonConversion(ru.Object, &p); err != nil {
+				var ws entities.Workspace
+				if err := fn.JsonConversion(ru.Object, &ws); err != nil {
 					return errors.NewE(err)
 				}
 
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteWorkspaceMessage(dctx, p)
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnWorkspaceDeleteMessage(dctx, ws)
 				}
-				return d.OnUpdateWorkspaceMessage(dctx, p)
+				return d.OnWorkspaceUpdateMessage(dctx, ws, resStatus, opts)
 			}
 		case appsGVK.String():
 			{
@@ -106,10 +125,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteAppMessage(dctx, a)
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnAppDeleteMessage(dctx, a)
 				}
-				return d.OnUpdateAppMessage(dctx, a)
+				return d.OnAppUpdateMessage(dctx, a, resStatus, opts)
 			}
 		case configGVK.String():
 			{
@@ -117,10 +136,11 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				if err := fn.JsonConversion(ru.Object, &c); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteConfigMessage(dctx, c)
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnConfigDeleteMessage(dctx, c)
 				}
-				return d.OnUpdateConfigMessage(dctx, c)
+				return d.OnConfigUpdateMessage(dctx, c, resStatus, opts)
 			}
 		case secretGVK.String():
 			{
@@ -128,10 +148,11 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				if err := fn.JsonConversion(ru.Object, &s); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteSecretMessage(dctx, s)
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnSecretDeleteMessage(dctx, s)
 				}
-				return d.OnUpdateSecretMessage(dctx, s)
+				return d.OnSecretUpdateMessage(dctx, s, resStatus, opts)
 			}
 		case imagePullSecretGVK.String():
 			{
@@ -139,10 +160,11 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				if err := fn.JsonConversion(ru.Object, &s); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteImagePullSecretMessage(dctx, s)
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnImagePullSecretDeleteMessage(dctx, s)
 				}
-				return d.OnUpdateImagePullSecretMessage(dctx, s)
+				return d.OnImagePullSecretUpdateMessage(dctx, s, resStatus, opts)
 			}
 		case routerGVK.String():
 			{
@@ -150,10 +172,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				if err := fn.JsonConversion(ru.Object, &r); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteRouterMessage(dctx, r)
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnRouterDeleteMessage(dctx, r)
 				}
-				return d.OnUpdateRouterMessage(dctx, r)
+				return d.OnRouterUpdateMessage(dctx, r, resStatus, opts)
 			}
 		case managedResourceGVK.String():
 			{
@@ -161,17 +183,18 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				if err := fn.JsonConversion(ru.Object, &mres); err != nil {
 					return errors.NewE(err)
 				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteManagedResourceMessage(dctx, mres)
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnManagedResourceDeleteMessage(dctx, mres)
 				}
-				return d.OnUpdateManagedResourceMessage(dctx, mres)
+				return d.OnManagedResourceUpdateMessage(dctx, mres, resStatus, opts)
 			}
 		}
 
 		return nil
 	}
 
-	if err:=consumer.Consume(msgReader, msgTypes.ConsumeOpts{
+	if err := consumer.Consume(msgReader, msgTypes.ConsumeOpts{
 		OnError: func(err error) error {
 			logger.Errorf(err, "received while reading messages, ignoring it")
 			return nil

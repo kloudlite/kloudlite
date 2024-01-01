@@ -1,13 +1,12 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *domain) ListApps(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
@@ -165,22 +164,14 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	return upApp, nil
 }
 
-func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error {
+func (d *domain) OnAppUpdateMessage(ctx ConsoleContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	exApp, err := d.findApp(ctx, app.Namespace, app.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	annotatedVersion, err := d.parseRecordVersionFromAnnotations(app.Annotations)
-	if err != nil {
-		return d.resyncK8sResource(ctx, exApp.SyncStatus.Action, &exApp.App, exApp.RecordVersion)
-	}
-
-	if annotatedVersion != exApp.RecordVersion {
-		return d.resyncK8sResource(ctx, exApp.SyncStatus.Action, &exApp.App, exApp.RecordVersion)
-	}
-
 	if err := d.MatchRecordVersion(app.Annotations, exApp.RecordVersion); err != nil {
+		return errors.NewE(err)
 	}
 
 	exApp.CreationTimestamp = app.CreationTimestamp
@@ -190,17 +181,23 @@ func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error 
 
 	exApp.Status = app.Status
 
-	exApp.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	exApp.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+
 	exApp.SyncStatus.RecordVersion = exApp.RecordVersion
 	exApp.SyncStatus.Error = nil
-	exApp.SyncStatus.LastSyncedAt = time.Now()
+	exApp.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.appRepo.UpdateById(ctx, exApp.Id, exApp)
 	d.resourceEventPublisher.PublishAppEvent(exApp, PublishUpdate)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error {
+func (d *domain) OnAppDeleteMessage(ctx ConsoleContext, app entities.App) error {
 	a, err := d.findApp(ctx, app.Namespace, app.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -219,14 +216,14 @@ func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error 
 	return nil
 }
 
-func (d *domain) OnApplyAppError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
+func (d *domain) OnAppApplyError(ctx ConsoleContext, errMsg string, namespace string, name string, opts UpdateAndDeleteOpts) error {
 	a, err2 := d.findApp(ctx, namespace, name)
 	if err2 != nil {
 		return errors.NewE(err2)
 	}
 
 	a.SyncStatus.State = t.SyncStateErroredAtAgent
-	a.SyncStatus.LastSyncedAt = time.Now()
+	a.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	a.SyncStatus.Error = &errMsg
 
 	_, err := d.appRepo.UpdateById(ctx, a.Id, a)

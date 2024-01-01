@@ -1,12 +1,11 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/constants"
 	corev1 "k8s.io/api/core/v1"
@@ -245,20 +244,20 @@ func (d *domain) deleteWorkspace(ctx ConsoleContext, namespace string, name stri
 	return nil
 }
 
-func (d *domain) OnApplyWorkspaceError(ctx ConsoleContext, errMsg, namespace, name string) error {
+func (d *domain) OnWorkspaceApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error {
 	ws, err2 := d.findWorkspace(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
 	ws.SyncStatus.State = t.SyncStateErroredAtAgent
-	ws.SyncStatus.LastSyncedAt = time.Now()
+	ws.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	ws.SyncStatus.Error = &errMsg
 	_, err := d.workspaceRepo.UpdateById(ctx, ws.Id, ws)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnDeleteWorkspaceMessage(ctx ConsoleContext, ws entities.Workspace) error {
+func (d *domain) OnWorkspaceDeleteMessage(ctx ConsoleContext, ws entities.Workspace) error {
 	exWs, err := d.findWorkspace(ctx, ws.Namespace, ws.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -276,22 +275,14 @@ func (d *domain) OnDeleteWorkspaceMessage(ctx ConsoleContext, ws entities.Worksp
 	return nil
 }
 
-func (d *domain) OnUpdateWorkspaceMessage(ctx ConsoleContext, ws entities.Workspace) error {
+func (d *domain) OnWorkspaceUpdateMessage(ctx ConsoleContext, ws entities.Workspace, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	exWs, err := d.findWorkspace(ctx, ws.Namespace, ws.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	annotatedVersion, err := d.parseRecordVersionFromAnnotations(ws.Annotations)
-	if err != nil {
-		return d.resyncK8sResource(ctx, exWs.SyncStatus.Action, &exWs.Workspace, exWs.RecordVersion)
-	}
-
-	if annotatedVersion != exWs.RecordVersion {
-		if err := d.resyncK8sResource(ctx, exWs.SyncStatus.Action, &exWs.Workspace, exWs.RecordVersion); err != nil {
-			return errors.NewE(err)
-		}
-		return nil
+	if err := d.MatchRecordVersion(ws.Annotations, exWs.RecordVersion); err != nil {
+		return errors.NewE(err)
 	}
 
 	exWs.CreationTimestamp = ws.CreationTimestamp
@@ -301,10 +292,15 @@ func (d *domain) OnUpdateWorkspaceMessage(ctx ConsoleContext, ws entities.Worksp
 
 	exWs.Status = ws.Status
 
-	exWs.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	exWs.SyncStatus.RecordVersion = annotatedVersion
+	exWs.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	exWs.SyncStatus.RecordVersion = exWs.RecordVersion
 	exWs.SyncStatus.Error = nil
-	exWs.SyncStatus.LastSyncedAt = time.Now()
+	exWs.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.workspaceRepo.UpdateById(ctx, exWs.Id, exWs)
 	d.resourceEventPublisher.PublishWorkspaceEvent(exWs, PublishUpdate)

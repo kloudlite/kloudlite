@@ -1,13 +1,12 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
@@ -148,21 +147,21 @@ func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string)
 	return d.deleteK8sResource(ctx, &c.Config)
 }
 
-func (d *domain) OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name string) error {
+func (d *domain) OnConfigApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error {
 	c, err := d.findConfig(ctx, namespace, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	c.SyncStatus.State = t.SyncStateErroredAtAgent
-	c.SyncStatus.LastSyncedAt = time.Now()
+	c.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	c.SyncStatus.Error = &errMsg
 
 	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error {
+func (d *domain) OnConfigDeleteMessage(ctx ConsoleContext, config entities.Config) error {
 	c, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -175,18 +174,13 @@ func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Confi
 	return d.configRepo.DeleteById(ctx, c.Id)
 }
 
-func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error {
+func (d *domain) OnConfigUpdateMessage(ctx ConsoleContext, config entities.Config, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	exConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	annotatedVersion, err := d.parseRecordVersionFromAnnotations(config.Annotations)
-	if err != nil {
-		return d.resyncK8sResource(ctx, exConfig.SyncStatus.Action, &exConfig.Config, exConfig.RecordVersion)
-	}
-
-	if annotatedVersion != exConfig.RecordVersion {
+	if err := d.MatchRecordVersion(config.Annotations, exConfig.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, exConfig.SyncStatus.Action, &exConfig.Config, exConfig.RecordVersion)
 	}
 
@@ -197,10 +191,15 @@ func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Confi
 
 	exConfig.Status = config.Status
 
-	exConfig.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	exConfig.SyncStatus.RecordVersion = annotatedVersion
+	exConfig.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	exConfig.SyncStatus.RecordVersion = exConfig.RecordVersion
 	exConfig.SyncStatus.Error = nil
-	exConfig.SyncStatus.LastSyncedAt = time.Now()
+	exConfig.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.configRepo.UpdateById(ctx, exConfig.Id, exConfig)
 	return errors.NewE(err)
