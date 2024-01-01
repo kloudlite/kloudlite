@@ -184,7 +184,11 @@ var Module = fx.Module("domain",
 				}
 			}
 
+
+
 			return &domain{
+				msvcTemplatesMap: msvcTemplatesMap,
+				msvcTemplates:    templates,
 				logger:                      logger,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
