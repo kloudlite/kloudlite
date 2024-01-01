@@ -84,6 +84,33 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn struct
 	SecretKey    *string `json:"secretKey,omitempty"`
 }
 
+type GithubComKloudliteAPIAppsInfraInternalEntitiesInputField struct {
+	DefaultValue interface{} `json:"defaultValue,omitempty"`
+	InputType    string      `json:"inputType"`
+	Label        string      `json:"label"`
+	Max          *float64    `json:"max,omitempty"`
+	Min          *float64    `json:"min,omitempty"`
+	Name         string      `json:"name"`
+	Required     *bool       `json:"required,omitempty"`
+	Unit         *string     `json:"unit,omitempty"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate struct {
+	APIVersion  *string                                                      `json:"apiVersion,omitempty"`
+	Description string                                                       `json:"description"`
+	DisplayName string                                                       `json:"displayName"`
+	Fields      []*GithubComKloudliteAPIAppsInfraInternalEntitiesInputField  `json:"fields"`
+	Kind        *string                                                      `json:"kind,omitempty"`
+	Name        string                                                       `json:"name"`
+	Outputs     []*GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField `json:"outputs"`
+}
+
+type GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField struct {
+	Description string `json:"description"`
+	Label       string `json:"label"`
+	Name        string `json:"name"`
+}
+
 type GithubComKloudliteAPIPkgTypesEncodedString struct {
 	Encoding string `json:"encoding"`
 	Value    string `json:"value"`
