@@ -17,6 +17,69 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_listEnvironments: executor(
+    gql`
+      query Core_listProjects($project: ProjectId!, $pq: CursorPaginationIn) {
+        core_listEnvironments(project: $project, pq: $pq) {
+          edges {
+            node {
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                namespace
+              }
+              spec {
+                isEnvironment
+                projectName
+                targetNamespace
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listEnvironments,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_listProjects: executor(
+    gql`
+      query Core_listProjects($clusterName: String, $pq: CursorPaginationIn) {
+        core_listProjects(clusterName: $clusterName, pq: $pq) {
+          edges {
+            node {
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                namespace
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listProjects,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_getKubeConfig: executor(
     gql`
       query Infra_getCluster($name: String!) {

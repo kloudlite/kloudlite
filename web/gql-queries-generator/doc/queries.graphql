@@ -2679,6 +2679,82 @@ query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
   }
 }
 
+query authCli_listProjects($clusterName: String, $search: SearchProjects, $pq: CursorPaginationIn) {
+  core_listProjects(clusterName: $clusterName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        spec {
+          accountName
+          clusterName
+          displayName
+          logo
+          targetNamespace
+        }
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query authCli_getKubeConfig($name: String!) {
   infra_getCluster(name: $name) {
     adminKubeconfig {
