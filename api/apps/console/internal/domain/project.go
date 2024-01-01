@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -276,7 +275,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	return upProject, nil
 }
 
-func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Project) error {
+func (d *domain) OnProjectDeleteMessage(ctx ConsoleContext, project entities.Project) error {
 	p, err := d.findProject(ctx, project.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -294,46 +293,46 @@ func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Pro
 	return nil
 }
 
-func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Project) error {
-	exProject, err := d.findProject(ctx, project.Name)
+func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Project, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	proj, err := d.findProject(ctx, project.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	annotatedVersion, err := d.parseRecordVersionFromAnnotations(project.Annotations)
-	if err != nil {
-		return d.resyncK8sResource(ctx, exProject.SyncStatus.Action, &exProject.Project, exProject.RecordVersion)
+	if err := d.MatchRecordVersion(project.Annotations, proj.RecordVersion); err != nil {
+		return nil
 	}
 
-	if annotatedVersion != exProject.RecordVersion {
-		return d.resyncK8sResource(ctx, exProject.SyncStatus.Action, &exProject.Project, exProject.RecordVersion)
-	}
+	proj.CreationTimestamp = project.CreationTimestamp
+	proj.Labels = project.Labels
+	proj.Annotations = project.Annotations
+	proj.Generation = project.Generation
 
-	exProject.Project.CreationTimestamp = project.CreationTimestamp
-	exProject.Project.Labels = project.Labels
-	exProject.Project.Annotations = project.Annotations
-	exProject.Generation = project.Generation
+	proj.Status = project.Status
 
-	exProject.Status = project.Status
+	proj.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	proj.SyncStatus.RecordVersion = proj.RecordVersion
+	proj.SyncStatus.Error = nil
+	proj.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
-	exProject.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	exProject.SyncStatus.RecordVersion = annotatedVersion
-	exProject.SyncStatus.Error = nil
-	exProject.SyncStatus.LastSyncedAt = time.Now()
-
-	_, err = d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
-	d.resourceEventPublisher.PublishProjectEvent(exProject, PublishUpdate)
+	_, err = d.projectRepo.UpdateById(ctx, proj.Id, proj)
+	d.resourceEventPublisher.PublishProjectEvent(proj, PublishUpdate)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnApplyProjectError(ctx ConsoleContext, errMsg string, name string) error {
+func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
 	p, err2 := d.findProject(ctx, name)
 	if err2 != nil {
 		return err2
 	}
 
 	p.SyncStatus.State = t.SyncStateErroredAtAgent
-	p.SyncStatus.LastSyncedAt = time.Now()
+	p.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	p.SyncStatus.Error = &errMsg
 	_, err := d.projectRepo.UpdateById(ctx, p.Id, p)
 	return errors.NewE(err)
