@@ -105,4 +105,7 @@ type Domain interface {
 	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
 	OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
 	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
+
+	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
+	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
 }
