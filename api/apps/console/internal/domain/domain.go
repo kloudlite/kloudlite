@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/kloudlite/api/pkg/logging"
-	"io"
-	"os"
 	"strconv"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -21,7 +19,6 @@ import (
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
@@ -56,8 +53,6 @@ type domain struct {
 
 	envVars *env.Env
 
-	msvcTemplates          []*entities.MsvcTemplate
-	msvcTemplatesMap       map[string]map[string]*entities.MsvcTemplateEntry
 	resourceEventPublisher ResourceEventPublisher
 }
 
@@ -392,33 +387,7 @@ var Module = fx.Module("domain",
 		resourceEventPublisher ResourceEventPublisher,
 
 		ev *env.Env,
-	) (Domain, error) {
-		open, err := os.Open(ev.MsvcTemplateFilePath)
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-
-		b, err := io.ReadAll(open)
-		if err != nil {
-			return nil, errors.NewE(err)
-		}
-
-		var templates []*entities.MsvcTemplate
-
-		if err := yaml.Unmarshal(b, &templates); err != nil {
-			return nil, errors.NewE(err)
-		}
-
-		msvcTemplatesMap := map[string]map[string]*entities.MsvcTemplateEntry{}
-
-		for _, t := range templates {
-			if _, ok := msvcTemplatesMap[t.Category]; !ok {
-				msvcTemplatesMap[t.Category] = make(map[string]*entities.MsvcTemplateEntry, len(t.Items))
-			}
-			for i := range t.Items {
-				msvcTemplatesMap[t.Category][t.Items[i].Name] = &t.Items[i]
-			}
-		}
+	) Domain {
 
 		return &domain{
 			k8sClient: k8sClient,
@@ -440,9 +409,7 @@ var Module = fx.Module("domain",
 
 			envVars: ev,
 
-			msvcTemplates:          templates,
-			msvcTemplatesMap:       msvcTemplatesMap,
 			resourceEventPublisher: resourceEventPublisher,
-		}, nil
+		}
 	}),
 )
