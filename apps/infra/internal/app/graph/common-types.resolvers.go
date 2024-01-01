@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -22,17 +21,47 @@ import (
 
 // Fields is the resolver for the fields field.
 func (r *github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver) Fields(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField, error) {
-	panic(fmt.Errorf("not implemented: Fields - fields"))
+	if obj == nil {
+		return nil, errors.Newf("msvcTemplateEntry is nil")
+	}
+	if obj.Fields == nil {
+		return nil, nil
+	}
+	var res []*model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField
+	if err := fn.JsonConversion(obj.Fields, &res); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return res, nil
 }
 
 // Outputs is the resolver for the outputs field.
 func (r *github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver) Outputs(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField, error) {
-	panic(fmt.Errorf("not implemented: Outputs - outputs"))
+	if obj == nil {
+		return nil, errors.Newf("msvcTemplateEntry is nil")
+	}
+	if obj.Outputs == nil {
+		return nil, nil
+	}
+	var res []*model.GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField
+	if err := fn.JsonConversion(obj.Outputs, &res); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return res, nil
 }
 
 // Resources is the resolver for the resources field.
 func (r *github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver) Resources(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate, error) {
-	panic(fmt.Errorf("not implemented: Resources - resources"))
+	if obj == nil {
+		return nil, errors.Newf("msvcTemplateEntry is nil")
+	}
+	if obj.Resources == nil {
+		return nil, nil
+	}
+	var res []*model.GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate
+	if err := fn.JsonConversion(obj.Resources, &res); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return res, nil
 }
 
 // UserID is the resolver for the userId field.
