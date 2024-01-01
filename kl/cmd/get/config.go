@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"

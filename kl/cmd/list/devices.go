@@ -3,13 +3,13 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"strings"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
-	"github.com/kloudlite/kl/lib/ui/text"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -35,10 +35,10 @@ Examples:
 
 func Devices(args []string) error {
 
-	var devices []server.Device
+	var devices []server2.Device
 	var err error
 
-	rs, err := server.GetRegions()
+	rs, err := server2.GetRegions()
 	if err != nil {
 		return err
 	}
@@ -54,9 +54,9 @@ func Devices(args []string) error {
 	}
 
 	if len(args) >= 1 {
-		devices, err = server.GetDevices(common_util.MakeOption("accountId", ""))
+		devices, err = server2.GetDevices(common_util.MakeOption("accountId", ""))
 	} else {
-		devices, err = server.GetDevices()
+		devices, err = server2.GetDevices()
 	}
 
 	if err != nil {
@@ -73,7 +73,7 @@ func Devices(args []string) error {
 		table.HeaderText("exposed ports"),
 	}
 
-	cDid, _ := server.CurrentDeviceId()
+	cDid, _ := server2.CurrentDeviceId()
 
 	rows := make([]table.Row, 0)
 
@@ -133,7 +133,7 @@ func Devices(args []string) error {
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId, _ := util.CurrentAccountName(); accountId != "" {
+	if accountId, _ := client.CurrentAccountName(); accountId != "" {
 		table.KVOutput("devices of", accountId, true)
 	}
 

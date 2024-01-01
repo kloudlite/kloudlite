@@ -3,12 +3,12 @@ package list
 import (
 	"errors"
 	"fmt"
+	util2 "github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
-	"github.com/kloudlite/kl/lib/ui/text"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +33,7 @@ Note: selected project will be highlighted with green color.
 
 		err := listProjects(accountName)
 		if err != nil {
-			common_util.PrintError(err)
+			functions.PrintError(err)
 			return
 		}
 	},
@@ -44,7 +44,7 @@ func listProjects(accountName string) error {
 	var err error
 
 	if accountName != "" {
-		projects, err = server.ListProjects(common_util.MakeOption("accountName", accountName))
+		projects, err = server.ListProjects(functions.MakeOption("accountName", accountName))
 	} else {
 		projects, err = server.ListProjects()
 	}
@@ -64,7 +64,7 @@ func listProjects(accountName string) error {
 
 	rows := make([]table.Row, 0)
 
-	projectId, _ := util.CurrentProjectName()
+	projectId, _ := util2.CurrentProjectName()
 
 	for _, a := range projects {
 		rows = append(rows, table.Row{
@@ -87,7 +87,7 @@ func listProjects(accountName string) error {
 	fmt.Println(table.Table(&header, rows))
 
 	if accountName == "" {
-		accountName, _ = util.CurrentAccountName()
+		accountName, _ = util2.CurrentAccountName()
 	}
 
 	if accountName == "" {

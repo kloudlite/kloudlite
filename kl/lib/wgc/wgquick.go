@@ -5,14 +5,14 @@ import (
 	"encoding"
 	"encoding/base64"
 	"fmt"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"net"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/lixiangzhong/dnsutil"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )

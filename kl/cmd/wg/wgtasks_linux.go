@@ -3,11 +3,10 @@ package wg
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"net"
 	"os"
-
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
 )
 
 const (
@@ -62,7 +61,7 @@ func setDNS(dns []net.IP, verbose bool) error {
 		}
 		resolveString += "nameserver 8.8.8.8\n"
 
-		util.SetActiveDns(dnsArr)
+		client.SetActiveDns(dnsArr)
 
 		return resolveString
 	}()), 0644)

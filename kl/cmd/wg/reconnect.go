@@ -1,12 +1,12 @@
 package wg
 
 import (
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"strings"
 	"time"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )

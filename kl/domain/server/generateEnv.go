@@ -3,8 +3,7 @@ package server
 import (
 	// "encoding/json"
 	"encoding/json"
-
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
 )
 
 type GeneratedEnvs struct {
@@ -13,7 +12,7 @@ type GeneratedEnvs struct {
 }
 
 func GenerateEnv() (*GeneratedEnvs, error) {
-	klFile, err := GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +26,7 @@ func GenerateEnv() (*GeneratedEnvs, error) {
 		return nil, err
 	}
 
-	projectId, err := util.CurrentProjectName()
+	projectId, err := client.CurrentProjectName()
 	if err != nil {
 		return nil, err
 	}

@@ -3,9 +3,8 @@ package server
 import (
 	"encoding/json"
 	"errors"
-
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 )
 
 type DAccount struct {
@@ -69,7 +68,7 @@ func GetDevices(options ...common_util.Option) ([]Device, error) {
 
 	accountId := common_util.GetOption(options, "accountId")
 	if accountId == "" {
-		accountId, err = util.CurrentAccountName()
+		accountId, err = client.CurrentAccountName()
 
 		if err != nil {
 			return nil, err
@@ -164,7 +163,7 @@ func CreateDevice(deviceName string) error {
 		return err
 	}
 
-	accId, err := util.CurrentAccountName()
+	accId, err := client.CurrentAccountName()
 	if err != nil {
 		return err
 	}

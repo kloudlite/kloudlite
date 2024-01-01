@@ -2,28 +2,17 @@ package server
 
 import (
 	"encoding/json"
-
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 )
 
-type CSEntry struct {
-	Value string `json:"value"`
-	Key   string `json:"key"`
-}
-
-type Config struct {
+type Secret struct {
 	Entries []CSEntry `json:"entries"`
 	Name    string    `json:"name"`
 	Id      string    `json:"id"`
 }
 
-type ConfigORSecret struct {
-	Entries []CSEntry `json:"entries"`
-	Name    string    `json:"name"`
-}
-
-func GetConfigs(options ...common_util.Option) ([]Config, error) {
+func GetSecrets(options ...common_util.Option) ([]Secret, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -31,13 +20,13 @@ func GetConfigs(options ...common_util.Option) ([]Config, error) {
 
 	projectId := common_util.GetOption(options, "projectId")
 	if projectId == "" {
-		projectId, err = util.CurrentProjectName()
+		projectId, err = client.CurrentProjectName()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	respData, err := klFetch("cli_getConfigs", map[string]any{
+	respData, err := klFetch("cli_getSecrets", map[string]any{
 		"projectId": projectId,
 	}, &cookie)
 
@@ -46,25 +35,24 @@ func GetConfigs(options ...common_util.Option) ([]Config, error) {
 	}
 
 	type Response struct {
-		CoreConfigs []Config `json:"data"`
+		CoreSecrets []Secret `json:"data"`
 	}
-
 	var resp Response
 	err = json.Unmarshal(respData, &resp)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.CoreConfigs, nil
+	return resp.CoreSecrets, nil
 }
 
-func GetConfig(id string) (*Config, error) {
+func GetSecret(id string) (*Config, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
-	respData, err := klFetch("cli_getConfig", map[string]any{
-		"configId": id,
+	respData, err := klFetch("cli_getSecret", map[string]any{
+		"secretId": id,
 	}, &cookie)
 
 	if err != nil {
@@ -72,7 +60,7 @@ func GetConfig(id string) (*Config, error) {
 	}
 
 	type Response struct {
-		CoreConfig Config `json:"data"`
+		CoreSecret Config `json:"data"`
 	}
 
 	var resp Response
@@ -81,5 +69,5 @@ func GetConfig(id string) (*Config, error) {
 		return nil, err
 	}
 
-	return &resp.CoreConfig, nil
+	return &resp.CoreSecret, nil
 }

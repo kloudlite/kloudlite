@@ -2,11 +2,11 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
 
 	"github.com/kloudlite/kl/cmd/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
 

@@ -3,15 +3,14 @@ package lib
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	server2 "github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"os/exec"
 	"runtime"
 
 	"github.com/kloudlite/kl/constants"
-	common "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/text"
-	"github.com/kloudlite/kl/lib/util"
 )
 
 func open(url string) error {
@@ -37,7 +36,7 @@ func open(url string) error {
 }
 
 func WhoAmI() error {
-	if u, err := server.GetCurrentUser(); err != nil {
+	if u, err := server2.GetCurrentUser(); err != nil {
 		return err
 	} else {
 		fmt.Println("You are logged in as " + text.Colored(u.Name, 4) + " (" + text.Colored(u.Email, 4) + ")")
@@ -46,7 +45,7 @@ func WhoAmI() error {
 }
 
 func Login() error {
-	loginId, err := server.CreateRemoteLogin()
+	loginId, err := server2.CreateRemoteLogin()
 	if err != nil {
 		return err
 	}
@@ -57,14 +56,14 @@ func Login() error {
 	fmt.Println(text.Colored(link, 21))
 	fmt.Println("")
 
-	if err = server.Login(loginId); err != nil {
+	if err = server2.Login(loginId); err != nil {
 		return err
 	}
 	return nil
 }
 
 func Logout() error {
-	configFolder, err := common.GetConfigFolder()
+	configFolder, err := client.GetConfigFolder()
 	if err != nil {
 		return err
 	}
@@ -79,53 +78,53 @@ func Logout() error {
 }
 
 func SelectAccount(accountName string) error {
-	file, err := util.GetContextFile()
+	file, err := client.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.AccountName = accountName
 
-	err = util.WriteContextFile(*file)
+	err = client.WriteContextFile(*file)
 	return err
 }
 
 func SelectCluster(clusterName string) error {
-	file, err := util.GetContextFile()
+	file, err := client.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.ClusterName = clusterName
 
-	err = util.WriteContextFile(*file)
+	err = client.WriteContextFile(*file)
 	return err
 }
 
 func SelectProject(projectId string) error {
 
-	file, err := util.GetContextFile()
+	file, err := client.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.ProjectId = projectId
 
-	err = util.WriteContextFile(*file)
+	err = client.WriteContextFile(*file)
 	return err
 
 }
 
 func SelectDevice(deviceId string) error {
 
-	file, err := util.GetContextFile()
+	file, err := client.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.DeviceId = deviceId
 
-	err = util.WriteContextFile(*file)
+	err = client.WriteContextFile(*file)
 	return err
 
 }

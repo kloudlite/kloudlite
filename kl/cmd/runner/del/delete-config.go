@@ -2,10 +2,10 @@ package del
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/constants"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ Examples:
 
 func removeConfig() error {
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		common_util.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
@@ -57,7 +57,7 @@ func removeConfig() error {
 	selectedConfig := klFile.Configs[selectedConfigIndex]
 
 	if len(selectedConfig.Env) == 1 {
-		newConfigs := make([]server.ResType, 0)
+		newConfigs := make([]client.ResType, 0)
 		for i, rt := range klFile.Configs {
 			if i == selectedConfigIndex {
 				continue
@@ -83,7 +83,7 @@ func removeConfig() error {
 			return e
 		}
 
-		newEnvs := make([]server.ResEnvType, 0)
+		newEnvs := make([]client.ResEnvType, 0)
 		for i, ret := range selectedConfig.Env {
 			if i == selectedKeyIndex {
 				continue
@@ -96,7 +96,7 @@ func removeConfig() error {
 		fmt.Printf("removed key %s/%s form your %s-file\n", selectedConfig.Name, selectedConfig.Name, constants.CmdName)
 	}
 
-	err = server.WriteKLFile(*klFile)
+	err = client.WriteKLFile(*klFile)
 
 	return err
 }

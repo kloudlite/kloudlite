@@ -2,10 +2,10 @@ package use
 
 import (
 	"errors"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/lib"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )

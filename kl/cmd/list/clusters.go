@@ -3,11 +3,11 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
-	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/spf13/cobra"
 )
 

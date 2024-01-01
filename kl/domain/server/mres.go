@@ -2,8 +2,7 @@ package server
 
 import (
 	"encoding/json"
-
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
 )
 
 type ResourceType struct {
@@ -50,7 +49,7 @@ func GetMreses() ([]*Mres, []mCategory, error) {
 		return nil, nil, err
 	}
 
-	projectId, err := util.CurrentProjectName()
+	projectId, err := client.CurrentProjectName()
 	if err != nil {
 		return nil, nil, err
 	}

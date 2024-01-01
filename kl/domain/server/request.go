@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net/http"
 	"strings"
 
 	"github.com/kloudlite/kl/constants"
-	common_util "github.com/kloudlite/kl/lib/common"
 )
 
 func klFetch(method string, variables map[string]any, cookie *string) ([]byte, error) {
@@ -41,7 +42,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		req.Header.Add("cookie", *cookie)
 	}
 
-	s := common_util.NewSpinner()
+	s := spinner.NewSpinner()
 	s.Start()
 	res, err := client.Do(req)
 	s.Stop()

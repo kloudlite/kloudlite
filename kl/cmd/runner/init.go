@@ -2,6 +2,8 @@ package runner
 
 import (
 	"fmt"
+	util2 "github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 
@@ -9,9 +11,6 @@ import (
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/lib"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -29,30 +28,30 @@ Examples:
 
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		pId := cmd.Flag("projectId").Value.String()
-		aId := cmd.Flag("accountId").Value.String()
+		pName := cmd.Flag("project").Value.String()
+		aName := cmd.Flag("account").Value.String()
 
-		initFile, err := server.GetKlFile(nil)
+		initFile, err := util2.GetKlFile(nil)
 
 		if err != nil {
 
 			dir, e := os.Getwd()
 			if e != nil {
-				common_util.PrintError(e)
+				fn.PrintError(e)
 				return
 			}
 
-			initFile = &server.KLFileType{
+			initFile = &util2.KLFileType{
 				Version: "v1",
 				Name:    path.Base(dir),
-				Mres:    make([]server.ResType, 0),
-				Configs: make([]server.ResType, 0),
-				Secrets: make([]server.ResType, 0),
-				Env:     []server.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
+				Mres:    make([]util2.ResType, 0),
+				Configs: make([]util2.ResType, 0),
+				Secrets: make([]util2.ResType, 0),
+				Env:     []util2.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
 				// Ports:   []string{},
-				FileMount: server.MountType{
+				FileMount: util2.MountType{
 					MountBasePath: "./.mounts",
-					Mounts:        make([]server.FileEntry, 0),
+					Mounts:        make([]util2.FileEntry, 0),
 				},
 			}
 
@@ -60,63 +59,63 @@ Examples:
 			fmt.Println("file already present")
 		}
 
-		accountId, _ := util.CurrentAccountName()
+		accountId, _ := util2.CurrentAccountName()
 
-		if aId == "" && accountId == "" {
+		if aName == "" && accountId == "" {
 			_, e := common_cmd.SelectAccount([]string{})
 
 			if e != nil {
-				common_util.PrintError(e)
+				fn.PrintError(e)
 				return
 			}
 
 		}
 
-		if aId != "" {
-			e := lib.SelectAccount(aId)
+		if aName != "" {
+			e := lib.SelectAccount(aName)
 
 			if e != nil {
-				common_util.PrintError(e)
+				fn.PrintError(e)
 				return
 			}
 
 		}
 
-		projectId, _ := util.CurrentProjectName()
+		projectId, _ := util2.CurrentProjectName()
 
-		if pId == "" && projectId == "" {
+		if pName == "" && projectId == "" {
 			projectId, e := use.SelectProject([]string{})
 			if e != nil {
-				common_util.PrintError(e)
+				fn.PrintError(e)
 				return
 			}
 
 			e = lib.SelectProject(projectId)
 			if e != nil {
-				common_util.PrintError(e)
+				fn.PrintError(e)
 				return
 			}
 		}
 
-		if pId != "" {
+		if pName != "" {
 			// TODO
-			e := lib.SelectProject(pId)
+			e := lib.SelectProject(pName)
 
 			if e != nil {
-				common_util.PrintError(e)
+				fn.PrintError(e)
 				return
 			}
 
 		}
 
-		err = server.WriteKLFile(*initFile)
+		err = util2.WriteKLFile(*initFile)
 
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 
-		fmt.Println("Initialized file", server.GetConfigPath())
+		fmt.Println("Initialized file", util2.GetConfigPath())
 	},
 }
 

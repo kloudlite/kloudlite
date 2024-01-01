@@ -3,9 +3,8 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 )
 
 type Region struct {
@@ -30,7 +29,7 @@ func GetRegions(options ...common_util.Option) ([]Region, error) {
 
 	accountId := common_util.GetOption(options, "accountId")
 	if accountId == "" {
-		accountId, err = util.CurrentAccountName()
+		accountId, err = client.CurrentAccountName()
 
 		if err != nil {
 			return nil, err

@@ -3,9 +3,9 @@ package use
 import (
 	"errors"
 	"fmt"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +33,7 @@ Examples:
 
 		fmt.Println(region)
 
-		if err = server.UpdateDevice([]server.Port{}, &region); err != nil {
+		if err = server2.UpdateDevice([]server2.Port{}, &region); err != nil {
 			common_util.PrintError(err)
 			return
 		}
@@ -45,7 +45,7 @@ Examples:
 
 func SelectRegion(region string) (string, error) {
 
-	regions, err := server.GetRegions()
+	regions, err := server2.GetRegions()
 	if err != nil {
 		return "", err
 	}

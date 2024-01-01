@@ -3,11 +3,10 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 	"log"
 	"os"
 	"path"
-
-	"github.com/kloudlite/kl/lib/util"
 )
 
 func SyncKubeConfig(accName, clustName *string) (*string, error) {
@@ -50,7 +49,7 @@ func getKubeConfig(accName, clusterName *string) (*string, error) {
 	}
 
 	if accName == nil {
-		_, err = util.CurrentAccountName()
+		_, err = client.CurrentAccountName()
 		if err != nil {
 			return nil, err
 		}

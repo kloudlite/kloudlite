@@ -1,9 +1,9 @@
-package server
+package client
 
 import (
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"os"
 
-	common_util "github.com/kloudlite/kl/lib/common"
 	"gopkg.in/yaml.v2"
 )
 

@@ -3,11 +3,11 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ func listRegions() error {
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId, _ := util.CurrentAccountName(); accountId != "" {
+	if accountId, _ := client.CurrentAccountName(); accountId != "" {
 		table.KVOutput("regions of", accountId, true)
 	}
 

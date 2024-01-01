@@ -1,4 +1,4 @@
-package util
+package client
 
 func ActiveDns() ([]string, error) {
 	file, err := GetContextFile()

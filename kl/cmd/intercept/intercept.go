@@ -3,9 +3,9 @@ package intercept
 import (
 	"errors"
 	"fmt"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -55,13 +55,13 @@ func interceptApp(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err = server.InterceptApp(deviceId, appId)
+	err = server2.InterceptApp(deviceId, appId)
 
 	return err
 }
 
 func triggerDeviceSelect(dName string) (string, error) {
-	devices, err := server.GetDevices()
+	devices, err := server2.GetDevices()
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +101,7 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 		aId = args[1]
 	}
 
-	apps, err := server.GetApps()
+	apps, err := server2.GetApps()
 	if err != nil {
 		return "", err
 	}

@@ -1,8 +1,8 @@
 package server
 
 import (
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 )
 
 type Project struct {
@@ -22,7 +22,7 @@ func ListProjects(options ...common_util.Option) ([]Project, error) {
 	var err error
 
 	if accountName == "" {
-		accountName, err = util.CurrentAccountName()
+		accountName, err = client.CurrentAccountName()
 
 		if err != nil {
 			return nil, err
@@ -30,7 +30,7 @@ func ListProjects(options ...common_util.Option) ([]Project, error) {
 	}
 
 	if clusterName == "" {
-		clusterName, err = util.CurrentClusterName()
+		clusterName, err = client.CurrentClusterName()
 
 		if err != nil {
 			return nil, err

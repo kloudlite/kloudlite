@@ -1,15 +1,13 @@
-package util
+package functions
 
 import (
 	"encoding/csv"
 	"os"
 	"os/exec"
 	"strings"
-
-	common_util "github.com/kloudlite/kl/lib/common"
 )
 
-func execCmd(cmdString string, verbose bool) error {
+func ExecCmd(cmdString string, verbose bool) error {
 	r := csv.NewReader(strings.NewReader(cmdString))
 	r.Comma = ' '
 	cmdArr, err := r.Read()
@@ -18,7 +16,7 @@ func execCmd(cmdString string, verbose bool) error {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
-		common_util.Log("[#] " + strings.Join(cmdArr, " "))
+		Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr

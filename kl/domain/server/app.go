@@ -2,9 +2,8 @@ package server
 
 import (
 	"encoding/json"
-
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 )
 
 type App struct {
@@ -34,7 +33,7 @@ func GetApps(options ...common_util.Option) ([]App, error) {
 
 	projectId := common_util.GetOption(options, "projectId")
 	if projectId == "" {
-		projectId, err = util.CurrentProjectName()
+		projectId, err = client.CurrentProjectName()
 		if err != nil {
 			return nil, err
 		}

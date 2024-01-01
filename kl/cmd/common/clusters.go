@@ -2,12 +2,11 @@ package common_cmd
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/lib"
-	"github.com/kloudlite/kl/lib/server"
-	fzf "github.com/kloudlite/kl/lib/ui/fzf"
-	"github.com/kloudlite/kl/lib/ui/text"
-
 	"github.com/pkg/errors"
 )
 

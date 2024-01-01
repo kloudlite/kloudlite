@@ -2,8 +2,7 @@ package server
 
 import (
 	"errors"
-
-	"github.com/kloudlite/kl/lib/util"
+	util2 "github.com/kloudlite/kl/domain/client"
 )
 
 type Check struct {
@@ -22,7 +21,7 @@ type Cluster struct {
 }
 
 func CurrentClusterName() (string, error) {
-	file, err := util.GetContextFile()
+	file, err := util2.GetContextFile()
 	if err != nil {
 		return "", err
 	}
@@ -37,7 +36,7 @@ func CurrentClusterName() (string, error) {
 }
 
 func GetClusters() ([]Cluster, error) {
-	if _, err := util.CurrentAccountName(); err != nil {
+	if _, err := util2.CurrentAccountName(); err != nil {
 		return nil, err
 	}
 	cookie, err := getCookie()

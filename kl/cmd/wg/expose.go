@@ -3,12 +3,12 @@ package wg
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"strconv"
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/list"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
 

@@ -3,11 +3,11 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"net/http"
 	"time"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/util"
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
@@ -67,7 +67,7 @@ func Login(loginId string) error {
 			return err
 		}
 		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
-			file, err := util.GetContextFile()
+			file, err := client.GetContextFile()
 			if err != nil {
 				return err
 			}
@@ -75,14 +75,14 @@ func Login(loginId string) error {
 			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
 			cookie, _ := req.Cookie("hotspot-session")
 			file.Session = cookie.Value
-			err = util.WriteContextFile(*file)
+			err = client.WriteContextFile(*file)
 			return err
 		}
 		if loginStatusResponse.RemoteLogin.Status == "failed" {
 			return errors.New("remote login failed")
 		}
 		if loginStatusResponse.RemoteLogin.Status == "pending" {
-			s := common_util.NewSpinner("waiting for login to complete")
+			s := spinner.NewSpinner("waiting for login to complete")
 			s.Start()
 			time.Sleep(time.Second * 2)
 			s.Stop()
@@ -93,7 +93,7 @@ func Login(loginId string) error {
 
 func CurrentDeviceId() (string, error) {
 
-	file, err := util.GetContextFile()
+	file, err := client.GetContextFile()
 
 	if err != nil {
 		return "", err
@@ -109,7 +109,7 @@ func CurrentDeviceId() (string, error) {
 
 func getCookie() (string, error) {
 
-	file, err := util.GetContextFile()
+	file, err := client.GetContextFile()
 
 	if err != nil {
 		return "", err
@@ -168,11 +168,11 @@ func GetEnvs(appId string) (string, error) {
 	return resp.Envs, nil
 }
 
-func GetFromRespForEdge[T any](respData []byte) ([]T, error) {
+type ItemList[T any] struct {
+	Edges Edges[T] `json:"edges"`
+}
 
-	type ItemList[T any] struct {
-		Edges Edges[T] `json:"edges"`
-	}
+func GetFromRespForEdge[T any](respData []byte) ([]T, error) {
 
 	resp, err := GetFromResp[ItemList[T]](respData)
 	if err != nil {

@@ -2,10 +2,10 @@ package use
 
 import (
 	"fmt"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	common_cmd "github.com/kloudlite/kl/cmd/common"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/spf13/cobra"
 )
 

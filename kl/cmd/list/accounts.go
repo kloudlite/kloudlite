@@ -3,12 +3,12 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
-	"github.com/kloudlite/kl/lib/ui/text"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -43,7 +43,7 @@ func listAccounts() error {
 		return errors.New("no accounts found")
 	}
 
-	accountName, _ := util.CurrentAccountName()
+	accountName, _ := client.CurrentAccountName()
 
 	header := table.Row{table.HeaderText("name"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)

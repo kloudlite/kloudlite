@@ -2,10 +2,10 @@ package del
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/constants"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ Examples:
 
 func removeMreses() error {
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 
 	if err != nil {
 		common_util.PrintError(err)
@@ -57,7 +57,7 @@ func removeMreses() error {
 
 	selectedMres := klFile.Mres[selectedMresIndex]
 
-	newMres := make([]server.ResType, 0)
+	newMres := make([]client.ResType, 0)
 
 	for i, rt := range klFile.Mres {
 		if i == selectedMresIndex {
@@ -68,7 +68,7 @@ func removeMreses() error {
 
 	klFile.Mres = newMres
 
-	err = server.WriteKLFile(*klFile)
+	err = client.WriteKLFile(*klFile)
 	if err != nil {
 		return err
 	}

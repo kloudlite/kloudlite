@@ -2,13 +2,13 @@ package wg
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"os/exec"
 	"strings"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/ui/text"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ func startServiceInBg() {
 		fmt.Println(err)
 		return
 	}
-	configFolder, err := util.GetConfigFolder()
+	configFolder, err := client.GetConfigFolder()
 	if err != nil {
 		common_util.PrintError(err)
 		return

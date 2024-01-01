@@ -2,15 +2,14 @@ package runner
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"path"
 
 	"github.com/kloudlite/kl/constants"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/kloudlite/kl/lib/ui/table"
-	"github.com/kloudlite/kl/lib/ui/text"
-	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +19,7 @@ var ShowCommand = &cobra.Command{
 	Long:  `Show kl-config`,
 	Run: func(_ *cobra.Command, _ []string) {
 
-		configFolder, err := util.GetConfigFolder()
+		configFolder, err := client.GetConfigFolder()
 		if err != nil {
 			common_util.PrintError(err)
 			return
@@ -32,7 +31,7 @@ var ShowCommand = &cobra.Command{
 			return
 		}
 
-		file, err := os.ReadFile(server.GetConfigPath())
+		file, err := os.ReadFile(client.GetConfigPath())
 		if err != nil {
 			common_util.PrintError(err)
 			return

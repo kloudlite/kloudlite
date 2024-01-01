@@ -2,9 +2,9 @@ package table
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/kloudlite/kl/lib/ui/text"
 )
 
 const (

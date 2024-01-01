@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/kloudlite/kl/lib"
-	common_util "github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 

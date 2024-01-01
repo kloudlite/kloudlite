@@ -2,8 +2,8 @@ package common_cmd
 
 import (
 	"errors"
+	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/lib"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 )
 

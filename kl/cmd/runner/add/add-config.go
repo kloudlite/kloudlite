@@ -3,11 +3,12 @@ package add
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"strings"
 
 	"github.com/kloudlite/kl/constants"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -46,14 +47,14 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		name = args[0]
 	}
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		common_util.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
-	configs, err := server.GetConfigs()
+	configs, err := server2.GetConfigs()
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return errors.New("no configs created yet on server")
 	}
 
-	selectedConfigGroup := server.Config{}
+	selectedConfigGroup := server2.Config{}
 
 	if name != "" {
 		for _, c := range configs {
@@ -92,7 +93,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no configs added yet to %s config", selectedConfigGroup.Name)
 	}
 
-	selectedConfigKey := server.CSEntry{}
+	selectedConfigKey := server2.CSEntry{}
 
 	if m != "" {
 		kk := strings.Split(m, "=")
@@ -144,7 +145,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		}
 
 		if matchedKeyIndex == -1 {
-			klFile.Configs[matchedGroupIndex].Env = append(klFile.Configs[matchedGroupIndex].Env, server.ResEnvType{
+			klFile.Configs[matchedGroupIndex].Env = append(klFile.Configs[matchedGroupIndex].Env, client.ResEnvType{
 				Key: func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
@@ -156,9 +157,9 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			})
 		}
 	} else {
-		klFile.Configs = append(klFile.Configs, server.ResType{
+		klFile.Configs = append(klFile.Configs, client.ResType{
 			Name: selectedConfigGroup.Name,
-			Env: []server.ResEnvType{
+			Env: []client.ResEnvType{
 				{
 					Key: func() string {
 						if m != "" {
@@ -173,7 +174,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	err = server.WriteKLFile(*klFile)
+	err = client.WriteKLFile(*klFile)
 	if err != nil {
 		return err
 	}

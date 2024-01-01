@@ -3,11 +3,12 @@ package add
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"strings"
 
 	"github.com/kloudlite/kl/constants"
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -46,14 +47,14 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		name = args[0]
 	}
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		common_util.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
-	secrets, err := server.GetSecrets()
+	secrets, err := server2.GetSecrets()
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no secrets created yet on server")
 	}
 
-	selectedSecretGroup := server.Secret{}
+	selectedSecretGroup := server2.Secret{}
 
 	if name != "" {
 		for _, c := range secrets {
@@ -92,7 +93,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no secrets added yet to %s secret", selectedSecretGroup.Name)
 	}
 
-	selectedSecretKey := server.CSEntry{}
+	selectedSecretKey := server2.CSEntry{}
 
 	if m != "" {
 		kk := strings.Split(m, "=")
@@ -143,7 +144,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		}
 
 		if matchedKeyIndex == -1 {
-			klFile.Secrets[matchedGroupIndex].Env = append(klFile.Secrets[matchedGroupIndex].Env, server.ResEnvType{
+			klFile.Secrets[matchedGroupIndex].Env = append(klFile.Secrets[matchedGroupIndex].Env, client.ResEnvType{
 				Key: func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
@@ -155,9 +156,9 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			})
 		}
 	} else {
-		klFile.Secrets = append(klFile.Secrets, server.ResType{
+		klFile.Secrets = append(klFile.Secrets, client.ResType{
 			Name: selectedSecretGroup.Name,
-			Env: []server.ResEnvType{
+			Env: []client.ResEnvType{
 				{
 					Key: func() string {
 						if m != "" {
@@ -173,7 +174,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	}
 
-	err = server.WriteKLFile(*klFile)
+	err = client.WriteKLFile(*klFile)
 	if err != nil {
 		common_util.PrintError(err)
 	}

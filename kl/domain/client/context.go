@@ -1,12 +1,12 @@
-package util
+package client
 
 import (
 	"errors"
 	"fmt"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 
-	common_util "github.com/kloudlite/kl/lib/common"
 	"gopkg.in/yaml.v2"
 )
 
@@ -106,7 +106,7 @@ func WriteContextFile(fileObj KLContext) error {
 
 	err = os.WriteFile(cfile, file, 0644)
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = execCmd(fmt.Sprintf("chown %s %s", usr, cfile),
+		if err = common_util.ExecCmd(fmt.Sprintf("chown %s %s", usr, cfile),
 			false); err != nil {
 			return err
 		}

@@ -3,12 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )

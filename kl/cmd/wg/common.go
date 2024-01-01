@@ -4,24 +4,25 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"os"
 	"os/exec"
 	"strings"
 
-	common_util "github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/kloudlite/kl/lib/wgc"
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
-func getDeviceSelect() (*server.Device, error) {
+func getDeviceSelect() (*server2.Device, error) {
 
-	deviceId, err := server.CurrentDeviceId()
+	deviceId, err := server2.CurrentDeviceId()
 	if err != nil {
 		return nil, err
 	}
 
-	devices, err := server.GetDevices()
+	devices, err := server2.GetDevices()
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func getDeviceSelect() (*server.Device, error) {
 }
 
 func startConfiguration(verbose bool) error {
-	devices, err := server.GetDevices()
+	devices, err := server2.GetDevices()
 	if err != nil {
 		return err
 	}
@@ -61,10 +62,10 @@ func configure(
 	verbose bool,
 ) error {
 
-	s := common_util.NewSpinner()
+	s := spinner.NewSpinner()
 	cfg := wgc.Config{}
 
-	device, err := server.GetDevice(deviceId)
+	device, err := server2.GetDevice(deviceId)
 	if err != nil {
 		return err
 	}
