@@ -6,17 +6,34 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Fields is the resolver for the fields field.
+func (r *github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver) Fields(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField, error) {
+	panic(fmt.Errorf("not implemented: Fields - fields"))
+}
+
+// Outputs is the resolver for the outputs field.
+func (r *github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver) Outputs(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField, error) {
+	panic(fmt.Errorf("not implemented: Outputs - outputs"))
+}
+
+// Resources is the resolver for the resources field.
+func (r *github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver) Resources(ctx context.Context, obj *entities.MsvcTemplateEntry) ([]*model.GithubComKloudliteAPIAppsInfraInternalEntitiesMresTemplate, error) {
+	panic(fmt.Errorf("not implemented: Resources - resources"))
+}
 
 // UserID is the resolver for the userId field.
 func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
@@ -134,6 +151,11 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return nil
 }
 
+// Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry returns generated.Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver implementation.
+func (r *Resolver) Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry() generated.Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver {
+	return &github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver{r}
+}
+
 // Github__com___kloudlite___api___common__CreatedOrUpdatedBy returns generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver implementation.
 func (r *Resolver) Github__com___kloudlite___api___common__CreatedOrUpdatedBy() generated.Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver {
 	return &github__com___kloudlite___api___common__CreatedOrUpdatedByResolver{r}
@@ -155,6 +177,7 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
+type github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver struct{ *Resolver }
 type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }

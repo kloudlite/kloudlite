@@ -106,9 +106,6 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedService
   ManagedServiceIn: *managed-service-model
 
-  MsvcTemplate:
-    model: github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplate
-
   ManagedResource: &managed-resource-model
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
@@ -149,9 +146,6 @@ models:
 
   Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
     model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
-
-  Github__com___kloudlite___api___apps___console___internal___entities__MsvcTemplateEntry:
-    model: github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplateEntry
 
   Github__com___kloudlite___operator___pkg___operator__Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
