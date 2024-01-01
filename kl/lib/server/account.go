@@ -1,13 +1,11 @@
 package server
 
 type Account struct {
-	Metadata struct {
-		Name string `json:"name"`
-	}
-	DisplayName string `json:"displayName"`
+	Metadata    Metadata `json:"metadata"`
+	DisplayName string   `json:"displayName"`
 }
 
-func GetAccounts() ([]Account, error) {
+func ListAccounts() ([]Account, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err

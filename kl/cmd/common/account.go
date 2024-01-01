@@ -19,7 +19,7 @@ func SelectAccount(args []string) (*ResourceData, error) {
 	if len(args) >= 1 {
 		accountId = args[0]
 	}
-	accounts, err := server.GetAccounts()
+	accounts, err := server.ListAccounts()
 	if err != nil {
 		return nil, err
 	}

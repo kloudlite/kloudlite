@@ -58,28 +58,28 @@ func listProjects(accountName string) error {
 	}
 
 	header := table.Row{
-		table.HeaderText("projects"),
-		table.HeaderText("id"),
+		table.HeaderText("Display Name"),
+		table.HeaderText("Name"),
 	}
 
 	rows := make([]table.Row, 0)
 
-	projectId, _ := server.CurrentProjectId()
+	projectId, _ := util.CurrentProjectName()
 
 	for _, a := range projects {
 		rows = append(rows, table.Row{
 			func() string {
-				if a.Id == projectId {
-					return text.Colored(fmt.Sprint("*", a.Name), 2)
+				if a.Metadata.Name == projectId {
+					return text.Colored(fmt.Sprint("*", a.DisplayName), 2)
 				}
-				return a.Name
+				return a.DisplayName
 			}(),
 
 			func() string {
-				if a.Id == projectId {
-					return text.Colored(a.Id, 2)
+				if a.Metadata.Name == projectId {
+					return text.Colored(a.Metadata.Name, 2)
 				}
-				return a.Id
+				return a.Metadata.Name
 			}(),
 		})
 	}

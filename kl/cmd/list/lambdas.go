@@ -7,6 +7,7 @@ import (
 	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/kloudlite/kl/lib/ui/table"
+	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -71,7 +72,7 @@ func listlambdas(args []string) error {
 	fmt.Println(table.Table(&header, rows))
 
 	if projectId == "" {
-		projectId, err = server.CurrentProjectId()
+		projectId, err = util.CurrentProjectName()
 		if err != nil {
 			return err
 		}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	common_util "github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 type CSEntry struct {
@@ -30,7 +31,7 @@ func GetConfigs(options ...common_util.Option) ([]Config, error) {
 
 	projectId := common_util.GetOption(options, "projectId")
 	if projectId == "" {
-		projectId, err = CurrentProjectId()
+		projectId, err = util.CurrentProjectName()
 		if err != nil {
 			return nil, err
 		}

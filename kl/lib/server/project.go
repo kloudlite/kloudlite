@@ -1,45 +1,25 @@
 package server
 
 import (
-	"encoding/json"
-	"errors"
-
 	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/util"
 )
 
 type Project struct {
-	Id          string `json:"id"`
-	ReadableId  string `json:"readableId"`
-	DisplayName string `json:"displayName"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	DisplayName string   `json:"displayName"`
+	Metadata    Metadata `json:"metadata"`
+	Status      Status   `json:"status"`
 }
 
-func CurrentProjectId() (string, error) {
-
-	file, err := util.GetContextFile()
-
-	if err != nil {
-		return "", err
-	}
-
-	if file.ProjectId == "" {
-		return "",
-			errors.New("no project is selected yet. please select one using \"kl use project\"")
-	}
-
-	return file.ProjectId, nil
+type ProjectList struct {
+	Edges Edges[Project] `json:"edges"`
 }
 
 func ListProjects(options ...common_util.Option) ([]Project, error) {
 	accountName := common_util.GetOption(options, "accountName")
+	clusterName := common_util.GetOption(options, "clusterName")
 
-	cookie, err := getCookie()
-
-	if err != nil {
-		return nil, err
-	}
+	var err error
 
 	if accountName == "" {
 		accountName, err = util.CurrentAccountName()
@@ -49,23 +29,34 @@ func ListProjects(options ...common_util.Option) ([]Project, error) {
 		}
 	}
 
+	if clusterName == "" {
+		clusterName, err = util.CurrentClusterName()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
 	respData, err := klFetch("cli_listProjects", map[string]any{
-		"cId": accountName,
+		"pq": map[string]any{
+			"orderBy":       "name",
+			"sortDirection": "ASC",
+			"first":         99999999,
+		},
 	}, &cookie)
 
 	if err != nil {
 		return nil, err
 	}
 
-	type Response struct {
-		FinanceAccount struct {
-			Projects []Project `json:"projects"`
-		} `json:"data"`
-	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
+	if fromResp, err := GetFromRespForEdge[Project](respData); err != nil {
 		return nil, err
+	} else {
+		return fromResp, nil
 	}
-	return resp.FinanceAccount.Projects, nil
 }

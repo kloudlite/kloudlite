@@ -167,3 +167,22 @@ func GetEnvs(appId string) (string, error) {
 
 	return resp.Envs, nil
 }
+
+func GetFromRespForEdge[T any](respData []byte) ([]T, error) {
+
+	type ItemList[T any] struct {
+		Edges Edges[T] `json:"edges"`
+	}
+
+	resp, err := GetFromResp[ItemList[T]](respData)
+	if err != nil {
+		return nil, err
+	}
+
+	var data []T
+	for _, v := range resp.Edges {
+		data = append(data, v.Node)
+	}
+
+	return data, nil
+}

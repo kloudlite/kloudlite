@@ -33,7 +33,7 @@ Examples:
 }
 
 func listAccounts() error {
-	accounts, err := server.GetAccounts()
+	accounts, err := server.ListAccounts()
 
 	if err != nil {
 		return err

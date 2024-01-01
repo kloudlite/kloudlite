@@ -44,10 +44,10 @@ Examples:
 }
 
 func SelectProject(args []string) (string, error) {
-	projectId := ""
+	projectName := ""
 
 	if len(args) >= 1 {
-		projectId = args[0]
+		projectName = args[0]
 	}
 
 	projects, err := server.ListProjects()
@@ -55,11 +55,11 @@ func SelectProject(args []string) (string, error) {
 		return "", err
 	}
 
-	if projectId != "" {
+	if projectName != "" {
 
 		for _, p := range projects {
-			if p.Id == projectId || p.ReadableId == projectId {
-				return p.Id, nil
+			if p.Metadata.Name == projectName {
+				return p.DisplayName, nil
 			}
 		}
 
@@ -69,7 +69,7 @@ func SelectProject(args []string) (string, error) {
 	selectedIndex, err := fuzzyfinder.Find(
 		projects,
 		func(i int) string {
-			return projects[i].Name
+			return projects[i].Metadata.Name
 		},
 		fuzzyfinder.WithPromptString("Select Project >"),
 	)
@@ -77,5 +77,5 @@ func SelectProject(args []string) (string, error) {
 		return "", err
 	}
 
-	return projects[selectedIndex].Id, nil
+	return projects[selectedIndex].Metadata.Name, nil
 }

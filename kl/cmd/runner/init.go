@@ -82,7 +82,7 @@ Examples:
 
 		}
 
-		projectId, _ := server.CurrentProjectId()
+		projectId, _ := util.CurrentProjectName()
 
 		if pId == "" && projectId == "" {
 			projectId, e := use.SelectProject([]string{})

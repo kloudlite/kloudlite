@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	common_util "github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 type App struct {
@@ -33,7 +34,7 @@ func GetApps(options ...common_util.Option) ([]App, error) {
 
 	projectId := common_util.GetOption(options, "projectId")
 	if projectId == "" {
-		projectId, err = CurrentProjectId()
+		projectId, err = util.CurrentProjectName()
 		if err != nil {
 			return nil, err
 		}
