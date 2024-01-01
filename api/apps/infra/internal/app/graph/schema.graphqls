@@ -94,6 +94,10 @@ type Query {
 
     infra_listHelmReleases(clusterName: String!, search: SearchHelmRelease, pagination: CursorPaginationIn): HelmReleasePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease @isLoggedInAndVerified @hasAccount
+
+    infra_listManagedServiceTemplates: [MsvcTemplate!]
+    infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
+
 }
 
 type Mutation {

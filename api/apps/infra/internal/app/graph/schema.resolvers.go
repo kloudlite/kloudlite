@@ -740,6 +740,16 @@ func (r *queryResolver) InfraGetHelmRelease(ctx context.Context, clusterName str
 	return r.Domain.GetHelmRelease(ictx, clusterName, name)
 }
 
+// InfraListManagedServiceTemplates is the resolver for the infra_listManagedServiceTemplates field.
+func (r *queryResolver) InfraListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error) {
+	return r.Domain.ListManagedSvcTemplates()
+}
+
+// InfraGetManagedServiceTemplate is the resolver for the infra_getManagedServiceTemplate field.
+func (r *queryResolver) InfraGetManagedServiceTemplate(ctx context.Context, category string, name string) (*entities.MsvcTemplateEntry, error) {
+	return r.Domain.GetManagedSvcTemplate(category, name)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

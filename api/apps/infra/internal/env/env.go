@@ -37,6 +37,8 @@ type Env struct {
 	SessionKVBucket     string `env:"SESSION_KV_BUCKET" required:"true"`
 	IsDev               bool
 	KubernetesApiProxy  string `env:"KUBERNETES_API_PROXY"`
+
+	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
