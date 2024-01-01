@@ -73,9 +73,20 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
-		resStatus, ok := su.Object[types.ResourceStatusKey].(types.ResourceStatus)
-		if !ok {
-			return errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
+		resStatus, err := func() (types.ResourceStatus, error) {
+			v, ok := su.Object[types.ResourceStatusKey]
+			if !ok {
+				return "", errors.NewE(fmt.Errorf("field %s not found in object", types.ResourceStatusKey))
+			}
+			s, ok := v.(string)
+			if !ok {
+				return "", errors.NewE(fmt.Errorf("field value %v is not a string", v))
+			}
+
+			return types.ResourceStatus(s), nil
+		}()
+		if err != nil {
+			return err
 		}
 
 		switch gvkStr {
@@ -152,7 +163,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, svc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
-
 		default:
 			{
 				mLogger.Infof("infra status updates consumer does not acknowledge the gvk %s", gvk(&obj))
