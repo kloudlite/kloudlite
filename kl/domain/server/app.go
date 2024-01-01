@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/kloudlite/kl/domain/client"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type App struct {
@@ -25,13 +25,13 @@ type App struct {
 	} `json:"containers"`
 }
 
-func GetApps(options ...common_util.Option) ([]App, error) {
+func GetApps(options ...fn.Option) ([]App, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId := common_util.GetOption(options, "projectId")
+	projectId := fn.GetOption(options, "projectId")
 	if projectId == "" {
 		projectId, err = client.CurrentProjectName()
 		if err != nil {

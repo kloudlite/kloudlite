@@ -3,7 +3,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/lib"
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ Example:
   logging out will not delete your mounted config/secret files or kl-config file.
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
-		err := lib.Logout()
+		err := client.Logout()
 		if err != nil {
 			fmt.Println(err)
 			return

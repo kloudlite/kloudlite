@@ -20,7 +20,4 @@ func init() {
 	Cmd.AddCommand(configsCmd)
 	Cmd.AddCommand(secretsCmd)
 	Cmd.AddCommand(appsCmd)
-	Cmd.AddCommand(lambdasCmd)
-
-	Cmd.AddCommand(regionsCmd)
 }

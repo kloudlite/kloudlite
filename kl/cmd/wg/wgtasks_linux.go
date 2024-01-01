@@ -23,9 +23,9 @@ func connect(verbose bool) error {
 
 	startService(verbose)
 
-	if err := startConfiguration(verbose); err != nil {
-		return err
-	}
+	// if err := startConfiguration(verbose); err != nil {
+	// 	return err
+	// }
 	success = true
 	return nil
 }

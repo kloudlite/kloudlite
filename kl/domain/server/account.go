@@ -10,6 +10,7 @@ import (
 type Account struct {
 	Metadata    Metadata `json:"metadata"`
 	DisplayName string   `json:"displayName"`
+	Status      Status   `json:"status"`
 }
 
 func ListAccounts() ([]Account, error) {

@@ -3,7 +3,7 @@ package list
 import (
 	"errors"
 	"fmt"
-	util2 "github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -64,7 +64,7 @@ func listProjects(accountName string) error {
 
 	rows := make([]table.Row, 0)
 
-	projectId, _ := util2.CurrentProjectName()
+	projectId, _ := client.CurrentProjectName()
 
 	for _, a := range projects {
 		rows = append(rows, table.Row{
@@ -87,7 +87,7 @@ func listProjects(accountName string) error {
 	fmt.Println(table.Table(&header, rows))
 
 	if accountName == "" {
-		accountName, _ = util2.CurrentAccountName()
+		accountName, _ = client.CurrentAccountName()
 	}
 
 	if accountName == "" {

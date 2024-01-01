@@ -36,58 +36,62 @@ Examples:
 }
 
 func interceptApp(cmd *cobra.Command, args []string) error {
-	dName := cmd.Flag("device-name").Value.String()
-	if dName == "" {
-		dName = cmd.Flag("device-id").Value.String()
-	}
+	// dName := cmd.Flag("device-name").Value.String()
+	// if dName == "" {
+	// 	dName = cmd.Flag("device-id").Value.String()
+	// }
+	//
+	// if len(args) >= 1 && dName == "" {
+	// 	dName = args[0]
+	// }
+	//
+	// appId, err := triggerSelectApp(cmd, args)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// deviceId, err := triggerDeviceSelect(dName)
+	// if err != nil {
+	// 	return err
+	// }
+	//
+	// err = server2.InterceptApp(deviceId, appId)
+	//
+	// return err
 
-	if len(args) >= 1 && dName == "" {
-		dName = args[0]
-	}
-
-	appId, err := triggerSelectApp(cmd, args)
-	if err != nil {
-		return err
-	}
-
-	deviceId, err := triggerDeviceSelect(dName)
-	if err != nil {
-		return err
-	}
-
-	err = server2.InterceptApp(deviceId, appId)
-
-	return err
+	return nil
 }
 
 func triggerDeviceSelect(dName string) (string, error) {
-	devices, err := server2.GetDevices()
-	if err != nil {
-		return "", err
-	}
+	// devices, err := server2.GetDevices()
+	// if err != nil {
+	// 	return "", err
+	// }
+	//
+	// if dName != "" {
+	// 	for _, d := range devices {
+	// 		if d.Name == dName || d.Id == dName {
+	// 			return d.Id, nil
+	// 		}
+	// 	}
+	// 	return "", errors.New("provided device-name is not yours or not present in selected account")
+	// }
+	//
+	// selectedIndex, err := fuzzyfinder.Find(
+	// 	devices,
+	// 	func(i int) string {
+	// 		return devices[i].Name
+	// 	},
+	// 	fuzzyfinder.WithPromptString("Select Device >"),
+	// )
+	//
+	// if err != nil {
+	// 	return "", err
+	// }
+	//
+	// return devices[selectedIndex].Id, nil
 
-	if dName != "" {
-		for _, d := range devices {
-			if d.Name == dName || d.Id == dName {
-				return d.Id, nil
-			}
-		}
-		return "", errors.New("provided device-name is not yours or not present in selected account")
-	}
-
-	selectedIndex, err := fuzzyfinder.Find(
-		devices,
-		func(i int) string {
-			return devices[i].Name
-		},
-		fuzzyfinder.WithPromptString("Select Device >"),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return devices[selectedIndex].Id, nil
+	return "", nil
 }
 
 func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {

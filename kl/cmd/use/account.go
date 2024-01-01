@@ -39,7 +39,7 @@ Examples:
 		}
 
 		fmt.Println(text.Bold(text.Green("\nSelected account:")),
-			text.Blue(fmt.Sprintf("%s (%s)", account.DisplayName, account.Metadata)),
+			text.Blue(fmt.Sprintf("%s (%s)", account.DisplayName, account.Metadata.Name)),
 		)
 	},
 }

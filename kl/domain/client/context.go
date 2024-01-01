@@ -3,7 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 
@@ -11,9 +11,9 @@ import (
 )
 
 type KLContext struct {
-	ProjectId    string            `yaml:"projectId"`
+	ProjectName  string            `yaml:"projectName"`
 	AccountName  string            `yaml:"accountName"`
-	DeviceId     string            `yaml:"deviceId"`
+	DeviceName   string            `yaml:"deviceName"`
 	Session      string            `yaml:"session"`
 	KlFile       string            `yaml:"klFile"`
 	DNS          []string          `yaml:"dns"`
@@ -48,7 +48,7 @@ func GetConfigFolder() (configFolder string, err error) {
 	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(configFolder, os.ModePerm)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 		}
 	}
 	return configFolder, nil
@@ -99,7 +99,7 @@ func WriteContextFile(fileObj KLContext) error {
 
 	file, err := yaml.Marshal(fileObj)
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 		return nil
 	}
 
@@ -107,14 +107,14 @@ func WriteContextFile(fileObj KLContext) error {
 
 	err = os.WriteFile(cfile, file, 0644)
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = common_util.ExecCmd(fmt.Sprintf("chown %s %s", usr, cfile),
+		if err = fn.ExecCmd(fmt.Sprintf("chown %s %s", usr, cfile),
 			false); err != nil {
 			return err
 		}
 	}
 
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 	}
 
 	return err

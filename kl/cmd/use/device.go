@@ -1,12 +1,9 @@
 package use
 
 import (
-	"errors"
-	"github.com/kloudlite/kl/domain/server"
 	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/lib"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -50,31 +47,33 @@ Examples:
 }
 
 func triggerDeviceSelect(dName string) (string, error) {
-	devices, err := server.GetDevices()
-	if err != nil {
-		return "", err
-	}
+	// devices, err := server.GetDevices()
+	// if err != nil {
+	// 	return "", err
+	// }
+	//
+	// if dName != "" {
+	// 	for _, d := range devices {
+	// 		if d.Name == dName || d.Id == dName {
+	// 			return d.Id, nil
+	// 		}
+	// 	}
+	// 	return "", errors.New("provided device-name is not yours or not present in selected account")
+	// }
+	//
+	// selectedIndex, err := fuzzyfinder.Find(
+	// 	devices,
+	// 	func(i int) string {
+	// 		return devices[i].Name
+	// 	},
+	// 	fuzzyfinder.WithPromptString("Select Device >"),
+	// )
+	//
+	// if err != nil {
+	// 	return "", err
+	// }
+	//
+	// return devices[selectedIndex].Id, nil
 
-	if dName != "" {
-		for _, d := range devices {
-			if d.Name == dName || d.Id == dName {
-				return d.Id, nil
-			}
-		}
-		return "", errors.New("provided device-name is not yours or not present in selected account")
-	}
-
-	selectedIndex, err := fuzzyfinder.Find(
-		devices,
-		func(i int) string {
-			return devices[i].Name
-		},
-		fuzzyfinder.WithPromptString("Select Device >"),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return devices[selectedIndex].Id, nil
+	return "", nil
 }

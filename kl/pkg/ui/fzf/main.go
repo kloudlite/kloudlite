@@ -4,20 +4,20 @@ import (
 	"errors"
 
 	"github.com/koki-develop/go-fzf"
-	ofzf "github.com/koki-develop/go-fzf"
+	mfzf "github.com/koki-develop/go-fzf"
 )
 
-type Option ofzf.Option
+type Option mfzf.Option
 
 func WithPrompt(prompt string) Option {
-	return Option(ofzf.WithPrompt(prompt))
+	return Option(mfzf.WithPrompt(prompt))
 }
 
 func FindOne[T any](items []T, itemFunc func(item T) string, options ...Option) (*T, error) {
-	f, err := ofzf.New(func() []ofzf.Option {
-		opts := make([]ofzf.Option, 0)
+	f, err := mfzf.New(func() []mfzf.Option {
+		opts := make([]mfzf.Option, 0)
 		for _, o := range options {
-			opts = append(opts, ofzf.Option(o))
+			opts = append(opts, mfzf.Option(o))
 		}
 
 		opts = append(opts, fzf.WithInputPlaceholder("search"))

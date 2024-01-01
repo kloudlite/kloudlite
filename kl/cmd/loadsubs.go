@@ -11,6 +11,7 @@ import (
 	"github.com/kloudlite/kl/cmd/runner/add"
 	"github.com/kloudlite/kl/cmd/runner/del"
 	"github.com/kloudlite/kl/cmd/runner/gen"
+	switch_cmd "github.com/kloudlite/kl/cmd/switch"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/cmd/wg"
 )
@@ -22,6 +23,7 @@ func init() {
 
 	rootCmd.AddCommand(list.Cmd)
 	rootCmd.AddCommand(use.Cmd)
+	rootCmd.AddCommand(switch_cmd.Cmd)
 	rootCmd.AddCommand(get.Cmd)
 
 	rootCmd.AddCommand(auth.LoginCmd)

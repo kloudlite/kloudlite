@@ -1,8 +1,11 @@
 package auth
 
 import (
-	"github.com/kloudlite/kl/lib"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	"fmt"
+
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -18,9 +21,14 @@ Example:
   visit your browser and approve there to access your account using this cli.
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
-		err := lib.WhoAmI()
-		if err != nil {
-			common_util.PrintError(err)
+		if u, err := server.GetCurrentUser(); err != nil {
+			fn.PrintError(err)
+			return
+		} else {
+			fmt.Printf("You are logged in as %s (%s)\n",
+				text.Blue(u.Name),
+				text.Blue(u.Email),
+			)
 			return
 		}
 	},

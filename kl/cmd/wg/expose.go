@@ -1,14 +1,6 @@
 package wg
 
 import (
-	"errors"
-	"fmt"
-	"github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
-	"strconv"
-	"strings"
-
-	"github.com/kloudlite/kl/cmd/list"
 	"github.com/spf13/cobra"
 )
 
@@ -28,63 +20,63 @@ Examples:
 	kl expose port -d -p <port>:<your_local_port> 
 `,
 	Run: func(_ *cobra.Command, _ []string) {
-		if len(maps) == 0 {
-			common_util.PrintError(errors.New("no port maps provided"))
-			return
-		}
-
-		ports := make([]server.Port, 0)
-
-		for _, v := range maps {
-			mp := strings.Split(v, ":")
-			if len(mp) != 2 {
-				common_util.PrintError(
-					errors.New("wrong map format use <server_port>:<local_port> eg: 80:3000"),
-				)
-				return
-			}
-
-			pp, err := strconv.ParseInt(mp[0], 10, 32)
-			if err != nil {
-				common_util.PrintError(err)
-				return
-			}
-
-			tp, err := strconv.ParseInt(mp[1], 10, 32)
-			if err != nil {
-				common_util.PrintError(err)
-				return
-			}
-
-			ports = append(ports, server.Port{
-				Port:       int(pp),
-				TargetPort: int(tp),
-			})
-		}
-
-		if !deleteFlag {
-
-			if err := server.UpdateDevice(ports, nil); err != nil {
-				common_util.PrintError(err)
-				return
-			}
-
-			fmt.Println("ports exposed")
-		} else {
-
-			if err := server.DeleteDevicePort(ports); err != nil {
-				common_util.PrintError(err)
-				return
-			}
-
-			fmt.Println("ports deleted")
-		}
-
-		if err := list.Devices([]string{}); err != nil {
-			common_util.PrintError(err)
-			return
-		}
-
+		// if len(maps) == 0 {
+		// 	common_util.PrintError(errors.New("no port maps provided"))
+		// 	return
+		// }
+		//
+		// ports := make([]server.Port, 0)
+		//
+		// for _, v := range maps {
+		// 	mp := strings.Split(v, ":")
+		// 	if len(mp) != 2 {
+		// 		common_util.PrintError(
+		// 			errors.New("wrong map format use <server_port>:<local_port> eg: 80:3000"),
+		// 		)
+		// 		return
+		// 	}
+		//
+		// 	pp, err := strconv.ParseInt(mp[0], 10, 32)
+		// 	if err != nil {
+		// 		common_util.PrintError(err)
+		// 		return
+		// 	}
+		//
+		// 	tp, err := strconv.ParseInt(mp[1], 10, 32)
+		// 	if err != nil {
+		// 		common_util.PrintError(err)
+		// 		return
+		// 	}
+		//
+		// 	ports = append(ports, server.Port{
+		// 		Port:       int(pp),
+		// 		TargetPort: int(tp),
+		// 	})
+		// }
+		//
+		// if !deleteFlag {
+		//
+		// 	if err := server.UpdateDevice(ports, nil); err != nil {
+		// 		common_util.PrintError(err)
+		// 		return
+		// 	}
+		//
+		// 	fmt.Println("ports exposed")
+		// } else {
+		//
+		// 	if err := server.DeleteDevicePort(ports); err != nil {
+		// 		common_util.PrintError(err)
+		// 		return
+		// 	}
+		//
+		// 	fmt.Println("ports deleted")
+		// }
+		//
+		// if err := list.Devices([]string{}); err != nil {
+		// 	common_util.PrintError(err)
+		// 	return
+		// }
+		//
 	},
 }
 

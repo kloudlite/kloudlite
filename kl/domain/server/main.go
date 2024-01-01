@@ -99,12 +99,12 @@ func CurrentDeviceId() (string, error) {
 		return "", err
 	}
 
-	if file.DeviceId == "" {
+	if file.DeviceName == "" {
 		return "",
 			errors.New("no device is selected yet. please select one using \"kl use device\"")
 	}
 
-	return file.DeviceId, nil
+	return file.DeviceName, nil
 }
 
 func getCookie() (string, error) {

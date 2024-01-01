@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
 	"github.com/spf13/cobra"
@@ -25,7 +25,7 @@ Examples:
 	Run: func(_ *cobra.Command, args []string) {
 		err := listSecrets(args)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -44,7 +44,7 @@ func listSecrets(args []string) error {
 	if projectId == "" {
 		secrets, err = server.GetSecrets()
 	} else {
-		secrets, err = server.GetSecrets(common_util.MakeOption("projectId", args[0]))
+		secrets, err = server.GetSecrets(fn.MakeOption("projectId", args[0]))
 	}
 
 	if err != nil {

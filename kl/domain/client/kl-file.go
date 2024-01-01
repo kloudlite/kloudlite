@@ -1,7 +1,7 @@
 package client
 
 import (
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -60,13 +60,13 @@ func GetConfigPath() string {
 func WriteKLFile(fileObj KLFileType) error {
 	file, err := yaml.Marshal(fileObj)
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 		return nil
 	}
 
 	err = os.WriteFile(GetConfigPath(), file, 0644)
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 	}
 
 	return err

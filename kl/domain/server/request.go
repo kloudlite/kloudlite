@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"io"
 	"net/http"
@@ -77,7 +77,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		common_util.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
+		fn.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
 		return nil, err
 	}
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -103,7 +104,7 @@ func SelectEnv(envName string) (*Env, error) {
 	env, err := fzf.FindOne(
 		envs,
 		func(env Env) string {
-			return env.DisplayName
+			return fmt.Sprintf("%s (%s)", env.DisplayName, env.Metadata.Name)
 		},
 		fzf.WithPrompt("Select Environment > "),
 	)

@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/kloudlite/kl/domain/client"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 type CSEntry struct {
@@ -22,13 +22,13 @@ type ConfigORSecret struct {
 	Name    string    `json:"name"`
 }
 
-func GetConfigs(options ...common_util.Option) ([]Config, error) {
+func GetConfigs(options ...fn.Option) ([]Config, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId := common_util.GetOption(options, "projectId")
+	projectId := fn.GetOption(options, "projectId")
 	if projectId == "" {
 		projectId, err = client.CurrentProjectName()
 		if err != nil {
