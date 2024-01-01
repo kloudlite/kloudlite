@@ -10,6 +10,7 @@ type PersistentVolumeClaim @shareable {
   recordVersion: Int!
   spec: K8s__io___api___core___v1__PersistentVolumeClaimSpec
   status: K8s__io___api___core___v1__PersistentVolumeClaimStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 

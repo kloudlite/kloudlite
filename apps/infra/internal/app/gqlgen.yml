@@ -55,6 +55,9 @@ models:
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
   MetadataIn: *metadata-model
 
+  MsvcTemplate:
+    model: github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
+
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -105,8 +108,8 @@ models:
   ResType:
     model: github.com/kloudlite/api/apps/infra/internal/domain.ResType
 
-  # PaginationQueryArgs:
-  #   model: github.com/kloudlite/api/pkg/repos.CursorPagination
+  Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry:
+    model: github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplateEntry
 
   CheckNameAvailabilityOutput:
     model: github.com/kloudlite/api/apps/infra/internal/domain.CheckNameAvailabilityOutput
