@@ -8,9 +8,10 @@ import (
 	"runtime"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	common "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/ui/text"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 func open(url string) error {
@@ -78,53 +79,53 @@ func Logout() error {
 }
 
 func SelectAccount(accountName string) error {
-	file, err := server.GetContextFile()
+	file, err := util.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.AccountName = accountName
 
-	err = server.WriteContextFile(*file)
+	err = util.WriteContextFile(*file)
 	return err
 }
 
 func SelectCluster(clusterName string) error {
-	file, err := server.GetContextFile()
+	file, err := util.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.ClusterName = clusterName
 
-	err = server.WriteContextFile(*file)
+	err = util.WriteContextFile(*file)
 	return err
 }
 
 func SelectProject(projectId string) error {
 
-	file, err := server.GetContextFile()
+	file, err := util.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.ProjectId = projectId
 
-	err = server.WriteContextFile(*file)
+	err = util.WriteContextFile(*file)
 	return err
 
 }
 
 func SelectDevice(deviceId string) error {
 
-	file, err := server.GetContextFile()
+	file, err := util.GetContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.DeviceId = deviceId
 
-	err = server.WriteContextFile(*file)
+	err = util.WriteContextFile(*file)
 	return err
 
 }

@@ -3,9 +3,9 @@ package use
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/cmd/util"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	common_cmd "github.com/kloudlite/kl/cmd/common"
+	common_util "github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -23,10 +23,10 @@ Examples:
   kl use account <accountId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		accountName, err := util.SelectAccount(args)
+		accountName, err := common_cmd.SelectAccount(args)
 
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

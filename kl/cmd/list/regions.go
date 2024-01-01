@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/ui/table"
+	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := listRegions()
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
@@ -56,7 +57,7 @@ func listRegions() error {
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId, _ := server.CurrentAccountName(); accountId != "" {
+	if accountId, _ := util.CurrentAccountName(); accountId != "" {
 		table.KVOutput("regions of", accountId, true)
 	}
 

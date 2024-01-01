@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/ui/table"
+	"github.com/kloudlite/kl/lib/ui/text"
+	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,7 @@ Examples:
 	Run: func(_ *cobra.Command, args []string) {
 		err := Devices(args)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
@@ -53,7 +54,7 @@ func Devices(args []string) error {
 	}
 
 	if len(args) >= 1 {
-		devices, err = server.GetDevices(common.MakeOption("accountId", ""))
+		devices, err = server.GetDevices(common_util.MakeOption("accountId", ""))
 	} else {
 		devices, err = server.GetDevices()
 	}
@@ -132,7 +133,7 @@ func Devices(args []string) error {
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId, _ := server.CurrentAccountName(); accountId != "" {
+	if accountId, _ := util.CurrentAccountName(); accountId != "" {
 		table.KVOutput("devices of", accountId, true)
 	}
 

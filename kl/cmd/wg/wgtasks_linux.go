@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 const (
@@ -62,7 +62,7 @@ func setDNS(dns []net.IP, verbose bool) error {
 		}
 		resolveString += "nameserver 8.8.8.8\n"
 
-		server.SetActiveDns(dnsArr)
+		util.SetActiveDns(dnsArr)
 
 		return resolveString
 	}()), 0644)

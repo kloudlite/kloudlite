@@ -1,23 +1,10 @@
 package server
 
-import "errors"
-
 type Account struct {
 	Metadata struct {
 		Name string `json:"name"`
 	}
 	DisplayName string `json:"displayName"`
-}
-
-func CurrentAccountName() (string, error) {
-	file, err := GetContextFile()
-	if err != nil {
-		return "", err
-	}
-	if file.AccountName == "" {
-		return "", errors.New("noSelectedAccount")
-	}
-	return file.AccountName, nil
 }
 
 func GetAccounts() ([]Account, error) {

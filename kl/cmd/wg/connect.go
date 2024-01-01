@@ -6,8 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	common_util "github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/ui/text"
+	"github.com/kloudlite/kl/lib/util"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -20,22 +21,22 @@ func startServiceInBg() {
 		fmt.Println(err)
 		return
 	}
-	configFolder, err := common.GetConfigFolder()
+	configFolder, err := util.GetConfigFolder()
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
 	err = os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
 		if err = execCmd(fmt.Sprintf("chown %s %s", usr, configFolder+"/wgpid"),
 			false); err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	}
@@ -58,7 +59,7 @@ Examples:
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
-			common.Log(
+			common_util.Log(
 				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
@@ -66,7 +67,7 @@ Examples:
 
 		if foreground {
 			if err := startService(connectVerbose); err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 		}
@@ -76,33 +77,33 @@ Examples:
 		})
 
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
 		if strings.TrimSpace(wgInterface) != "" {
-			common.Log("[#] already connected")
+			common_util.Log("[#] already connected")
 
-			common.Log("\n[#] reconnecting")
+			common_util.Log("\n[#] reconnecting")
 
 			if err := disconnect(connectVerbose); err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 
 			if err := connect(connectVerbose); err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 
-			common.Log("[#] connected")
-			common.Log("[#] reconnection done")
+			common_util.Log("[#] connected")
+			common_util.Log("[#] reconnection done")
 
 			return
 		}
 
 		if err := connect(connectVerbose); err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
@@ -119,7 +120,7 @@ Examples:
 		// 	}
 		// }
 
-		common.Log("[#] connected")
+		common_util.Log("[#] connected")
 	},
 }
 

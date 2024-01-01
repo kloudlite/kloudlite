@@ -1,11 +1,13 @@
-package util
+package common_cmd
 
 import (
 	"fmt"
 
 	"github.com/kloudlite/kl/lib"
 	"github.com/kloudlite/kl/lib/server"
-	"github.com/ktr0731/go-fuzzyfinder"
+	fzf "github.com/kloudlite/kl/lib/ui/fzf"
+	"github.com/kloudlite/kl/lib/ui/text"
+
 	"github.com/pkg/errors"
 )
 
@@ -38,29 +40,34 @@ func SelectCluster(args []string) (*ResourceData, error) {
 		return nil, errors.New("you don't have access to this cluster")
 	}
 
-	selectedIndex, err := fuzzyfinder.Find(
-		clusters,
-		func(i int) string {
-			return fmt.Sprintf("%s %s", clusters[i].DisplayName, func() string {
-				if clusters[i].Status.IsReady {
+	c, err := fzf.FindOne(clusters,
+		func(item server.Cluster) string {
+			return fmt.Sprintf("%s (%s) %s",
+				item.DisplayName, item.Metadata.Name,
+
+				func() string {
+					if !item.Status.IsReady {
+						return "not ready to use"
+					}
 					return ""
-				} else {
-					return "(Not Ready)"
-				}
-			}())
+				}(),
+			)
 		},
-		fuzzyfinder.WithPromptString("Select Cluster > "),
+		fzf.WithPrompt(text.Green("Select Cluster > ")),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	if err = lib.SelectCluster(clusters[selectedIndex].Metadata.Name); err != nil {
+	if err = lib.SelectCluster(c.Metadata.Name); err != nil {
 		return nil, err
 	}
 	return &ResourceData{
-		Name:        clusters[selectedIndex].Metadata.Name,
-		DisplayName: clusters[selectedIndex].DisplayName,
+		Name:        c.Metadata.Name,
+		DisplayName: c.DisplayName,
 	}, nil
 }

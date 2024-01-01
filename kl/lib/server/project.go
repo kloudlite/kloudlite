@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 type Project struct {
@@ -17,7 +18,7 @@ type Project struct {
 
 func CurrentProjectId() (string, error) {
 
-	file, err := GetContextFile()
+	file, err := util.GetContextFile()
 
 	if err != nil {
 		return "", err
@@ -31,9 +32,8 @@ func CurrentProjectId() (string, error) {
 	return file.ProjectId, nil
 }
 
-
-func GetProjects(options ...common.Option) ([]Project, error) {
-	accountId := common.GetOption(options, "accountId")
+func ListProjects(options ...lib.Option) ([]Project, error) {
+	accountName := common.GetOption(options, "accountName")
 
 	cookie, err := getCookie()
 
@@ -41,16 +41,16 @@ func GetProjects(options ...common.Option) ([]Project, error) {
 		return nil, err
 	}
 
-	if accountId == "" {
-		accountId, err = CurrentAccountName()
+	if accountName == "" {
+		accountName, err = util.CurrentAccountName()
 
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	respData, err := klFetch("cli_getProjects", map[string]any{
-		"accountId": accountId,
+	respData, err := klFetch("cli_listProjects", map[string]any{
+		"cId": accountName,
 	}, &cookie)
 
 	if err != nil {

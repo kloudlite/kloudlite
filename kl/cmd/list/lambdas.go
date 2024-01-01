@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/ui/table"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ Examples:
 	Run: func(_ *cobra.Command, args []string) {
 		err := listlambdas(args)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
@@ -43,7 +43,7 @@ func listlambdas(args []string) error {
 	if projectId == "" {
 		l, err = server.GetApps()
 	} else {
-		l, err = server.GetApps(common.MakeOption("projectId", args[0]))
+		l, err = server.GetApps(common_util.MakeOption("projectId", args[0]))
 	}
 
 	var lambdas []server.App

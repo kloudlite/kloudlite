@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	common_util "github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 
 		if euid := os.Geteuid(); euid != 0 {
-			common.Log(
+			common_util.Log(
 				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
@@ -38,30 +38,30 @@ Examples:
 		})
 
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
 		if strings.TrimSpace(wgInterface) == "" {
-			common.Log(text.Colored("[#] no devices connected yet", 209))
+			common_util.Log(text.Colored("[#] no devices connected yet", 209))
 		} else {
 			if err := disconnect(reconnectVerbose); err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
-			common.Log("[#] disconnected")
+			common_util.Log("[#] disconnected")
 		}
-		common.Log("[#] connecting")
+		common_util.Log("[#] connecting")
 		time.Sleep(time.Second * 1)
 
 		// startServiceInBg()
 		if err := connect(reconnectVerbose); err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
-		common.Log("[#] connected")
-		common.Log("[#] reconnection done")
+		common_util.Log("[#] connected")
+		common_util.Log("[#] reconnection done")
 	},
 }
 

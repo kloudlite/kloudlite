@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 type DAccount struct {
@@ -68,7 +69,7 @@ func GetDevices(options ...common.Option) ([]Device, error) {
 
 	accountId := common.GetOption(options, "accountId")
 	if accountId == "" {
-		accountId, err = CurrentAccountName()
+		accountId, err = util.CurrentAccountName()
 
 		if err != nil {
 			return nil, err
@@ -163,7 +164,7 @@ func CreateDevice(deviceName string) error {
 		return err
 	}
 
-	accId, err := CurrentAccountName()
+	accId, err := util.CurrentAccountName()
 	if err != nil {
 		return err
 	}

@@ -3,8 +3,8 @@ package wg
 import (
 	"os"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	common_util "github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/ui/text"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +19,7 @@ Examples:
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
-			common.Log(
+			common_util.Log(
 				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
@@ -27,7 +27,7 @@ Examples:
 
 		_, err := wgc.Show(nil)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},

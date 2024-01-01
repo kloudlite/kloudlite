@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/util"
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
@@ -66,7 +67,7 @@ func Login(loginId string) error {
 			return err
 		}
 		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
-			file, err := GetContextFile()
+			file, err := util.GetContextFile()
 			if err != nil {
 				return err
 			}
@@ -74,7 +75,7 @@ func Login(loginId string) error {
 			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
 			cookie, _ := req.Cookie("hotspot-session")
 			file.Session = cookie.Value
-			err = WriteContextFile(*file)
+			err = util.WriteContextFile(*file)
 			return err
 		}
 		if loginStatusResponse.RemoteLogin.Status == "failed" {
@@ -92,7 +93,7 @@ func Login(loginId string) error {
 
 func CurrentDeviceId() (string, error) {
 
-	file, err := GetContextFile()
+	file, err := util.GetContextFile()
 
 	if err != nil {
 		return "", err
@@ -108,7 +109,7 @@ func CurrentDeviceId() (string, error) {
 
 func getCookie() (string, error) {
 
-	file, err := GetContextFile()
+	file, err := util.GetContextFile()
 
 	if err != nil {
 		return "", err

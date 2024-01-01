@@ -1,15 +1,12 @@
-package server
+package util
 
 import (
-	"encoding/csv"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"gopkg.in/yaml.v2"
 )
 
@@ -27,7 +24,7 @@ func (f *KLContext) GetCookieString() string {
 	return fmt.Sprintf("kloudlite-account=%s;kloudlite-cluster=%s;hotspot-session=%s", f.AccountName, f.ClusterName, f.Session)
 }
 
-func getConfigFolder() (configFolder string, err error) {
+func GetConfigFolder() (configFolder string, err error) {
 	var dirName string
 	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
 	if !ok {
@@ -50,68 +47,14 @@ func getConfigFolder() (configFolder string, err error) {
 	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(configFolder, os.ModePerm)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 		}
 	}
 	return configFolder, nil
 }
 
-func ActiveDns() ([]string, error) {
-
-	file, err := GetContextFile()
-
-	if err != nil {
-		return nil, err
-	}
-
-	// if len(file.DNS) == 0 {
-	// 	return nil,
-	// 		errors.New("no active dns found")
-	// }
-
-	return file.DNS, nil
-}
-
-func SetActiveDns(dns []string) error {
-	file, err := GetContextFile()
-	if err != nil {
-		return err
-	}
-	file.DNS = dns
-	return WriteContextFile(*file)
-}
-
-func WriteContextFile(fileObj KLContext) error {
-	filePath, err := getConfigFolder()
-	if err != nil {
-		return err
-	}
-
-	file, err := yaml.Marshal(fileObj)
-	if err != nil {
-		common.PrintError(err)
-		return nil
-	}
-
-	cfile := path.Join(filePath, "config")
-
-	err = os.WriteFile(cfile, file, 0644)
-	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = execCmd(fmt.Sprintf("chown %s %s", usr, cfile),
-			false); err != nil {
-			return err
-		}
-	}
-
-	if err != nil {
-		common.PrintError(err)
-	}
-
-	return err
-}
-
 func GetContextFile() (*KLContext, error) {
-	configPath, err := getConfigFolder()
+	configPath, err := GetConfigFolder()
 	if err != nil {
 		return nil, err
 	}
@@ -147,21 +90,31 @@ func GetContextFile() (*KLContext, error) {
 	return &klfile, nil
 }
 
-func execCmd(cmdString string, verbose bool) error {
-	r := csv.NewReader(strings.NewReader(cmdString))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
+func WriteContextFile(fileObj KLContext) error {
+	filePath, err := GetConfigFolder()
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-	if verbose {
-		common.Log("[#] " + strings.Join(cmdArr, " "))
-		cmd.Stdout = os.Stdout
+
+	file, err := yaml.Marshal(fileObj)
+	if err != nil {
+		common_util.PrintError(err)
+		return nil
 	}
-	cmd.Stderr = os.Stderr
-	// s.Start()
-	err = cmd.Run()
-	// s.Stop()
+
+	cfile := path.Join(filePath, "config")
+
+	err = os.WriteFile(cfile, file, 0644)
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err = execCmd(fmt.Sprintf("chown %s %s", usr, cfile),
+			false); err != nil {
+			return err
+		}
+	}
+
+	if err != nil {
+		common_util.PrintError(err)
+	}
+
 	return err
 }

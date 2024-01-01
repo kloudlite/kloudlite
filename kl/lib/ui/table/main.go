@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	"github.com/kloudlite/kl/lib/ui/text"
 )
 
 const (

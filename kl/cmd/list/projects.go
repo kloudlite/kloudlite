@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/ui/table"
+	"github.com/kloudlite/kl/lib/ui/text"
+	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -25,27 +26,27 @@ Examples:
 Note: selected project will be highlighted with green color.
   `,
 	Run: func(_ *cobra.Command, args []string) {
-		accountId := ""
+		accountName := ""
 		if len(args) >= 1 {
-			accountId = args[0]
+			accountName = args[0]
 		}
 
-		err := listProjects(accountId)
+		err := listProjects(accountName)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
 }
 
-func listProjects(accountId string) error {
+func listProjects(accountName string) error {
 	var projects []server.Project
 	var err error
 
-	if accountId != "" {
-		projects, err = server.GetProjects(common.MakeOption("accountId", accountId))
+	if accountName != "" {
+		projects, err = server.ListProjects(common_util.MakeOption("accountName", accountName))
 	} else {
-		projects, err = server.GetProjects()
+		projects, err = server.ListProjects()
 	}
 
 	if err != nil {
@@ -85,12 +86,12 @@ func listProjects(accountId string) error {
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId == "" {
-		accountId, _ = server.CurrentAccountName()
+	if accountName == "" {
+		accountName, _ = util.CurrentAccountName()
 	}
 
-	if accountId == "" {
-		table.KVOutput("projects of", accountId, true)
+	if accountName == "" {
+		table.KVOutput("projects of", accountName, true)
 	}
 
 	table.TotalResults(len(projects), true)

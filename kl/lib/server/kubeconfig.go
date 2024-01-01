@@ -6,6 +6,8 @@ import (
 	"log"
 	"os"
 	"path"
+
+	"github.com/kloudlite/kl/lib/util"
 )
 
 func SyncKubeConfig(accName, clustName *string) (*string, error) {
@@ -48,7 +50,7 @@ func getKubeConfig(accName, clusterName *string) (*string, error) {
 	}
 
 	if accName == nil {
-		_, err = CurrentAccountName()
+		_, err = util.CurrentAccountName()
 		if err != nil {
 			return nil, err
 		}

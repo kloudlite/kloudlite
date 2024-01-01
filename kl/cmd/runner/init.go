@@ -2,15 +2,16 @@ package runner
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/cmd/util"
 	"os"
 	"path"
 
+	common_cmd "github.com/kloudlite/kl/cmd/common"
 	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/lib"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/lib/util"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +38,7 @@ Examples:
 
 			dir, e := os.Getwd()
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 
@@ -59,19 +60,19 @@ Examples:
 			fmt.Println("file already present")
 		}
 
-		accountId, _ := server.CurrentAccountName()
+		accountId, _ := util.CurrentAccountName()
 
 		if aId == "" && accountId == "" {
-			acc, e := util.SelectAccount([]string{})
+			acc, e := common_cmd.SelectAccount([]string{})
 
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 
-			e = lib.SelectAccount(acc.Name)
+			e = common_cmd.SelectAccount(acc)
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 
@@ -81,7 +82,7 @@ Examples:
 			e := lib.SelectAccount(aId)
 
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 
@@ -92,13 +93,13 @@ Examples:
 		if pId == "" && projectId == "" {
 			projectId, e := use.SelectProject([]string{})
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 
 			e = lib.SelectProject(projectId)
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 		}
@@ -108,7 +109,7 @@ Examples:
 			e := lib.SelectProject(pId)
 
 			if e != nil {
-				common.PrintError(e)
+				common_util.PrintError(e)
 				return
 			}
 
@@ -117,7 +118,7 @@ Examples:
 		err = server.WriteKLFile(*initFile)
 
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

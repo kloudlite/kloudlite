@@ -1,4 +1,4 @@
-package common
+package common_util
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	"github.com/kloudlite/kl/lib/ui/text"
 )
 
 type Option struct {

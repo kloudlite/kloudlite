@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/lib/common"
+	"github.com/kloudlite/kl/lib/util"
 )
 
 type Region struct {
@@ -29,7 +30,7 @@ func GetRegions(options ...common.Option) ([]Region, error) {
 
 	accountId := common.GetOption(options, "accountId")
 	if accountId == "" {
-		accountId, err = CurrentAccountName()
+		accountId, err = util.CurrentAccountName()
 
 		if err != nil {
 			return nil, err

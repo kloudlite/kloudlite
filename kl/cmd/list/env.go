@@ -11,16 +11,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var clustersCmd = &cobra.Command{
-	Use:   "clusters",
-	Short: "list all the clusters accessible to you",
-	Long: `List Clusters
+var envsCmd = &cobra.Command{
+	Use:   "envs",
+	Short: "list all the environments accessible to you",
+	Long: `List Environments
 
-This command will help you to see list of all the clusters that's accessible to you. 
+This command will help you to see list of all the environments that's accessible to you.
 
 Examples:
-  # list clusters accessible to you
-  kl list clusters
+  # list environments accessible to you
+  kl list envs
 `,
 	Run: func(_ *cobra.Command, _ []string) {
 		err := listClusters()
@@ -31,7 +31,7 @@ Examples:
 	},
 }
 
-func listClusters() error {
+func listEnvironments() error {
 	clusters, err := server.GetClusters()
 
 	if err != nil {
@@ -78,6 +78,7 @@ func listClusters() error {
 }
 
 func init() {
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "cluster")
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "clus")
+	clustersCmd.Aliases = append(clustersCmd.Aliases, "enviroments")
+	clustersCmd.Aliases = append(clustersCmd.Aliases, "env")
+	clustersCmd.Aliases = append(clustersCmd.Aliases, "envs")
 }

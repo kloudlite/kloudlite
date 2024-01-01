@@ -1,4 +1,4 @@
-package util
+package common_cmd
 
 import (
 	"errors"

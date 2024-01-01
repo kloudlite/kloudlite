@@ -50,7 +50,7 @@ func SelectProject(args []string) (string, error) {
 		projectId = args[0]
 	}
 
-	projects, err := server.GetProjects()
+	projects, err := server.ListProjects()
 	if err != nil {
 		return "", err
 	}
