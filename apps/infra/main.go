@@ -3,10 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/kloudlite/api/pkg/errors"
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"os"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 
 	"github.com/kloudlite/api/apps/infra/internal/env"
 	"github.com/kloudlite/api/apps/infra/internal/framework"
@@ -40,12 +41,13 @@ func main() {
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
-			if e, err := env.LoadEnv(); err != nil {
+			e, err := env.LoadEnv()
+			if err != nil {
 				return nil, errors.NewE(err)
-			} else {
-				e.IsDev = isDev
-				return e, nil
 			}
+
+			e.IsDev = isDev
+			return e, nil
 		}),
 
 		fx.Provide(func(e *env.Env) (*rest.Config, error) {
@@ -71,8 +73,7 @@ func main() {
 
 	ctx, cancel := func() (context.Context, context.CancelFunc) {
 		if isDev {
-			// return context.WithCancel(context.TODO())
-			return context.WithTimeout(context.TODO(), 10 * time.Second)
+			return context.WithTimeout(context.TODO(), 10*time.Second)
 		}
 		return context.WithTimeout(context.Background(), 2*time.Second)
 	}()
