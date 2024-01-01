@@ -149,9 +149,6 @@ type Domain interface {
 
 	// Managed Service Templates
 
-	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
-	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
-
 	ListManagedResources(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	GetManagedResource(ctx ConsoleContext, namespace, name string) (*entities.ManagedResource, error)
 

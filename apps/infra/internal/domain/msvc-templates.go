@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
 )
 
 func (d *domain) ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error) {

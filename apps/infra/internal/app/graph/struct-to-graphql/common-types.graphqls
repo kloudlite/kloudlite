@@ -9,6 +9,46 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecr
   secretKey: String
 }
 
+type Github__com___kloudlite___api___apps___infra___internal___entities__InputField @shareable {
+  defaultValue: Any
+  inputType: String!
+  label: String!
+  max: Float
+  min: Float
+  name: String!
+  required: Boolean
+  unit: String
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate @shareable {
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___infra___internal___entities__InputField!]!
+  kind: String
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___infra___internal___entities__OutputField!]!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry @shareable {
+  active: Boolean!
+  apiVersion: String
+  description: String!
+  displayName: String!
+  fields: [Github__com___kloudlite___api___apps___infra___internal___entities__InputField!]!
+  kind: String
+  logoUrl: String!
+  name: String!
+  outputs: [Github__com___kloudlite___api___apps___infra___internal___entities__OutputField!]!
+  resources: [Github__com___kloudlite___api___apps___infra___internal___entities__MresTemplate!]!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__OutputField @shareable {
+  description: String!
+  label: String!
+  name: String!
+}
+
 type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!

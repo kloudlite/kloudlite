@@ -27,8 +27,6 @@ type Env struct {
 
 	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
 
-	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
-
 	LokiServerHttpAddr string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
 	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
 	SessionKVBucket    string `env:"SESSION_KV_BUCKET" required:"true"`

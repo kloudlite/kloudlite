@@ -2,10 +2,13 @@ package domain
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
+	"gopkg.in/yaml.v2"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
@@ -42,6 +45,9 @@ type domain struct {
 	resDispatcher               ResourceDispatcher
 	k8sClient                   k8s.Client
 	resourceEventPublisher      ResourceEventPublisher
+
+	msvcTemplates    []*entities.MsvcTemplate
+	msvcTemplatesMap map[string]map[string]*entities.MsvcTemplateEntry
 }
 
 func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
@@ -148,7 +154,36 @@ var Module = fx.Module("domain",
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 			logger logging.Logger,
 			resourceEventPublisher ResourceEventPublisher,
-		) Domain {
+
+		) (Domain, error) {
+
+			open, err := os.Open(env.MsvcTemplateFilePath)
+			if err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			b, err := io.ReadAll(open)
+			if err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			var templates []*entities.MsvcTemplate
+
+			if err := yaml.Unmarshal(b, &templates); err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			msvcTemplatesMap := map[string]map[string]*entities.MsvcTemplateEntry{}
+
+			for _, t := range templates {
+				if _, ok := msvcTemplatesMap[t.Category]; !ok {
+					msvcTemplatesMap[t.Category] = make(map[string]*entities.MsvcTemplateEntry, len(t.Items))
+				}
+				for i := range t.Items {
+					msvcTemplatesMap[t.Category][t.Items[i].Name] = &t.Items[i]
+				}
+			}
+
 			return &domain{
 				logger:                      logger,
 				env:                         env,
@@ -167,6 +202,6 @@ var Module = fx.Module("domain",
 				messageOfficeInternalClient: msgOfficeInternalClient,
 				resourceEventPublisher:      resourceEventPublisher,
 				helmReleaseRepo:             helmReleaseRepo,
-			}
+			}, nil
 		}),
 )

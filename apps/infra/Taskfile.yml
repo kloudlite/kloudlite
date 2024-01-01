@@ -34,6 +34,7 @@ tasks:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Cluster
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Node
           --struct github.com/kloudlite/api/apps/infra/internal/entities.NodePool
           --struct github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret

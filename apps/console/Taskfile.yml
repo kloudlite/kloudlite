@@ -40,7 +40,6 @@ tasks:
           --struct github.com/kloudlite/api/apps/console/internal/entities.Config
           --struct github.com/kloudlite/api/apps/console/internal/entities.Router
           --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
-          --struct github.com/kloudlite/api/apps/console/internal/entities.MsvcTemplate
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
