@@ -17,6 +17,90 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_listDevices: executor(
+    gql`
+      query Infra_listVPNDevices(
+        $pq: CursorPaginationIn
+        $clusterName: String
+      ) {
+        infra_listVPNDevices(pq: $pq, clusterName: $clusterName) {
+          edges {
+            node {
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                namespace
+              }
+              spec {
+                cnameRecords {
+                  host
+                  target
+                }
+                deviceNamespace
+                ports {
+                  port
+                  targetPort
+                }
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_listVPNDevices,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getDevice: executor(
+    gql`
+      query Infra_getVPNDevice($clusterName: String!, $name: String!) {
+        infra_getVPNDevice(clusterName: $clusterName, name: $name) {
+          displayName
+          markedForDeletion
+          metadata {
+            name
+            namespace
+          }
+          spec {
+            cnameRecords {
+              host
+              target
+            }
+            deviceNamespace
+            nodeSelector
+            ports {
+              port
+              targetPort
+            }
+          }
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          wireguardConfig {
+            encoding
+            value
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_getVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_listEnvironments: executor(
     gql`
       query Core_listProjects($project: ProjectId!, $pq: CursorPaginationIn) {
