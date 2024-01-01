@@ -16,6 +16,10 @@ type ResourceUpdate struct {
 
 type ResourceStatus string
 
+func (rs ResourceStatus) String() string {
+	return string(rs)
+}
+
 const (
 	ResourceStatusUpdated  ResourceStatus = "updated"
 	ResourceStatusDeleting ResourceStatus = "deleting"

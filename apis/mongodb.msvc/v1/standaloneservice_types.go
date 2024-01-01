@@ -14,6 +14,8 @@ type StandaloneServiceOutput struct {
 }
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
+// kl-msvc-template: description="hello description"
+// kl-msvc-template: logoUrl="https://asdfjasdkfdjasf;jsadf"
 type StandaloneServiceSpec struct {
 	Region       string              `json:"region,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`

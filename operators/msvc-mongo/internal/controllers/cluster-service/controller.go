@@ -284,8 +284,8 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 		"cpu-min": obj.Spec.Resources.Cpu.Min,
 		"cpu-max": obj.Spec.Resources.Cpu.Max,
 
-		"memory-min": obj.Spec.Resources.Memory,
-		"memory-max": obj.Spec.Resources.Memory,
+		"memory-min": obj.Spec.Resources.Memory.Min,
+		"memory-max": obj.Spec.Resources.Memory.Max,
 	})
 	if err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error())

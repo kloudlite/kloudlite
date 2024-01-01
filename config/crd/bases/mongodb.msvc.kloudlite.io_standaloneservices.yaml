@@ -46,7 +46,9 @@ spec:
           metadata:
             type: object
           spec:
-            description: StandaloneServiceSpec defines the desired state of StandaloneService
+            description: 'StandaloneServiceSpec defines the desired state of StandaloneService
+              kl-msvc-template: description="hello description" kl-msvc-template:
+              logoUrl="https://asdfjasdkfdjasf;jsadf"'
             properties:
               nodeSelector:
                 additionalProperties:
@@ -91,8 +93,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
