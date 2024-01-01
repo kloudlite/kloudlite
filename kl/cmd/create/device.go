@@ -1,6 +1,9 @@
 package create
 
 import (
+	"fmt"
+
+	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
@@ -28,5 +31,7 @@ Examples:
 		// }
 		//
 		// common_util.Log("device created successfully")
+
+		functions.PrintError(fmt.Errorf("not implemented"))
 	},
 }

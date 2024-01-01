@@ -2,12 +2,12 @@ package list
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
-	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/spf13/cobra"
 )
@@ -41,29 +41,37 @@ func listDevices() error {
 	header := table.Row{
 		table.HeaderText("Display Name"),
 		table.HeaderText("Name"),
+		table.HeaderText("Active_Ns"),
+		table.HeaderText("Ports"),
 	}
 
 	rows := make([]table.Row, 0)
 	activeDevName, _ := client.CurrentDeviceName()
 
 	for _, d := range devices {
-
 		rows = append(rows, table.Row{
-			func() string {
-				if d.Metadata.Name == activeDevName {
-					return text.Colored(fmt.Sprintf("*%s", d.DisplayName), 2)
+			fn.GetPrintRow(d, activeDevName, d.DisplayName, true),
+			fn.GetPrintRow(d, activeDevName, d.Metadata.Name),
+			fn.GetPrintRow(d, activeDevName, d.Spec.DeviceNamespace),
+			fn.GetPrintRow(d, activeDevName, func() string {
+				if d.Spec.Ports == nil {
+					return ""
 				}
-				return d.DisplayName
-			}(),
 
-			func() string {
-				if d.Metadata.Name == activeDevName {
-					return text.Colored(fmt.Sprintf("*%s", d.Metadata.Name), 2)
+				res := make([]string, 0)
+
+				for _, p := range d.Spec.Ports {
+					res = append(res, fmt.Sprintf("%d:%d ", p.Port, func() int {
+						if p.TargetPort == 0 {
+							return p.Port
+						}
+						return p.TargetPort
+					}()))
 				}
-				return d.Metadata.Name
-			}(),
+
+				return strings.Join(res, "\n")
+			}()),
 		})
-
 	}
 
 	fmt.Println(table.Table(&header, rows))

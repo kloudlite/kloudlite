@@ -6,7 +6,7 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "use",
-	Short: "select [ account | project | device | region ] to use later with all commands",
+	Short: "select [ account | cluster | device ] to use later with all commands",
 	Long: `Select account or project for later use
 Examples:
   # select account

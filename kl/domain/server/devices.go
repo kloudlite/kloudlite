@@ -75,12 +75,10 @@ func SelectDevice(deviceName string) (*Device, error) {
 		return nil
 	}
 
-	if deviceName == "" {
-		s, err := client.CurrentDeviceName()
-		if err != nil {
-			return nil, err
+	if deviceName != "" {
+		if s, err := client.CurrentDeviceName(); err == nil {
+			deviceName = s
 		}
-		deviceName = s
 	}
 
 	devices, err := ListDevices()
