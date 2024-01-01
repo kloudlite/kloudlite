@@ -321,8 +321,11 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 	proj.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.projectRepo.UpdateById(ctx, proj.Id, proj)
+	if err != nil {
+	  return errors.NewE(err)
+	}
 	d.resourceEventPublisher.PublishProjectEvent(proj, PublishUpdate)
-	return errors.NewE(err)
+	return nil
 }
 
 func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {

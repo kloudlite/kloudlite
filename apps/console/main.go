@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/kloudlite/api/pkg/errors"
 	"os"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
