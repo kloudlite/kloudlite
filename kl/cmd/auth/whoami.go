@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/kloudlite/kl/lib"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ Example:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := lib.WhoAmI()
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},

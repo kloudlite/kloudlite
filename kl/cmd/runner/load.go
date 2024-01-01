@@ -6,7 +6,7 @@ import (
 
 	"github.com/kloudlite/kl/cmd/runner/mounter"
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -47,20 +47,20 @@ Examples:
 func loadEnv(args []string) {
 	generatedConfig, err := server.GenerateEnv()
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
 	klfile, err := server.GetKlFile(nil)
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
 	err = mounter.Mount(generatedConfig.MountFiles, klfile.FileMount.MountBasePath)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
@@ -74,7 +74,7 @@ func loadEnv(args []string) {
 	err = mounter.Load(generatedConfig.EnvVars, args)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 

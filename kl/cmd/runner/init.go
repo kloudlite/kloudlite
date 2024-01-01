@@ -63,14 +63,8 @@ Examples:
 		accountId, _ := util.CurrentAccountName()
 
 		if aId == "" && accountId == "" {
-			acc, e := common_cmd.SelectAccount([]string{})
+			_, e := common_cmd.SelectAccount([]string{})
 
-			if e != nil {
-				common_util.PrintError(e)
-				return
-			}
-
-			e = common_cmd.SelectAccount(acc)
 			if e != nil {
 				common_util.PrintError(e)
 				return

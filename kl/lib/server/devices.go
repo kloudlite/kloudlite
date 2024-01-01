@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/util"
 )
 
@@ -60,14 +60,14 @@ func GetDevice(deviceId string) (*Device, error) {
 	return &resp.Device, nil
 }
 
-func GetDevices(options ...common.Option) ([]Device, error) {
+func GetDevices(options ...common_util.Option) ([]Device, error) {
 
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	accountId := common.GetOption(options, "accountId")
+	accountId := common_util.GetOption(options, "accountId")
 	if accountId == "" {
 		accountId, err = util.CurrentAccountName()
 

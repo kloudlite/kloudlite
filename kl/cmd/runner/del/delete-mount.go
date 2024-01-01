@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
@@ -25,7 +25,7 @@ func removeConfigMount() {
 	klFile, err := server.GetKlFile(nil)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
@@ -38,7 +38,7 @@ func removeConfigMount() {
 	)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
@@ -55,7 +55,7 @@ func removeConfigMount() {
 	err = server.WriteKLFile(*klFile)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 	}
 
 	fmt.Println("mount removed")

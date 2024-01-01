@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 )
 
 type Secret struct {
@@ -12,13 +12,13 @@ type Secret struct {
 	Id      string    `json:"id"`
 }
 
-func GetSecrets(options ...common.Option) ([]Secret, error) {
+func GetSecrets(options ...common_util.Option) ([]Secret, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId := common.GetOption(options, "projectId")
+	projectId := common_util.GetOption(options, "projectId")
 	if projectId == "" {
 		projectId, err = CurrentProjectId()
 		if err != nil {

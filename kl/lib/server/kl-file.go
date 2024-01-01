@@ -3,7 +3,7 @@ package server
 import (
 	"os"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"gopkg.in/yaml.v2"
 )
 
@@ -60,13 +60,13 @@ func GetConfigPath() string {
 func WriteKLFile(fileObj KLFileType) error {
 	file, err := yaml.Marshal(fileObj)
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return nil
 	}
 
 	err = os.WriteFile(GetConfigPath(), file, 0644)
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 	}
 
 	return err

@@ -10,8 +10,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	"github.com/kloudlite/kl/lib/ui/table"
+	"github.com/kloudlite/kl/lib/ui/text"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )

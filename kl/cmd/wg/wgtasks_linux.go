@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/util"
 )
 
@@ -37,7 +37,7 @@ func disconnect(verbose bool) error {
 
 func setDNS(dns []net.IP, verbose bool) error {
 	if verbose {
-		common.Log("[#] setting /etc/resolv.conf")
+		common_util.Log("[#] setting /etc/resolv.conf")
 	}
 	file, err := os.ReadFile("/etc/resolv.conf")
 	if err != nil {
@@ -71,7 +71,7 @@ func setDNS(dns []net.IP, verbose bool) error {
 }
 func resetDNS(verbose bool) error {
 	if verbose {
-		common.Log("[#] resetting /etc/resolv.conf")
+		common_util.Log("[#] resetting /etc/resolv.conf")
 	}
 
 	// err := os.Remove("/etc/resolv.conf")

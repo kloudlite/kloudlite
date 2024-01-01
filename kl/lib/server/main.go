@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/util"
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
@@ -82,7 +82,7 @@ func Login(loginId string) error {
 			return errors.New("remote login failed")
 		}
 		if loginStatusResponse.RemoteLogin.Status == "pending" {
-			s := common.NewSpinner("waiting for login to complete")
+			s := common_util.NewSpinner("waiting for login to complete")
 			s.Start()
 			time.Sleep(time.Second * 2)
 			s.Stop()

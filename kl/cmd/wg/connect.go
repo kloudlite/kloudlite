@@ -109,13 +109,13 @@ Examples:
 
 		// if foreground {
 		// 	if err := startService(connectVerbose); err != nil {
-		// 		common.PrintError(err)
+		// 		common_util.PrintError(err)
 		// 		return
 		// 	}
 		// } else {
 		// 	startServiceInBg()
 		// 	if err := startConfiguration(connectVerbose); err != nil {
-		// 		common.PrintError(err)
+		// 		common_util.PrintError(err)
 		// 		return
 		// 	}
 		// }

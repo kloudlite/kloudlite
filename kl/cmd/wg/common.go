@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/kloudlite/kl/lib/wgc"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -61,7 +61,7 @@ func configure(
 	verbose bool,
 ) error {
 
-	s := common.NewSpinner()
+	s := common_util.NewSpinner()
 	cfg := wgc.Config{}
 
 	device, err := server.GetDevice(deviceId)
@@ -75,7 +75,7 @@ func configure(
 
 	s.Start()
 	if verbose {
-		common.Log("[#] validating configuration")
+		common_util.Log("[#] validating configuration")
 	}
 	if e := cfg.UnmarshalText([]byte(configuration)); e != nil {
 		return e
@@ -98,7 +98,7 @@ func configure(
 	}
 
 	if verbose {
-		common.Log("[#] setting up connection")
+		common_util.Log("[#] setting up connection")
 	}
 
 	err = wg.ConfigureDevice(KlWgInterface, cfg.Config)
@@ -125,7 +125,7 @@ func execCmd(cmdString string, verbose bool) error {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
-		common.Log("[#] " + strings.Join(cmdArr, " "))
+		common_util.Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr

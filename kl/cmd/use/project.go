@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/kloudlite/kl/lib"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
@@ -30,13 +30,13 @@ Examples:
 	Run: func(_ *cobra.Command, args []string) {
 		projectId, err := SelectProject(args)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
 		err = lib.SelectProject(projectId)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

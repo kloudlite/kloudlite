@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 )
 
 func execCmd(cmdString string, verbose bool) error {
@@ -18,7 +18,7 @@ func execCmd(cmdString string, verbose bool) error {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
-		common.Log("[#] " + strings.Join(cmdArr, " "))
+		common_util.Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr

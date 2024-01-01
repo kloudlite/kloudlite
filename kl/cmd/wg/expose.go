@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/cmd/list"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ Examples:
 `,
 	Run: func(_ *cobra.Command, _ []string) {
 		if len(maps) == 0 {
-			common.PrintError(errors.New("no port maps provided"))
+			common_util.PrintError(errors.New("no port maps provided"))
 			return
 		}
 
@@ -38,7 +38,7 @@ Examples:
 		for _, v := range maps {
 			mp := strings.Split(v, ":")
 			if len(mp) != 2 {
-				common.PrintError(
+				common_util.PrintError(
 					errors.New("wrong map format use <server_port>:<local_port> eg: 80:3000"),
 				)
 				return
@@ -46,13 +46,13 @@ Examples:
 
 			pp, err := strconv.ParseInt(mp[0], 10, 32)
 			if err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 
 			tp, err := strconv.ParseInt(mp[1], 10, 32)
 			if err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 
@@ -65,7 +65,7 @@ Examples:
 		if !deleteFlag {
 
 			if err := server.UpdateDevice(ports, nil); err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 
@@ -73,7 +73,7 @@ Examples:
 		} else {
 
 			if err := server.DeleteDevicePort(ports); err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 
@@ -81,7 +81,7 @@ Examples:
 		}
 
 		if err := list.Devices([]string{}); err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

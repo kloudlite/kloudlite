@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/util"
 )
 
@@ -21,14 +21,14 @@ type Provider struct {
 	Edges    []Region `json:"edges"`
 }
 
-func GetRegions(options ...common.Option) ([]Region, error) {
+func GetRegions(options ...common_util.Option) ([]Region, error) {
 
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	accountId := common.GetOption(options, "accountId")
+	accountId := common_util.GetOption(options, "accountId")
 	if accountId == "" {
 		accountId, err = util.CurrentAccountName()
 

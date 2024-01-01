@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 )
 
 func klFetch(method string, variables map[string]any, cookie *string) ([]byte, error) {
@@ -41,7 +41,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		req.Header.Add("cookie", *cookie)
 	}
 
-	s := common.NewSpinner()
+	s := common_util.NewSpinner()
 	s.Start()
 	res, err := client.Do(req)
 	s.Stop()
@@ -76,7 +76,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	var respData RespData
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		common.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
+		common_util.PrintError(fmt.Errorf("some issue with server:\n%s", string(body)))
 		return nil, err
 	}
 

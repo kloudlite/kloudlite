@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/kloudlite/kl/lib"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/util"
 )
 
@@ -32,8 +32,8 @@ func CurrentProjectId() (string, error) {
 	return file.ProjectId, nil
 }
 
-func ListProjects(options ...lib.Option) ([]Project, error) {
-	accountName := common.GetOption(options, "accountName")
+func ListProjects(options ...common_util.Option) ([]Project, error) {
+	accountName := common_util.GetOption(options, "accountName")
 
 	cookie, err := getCookie()
 

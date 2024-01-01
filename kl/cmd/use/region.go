@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
@@ -27,14 +27,14 @@ Examples:
 		region, err := SelectRegion(regionArg)
 
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
 		fmt.Println(region)
 
 		if err = server.UpdateDevice([]server.Port{}, &region); err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

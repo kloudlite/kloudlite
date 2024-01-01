@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
+	common_util "github.com/kloudlite/kl/lib/common"
 	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := removeConfig()
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
@@ -32,9 +32,9 @@ func removeConfig() error {
 
 	klFile, err := server.GetKlFile(nil)
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
-		common.PrintError(fmt.Errorf(es))
+		common_util.PrintError(fmt.Errorf(es))
 	}
 
 	if len(klFile.Configs) == 0 {
