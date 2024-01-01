@@ -37,12 +37,18 @@ type CpuT struct {
 	Max string `json:"max"`
 }
 
+type MemoryT struct {
+	// +kubebuilder:validation:Pattern=[\d]+Mi$
+	Min string `json:"min"`
+	// +kubebuilder:validation:Pattern=[\d]+Mi$
+	Max string `json:"max"`
+}
+
 // +kubebuilder:object:generate=true
 
 type Resources struct {
-	Cpu CpuT `json:"cpu"`
-	// +kubebuilder:validation:Pattern=[\d]+Mi$
-	Memory string `json:"memory"`
+	Cpu    CpuT    `json:"cpu"`
+	Memory MemoryT `json:"memory"`
 
 	Storage *Storage `json:"storage,omitempty"`
 }

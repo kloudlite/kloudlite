@@ -273,10 +273,10 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 		"storage-size":  obj.Spec.Resources.Storage.Size,
 
 		"requests-cpu": obj.Spec.Resources.Cpu.Min,
-		"requests-mem": obj.Spec.Resources.Memory,
+		"requests-mem": obj.Spec.Resources.Memory.Min,
 
-		"limits-cpu": obj.Spec.Resources.Cpu.Min,
-		"limits-mem": obj.Spec.Resources.Memory,
+		"limits-cpu": obj.Spec.Resources.Cpu.Max,
+		"limits-mem": obj.Spec.Resources.Memory.Max,
 
 		"existing-secret": obj.Spec.Output.HelmSecret.Name,
 	})
