@@ -86,10 +86,12 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn struct
 
 type GithubComKloudliteAPIAppsInfraInternalEntitiesInputField struct {
 	DefaultValue interface{} `json:"defaultValue,omitempty"`
+	DisplayUnit  *string     `json:"displayUnit,omitempty"`
 	InputType    string      `json:"inputType"`
 	Label        string      `json:"label"`
 	Max          *float64    `json:"max,omitempty"`
 	Min          *float64    `json:"min,omitempty"`
+	Multiplier   *float64    `json:"multiplier,omitempty"`
 	Name         string      `json:"name"`
 	Required     *bool       `json:"required,omitempty"`
 	Unit         *string     `json:"unit,omitempty"`
