@@ -52,11 +52,11 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
 }
 
 type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
-  action: Github__com___kloudlite___api___pkg___types__SyncStatusAction!
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
   lastSyncedAt: Date
   recordVersion: Int!
-  state: Github__com___kloudlite___api___pkg___types__SyncStatusState!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
   syncScheduledAt: Date
 }
 
@@ -242,16 +242,19 @@ enum Github__com___kloudlite___api___apps___container____registry___internal___d
   read_write
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusAction {
+enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusState {
+enum Github__com___kloudlite___api___pkg___types__SyncState {
   APPLIED_AT_AGENT
+  DELETED_AT_AGENT
+  DELETING_AT_AGENT
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
   RECEIVED_UPDATE_FROM_AGENT
+  UPDATED_AT_AGENT
 }
 
