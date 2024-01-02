@@ -13,7 +13,7 @@ var (
 	}()
 	ServerURL = func() string {
 		if os.Getenv("BASE_URL") == "" {
-			return "https://auth.devc.kloudlite.io/api/"
+			return "https://auth.dev.kloudlite.io/api/"
 		}
 
 		return os.Getenv("BASE_URL") + "/api/"
