@@ -34,26 +34,16 @@ type Device struct {
 func ListDevices(options ...fn.Option) ([]Device, error) {
 
 	clusterName := fn.GetOption(options, "clusterName")
+
+	var err error
+	if clusterName, err = EnsureCluster(clusterName); err != nil {
+		return nil, err
+	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
-
-	if clusterName != "" {
-
-		c, err := SelectCluster(clusterName)
-		if err != nil {
-			return nil, err
-		}
-		clusterName = c.Metadata.Name
-	}
-
-	s, err := client.CurrentClusterName()
-	if err != nil {
-		return nil, err
-	}
-
-	clusterName = s
 
 	respData, err := klFetch("cli_listDevices", map[string]any{
 		"pq": map[string]any{
@@ -66,6 +56,7 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if fromResp, err := GetFromRespForEdge[Device](respData); err != nil {
 		return nil, err
 	} else {
@@ -75,23 +66,14 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 
 func GetDevice(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
+	clusterName := fn.GetOption(options, "clusterName")
+
+	var err error
+	devName, err = EnsureDevice(options...)
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
-	}
-
-	s, err := client.CurrentClusterName()
-	if err != nil {
-		return nil, err
-	}
-	clusterName := s
-
-	if devName != "" {
-		if s, err := client.CurrentDeviceName(); err != nil {
-			return nil, err
-		} else {
-			devName = s
-		}
 	}
 
 	respData, err := klFetch("cli_getDevice", map[string]any{
@@ -109,7 +91,7 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 	}
 }
 
-func SelectDevice(deviceName string) (*Device, error) {
+func SelectDevice(devName string) (*Device, error) {
 	persistSelectedDevice := func(deviceName string) error {
 		err := client.SelectDevice(deviceName)
 		if err != nil {
@@ -118,20 +100,14 @@ func SelectDevice(deviceName string) (*Device, error) {
 		return nil
 	}
 
-	if deviceName != "" {
-		if s, err := client.CurrentDeviceName(); err == nil {
-			deviceName = s
-		}
-	}
-
 	devices, err := ListDevices()
 	if err != nil {
 		return nil, err
 	}
 
-	if deviceName != "" {
+	if devName != "" {
 		for _, d := range devices {
-			if d.Metadata.Name == deviceName {
+			if d.Metadata.Name == devName {
 				if err := persistSelectedDevice(d.Metadata.Name); err != nil {
 					return nil, err
 				}
@@ -218,7 +194,6 @@ func UpdateDevice(ports []DevicePort) error {
 }
 
 func DeleteDevicePort(ports []DevicePort) error {
-
 	clusterName, err := client.CurrentClusterName()
 	if err != nil {
 		return err
@@ -275,6 +250,34 @@ func DeleteDevicePort(ports []DevicePort) error {
 	}
 
 	return nil
+}
+
+func EnsureDevice(options ...fn.Option) (string, error) {
+	devName := fn.GetOption(options, "deviceName")
+	clusterName := fn.GetOption(options, "clusterName")
+
+	_, err := EnsureCluster(clusterName)
+	if err != nil {
+		return "", err
+	}
+
+	if devName != "" {
+		return devName, nil
+	}
+
+	devName, _ = client.CurrentDeviceName()
+
+	if devName != "" {
+		return devName, nil
+	}
+
+	dev, err := SelectDevice("")
+
+	if err != nil {
+		return "", err
+	}
+
+	return dev.Metadata.Name, nil
 }
 
 // func InterceptApp(devieId, appId string) error {

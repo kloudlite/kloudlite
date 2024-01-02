@@ -39,14 +39,6 @@ func SelectAccount(accountName string) (*Account, error) {
 		return nil
 	}
 
-	if accountName == "" {
-		s, err := client.CurrentAccountName()
-		if err != nil {
-			return nil, err
-		}
-		accountName = s
-	}
-
 	accounts, err := ListAccounts()
 	if err != nil {
 		return nil, err

@@ -3,10 +3,12 @@ package client
 import (
 	"errors"
 	"fmt"
-	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 
+	fn "github.com/kloudlite/kl/pkg/functions"
+
+	"github.com/adrg/xdg"
 	"gopkg.in/yaml.v2"
 )
 
@@ -26,23 +28,8 @@ func (f *KLContext) GetCookieString() string {
 }
 
 func GetConfigFolder() (configFolder string, err error) {
-	var dirName string
-	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
-	if !ok {
-		dirName, err = os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-	}
 
-	if dirName == "/root" {
-		dirName, ok = os.LookupEnv("SUDO_USER")
-		if !ok {
-			return "", errors.New("something went wrong")
-		}
-
-		dirName = "/home/" + dirName
-	}
+	dirName := xdg.CacheHome
 
 	configFolder = fmt.Sprintf("%s/.kl", dirName)
 	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {

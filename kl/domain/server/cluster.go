@@ -25,9 +25,14 @@ type Cluster struct {
 }
 
 func ListClusters() ([]Cluster, error) {
-	if _, err := client.CurrentAccountName(); err != nil {
-		return nil, err
+
+	s, _ := client.CurrentAccountName()
+	if s == "" {
+		if _, err := SelectAccount(s); err != nil {
+			return nil, err
+		}
 	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -61,16 +66,6 @@ func ListClusters() ([]Cluster, error) {
 
 func SelectCluster(clusterName string) (*Cluster, error) {
 	clusters, err := ListClusters()
-	if err != nil {
-		if err.Error() == "noSelectedAccount" {
-			_, err := SelectAccount("")
-			if err != nil {
-				return nil, err
-			}
-			return SelectCluster("")
-		}
-		return nil, err
-	}
 
 	if clusterName != "" {
 		for _, a := range clusters {
@@ -105,4 +100,25 @@ func SelectCluster(clusterName string) (*Cluster, error) {
 	}
 
 	return c, nil
+}
+
+func EnsureCluster(clusterName string) (string, error) {
+
+	if clusterName != "" {
+		return clusterName, nil
+	}
+
+	clusterName, _ = client.CurrentClusterName()
+
+	if clusterName != "" {
+		return clusterName, nil
+	}
+
+	c, err := SelectCluster(clusterName)
+
+	if err != nil {
+		return "", err
+	}
+
+	return c.Metadata.Name, nil
 }
