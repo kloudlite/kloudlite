@@ -224,10 +224,12 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___api___apps___infra___internal___entities__InputField struct {
 		DefaultValue func(childComplexity int) int
+		DisplayUnit  func(childComplexity int) int
 		InputType    func(childComplexity int) int
 		Label        func(childComplexity int) int
 		Max          func(childComplexity int) int
 		Min          func(childComplexity int) int
+		Multiplier   func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Required     func(childComplexity int) int
 		Unit         func(childComplexity int) int
@@ -1751,6 +1753,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.DefaultValue(childComplexity), true
 
+	case "Github__com___kloudlite___api___apps___infra___internal___entities__InputField.displayUnit":
+		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.DisplayUnit == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.DisplayUnit(childComplexity), true
+
 	case "Github__com___kloudlite___api___apps___infra___internal___entities__InputField.inputType":
 		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.InputType == nil {
 			break
@@ -1778,6 +1787,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.Min(childComplexity), true
+
+	case "Github__com___kloudlite___api___apps___infra___internal___entities__InputField.multiplier":
+		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.Multiplier == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.Multiplier(childComplexity), true
 
 	case "Github__com___kloudlite___api___apps___infra___internal___entities__InputField.name":
 		if e.complexity.Github__com___kloudlite___api___apps___infra___internal___entities__InputField.Name == nil {
@@ -5185,10 +5201,12 @@ input ClusterManagedServiceIn {
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__InputField @shareable {
   defaultValue: Any
+  displayUnit: String
   inputType: String!
   label: String!
   max: Float
   min: Float
+  multiplier: Float
   name: String!
   required: Boolean
   unit: String
@@ -11797,6 +11815,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayUnit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___api___apps___infra___internal___entities__InputField",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__InputField_inputType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_inputType(ctx, field)
 	if err != nil {
@@ -11955,6 +12014,47 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___api___apps___infra___internal___entities__InputField",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteAPIAppsInfraInternalEntitiesInputField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Multiplier, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*float64)
+	fc.Result = res
+	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___apps___infra___internal___entities__InputField",
 		Field:      field,
@@ -12263,6 +12363,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___
 			switch field.Name {
 			case "defaultValue":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_defaultValue(ctx, field)
+			case "displayUnit":
+				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx, field)
 			case "inputType":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_inputType(ctx, field)
 			case "label":
@@ -12271,6 +12373,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_max(ctx, field)
 			case "min":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_min(ctx, field)
+			case "multiplier":
+				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx, field)
 			case "name":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_name(ctx, field)
 			case "required":
@@ -12635,6 +12739,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___
 			switch field.Name {
 			case "defaultValue":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_defaultValue(ctx, field)
+			case "displayUnit":
+				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx, field)
 			case "inputType":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_inputType(ctx, field)
 			case "label":
@@ -12643,6 +12749,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___apps___
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_max(ctx, field)
 			case "min":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_min(ctx, field)
+			case "multiplier":
+				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx, field)
 			case "name":
 				return ec.fieldContext_Github__com___kloudlite___api___apps___infra___internal___entities__InputField_name(ctx, field)
 			case "required":
@@ -38390,6 +38498,10 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_defaultValue(ctx, field, obj)
 
+		case "displayUnit":
+
+			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_displayUnit(ctx, field, obj)
+
 		case "inputType":
 
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_inputType(ctx, field, obj)
@@ -38411,6 +38523,10 @@ func (ec *executionContext) _Github__com___kloudlite___api___apps___infra___inte
 		case "min":
 
 			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_min(ctx, field, obj)
+
+		case "multiplier":
+
+			out.Values[i] = ec._Github__com___kloudlite___api___apps___infra___internal___entities__InputField_multiplier(ctx, field, obj)
 
 		case "name":
 
@@ -45492,7 +45608,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45500,7 +45616,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
