@@ -20,24 +20,9 @@ type ProjectList struct {
 
 func ListProjects(options ...fn.Option) ([]Project, error) {
 	accountName := fn.GetOption(options, "accountName")
-	clusterName := fn.GetOption(options, "clusterName")
 
-	var err error
-
-	if accountName == "" {
-		accountName, err = client.CurrentAccountName()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if clusterName == "" {
-		clusterName, err = client.CurrentClusterName()
-
-		if err != nil {
-			return nil, err
-		}
+	if _, err := EnsureAccount(accountName); err != nil {
+		return nil, err
 	}
 
 	cookie, err := getCookie()
@@ -92,4 +77,29 @@ func SelectProject(projectName string) (*Project, error) {
 	}
 
 	return project, nil
+}
+
+func EnsureProject(options ...fn.Option) (string, error) {
+	accountName := fn.GetOption(options, "accountName")
+	projectName := fn.GetOption(options, "projectName")
+
+	if _, err := EnsureAccount(accountName); err != nil {
+		return "", err
+	}
+
+	if projectName != "" {
+		return projectName, nil
+	}
+
+	s, _ := client.CurrentProjectName()
+	if s != "" {
+		return s, nil
+	}
+
+	project, err := SelectProject(projectName)
+	if err != nil {
+		return "", err
+	}
+
+	return project.Metadata.Name, nil
 }

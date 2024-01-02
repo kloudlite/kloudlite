@@ -13,7 +13,6 @@ import (
 )
 
 type KLContext struct {
-	ProjectName  string            `yaml:"projectName"`
 	AccountName  string            `yaml:"accountName"`
 	DeviceName   string            `yaml:"deviceName"`
 	Session      string            `yaml:"session"`

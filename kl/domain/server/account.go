@@ -73,3 +73,22 @@ func SelectAccount(accountName string) (*Account, error) {
 
 	return account, nil
 }
+
+func EnsureAccount(accountName string) (string, error) {
+	if accountName != "" {
+		return accountName, nil
+	}
+
+	s, _ := client.CurrentAccountName()
+	if s != "" {
+		return s, nil
+	}
+
+	account, err := SelectAccount(accountName)
+
+	if err != nil {
+		return "", err
+	}
+
+	return account.Metadata.Name, nil
+}

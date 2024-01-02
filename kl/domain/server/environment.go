@@ -20,28 +20,8 @@ type EnvList struct {
 }
 
 func ListEnvs(options ...fn.Option) ([]Env, error) {
-	accountName := fn.GetOption(options, "accountName")
-	clusterName := fn.GetOption(options, "clusterName")
-
 	var err error
-
-	if accountName == "" {
-		accountName, err = client.CurrentAccountName()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if clusterName == "" {
-		clusterName, err = client.CurrentClusterName()
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	projectName, err := client.CurrentProjectName()
+	projectName, err := EnsureProject(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -118,4 +98,28 @@ func SelectEnv(envName string) (*Env, error) {
 	}
 
 	return env, nil
+}
+
+func EnsureEnv(options ...fn.Option) (string, error) {
+	envName := fn.GetOption(options, "envName")
+
+	if _, err := EnsureProject(options...); err != nil {
+		return "", err
+	}
+
+	if envName != "" {
+		return envName, nil
+	}
+
+	s, _ := client.CurrentEnvName()
+	if s != "" {
+		return s, nil
+	}
+
+	env, err := SelectEnv(envName)
+	if err != nil {
+		return "", err
+	}
+
+	return env.Metadata.Name, nil
 }

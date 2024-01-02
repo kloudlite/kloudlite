@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 	"github.com/kloudlite/kl/pkg/ui/text"
 )
@@ -102,7 +103,15 @@ func SelectCluster(clusterName string) (*Cluster, error) {
 	return c, nil
 }
 
-func EnsureCluster(clusterName string) (string, error) {
+func EnsureCluster(options ...fn.Option) (string, error) {
+	accountName := fn.GetOption(options, "accountName")
+
+	_, err := EnsureAccount(accountName)
+	if err != nil {
+		return "", err
+	}
+
+	clusterName := fn.GetOption(options, "clusterName")
 
 	if clusterName != "" {
 		return clusterName, nil

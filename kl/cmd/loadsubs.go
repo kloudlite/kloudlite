@@ -34,7 +34,7 @@ func init() {
 
 	rootCmd.AddCommand(wg.Cmd)
 
-	// rootCmd.AddCommand(runner.InitCommand)
+	rootCmd.AddCommand(runner.InitCommand)
 	// rootCmd.AddCommand(runner.LoadCommand)
 	rootCmd.AddCommand(runner.ShowCommand)
 

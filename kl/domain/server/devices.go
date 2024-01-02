@@ -36,7 +36,7 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 	clusterName := fn.GetOption(options, "clusterName")
 
 	var err error
-	if clusterName, err = EnsureCluster(clusterName); err != nil {
+	if clusterName, err = EnsureCluster(options...); err != nil {
 		return nil, err
 	}
 
@@ -254,9 +254,8 @@ func DeleteDevicePort(ports []DevicePort) error {
 
 func EnsureDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
-	clusterName := fn.GetOption(options, "clusterName")
 
-	_, err := EnsureCluster(clusterName)
+	_, err := EnsureCluster(options...)
 	if err != nil {
 		return "", err
 	}
