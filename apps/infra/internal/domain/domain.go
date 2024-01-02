@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sigs.k8s.io/yaml"
 	"strconv"
 
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
-	"gopkg.in/yaml.v2"
+
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 

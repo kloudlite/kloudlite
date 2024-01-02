@@ -11,10 +11,12 @@ type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecr
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__InputField @shareable {
   defaultValue: Any
+  displayUnit: String
   inputType: String!
   label: String!
   max: Float
   min: Float
+  multiplier: Float
   name: String!
   required: Boolean
   unit: String
