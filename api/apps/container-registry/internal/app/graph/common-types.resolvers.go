@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
 	"github.com/kloudlite/api/common"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

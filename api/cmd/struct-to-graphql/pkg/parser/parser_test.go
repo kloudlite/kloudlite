@@ -268,13 +268,6 @@ func (s schemaClient) GetHttpJsonSchema(url string) (*apiExtensionsV1.JSONSchema
 }
 
 func Test_GeneratedGraphqlSchema(t *testing.T) {
-	//schemaCli, err := func() (kubernetes.Clientset, error) {
-	//	// kc := kubernetesClient{}
-	//	// return k8s.NewExtendedK8sClient()
-	//	return kubernetesClient{}, nil
-	//	// return k8s.NewExtendedK8sClient(&rest.Config{Host: "localhost:8080"})
-	//}()
-
 	schemaCli := &schemaClient{}
 
 	type fields struct {
@@ -843,7 +836,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"apiVersion: String!",
 							"kind: String!",
 							"metadata: Metadata! @goField(name: \"objectMeta\")",
-							"spec: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ProjectSpec!",
+							"spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ProjectSpec!",
 							"status: Github__com___kloudlite___operator___pkg___operator__Status",
 						},
 					},
@@ -851,17 +844,17 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						"ProjectIn": {
 							"AccountName: String!",
 							"metadata: MetadataIn!",
-							"spec: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ProjectSpecIn!",
+							"spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ProjectSpecIn!",
 						},
 					},
 					Enums: map[string][]string{},
 				},
 				"common-types": {
 					Types: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ProjectSpec": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ProjectSpec": {
 							"accountName: String!",
 							"clusterName: String!",
-							"displayName: Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString",
+							"displayName: Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString",
 							"logo: String",
 							"targetNamespace: String!",
 						},
@@ -898,10 +891,10 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 					},
 					Inputs: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ProjectSpecIn": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ProjectSpecIn": {
 							"accountName: String!",
 							"clusterName: String!",
-							"displayName: Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString",
+							"displayName: Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString",
 							"logo: String",
 							"targetNamespace: String!",
 						},
@@ -913,9 +906,10 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 					},
 					Enums: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString": {
 							"item_1",
 							"item_2",
+							"item_3",
 						},
 					},
 				},
@@ -991,7 +985,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				"User": {
 					Types: map[string][]string{
 						"User": {
-							"syncStatus: Kloudlite__io___pkg___types__SyncStatus!",
+							"syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!",
 						},
 					},
 					Inputs: map[string][]string{},
@@ -999,26 +993,29 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				},
 				"common-types": {
 					Types: map[string][]string{
-						"Kloudlite__io___pkg___types__SyncStatus": {
-							"action: Kloudlite__io___pkg___types__SyncStatusAction!",
+						"Github__com___kloudlite___api___pkg___types__SyncStatus": {
+							"action: Github__com___kloudlite___api___pkg___types__SyncAction!",
 							"error: String",
 							"recordVersion: Int!",
 							"lastSyncedAt: Date",
-							"state: Kloudlite__io___pkg___types__SyncStatusState!",
+							"state: Github__com___kloudlite___api___pkg___types__SyncState!",
 							"syncScheduledAt: Date",
 						},
 					},
 					Enums: map[string][]string{
-						"Kloudlite__io___pkg___types__SyncStatusAction": {
+						"Github__com___kloudlite___api___pkg___types__SyncAction": {
 							"APPLY",
 							"DELETE",
 						},
-						"Kloudlite__io___pkg___types__SyncStatusState": {
+						"Github__com___kloudlite___api___pkg___types__SyncState": {
 							"IDLE",
+							"IN_QUEUE",
 							"APPLIED_AT_AGENT",
 							"ERRORED_AT_AGENT",
-							"IN_QUEUE",
 							"RECEIVED_UPDATE_FROM_AGENT",
+							"UPDATED_AT_AGENT",
+							"DELETING_AT_AGENT",
+							"DELETED_AT_AGENT",
 						},
 					},
 				},
@@ -1041,28 +1038,28 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				"Example": {
 					Types: map[string][]string{
 						"Example": {
-							"example: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJson!",
+							"example: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJson!",
 						},
 					},
 					Inputs: map[string][]string{
 						"ExampleIn": {
-							"example: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonIn!",
+							"example: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonIn!",
 						},
 					},
 					Enums: map[string][]string{},
 				},
 				"common-types": {
 					Types: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJson": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJson": {
 							"apiVersion: String!",
 							"kind: String!",
 							"metadata: Metadata! @goField(name: \"objectMeta\")",
-							"Spec: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpec!",
+							"Spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpec!",
 						},
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpec": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpec": {
 							"clusterName: String!",
 							"nodePoolName: String!",
-							"nodeType: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecNodeType!",
+							"nodeType: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecNodeType!",
 							"taints: [String!]!",
 						},
 						"Metadata": {
@@ -1076,14 +1073,14 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 					},
 					Inputs: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonIn": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonIn": {
 							"metadata: MetadataIn!",
-							"Spec: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecIn!",
+							"Spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecIn!",
 						},
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecIn": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecIn": {
 							"clusterName: String!",
 							"nodePoolName: String!",
-							"nodeType: Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecNodeType!",
+							"nodeType: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecNodeType!",
 							"taints: [String!]!",
 						},
 						"MetadataIn": {
@@ -1094,7 +1091,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 					},
 					Enums: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecNodeType": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecNodeType": {
 							"worker",
 							"master",
 							"cluster",
@@ -1226,7 +1223,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"name: String!",
 							"accountName: String!",
 							"clusterName: String!",
-							"displayName: Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString",
+							"displayName: Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString",
 							"logo: String",
 							"targetNamespace: String!",
 						},
@@ -1236,7 +1233,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"name: String!",
 							"accountName: String!",
 							"clusterName: String!",
-							"displayName: Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString",
+							"displayName: Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString",
 							"logo: String",
 							"targetNamespace: String!",
 						},
@@ -1244,9 +1241,10 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				},
 				"common-types": {
 					Enums: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString": {
 							"item_1",
 							"item_2",
+							"item_3",
 						},
 					},
 				},
@@ -1271,8 +1269,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"name: String!",
 							"displayName: String!",
 							"age: Int!",
-							"createdBy: Kloudlite__io___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMeta!",
-							"updatedBy: Kloudlite__io___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMeta!",
+							"createdBy: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMeta!",
+							"updatedBy: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMeta!",
 						},
 					},
 					Inputs: map[string][]string{
@@ -1280,20 +1278,20 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"name: String!",
 							"displayName: String!",
 							"age: Int!",
-							"createdBy: Kloudlite__io___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMetaIn!",
-							"updatedBy: Kloudlite__io___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMetaIn!",
+							"createdBy: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMetaIn!",
+							"updatedBy: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMetaIn!",
 						},
 					},
 				},
 				"common-types": {
 					Types: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMeta": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMeta": {
 							"firstName: String!",
 							"lastName: String!",
 						},
 					},
 					Inputs: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMetaIn": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser___testdata___types__ActionMetaIn": {
 							"firstName: String!",
 							"lastName: String!",
 						},
@@ -1318,21 +1316,22 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 					Types: map[string][]string{
 						"Sample": {
 							"name: String!",
-							"sampleName: Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString",
+							"sampleName: Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString",
 						},
 					},
 					Inputs: map[string][]string{
 						"SampleIn": {
 							"name: String!",
-							"sampleName: Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString",
+							"sampleName: Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString",
 						},
 					},
 				},
 				"common-types": {
 					Enums: map[string][]string{
-						"Kloudlite__io___cmd___struct____to____graphql___internal___example___types__SampleString": {
+						"Github__com___kloudlite___api___cmd___struct____to____graphql___internal___example___types__SampleString": {
 							"item_1",
 							"item_2",
+							"item_3",
 						},
 					},
 				},
@@ -1344,6 +1343,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 	for _idx, _tt := range tests {
 		idx := _idx
 		tt := _tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			// t.Parallel()
 
