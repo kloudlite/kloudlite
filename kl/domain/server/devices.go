@@ -8,6 +8,11 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
+type DevicePort struct {
+	Port       int `json:"port"`
+	TargetPort int `json:"targetPort,omitempty"`
+}
+
 type Device struct {
 	Metadata    Metadata `json:"metadata"`
 	DisplayName string   `json:"displayName"`
@@ -17,11 +22,8 @@ type Device struct {
 			Host   string `json:"host"`
 			Target string `json:"target"`
 		} `json:"cnameRecords"`
-		DeviceNamespace string `json:"deviceNamespace"`
-		Ports           []struct {
-			Port       int `json:"port"`
-			TargetPort int `json:"targetPort,omitempty"`
-		} `json:"ports"`
+		DeviceNamespace string       `json:"deviceNamespace"`
+		Ports           []DevicePort `json:"ports"`
 	} `json:"spec"`
 	WireguardConfig *struct {
 		Encoding string `json:"encoding"`
@@ -30,6 +32,7 @@ type Device struct {
 }
 
 func ListDevices(options ...fn.Option) ([]Device, error) {
+
 	clusterName := fn.GetOption(options, "clusterName")
 	cookie, err := getCookie()
 	if err != nil {
@@ -157,94 +160,123 @@ func SelectDevice(deviceName string) (*Device, error) {
 	return device, nil
 }
 
-// type DAccount struct {
-// 	Devices []Device `json:"devices"`
-// }
-//
-// type DApp struct {
-// 	ReadableId string `json:"readableId"`
-// 	Name       string `json:"name"`
-// 	Id         string `json:"id"`
-// }
-//
-// type Port struct {
-// 	Port       int `json:"port"`
-// 	TargetPort int `json:"targetPort,omitempty"`
-// }
-//
-// type Device struct {
-// 	Region        string            `json:"region"`
-// 	Ports         []Port            `json:"ports"`
-// 	Configuration map[string]string `json:"configuration"`
-// 	Name          string            `json:"name"`
-// 	Id            string            `json:"id"`
-// 	Intercepted   []DApp            `json:"interceptingServices"`
-// }
-//
-// func GetDevice(deviceId string) (*Device, error) {
-//
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	respData, err := klFetch("cli_getDevice", map[string]any{
-// 		"deviceId": deviceId,
-// 	}, &cookie)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	type Response struct {
-// 		Device Device `json:"data"`
-// 	}
-//
-// 	// fmt.Println(string(respData),"here")
-// 	var resp Response
-// 	err = json.Unmarshal(respData, &resp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return &resp.Device, nil
-// }
-//
-// func GetDevices(options ...fn.Option) ([]Device, error) {
-//
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	accountId := fn.GetOption(options, "accountId")
-// 	if accountId == "" {
-// 		accountId, err = client.CurrentAccountName()
-//
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 	}
-//
-// 	respData, err := klFetch("cli_getDevices", map[string]any{}, &cookie)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	type Response struct {
-// 		Account map[string]DAccount `json:"data"`
-// 	}
-//
-// 	var resp Response
-// 	err = json.Unmarshal(respData, &resp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	account := resp.Account[accountId]
-//
-// 	return account.Devices, nil
-// }
-//
+func UpdateDevice(ports []DevicePort) error {
+
+	clusterName, err := client.CurrentClusterName()
+	if err != nil {
+		return err
+	}
+
+	if clusterName == "" {
+		c, err := SelectCluster("")
+		if err != nil {
+			return err
+		}
+
+		clusterName = c.Metadata.Name
+	}
+
+	devName, err := client.CurrentDeviceName()
+	if err != nil {
+		return err
+	}
+
+	d, err := GetDevice(fn.MakeOption("deviceName", devName))
+	if err != nil {
+		return err
+	}
+
+	for _, p := range ports {
+		matched := false
+		for i, p2 := range d.Spec.Ports {
+			if p2.Port == p.Port {
+				matched = true
+				d.Spec.Ports[i] = p
+				break
+			}
+		}
+
+		if !matched {
+			d.Spec.Ports = append(d.Spec.Ports, p)
+		}
+	}
+
+	respData, err := klFetch("cli_updateDevice", map[string]any{
+		"clusterName": clusterName,
+		"vpnDevice":   d,
+	}, nil)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := GetFromRespForEdge[Device](respData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteDevicePort(ports []DevicePort) error {
+
+	clusterName, err := client.CurrentClusterName()
+	if err != nil {
+		return err
+	}
+
+	if clusterName == "" {
+		c, err := SelectCluster("")
+		if err != nil {
+			return err
+		}
+
+		clusterName = c.Metadata.Name
+	}
+
+	devName, err := client.CurrentDeviceName()
+	if err != nil {
+		return err
+	}
+
+	d, err := GetDevice(fn.MakeOption("deviceName", devName))
+	if err != nil {
+		return err
+	}
+
+	newPorts := make([]DevicePort, 0)
+
+	for _, p := range d.Spec.Ports {
+		matched := false
+		for _, p2 := range ports {
+			if p.Port == p2.Port {
+				matched = true
+				break
+			}
+		}
+
+		if !matched {
+			newPorts = append(newPorts, p)
+		}
+	}
+
+	d.Spec.Ports = newPorts
+
+	respData, err := klFetch("cli_updateDevice", map[string]any{
+		"clusterName": clusterName,
+		"vpnDevice":   d,
+	}, nil)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := GetFromRespForEdge[Device](respData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // func InterceptApp(devieId, appId string) error {
 // 	cookie, err := getCookie()
 // 	if err != nil {
@@ -272,10 +304,10 @@ func SelectDevice(deviceName string) (*Device, error) {
 // 	if resp.Inercepted {
 // 		return nil
 // 	}
-//
+
 // 	return errors.New("SOMETHING WENT WRONG... PLEASE TRY AGAIN")
 // }
-//
+
 // func CloseInterceptApp(appId string) error {
 // 	cookie, err := getCookie()
 // 	if err != nil {
