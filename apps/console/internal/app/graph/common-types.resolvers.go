@@ -27,9 +27,19 @@ func (r *github__com___kloudlite___api___common__CreatedOrUpdatedByResolver) Use
 	return string(obj.UserId), nil
 }
 
+// Action is the resolver for the action field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) Action(ctx context.Context, obj *types.SyncStatus) (model.GithubComKloudliteAPIPkgTypesSyncAction, error) {
+	panic(fmt.Errorf("not implemented: Action - action"))
+}
+
 // LastSyncedAt is the resolver for the lastSyncedAt field.
 func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
 	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
+}
+
+// State is the resolver for the state field.
+func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) State(ctx context.Context, obj *types.SyncStatus) (model.GithubComKloudliteAPIPkgTypesSyncState, error) {
+	panic(fmt.Errorf("not implemented: State - state"))
 }
 
 // SyncScheduledAt is the resolver for the syncScheduledAt field.

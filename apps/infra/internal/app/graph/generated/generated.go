@@ -926,8 +926,11 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedByResolver interfac
 	UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error)
 }
 type Github__com___kloudlite___api___pkg___types__SyncStatusResolver interface {
+	Action(ctx context.Context, obj *types.SyncStatus) (model.GithubComKloudliteAPIPkgTypesSyncAction, error)
+
 	LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error)
 
+	State(ctx context.Context, obj *types.SyncStatus) (model.GithubComKloudliteAPIPkgTypesSyncState, error)
 	SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error)
 }
 type Github__com___kloudlite___operator___pkg___operator__StatusResolver interface {
@@ -5253,11 +5256,11 @@ type Github__com___kloudlite___api___pkg___types__EncodedString @shareable {
 }
 
 type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
-  action: Github__com___kloudlite___api___pkg___types__SyncStatusAction!
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
   lastSyncedAt: Date
   recordVersion: Int!
-  state: Github__com___kloudlite___api___pkg___types__SyncStatusState!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
   syncScheduledAt: Date
 }
 
@@ -5924,17 +5927,20 @@ input MetadataIn {
   namespace: String
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusAction {
+enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusState {
+enum Github__com___kloudlite___api___pkg___types__SyncState {
   APPLIED_AT_AGENT
+  DELETED_AT_AGENT
+  DELETING_AT_AGENT
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
   RECEIVED_UPDATE_FROM_AGENT
+  UPDATED_AT_AGENT
 }
 
 enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType {
@@ -13371,7 +13377,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Action, nil
+		return ec.resolvers.Github__com___kloudlite___api___pkg___types__SyncStatus().Action(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13383,19 +13389,19 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		}
 		return graphql.Null
 	}
-	res := resTmp.(types.SyncAction)
+	res := resTmp.(model.GithubComKloudliteAPIPkgTypesSyncAction)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncAction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncStatusAction does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncAction does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13541,7 +13547,7 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.State, nil
+		return ec.resolvers.Github__com___kloudlite___api___pkg___types__SyncStatus().State(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13553,19 +13559,19 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		}
 		return graphql.Null
 	}
-	res := resTmp.(types.SyncState)
+	res := resTmp.(model.GithubComKloudliteAPIPkgTypesSyncState)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusState2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncState(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncState(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___api___pkg___types__SyncStatus",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncStatusState does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncState does not have child fields")
 		},
 	}
 	return fc, nil
@@ -38885,12 +38891,25 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___api___pkg___types__SyncStatus")
 		case "action":
+			field := field
 
-			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "error":
 
 			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field, obj)
@@ -38920,12 +38939,25 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "state":
+			field := field
 
-			out.Values[i] = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "syncScheduledAt":
 			field := field
 
@@ -44294,40 +44326,28 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__Crea
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncAction(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgTypesSyncAction, error) {
+	var res model.GithubComKloudliteAPIPkgTypesSyncAction
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncAction(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncAction) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncState(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgTypesSyncState, error) {
+	var res model.GithubComKloudliteAPIPkgTypesSyncState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncState(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncState) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx context.Context, sel ast.SelectionSet, v types.SyncStatus) graphql.Marshaler {
 	return ec._Github__com___kloudlite___api___pkg___types__SyncStatus(ctx, sel, &v)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncStatusAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := types.SyncAction(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusAction2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncAction(ctx context.Context, sel ast.SelectionSet, v types.SyncAction) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncStatusState2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncState(ctx context.Context, v interface{}) (types.SyncState, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := types.SyncState(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusState2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncState(ctx context.Context, sel ast.SelectionSet, v types.SyncState) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__AWSPoolType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSPoolType(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSPoolType, error) {

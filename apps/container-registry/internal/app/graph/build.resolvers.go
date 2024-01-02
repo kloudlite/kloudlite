@@ -16,11 +16,6 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 )
 
-// AccountName is the resolver for the accountName field.
-func (r *buildResolver) AccountName(ctx context.Context, obj *entities.Build) (string, error) {
-	panic(fmt.Errorf("not implemented: AccountName - accountName"))
-}
-
 // CreationTime is the resolver for the creationTime field.
 func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (string, error) {
 	if obj == nil {
@@ -122,3 +117,13 @@ func (r *Resolver) BuildIn() generated.BuildInResolver { return &buildInResolver
 
 type buildResolver struct{ *Resolver }
 type buildInResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *buildResolver) AccountName(ctx context.Context, obj *entities.Build) (string, error) {
+	panic(fmt.Errorf("not implemented: AccountName - accountName"))
+}

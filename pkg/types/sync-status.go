@@ -12,9 +12,9 @@ type (
 type SyncStatus struct {
 	SyncScheduledAt time.Time  `json:"syncScheduledAt,omitempty"`
 	LastSyncedAt    time.Time  `json:"lastSyncedAt,omitempty"`
-	Action          SyncAction `json:"action" graphql:"enum=APPLY;DELETE"`
+  Action          SyncAction `json:"action"`
 	RecordVersion   int        `json:"recordVersion"`
-	State           SyncState  `json:"state" graphql:"enum=IDLE;IN_QUEUE;APPLIED_AT_AGENT;ERRORED_AT_AGENT;RECEIVED_UPDATE_FROM_AGENT"`
+	State           SyncState  `json:"state"`
 	Error           *string    `json:"error,omitempty"`
 }
 

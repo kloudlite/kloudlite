@@ -70,7 +70,6 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Build struct {
-		AccountName       func(childComplexity int) int
 		BuildClusterName  func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
@@ -504,8 +503,6 @@ type ComplexityRoot struct {
 }
 
 type BuildResolver interface {
-	AccountName(ctx context.Context, obj *entities.Build) (string, error)
-
 	CreationTime(ctx context.Context, obj *entities.Build) (string, error)
 
 	ErrorMessages(ctx context.Context, obj *entities.Build) (map[string]interface{}, error)
@@ -644,13 +641,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
-
-	case "Build.accountName":
-		if e.complexity.Build.AccountName == nil {
-			break
-		}
-
-		return e.complexity.Build.AccountName(childComplexity), true
 
 	case "Build.buildClusterName":
 		if e.complexity.Build.BuildClusterName == nil {
@@ -2946,7 +2936,6 @@ type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/build.graphqls", Input: `type Build @shareable {
-  accountName: String!
   buildClusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
@@ -3097,11 +3086,11 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
 }
 
 type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
-  action: Github__com___kloudlite___api___pkg___types__SyncStatusAction!
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
   lastSyncedAt: Date
   recordVersion: Int!
-  state: Github__com___kloudlite___api___pkg___types__SyncStatusState!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
   syncScheduledAt: Date
 }
 
@@ -3287,17 +3276,20 @@ enum Github__com___kloudlite___api___apps___container____registry___internal___d
   read_write
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusAction {
+enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusState {
+enum Github__com___kloudlite___api___pkg___types__SyncState {
   APPLIED_AT_AGENT
+  DELETED_AT_AGENT
+  DELETING_AT_AGENT
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
   RECEIVED_UPDATE_FROM_AGENT
+  UPDATED_AT_AGENT
 }
 
 `, BuiltIn: false},
@@ -4279,50 +4271,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
-
-func (ec *executionContext) _Build_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.Build) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Build_accountName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Build().AccountName(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Build_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Build",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
 
 func (ec *executionContext) _Build_buildClusterName(ctx context.Context, field graphql.CollectedField, obj *entities.Build) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Build_buildClusterName(ctx, field)
@@ -5823,8 +5771,6 @@ func (ec *executionContext) fieldContext_BuildEdge_node(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_Build_accountName(ctx, field)
 			case "buildClusterName":
 				return ec.fieldContext_Build_buildClusterName(ctx, field)
 			case "createdBy":
@@ -11381,9 +11327,9 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteAPIPkgTypesSyncStatusAction)
+	res := resTmp.(model.GithubComKloudliteAPIPkgTypesSyncAction)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatusAction(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncAction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11393,7 +11339,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___t
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncStatusAction does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncAction does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11551,9 +11497,9 @@ func (ec *executionContext) _Github__com___kloudlite___api___pkg___types__SyncSt
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteAPIPkgTypesSyncStatusState)
+	res := resTmp.(model.GithubComKloudliteAPIPkgTypesSyncState)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatusState(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncState(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11563,7 +11509,7 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___api___pkg___t
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncStatusState does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___api___pkg___types__SyncState does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15210,8 +15156,6 @@ func (ec *executionContext) fieldContext_Mutation_cr_addBuild(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_Build_accountName(ctx, field)
 			case "buildClusterName":
 				return ec.fieldContext_Build_buildClusterName(ctx, field)
 			case "createdBy":
@@ -15320,8 +15264,6 @@ func (ec *executionContext) fieldContext_Mutation_cr_updateBuild(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_Build_accountName(ctx, field)
 			case "buildClusterName":
 				return ec.fieldContext_Build_buildClusterName(ctx, field)
 			case "createdBy":
@@ -16635,8 +16577,6 @@ func (ec *executionContext) fieldContext_Query_cr_getBuild(ctx context.Context, 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_Build_accountName(ctx, field)
 			case "buildClusterName":
 				return ec.fieldContext_Build_buildClusterName(ctx, field)
 			case "createdBy":
@@ -21405,26 +21345,6 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Build")
-		case "accountName":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Build_accountName(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "buildClusterName":
 
 			out.Values[i] = ec._Build_buildClusterName(ctx, field, obj)
@@ -25809,6 +25729,26 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___common__Crea
 	return ec._Github__com___kloudlite___api___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncAction(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgTypesSyncAction, error) {
+	var res model.GithubComKloudliteAPIPkgTypesSyncAction
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncAction(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncAction) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncState(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgTypesSyncState, error) {
+	var res model.GithubComKloudliteAPIPkgTypesSyncState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncState(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncState) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatus(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncStatus) graphql.Marshaler {
 	return ec._Github__com___kloudlite___api___pkg___types__SyncStatus(ctx, sel, &v)
 }
@@ -25821,26 +25761,6 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types_
 		return graphql.Null
 	}
 	return ec._Github__com___kloudlite___api___pkg___types__SyncStatus(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncStatusAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatusAction(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgTypesSyncStatusAction, error) {
-	var res model.GithubComKloudliteAPIPkgTypesSyncStatusAction
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusAction2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatusAction(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncStatusAction) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___pkg___types__SyncStatusState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatusState(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIPkgTypesSyncStatusState, error) {
-	var res model.GithubComKloudliteAPIPkgTypesSyncStatusState
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___pkg___types__SyncStatusState2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIPkgTypesSyncStatusState(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIPkgTypesSyncStatusState) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec2githubᚗcomᚋkloudliteᚋapiᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisDistributionV1BuildRunSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec) graphql.Marshaler {

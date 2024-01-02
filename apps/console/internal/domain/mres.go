@@ -1,13 +1,12 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 // query
@@ -158,7 +157,7 @@ func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, nam
 	return d.deleteK8sResource(ctx, &m.ManagedResource)
 }
 
-func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
+func (d *domain) OnManagedResourceDeleteMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
 	exMres, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -176,18 +175,13 @@ func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entitie
 	return nil
 }
 
-func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
+func (d *domain) OnManagedResourceUpdateMessage(ctx ConsoleContext, mres entities.ManagedResource, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	exMres, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	annotatedVersion, err := d.parseRecordVersionFromAnnotations(mres.Annotations)
-	if err != nil {
-		return d.resyncK8sResource(ctx, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
-	}
-
-	if annotatedVersion != exMres.RecordVersion {
+	if err := d.MatchRecordVersion(mres.Annotations, exMres.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
@@ -198,24 +192,29 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 
 	exMres.Status = mres.Status
 
-	exMres.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	exMres.SyncStatus.RecordVersion = annotatedVersion
+	exMres.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	exMres.SyncStatus.RecordVersion = exMres.RecordVersion
 	exMres.SyncStatus.Error = nil
-	exMres.SyncStatus.LastSyncedAt = time.Now()
+	exMres.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.mresRepo.UpdateById(ctx, exMres.Id, exMres)
 	d.resourceEventPublisher.PublishMresEvent(exMres, PublishUpdate)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
+func (d *domain) OnManagedResourceApplyError(ctx ConsoleContext, errMsg string, namespace string, name string, opts UpdateAndDeleteOpts) error {
 	m, err2 := d.findMRes(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
 	m.SyncStatus.State = t.SyncStateErroredAtAgent
-	m.SyncStatus.LastSyncedAt = time.Now()
+	m.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	m.SyncStatus.Error = &errMsg
 	_, err := d.mresRepo.UpdateById(ctx, m.Id, m)
 	return errors.NewE(err)

@@ -1,13 +1,12 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/pkg/errors"
-	"time"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
@@ -140,18 +139,13 @@ func (d *domain) DeleteImagePullSecret(ctx ConsoleContext, namespace, name strin
 	return d.deleteK8sResource(ctx, &ips.ImagePullSecret)
 }
 
-func (d *domain) OnUpdateImagePullSecretMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error {
+func (d *domain) OnImagePullSecretUpdateMessage(ctx ConsoleContext, ips entities.ImagePullSecret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	exIps, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	annotatedVersion, err := d.parseRecordVersionFromAnnotations(ips.Annotations)
-	if err != nil {
-		return d.resyncK8sResource(ctx, exIps.SyncStatus.Action, &exIps.ImagePullSecret, exIps.RecordVersion)
-	}
-
-	if annotatedVersion != exIps.RecordVersion {
+	if err := d.MatchRecordVersion(ips.Annotations, exIps.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, exIps.SyncStatus.Action, &exIps.ImagePullSecret, exIps.RecordVersion)
 	}
 
@@ -162,32 +156,41 @@ func (d *domain) OnUpdateImagePullSecretMessage(ctx ConsoleContext, ips entities
 
 	exIps.Status = ips.Status
 
-	exIps.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	exIps.SyncStatus.RecordVersion = annotatedVersion
+	exIps.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	exIps.SyncStatus.RecordVersion = exIps.RecordVersion
 	exIps.SyncStatus.Error = nil
-	exIps.SyncStatus.LastSyncedAt = time.Now()
+	exIps.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
 	_, err = d.pullSecretsRepo.UpdateById(ctx, exIps.Id, exIps)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnDeleteImagePullSecretMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error {
+func (d *domain) OnImagePullSecretDeleteMessage(ctx ConsoleContext, ips entities.ImagePullSecret) error {
 	a, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
+	if err := d.MatchRecordVersion(ips.Annotations, a.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, a.SyncStatus.Action, &a.ImagePullSecret, a.RecordVersion)
+	}
+
 	return d.pullSecretsRepo.DeleteById(ctx, a.Id)
 }
 
-func (d *domain) OnApplyImagePullSecretError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
+func (d *domain) OnImagePullSecretApplyError(ctx ConsoleContext, errMsg string, namespace string, name string, opts UpdateAndDeleteOpts) error {
 	a, err2 := d.findImagePullSecret(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
 	a.SyncStatus.State = t.SyncStateErroredAtAgent
-	a.SyncStatus.LastSyncedAt = time.Now()
+	a.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	a.SyncStatus.Error = &errMsg
 	_, err := d.pullSecretsRepo.UpdateById(ctx, a.Id, a)
 	return errors.NewE(err)
