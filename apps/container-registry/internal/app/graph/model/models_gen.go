@@ -138,12 +138,12 @@ type GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesGithubUserA
 }
 
 type GithubComKloudliteAPIPkgTypesSyncStatus struct {
-	Action          GithubComKloudliteAPIPkgTypesSyncStatusAction `json:"action"`
-	Error           *string                                       `json:"error,omitempty"`
-	LastSyncedAt    *string                                       `json:"lastSyncedAt,omitempty"`
-	RecordVersion   int                                           `json:"recordVersion"`
-	State           GithubComKloudliteAPIPkgTypesSyncStatusState  `json:"state"`
-	SyncScheduledAt *string                                       `json:"syncScheduledAt,omitempty"`
+	Action          GithubComKloudliteAPIPkgTypesSyncAction `json:"action"`
+	Error           *string                                 `json:"error,omitempty"`
+	LastSyncedAt    *string                                 `json:"lastSyncedAt,omitempty"`
+	RecordVersion   int                                     `json:"recordVersion"`
+	State           GithubComKloudliteAPIPkgTypesSyncState  `json:"state"`
+	SyncScheduledAt *string                                 `json:"syncScheduledAt,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
@@ -486,90 +486,96 @@ func (e GithubComKloudliteAPIAppsContainerRegistryInternalDomainEntitiesRepoAcce
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type GithubComKloudliteAPIPkgTypesSyncStatusAction string
+type GithubComKloudliteAPIPkgTypesSyncAction string
 
 const (
-	GithubComKloudliteAPIPkgTypesSyncStatusActionApply  GithubComKloudliteAPIPkgTypesSyncStatusAction = "APPLY"
-	GithubComKloudliteAPIPkgTypesSyncStatusActionDelete GithubComKloudliteAPIPkgTypesSyncStatusAction = "DELETE"
+	GithubComKloudliteAPIPkgTypesSyncActionApply  GithubComKloudliteAPIPkgTypesSyncAction = "APPLY"
+	GithubComKloudliteAPIPkgTypesSyncActionDelete GithubComKloudliteAPIPkgTypesSyncAction = "DELETE"
 )
 
-var AllGithubComKloudliteAPIPkgTypesSyncStatusAction = []GithubComKloudliteAPIPkgTypesSyncStatusAction{
-	GithubComKloudliteAPIPkgTypesSyncStatusActionApply,
-	GithubComKloudliteAPIPkgTypesSyncStatusActionDelete,
+var AllGithubComKloudliteAPIPkgTypesSyncAction = []GithubComKloudliteAPIPkgTypesSyncAction{
+	GithubComKloudliteAPIPkgTypesSyncActionApply,
+	GithubComKloudliteAPIPkgTypesSyncActionDelete,
 }
 
-func (e GithubComKloudliteAPIPkgTypesSyncStatusAction) IsValid() bool {
+func (e GithubComKloudliteAPIPkgTypesSyncAction) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIPkgTypesSyncStatusActionApply, GithubComKloudliteAPIPkgTypesSyncStatusActionDelete:
+	case GithubComKloudliteAPIPkgTypesSyncActionApply, GithubComKloudliteAPIPkgTypesSyncActionDelete:
 		return true
 	}
 	return false
 }
 
-func (e GithubComKloudliteAPIPkgTypesSyncStatusAction) String() string {
+func (e GithubComKloudliteAPIPkgTypesSyncAction) String() string {
 	return string(e)
 }
 
-func (e *GithubComKloudliteAPIPkgTypesSyncStatusAction) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIPkgTypesSyncAction) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = GithubComKloudliteAPIPkgTypesSyncStatusAction(str)
+	*e = GithubComKloudliteAPIPkgTypesSyncAction(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___types__SyncStatusAction", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___types__SyncAction", str)
 	}
 	return nil
 }
 
-func (e GithubComKloudliteAPIPkgTypesSyncStatusAction) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIPkgTypesSyncAction) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type GithubComKloudliteAPIPkgTypesSyncStatusState string
+type GithubComKloudliteAPIPkgTypesSyncState string
 
 const (
-	GithubComKloudliteAPIPkgTypesSyncStatusStateAppliedAtAgent          GithubComKloudliteAPIPkgTypesSyncStatusState = "APPLIED_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStatusStateErroredAtAgent          GithubComKloudliteAPIPkgTypesSyncStatusState = "ERRORED_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStatusStateIDLe                    GithubComKloudliteAPIPkgTypesSyncStatusState = "IDLE"
-	GithubComKloudliteAPIPkgTypesSyncStatusStateInQueue                 GithubComKloudliteAPIPkgTypesSyncStatusState = "IN_QUEUE"
-	GithubComKloudliteAPIPkgTypesSyncStatusStateReceivedUpdateFromAgent GithubComKloudliteAPIPkgTypesSyncStatusState = "RECEIVED_UPDATE_FROM_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "APPLIED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "DELETED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent         GithubComKloudliteAPIPkgTypesSyncState = "DELETING_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "ERRORED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateIDLe                    GithubComKloudliteAPIPkgTypesSyncState = "IDLE"
+	GithubComKloudliteAPIPkgTypesSyncStateInQueue                 GithubComKloudliteAPIPkgTypesSyncState = "IN_QUEUE"
+	GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent GithubComKloudliteAPIPkgTypesSyncState = "RECEIVED_UPDATE_FROM_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "UPDATED_AT_AGENT"
 )
 
-var AllGithubComKloudliteAPIPkgTypesSyncStatusState = []GithubComKloudliteAPIPkgTypesSyncStatusState{
-	GithubComKloudliteAPIPkgTypesSyncStatusStateAppliedAtAgent,
-	GithubComKloudliteAPIPkgTypesSyncStatusStateErroredAtAgent,
-	GithubComKloudliteAPIPkgTypesSyncStatusStateIDLe,
-	GithubComKloudliteAPIPkgTypesSyncStatusStateInQueue,
-	GithubComKloudliteAPIPkgTypesSyncStatusStateReceivedUpdateFromAgent,
+var AllGithubComKloudliteAPIPkgTypesSyncState = []GithubComKloudliteAPIPkgTypesSyncState{
+	GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateIDLe,
+	GithubComKloudliteAPIPkgTypesSyncStateInQueue,
+	GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent,
+	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent,
 }
 
-func (e GithubComKloudliteAPIPkgTypesSyncStatusState) IsValid() bool {
+func (e GithubComKloudliteAPIPkgTypesSyncState) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIPkgTypesSyncStatusStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStatusStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStatusStateIDLe, GithubComKloudliteAPIPkgTypesSyncStatusStateInQueue, GithubComKloudliteAPIPkgTypesSyncStatusStateReceivedUpdateFromAgent:
+	case GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent, GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStateIDLe, GithubComKloudliteAPIPkgTypesSyncStateInQueue, GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent, GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent:
 		return true
 	}
 	return false
 }
 
-func (e GithubComKloudliteAPIPkgTypesSyncStatusState) String() string {
+func (e GithubComKloudliteAPIPkgTypesSyncState) String() string {
 	return string(e)
 }
 
-func (e *GithubComKloudliteAPIPkgTypesSyncStatusState) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIPkgTypesSyncState) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = GithubComKloudliteAPIPkgTypesSyncStatusState(str)
+	*e = GithubComKloudliteAPIPkgTypesSyncState(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___types__SyncStatusState", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___pkg___types__SyncState", str)
 	}
 	return nil
 }
 
-func (e GithubComKloudliteAPIPkgTypesSyncStatusState) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIPkgTypesSyncState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

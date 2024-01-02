@@ -1,5 +1,4 @@
 type Build @shareable {
-  accountName: String!
   buildClusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
