@@ -3,14 +3,13 @@ package wg
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	common_util "github.com/kloudlite/kl/pkg/functions"
 	"net"
 	"os"
-)
+	"strings"
 
-const (
-	KlWgInterface = "wgkl"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/lib/wgc"
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
 func connect(verbose bool) error {
@@ -23,9 +22,9 @@ func connect(verbose bool) error {
 
 	startService(verbose)
 
-	// if err := startConfiguration(verbose); err != nil {
-	// 	return err
-	// }
+	if err := startConfiguration(verbose); err != nil {
+		return err
+	}
 	success = true
 	return nil
 }
@@ -36,15 +35,16 @@ func disconnect(verbose bool) error {
 
 func setDNS(dns []net.IP, verbose bool) error {
 	if verbose {
-		common_util.Log("[#] setting /etc/resolv.conf")
+		fn.Log("[#] setting /etc/resolv.conf")
 	}
+
 	file, err := os.ReadFile("/etc/resolv.conf")
 	if err != nil {
 		return err
 	}
 
-	if _, e := os.Stat("/etc/resolv.conf.back"); errors.Is(e, os.ErrNotExist) {
-		e = os.WriteFile("/etc/resolv.conf.back", file, 0644)
+	if _, e := os.Stat("/etc/resolv.conf.bak"); errors.Is(e, os.ErrNotExist) {
+		e = os.WriteFile("/etc/resolv.conf.bak", file, 0644)
 		if e != nil {
 			return e
 		}
@@ -69,38 +69,61 @@ func setDNS(dns []net.IP, verbose bool) error {
 	return err
 }
 func resetDNS(verbose bool) error {
+
 	if verbose {
-		common_util.Log("[#] resetting /etc/resolv.conf")
+		fn.Log("[#] resetting /etc/resolv.conf")
 	}
 
-	// err := os.Remove("/etc/resolv.conf")
-	// if err != nil {
-	// 	return err
-	// }
-	err := os.Rename("/etc/resolv.conf.back", "/etc/resolv.conf")
-	return err
+	if _, e := os.Stat("/etc/resolv.conf"); e != nil && !errors.Is(e, os.ErrNotExist) {
+		if err := os.Remove("/etc/resolv.conf"); err != nil {
+			return err
+		}
+	}
+
+	if _, e := os.Stat("/etc/resolv.conf.bak"); errors.Is(e, os.ErrNotExist) {
+		return nil
+	}
+
+	return os.Rename("/etc/resolv.conf.bak", "/etc/resolv.conf")
 }
 
-func setDeviceIp(deviceIp string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", KlWgInterface, deviceIp, deviceIp), verbose)
+func setDeviceIp(deviceIp string, deviceName string, verbose bool) error {
+	return execCmd(fmt.Sprintf("ifconfig %s %s %s", deviceName, deviceIp, deviceIp), verbose)
 }
 
 func startService(verbose bool) error {
-	err := execCmd(fmt.Sprintf("ip link add dev %s type wireguard", KlWgInterface), verbose)
+
+	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
 
-	return execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", KlWgInterface), verbose)
+	if err := execCmd(fmt.Sprintf("ip link add dev %s type wireguard", devName), verbose); err != nil {
+		return err
+	}
+
+	return execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", devName), verbose)
+
 }
 
-func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ip -4 route add %s dev %s", ip, KlWgInterface), verbose)
+func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) error {
+	return execCmd(fmt.Sprintf("ip -4 route add %s dev %s", ip, devName), verbose)
 }
 
 func stopService(verbose bool) error {
-	err := execCmd(fmt.Sprintf("ip link del dev %s", KlWgInterface), verbose)
+
+	wgInterface, err := wgc.Show(&wgc.WgShowOptions{
+		Interface: "interfaces",
+	})
 	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(wgInterface) == "" {
+		return nil
+	}
+
+	if err := execCmd(fmt.Sprintf("ip link del dev %s", strings.TrimSpace(wgInterface)), verbose); err != nil {
 		return err
 	}
 

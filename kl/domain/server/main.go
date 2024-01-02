@@ -91,22 +91,6 @@ func Login(loginId string) error {
 	}
 }
 
-func CurrentDeviceId() (string, error) {
-
-	file, err := client.GetContextFile()
-
-	if err != nil {
-		return "", err
-	}
-
-	if file.DeviceName == "" {
-		return "",
-			errors.New("no device is selected yet. please select one using \"kl use device\"")
-	}
-
-	return file.DeviceName, nil
-}
-
 func getCookie() (string, error) {
 
 	file, err := client.GetContextFile()

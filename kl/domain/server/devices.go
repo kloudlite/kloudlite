@@ -23,6 +23,10 @@ type Device struct {
 			TargetPort int `json:"targetPort,omitempty"`
 		} `json:"ports"`
 	} `json:"spec"`
+	WireguardConfig *struct {
+		Encoding string `json:"encoding"`
+		Value    string `json:"value"`
+	} `json:"wireguardConfig,omitempty"`
 }
 
 func ListDevices(options ...fn.Option) ([]Device, error) {
@@ -60,6 +64,42 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 		return nil, err
 	}
 	if fromResp, err := GetFromRespForEdge[Device](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
+	}
+}
+
+func GetDevice(options ...fn.Option) (*Device, error) {
+	devName := fn.GetOption(options, "deviceName")
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := client.CurrentClusterName()
+	if err != nil {
+		return nil, err
+	}
+	clusterName := s
+
+	if devName != "" {
+		if s, err := client.CurrentDeviceName(); err != nil {
+			return nil, err
+		} else {
+			devName = s
+		}
+	}
+
+	respData, err := klFetch("cli_getDevice", map[string]any{
+		"clusterName": clusterName,
+		"name":        devName,
+	}, &cookie)
+	if err != nil {
+		return nil, err
+	}
+
+	if fromResp, err := GetFromResp[Device](respData); err != nil {
 		return nil, err
 	} else {
 		return fromResp, nil

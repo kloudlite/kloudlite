@@ -13,7 +13,7 @@ import (
 	// "github.com/kloudlite/kl/cmd/runner/gen"
 	switch_cmd "github.com/kloudlite/kl/cmd/switch"
 	"github.com/kloudlite/kl/cmd/use"
-	// "github.com/kloudlite/kl/cmd/wg"
+	"github.com/kloudlite/kl/cmd/wg"
 )
 
 func init() {
@@ -32,7 +32,7 @@ func init() {
 
 	rootCmd.AddCommand(cluster.Command)
 
-	// rootCmd.AddCommand(wg.Cmd)
+	rootCmd.AddCommand(wg.Cmd)
 
 	// rootCmd.AddCommand(runner.InitCommand)
 	// rootCmd.AddCommand(runner.LoadCommand)
