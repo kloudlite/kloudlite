@@ -9,6 +9,11 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
+type ConfigORSecret struct {
+	Entries map[string]string `json:"entries"`
+	Name    string            `json:"name"`
+}
+
 type Config struct {
 	DisplayName string            `yaml:"displayName"`
 	Metadata    Metadata          `yaml:"metadata"`

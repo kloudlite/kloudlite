@@ -125,7 +125,12 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 		return env, nil
 	}
 
-	mEnv, err := SelectEnv(env.Name)
+	mEnv, err := SelectEnv(func() string {
+		if env != nil {
+			return env.Name
+		}
+		return ""
+	}())
 	if err != nil {
 		return nil, err
 	}

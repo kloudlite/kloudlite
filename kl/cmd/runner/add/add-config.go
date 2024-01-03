@@ -3,10 +3,12 @@ package add
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	server2 "github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
 	"strings"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/ktr0731/go-fuzzyfinder"
@@ -33,7 +35,7 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		err := selectAndAddConfig(cmd, args)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -49,12 +51,12 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 	klFile, err := client.GetKlFile(nil)
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
-	configs, err := server2.GetConfigs()
+	configs, err := server.ListConfigs()
 	if err != nil {
 		return err
 	}
@@ -63,11 +65,11 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return errors.New("no configs created yet on server")
 	}
 
-	selectedConfigGroup := server2.Config{}
+	selectedConfigGroup := server.Config{}
 
 	if name != "" {
 		for _, c := range configs {
-			if c.Name == name {
+			if c.Metadata.Name == name {
 				selectedConfigGroup = c
 				break
 			}
@@ -78,7 +80,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		selectedGroupIndex, e := fuzzyfinder.Find(
 			configs,
 			func(i int) string {
-				return configs[i].Name
+				return configs[i].Metadata.Name
 			},
 			fuzzyfinder.WithPromptString("Select Config Group >"),
 		)
@@ -89,11 +91,16 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		selectedConfigGroup = configs[selectedGroupIndex]
 	}
 
-	if len(selectedConfigGroup.Entries) == 0 {
-		return fmt.Errorf("no configs added yet to %s config", selectedConfigGroup.Name)
+	if len(selectedConfigGroup.Data) == 0 {
+		return fmt.Errorf("no configs added yet to %s config", selectedConfigGroup.Metadata.Name)
 	}
 
-	selectedConfigKey := server2.CSEntry{}
+	type KV struct {
+		Key   string
+		Value string
+	}
+
+	selectedConfigKey := &KV{}
 
 	if m != "" {
 		kk := strings.Split(m, "=")
@@ -101,9 +108,12 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			return errors.New("map must be in format of config_key=your_var_key")
 		}
 
-		for _, c := range selectedConfigGroup.Entries {
-			if c.Key == kk[0] {
-				selectedConfigKey = c
+		for k, v := range selectedConfigGroup.Data {
+			if k == kk[0] {
+				selectedConfigKey = &KV{
+					Key:   k,
+					Value: v,
+				}
 				break
 			}
 		}
@@ -111,24 +121,32 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return errors.New("config_key not found in selected config")
 
 	} else {
-		selectedKeyIndex, e := fuzzyfinder.Find(
-			selectedConfigGroup.Entries,
-			func(i int) string {
-				return selectedConfigGroup.Entries[i].Key
+		selectedConfigKey, err = fzf.FindOne(
+			func() []KV {
+				var kvs []KV
+
+				for k, v := range selectedConfigGroup.Data {
+					kvs = append(kvs, KV{
+						Key:   k,
+						Value: v,
+					})
+				}
+
+				return kvs
+			}(),
+			func(val KV) string {
+				return val.Key
 			},
-			fuzzyfinder.WithPromptString(fmt.Sprintf("Select Key of %s >", selectedConfigGroup.Name)),
+			fzf.WithPrompt(fmt.Sprintf("Select Key of %s >", selectedConfigGroup.Metadata.Name)),
 		)
-		if e != nil {
-			return e
+		if err != nil {
+			return err
 		}
-
-		selectedConfigKey = selectedConfigGroup.Entries[selectedKeyIndex]
-
 	}
 
 	matchedGroupIndex := -1
 	for i, rt := range klFile.Configs {
-		if rt.Name == selectedConfigGroup.Name {
+		if rt.Name == selectedConfigGroup.Metadata.Name {
 			matchedGroupIndex = i
 			break
 		}
@@ -158,7 +176,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		klFile.Configs = append(klFile.Configs, client.ResType{
-			Name: selectedConfigGroup.Name,
+			Name: selectedConfigGroup.Metadata.Name,
 			Env: []client.ResEnvType{
 				{
 					Key: func() string {
@@ -179,7 +197,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("added config %s/%s to your %s-file\n", selectedConfigGroup.Name, selectedConfigKey.Key, constants.CmdName)
+	fmt.Printf("added config %s/%s to your %s-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key, constants.CmdName)
 
 	return nil
 }

@@ -16,6 +16,9 @@ func SelectEnv(envName Env) error {
 	if err != nil {
 		return err
 	}
+	if k.SelectedEnvs == nil {
+		k.SelectedEnvs = map[string]*Env{}
+	}
 
 	k.SelectedEnvs[dir] = &envName
 	if err := WriteContextFile(*k); err != nil {

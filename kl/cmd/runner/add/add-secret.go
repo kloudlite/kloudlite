@@ -3,10 +3,12 @@ package add
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	server2 "github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
 	"strings"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/ktr0731/go-fuzzyfinder"
@@ -33,7 +35,7 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		err := selectAndAddSecret(cmd, args)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -49,12 +51,12 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	klFile, err := client.GetKlFile(nil)
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
-	secrets, err := server2.GetSecrets()
+	secrets, err := server.ListSecrets()
 	if err != nil {
 		return err
 	}
@@ -63,11 +65,11 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no secrets created yet on server")
 	}
 
-	selectedSecretGroup := server2.Secret{}
+	selectedSecretGroup := server.Secret{}
 
 	if name != "" {
 		for _, c := range secrets {
-			if c.Name == name {
+			if c.Metadata.Name == name {
 				selectedSecretGroup = c
 				break
 			}
@@ -78,7 +80,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		selectedGroupIndex, err := fuzzyfinder.Find(
 			secrets,
 			func(i int) string {
-				return secrets[i].Name
+				return secrets[i].Metadata.Name
 			},
 			fuzzyfinder.WithPromptString("Select Secret Group >"),
 		)
@@ -89,11 +91,16 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		selectedSecretGroup = secrets[selectedGroupIndex]
 	}
 
-	if len(selectedSecretGroup.Entries) == 0 {
-		return fmt.Errorf("no secrets added yet to %s secret", selectedSecretGroup.Name)
+	if len(selectedSecretGroup.StringData) == 0 {
+		return fmt.Errorf("no secrets added yet to %s secret", selectedSecretGroup.Metadata.Name)
 	}
 
-	selectedSecretKey := server2.CSEntry{}
+	type KV struct {
+		Key   string
+		Value string
+	}
+
+	selectedSecretKey := &KV{}
 
 	if m != "" {
 		kk := strings.Split(m, "=")
@@ -101,9 +108,12 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			return errors.New("map must be in format of secret_key=your_var_key")
 		}
 
-		for _, c := range selectedSecretGroup.Entries {
-			if c.Key == kk[0] {
-				selectedSecretKey = c
+		for k, v := range selectedSecretGroup.StringData {
+			if k == kk[0] {
+				selectedSecretKey = &KV{
+					Key:   k,
+					Value: v,
+				}
 				break
 			}
 		}
@@ -111,23 +121,32 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return errors.New("secret_key not found in selected secret")
 
 	} else {
-		selectedKeyIndex, e := fuzzyfinder.Find(
-			selectedSecretGroup.Entries,
-			func(i int) string {
-				return selectedSecretGroup.Entries[i].Key
-			},
-			fuzzyfinder.WithPromptString(fmt.Sprintf("Select Key of %s >", selectedSecretGroup.Name)),
-		)
-		if e != nil {
-			return e
-		}
+		selectedSecretKey, err = fzf.FindOne(
+			func() []KV {
+				var kvs []KV
 
-		selectedSecretKey = selectedSecretGroup.Entries[selectedKeyIndex]
+				for k, v := range selectedSecretGroup.StringData {
+					kvs = append(kvs, KV{
+						Key:   k,
+						Value: v,
+					})
+				}
+
+				return kvs
+			}(),
+			func(val KV) string {
+				return val.Key
+			},
+			fzf.WithPrompt(fmt.Sprintf("Select Key of %s >", selectedSecretGroup.Metadata.Name)),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	matchedGroupIndex := -1
 	for i, rt := range klFile.Secrets {
-		if rt.Name == selectedSecretGroup.Name {
+		if rt.Name == selectedSecretGroup.Metadata.Name {
 			matchedGroupIndex = i
 			break
 		}
@@ -157,7 +176,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		klFile.Secrets = append(klFile.Secrets, client.ResType{
-			Name: selectedSecretGroup.Name,
+			Name: selectedSecretGroup.Metadata.Name,
 			Env: []client.ResEnvType{
 				{
 					Key: func() string {
@@ -176,10 +195,10 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 	err = client.WriteKLFile(*klFile)
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 	}
 
-	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Name, selectedSecretKey.Key, constants.CmdName)
+	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key, constants.CmdName)
 	return nil
 }
 

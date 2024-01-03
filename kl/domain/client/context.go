@@ -16,18 +16,18 @@ const (
 )
 
 type Env struct {
-	Name          string `yaml:"name"`
-	IsEnvironment bool   `yaml:"isEnvironment"`
+	Name          string `json:"name"`
+	IsEnvironment bool   `json:"isEnvironment"`
 }
 
 type KLContext struct {
-	AccountName  string          `yaml:"accountName"`
-	DeviceName   string          `yaml:"deviceName"`
-	Session      string          `yaml:"session"`
-	KlFile       string          `yaml:"klFile"`
-	DNS          []string        `yaml:"dns"`
-	ClusterName  string          `yaml:"clusterName"`
-	SelectedEnvs map[string]*Env `yaml:"selectedEnvs"`
+	AccountName  string          `json:"accountName"`
+	DeviceName   string          `json:"deviceName"`
+	Session      string          `json:"session"`
+	KlFile       string          `json:"klFile"`
+	DNS          []string        `json:"dns"`
+	ClusterName  string          `json:"clusterName"`
+	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
 }
 
 func (f *KLContext) GetCookieString() string {

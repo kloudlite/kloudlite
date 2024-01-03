@@ -9,40 +9,40 @@ import (
 )
 
 type ResEnvType struct {
-	Name   *string `yaml:"name,omitempty" yaml:"name,omitempty"`
-	Key    string  `yaml:"key"`
-	RefKey string  `yaml:"refKey"`
+	Name   *string `json:"name,omitempty" yaml:"name,omitempty"`
+	Key    string  `json:"key"`
+	RefKey string  `json:"refKey"`
 }
 
 type EnvType struct {
-	Key   string `yaml:"key"`
-	Value string `yaml:"value"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type ResType struct {
-	Name string       `yaml:"name"`
-	Env  []ResEnvType `yaml:"env"`
+	Name string       `json:"name"`
+	Env  []ResEnvType `json:"env"`
 }
 
 type FileEntry struct {
-	Path string `yaml:"path"`
-	Type string `yaml:"type"`
-	Name string `yaml:"Name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+	Name string `json:"Name"`
 }
 
 type MountType struct {
-	MountBasePath string      `yaml:"mountBasePath" yaml:"mountBasePath"`
-	Mounts        []FileEntry `yaml:"mounts"`
+	MountBasePath string      `json:"mountBasePath"`
+	Mounts        []FileEntry `json:"mounts"`
 }
 
 type KLFileType struct {
-	Version   string    `yaml:"version"`
-	Project   string    `yaml:"project"`
-	Mres      []ResType `yaml:"mres"`
-	Configs   []ResType `yaml:"configs"`
-	Secrets   []ResType `yaml:"secrets"`
-	Env       []EnvType `yaml:"env"`
-	FileMount MountType `yaml:"fileMount"`
+	Version   string    `json:"version"`
+	Project   string    `json:"project"`
+	Mres      []ResType `json:"mres"`
+	Configs   []ResType `json:"configs"`
+	Secrets   []ResType `json:"secrets"`
+	Env       []EnvType `json:"env"`
+	FileMount MountType `json:"fileMount"`
 }
 
 const (
