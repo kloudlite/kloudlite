@@ -329,13 +329,13 @@ func (r *Request[T]) Finalize() stepResult.Result {
 	return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
 }
 
-func (r *Request[T]) LogPreReconcile() {
+func (r *Request[T]) PreReconcile() {
 	blue := color.New(color.FgBlue).SprintFunc()
 	r.reconStartTime = time.Now()
 	r.internalLogger.Infof(blue("[reconcile:start] start"))
 }
 
-func (r *Request[T]) LogPostReconcile() {
+func (r *Request[T]) PostReconcile() {
 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
 
 	tDiff := time.Since(r.reconStartTime).Seconds()
@@ -343,7 +343,11 @@ func (r *Request[T]) LogPostReconcile() {
 	isReady := r.Object.GetStatus().IsReady
 
 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-	r.Object.GetStatus().Resources = r.GetOwnedResources()
+
+	if r.Object.GetDeletionTimestamp() == nil {
+		r.Object.GetStatus().Resources = r.GetOwnedResources()
+	}
+
 	if isReady {
 		r.Object.GetStatus().LastReadyGeneration = r.Object.GetGeneration()
 	}
@@ -446,9 +450,12 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 
 	checkName := "cleanupLogic"
 
-	resources := r.GetOwnedResources()
+	test := r.Object.GetName()
+	_ = test
 
-	allRemovedFromK8s := true
+	resources := r.Object.GetStatus().Resources
+
+	deletionStatus := make(map[string]bool)
 
 	for i := range resources {
 		res := &unstructured.Unstructured{Object: map[string]any{
@@ -460,38 +467,34 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 			},
 		}}
 
-		allRemovedFromK8s = false
-		if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
-			if client.IgnoreNotFound(err) != nil {
-				return r.CheckFailed(checkName, check, err.Error())
-			}
-			allRemovedFromK8s = true
-		}
+		resLabel := fmt.Sprintf("apiVersion: %s, kind: %s, name: %s, namespace: %s", resources[i].APIVersion, resources[i].Kind, resources[i].Name, resources[i].Namespace)
 
-		if fn.IsOwner(res, fn.AsOwner(obj, true)) {
-			controllerutil.RemoveFinalizer(res, constants.CommonFinalizer)
-			// FIXME: this is not working
-			controllerutil.RemoveFinalizer(res, constants.GenericFinalizer)
+		deletionStatus[resLabel] = false
+		// allRemovedFromK8s = false
+		if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
+			if apiErrors.IsNotFound(err) {
+				deletionStatus[resLabel] = true
+				continue
+			}
+			return r.CheckFailed(checkName, check, err.Error())
 		}
 
 		if err := r.client.Update(ctx, res); err != nil {
-			if client.IgnoreNotFound(err) != nil {
+			if !apiErrors.IsNotFound(err) {
 				return r.CheckFailed(checkName, check, err.Error())
 			}
 		}
 
-		r.Logger.Infof("deleting resource GVK: %s, %s, as its parent is finalizing", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName()))
+		r.Logger.Infof("deleting resource (%s), as its parent is finalizing", resLabel)
 
 		if err := r.client.Delete(ctx, res, &client.DeleteOptions{
 			GracePeriodSeconds: fn.New(int64(30)),
 			PropagationPolicy:  fn.New(metav1.DeletePropagationForeground),
 		}); err != nil {
-			if client.IgnoreNotFound(err) != nil {
+			if !apiErrors.IsNotFound(err) {
 				return r.CheckFailed(checkName, check, err.Error()).Err(nil)
 			}
-			return r.CheckFailed(checkName, check,
-				fmt.Sprintf("waiting for deletion of owned resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
-			).Err(nil)
+			return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for deletion of resource %s", resLabel)).Err(nil)
 		}
 
 		if res.GetDeletionTimestamp() == nil {
@@ -501,8 +504,10 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 		}
 	}
 
-	if !allRemovedFromK8s {
-		return r.CheckFailed(checkName, check, "waiting for all owned resources to be removed from k8s")
+	for k, v := range deletionStatus {
+		if !v {
+			return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for all owned resource (%s) to be removed from k8s", k))
+		}
 	}
 
 	check.Status = true
