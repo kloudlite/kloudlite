@@ -135,7 +135,7 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 
 	check.Status = true
 	if check != obj.Status.Checks[RealMsvcCreated] {
-		obj.Status.Checks[RealMsvcCreated] = check
+		fn.MapSet(&obj.Status.Checks, RealMsvcCreated, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -172,7 +172,7 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 
 	if !realMsvcObj.Status.IsReady {
 		if realMsvcObj.Status.Message == nil {
-			return req.CheckFailed(RealMsvcReady, check, "waiting for real managed resource to reconcile ...").Err(nil)
+			return req.CheckFailed(RealMsvcReady, check, "waiting for real managed service to reconcile ...").Err(nil)
 		}
 		b, err := realMsvcObj.Status.Message.MarshalJSON()
 		if err != nil {
@@ -183,7 +183,7 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 
 	check.Status = true
 	if check != obj.Status.Checks[RealMsvcReady] {
-		obj.Status.Checks[RealMsvcReady] = check
+		fn.MapSet(&obj.Status.Checks, RealMsvcReady, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

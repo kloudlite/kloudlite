@@ -492,14 +492,14 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 			PropagationPolicy:  fn.New(metav1.DeletePropagationForeground),
 		}); err != nil {
 			if !apiErrors.IsNotFound(err) {
-				return r.CheckFailed(checkName, check, err.Error()).Err(nil)
+				return r.CheckFailed(checkName, check, err.Error())
 			}
 			return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for deletion of resource %s", resLabel)).Err(nil)
 		}
 
 		if res.GetDeletionTimestamp() == nil {
 			if err := r.client.Delete(ctx, res); err != nil {
-				return r.CheckFailed(checkName, check, err.Error()).Err(nil)
+				return r.CheckFailed(checkName, check, err.Error())
 			}
 		}
 	}
