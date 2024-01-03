@@ -27,6 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/yaml"
 )
 
@@ -80,8 +82,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -124,9 +126,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.HelmChart]) stepResult.R
 		return step
 	}
 
-	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
-		return step
-	}
+	// if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+	// 	return step
+	// }
 
 	return req.Finalize()
 }
@@ -316,8 +318,8 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 	req.LogPreCheck(uninstallJob)
 	defer req.LogPostCheck(uninstallJob)
 
-	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
+	job, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getJobName(obj.Name)), &batchv1.Job{})
+	if err != nil {
 		job = nil
 	}
 
@@ -330,7 +332,7 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 				LabelUninstallJob:       "true",
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
 			},
-			"owner-refs":           []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			// "owner-refs":           []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"service-account-name": getJobSvcAccountName(),
 			"tolerations":          obj.Spec.JobVars.Tolerations,
 			"affinity":             obj.Spec.JobVars.Affinity,
@@ -362,9 +364,14 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			return req.CheckFailed(uninstallJob, check, "waiting for previous jobs to finish execution").Err(nil)
 		}
 		// deleting that job
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
+		if err := r.Delete(ctx, job, &client.DeleteOptions{
+			GracePeriodSeconds: fn.New(int64(10)),
+			Preconditions:      &metav1.Preconditions{},
+			PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
+		}); err != nil {
 			return req.CheckFailed(uninstallJob, check, err.Error())
 		}
+
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
@@ -383,6 +390,15 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 
 	if !check.Status {
 		return req.Done()
+	}
+
+	// deleting that job
+	if err := r.Delete(ctx, job, &client.DeleteOptions{
+		GracePeriodSeconds: fn.New(int64(10)),
+		Preconditions:      &metav1.Preconditions{},
+		PropagationPolicy:  fn.New(metav1.DeletePropagationBackground),
+	}); err != nil {
+		return req.CheckFailed(uninstallJob, check, err.Error())
 	}
 
 	return req.Next()
@@ -411,7 +427,19 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.HelmChart{})
-	builder.Owns(&batchv1.Job{})
+
+	builder.Watches(
+		&batchv1.Job{},
+		handler.EnqueueRequestsFromMapFunc(
+			func(_ context.Context, o client.Object) []reconcile.Request {
+				if v, ok := o.GetLabels()[LabelHelmChartName]; ok {
+					return []reconcile.Request{{NamespacedName: fn.NN(o.GetNamespace(), v)}}
+				}
+				return nil
+			}),
+	)
+
+	// builder.Owns(&batchv1.Job{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
