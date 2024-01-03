@@ -2,12 +2,12 @@ package wg
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/kloudlite/kl/domain/client"
-	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
@@ -58,12 +58,12 @@ Examples:
 
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
-		// if euid := os.Geteuid(); euid != 0 {
-		// 	fn.Log(
-		// 		text.Colored("make sure you are running command with sudo", 209),
-		// 	)
-		// 	return
-		// }
+		if euid := os.Geteuid(); euid != 0 {
+			fn.Log(
+				text.Colored("make sure you are running command with sudo", 209),
+			)
+			return
+		}
 
 		if foreground {
 			if err := startService(connectVerbose); err != nil {

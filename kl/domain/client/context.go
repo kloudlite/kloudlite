@@ -8,8 +8,11 @@ import (
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 
-	"github.com/adrg/xdg"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	ConfigFileName string = "kl-session.yaml"
 )
 
 type Env struct {
@@ -33,7 +36,23 @@ func (f *KLContext) GetCookieString() string {
 
 func GetConfigFolder() (configFolder string, err error) {
 
-	dirName := xdg.CacheHome
+	var dirName string
+	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
+	if !ok {
+		dirName, err = os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if dirName == "/root" {
+		dirName, ok = os.LookupEnv("SUDO_USER")
+		if !ok {
+			return "", errors.New("something went wrong")
+		}
+
+		dirName = "/home/" + dirName
+	}
 
 	configFolder = fmt.Sprintf("%s/.kl", dirName)
 	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
@@ -51,7 +70,7 @@ func GetContextFile() (*KLContext, error) {
 		return nil, err
 	}
 
-	filePath := path.Join(configPath, "config")
+	filePath := path.Join(configPath, ConfigFileName)
 
 	if _, er := os.Stat(filePath); errors.Is(er, os.ErrNotExist) {
 		er := os.MkdirAll(path.Dir(filePath), os.ModePerm)
@@ -94,12 +113,13 @@ func WriteContextFile(fileObj KLContext) error {
 		return nil
 	}
 
-	cfile := path.Join(filePath, "config")
+	cfile := path.Join(filePath, ConfigFileName)
 
 	err = os.WriteFile(cfile, file, 0644)
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = fn.ExecCmd(fmt.Sprintf("chown %s %s", usr, cfile),
-			false); err != nil {
+		if err = fn.ExecCmd(
+			fmt.Sprintf("chown %s %s", usr, cfile), nil, false,
+		); err != nil {
 			return err
 		}
 	}
