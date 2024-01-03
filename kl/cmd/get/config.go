@@ -18,13 +18,13 @@ var configCmd = &cobra.Command{
 	Long: `get config entries
 Examples:
   # get config entries in table
-  kl get config <configid>
+  kl get config <configname>
 
   # get config entries in json format
-  kl get config <configid> -o json
+  kl get config <configname> -o json
 
   # get config entries in yaml format
-  kl get config <configid> -o yaml
+  kl get config <configname> -o yaml
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		configName := ""

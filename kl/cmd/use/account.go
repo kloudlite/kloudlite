@@ -20,8 +20,8 @@ Examples:
   kl use account
 	# this will open selector where you can select one of the account accessible to you.
 
-  # select account with account id
-  kl use account <accountId>
+  # select account with account name
+  kl use account <accountname>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
 

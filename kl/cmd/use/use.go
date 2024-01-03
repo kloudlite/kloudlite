@@ -12,8 +12,8 @@ Examples:
   # select account
   kl use account
 
-  # select account with account id
-  kl use account <accountId>
+  # select account with account name
+  kl use account <accountname>
 `,
 }
 

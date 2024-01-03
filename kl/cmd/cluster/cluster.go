@@ -5,7 +5,10 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/spf13/cobra"
 )
@@ -31,11 +34,31 @@ Example:
   visit your browser and approve there to access your account using this cli.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		var fn func()
-		fn = func() {
+		var fn func() error
+		fn = func() error {
 
 			accountName := cmd.Flag("account").Value.String()
 			clusterName := cmd.Flag("cluster").Value.String()
+
+			var err error
+			clusterName, err = server.EnsureCluster([]functions.Option{
+				functions.MakeOption("accountName", accountName),
+				functions.MakeOption("clusterName", clusterName),
+			}...)
+
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(
+				text.Bold(text.Green("\nSelected Cluster:")),
+				text.Blue(fmt.Sprintf("%s", clusterName)),
+			)
+
+			accountName, err = client.CurrentAccountName()
+			if err != nil {
+				return err
+			}
 
 			configPath, err := server.SyncKubeConfig(func() *string {
 				if accountName == "" {
@@ -49,33 +72,20 @@ Example:
 				return &clusterName
 			}())
 			if err != nil {
-				switch err.Error() {
-				case "noSelectedAccount":
-					_, err := server.SelectAccount("")
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-					fn()
-				case "noSelectedCluster":
-					_, err := server.SelectCluster("")
-					if err != nil {
-						fmt.Println(err)
-						return
-					}
-					fn()
-				default:
-					fmt.Println(err)
-				}
-				return
+
+				return err
 			}
 			if err := run(map[string]string{
 				"KUBECONFIG": *configPath,
 			}, args); err != nil {
-				fmt.Println(err)
+				return err
 			}
+			return nil
 		}
-		fn()
+		if err := fn(); err != nil {
+			functions.PrintError(err)
+			return
+		}
 	},
 }
 

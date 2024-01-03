@@ -11,16 +11,16 @@ var Cmd = &cobra.Command{
 
 Examples:
   # get config table
-  kl get config <configid>
+  kl get config <configname>
 
 	# get secret table
-  kl get secret <secretid>
+  kl get secret <secretname>
 
 	# get config/secret in yaml format
-  kl get [command] <id> -o yaml
+  kl get [command] <name> -o yaml
 
 	# get config/secret in json format
-  kl get [command] <id> -o json
+  kl get [command] <name> -o json
 `,
 }
 

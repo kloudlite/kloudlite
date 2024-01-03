@@ -18,13 +18,13 @@ var secretCmd = &cobra.Command{
 	Long: `get secret entries
 Examples:
   # get secret entries in table
-  kl get secret <secretid>
+  kl get secret <secretname>
 
   # get secret entries in json format
-  kl get secret <secretid> -o json
+  kl get secret <secretname> -o json
 
   # get secret entries in yaml format
-  kl get secret <secretid> -o yaml
+  kl get secret <secretname> -o yaml
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		secName := ""
@@ -33,13 +33,13 @@ Examples:
 			secName = args[0]
 		}
 
-		config, err := server.EnsureConfig(fn.MakeOption("secretName", secName))
+		sec, err := server.EnsureSecret(fn.MakeOption("secretName", secName))
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		if err := printConfig(config, cmd); err != nil {
+		if err := printSecret(sec, cmd); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -78,9 +78,7 @@ func printSecret(secret *server.Secret, cmd *cobra.Command) error {
 		}
 
 		fmt.Println(table.Table(&header, rows))
-
 		table.KVOutput("Showing entries of secret:", secret.Metadata.Name, true)
-
 		table.TotalResults(len(secret.StringData), true)
 	}
 
@@ -89,4 +87,5 @@ func printSecret(secret *server.Secret, cmd *cobra.Command) error {
 
 func init() {
 	secretCmd.Flags().StringP("output", "o", "table", "output format (table|json|yaml)")
+	secretCmd.Aliases = append(secretCmd.Aliases, "sec")
 }
