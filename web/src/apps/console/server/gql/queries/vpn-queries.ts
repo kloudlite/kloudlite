@@ -34,7 +34,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateVpnDeviceMutation) =>
         data.infra_createVPNDevice,
-      vars(_: ConsoleCreateVpnDeviceMutationVariables) {},
+      vars(_: ConsoleCreateVpnDeviceMutationVariables) { },
     }
   ),
 
@@ -56,7 +56,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       transformer: (v: ConsoleUpdateVpnDeviceMutation) => {
         return v.infra_updateVPNDevice;
       },
-      vars(_: ConsoleUpdateVpnDeviceMutationVariables) {},
+      vars(_: ConsoleUpdateVpnDeviceMutationVariables) { },
     }
   ),
   listVpnDevices: executor(
@@ -98,8 +98,6 @@ export const vpnQueries = (executor: IExecutor) => ({
                 namespace
               }
               spec {
-                accountName
-                clusterName
                 ports {
                   port
                   targetPort
@@ -145,7 +143,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleListVpnDevicesQuery) {
         return data.infra_listVPNDevices;
       },
-      vars(_: ConsoleListVpnDevicesQueryVariables) {},
+      vars(_: ConsoleListVpnDevicesQueryVariables) { },
     }
   ),
   getVpnDevice: executor(
@@ -176,8 +174,6 @@ export const vpnQueries = (executor: IExecutor) => ({
             namespace
           }
           spec {
-            accountName
-            clusterName
             ports {
               port
               targetPort
@@ -218,7 +214,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetVpnDeviceQuery) {
         return data.infra_getVPNDevice;
       },
-      vars(_: ConsoleGetVpnDeviceQueryVariables) {},
+      vars(_: ConsoleGetVpnDeviceQueryVariables) { },
     }
   ),
   deleteVpnDevice: executor(
@@ -237,7 +233,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleDeleteVpnDeviceMutation) {
         return data.infra_deleteVPNDevice;
       },
-      vars(_: ConsoleDeleteVpnDeviceMutationVariables) {},
+      vars(_: ConsoleDeleteVpnDeviceMutationVariables) { },
     }
   ),
 });

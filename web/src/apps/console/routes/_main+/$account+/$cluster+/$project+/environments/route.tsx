@@ -13,10 +13,13 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 
+import {
+  ensureAccountSet,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import Resources from './resources';
 import Tools from './tools';
-import { ensureAccountSet, ensureClusterSet } from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -61,6 +64,8 @@ const Workspaces = () => {
         }}
       >
         {({ environmentData }) => {
+          console.log('environment: ', environmentData);
+
           const environments = parseNodes(environmentData);
 
           if (!environments) {

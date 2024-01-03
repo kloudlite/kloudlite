@@ -67,6 +67,7 @@ export const IdSelector = ({
       case 'environment':
       case 'managed_service':
       case 'managed_resource':
+      case 'helm_release':
       case 'router':
       case 'secret':
       case 'workspace':
@@ -119,6 +120,11 @@ export const IdSelector = ({
             ...(resType === 'nodepool' || resType === 'vpn_device'
               ? {
                   clusterName: cluster,
+                }
+              : {}),
+            ...(resType === 'managed_resource'
+              ? {
+                  namespace: '',
                 }
               : {}),
           });

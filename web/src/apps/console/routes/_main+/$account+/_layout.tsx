@@ -17,8 +17,10 @@ import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
 
-
-import { IAccount, IAccounts } from '~/console/server/gql/queries/account-queries';
+import {
+  IAccount,
+  IAccounts,
+} from '~/console/server/gql/queries/account-queries';
 import { parseName } from '~/console/server/r-utils/common';
 
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';

@@ -1,19 +1,20 @@
 import { AWSlogoFill } from '@jengaicons/react';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
+import { json } from 'react-router-dom';
 import {
-  IManagedServiceTemplate,
-  IManagedServiceTemplates,
-} from '../server/gql/queries/managed-service-queries';
+  IMSvTemplate,
+  IMSvTemplates,
+} from '../server/gql/queries/managed-templates-queries';
 
 export const getManagedTemplate = ({
   templates,
   kind,
   apiVersion,
 }: {
-  templates: IManagedServiceTemplates;
+  templates: IMSvTemplates;
   kind: string;
   apiVersion: string;
-}): IManagedServiceTemplate | undefined => {
+}): IMSvTemplate | undefined => {
   return templates
     ?.flatMap((t) => t.items.flat())
     .find((t) => t.kind === kind && t.apiVersion === apiVersion);
@@ -124,4 +125,11 @@ export const renderCloudProvider = ({
     default:
       return cloudprovider;
   }
+};
+
+export const flatMap = (data: any) => {
+  const keys = data.split('.');
+
+  const jsonObject = keys.reduceRight((acc, key) => ({ [key]: acc }), null);
+  return jsonObject;
 };

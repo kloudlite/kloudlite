@@ -6,14 +6,16 @@ import {
   ConsoleCreateWorkspaceMutationVariables,
   ConsoleGetWorkspaceQuery,
   ConsoleGetWorkspaceQueryVariables,
-  ConsoleListWorkspacesQuery,
-  ConsoleListWorkspacesQueryVariables,
+  ConsoleListEnvironmentsQuery,
+  ConsoleListEnvironmentsQueryVariables,
   ConsoleUpdateWorkspaceMutation,
   ConsoleUpdateWorkspaceMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IWorkspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
-export type IWorkspaces = NN<ConsoleListWorkspacesQuery['core_listWorkspaces']>;
+export type IWorkspaces = NN<
+  ConsoleListEnvironmentsQuery['core_listEnvironments']
+>;
 export const workspaceQueries = (executor: IExecutor) => ({
   getWorkspace: executor(
     gql`
@@ -37,7 +39,7 @@ export const workspaceQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetWorkspaceQuery) => data.core_getWorkspace,
-      vars(_: ConsoleGetWorkspaceQueryVariables) {},
+      vars(_: ConsoleGetWorkspaceQueryVariables) { },
     }
   ),
   createWorkspace: executor(
@@ -51,7 +53,7 @@ export const workspaceQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateWorkspaceMutation) =>
         data.core_createWorkspace,
-      vars(_: ConsoleCreateWorkspaceMutationVariables) {},
+      vars(_: ConsoleCreateWorkspaceMutationVariables) { },
     }
   ),
   updateWorkspace: executor(
@@ -66,63 +68,7 @@ export const workspaceQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleUpdateWorkspaceMutation) {
         return data.core_updateWorkspace;
       },
-      vars(_: ConsoleUpdateWorkspaceMutationVariables) {},
-    }
-  ),
-  listWorkspaces: executor(
-    gql`
-      query Core_listWorkspaces(
-        $project: ProjectId!
-        $search: SearchWorkspaces
-        $pagination: CursorPaginationIn
-      ) {
-        core_listWorkspaces(
-          project: $project
-          search: $search
-          pq: $pagination
-        ) {
-          pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
-            endCursor
-          }
-          totalCount
-          edges {
-            node {
-              metadata {
-                name
-                namespace
-                labels
-                annotations
-              }
-              displayName
-              clusterName
-              updateTime
-              creationTime
-              spec {
-                targetNamespace
-                projectName
-              }
-              createdBy {
-                userEmail
-                userId
-                userName
-              }
-              lastUpdatedBy {
-                userEmail
-                userId
-                userName
-              }
-            }
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: ConsoleListWorkspacesQuery) =>
-        data.core_listWorkspaces,
-      vars(_: ConsoleListWorkspacesQueryVariables) {},
+      vars(_: ConsoleUpdateWorkspaceMutationVariables) { },
     }
   ),
 });

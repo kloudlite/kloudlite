@@ -15,7 +15,7 @@ const Infra = () => {
     <SidebarLayout
       navItems={[
         { label: 'Clusters', value: 'clusters' },
-        { label: 'VMs', value: 'vms' },
+        { label: 'VM instances', value: 'vms' },
       ]}
       parentPath="/infra"
       headerActions={subNavAction.data}

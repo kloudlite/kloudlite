@@ -12,6 +12,7 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
@@ -24,10 +25,13 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listNodePools({
       clusterName: cluster,
-      // pagination: getPagination(ctx),
-      // search: getSearch(ctx),
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
     });
+
     if (errors) {
+      console.log(errors);
+
       throw errors[0];
     }
     return { nodePoolData: data };
@@ -56,7 +60,7 @@ const Nodepools = () => {
           }
           const { pageInfo, totalCount } = nodePoolData;
 
-          console.log(nodepools);
+          console.log('nodepools...', nodepools, nodePoolData);
 
           return (
             <Wrapper

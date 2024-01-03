@@ -1,4 +1,4 @@
-import { Plus } from '@jengaicons/react';
+import { Container, Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
@@ -53,7 +53,11 @@ const ContainerRegistryRepos = () => {
           return (
             <div className="flex flex-col gap-6xl">
               <SecondarySubHeader
-                title="Container registry"
+                title={
+                  <div className="flex flex-row gap-xl items-center">
+                    <span>Container Repos</span>
+                  </div>
+                }
                 action={
                   <Button
                     content="Create new repository"

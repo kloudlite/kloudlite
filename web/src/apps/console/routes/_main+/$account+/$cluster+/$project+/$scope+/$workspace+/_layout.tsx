@@ -17,7 +17,6 @@ import {
   BlackWorkspaceLogo,
 } from '~/console/components/commons';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
-import { IManagedServiceTemplates } from '~/console/server/gql/queries/managed-service-queries';
 import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
@@ -38,12 +37,12 @@ import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-ac
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Truncate, handleError } from '~/root/lib/utils/common';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { IProjectContext } from '../../_layout';
-
 
 export interface IWorkspaceContext extends IProjectContext {
   workspace: IWorkspace;
-  managedTemplates: IManagedServiceTemplates;
+  managedTemplates: IMSvTemplates;
 }
 
 const Workspace = () => {
@@ -268,6 +267,7 @@ export const loader = async (ctx: IRemixCtx) => {
       ...getScopeAndProjectQuery(ctx),
       name: workspace,
     });
+
     if (errors) {
       logger.error(errors);
       throw errors[0];
@@ -275,7 +275,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
     const { data: mTemplates, errors: mErrors } = await GQLServerHandler(
       ctx.request
-    ).listTemplates({});
+    ).listMSvTemplates({});
     if (mErrors) {
       throw mErrors[0];
     }

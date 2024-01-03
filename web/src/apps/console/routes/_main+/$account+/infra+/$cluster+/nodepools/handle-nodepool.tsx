@@ -22,7 +22,6 @@ import { Switch } from '~/components/atoms/switch';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_layout';
 
-
 type IDialog = IDialogBase<ExtractNodeType<INodepools>>;
 
 const Root = (props: IDialog) => {

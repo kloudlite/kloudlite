@@ -3,11 +3,14 @@ import { Link, Outlet, useOutletContext, useParams } from '@remix-run/react';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import { SCOPE } from '~/console/page-components/new-scope';
-import { ensureAccountSet, ensureClusterSet } from '~/console/server/utils/auth-utils';
+import {
+  ensureAccountSet,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { IProjectContext } from '../_layout';
 import Breadcrum from '~/console/components/breadcrum';
 import LogoWrapper from '~/console/components/logo-wrapper';
+import { IProjectContext } from '../_layout';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);

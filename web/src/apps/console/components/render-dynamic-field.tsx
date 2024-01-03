@@ -1,5 +1,5 @@
 import { NumberInput, TextInput } from '~/components/atoms/input';
-import { IManagedServiceTemplate } from '../server/gql/queries/managed-service-queries';
+import { IMSvTemplate } from '../server/gql/queries/managed-templates-queries';
 
 const RenderDynamicField = ({
   field,
@@ -8,7 +8,7 @@ const RenderDynamicField = ({
   error,
   message,
 }: {
-  field: IManagedServiceTemplate['resources'][number]['fields'][number];
+  field: IMSvTemplate['fields'][number];
   onChange: (e: { target: { value: any } }) => void;
   value: any;
   error?: boolean;

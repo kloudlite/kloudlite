@@ -46,35 +46,24 @@ const Builds = () => {
           const builds = buildData.edges?.map(({ node }) => node);
 
           return (
-            <div className="flex flex-col gap-3xl">
-              <SecondarySubHeader
-                title="Builds"
-                action={
-                  <Button
-                    content="Create build"
-                    variant="primary"
-                    onClick={() => {
-                      setVisible(true);
-                    }}
-                  />
-                }
-              />
-              <Wrapper
-                empty={{
-                  is: builds.length === 0,
-                  title: 'This is where you’ll manage your Build Configs.',
-                  content: (
-                    <p>
-                      You can create a new Build Config and manage the listed
-                      Build Configs.
-                    </p>
-                  ),
-                }}
-                tools={<Tools />}
-              >
-                <BuildResources items={builds} />
-              </Wrapper>
-            </div>
+            <Wrapper
+              header={{
+                title: 'Build Integrations',
+              }}
+              empty={{
+                is: builds.length === 0,
+                title: 'This is where you’ll manage your Build Configs.',
+                content: (
+                  <p>
+                    You can create a new Build Config and manage the listed
+                    Build Configs.
+                  </p>
+                ),
+              }}
+              tools={<Tools />}
+            >
+              <BuildResources items={builds} />
+            </Wrapper>
           );
         }}
       </LoadingComp>

@@ -9,7 +9,16 @@ import {
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import { ChevronRight } from '@jengaicons/react';
+import {
+  BackingServices,
+  ChevronRight,
+  CirclesThreePlus,
+  Cpu,
+  Database,
+  GearSix,
+  HouseLine,
+  WireGuardlogo,
+} from '@jengaicons/react';
 import {
   ICluster,
   IClusters,
@@ -37,31 +46,67 @@ const Cluster = () => {
 
 const ClusterTabs = () => {
   const { account, cluster } = useParams();
+  const iconSize = 16;
   return (
     <CommonTabs
       tabs={[
         {
-          label: 'Overview',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <HouseLine size={iconSize} />
+              Overview
+            </span>
+          ),
           to: '/overview',
           value: '/overview',
         },
         {
-          label: 'Compute',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <Cpu size={iconSize} />
+              Nodepools
+            </span>
+          ),
           to: '/nodepools',
           value: '/nodepools',
         },
         {
-          label: 'Storage',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <Database size={iconSize} />
+              Storage
+            </span>
+          ),
           to: '/storage',
           value: '/storage',
         },
         {
-          label: 'Network',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <WireGuardlogo size={iconSize} />
+              VPN
+            </span>
+          ),
           to: '/network/vpn',
           value: '/network',
         },
         {
-          label: 'Settings',
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <BackingServices size={iconSize} />
+              Managed services
+            </span>
+          ),
+          to: '/managedservices/kl-operator-services',
+          value: '/managedservices',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <GearSix size={iconSize} />
+              Settings
+            </span>
+          ),
           to: '/settings/general',
           value: '/settings',
         },

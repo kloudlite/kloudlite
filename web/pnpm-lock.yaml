@@ -12,8 +12,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0(react@18.2.0)
   '@oshq/react-select':
-    specifier: ^1.0.1
-    version: 1.0.1(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.16)(rc-virtual-list@3.11.3)(react@18.2.0)
+    specifier: ^1.0.2
+    version: 1.0.2(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.16)(rc-virtual-list@3.11.3)(react@18.2.0)
   '@radix-ui/primitive':
     specifier: ^1.0.1
     version: 1.0.1
@@ -2505,8 +2505,8 @@ packages:
       json-parse-even-better-errors: 2.3.1
     dev: true
 
-  /@oshq/react-select@1.0.1(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.16)(rc-virtual-list@3.11.3)(react@18.2.0):
-    resolution: {integrity: sha512-jFaoj7C0dzQBZyj4gbisgS7N3ws2VspMOWfcKdF4aaN5Em0JA8TdVJAOS+xAb+wJcZOtVpKaHoXI4otANNmzaA==}
+  /@oshq/react-select@1.0.2(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.16)(rc-virtual-list@3.11.3)(react@18.2.0):
+    resolution: {integrity: sha512-YLLz708lyYwPeYRJBJmA9DtPUHDcuiFzDMLNczhALeZzclycvzth6oWPTThsbL1LuAkEADiEQHIqohLnMsl53w==}
     peerDependencies:
       '@radix-ui/react-portal': ^1.0.4
       classnames: ^2.3.2

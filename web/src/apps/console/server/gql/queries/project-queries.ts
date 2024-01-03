@@ -27,7 +27,7 @@ export const projectQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateProjectMutation) =>
         data.core_createProject,
-      vars(_: ConsoleCreateProjectMutationVariables) {},
+      vars(_: ConsoleCreateProjectMutationVariables) { },
     }
   ),
   updateProject: executor(
@@ -41,7 +41,7 @@ export const projectQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateProjectMutation) =>
         data.core_updateProject,
-      vars(_: ConsoleUpdateProjectMutationVariables) {},
+      vars(_: ConsoleUpdateProjectMutationVariables) { },
     }
   ),
   getProject: executor(
@@ -100,7 +100,7 @@ export const projectQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetProjectQuery) => data.core_getProject,
-      vars(_: ConsoleGetProjectQueryVariables) {},
+      vars(_: ConsoleGetProjectQueryVariables) { },
     }
   ),
   listProjects: executor(
@@ -165,14 +165,7 @@ export const projectQueries = (executor: IExecutor) => ({
                 isReady
                 checks
               }
-              syncStatus {
-                syncScheduledAt
-                state
-                recordVersion
-                lastSyncedAt
-                error
-                action
-              }
+
               updateTime
               accountName
             }
@@ -188,7 +181,7 @@ export const projectQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListProjectsQuery) => data.core_listProjects,
-      vars(_: ConsoleListProjectsQueryVariables) {},
+      vars(_: ConsoleListProjectsQueryVariables) { },
     }
   ),
 });

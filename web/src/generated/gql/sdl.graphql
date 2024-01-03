@@ -95,7 +95,6 @@ type AppPaginatedRecords {
 }
 
 type Build {
-  accountName: String!
   buildClusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
@@ -628,10 +627,12 @@ input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSec
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__InputField {
   defaultValue: Any
+  displayUnit: String
   inputType: String!
   label: String!
   max: Float
   min: Float
+  multiplier: Float
   name: String!
   required: Boolean
   unit: String
@@ -677,26 +678,29 @@ type Github__com___kloudlite___api___pkg___types__EncodedString {
   value: String!
 }
 
-type Github__com___kloudlite___api___pkg___types__SyncStatus {
-  action: Github__com___kloudlite___api___pkg___types__SyncStatusAction!
-  error: String
-  lastSyncedAt: Date
-  recordVersion: Int!
-  state: Github__com___kloudlite___api___pkg___types__SyncStatusState!
-  syncScheduledAt: Date
-}
-
-enum Github__com___kloudlite___api___pkg___types__SyncStatusAction {
+enum Github__com___kloudlite___api___pkg___types__SyncAction {
   APPLY
   DELETE
 }
 
-enum Github__com___kloudlite___api___pkg___types__SyncStatusState {
+enum Github__com___kloudlite___api___pkg___types__SyncState {
   APPLIED_AT_AGENT
+  DELETED_AT_AGENT
+  DELETING_AT_AGENT
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
   RECEIVED_UPDATE_FROM_AGENT
+  UPDATED_AT_AGENT
+}
+
+type Github__com___kloudlite___api___pkg___types__SyncStatus {
+  action: Github__com___kloudlite___api___pkg___types__SyncAction!
+  error: String
+  lastSyncedAt: Date
+  recordVersion: Int!
+  state: Github__com___kloudlite___api___pkg___types__SyncState!
+  syncScheduledAt: Date
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig {
