@@ -79,8 +79,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -97,7 +97,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(AccessCredsReady,DBUserReady,IsOwnedByMsvc,DBUserDeleted,DefaultsPatched); !step.ShouldProceed() {
+	if step := req.EnsureChecks(AccessCredsReady, DBUserReady, IsOwnedByMsvc, DBUserDeleted, DefaultsPatched); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -160,7 +160,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.Database]) s
 
 	check.Status = true
 	if check != obj.Status.Checks[DefaultsPatched] {
-		fn.MapSet(obj.Status.Checks, DefaultsPatched, check)
+		fn.MapSet(&obj.Status.Checks, DefaultsPatched, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -228,7 +228,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) 
 
 	check.Status = true
 	if check != obj.Status.Checks[IsOwnedByMsvc] {
-		fn.MapSet(obj.Status.Checks, IsOwnedByMsvc, check)
+		fn.MapSet(&obj.Status.Checks, IsOwnedByMsvc, check)
 		if step := req.UpdateStatus(); !step.ShouldProceed() {
 			return step
 		}
@@ -371,7 +371,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			if err := mongoCli.UpsertUser(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
 				return req.CheckFailed(DBUserReady, check, err.Error())
 			}
-			fn.MapSet(obj.Status.Checks, DBUserReady, check)
+			fn.MapSet(&obj.Status.Checks, DBUserReady, check)
 			return req.UpdateStatus()
 		}
 
@@ -384,7 +384,7 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 
 	check.Status = true
 	if check != obj.Status.Checks[AccessCredsReady] {
-		fn.MapSet(obj.Status.Checks, AccessCredsReady, check)
+		fn.MapSet(&obj.Status.Checks, AccessCredsReady, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

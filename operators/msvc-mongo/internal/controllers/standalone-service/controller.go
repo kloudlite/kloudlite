@@ -74,8 +74,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -121,6 +121,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
+	check := "finalizing"
+
+	req.LogPreCheck(check)
+	defer req.LogPostCheck(check)
+
+	if result := req.CleanupOwnedResources(); !result.ShouldProceed() {
+		return result
+	}
+
 	return req.Finalize()
 }
 
@@ -161,7 +170,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 
 	check.Status = true
 	if check != obj.Status.Checks[CheckPatchDefaults] {
-		fn.MapSet(obj.Status.Checks, CheckPatchDefaults, check)
+		fn.MapSet(&obj.Status.Checks, CheckPatchDefaults, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -182,7 +191,6 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 	msvcOutput := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.Output.Credentials.Name, Namespace: obj.Namespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvcOutput, func() error {
 		msvcOutput.SetLabels(obj.GetLabels())
-		msvcOutput.SetFinalizers([]string{constants.GenericFinalizer})
 
 		msvcOutput.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
@@ -223,8 +231,6 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, helmSecret, func() error {
 		helmSecret.SetLabels(obj.GetLabels())
-		helmSecret.SetFinalizers([]string{constants.GenericFinalizer})
-
 		helmSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		if helmSecret.Data == nil {
@@ -243,7 +249,7 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 	check.Status = true
 	if check != obj.Status.Checks[ReconcileCredentials] {
-		fn.MapSet(obj.Status.Checks, ReconcileCredentials, check)
+		fn.MapSet(&obj.Status.Checks, ReconcileCredentials, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -253,7 +259,7 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 }
 
 func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(HelmReady)
@@ -292,8 +298,8 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != checks[HelmReady] {
-		checks[HelmReady] = check
+	if check != obj.Status.Checks[HelmReady] {
+		fn.MapSet(&obj.Status.Checks, HelmReady, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -303,7 +309,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 }
 
 func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(StsReady)
@@ -357,8 +363,8 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService
 	}
 
 	check.Status = true
-	if check != checks[StsReady] {
-		checks[StsReady] = check
+	if check != obj.Status.Checks[StsReady] {
+		fn.MapSet(&obj.Status.Checks, StsReady, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

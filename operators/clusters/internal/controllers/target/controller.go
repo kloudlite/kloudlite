@@ -82,8 +82,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	notifyAndExit := func(step stepResult.Result) (ctrl.Result, error) {
 		if err := r.NotifyOnClusterUpdate(ctx, req.Object); err != nil {
@@ -168,7 +168,7 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 	annKey := "kloudlite.io/cluster.job-ref"
 	if _, ok := ann[annKey]; !ok {
 		hasUpdated = true
-		fn.MapSet(ann, annKey, fmt.Sprintf("%s/%s", obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName))
+		fn.MapSet(&ann, annKey, fmt.Sprintf("%s/%s", obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName))
 		obj.SetAnnotations(ann)
 	}
 
@@ -181,7 +181,7 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 
 	check.Status = true
 	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(obj.Status.Checks, checkName, check)
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -203,7 +203,7 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 		check.Status = false
 		check.Message = "cluster job failed"
 		if check != obj.Status.Checks[checkName] {
-			fn.MapSet(obj.Status.Checks, checkName, check)
+			fn.MapSet(&obj.Status.Checks, checkName, check)
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 				return sr
 			}
