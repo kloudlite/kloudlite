@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"time"
+
+	"github.com/kloudlite/operator/pkg/kubectl"
 
 	"github.com/goombaio/namegenerator"
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -62,7 +63,7 @@ const (
 // +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &elasticsearchMsvcv1.Service{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &elasticsearchMsvcv1.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -74,16 +75,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -117,8 +112,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
@@ -154,7 +148,6 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsvcv1.Ser
 			},
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error())
 	}
@@ -220,7 +213,6 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Service]) 
 			},
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
@@ -360,7 +352,10 @@ func (r *Reconciler) reconKibana(req *rApi.Request[*elasticsearchMsvcv1.Service]
 								Min: "200m",
 								Max: "400m",
 							},
-							Memory: "800Mi",
+							Memory: ct.MemoryT{
+								Min: "800Mi",
+								Max: "800Mi",
+							},
 						},
 						ElasticUrl: msvcOutput.Uri,
 						Expose: elasticsearchMsvcv1.Expose{
