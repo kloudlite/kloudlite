@@ -35,7 +35,7 @@ var (
 	helmreleaseGVK = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
-	clusterMsvcGVK = fn.GVK("clusters.kloudlite.io/v1", "ClusterManagedService")
+	clusterMsvcGVK = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {

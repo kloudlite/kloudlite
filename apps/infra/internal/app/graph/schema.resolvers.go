@@ -7,7 +7,7 @@ package graph
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -230,17 +230,32 @@ func (r *mutationResolver) InfraDeleteClusterManagedService(ctx context.Context,
 
 // InfraCreateHelmRelease is the resolver for the infra_createHelmRelease field.
 func (r *mutationResolver) InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
-	panic(fmt.Errorf("not implemented: InfraCreateHelmRelease - infra_createHelmRelease"))
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateHelmRelease(ictx, clusterName, release)
 }
 
 // InfraUpdateHelmRelease is the resolver for the infra_updateHelmRelease field.
 func (r *mutationResolver) InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error) {
-	panic(fmt.Errorf("not implemented: InfraUpdateHelmRelease - infra_updateHelmRelease"))
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateHelmRelease(ictx, clusterName, release)
 }
 
 // InfraDeleteHelmRelease is the resolver for the infra_deleteHelmRelease field.
 func (r *mutationResolver) InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: InfraDeleteHelmRelease - infra_deleteHelmRelease"))
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteHelmRelease(ictx, clusterName, releaseName); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // InfraCheckNameAvailability is the resolver for the infra_checkNameAvailability field.
@@ -756,5 +771,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
