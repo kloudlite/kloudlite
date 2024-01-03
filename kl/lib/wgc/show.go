@@ -2,6 +2,8 @@ package wgc
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"math"
 	"net"
 	"os"
@@ -10,8 +12,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
 	"golang.zx2c4.com/wireguard/wgctrl"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )

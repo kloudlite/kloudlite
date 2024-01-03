@@ -1,11 +1,11 @@
 package wg
 
 import (
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 
 		if euid := os.Geteuid(); euid != 0 {
-			common.Log(
+			common_util.Log(
 				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
@@ -36,22 +36,22 @@ Examples:
 		})
 
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
 		if strings.TrimSpace(wgInterface) == "" {
-			common.Log(text.Colored("[#] no device connected yet", 209))
+			common_util.Log(text.Colored("[#] no device connected yet", 209))
 			return
 		}
 
 		err = disconnect(disconnectVerbose)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 
-		common.Log("[#] disconnected")
+		common_util.Log("[#] disconnected")
 	},
 }
 

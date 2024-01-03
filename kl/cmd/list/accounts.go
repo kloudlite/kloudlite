@@ -3,11 +3,12 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
 
@@ -25,14 +26,14 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := listAccounts()
 		if err != nil {
-			common.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
 }
 
 func listAccounts() error {
-	accounts, err := server.GetAccounts()
+	accounts, err := server.ListAccounts()
 
 	if err != nil {
 		return err
@@ -42,7 +43,7 @@ func listAccounts() error {
 		return errors.New("no accounts found")
 	}
 
-	accountName, _ := server.CurrentAccountName()
+	accountName, _ := client.CurrentAccountName()
 
 	header := table.Row{table.HeaderText("name"), table.HeaderText("id")}
 	rows := make([]table.Row, 0)

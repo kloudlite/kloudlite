@@ -1,13 +1,14 @@
 package runner
 
 import (
+	"github.com/kloudlite/kl/domain/client"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 
 	"github.com/kloudlite/kl/cmd/runner/mounter"
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
 
@@ -45,22 +46,22 @@ Examples:
 }
 
 func loadEnv(args []string) {
-	generatedConfig, err := server.GenerateEnv()
+	generatedConfig, err := server2.GenerateEnv()
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
-	klfile, err := server.GetKlFile(nil)
+	klfile, err := client.GetKlFile(nil)
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
 	err = mounter.Mount(generatedConfig.MountFiles, klfile.FileMount.MountBasePath)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
@@ -74,7 +75,7 @@ func loadEnv(args []string) {
 	err = mounter.Load(generatedConfig.EnvVars, args)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 

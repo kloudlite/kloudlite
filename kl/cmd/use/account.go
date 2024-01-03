@@ -3,9 +3,10 @@ package use
 import (
 	"fmt"
 
-	"github.com/kloudlite/kl/cmd/util"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/text"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
+
 	"github.com/spf13/cobra"
 )
 
@@ -23,15 +24,22 @@ Examples:
   kl use account <accountId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		accountName, err := util.SelectAccount(args)
+
+		aName := ""
+
+		if len(args) >= 1 {
+			aName = args[0]
+		}
+
+		account, err := server.SelectAccount(aName)
 
 		if err != nil {
-			common.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 
 		fmt.Println(text.Bold(text.Green("\nSelected account:")),
-			text.Blue(fmt.Sprintf("%s (%s)", accountName.DisplayName, accountName.Name)),
+			text.Blue(fmt.Sprintf("%s (%s)", account.DisplayName, account.Metadata.Name)),
 		)
 	},
 }

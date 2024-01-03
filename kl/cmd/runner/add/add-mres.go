@@ -2,10 +2,11 @@ package add
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	server2 "github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ Examples:
 	Run: func(cmd *cobra.Command, _ []string) {
 		err := selectAndAddMres(cmd)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
@@ -36,15 +37,15 @@ func selectAndAddMres(cmd *cobra.Command) error {
 	resource := cmd.Flag("resource").Value.String()
 	service := cmd.Flag("service").Value.String()
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
-	mreses, market, err := server.GetMreses()
+	mreses, market, err := server2.GetMreses()
 
 	if err != nil {
 		return err
@@ -54,7 +55,7 @@ func selectAndAddMres(cmd *cobra.Command) error {
 		return fmt.Errorf("no managed services created yet on server")
 	}
 
-	selectedMsvc := &server.Mres{}
+	selectedMsvc := &server2.Mres{}
 
 	if service != "" {
 		for _, m := range mreses {
@@ -84,7 +85,7 @@ func selectAndAddMres(cmd *cobra.Command) error {
 		return fmt.Errorf("no resources found in %s managed service", selectedMsvc.Name)
 	}
 
-	selectedMres := server.ResourceType{}
+	selectedMres := server2.ResourceType{}
 	if resource != "" {
 
 		for _, rt := range selectedMsvc.Resources {
@@ -114,7 +115,7 @@ func selectAndAddMres(cmd *cobra.Command) error {
 
 	}
 
-	var outputs server.Outputs
+	var outputs server2.Outputs
 
 	for _, mc := range market {
 		for _, mmi := range mc.List {
@@ -150,11 +151,11 @@ func selectAndAddMres(cmd *cobra.Command) error {
 	}
 
 	if matchedMres != -1 {
-		klFile.Mres[matchedMres].Env = func() []server.ResEnvType {
-			env := make([]server.ResEnvType, 0)
+		klFile.Mres[matchedMres].Env = func() []client.ResEnvType {
+			env := make([]client.ResEnvType, 0)
 
 			for _, op := range outputs {
-				env = append(env, server.ResEnvType{
+				env = append(env, client.ResEnvType{
 					Key: func() string {
 						for _, ret := range klFile.Mres[matchedMres].Env {
 							if ret.RefKey == op.Name {
@@ -179,12 +180,12 @@ func selectAndAddMres(cmd *cobra.Command) error {
 		}()
 	} else {
 
-		klFile.Mres = append(klFile.Mres, server.ResType{
+		klFile.Mres = append(klFile.Mres, client.ResType{
 			Name: fmt.Sprintf("%s/%s", selectedMsvc.Name, selectedMres.Name),
-			Env: func() []server.ResEnvType {
-				env := make([]server.ResEnvType, 0)
+			Env: func() []client.ResEnvType {
+				env := make([]client.ResEnvType, 0)
 				for _, op := range outputs {
-					env = append(env, server.ResEnvType{
+					env = append(env, client.ResEnvType{
 						Key:    op.Name,
 						RefKey: op.Name,
 						Name:   &op.Label,
@@ -195,7 +196,7 @@ func selectAndAddMres(cmd *cobra.Command) error {
 			}(),
 		})
 
-		err = server.WriteKLFile(*klFile)
+		err = client.WriteKLFile(*klFile)
 		if err != nil {
 			return err
 		}

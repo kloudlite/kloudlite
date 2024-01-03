@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
-	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
+
 	"github.com/spf13/cobra"
 )
 
@@ -25,14 +27,14 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := listClusters()
 		if err != nil {
-			common.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
 }
 
 func listClusters() error {
-	clusters, err := server.GetClusters()
+	clusters, err := server.ListClusters()
 
 	if err != nil {
 		return err
@@ -42,7 +44,7 @@ func listClusters() error {
 		return errors.New("no clusters found")
 	}
 
-	clusterName, _ := server.CurrentClusterName()
+	clusterName, _ := client.CurrentClusterName()
 
 	header := table.Row{table.HeaderText("name"), table.HeaderText("id"), table.HeaderText("ready")}
 	rows := make([]table.Row, 0)

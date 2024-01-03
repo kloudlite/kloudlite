@@ -1,6 +1,7 @@
 package wg
 
 import (
+	"encoding/base64"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -8,26 +9,28 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/lib/wgc"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
 func getDeviceSelect() (*server.Device, error) {
 
-	deviceId, err := server.CurrentDeviceId()
+	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return nil, err
 	}
 
-	devices, err := server.GetDevices()
+	devices, err := server.ListDevices()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, d := range devices {
-		if d.Id == deviceId {
+		if d.Metadata.Name == devName {
 			return &d, err
 		}
 	}
@@ -36,8 +39,9 @@ func getDeviceSelect() (*server.Device, error) {
 }
 
 func startConfiguration(verbose bool) error {
-	devices, err := server.GetDevices()
+	devices, err := server.ListDevices()
 	if err != nil {
+		fmt.Println("here ********")
 		return err
 	}
 	if len(devices) == 0 {
@@ -48,34 +52,35 @@ func startConfiguration(verbose bool) error {
 		return err
 	}
 
-	if device.Region == "" {
-		return errors.New("region not selected in device please use 'kl use device' to select device")
-	}
-
-	err = configure(device.Id, verbose)
-	return err
+	return configure(device.Metadata.Name, verbose)
 }
 
 func configure(
-	deviceId string,
+	devName string,
 	verbose bool,
 ) error {
 
-	s := common.NewSpinner()
+	s := spinner.NewSpinner()
 	cfg := wgc.Config{}
 
-	device, err := server.GetDevice(deviceId)
+	device, err := server.GetDevice(fn.MakeOption("deviceName", devName))
 	if err != nil {
 		return err
 	}
 
 	// time.Sleep(time.Second * 2)
+	if device.WireguardConfig == nil {
+		return errors.New("no wireguard config found")
+	}
 
-	configuration := device.Configuration["config-"+device.Region]
+	configuration, err := base64.StdEncoding.DecodeString(device.WireguardConfig.Value)
+	if err != nil {
+		return err
+	}
 
 	s.Start()
 	if verbose {
-		common.Log("[#] validating configuration")
+		fn.Log("[#] validating configuration")
 	}
 	if e := cfg.UnmarshalText([]byte(configuration)); e != nil {
 		return e
@@ -84,7 +89,7 @@ func configure(
 
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
-	} else if e := setDeviceIp(cfg.Address[0].IP.String(), verbose); e != nil {
+	} else if e := setDeviceIp(cfg.Address[0].IP.String(), devName, verbose); e != nil {
 		return e
 	}
 
@@ -98,16 +103,16 @@ func configure(
 	}
 
 	if verbose {
-		common.Log("[#] setting up connection")
+		fn.Log("[#] setting up connection")
 	}
 
-	err = wg.ConfigureDevice(KlWgInterface, cfg.Config)
+	err = wg.ConfigureDevice(devName, cfg.Config)
 	if err != nil {
 		fmt.Printf("failed to configure device: %v", err)
 	}
 
 	for _, i2 := range cfg.Peers[0].AllowedIPs {
-		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), verbose)
+		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), devName, verbose)
 		if err != nil {
 			return err
 		}
@@ -125,7 +130,7 @@ func execCmd(cmdString string, verbose bool) error {
 	}
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
-		common.Log("[#] " + strings.Join(cmdArr, " "))
+		fn.Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
 	cmd.Stderr = os.Stderr

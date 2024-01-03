@@ -2,10 +2,10 @@ package del
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -22,10 +22,10 @@ and usage of using your command.`,
 
 func removeConfigMount() {
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
@@ -38,11 +38,11 @@ func removeConfigMount() {
 	)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		return
 	}
 
-	newMounts := make([]server.FileEntry, 0)
+	newMounts := make([]client.FileEntry, 0)
 	for i, fe := range klFile.FileMount.Mounts {
 		if i == selectedMount {
 			continue
@@ -52,10 +52,10 @@ func removeConfigMount() {
 
 	klFile.FileMount.Mounts = newMounts
 
-	err = server.WriteKLFile(*klFile)
+	err = client.WriteKLFile(*klFile)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 	}
 
 	fmt.Println("mount removed")

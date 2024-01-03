@@ -2,11 +2,12 @@ package cluster
 
 import (
 	"fmt"
-	util "github.com/kloudlite/kl/cmd/util"
-	"github.com/kloudlite/kl/lib/server"
-	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+
+	"github.com/kloudlite/kl/domain/server"
+
+	"github.com/spf13/cobra"
 )
 
 var Command = &cobra.Command{
@@ -50,14 +51,14 @@ Example:
 			if err != nil {
 				switch err.Error() {
 				case "noSelectedAccount":
-					_, err := util.SelectAccount([]string{})
+					_, err := server.SelectAccount("")
 					if err != nil {
 						fmt.Println(err)
 						return
 					}
 					fn()
 				case "noSelectedCluster":
-					_, err := util.SelectCluster([]string{})
+					_, err := server.SelectCluster("")
 					if err != nil {
 						fmt.Println(err)
 						return

@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
+	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -35,14 +35,14 @@ Examples:
 			var err error
 			secretId, err = selectSecret()
 			if err != nil {
-				common.PrintError(err)
+				common_util.PrintError(err)
 				return
 			}
 		}
 
 		err := printSecret(secretId, cmd)
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

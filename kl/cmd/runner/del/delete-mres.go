@@ -2,10 +2,10 @@ package del
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +22,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := removeMreses()
 		if err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 	},
@@ -30,10 +30,10 @@ Examples:
 
 func removeMreses() error {
 
-	klFile, err := server.GetKlFile(nil)
+	klFile, err := client.GetKlFile(nil)
 
 	if err != nil {
-		common.PrintError(err)
+		common_util.PrintError(err)
 		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
@@ -57,7 +57,7 @@ func removeMreses() error {
 
 	selectedMres := klFile.Mres[selectedMresIndex]
 
-	newMres := make([]server.ResType, 0)
+	newMres := make([]client.ResType, 0)
 
 	for i, rt := range klFile.Mres {
 		if i == selectedMresIndex {
@@ -68,7 +68,7 @@ func removeMreses() error {
 
 	klFile.Mres = newMres
 
-	err = server.WriteKLFile(*klFile)
+	err = client.WriteKLFile(*klFile)
 	if err != nil {
 		return err
 	}

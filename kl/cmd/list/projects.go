@@ -3,11 +3,12 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/common/ui/text"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
 
@@ -25,27 +26,27 @@ Examples:
 Note: selected project will be highlighted with green color.
   `,
 	Run: func(_ *cobra.Command, args []string) {
-		accountId := ""
+		accountName := ""
 		if len(args) >= 1 {
-			accountId = args[0]
+			accountName = args[0]
 		}
 
-		err := listProjects(accountId)
+		err := listProjects(accountName)
 		if err != nil {
-			common.PrintError(err)
+			functions.PrintError(err)
 			return
 		}
 	},
 }
 
-func listProjects(accountId string) error {
+func listProjects(accountName string) error {
 	var projects []server.Project
 	var err error
 
-	if accountId != "" {
-		projects, err = server.GetProjects(common.MakeOption("accountId", accountId))
+	if accountName != "" {
+		projects, err = server.ListProjects(functions.MakeOption("accountName", accountName))
 	} else {
-		projects, err = server.GetProjects()
+		projects, err = server.ListProjects()
 	}
 
 	if err != nil {
@@ -57,40 +58,40 @@ func listProjects(accountId string) error {
 	}
 
 	header := table.Row{
-		table.HeaderText("projects"),
-		table.HeaderText("id"),
+		table.HeaderText("Display Name"),
+		table.HeaderText("Name"),
 	}
 
 	rows := make([]table.Row, 0)
 
-	projectId, _ := server.CurrentProjectId()
+	projectId, _ := client.CurrentProjectName()
 
 	for _, a := range projects {
 		rows = append(rows, table.Row{
 			func() string {
-				if a.Id == projectId {
-					return text.Colored(fmt.Sprint("*", a.Name), 2)
+				if a.Metadata.Name == projectId {
+					return text.Colored(fmt.Sprint("*", a.DisplayName), 2)
 				}
-				return a.Name
+				return a.DisplayName
 			}(),
 
 			func() string {
-				if a.Id == projectId {
-					return text.Colored(a.Id, 2)
+				if a.Metadata.Name == projectId {
+					return text.Colored(a.Metadata.Name, 2)
 				}
-				return a.Id
+				return a.Metadata.Name
 			}(),
 		})
 	}
 
 	fmt.Println(table.Table(&header, rows))
 
-	if accountId == "" {
-		accountId, _ = server.CurrentAccountName()
+	if accountName == "" {
+		accountName, _ = client.CurrentAccountName()
 	}
 
-	if accountId == "" {
-		table.KVOutput("projects of", accountId, true)
+	if accountName == "" {
+		table.KVOutput("projects of", accountName, true)
 	}
 
 	table.TotalResults(len(projects), true)

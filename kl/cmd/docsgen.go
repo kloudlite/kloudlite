@@ -3,12 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	common_util "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/kloudlite/kl/lib/common"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
@@ -148,7 +148,7 @@ Example:
 	`,
 	Run: func(_ *cobra.Command, args []string) {
 		if err := runDocGen(rootCmd, args); err != nil {
-			common.PrintError(err)
+			common_util.PrintError(err)
 			return
 		}
 

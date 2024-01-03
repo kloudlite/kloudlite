@@ -3,10 +3,11 @@ package list
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/table"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/common/ui/table"
-	"github.com/kloudlite/kl/lib/server"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +25,7 @@ Examples:
 	Run: func(_ *cobra.Command, args []string) {
 		err := listConfigs(args)
 		if err != nil {
-			common.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -43,7 +44,7 @@ func listConfigs(args []string) error {
 	if projectId == "" {
 		configs, err = server.GetConfigs()
 	} else {
-		configs, err = server.GetConfigs(common.MakeOption("projectId", args[0]))
+		configs, err = server.GetConfigs(fn.MakeOption("projectId", args[0]))
 	}
 
 	if err != nil {
@@ -76,7 +77,7 @@ func listConfigs(args []string) error {
 	fmt.Println(table.Table(&header, rows))
 
 	if projectId == "" {
-		projectId, _ = server.CurrentProjectId()
+		projectId, _ = client.CurrentProjectName()
 	}
 
 	if projectId != "" {

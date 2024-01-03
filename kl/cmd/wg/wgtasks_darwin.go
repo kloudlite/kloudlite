@@ -3,6 +3,8 @@ package wg
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	"net"
 	"os"
 	"os/exec"
@@ -11,17 +13,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/kloudlite/kl/lib/common"
-	"github.com/kloudlite/kl/lib/server"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
 	"golang.zx2c4.com/wireguard/tun"
 	"k8s.io/utils/strings/slices"
-)
-
-const (
-	KlWgInterface = "utun1729"
 )
 
 func connect(verbose bool) error {
@@ -44,14 +40,14 @@ func disconnect(verbose bool) error {
 	return nil
 }
 
-func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
+func ipRouteAdd(ip string, interfaceIp string, deviceName string, verbose bool) error {
 	return execCmd(fmt.Sprintf("route -n add -net %s %s", ip, interfaceIp), verbose)
 }
 
 func getNetworkServices(verbose bool) ([]string, error) {
 	output, err := exec.Command("networksetup", "-listallnetworkservices").Output()
 	if err != nil {
-		common.Log(string(output))
+		functions.Log(string(output))
 		return nil, err
 	}
 	lines := strings.Split(string(output), "\n")
@@ -67,11 +63,11 @@ func getNetworkServices(verbose bool) ([]string, error) {
 
 func getDNSServers(networkService string, verbose bool) ([]string, error) {
 	if verbose {
-		common.Log(fmt.Sprintf("[#] networksetup -getdnsservers %s", networkService))
+		functions.Log(fmt.Sprintf("[#] networksetup -getdnsservers %s", networkService))
 	}
 	output, err := exec.Command("networksetup", "-getdnsservers", networkService).Output()
 	if err != nil {
-		common.Log(fmt.Sprintf("[#] %s", string(output)))
+		functions.Log(fmt.Sprintf("[#] %s", string(output)))
 		return nil, err
 	}
 
@@ -115,7 +111,7 @@ func addDNSServer(networkService string, dnsServer string, verbose bool) error {
 }
 
 func setDNS(dns []net.IP, verbose bool) error {
-	err := server.SetActiveDns(func() []string {
+	err := client.SetActiveDns(func() []string {
 		var dnsServers []string
 		for _, d := range dns {
 			dnsServers = append(dnsServers, d.String())
@@ -141,7 +137,7 @@ func setDNS(dns []net.IP, verbose bool) error {
 }
 
 func resetDNS(verbose bool) error {
-	dns, err := server.ActiveDns()
+	dns, err := client.ActiveDns()
 	if err != nil {
 		return err
 	}
@@ -157,19 +153,25 @@ func resetDNS(verbose bool) error {
 			}
 		}
 	}
-	_ = server.SetActiveDns([]string{})
+	_ = client.SetActiveDns([]string{})
 	return nil
 }
 
-func setDeviceIp(deviceIp string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", KlWgInterface, deviceIp, deviceIp), verbose)
+func setDeviceIp(deviceIp string, devName string, verbose bool) error {
+	devName = fmt.Sprint("utun", devName)
+	return execCmd(fmt.Sprintf("ifconfig %s %s %s", devName, deviceIp, deviceIp), verbose)
 }
 func startService(verbose bool) error {
-	t, err := tun.CreateTUN(KlWgInterface, device.DefaultMTU)
+	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
-	fileUAPI, err := ipc.UAPIOpen(KlWgInterface)
+	devName = fmt.Sprint("utun", devName)
+	t, err := tun.CreateTUN(devName, device.DefaultMTU)
+	if err != nil {
+		return err
+	}
+	fileUAPI, err := ipc.UAPIOpen(devName)
 	if err != nil {
 		return err
 	}
@@ -177,12 +179,12 @@ func startService(verbose bool) error {
 	if verbose {
 		logger = device.NewLogger(
 			device.LogLevelSilent,
-			fmt.Sprintf("[%s]", KlWgInterface),
+			fmt.Sprintf("[%s]", devName),
 		)
 	} else {
 		logger = device.NewLogger(
 			device.LogLevelVerbose,
-			fmt.Sprintf("[%s]", KlWgInterface),
+			fmt.Sprintf("[%s]", devName),
 		)
 	}
 
@@ -190,7 +192,7 @@ func startService(verbose bool) error {
 	logger.Verbosef("Device started")
 	errs := make(chan error)
 	term := make(chan os.Signal, 1)
-	uapi, err := ipc.UAPIListen(KlWgInterface, fileUAPI)
+	uapi, err := ipc.UAPIListen(devName, fileUAPI)
 	if err != nil {
 		logger.Errorf("Failed to listen on uapi socket: %v", err)
 		os.Exit(1)
