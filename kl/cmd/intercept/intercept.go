@@ -105,7 +105,7 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 		aId = args[1]
 	}
 
-	apps, err := server2.GetApps()
+	apps, err := server2.ListApps()
 	if err != nil {
 		return "", err
 	}

@@ -23,8 +23,7 @@ Examples:
   kl list apps <projectId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
-		err := listapps(args)
-		if err != nil {
+		if err := listapps(args); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -32,7 +31,7 @@ Examples:
 }
 
 func listapps(args []string) error {
-	var a []server.App
+	var apps []server.App
 	var err error
 
 	projectId := ""
@@ -42,17 +41,16 @@ func listapps(args []string) error {
 	}
 
 	if projectId == "" {
-		a, err = server.GetApps()
+		apps, err = server.ListApps()
 	} else {
-		a, err = server.GetApps(fn.MakeOption("projectId", args[0]))
+		apps, err = server.ListApps(fn.MakeOption("projectId", args[0]))
 	}
 
-	var apps []server.App
-	for _, l := range a {
-		if !l.IsLambda {
-			apps = append(apps, l)
-		}
-	}
+	//for _, l := range a {
+	//	if !l.IsLambda {
+	//		apps = append(apps, l)
+	//	}
+	//}
 
 	if err != nil {
 		return err
@@ -70,7 +68,7 @@ func listapps(args []string) error {
 	rows := make([]table.Row, 0)
 
 	for _, a := range apps {
-		rows = append(rows, table.Row{a.Name, a.Id})
+		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name})
 	}
 
 	fmt.Println(table.Table(&header, rows))

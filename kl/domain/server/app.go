@@ -2,60 +2,79 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/kloudlite/kl/domain/client"
+	"fmt"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"strings"
 )
 
 type App struct {
-	IsLambda   bool   `json:"isLambda"`
-	Id         string `json:"id"`
-	Name       string `json:"name"`
-	ReadableId string `json:"readableId"`
-	Containers []struct {
-		Name    string `json:"name"`
-		EnvVars []struct {
-			Key   string `json:"key"`
-			Value struct {
-				Key   string `json:"key"`
-				Ref   string `json:"ref"`
-				Type  string `json:"type"`
-				Value string `json:"value"`
-			} `json:"value"`
-		} `json:"envVars"`
-	} `json:"containers"`
+	//IsLambda   bool   `json:"isLambda"`
+	//Id         string `json:"id"`
+	//Name       string `json:"name"`
+	//ReadableId string `json:"readableId"`
+	//Containers []struct {
+	//	Name    string `json:"name"`
+	//	EnvVars []struct {
+	//		Key   string `json:"key"`
+	//		Value struct {
+	//			Key   string `json:"key"`
+	//			Ref   string `json:"ref"`
+	//			Type  string `json:"type"`
+	//			Value string `json:"value"`
+	//		} `json:"value"`
+	//	} `json:"envVars"`
+	//} `json:"containers"`
+	DisplayName string   `json:"displayName"`
+	Metadata    Metadata `json:"metadata"`
+	Status      Status   `json:"status"`
 }
 
-func GetApps(options ...fn.Option) ([]App, error) {
+func ListApps(options ...fn.Option) ([]App, error) {
+
+	var err error
+	projectName, err := EnsureProject(options...)
+	if err != nil {
+		return nil, err
+	}
+
+	envName, err := EnsureEnv(nil, options...)
+	if err != nil {
+		return nil, err
+	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId := fn.GetOption(options, "projectId")
-	if projectId == "" {
-		projectId, err = client.CurrentProjectName()
-		if err != nil {
-			return nil, err
-		}
-	}
+	fmt.Println(envName.Name, projectName, envName.IsEnvironment)
 
-	respData, err := klFetch("cli_getApps", map[string]any{
-		"projectId": projectId,
+	respData, err := klFetch("cli_listApps", map[string]any{
+		"pq": map[string]any{
+			"orderBy":       "name",
+			"sortDirection": "ASC",
+			"first":         99999999,
+		},
+		"project": map[string]any{
+			"type":  "name",
+			"value": strings.TrimSpace(projectName),
+		},
+		"scope": map[string]any{
+			"type":  "environmentName",
+			"value": strings.TrimSpace(envName.Name),
+		},
 	}, &cookie)
 
 	if err != nil {
 		return nil, err
 	}
 
-	type Response struct {
-		CoreApps []App `json:"data"`
-	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
+	if fromResp, err := GetFromRespForEdge[App](respData); err != nil {
 		return nil, err
+	} else {
+		fmt.Println(fromResp)
+		return fromResp, nil
 	}
-	return resp.CoreApps, nil
 }
 
 func GetApp(appId string) (*App, error) {
