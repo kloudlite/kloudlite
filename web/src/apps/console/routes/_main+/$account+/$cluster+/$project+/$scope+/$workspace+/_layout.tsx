@@ -32,12 +32,12 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import logger from '~/root/lib/client/helpers/log';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Truncate, handleError } from '~/root/lib/utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProjectContext } from '../../_layout';
 
 export interface IWorkspaceContext extends IProjectContext {
@@ -114,7 +114,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
   const [workspaces, setWorkspaces] = useState<IWorkspace[]>([]);
   const [environments, setEnvironments] = useState<IWorkspace[]>([]);
 
-  const api = useAPIClient();
+  const api = useConsoleApi();
   const [search, setSearch] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -123,13 +123,9 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
     async () => {
       ensureClusterClientSide(params);
       ensureAccountClientSide(params);
-      const listApi =
-        activeTab === SCOPE.ENVIRONMENT
-          ? api.listEnvironments
-          : api.listWorkspaces;
       try {
         setIsLoading(true);
-        const { data, errors } = await listApi({
+        const { data, errors } = await api.listEnvironments({
           project: getScopeAndProjectQuery({ params }).project,
         });
         if (errors) {
@@ -137,9 +133,11 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
         }
 
         if (activeTab === SCOPE.ENVIRONMENT) {
-          setEnvironments(parseNodes(data));
+          setEnvironments(
+            parseNodes(data).filter((e) => e.spec?.isEnvironment)
+          );
         } else {
-          setWorkspaces(parseNodes(data));
+          setWorkspaces(parseNodes(data).filter((e) => !e.spec?.isEnvironment));
         }
       } catch (err) {
         handleError(err);

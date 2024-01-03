@@ -10,7 +10,6 @@ import {
   IGqlReturn,
   NN,
 } from '../../types/common';
-import logger from '../../client/helpers/log';
 
 const parseCookie = (cookieString: string) => {
   const [cookie] = cookieString.split(';');
@@ -44,8 +43,9 @@ export const ExecuteQueryWithContext = (
     def?: any
   ): IExecutorResp<B, C> {
     const logId = uuid();
-    const apiName = `[#${logId.substring(0, 5)}] ${(q as any)?.definitions[0]?.selectionSet?.selections[0]?.name?.value || ''
-      }`;
+    const apiName = `[#${logId.substring(0, 5)}] ${
+      (q as any)?.definitions[0]?.selectionSet?.selections[0]?.name?.value || ''
+    }`;
 
     const res: IExecutorResp<B, C> = async (variables) => {
       const { transformer } = formatter;
@@ -93,8 +93,9 @@ export const ExecuteQueryWithContext = (
 
           throw new Error(
             e.reduce((acc, curr) => {
-              return `${acc}\n\n1. ${curr.name ? `${curr.name}:` : ''}:${curr.message
-                }${curr.stack ? `\n${curr.stack}` : ''}`;
+              return `${acc}\n\n1. ${curr.name ? `${curr.name}:` : ''}:${
+                curr.message
+              }${curr.stack ? `\n${curr.stack}` : ''}`;
             }, 'Errors:')
           );
         }

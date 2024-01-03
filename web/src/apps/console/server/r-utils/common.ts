@@ -6,8 +6,8 @@ import {
   Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProvider,
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
   ProjectId,
-  Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction as SyncStatusAction,
-  Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState as SyncStatusState,
+  Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as SyncAction,
+  Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncState,
   WorkspaceOrEnvId,
 } from '~/root/src/generated/gql/server';
 
@@ -60,10 +60,10 @@ export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
 
 type IparseName =
   | {
-    metadata?: {
-      name: string;
-    };
-  }
+      metadata?: {
+        name: string;
+      };
+    }
   | undefined
   | null;
 
@@ -87,10 +87,10 @@ export const parseName = (resource: IparseName, ensure = false) => {
 
 type IparseNamespace =
   | {
-    metadata: {
-      namespace: string;
-    };
-  }
+      metadata: {
+        namespace: string;
+      };
+    }
   | undefined
   | null;
 
@@ -99,10 +99,10 @@ export const parseNamespace = (resource: IparseNamespace) =>
 
 type IparseTargetNs =
   | {
-    spec?: {
-      targetNamespace: string;
-    };
-  }
+      spec?: {
+        targetNamespace: string;
+      };
+    }
   | undefined
   | null;
 
@@ -216,11 +216,11 @@ export interface Status {
 
 export interface SyncStatus {
   syncScheduledAt?: any;
-  state: SyncStatusState;
+  state: SyncState;
   recordVersion: number;
   lastSyncedAt?: any;
   error?: string;
-  action: SyncStatusAction;
+  action: SyncAction;
 }
 
 interface IStatusProps {

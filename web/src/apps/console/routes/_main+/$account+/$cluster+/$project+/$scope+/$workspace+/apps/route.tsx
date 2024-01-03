@@ -30,6 +30,7 @@ export const loader = async (ctx: IRemixCtx) => {
       search: getSearch(ctx),
     });
     if (errors) {
+      console.error(errors);
       throw errors[0];
     }
 

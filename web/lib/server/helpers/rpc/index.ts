@@ -1,4 +1,5 @@
 import axios from 'axios';
+import logger from '~/root/lib/client/helpers/log';
 import { MapType } from '~/root/lib/types/common';
 
 export interface IMiddlewareResponse {
@@ -42,7 +43,7 @@ export const withRPC = (
       const response = await method(...(req.body.args || []));
       res.json(response);
     } catch (err) {
-      console.log('here');
+      logger.trace('ErrorIn:', req.body.method, (err as Error).message);
       next(err as Error);
     }
   };

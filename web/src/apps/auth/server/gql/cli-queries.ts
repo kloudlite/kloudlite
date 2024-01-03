@@ -125,7 +125,7 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: any) => data,
+      transformer: (data: any) => data.core_listApps,
       vars: (_: any) => {},
     }
   ),
@@ -158,7 +158,7 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: any) => data,
+      transformer: (data: any) => data.core_listSecrets,
       vars: (_: any) => {},
     }
   ),

@@ -1,6 +1,5 @@
 import { AWSlogoFill } from '@jengaicons/react';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
-import { json } from 'react-router-dom';
 import {
   IMSvTemplate,
   IMSvTemplates,
@@ -130,6 +129,9 @@ export const renderCloudProvider = ({
 export const flatMap = (data: any) => {
   const keys = data.split('.');
 
-  const jsonObject = keys.reduceRight((acc, key) => ({ [key]: acc }), null);
+  const jsonObject = keys.reduceRight(
+    (acc: any, key: string) => ({ [key]: acc }),
+    null
+  );
   return jsonObject;
 };

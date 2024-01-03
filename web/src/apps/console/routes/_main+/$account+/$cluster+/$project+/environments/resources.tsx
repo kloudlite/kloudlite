@@ -102,7 +102,9 @@ const ListView = ({ items }: { items: BaseType[] }) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${cluster}/${project}/environment/${id}`}
+            to={`/${account}/${cluster}/${project}/${
+              item.spec?.isEnvironment ? 'environment' : 'workspace'
+            }/${id}`}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
