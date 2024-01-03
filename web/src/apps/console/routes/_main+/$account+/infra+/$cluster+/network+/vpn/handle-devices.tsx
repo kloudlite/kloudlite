@@ -41,10 +41,8 @@ import { LoadingPlaceHolder } from '~/console/components/loading';
 import { downloadFile } from '~/console/utils/commons';
 import CodeView from '~/console/components/code-view';
 import { InfoLabel } from '~/console/components/commons';
-import { IAccountContext } from '../../../../_layout';
 import { parseValue } from '~/console/page-components/util';
-
-
+import { IAccountContext } from '../../../../_layout';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -433,8 +431,6 @@ const Root = (props: IDialog) => {
                   namespace: ENV_NAMESPACE,
                 },
                 spec: {
-                  accountName: parseName(account),
-                  clusterName: ensureResource(cluster),
                   ports: val.ports,
                 },
               },
@@ -452,8 +448,6 @@ const Root = (props: IDialog) => {
                   namespace: ENV_NAMESPACE,
                 },
                 spec: {
-                  accountName: parseName(account),
-                  clusterName: ensureResource(cluster),
                   ports: val.ports,
                 },
               },

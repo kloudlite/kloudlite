@@ -60,10 +60,10 @@ export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
 
 type IparseName =
   | {
-      metadata?: {
-        name: string;
-      };
-    }
+    metadata?: {
+      name: string;
+    };
+  }
   | undefined
   | null;
 
@@ -87,10 +87,10 @@ export const parseName = (resource: IparseName, ensure = false) => {
 
 type IparseNamespace =
   | {
-      metadata: {
-        namespace: string;
-      };
-    }
+    metadata: {
+      namespace: string;
+    };
+  }
   | undefined
   | null;
 
@@ -99,10 +99,10 @@ export const parseNamespace = (resource: IparseNamespace) =>
 
 type IparseTargetNs =
   | {
-      spec?: {
-        targetNamespace: string;
-      };
-    }
+    spec?: {
+      targetNamespace: string;
+    };
+  }
   | undefined
   | null;
 

@@ -7,6 +7,7 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import TagsResources from './tags-resources';
 import Tools from './tools';
 
@@ -41,6 +42,9 @@ const Images = () => {
 
         return (
           <Wrapper
+            header={{
+              title: 'Images',
+            }}
             empty={{
               is: tags.length === 0,
               title: 'This is where you’ll manage your images.',

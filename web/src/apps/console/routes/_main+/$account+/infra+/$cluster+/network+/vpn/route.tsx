@@ -55,7 +55,7 @@ const VPN = () => {
           const devices = devicesData.edges?.map(({ node }) => node);
           return (
             <Wrapper
-              secondaryHeader={{
+              header={{
                 title: 'Wireguard devices',
                 action: devices.length > 0 && (
                   <Button

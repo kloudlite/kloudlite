@@ -12,6 +12,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Plus } from '@jengaicons/react';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import Tools from './tools';
 import BuildCachesResources from './build-caches-resources';
 import HandleBuildCache from './handle-build-cache';
@@ -38,24 +39,6 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const Tabs = () => {
-  const { account } = useParams();
-  return (
-    <CommonTabs
-      backButton={{
-        to: `/${account}/container-registry/repos`,
-        label: 'Repos',
-      }}
-    />
-  );
-};
-
-export const handle = () => {
-  return {
-    navbar: <Tabs />,
-  };
-};
-
 const Builds = () => {
   const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
@@ -66,18 +49,21 @@ const Builds = () => {
           const buildsCaches = buildCachesData.edges?.map(({ node }) => node);
 
           return (
-            <>
-              {buildsCaches.length > 0 && (
-                <SubNavAction deps={[buildsCaches.length]}>
-                  <Button
-                    content="Create build cache"
-                    variant="primary"
-                    onClick={() => {
-                      setVisible(true);
-                    }}
-                  />
-                </SubNavAction>
-              )}
+            <div className="flex flex-col gap-6xl">
+              <SecondarySubHeader
+                title="Build caches"
+                action={
+                  buildsCaches.length > 0 && (
+                    <Button
+                      content="Create build cache"
+                      variant="primary"
+                      onClick={() => {
+                        setVisible(true);
+                      }}
+                    />
+                  )
+                }
+              />
               <Wrapper
                 empty={{
                   is: buildsCaches.length === 0,
@@ -101,7 +87,7 @@ const Builds = () => {
               >
                 <BuildCachesResources items={buildsCaches} />
               </Wrapper>
-            </>
+            </div>
           );
         }}
       </LoadingComp>

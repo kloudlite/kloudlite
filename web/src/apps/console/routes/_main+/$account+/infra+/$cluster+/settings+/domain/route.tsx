@@ -52,7 +52,7 @@ const Domain = () => {
           return (
             <Wrapper
               secondaryHeader={{
-                title: 'Domain',
+                title: 'Domains',
                 action: domains.length > 0 && (
                   <Button
                     content="Add domain"

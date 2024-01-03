@@ -73,14 +73,6 @@ export const environmentQueries = (executor: IExecutor) => ({
               namespace
             }
           }
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            recordVersion
-            state
-            syncScheduledAt
-          }
           updateTime
         }
       }
@@ -88,7 +80,7 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetEnvironmentQuery) =>
         data.core_getEnvironment,
-      vars(_: ConsoleGetEnvironmentQueryVariables) {},
+      vars(_: ConsoleGetEnvironmentQueryVariables) { },
     }
   ),
   createEnvironment: executor(
@@ -102,7 +94,7 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateEnvironmentMutation) =>
         data.core_createEnvironment,
-      vars(_: ConsoleCreateEnvironmentMutationVariables) {},
+      vars(_: ConsoleCreateEnvironmentMutationVariables) { },
     }
   ),
   updateEnvironment: executor(
@@ -117,7 +109,7 @@ export const environmentQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleUpdateEnvironmentMutation) {
         return data.core_updateEnvironment;
       },
-      vars(_: ConsoleUpdateEnvironmentMutationVariables) {},
+      vars(_: ConsoleUpdateEnvironmentMutationVariables) { },
     }
   ),
 
@@ -184,14 +176,6 @@ export const environmentQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
               updateTime
             }
           }
@@ -208,7 +192,7 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListEnvironmentsQuery) =>
         data.core_listEnvironments,
-      vars(_: ConsoleListEnvironmentsQueryVariables) {},
+      vars(_: ConsoleListEnvironmentsQueryVariables) { },
     }
   ),
 });

@@ -11,11 +11,10 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { useState } from 'react';
 
-
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import HandleProvider from './handle-provider';
 import ProviderResources from './provider-resources';
 import Tools from './tools';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {

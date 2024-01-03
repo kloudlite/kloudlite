@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-import { DotsThreeOutlineFill, Trash } from '@jengaicons/react';
+import { DotsThreeOutlineFill, Tag, Trash } from '@jengaicons/react';
 import { useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Badge } from '~/components/atoms/badge';
@@ -91,7 +91,9 @@ const TagView = ({
             key={tag}
             className="rounded-full outline-none ring-offset-1 focus-visible:ring-2 focus-visible:ring-border-focus hover:underline text-text-primary"
           >
-            <Badge type="info">{tag}</Badge>
+            <Badge type="info" icon={<Tag />}>
+              {tag}
+            </Badge>
           </button>
         ))}
       </div>

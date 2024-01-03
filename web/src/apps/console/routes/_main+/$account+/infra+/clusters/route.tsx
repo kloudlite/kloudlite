@@ -21,6 +21,7 @@ export const loader = async (ctx: IRemixCtx) => {
       pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
+    console.log(errors);
 
     if (errors) {
       throw errors[0];

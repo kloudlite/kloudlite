@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useSearchParams } from '@remix-run/react';
 import CommonTools, { IModeProps } from '~/console/components/common-tools';
-import { toast } from 'react-toastify';
 
 const Tools = ({ viewMode, setViewMode }: IModeProps) => {
   const [searchParams] = useSearchParams();
@@ -13,7 +12,6 @@ const Tools = ({ viewMode, setViewMode }: IModeProps) => {
         type: 'text',
         search: false,
         dataFetcher: async () => {
-          toast.info(`todo status`);
           return [
             { content: 'Active', value: 'active' },
             { content: 'Freezed', value: 'freezed' },

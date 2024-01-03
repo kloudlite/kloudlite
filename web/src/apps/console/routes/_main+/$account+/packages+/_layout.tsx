@@ -1,6 +1,6 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
-import { IAccountContext } from '../_layout';
 import SidebarLayout from '~/console/components/sidebar-layout';
+import { IAccountContext } from '../_layout';
 
 const ContainerRegistry = () => {
   const rootContext = useOutletContext<IAccountContext>();

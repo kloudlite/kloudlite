@@ -35,7 +35,7 @@ tasks:
 
         case $(whoami) in
           "bikash")
-            URL_SUFFIX=""
+            URL_SUFFIX="-bikash"
             ;;
 
           "vision")
