@@ -30,25 +30,19 @@ func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string
 }
 
 func (d *domain) findClusterManagedService(ctx InfraContext, clusterName string, svcName string) (*entities.ClusterManagedService, error) {
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	cluster, err := d.clusterManagedServiceRepo.FindOne(ctx, repos.Filter{
-		"clusterName":        clusterName,
-		"accountName":        ctx.AccountName,
-		"metadata.name":      svcName,
-		"metadata.namespace": accNs,
+	cmsvc, err := d.clusterManagedServiceRepo.FindOne(ctx, repos.Filter{
+		"clusterName":   clusterName,
+		"accountName":   ctx.AccountName,
+		"metadata.name": svcName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if cluster == nil {
-		return nil, errors.Newf("cluster with name %q not found", clusterName)
+	if cmsvc == nil {
+		return nil, errors.Newf("cmsvc with name %q not found", clusterName)
 	}
-	return cluster, nil
+	return cmsvc, nil
 }
 
 func (d *domain) GetClusterManagedService(ctx InfraContext, clusterName string, serviceName string) (*entities.ClusterManagedService, error) {
@@ -202,7 +196,11 @@ func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName
 }
 
 func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error {
-	svc, _ := d.findClusterManagedService(ctx, clusterName, service.Name)
+	svc, err := d.findClusterManagedService(ctx, clusterName, service.Name)
+	if err != nil {
+		return err
+	}
+
 	if svc == nil {
 		// does not exist, (maybe already deleted)
 		return nil
@@ -212,7 +210,9 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterN
 		return d.resyncToTargetCluster(ctx, svc.SyncStatus.Action, clusterName, svc, svc.RecordVersion)
 	}
 
-	err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id)
+	if err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id); err != nil {
+		return err
+	}
 	d.resourceEventPublisher.PublishCMSEvent(svc, PublishDelete)
 	return err
 }
