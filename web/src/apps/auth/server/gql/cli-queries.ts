@@ -17,6 +17,62 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_getSecret: executor(
+    gql`
+      query Core_getSecret(
+        $project: ProjectId!
+        $scope: WorkspaceOrEnvId!
+        $name: String!
+      ) {
+        core_getSecret(project: $project, scope: $scope, name: $name) {
+          metadata {
+            name
+            namespace
+          }
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          stringData
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getSecret,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_getConfig: executor(
+    gql`
+      query Core_getConfig(
+        $project: ProjectId!
+        $scope: WorkspaceOrEnvId!
+        $name: String!
+      ) {
+        core_getConfig(project: $project, scope: $scope, name: $name) {
+          data
+          displayName
+          metadata {
+            name
+            namespace
+          }
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getConfig,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_listApps: executor(
     gql`
       query Core_listApps(
@@ -126,6 +182,36 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listApps,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_listConfigs: executor(
+    gql`
+      query Core_listConfigs($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
+        core_listConfigs(project: $project, scope: $scope) {
+          totalCount
+          edges {
+            node {
+              data
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                namespace
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listConfigs,
       vars: (_: any) => {},
     }
   ),
