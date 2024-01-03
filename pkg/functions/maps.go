@@ -1,11 +1,11 @@
 package functions
 
 // MapSet sets a key, value in a map. If a map is nil, it firsts initializes the map
-func MapSet[T any](m map[string]T, key string, value T) {
-	if m == nil {
-		m = map[string]T{}
+func MapSet[T any](m *map[string]T, key string, value T) {
+	if *m == nil {
+		*m = make(map[string]T)
 	}
-	m[key] = value
+	(*m)[key] = value
 }
 
 // MapContains checks if `destination` contains all keys from `source`
