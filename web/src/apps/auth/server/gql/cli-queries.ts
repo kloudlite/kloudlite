@@ -17,6 +17,186 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_listApps: executor(
+    gql`
+      query Core_listApps(
+        $project: ProjectId!
+        $scope: WorkspaceOrEnvId!
+        $pq: CursorPaginationIn
+      ) {
+        core_listApps(project: $project, scope: $scope, pq: $pq) {
+          edges {
+            node {
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                namespace
+              }
+              projectName
+              spec {
+                containers {
+                  args
+                  command
+                  env {
+                    key
+                    optional
+                    refKey
+                    refName
+                    type
+                    value
+                  }
+                  envFrom {
+                    refName
+                    type
+                  }
+                  image
+                  imagePullPolicy
+                  livenessProbe {
+                    failureThreshold
+
+                    initialDelay
+                    interval
+
+                    type
+                  }
+                  name
+                  readinessProbe {
+                    failureThreshold
+                    initialDelay
+                    interval
+                    type
+                  }
+                  resourceCpu {
+                    max
+                    min
+                  }
+                  resourceMemory {
+                    max
+                    min
+                  }
+                  volumes {
+                    mountPath
+                    refName
+                    type
+                  }
+                }
+                displayName
+                freeze
+                hpa {
+                  enabled
+                  maxReplicas
+                  minReplicas
+                  thresholdCpu
+                  thresholdMemory
+                }
+                intercept {
+                  enabled
+                  toDevice
+                }
+                nodeSelector
+                region
+                replicas
+                serviceAccount
+                services {
+                  name
+                  port
+                  targetPort
+                  type
+                }
+                tolerations {
+                  effect
+                  key
+                  operator
+                  tolerationSeconds
+                  value
+                }
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+              workspaceName
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_listSecrets: executor(
+    gql`
+      query Core_listSecrets(
+        $project: ProjectId!
+        $scope: WorkspaceOrEnvId!
+        $pq: CursorPaginationIn
+      ) {
+        core_listSecrets(project: $project, scope: $scope, pq: $pq) {
+          edges {
+            node {
+              displayName
+              markedForDeletion
+              metadata {
+                name
+                namespace
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+              stringData
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_updateDevice: executor(
+    gql`
+      mutation Mutation($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+        infra_updateVPNDevice(
+          clusterName: $clusterName
+          vpnDevice: $vpnDevice
+        ) {
+          metadata {
+            name
+          }
+          spec {
+            deviceNamespace
+            cnameRecords {
+              target
+              host
+            }
+            ports {
+              targetPort
+              port
+            }
+          }
+          status {
+            message {
+              RawMessage
+            }
+            isReady
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_updateVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
   cli_listDevices: executor(
     gql`
       query Infra_listVPNDevices(
