@@ -261,6 +261,7 @@ func parsePeerLine(peerCfg *wgtypes.PeerConfig, lhs string, rhs string) error {
 		peerCfg.PresharedKey = &key
 	case "AllowedIPs":
 		for _, addr := range strings.Split(rhs, ",") {
+			// fmt.Println(addr)
 			ip, cidr, err := net.ParseCIDR(strings.TrimSpace(addr))
 			if err != nil {
 				return fmt.Errorf("cannot parse %s: %v", addr, err)

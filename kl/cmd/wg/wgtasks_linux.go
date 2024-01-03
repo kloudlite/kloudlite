@@ -102,8 +102,11 @@ func startService(verbose bool) error {
 		return err
 	}
 
-	return execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", devName), verbose)
+	if err := execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", devName), verbose); err != nil {
+		return err
+	}
 
+	return nil
 }
 
 func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) error {
