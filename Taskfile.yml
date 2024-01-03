@@ -1,7 +1,7 @@
 version: 3
 
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/operators"
+  ImagePrefix: "ghcr.io/kloudlite/operator"
   dockerRegistry: registry.kloudlite.io
   KlControllerGen: "./bin/kl-controller-gen"
   # KlTemplatizer: "./bin/kl-templatizer"
