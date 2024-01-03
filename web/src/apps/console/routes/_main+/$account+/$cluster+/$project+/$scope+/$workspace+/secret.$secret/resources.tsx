@@ -352,6 +352,9 @@ const SecretItemResources = ({
     restoreItem,
     onShow,
   };
+
+  console.log('items....', items);
+
   return (
     <>
       {(!searchText || (searchText && items.length > 0)) && (

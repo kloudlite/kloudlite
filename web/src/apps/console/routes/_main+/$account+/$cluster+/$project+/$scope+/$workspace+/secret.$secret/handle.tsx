@@ -50,7 +50,7 @@ export const updateSecret = async ({
   }
 };
 
-export const ManageSecretDialog = ({
+const Handle = ({
   show,
   setShow,
   onSubmit,
@@ -92,7 +92,7 @@ export const ManageSecretDialog = ({
       }}
     >
       <Popup.Header>Add new entry</Popup.Header>
-      <form onSubmit={handleSubmit}>
+      <Popup.Form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
             <TextInput
@@ -120,7 +120,9 @@ export const ManageSecretDialog = ({
             variant="primary"
           />
         </Popup.Footer>
-      </form>
+      </Popup.Form>
     </Popup.Root>
   );
 };
+
+export default Handle;

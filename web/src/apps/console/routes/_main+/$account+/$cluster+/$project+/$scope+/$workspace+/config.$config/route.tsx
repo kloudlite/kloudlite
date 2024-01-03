@@ -75,20 +75,24 @@ const ConfigBody = ({ config }: { config: IConfig }) => {
   }, []);
 
   useEffect(() => {
-    setModifiedItems(
-      Object.entries(originalItems).reduce((acc, [key, value]) => {
-        return {
-          ...acc,
-          [key]: {
-            value,
-            delete: false,
-            edit: false,
-            insert: false,
-            newvalue: null,
-          },
-        };
-      }, {})
-    );
+    try {
+      setModifiedItems(
+        Object.entries(originalItems).reduce((acc, [key, value]) => {
+          return {
+            ...acc,
+            [key]: {
+              value,
+              delete: false,
+              edit: false,
+              insert: false,
+              newvalue: null,
+            },
+          };
+        }, {})
+      );
+    } catch {
+      //
+    }
   }, [originalItems]);
 
   const changesCount = () => {
