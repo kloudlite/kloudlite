@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	v1 "github.com/kloudlite/operator/apis/crds/v1"
 	"strings"
 	"time"
+
+	v1 "github.com/kloudlite/operator/apis/crds/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -58,6 +59,10 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	belongsTo := func(group string) bool {
 		return strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, group)
+	}
+
+	if r.MsgSender == nil {
+		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
 	switch {
@@ -123,6 +128,18 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				return ctrl.Result{}, err
 			}
 		}
+
+	case obj.GetObjectKind().GroupVersionKind().String() == fn.ParseGVK("crds.kloudlite.io/v1", "ClusterManagedService").String():
+		{
+			if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			}); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
 	case belongsTo("kloudlite.io"):
 		{
 			if err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
@@ -158,12 +175,12 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 		}
 
 		// 2. send deleted event
-		obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
 		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
 			if rr, err := r.RemoveWatcherFinalizer(ctx, obj); err != nil {
 				return rr, err
 			}
 		}
+		obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
 		return r.dispatchEvent(ctx, obj)
 	}
 
@@ -255,13 +272,14 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	watchList := []WatchResource{
 		NewWatchResource("crds.kloudlite.io/v1", "Project"),
 		NewWatchResource("crds.kloudlite.io/v1", "App"),
-		NewWatchResource("crds.kloudlite.io/v1", "ManagedService"),
+		// NewWatchResource("crds.kloudlite.io/v1", "ManagedService"),
 		NewWatchResource("crds.kloudlite.io/v1", "ManagedResource"),
 		NewWatchResource("crds.kloudlite.io/v1", "Workspace"),
 		NewWatchResource("crds.kloudlite.io/v1", "Router"),
 		NewWatchResource("clusters.kloudlite.io/v1", "NodePool"),
 		NewWatchResource("wireguard.kloudlite.io/v1", "Device"),
 		NewWatchResource("distribution.kloudlite.io/v1", "BuildRun"),
+		NewWatchResource("crds.kloudlite.io/v1", "ClusterManagedService"),
 
 		// native resources
 		NewWatchResource("v1", "PersistentVolumeClaim"),
@@ -298,7 +316,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					},
 				),
 			)
-
 		}(watchList[i])
 	}
 
