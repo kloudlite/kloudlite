@@ -23,65 +23,47 @@ Examples:
   kl list configs <projectId>
 `,
 	Run: func(_ *cobra.Command, args []string) {
-		err := listConfigs(args)
+		pName := ""
+		if len(args) > 1 {
+			pName = args[0]
+		}
+
+		config, err := server.ListConfigs(fn.MakeOption("projectName", pName))
 		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := printConfigs(config); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listConfigs(args []string) error {
-
-	var configs []server.Config
-	var err error
-	projectId := ""
-
-	if len(args) >= 1 {
-		projectId = args[0]
-	}
-
-	if projectId == "" {
-		configs, err = server.GetConfigs()
-	} else {
-		configs, err = server.GetConfigs(fn.MakeOption("projectId", args[0]))
-	}
-
-	if err != nil {
-		return err
-	}
-
+func printConfigs(configs []server.Config) error {
 	if len(configs) == 0 {
 		return errors.New("no configs found")
 	}
 
 	header := table.Row{
-		table.HeaderText("configs"),
-		table.HeaderText("id"),
+		table.HeaderText("Display Name"),
+		table.HeaderText("Name"),
 		table.HeaderText("entries"),
 	}
 
 	rows := make([]table.Row, 0)
 
 	for _, a := range configs {
-		rows = append(rows,
-			table.Row{
-				a.Name,
-				a.Id,
-				fmt.Sprintf("%d entries",
-					len(a.Entries)),
-			},
-		)
+		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name, fmt.Sprintf("%d", len(a.Data))})
 	}
 
 	fmt.Println(table.Table(&header, rows))
 
-	if projectId == "" {
-		projectId, _ = client.CurrentProjectName()
-	}
+	pName, _ := client.CurrentProjectName()
 
-	if projectId != "" {
-		table.KVOutput("configs of", projectId, true)
+	if pName != "" {
+		table.KVOutput("configs of", pName, true)
 	}
 
 	table.TotalResults(len(configs), true)

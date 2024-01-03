@@ -3,6 +3,7 @@ package list
 import (
 	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -23,58 +24,48 @@ Examples:
   kl list secrets <projectId>
 `,
 	Run: func(_ *cobra.Command, args []string) {
-		err := listSecrets(args)
+
+		pName := ""
+		if len(args) > 1 {
+			pName = args[0]
+		}
+
+		sec, err := server.ListSecrets(fn.MakeOption("projectName", pName))
 		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if err := printSecrets(sec); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listSecrets(args []string) error {
-
-	var secrets []server.Secret
-	var err error
-	projectId := ""
-
-	if len(args) >= 1 {
-		projectId = args[0]
-	}
-
-	if projectId == "" {
-		secrets, err = server.GetSecrets()
-	} else {
-		secrets, err = server.GetSecrets(fn.MakeOption("projectId", args[0]))
-	}
-
-	if err != nil {
-		return err
-	}
-
+func printSecrets(secrets []server.Secret) error {
 	if len(secrets) == 0 {
 		return errors.New("no secrets found")
 	}
 
 	header := table.Row{
-		table.HeaderText("secrets"),
-		table.HeaderText("id"),
+		table.HeaderText("Display Name"),
+		table.HeaderText("Name"),
 		table.HeaderText("entries"),
 	}
 
 	rows := make([]table.Row, 0)
 
 	for _, a := range secrets {
-		rows = append(rows, table.Row{a.Name, a.Id, fmt.Sprintf("%d", len(a.Entries))})
+		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name, fmt.Sprintf("%d", len(a.StringData))})
 	}
 
 	fmt.Println(table.Table(&header, rows))
 
-	if projectId == "" {
-		projectId, _ = client.CurrentProjectName()
-	}
+	pName, _ := client.CurrentProjectName()
 
-	if projectId != "" {
-		table.KVOutput("secrets of", projectId, true)
+	if pName != "" {
+		table.KVOutput("secrets of", pName, true)
 	}
 
 	table.TotalResults(len(secrets), true)
