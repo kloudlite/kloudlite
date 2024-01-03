@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func SelectEnv(envName string) error {
+func SelectEnv(envName Env) error {
 
 	k, err := GetContextFile()
 	if err != nil {
@@ -17,7 +17,7 @@ func SelectEnv(envName string) error {
 		return err
 	}
 
-	k.SelectedEnvs[dir] = envName
+	k.SelectedEnvs[dir] = &envName
 	if err := WriteContextFile(*k); err != nil {
 		return err
 	}
@@ -26,23 +26,23 @@ func SelectEnv(envName string) error {
 
 }
 
-func CurrentEnvName() (string, error) {
+func CurrentEnv() (*Env, error) {
 	file, err := GetContextFile()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if file.SelectedEnvs == nil {
-		return "", errors.New("noSelectedEnv")
+		return nil, errors.New("No selected environment")
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if file.SelectedEnvs[dir] == "" {
-		return "", errors.New("noSelectedEnv")
+	if file.SelectedEnvs[dir] == nil {
+		return nil, errors.New("No selected environment")
 	}
 
 	return file.SelectedEnvs[dir], nil

@@ -3,6 +3,7 @@ module github.com/kloudlite/kl
 go 1.19
 
 require (
+	github.com/adrg/xdg v0.4.0
 	github.com/briandowns/spinner v1.23.0
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
@@ -17,10 +18,10 @@ require (
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
-	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v0.9.1 // indirect

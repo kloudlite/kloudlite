@@ -32,13 +32,18 @@ Examples:
 
 		if err != nil {
 
-			a, err := server.SelectAccount(aName)
+			acc, err := server.EnsureAccount(aName)
 			if err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			p, err := server.SelectProject(pName)
+			prj, err := server.EnsureProject(
+				[]fn.Option{
+					fn.MakeOption("accountName", aName),
+					fn.MakeOption("projectName", pName),
+				}...,
+			)
 			if err != nil {
 				fn.PrintError(err)
 				return
@@ -46,12 +51,11 @@ Examples:
 
 			initFile = &client.KLFileType{
 				Version: "v1",
-				Project: fmt.Sprintf("%s/%s", a.Metadata.Name, p.Metadata.Name),
+				Project: fmt.Sprintf("%s/%s", acc, prj),
 				Mres:    make([]client.ResType, 0),
 				Configs: make([]client.ResType, 0),
 				Secrets: make([]client.ResType, 0),
 				Env:     []client.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
-				// Ports:   []string{},
 				FileMount: client.MountType{
 					MountBasePath: "./.mounts",
 					Mounts:        make([]client.FileEntry, 0),

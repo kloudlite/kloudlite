@@ -45,10 +45,10 @@ type resType struct {
 	}
 }
 
-func GetPrintRow(res any, activeName string, printValue string, prefix ...bool) string {
+func GetPrintRow(res any, activeName string, printValue interface{}, prefix ...bool) string {
 	var item resType
 	if err := JsonConversion(res, &item); err != nil {
-		return printValue
+		return fmt.Sprint(printValue)
 	}
 
 	if item.Metadata.Name == activeName {
@@ -62,7 +62,7 @@ func GetPrintRow(res any, activeName string, printValue string, prefix ...bool) 
 			}(),
 
 			func() string {
-				s := strings.Split(printValue, "\n")
+				s := strings.Split(fmt.Sprint(printValue), "\n")
 				if len(s) > 1 {
 					for i, v := range s {
 						s[i] = text.Green(v)
@@ -74,7 +74,7 @@ func GetPrintRow(res any, activeName string, printValue string, prefix ...bool) 
 		))
 	}
 
-	return printValue
+	return fmt.Sprint(printValue)
 }
 
 func JsonConversion(from any, to any) error {

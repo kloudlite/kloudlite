@@ -9,17 +9,22 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/adrg/xdg"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
+type Env struct {
+	Name          string `yaml:"name"`
+	IsEnvironment bool   `yaml:"isEnvironment"`
+}
+
 type KLContext struct {
-	AccountName  string            `yaml:"accountName"`
-	DeviceName   string            `yaml:"deviceName"`
-	Session      string            `yaml:"session"`
-	KlFile       string            `yaml:"klFile"`
-	DNS          []string          `yaml:"dns"`
-	ClusterName  string            `yaml:"clusterName"`
-	SelectedEnvs map[string]string `yaml:"selectedEnvs"`
+	AccountName  string          `yaml:"accountName"`
+	DeviceName   string          `yaml:"deviceName"`
+	Session      string          `yaml:"session"`
+	KlFile       string          `yaml:"klFile"`
+	DNS          []string        `yaml:"dns"`
+	ClusterName  string          `yaml:"clusterName"`
+	SelectedEnvs map[string]*Env `yaml:"selectedEnvs"`
 }
 
 func (f *KLContext) GetCookieString() string {

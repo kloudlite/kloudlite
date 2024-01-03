@@ -41,7 +41,6 @@ func getDeviceSelect() (*server.Device, error) {
 func startConfiguration(verbose bool) error {
 	devices, err := server.ListDevices()
 	if err != nil {
-		fmt.Println("here ********")
 		return err
 	}
 	if len(devices) == 0 {

@@ -23,7 +23,7 @@ Examples:
 
 	`,
 
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		envName := ""
 
 		if len(args) >= 1 {

@@ -1,47 +1,47 @@
 package client
 
 import (
-	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	fn "github.com/kloudlite/kl/pkg/functions"
+
+	"sigs.k8s.io/yaml"
 )
 
 type ResEnvType struct {
-	Name   *string `json:"name,omitempty" yaml:"name,omitempty"`
-	Key    string  `json:"key"`
-	RefKey string  `json:"refKey"`
+	Name   *string `yaml:"name,omitempty" yaml:"name,omitempty"`
+	Key    string  `yaml:"key"`
+	RefKey string  `yaml:"refKey"`
 }
 
 type EnvType struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key   string `yaml:"key"`
+	Value string `yaml:"value"`
 }
 
 type ResType struct {
-	Name string       `json:"name"`
-	Env  []ResEnvType `json:"env"`
+	Name string       `yaml:"name"`
+	Env  []ResEnvType `yaml:"env"`
 }
 
 type FileEntry struct {
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Name string `json:"Name"`
+	Path string `yaml:"path"`
+	Type string `yaml:"type"`
+	Name string `yaml:"Name"`
 }
 
 type MountType struct {
-	MountBasePath string      `yaml:"mountBasePath" json:"mountBasePath"`
-	Mounts        []FileEntry `json:"mounts"`
+	MountBasePath string      `yaml:"mountBasePath" yaml:"mountBasePath"`
+	Mounts        []FileEntry `yaml:"mounts"`
 }
 
 type KLFileType struct {
-	Version string    `json:"version"`
-	Project string    `json:"projectName"`
-	Mres    []ResType `json:"mres"`
-	Configs []ResType `json:"configs"`
-	Secrets []ResType `json:"secrets"`
-	Env     []EnvType `json:"env"`
-	// Ports     []string  `json:"ports"`
+	Version   string    `yaml:"version"`
+	Project   string    `yaml:"project"`
+	Mres      []ResType `yaml:"mres"`
+	Configs   []ResType `yaml:"configs"`
+	Secrets   []ResType `yaml:"secrets"`
+	Env       []EnvType `yaml:"env"`
 	FileMount MountType `yaml:"fileMount"`
 }
 
