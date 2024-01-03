@@ -118,10 +118,10 @@ models:
     model: github.com/kloudlite/operator/apis/crds/v1.JsonPatch
   OverridesIn: *overrides-model
 
-  Github__com___kloudlite___api___pkg___types__SyncStatusAction:
+  Github__com___kloudlite___api___pkg___types__SyncAction:
     model: github.com/kloudlite/api/pkg/types.SyncAction
 
-  Github__com___kloudlite___api___pkg___types__SyncStatusState:
+  Github__com___kloudlite___api___pkg___types__SyncState:
     model: github.com/kloudlite/api/pkg/types.SyncState
 
   ConsoleResType:

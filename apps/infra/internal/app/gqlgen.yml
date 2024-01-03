@@ -147,11 +147,12 @@ models:
   Github__com___kloudlite___api___pkg___types__SyncStatus: &sync-status-model
     model: github.com/kloudlite/api/pkg/types.SyncStatus
 
-  Github__com___kloudlite___api___pkg___types__SyncStatusState:
+  Github__com___kloudlite___api___pkg___types__SyncAction:
+    model: github.com/kloudlite/api/pkg/types.SyncAction
+
+  Github__com___kloudlite___api___pkg___types__SyncState:
     model: github.com/kloudlite/api/pkg/types.SyncState
 
-  Github__com___kloudlite___api___pkg___types__SyncStatusAction:
-    model: github.com/kloudlite/api/pkg/types.SyncAction
 
   # CheckAwsAccessOutput:
   #   model: github.com/kloudlite/api/apps/infra/internal/domain.AWSAccessValidationOutput
