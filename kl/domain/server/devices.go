@@ -66,9 +66,12 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 
 func GetDevice(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
-	clusterName := fn.GetOption(options, "clusterName")
 
-	var err error
+	clusterName, err := EnsureCluster(options...)
+	if err != nil {
+		return nil, err
+	}
+
 	devName, err = EnsureDevice(options...)
 
 	cookie, err := getCookie()

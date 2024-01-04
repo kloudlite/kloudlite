@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -41,7 +42,6 @@ func getDeviceSelect() (*server.Device, error) {
 func startConfiguration(verbose bool) error {
 	devices, err := server.ListDevices()
 	if err != nil {
-		fmt.Println("here ********")
 		return err
 	}
 	if len(devices) == 0 {
@@ -52,11 +52,16 @@ func startConfiguration(verbose bool) error {
 		return err
 	}
 
-	return configure(device.Metadata.Name, verbose)
+	if runtime.GOOS == "darwin" {
+		return configureDarwin(device.Metadata.Name, verbose)
+	}
+
+	return configure(device.Metadata.Name, device.Metadata.Name, verbose)
 }
 
 func configure(
 	devName string,
+	interfaceName string,
 	verbose bool,
 ) error {
 
@@ -89,7 +94,7 @@ func configure(
 
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
-	} else if e := setDeviceIp(cfg.Address[0].IP.String(), devName, verbose); e != nil {
+	} else if e := setDeviceIp(cfg.Address[0], devName, verbose); e != nil {
 		return e
 	}
 
@@ -106,13 +111,13 @@ func configure(
 		fn.Log("[#] setting up connection")
 	}
 
-	err = wg.ConfigureDevice(devName, cfg.Config)
+	err = wg.ConfigureDevice(interfaceName, cfg.Config)
 	if err != nil {
 		fmt.Printf("failed to configure device: %v", err)
 	}
 
 	for _, i2 := range cfg.Peers[0].AllowedIPs {
-		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), devName, verbose)
+		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), interfaceName, verbose)
 		if err != nil {
 			return err
 		}

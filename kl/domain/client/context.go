@@ -5,21 +5,30 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 
-	"github.com/adrg/xdg"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 )
 
+const (
+	ConfigFileName string = "kl-session.yaml"
+)
+
+type Env struct {
+	Name          string `json:"name"`
+	IsEnvironment bool   `json:"isEnvironment"`
+}
+
 type KLContext struct {
-	AccountName  string            `yaml:"accountName"`
-	DeviceName   string            `yaml:"deviceName"`
-	Session      string            `yaml:"session"`
-	KlFile       string            `yaml:"klFile"`
-	DNS          []string          `yaml:"dns"`
-	ClusterName  string            `yaml:"clusterName"`
-	SelectedEnvs map[string]string `yaml:"selectedEnvs"`
+	AccountName  string          `json:"accountName"`
+	DeviceName   string          `json:"deviceName"`
+	Session      string          `json:"session"`
+	KlFile       string          `json:"klFile"`
+	DNS          []string        `json:"dns"`
+	ClusterName  string          `json:"clusterName"`
+	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
 }
 
 func (f *KLContext) GetCookieString() string {
@@ -27,17 +36,55 @@ func (f *KLContext) GetCookieString() string {
 }
 
 func GetConfigFolder() (configFolder string, err error) {
+	homePath := ""
 
-	dirName := xdg.CacheHome
+	// fetching homePath
+	{
+		if euid := os.Geteuid(); euid == 0 {
+			username, ok := os.LookupEnv("SUDO_USER")
+			if !ok {
+				return "", errors.New("something went wrong")
+			}
 
-	configFolder = fmt.Sprintf("%s/.kl", dirName)
-	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(configFolder, os.ModePerm)
-		if err != nil {
-			fn.PrintError(err)
+			oldPwd, err := os.Getwd()
+			if err != nil {
+				return "", err
+			}
+
+			sp := strings.Split(oldPwd, "/")
+
+			for i := range sp {
+				if sp[i] == username {
+					homePath = path.Join("/", path.Join(sp[:i+1]...))
+				}
+			}
+		} else {
+			userHome, ok := os.LookupEnv("HOME")
+			if !ok {
+				return "", errors.New("something went wrong")
+			}
+
+			homePath = userHome
 		}
 	}
-	return configFolder, nil
+
+	configPath := path.Join(homePath, ".cache", ".kl")
+
+	// ensuring the dir is present
+	if err := os.MkdirAll(configPath, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	// ensuring user permission on created dir
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err = fn.ExecCmd(
+			fmt.Sprintf("chown %s %s", usr, configPath), nil, false,
+		); err != nil {
+			return "", err
+		}
+	}
+
+	return configPath, nil
 }
 
 func GetContextFile() (*KLContext, error) {
@@ -46,7 +93,7 @@ func GetContextFile() (*KLContext, error) {
 		return nil, err
 	}
 
-	filePath := path.Join(configPath, "config")
+	filePath := path.Join(configPath, ConfigFileName)
 
 	if _, er := os.Stat(filePath); errors.Is(er, os.ErrNotExist) {
 		er := os.MkdirAll(path.Dir(filePath), os.ModePerm)
@@ -89,12 +136,13 @@ func WriteContextFile(fileObj KLContext) error {
 		return nil
 	}
 
-	cfile := path.Join(filePath, "config")
+	cfile := path.Join(filePath, ConfigFileName)
 
 	err = os.WriteFile(cfile, file, 0644)
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = fn.ExecCmd(fmt.Sprintf("chown %s %s", usr, cfile),
-			false); err != nil {
+		if err = fn.ExecCmd(
+			fmt.Sprintf("chown %s %s", usr, cfile), nil, false,
+		); err != nil {
 			return err
 		}
 	}

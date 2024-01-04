@@ -1,10 +1,11 @@
 package client
 
 import (
-	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	fn "github.com/kloudlite/kl/pkg/functions"
+
+	"sigs.k8s.io/yaml"
 )
 
 type ResEnvType struct {
@@ -30,19 +31,18 @@ type FileEntry struct {
 }
 
 type MountType struct {
-	MountBasePath string      `yaml:"mountBasePath" json:"mountBasePath"`
+	MountBasePath string      `json:"mountBasePath"`
 	Mounts        []FileEntry `json:"mounts"`
 }
 
 type KLFileType struct {
-	Version string    `json:"version"`
-	Project string    `json:"projectName"`
-	Mres    []ResType `json:"mres"`
-	Configs []ResType `json:"configs"`
-	Secrets []ResType `json:"secrets"`
-	Env     []EnvType `json:"env"`
-	// Ports     []string  `json:"ports"`
-	FileMount MountType `yaml:"fileMount"`
+	Version   string    `json:"version"`
+	Project   string    `json:"project"`
+	Mres      []ResType `json:"mres"`
+	Configs   []ResType `json:"configs"`
+	Secrets   []ResType `json:"secrets"`
+	Env       []EnvType `json:"env"`
+	FileMount MountType `json:"fileMount"`
 }
 
 const (

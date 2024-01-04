@@ -2,12 +2,13 @@ package functions
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-func ExecCmd(cmdString string, verbose bool) error {
+func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 	r := csv.NewReader(strings.NewReader(cmdString))
 	r.Comma = ' '
 	cmdArr, err := r.Read()
@@ -19,6 +20,11 @@ func ExecCmd(cmdString string, verbose bool) error {
 		Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
+
+	for k, v := range env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+	}
+
 	cmd.Stderr = os.Stderr
 	// s.Start()
 	err = cmd.Run()

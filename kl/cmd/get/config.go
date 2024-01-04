@@ -2,13 +2,12 @@ package get
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -19,76 +18,47 @@ var configCmd = &cobra.Command{
 	Long: `get config entries
 Examples:
   # get config entries in table
-  kl get config <configid>
+  kl get config <configname>
 
   # get config entries in json format
-  kl get config <configid> -o json
+  kl get config <configname> -o json
 
   # get config entries in yaml format
-  kl get config <configid> -o yaml
+  kl get config <configname> -o yaml
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		configId := ""
+		configName := ""
+
 		if len(args) >= 1 {
-			configId = args[0]
-		} else {
-			var err error
-			configId, err = selectConfig()
-			if err != nil {
-				common_util.PrintError(err)
-				return
-			}
+			configName = args[0]
 		}
 
-		err := printConfig(configId, cmd)
+		config, err := server.EnsureConfig(fn.MakeOption("configName", configName))
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
+			return
+		}
+
+		if err := printConfig(config, cmd); err != nil {
+			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func selectConfig() (string, error) {
-	var err error
-	configs, err := server.GetConfigs()
-
-	if len(configs) == 0 {
-		return "", errors.New("no configs present in your current project")
-	}
-
-	selectedIndex, err := fuzzyfinder.Find(
-		configs,
-		func(i int) string {
-			return configs[i].Name
-		},
-		fuzzyfinder.WithPromptString("Select Config >"),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return configs[selectedIndex].Id, nil
-}
-
-func printConfig(configId string, cmd *cobra.Command) error {
+func printConfig(config *server.Config, cmd *cobra.Command) error {
 	outputFormat := cmd.Flag("output").Value.String()
-
-	config, err := server.GetConfig(configId)
-	if err != nil {
-		return err
-	}
 
 	switch outputFormat {
 	case "json":
-		configBytes, err := json.Marshal(config)
+		configBytes, err := json.Marshal(config.Data)
 		if err != nil {
 			return err
 		}
 		fmt.Println(string(configBytes))
 
 	case "yaml", "yml":
-		configBytes, err := yaml.Marshal(config)
+		configBytes, err := yaml.Marshal(config.Data)
 		if err != nil {
 			return err
 		}
@@ -101,20 +71,17 @@ func printConfig(configId string, cmd *cobra.Command) error {
 		}
 		rows := make([]table.Row, 0)
 
-		for _, c := range config.Entries {
+		for k, v := range config.Data {
 			rows = append(rows, table.Row{
-				c.Key, c.Value,
+				k, v,
 			})
 		}
 
 		fmt.Println(table.Table(&header, rows))
 
-		fmt.Println(
-			table.KVOutput("Showing entries of config:", config.Name, true),
-		)
+		table.KVOutput("Showing entries of config:", config.Metadata.Name, true)
 
-		table.TotalResults(len(config.Entries), true)
-
+		table.TotalResults(len(config.Data), true)
 	}
 
 	return nil

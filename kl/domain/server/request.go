@@ -66,8 +66,6 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		return nil, err
 	}
 
-	// fmt.Println(string(body))
-
 	type RespData struct {
 		Errors []struct {
 			Message string `json:"message"`
@@ -87,7 +85,6 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 			errorMessages = append(errorMessages, e.Message)
 		}
 
-		// fmt.Println("here")
 		return nil, fmt.Errorf(strings.Join(errorMessages, "\n"))
 
 	}

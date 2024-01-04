@@ -1,84 +1,164 @@
 package server
 
 import (
-	"encoding/json"
+	"errors"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
-type CSEntry struct {
-	Value string `json:"value"`
-	Key   string `json:"key"`
+type ConfigORSecret struct {
+	Entries map[string]string `json:"entries"`
+	Name    string            `json:"name"`
 }
 
 type Config struct {
-	Entries []CSEntry `json:"entries"`
-	Name    string    `json:"name"`
-	Id      string    `json:"id"`
+	DisplayName string            `yaml:"displayName"`
+	Metadata    Metadata          `yaml:"metadata"`
+	Status      Status            `yaml:"status"`
+	Data        map[string]string `yaml:"data"`
 }
 
-type ConfigORSecret struct {
-	Entries []CSEntry `json:"entries"`
-	Name    string    `json:"name"`
-}
+func ListConfigs(options ...fn.Option) ([]Config, error) {
 
-func GetConfigs(options ...fn.Option) ([]Config, error) {
+	env, err := EnsureEnv(nil, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	projectName, err := client.CurrentProjectName()
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId := fn.GetOption(options, "projectId")
-	if projectId == "" {
-		projectId, err = client.CurrentProjectName()
-		if err != nil {
-			return nil, err
-		}
-	}
+	respData, err := klFetch("cli_listConfigs", map[string]any{
+		"pq": map[string]any{
+			"orderBy":       "name",
+			"sortDirection": "ASC",
+			"first":         99999999,
+		},
+		"project": map[string]any{
+			"type":  "name",
+			"value": strings.TrimSpace(projectName),
+		},
+		"scope": map[string]any{
+			"type": func() string {
+				if env.IsEnvironment {
+					return "environmentName"
+				}
 
-	respData, err := klFetch("cli_getConfigs", map[string]any{
-		"projectId": projectId,
+				return "workspaceName"
+			}(),
+			"value": strings.TrimSpace(env.Name),
+		},
 	}, &cookie)
 
 	if err != nil {
 		return nil, err
 	}
 
-	type Response struct {
-		CoreConfigs []Config `json:"data"`
+	if fromResp, err := GetFromRespForEdge[Config](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
 	}
+}
 
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
+func SelectConfig(options ...fn.Option) (*Config, error) {
+
+	e, err := EnsureEnv(nil, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.CoreConfigs, nil
+	if e.Name == "" {
+		return nil, errors.New("no environment selected")
+	}
+
+	configs, err := ListConfigs(options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(configs) == 0 {
+		return nil, errors.New("no configs found")
+	}
+
+	config, err := fzf.FindOne(
+		configs,
+		func(config Config) string {
+			return config.DisplayName
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
 
-func GetConfig(id string) (*Config, error) {
+func EnsureConfig(options ...fn.Option) (*Config, error) {
+	configName := fn.GetOption(options, "configName")
+
+	if configName != "" {
+		return GetConfig(options...)
+	}
+
+	config, err := SelectConfig(options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func GetConfig(options ...fn.Option) (*Config, error) {
+	configName := fn.GetOption(options, "configName")
+
+	env, err := EnsureEnv(nil, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	projectName, err := client.CurrentProjectName()
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
+
 	respData, err := klFetch("cli_getConfig", map[string]any{
-		"configId": id,
+		"name": configName,
+		"project": map[string]any{
+			"type":  "name",
+			"value": strings.TrimSpace(projectName),
+		},
+		"scope": map[string]any{
+			"type": func() string {
+				if env.IsEnvironment {
+					return "environmentName"
+				}
+
+				return "workspaceName"
+			}(),
+			"value": strings.TrimSpace(env.Name),
+		},
 	}, &cookie)
 
 	if err != nil {
 		return nil, err
 	}
 
-	type Response struct {
-		CoreConfig Config `json:"data"`
-	}
-
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
+	if fromResp, err := GetFromResp[Config](respData); err != nil {
 		return nil, err
+	} else {
+		return fromResp, nil
 	}
-
-	return &resp.CoreConfig, nil
 }

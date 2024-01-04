@@ -3,8 +3,8 @@ package gen
 import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
-	server2 "github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/ktr0731/go-fuzzyfinder"
@@ -27,9 +27,9 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		klFile, err := client.GetKlFile(nil)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
-			common_util.PrintError(fmt.Errorf(es))
+			fn.PrintError(fmt.Errorf(es))
 			return
 		}
 		path := ""
@@ -40,7 +40,7 @@ Examples:
 
 		err = selectConfigMount(path, *klFile, cmd)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -77,31 +77,32 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		cOrs = csName[cOrsIndex]
 	}
 
-	items := make([]server2.ConfigORSecret, 0)
+	items := make([]server.ConfigORSecret, 0)
 	if cOrs == "config" {
-		configs, e := server2.GetConfigs()
+		configs, e := server.ListConfigs()
 
 		if e != nil {
 			return e
 		}
 
 		for _, c := range configs {
-			items = append(items, server2.ConfigORSecret{
-				Name: c.Name,
+			items = append(items, server.ConfigORSecret{
+				Entries: c.Data,
+				Name:    c.Metadata.Name,
 			})
 		}
 
 	} else {
-		secrets, e := server2.GetSecrets()
+		secrets, e := server.ListSecrets()
 
 		if e != nil {
 			return e
 		}
 
 		for _, c := range secrets {
-			items = append(items, server2.ConfigORSecret{
-				Entries: c.Entries,
-				Name:    c.Name,
+			items = append(items, server.ConfigORSecret{
+				Entries: c.StringData,
+				Name:    c.Metadata.Name,
 			})
 		}
 	}
@@ -110,7 +111,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		return fmt.Errorf("no %ss created yet on server", cOrs)
 	}
 
-	selectedItem := server2.ConfigORSecret{}
+	selectedItem := server.ConfigORSecret{}
 
 	if c != "" || s != "" {
 		csId := func() string {
@@ -138,7 +139,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		)
 
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 		}
 
 		selectedItem = items[selectedItemIndex]

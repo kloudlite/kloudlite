@@ -2,12 +2,13 @@ package wg
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/text"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
@@ -64,18 +65,13 @@ Examples:
 			)
 			return
 		}
-		/*
-		   steps to perform
-		   1. setup interface
-		   2. setup dns
-
-		*/
 
 		if foreground {
 			if err := startService(connectVerbose); err != nil {
 				fn.PrintError(err)
 				return
 			}
+			return
 		}
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
@@ -108,10 +104,10 @@ Examples:
 			return
 		}
 
-		if err := connect(connectVerbose); err != nil {
-			fn.PrintError(err)
-			return
-		}
+		// if err := connect(connectVerbose); err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
 
 		if foreground {
 			if err := startService(connectVerbose); err != nil {
@@ -119,6 +115,7 @@ Examples:
 				return
 			}
 		} else {
+
 			startServiceInBg()
 			if err := startConfiguration(connectVerbose); err != nil {
 				fn.PrintError(err)
@@ -127,6 +124,8 @@ Examples:
 		}
 
 		fn.Log("[#] connected")
+
+		wgc.Show(nil)
 	},
 }
 

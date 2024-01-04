@@ -20,8 +20,8 @@ Examples:
   kl use cluster
 	# this will open selector where you can select one of the cluster accessible to you.
 
-  # select account with cluster id
-  kl use cluster <clusterId>
+  # select account with cluster name
+  kl use cluster <clustername>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
 

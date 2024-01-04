@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -13,6 +14,9 @@ type Env struct {
 	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
 	Status      Status   `json:"status"`
+	Spec        struct {
+		IsEnvironment bool `json:"isEnvironment"`
+	} `json:"spec"`
 }
 
 type EnvList struct {
@@ -39,7 +43,7 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 		},
 		"project": map[string]any{
 			"type":  "name",
-			"value": projectName,
+			"value": strings.TrimSpace(projectName),
 		},
 	}, &cookie)
 
@@ -56,8 +60,8 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 
 func SelectEnv(envName string) (*Env, error) {
 
-	persistSelectedEnv := func(envName string) error {
-		err := client.SelectEnv(envName)
+	persistSelectedEnv := func(env client.Env) error {
+		err := client.SelectEnv(env)
 		if err != nil {
 			return err
 		}
@@ -72,7 +76,10 @@ func SelectEnv(envName string) (*Env, error) {
 	if envName != "" {
 		for _, a := range envs {
 			if a.Metadata.Name == envName {
-				if err := persistSelectedEnv(a.Metadata.Name); err != nil {
+				if err := persistSelectedEnv(client.Env{
+					Name:          a.Metadata.Name,
+					IsEnvironment: a.Spec.IsEnvironment,
+				}); err != nil {
 					return nil, err
 				}
 				return &a, nil
@@ -93,33 +100,43 @@ func SelectEnv(envName string) (*Env, error) {
 		return nil, err
 	}
 
-	if err := persistSelectedEnv(env.Metadata.Name); err != nil {
+	if err := persistSelectedEnv(client.Env{
+		Name:          env.Metadata.Name,
+		IsEnvironment: env.Spec.IsEnvironment,
+	}); err != nil {
 		return nil, err
 	}
 
 	return env, nil
 }
 
-func EnsureEnv(options ...fn.Option) (string, error) {
-	envName := fn.GetOption(options, "envName")
-
+func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 	if _, err := EnsureProject(options...); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	if envName != "" {
-		return envName, nil
+	if env != nil {
+		return env, nil
 	}
 
-	s, _ := client.CurrentEnvName()
-	if s != "" {
-		return s, nil
+	env, _ = client.CurrentEnv()
+
+	if env != nil {
+		return env, nil
 	}
 
-	env, err := SelectEnv(envName)
+	mEnv, err := SelectEnv(func() string {
+		if env != nil {
+			return env.Name
+		}
+		return ""
+	}())
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return env.Metadata.Name, nil
+	return &client.Env{
+		Name:          mEnv.Metadata.Name,
+		IsEnvironment: mEnv.Spec.IsEnvironment,
+	}, nil
 }

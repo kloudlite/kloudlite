@@ -45,6 +45,7 @@ func Show(opts *WgShowOptions) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	// checkError(err)
 	switch opts.Interface {
 	case "interfaces":
@@ -78,6 +79,7 @@ func Show(opts *WgShowOptions) (string, error) {
 			return "", err
 		}
 	}
+
 	return res, client.Close()
 }
 

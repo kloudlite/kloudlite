@@ -1,73 +1,159 @@
 package server
 
 import (
-	"encoding/json"
+	"errors"
+	"strings"
+
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 type Secret struct {
-	Entries []CSEntry `json:"entries"`
-	Name    string    `json:"name"`
-	Id      string    `json:"id"`
+	DisplayName string            `yaml:"displayName"`
+	Metadata    Metadata          `yaml:"metadata"`
+	Status      Status            `yaml:"status"`
+	StringData  map[string]string `yaml:"stringData"`
 }
 
-func GetSecrets(options ...fn.Option) ([]Secret, error) {
+func ListSecrets(options ...fn.Option) ([]Secret, error) {
+
+	env, err := EnsureEnv(nil, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	projectName, err := client.CurrentProjectName()
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	projectId := fn.GetOption(options, "projectId")
-	if projectId == "" {
-		projectId, err = client.CurrentProjectName()
-		if err != nil {
-			return nil, err
-		}
-	}
+	respData, err := klFetch("cli_listSecrets", map[string]any{
+		"pq": map[string]any{
+			"orderBy":       "name",
+			"sortDirection": "ASC",
+			"first":         99999999,
+		},
+		"project": map[string]any{
+			"type":  "name",
+			"value": strings.TrimSpace(projectName),
+		},
+		"scope": map[string]any{
+			"type": func() string {
+				if env.IsEnvironment {
+					return "environmentName"
+				}
 
-	respData, err := klFetch("cli_getSecrets", map[string]any{
-		"projectId": projectId,
+				return "workspaceName"
+			}(),
+			"value": strings.TrimSpace(env.Name),
+		},
 	}, &cookie)
 
 	if err != nil {
 		return nil, err
 	}
 
-	type Response struct {
-		CoreSecrets []Secret `json:"data"`
+	if fromResp, err := GetFromRespForEdge[Secret](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
 	}
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
+}
+
+func SelectSecret(options ...fn.Option) (*Secret, error) {
+
+	e, err := EnsureEnv(nil, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.CoreSecrets, nil
+	if e.Name == "" {
+		return nil, errors.New("no environment selected")
+	}
+
+	secrets, err := ListSecrets(options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(secrets) == 0 {
+		return nil, errors.New("no configs found")
+	}
+
+	secret, err := fzf.FindOne(
+		secrets,
+		func(sec Secret) string {
+			return sec.DisplayName
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return secret, nil
 }
 
-func GetSecret(id string) (*Config, error) {
+func EnsureSecret(options ...fn.Option) (*Secret, error) {
+	secName := fn.GetOption(options, "secretName")
+
+	if secName != "" {
+		return GetSecret(options...)
+	}
+
+	secret, err := SelectSecret(options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return secret, nil
+}
+
+func GetSecret(options ...fn.Option) (*Secret, error) {
+	secName := fn.GetOption(options, "secretName")
+
+	env, err := EnsureEnv(nil, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	projectName, err := client.CurrentProjectName()
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
+
 	respData, err := klFetch("cli_getSecret", map[string]any{
-		"secretId": id,
+		"name": secName,
+		"project": map[string]any{
+			"type":  "name",
+			"value": strings.TrimSpace(projectName),
+		},
+		"scope": map[string]any{
+			"type": func() string {
+				if env.IsEnvironment {
+					return "environmentName"
+				}
+
+				return "workspaceName"
+			}(),
+			"value": strings.TrimSpace(env.Name),
+		},
 	}, &cookie)
 
 	if err != nil {
 		return nil, err
 	}
 
-	type Response struct {
-		CoreSecret Config `json:"data"`
-	}
-
-	var resp Response
-	err = json.Unmarshal(respData, &resp)
-	if err != nil {
+	if fromResp, err := GetFromResp[Secret](respData); err != nil {
 		return nil, err
+	} else {
+		return fromResp, nil
 	}
-
-	return &resp.CoreSecret, nil
 }

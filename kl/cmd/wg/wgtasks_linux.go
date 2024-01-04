@@ -10,7 +10,13 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/lib/wgc"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/vishvananda/netlink"
 )
+
+func configureDarwin(_ string, _ bool) error {
+	// not required to implement
+	return nil
+}
 
 func connect(verbose bool) error {
 	success := false
@@ -68,6 +74,7 @@ func setDNS(dns []net.IP, verbose bool) error {
 
 	return err
 }
+
 func resetDNS(verbose bool) error {
 
 	if verbose {
@@ -87,31 +94,60 @@ func resetDNS(verbose bool) error {
 	return os.Rename("/etc/resolv.conf.bak", "/etc/resolv.conf")
 }
 
-func setDeviceIp(deviceIp string, deviceName string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", deviceName, deviceIp, deviceIp), verbose)
-}
-
-func startService(verbose bool) error {
-
+func startService(_ bool) error {
 	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
 
-	if err := execCmd(fmt.Sprintf("ip link add dev %s type wireguard", devName), verbose); err != nil {
-		return err
+	// Add Wireguard device
+	wgLink := &netlink.GenericLink{
+		LinkAttrs: netlink.LinkAttrs{Name: devName},
+		LinkType:  "wireguard",
+	}
+	if err := netlink.LinkAdd(wgLink); err != nil {
+		return fmt.Errorf("failed to add WireGuard interface: %v", err)
 	}
 
-	return execCmd(fmt.Sprintf("ip link set mtu 1420 up dev %s", devName), verbose)
+	// Set MTU and bring up the device
+	link, err := netlink.LinkByName(devName)
+	if err != nil {
+		return fmt.Errorf("failed to find the interface %s: %v", devName, err)
+	}
+	if err := netlink.LinkSetMTU(link, 1420); err != nil {
+		return fmt.Errorf("failed to set MTU for %s: %v", devName, err)
+	}
+	if err := netlink.LinkSetUp(link); err != nil {
+		return fmt.Errorf("failed to bring up the interface %s: %v", devName, err)
+	}
 
+	return nil
 }
 
-func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ip -4 route add %s dev %s", ip, devName), verbose)
+func ipRouteAdd(ip string, _ string, devName string, _ bool) error {
+	_, dst, err := net.ParseCIDR(ip)
+	if err != nil {
+		return fmt.Errorf("failed to parse CIDR: %v", err)
+	}
+
+	link, err := netlink.LinkByName(devName)
+	if err != nil {
+		return fmt.Errorf("failed to find the interface %s: %v", devName, err)
+	}
+
+	route := &netlink.Route{
+		LinkIndex: link.Attrs().Index,
+		Dst:       dst,
+		Scope:     netlink.SCOPE_UNIVERSE,
+	}
+	if err := netlink.RouteAdd(route); err != nil {
+		return fmt.Errorf("failed to add the route: %v", err)
+	}
+
+	return nil
 }
 
 func stopService(verbose bool) error {
-
 	wgInterface, err := wgc.Show(&wgc.WgShowOptions{
 		Interface: "interfaces",
 	})
@@ -123,9 +159,34 @@ func stopService(verbose bool) error {
 		return nil
 	}
 
-	if err := execCmd(fmt.Sprintf("ip link del dev %s", strings.TrimSpace(wgInterface)), verbose); err != nil {
-		return err
+	link, err := netlink.LinkByName(strings.TrimSpace(wgInterface))
+	if err != nil {
+		return fmt.Errorf("failed to find the interface %s: %v", wgInterface, err)
+	}
+
+	if err := netlink.LinkDel(link); err != nil {
+		return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
 	}
 
 	return resetDNS(verbose)
+}
+
+func setDeviceIp(ip net.IPNet, deviceName string, _ bool) error {
+	link, err := netlink.LinkByName(deviceName)
+	if err != nil {
+		return fmt.Errorf("failed to find the interface %s: %v", deviceName, err)
+	}
+
+	addr := &netlink.Addr{
+		IPNet: &net.IPNet{
+			IP:   ip.IP,
+			Mask: ip.Mask,
+		},
+	}
+
+	if err := netlink.AddrAdd(link, addr); err != nil {
+		return fmt.Errorf("failed to set IP address for %s: %v", deviceName, err)
+	}
+
+	return nil
 }

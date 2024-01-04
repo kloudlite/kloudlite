@@ -1,10 +1,10 @@
 package wg
 
 import (
+	"strings"
+
 	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
-	"os"
-	"strings"
 
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/spf13/cobra"
@@ -24,12 +24,12 @@ Examples:
   kl wg disconnect -v`,
 	Run: func(_ *cobra.Command, _ []string) {
 
-		if euid := os.Geteuid(); euid != 0 {
-			common_util.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
-			return
-		}
+		// if euid := os.Geteuid(); euid != 0 {
+		// 	common_util.Log(
+		// 		text.Colored("make sure you are running command with sudo", 209),
+		// 	)
+		// 	return
+		// }
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
 			Interface: "interfaces",

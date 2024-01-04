@@ -179,6 +179,7 @@ func (cfg *Config) UnmarshalText(text []byte) error {
 
 	return nil
 }
+
 func parseInterfaceLine(cfg *Config, lhs string, rhs string) error {
 	switch lhs {
 	case "Address":
@@ -277,15 +278,18 @@ func parsePeerLine(peerCfg *wgtypes.PeerConfig, lhs string, rhs string) error {
 			if err != nil {
 				return nil, err
 			}
+
 			if len(a) == 0 {
 				common_util.Log(text.Colored("defering to net.ResolveUDPAddr", 209))
 				return net.ResolveUDPAddr("", rhs)
 			}
+
 			port, err := strconv.ParseInt(strings.Split(rhs, ":")[1], 10, 32)
 			if err != nil {
 				common_util.Log(text.Colored("defering to net.ResolveUDPAddr", 209))
 				return net.ResolveUDPAddr("", rhs)
 			}
+
 			return &net.UDPAddr{
 				IP:   a[0].A.To4(),
 				Port: int(port),

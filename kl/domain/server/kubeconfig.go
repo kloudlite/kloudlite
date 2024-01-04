@@ -22,17 +22,17 @@ func SyncKubeConfig(accName, clustName *string) (*string, error) {
 		name = *accName
 	}
 
-	config, err := getKubeConfig(accName, clustName)
-	if err != nil {
-		return nil, err
-	}
-
 	tmpDir := os.TempDir()
 	tmpFile := path.Join(tmpDir, name)
 
 	_, err = os.Stat(tmpFile)
 	if err == nil {
 		return &tmpFile, nil
+	}
+
+	config, err := getKubeConfig(accName, clustName)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := os.WriteFile(tmpFile, []byte(*config), 0644); err != nil {

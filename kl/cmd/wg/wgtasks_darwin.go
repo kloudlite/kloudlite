@@ -3,8 +3,6 @@ package wg
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/pkg/functions"
 	"net"
 	"os"
 	"os/exec"
@@ -13,6 +11,9 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
+
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
@@ -20,6 +21,13 @@ import (
 	"k8s.io/utils/strings/slices"
 )
 
+const (
+	ifName string = "utun2464"
+)
+
+func configureDarwin(devName string, verbose bool) error {
+	return configure(devName, ifName, verbose)
+}
 func connect(verbose bool) error {
 	success := false
 	defer func() {
@@ -157,21 +165,18 @@ func resetDNS(verbose bool) error {
 	return nil
 }
 
-func setDeviceIp(deviceIp string, devName string, verbose bool) error {
-	devName = fmt.Sprint("utun", devName)
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", devName, deviceIp, deviceIp), verbose)
+func setDeviceIp(deviceIp  net.IPNet, _ string, verbose bool) error {
+	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
 }
+
 func startService(verbose bool) error {
-	devName, err := client.CurrentDeviceName()
+
+	t, err := tun.CreateTUN(ifName, device.DefaultMTU)
 	if err != nil {
 		return err
 	}
-	devName = fmt.Sprint("utun", devName)
-	t, err := tun.CreateTUN(devName, device.DefaultMTU)
-	if err != nil {
-		return err
-	}
-	fileUAPI, err := ipc.UAPIOpen(devName)
+
+	fileUAPI, err := ipc.UAPIOpen(ifName)
 	if err != nil {
 		return err
 	}
@@ -179,12 +184,12 @@ func startService(verbose bool) error {
 	if verbose {
 		logger = device.NewLogger(
 			device.LogLevelSilent,
-			fmt.Sprintf("[%s]", devName),
+			fmt.Sprintf("[%s]", ifName),
 		)
 	} else {
 		logger = device.NewLogger(
 			device.LogLevelVerbose,
-			fmt.Sprintf("[%s]", devName),
+			fmt.Sprintf("[%s]", ifName),
 		)
 	}
 
@@ -192,7 +197,7 @@ func startService(verbose bool) error {
 	logger.Verbosef("Device started")
 	errs := make(chan error)
 	term := make(chan os.Signal, 1)
-	uapi, err := ipc.UAPIListen(devName, fileUAPI)
+	uapi, err := ipc.UAPIListen(ifName, fileUAPI)
 	if err != nil {
 		logger.Errorf("Failed to listen on uapi socket: %v", err)
 		os.Exit(1)

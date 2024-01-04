@@ -101,7 +101,7 @@ func getCookie() (string, error) {
 
 	if file.Session == "" {
 		return "",
-			errors.New("you are not logged in yet. please login using \"kl auth login\"")
+			errors.New("you are not logged in yet. please login using \"kl login\"")
 	}
 
 	return file.GetCookieString(), nil

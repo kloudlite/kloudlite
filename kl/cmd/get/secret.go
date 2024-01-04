@@ -2,13 +2,12 @@ package get
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -19,82 +18,51 @@ var secretCmd = &cobra.Command{
 	Long: `get secret entries
 Examples:
   # get secret entries in table
-  kl get secret <secretid>
+  kl get secret <secretname>
 
   # get secret entries in json format
-  kl get secret <secretid> -o json
+  kl get secret <secretname> -o json
 
   # get secret entries in yaml format
-  kl get secret <secretid> -o yaml
+  kl get secret <secretname> -o yaml
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		secretId := ""
+		secName := ""
+
 		if len(args) >= 1 {
-			secretId = args[0]
-		} else {
-			var err error
-			secretId, err = selectSecret()
-			if err != nil {
-				common_util.PrintError(err)
-				return
-			}
+			secName = args[0]
 		}
 
-		err := printSecret(secretId, cmd)
+		sec, err := server.EnsureSecret(fn.MakeOption("secretName", secName))
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 
+		if err := printSecret(sec, cmd); err != nil {
+			fn.PrintError(err)
+			return
+		}
 	},
 }
 
-func selectSecret() (string, error) {
-	var err error
-	secrets, err := server.GetSecrets()
-
-	if len(secrets) == 0 {
-		return "", errors.New("no secret present in your current project")
-	}
-
-	selectedIndex, err := fuzzyfinder.Find(
-		secrets,
-		func(i int) string {
-			return secrets[i].Name
-		},
-		fuzzyfinder.WithPromptString("Select Secret >"),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return secrets[selectedIndex].Name, nil
-}
-
-func printSecret(secretId string, cmd *cobra.Command) error {
+func printSecret(secret *server.Secret, cmd *cobra.Command) error {
 	outputFormat := cmd.Flag("output").Value.String()
-
-	secret, err := server.GetSecret(secretId)
-	if err != nil {
-		return err
-	}
 
 	switch outputFormat {
 	case "json":
-		secretBytes, err := json.Marshal(secret)
+		configBytes, err := json.Marshal(secret.StringData)
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(secretBytes))
+		fmt.Println(string(configBytes))
 
 	case "yaml", "yml":
-
-		secretBytes, err := yaml.Marshal(secret)
+		configBytes, err := yaml.Marshal(secret.StringData)
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(secretBytes))
+		fmt.Println(string(configBytes))
 
 	default:
 		header := table.Row{
@@ -103,18 +71,15 @@ func printSecret(secretId string, cmd *cobra.Command) error {
 		}
 		rows := make([]table.Row, 0)
 
-		for _, c := range secret.Entries {
+		for k, v := range secret.StringData {
 			rows = append(rows, table.Row{
-				c.Key, c.Value,
+				k, v,
 			})
 		}
 
 		fmt.Println(table.Table(&header, rows))
-
-		table.KVOutput("Showing entries of secret:", secret.Name, true)
-
-		table.TotalResults(len(secret.Entries), true)
-
+		table.KVOutput("Showing entries of secret:", secret.Metadata.Name, true)
+		table.TotalResults(len(secret.StringData), true)
 	}
 
 	return nil
@@ -122,4 +87,5 @@ func printSecret(secretId string, cmd *cobra.Command) error {
 
 func init() {
 	secretCmd.Flags().StringP("output", "o", "table", "output format (table|json|yaml)")
+	secretCmd.Aliases = append(secretCmd.Aliases, "sec")
 }
