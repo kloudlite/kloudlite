@@ -46,9 +46,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: 'StandaloneServiceSpec defines the desired state of StandaloneService
-              kl-msvc-template: description="hello description" kl-msvc-template:
-              logoUrl="https://asdfjasdkfdjasf;jsadf"'
+            description: StandaloneServiceSpec defines the desired state of StandaloneService
             properties:
               nodeSelector:
                 additionalProperties:
