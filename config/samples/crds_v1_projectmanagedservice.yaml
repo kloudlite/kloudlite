@@ -1,12 +1,12 @@
 apiVersion: crds.kloudlite.io/v1
-kind: ClusterManagedService
+kind: ProjectManagedService
 metadata:
   labels:
-    app.kubernetes.io/name: clustermanagedservice
-    app.kubernetes.io/instance: clustermanagedservice-sample
+    app.kubernetes.io/name: projectmanagedservice
+    app.kubernetes.io/instance: projectmanagedservice-sample
     app.kubernetes.io/part-of: app
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: app
-  name: clustermanagedservice-sample
+  name: projectmanagedservice-sample
 spec:
   # TODO(user): Add fields here

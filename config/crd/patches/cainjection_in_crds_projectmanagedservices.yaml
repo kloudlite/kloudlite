@@ -4,4 +4,4 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
-  name: clustermanagedservices.crds.kloudlite.io
+  name: projectmanagedservices.crds.kloudlite.io

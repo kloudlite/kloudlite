@@ -366,7 +366,7 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: crds
-  kind: ClusterManagedService
+  kind: ProjectManagedService
   path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 version: "3"

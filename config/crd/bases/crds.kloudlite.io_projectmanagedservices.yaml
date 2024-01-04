@@ -5,15 +5,15 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: clustermanagedservices.crds.kloudlite.io
+  name: projectmanagedservices.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: ClusterManagedService
-    listKind: ClusterManagedServiceList
-    plural: clustermanagedservices
-    singular: clustermanagedservice
-  scope: Cluster
+    kind: ProjectManagedService
+    listKind: ProjectManagedServiceList
+    plural: projectmanagedservices
+    singular: projectmanagedservice
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .metadata.annotations.kloudlite\.io\/service-gvk
@@ -31,7 +31,7 @@ spec:
     name: v1
     schema:
       openAPIV3Schema:
-        description: ClusterManagedService is the Schema for the clustermanagedservices
+        description: ProjectManagedService is the Schema for the projectmanagedservices
           API
         properties:
           apiVersion:
@@ -47,7 +47,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ClusterManagedServiceSpec defines the desired state of ClusterManagedService
+            description: ProjectManagedServiceSpec defines the desired state of ProjectManagedService
             properties:
               msvcSpec:
                 description: ManagedServiceSpec defines the desired state of ManagedService
@@ -70,11 +70,11 @@ spec:
                 required:
                 - serviceTemplate
                 type: object
-              namespace:
+              targetNamespace:
                 type: string
             required:
             - msvcSpec
-            - namespace
+            - targetNamespace
             type: object
           status:
             properties:
