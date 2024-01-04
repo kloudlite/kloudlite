@@ -1,20 +1,20 @@
-# permissions for end users to view clustermanagedservices.
+# permissions for end users to view projectmanagedservices.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: clustermanagedservice-viewer-role
+    app.kubernetes.io/instance: projectmanagedservice-viewer-role
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: app
     app.kubernetes.io/part-of: app
     app.kubernetes.io/managed-by: kustomize
-  name: clustermanagedservice-viewer-role
+  name: projectmanagedservice-viewer-role
 rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - clustermanagedservices
+  - projectmanagedservices
   verbs:
   - get
   - list
@@ -22,6 +22,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - clustermanagedservices/status
+  - projectmanagedservices/status
   verbs:
   - get

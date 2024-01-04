@@ -11,10 +11,10 @@ import (
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	zookeeperMsvcv1 "github.com/kloudlite/operator/apis/zookeeper.msvc/v1"
 	"github.com/kloudlite/operator/operator"
-	cmsvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/cluster-msvc"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/mres"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/msvc"
+	pmsvc "github.com/kloudlite/operator/operators/msvc-n-mres/internal/project-msvc"
 )
 
 func RegisterInto(mgr operator.Operator) {
@@ -31,7 +31,7 @@ func RegisterInto(mgr operator.Operator) {
 		neo4jMsvcv1.AddToScheme,
 	)
 	mgr.RegisterControllers(
-		&cmsvc.Reconciler{Name: "cmsvc", Env: ev},
+		&pmsvc.Reconciler{Name: "project-msvc", Env: ev},
 		&msvc.Reconciler{Name: "msvc", Env: ev},
 		&mres.Reconciler{Name: "mres", Env: ev},
 	)

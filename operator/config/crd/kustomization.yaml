@@ -36,7 +36,7 @@ resources:
 - bases/distribution.kloudlite.io_builds.yaml
 - bases/distribution.kloudlite.io_buildruns.yaml
 - bases/wireguard.kloudlite.io_dns.yaml
-- bases/crds.kloudlite.io_clustermanagedservices.yaml
+- bases/crds.kloudlite.io_projectmanagedservices.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -47,7 +47,7 @@ patchesStrategicMerge:
 # - patches/webhook_in_builds.yaml
 # - patches/webhook_in_buildruns.yaml
 # - patches/webhook_in_dns.yaml
-#- patches/webhook_in_clustermanagedservices.yaml
+#- patches/webhook_in_projectmanagedservices.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -56,7 +56,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_builds.yaml
 #- patches/webhook_in_buildruns.yaml
 #- patches/webhook_in_dns.yaml
-#- patches/webhook_in_clustermanagedservices.yaml
+#- patches/webhook_in_projectmanagedservices.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 # - patches/serverless.kloudlite.io_lambdas.yaml
 # - patches/cainjection_in_lambdas.yaml
@@ -64,7 +64,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_builds.yaml
 #- patches/cainjection_in_buildruns.yaml
 #- patches/cainjection_in_dns.yaml
-#- patches/cainjection_in_clustermanagedservices.yaml
+#- patches/cainjection_in_projectmanagedservices.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
