@@ -2694,6 +2694,39 @@ mutation consoleDeleteHelmChart($clusterName: String!, $releaseName: String!) {
   infra_deleteHelmRelease(clusterName: $clusterName, releaseName: $releaseName)
 }
 
+query authCli_getSecret($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
+  core_getSecret(project: $project, scope: $scope, name: $name) {
+    metadata {
+      name
+      namespace
+    }
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+    stringData
+  }
+}
+
+query authCli_getConfig($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
+  core_getConfig(project: $project, scope: $scope, name: $name) {
+    data
+    displayName
+    metadata {
+      name
+      namespace
+    }
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+  }
+}
+
 query authCli_listApps($project: ProjectId!, $scope: WorkspaceOrEnvId!, $pq: CursorPaginationIn) {
   core_listApps(project: $project, scope: $scope, pq: $pq) {
     edges {
@@ -2788,6 +2821,29 @@ query authCli_listApps($project: ProjectId!, $scope: WorkspaceOrEnvId!, $pq: Cur
           }
         }
         workspaceName
+      }
+    }
+  }
+}
+
+query authCli_listConfigs($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
+  core_listConfigs(project: $project, scope: $scope) {
+    totalCount
+    edges {
+      node {
+        data
+        displayName
+        markedForDeletion
+        metadata {
+          name
+          namespace
+        }
+        status {
+          isReady
+          message {
+            RawMessage
+          }
+        }
       }
     }
   }

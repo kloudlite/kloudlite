@@ -17,6 +17,25 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_updateDevicePort: executor(
+    gql`
+      mutation Mutation(
+        $clusterName: String!
+        $deviceName: String!
+        $ports: [PortIn!]!
+      ) {
+        infra_updateVPNDevicePorts(
+          clusterName: $clusterName
+          deviceName: $deviceName
+          ports: $ports
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_updateVPNDevicePorts,
+      vars: (_: any) => {},
+    }
+  ),
   cli_getSecret: executor(
     gql`
       query Core_getSecret(
