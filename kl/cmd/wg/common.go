@@ -94,7 +94,7 @@ func configure(
 
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
-	} else if e := setDeviceIp(cfg.Address[0].IP.String(), devName, verbose); e != nil {
+	} else if e := setDeviceIp(cfg.Address[0], devName, verbose); e != nil {
 		return e
 	}
 

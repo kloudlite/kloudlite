@@ -164,8 +164,28 @@ func resetDNS(verbose bool) error {
 	return nil
 }
 
-func setDeviceIp(deviceIp string, _ string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp, deviceIp), verbose)
+// func setDeviceIp(deviceIp string, _ string, verbose bool) error {
+// 	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp, deviceIp), verbose)
+// }
+
+func setDeviceIp(ip net.IPNet, deviceName string, _ bool) error {
+	link, err := netlink.LinkByName(deviceName)
+	if err != nil {
+		return fmt.Errorf("failed to find the interface %s: %v", deviceName, err)
+	}
+
+	addr := &netlink.Addr{
+		IPNet: &net.IPNet{
+			IP:   ip.IP,
+			Mask: ip.Mask,
+		},
+	}
+
+	if err := netlink.AddrAdd(link, addr); err != nil {
+		return fmt.Errorf("failed to set IP address for %s: %v", deviceName, err)
+	}
+
+	return nil
 }
 func startService(verbose bool) error {
 
