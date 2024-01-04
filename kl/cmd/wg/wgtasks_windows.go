@@ -27,14 +27,20 @@ func disconnect(verbose bool) error {
 }
 
 func setDNS(dns []net.IP, verbose bool) error {
-	return nil
+	return errors.New(
+		text.Colored("This command is not available for windows, will be available soon", 209),
+	)
 }
 func resetDNS(verbose bool) error {
-	return nil
+	return errors.New(
+		text.Colored("This command is not available for windows, will be available soon", 209),
+	)
 }
 
-func setDeviceIp(deviceIp string, verbose bool) error {
-	return nil
+func setDeviceIp(deviceIp string, deviceName string, verbose bool) error {
+	return errors.New(
+		text.Colored("This command is not available for windows, will be available soon", 209),
+	)
 }
 
 func startService(verbose bool) error {
@@ -43,8 +49,10 @@ func startService(verbose bool) error {
 	)
 }
 
-func ipRouteAdd(ip string, interfaceIp string, verbose bool) error {
-	return nil
+func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) error {
+	return errors.New(
+		text.Colored("This command is not available for windows, will be available soon", 209),
+	)
 }
 
 func stopService(verbose bool) error {
