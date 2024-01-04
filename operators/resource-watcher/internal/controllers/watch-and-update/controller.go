@@ -106,7 +106,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			return ctrl.Result{}, err
 		}
 
-	case ClusterManagedServiceGVK.String(), NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String():
+	case ClusterManagedServiceGVK.String(), NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
 		{
 			// dispatch to infra
 			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
@@ -231,6 +231,7 @@ var (
 	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
 	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
+	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
 
 	// native resources
 	PersistentVolumeClaimGVK = newGVK("v1", "PersistentVolumeClaim")
@@ -261,6 +262,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 		ClusterManagedServiceGVK,
 		NodePoolGVK,
+		HelmChartGVK,
 
 		// native resources
 		PersistentVolumeClaimGVK,
