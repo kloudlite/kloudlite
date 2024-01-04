@@ -3,8 +3,6 @@ package wg
 import (
 	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/pkg/functions"
 	"net"
 	"os"
 	"os/exec"
@@ -12,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
@@ -164,29 +165,10 @@ func resetDNS(verbose bool) error {
 	return nil
 }
 
-// func setDeviceIp(deviceIp string, _ string, verbose bool) error {
-// 	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp, deviceIp), verbose)
-// }
-
-func setDeviceIp(ip net.IPNet, deviceName string, _ bool) error {
-	link, err := netlink.LinkByName(deviceName)
-	if err != nil {
-		return fmt.Errorf("failed to find the interface %s: %v", deviceName, err)
-	}
-
-	addr := &netlink.Addr{
-		IPNet: &net.IPNet{
-			IP:   ip.IP,
-			Mask: ip.Mask,
-		},
-	}
-
-	if err := netlink.AddrAdd(link, addr); err != nil {
-		return fmt.Errorf("failed to set IP address for %s: %v", deviceName, err)
-	}
-
-	return nil
+func setDeviceIp(deviceIp  net.IPNet, _ string, verbose bool) error {
+	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
 }
+
 func startService(verbose bool) error {
 
 	t, err := tun.CreateTUN(ifName, device.DefaultMTU)
