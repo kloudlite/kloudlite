@@ -332,16 +332,6 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ChartRepo struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ChartRepoIn struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
 	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
 	Namespace string                                                  `json:"namespace"`
@@ -353,27 +343,27 @@ type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
+	ChartName     string                                       `json:"chartName"`
+	ChartRepoURL  string                                       `json:"chartRepoURL"`
+	ChartVersion  string                                       `json:"chartVersion"`
+	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVars `json:"jobVars,omitempty"`
+	PostInstall   *string                                      `json:"postInstall,omitempty"`
+	PostUninstall *string                                      `json:"postUninstall,omitempty"`
+	PreInstall    *string                                      `json:"preInstall,omitempty"`
+	PreUninstall  *string                                      `json:"preUninstall,omitempty"`
+	Values        map[string]interface{}                       `json:"values"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
 	ChartName     string                                         `json:"chartName"`
-	ChartRepo     *GithubComKloudliteOperatorApisCrdsV1ChartRepo `json:"chartRepo"`
+	ChartRepoURL  string                                         `json:"chartRepoURL"`
 	ChartVersion  string                                         `json:"chartVersion"`
-	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVars   `json:"jobVars,omitempty"`
+	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVarsIn `json:"jobVars,omitempty"`
 	PostInstall   *string                                        `json:"postInstall,omitempty"`
 	PostUninstall *string                                        `json:"postUninstall,omitempty"`
 	PreInstall    *string                                        `json:"preInstall,omitempty"`
 	PreUninstall  *string                                        `json:"preUninstall,omitempty"`
 	Values        map[string]interface{}                         `json:"values"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
-	ChartName     string                                           `json:"chartName"`
-	ChartRepo     *GithubComKloudliteOperatorApisCrdsV1ChartRepoIn `json:"chartRepo"`
-	ChartVersion  string                                           `json:"chartVersion"`
-	JobVars       *GithubComKloudliteOperatorApisCrdsV1JobVarsIn   `json:"jobVars,omitempty"`
-	PostInstall   *string                                          `json:"postInstall,omitempty"`
-	PostUninstall *string                                          `json:"postUninstall,omitempty"`
-	PreInstall    *string                                          `json:"preInstall,omitempty"`
-	PreUninstall  *string                                          `json:"preUninstall,omitempty"`
-	Values        map[string]interface{}                           `json:"values"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
