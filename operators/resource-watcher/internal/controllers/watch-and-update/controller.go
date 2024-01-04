@@ -6,14 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
-
-	v1 "github.com/kloudlite/operator/apis/crds/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -57,110 +55,76 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	}()
 	defer cf()
 
-	belongsTo := func(group string) bool {
-		return strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, group)
-	}
-
 	if r.MsgSender == nil {
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	switch {
-	case belongsTo("infra.kloudlite.io"):
-		{
-			if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-	case belongsTo("clusters.kloudlite.io"):
-		{
-			if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-	case belongsTo("wireguard.kloudlite.io"):
-		{
-			switch obj.GetObjectKind().GroupVersionKind().Kind {
-			case "Device":
-				{
-					deviceConfig := &corev1.Secret{}
-					if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
-						r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
-						deviceConfig = nil
-					}
+	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
-					if deviceConfig != nil {
-						obj.Object["resource-watcher-wireguard-config"] = map[string]any{
-							"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
-							"encoding": "base64",
-						}
-					}
-
-					if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-						ClusterName: r.Env.ClusterName,
-						AccountName: r.Env.AccountName,
-						Object:      obj.Object,
-					}); err != nil {
-						return ctrl.Result{}, err
-					}
-				}
-			default:
-				{
-					return ctrl.Result{}, nil
-				}
-			}
-		}
-	case belongsTo("distribution.kloudlite.io"):
+	switch gvk.String() {
+	case ProjectGVK.String(), AppGVK.String(), ManagedResourceGVK.String(), WorkspaceGVK.String(), RouterGVK.String():
 		{
-			if err := r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+			// dispatch to console
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-	case obj.GetObjectKind().GroupVersionKind().String() == fn.ParseGVK("crds.kloudlite.io/v1", "ClusterManagedService").String():
-		{
-			if err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-
-	case belongsTo("kloudlite.io"):
-		{
-			if err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
-				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-	case belongsTo(""):
-		if err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-			ClusterName: r.Env.ClusterName,
-			AccountName: r.Env.AccountName,
-			Object:      obj.Object,
-		}); err != nil {
+			})
 			return ctrl.Result{}, err
 		}
-	}
 
-	return ctrl.Result{}, nil
+	case BuildRunGVK.String():
+		{
+			// dispatch to container registry
+			err := r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case DeviceGVK.String():
+		{
+			// dispatch to infra
+			deviceConfig := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
+				r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
+				deviceConfig = nil
+			}
+
+			if deviceConfig != nil {
+				obj.Object["resource-watcher-wireguard-config"] = map[string]any{
+					"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
+					"encoding": "base64",
+				}
+			}
+
+			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case ClusterManagedServiceGVK.String(), NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String():
+		{
+			// dispatch to infra
+			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	default:
+		{
+			r.logger.Infof("message sender is not configured for resource (%s) of gvk(%s). Ignoring resource update", fmt.Sprintf(obj.GetNamespace(), obj.GetName()), obj.GetObjectKind().GroupVersionKind().String())
+			return ctrl.Result{}, nil
+		}
+	}
 }
 
 func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
@@ -222,9 +186,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 	}
 
 	logger := r.logger.WithKV("NN", fn.NN(oReq.Namespace, wName.Name).String()).WithKV("gvk", gvk.String())
-	logger.Infof("request received")
+	logger.Infof("resource update received")
 	defer func() {
-		logger.Infof("request processed")
+		logger.Infof("resource update processed")
 	}()
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
@@ -247,18 +211,35 @@ func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Obje
 	return ctrl.Result{}, r.Update(ctx, obj)
 }
 
-type WatchResource struct {
-	metav1.TypeMeta `json:",inline"`
+type GVK struct {
+	schema.GroupVersionKind
 }
 
-func NewWatchResource(apiVersion string, kind string) WatchResource {
-	return WatchResource{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       kind,
-			APIVersion: apiVersion,
-		},
+func newGVK(apiVersion, kind string) GVK {
+	return GVK{
+		GroupVersionKind: fn.ParseGVK(apiVersion, kind),
 	}
 }
+
+var (
+	ProjectGVK = newGVK("crds.kloudlite.io/v1", "Project")
+	AppGVK     = newGVK("crds.kloudlite.io/v1", "App")
+
+	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
+	ManagedResourceGVK       = newGVK("crds.kloudlite.io/v1", "ManagedResource")
+	WorkspaceGVK             = newGVK("crds.kloudlite.io/v1", "Workspace")
+	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
+	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
+	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
+	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
+	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
+
+	// native resources
+	PersistentVolumeClaimGVK = newGVK("v1", "PersistentVolumeClaim")
+	PersistentVolumeGVK      = newGVK("v1", "PersistentVolume")
+	VolumeAttachmentGVK      = newGVK("storage.k8s.io/v1", "VolumeAttachment")
+	IngressGVK               = newGVK("networking.k8s.io/v1", "Ingress")
+)
 
 // SetupWithManager sets up the controllers with the Manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
@@ -269,64 +250,57 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&corev1.Node{})
 
-	watchList := []WatchResource{
-		NewWatchResource("crds.kloudlite.io/v1", "Project"),
-		NewWatchResource("crds.kloudlite.io/v1", "App"),
-		// NewWatchResource("crds.kloudlite.io/v1", "ManagedService"),
-		NewWatchResource("crds.kloudlite.io/v1", "ManagedResource"),
-		NewWatchResource("crds.kloudlite.io/v1", "Workspace"),
-		NewWatchResource("crds.kloudlite.io/v1", "Router"),
-		NewWatchResource("clusters.kloudlite.io/v1", "NodePool"),
-		NewWatchResource("wireguard.kloudlite.io/v1", "Device"),
-		NewWatchResource("distribution.kloudlite.io/v1", "BuildRun"),
-		NewWatchResource("crds.kloudlite.io/v1", "ClusterManagedService"),
+	watchList := []GVK{
+		ProjectGVK,
+		AppGVK,
+		ManagedResourceGVK,
+		WorkspaceGVK,
+		RouterGVK,
+
+		BuildRunGVK,
+
+		DeviceGVK,
+
+		ClusterManagedServiceGVK,
+		NodePoolGVK,
 
 		// native resources
-		NewWatchResource("v1", "PersistentVolumeClaim"),
-		NewWatchResource("v1", "PersistentVolume"),
-		NewWatchResource("networking.k8s.io/v1", "Ingress"),
+		PersistentVolumeClaimGVK,
+		PersistentVolumeGVK,
+		VolumeAttachmentGVK,
+		IngressGVK,
 	}
 
 	for i := range watchList {
-		func(obj WatchResource) {
-			builder.Watches(
-				fn.NewUnstructured(obj.TypeMeta),
-				handler.EnqueueRequestsFromMapFunc(
-					func(_ context.Context, obj client.Object) []reconcile.Request {
-						gvk := obj.GetObjectKind().GroupVersionKind().String()
+		restype := fn.NewUnstructured(metav1.TypeMeta{Kind: watchList[i].Kind, APIVersion: watchList[i].GroupVersion().String()})
+		builder.Watches(
+			restype,
+			handler.EnqueueRequestsFromMapFunc(
+				func(_ context.Context, obj client.Object) []reconcile.Request {
+					gvk := obj.GetObjectKind().GroupVersionKind().String()
 
-						b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
-						if len(b64Group) == 0 {
-							return nil
-						}
+					b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
+					if len(b64Group) == 0 {
+						return nil
+					}
 
-						wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
-						if err != nil {
-							return nil
+					wName, err := types.WrappedName{Name: obj.GetName(), Group: b64Group}.String()
+					if err != nil {
+						return nil
+					}
+					if obj.GetNamespace() == "" {
+						return []reconcile.Request{
+							{NamespacedName: fn.NN(ClusterScopeNamespace, wName)},
 						}
-						if obj.GetNamespace() == "" {
-							return []reconcile.Request{
-								{NamespacedName: fn.NN(ClusterScopeNamespace, wName)},
-							}
-						} else {
-							return []reconcile.Request{
-								{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
-							}
+					} else {
+						return []reconcile.Request{
+							{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
 						}
-					},
-				),
-			)
-		}(watchList[i])
+					}
+				},
+			),
+		)
 	}
-
-	builder.Watches(
-		&v1.Secret{},
-		handler.EnqueueRequestsFromMapFunc(
-			func(ctx context.Context, object client.Object) []reconcile.Request {
-				return nil
-			},
-		),
-	)
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
