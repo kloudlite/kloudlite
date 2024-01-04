@@ -67,6 +67,7 @@ Examples:
 		}
 
 		if foreground {
+			fmt.Println("here start service")
 			if err := startService(connectVerbose); err != nil {
 				fn.PrintError(err)
 				return
@@ -115,6 +116,7 @@ Examples:
 				return
 			}
 		} else {
+
 			startServiceInBg()
 			if err := startConfiguration(connectVerbose); err != nil {
 				fn.PrintError(err)
@@ -123,6 +125,8 @@ Examples:
 		}
 
 		fn.Log("[#] connected")
+
+		wgc.Show(nil)
 	},
 }
 
