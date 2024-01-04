@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 
@@ -35,33 +36,55 @@ func (f *KLContext) GetCookieString() string {
 }
 
 func GetConfigFolder() (configFolder string, err error) {
+	homePath := ""
 
-	var dirName string
-	dirName, ok := os.LookupEnv("XDG_CONFIG_HOME")
-	if !ok {
-		dirName, err = os.UserHomeDir()
-		if err != nil {
+	// fetching homePath
+	{
+		if euid := os.Geteuid(); euid == 0 {
+			username, ok := os.LookupEnv("SUDO_USER")
+			if !ok {
+				return "", errors.New("something went wrong")
+			}
+
+			oldPwd, err := os.Getwd()
+			if err != nil {
+				return "", err
+			}
+
+			sp := strings.Split(oldPwd, "/")
+
+			for i := range sp {
+				if sp[i] == username {
+					homePath = path.Join("/", path.Join(sp[:i+1]...))
+				}
+			}
+		} else {
+			userHome, ok := os.LookupEnv("HOME")
+			if !ok {
+				return "", errors.New("something went wrong")
+			}
+
+			homePath = userHome
+		}
+	}
+
+	configPath := path.Join(homePath, ".cache", ".kl")
+
+	// ensuring the dir is present
+	if err := os.MkdirAll(configPath, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	// ensuring user permission on created dir
+	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
+		if err = fn.ExecCmd(
+			fmt.Sprintf("chown %s %s", usr, configPath), nil, false,
+		); err != nil {
 			return "", err
 		}
 	}
 
-	if dirName == "/root" {
-		dirName, ok = os.LookupEnv("SUDO_USER")
-		if !ok {
-			return "", errors.New("something went wrong")
-		}
-
-		dirName = "/home/" + dirName
-	}
-
-	configFolder = fmt.Sprintf("%s/.kl", dirName)
-	if _, err := os.Stat(configFolder); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(configFolder, os.ModePerm)
-		if err != nil {
-			fn.PrintError(err)
-		}
-	}
-	return configFolder, nil
+	return configPath, nil
 }
 
 func GetContextFile() (*KLContext, error) {
