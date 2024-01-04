@@ -1,0 +1,32 @@
+type PersistentVolume @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeSpec
+  status: K8s__io___api___core___v1__PersistentVolumeStatus
+  updateTime: Date!
+}
+
+type PersistentVolumeEdge @shareable {
+  cursor: String!
+  node: PersistentVolume!
+}
+
+type PersistentVolumePaginatedRecords @shareable {
+  edges: [PersistentVolumeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input PersistentVolumeIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  status: K8s__io___api___core___v1__PersistentVolumeStatusIn
+}
+

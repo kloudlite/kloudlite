@@ -10,6 +10,8 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (d *domain) findHelmRelease(ctx InfraContext, clusterName string, hrName string) (*entities.HelmRelease, error) {
@@ -29,7 +31,6 @@ func (d *domain) findHelmRelease(ctx InfraContext, clusterName string, hrName st
 }
 
 func (d *domain) ListHelmReleases(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmRelease], error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.ListHelmReleases); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -45,7 +46,6 @@ func (d *domain) ListHelmReleases(ctx InfraContext, clusterName string, mf map[s
 	}
 
 	return pr, nil
-
 }
 
 func (d *domain) GetHelmRelease(ctx InfraContext, clusterName string, hrName string) (*entities.HelmRelease, error) {
@@ -62,15 +62,15 @@ func (d *domain) GetHelmRelease(ctx InfraContext, clusterName string, hrName str
 }
 
 func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr entities.HelmRelease) (*entities.HelmRelease, error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateHelmRelease); err != nil {
+		return nil, errors.NewE(err)
+	}
+	hr.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &hr.HelmChart); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	hr.IncrementRecordVersion()
-
-	// ctx.AccountName
-
 	hr.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -84,7 +84,6 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 		"accountName":   ctx.AccountName,
 		"metadata.name": hr.Name,
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -96,16 +95,27 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 	hr.AccountName = ctx.AccountName
 	hr.ClusterName = clusterName
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &hr.HelmChart, 1); err != nil {
+	cms, err := d.helmReleaseRepo.Create(ctx, &hr)
+	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if cms, err := d.helmReleaseRepo.Create(ctx, &hr); err != nil {
+	d.resourceEventPublisher.PublishHelmReleaseEvent(&hr, PublishAdd)
+
+	if err = d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: hr.Namespace,
+		},
+	}, hr.RecordVersion)
+		err != nil {
 		return nil, errors.NewE(err)
-	} else {
-		d.resourceEventPublisher.PublishHelmReleaseEvent(&hr, PublishAdd)
-		return cms, nil
 	}
+
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &hr.HelmChart, hr.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return cms, nil
 }
 
 func (d *domain) UpdateHelmRelease(ctx InfraContext, clusterName string, hr entities.HelmRelease) (*entities.HelmRelease, error) {
@@ -154,7 +164,6 @@ func (d *domain) UpdateHelmRelease(ctx InfraContext, clusterName string, hr enti
 }
 
 func (d *domain) DeleteHelmRelease(ctx InfraContext, clusterName string, name string) error {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteHelmRelease); err != nil {
 		return errors.NewE(err)
 	}
@@ -178,11 +187,9 @@ func (d *domain) DeleteHelmRelease(ctx InfraContext, clusterName string, name st
 	d.resourceEventPublisher.PublishHelmReleaseEvent(upC, PublishUpdate)
 
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.HelmChart)
-
 }
 
 func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
-
 	svc, err := d.findHelmRelease(ctx, clusterName, name)
 	if err != nil {
 		return errors.NewE(err)
@@ -195,8 +202,8 @@ func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, n
 	_, err = d.helmReleaseRepo.UpdateById(ctx, svc.Id, svc)
 	d.resourceEventPublisher.PublishHelmReleaseEvent(svc, PublishUpdate)
 	return errors.NewE(err)
-
 }
+
 func (d *domain) OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, hr entities.HelmRelease) error {
 	svc, _ := d.findHelmRelease(ctx, clusterName, hr.Name)
 	if svc == nil {
@@ -211,8 +218,8 @@ func (d *domain) OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string
 	err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id)
 	d.resourceEventPublisher.PublishHelmReleaseEvent(svc, PublishDelete)
 	return err
-
 }
+
 func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, hr entities.HelmRelease) error {
 	svc, err := d.findHelmRelease(ctx, clusterName, hr.Name)
 	if err != nil {
@@ -235,5 +242,4 @@ func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string
 	}
 	d.resourceEventPublisher.PublishHelmReleaseEvent(svc, PublishUpdate)
 	return nil
-
 }

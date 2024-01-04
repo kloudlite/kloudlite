@@ -55,18 +55,24 @@ type ResolverRoot interface {
 	HelmRelease() HelmReleaseResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
+	Namespace() NamespaceResolver
 	Node() NodeResolver
 	NodePool() NodePoolResolver
+	PersistentVolume() PersistentVolumeResolver
 	PersistentVolumeClaim() PersistentVolumeClaimResolver
 	Query() QueryResolver
 	VPNDevice() VPNDeviceResolver
+	VolumeAttachment() VolumeAttachmentResolver
 	CloudProviderSecretIn() CloudProviderSecretInResolver
 	ClusterIn() ClusterInResolver
 	ClusterManagedServiceIn() ClusterManagedServiceInResolver
 	HelmReleaseIn() HelmReleaseInResolver
 	MetadataIn() MetadataInResolver
+	NamespaceIn() NamespaceInResolver
 	NodePoolIn() NodePoolInResolver
+	PersistentVolumeIn() PersistentVolumeInResolver
 	VPNDeviceIn() VPNDeviceInResolver
+	VolumeAttachmentIn() VolumeAttachmentInResolver
 }
 
 type DirectiveRoot struct {
@@ -547,10 +553,144 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource struct {
+		FsType    func(childComplexity int) int
+		Partition func(childComplexity int) int
+		ReadOnly  func(childComplexity int) int
+		VolumeID  func(childComplexity int) int
+	}
+
 	K8s__io___api___core___v1__Affinity struct {
 		NodeAffinity    func(childComplexity int) int
 		PodAffinity     func(childComplexity int) int
 		PodAntiAffinity func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__AzureDiskVolumeSource struct {
+		CachingMode func(childComplexity int) int
+		DiskName    func(childComplexity int) int
+		DiskURI     func(childComplexity int) int
+		FsType      func(childComplexity int) int
+		Kind        func(childComplexity int) int
+		ReadOnly    func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__AzureFilePersistentVolumeSource struct {
+		ReadOnly        func(childComplexity int) int
+		SecretName      func(childComplexity int) int
+		SecretNamespace func(childComplexity int) int
+		ShareName       func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__CSIPersistentVolumeSource struct {
+		ControllerExpandSecretRef  func(childComplexity int) int
+		ControllerPublishSecretRef func(childComplexity int) int
+		Driver                     func(childComplexity int) int
+		FsType                     func(childComplexity int) int
+		NodeExpandSecretRef        func(childComplexity int) int
+		NodePublishSecretRef       func(childComplexity int) int
+		NodeStageSecretRef         func(childComplexity int) int
+		ReadOnly                   func(childComplexity int) int
+		VolumeAttributes           func(childComplexity int) int
+		VolumeHandle               func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__CephFSPersistentVolumeSource struct {
+		Monitors   func(childComplexity int) int
+		Path       func(childComplexity int) int
+		ReadOnly   func(childComplexity int) int
+		SecretFile func(childComplexity int) int
+		SecretRef  func(childComplexity int) int
+		User       func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__CinderPersistentVolumeSource struct {
+		FsType    func(childComplexity int) int
+		ReadOnly  func(childComplexity int) int
+		SecretRef func(childComplexity int) int
+		VolumeID  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__FCVolumeSource struct {
+		FsType     func(childComplexity int) int
+		Lun        func(childComplexity int) int
+		ReadOnly   func(childComplexity int) int
+		TargetWWNs func(childComplexity int) int
+		Wwids      func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__FlexPersistentVolumeSource struct {
+		Driver    func(childComplexity int) int
+		FsType    func(childComplexity int) int
+		Options   func(childComplexity int) int
+		ReadOnly  func(childComplexity int) int
+		SecretRef func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__FlockerVolumeSource struct {
+		DatasetName func(childComplexity int) int
+		DatasetUUID func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__GCEPersistentDiskVolumeSource struct {
+		FsType    func(childComplexity int) int
+		Partition func(childComplexity int) int
+		PdName    func(childComplexity int) int
+		ReadOnly  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__GlusterfsPersistentVolumeSource struct {
+		Endpoints          func(childComplexity int) int
+		EndpointsNamespace func(childComplexity int) int
+		Path               func(childComplexity int) int
+		ReadOnly           func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__HostPathVolumeSource struct {
+		Path func(childComplexity int) int
+		Type func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__ISCSIPersistentVolumeSource struct {
+		ChapAuthDiscovery func(childComplexity int) int
+		ChapAuthSession   func(childComplexity int) int
+		FsType            func(childComplexity int) int
+		InitiatorName     func(childComplexity int) int
+		Iqn               func(childComplexity int) int
+		IscsiInterface    func(childComplexity int) int
+		Lun               func(childComplexity int) int
+		Portals           func(childComplexity int) int
+		ReadOnly          func(childComplexity int) int
+		SecretRef         func(childComplexity int) int
+		TargetPortal      func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__LocalVolumeSource struct {
+		FsType func(childComplexity int) int
+		Path   func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NFSVolumeSource struct {
+		Path     func(childComplexity int) int
+		ReadOnly func(childComplexity int) int
+		Server   func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NamespaceCondition struct {
+		LastTransitionTime func(childComplexity int) int
+		Message            func(childComplexity int) int
+		Reason             func(childComplexity int) int
+		Status             func(childComplexity int) int
+		Type               func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NamespaceSpec struct {
+		Finalizers func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__NamespaceStatus struct {
+		Conditions func(childComplexity int) int
+		Phase      func(childComplexity int) int
 	}
 
 	K8s__io___api___core___v1__NodeAffinity struct {
@@ -571,6 +711,16 @@ type ComplexityRoot struct {
 	K8s__io___api___core___v1__NodeSelectorTerm struct {
 		MatchExpressions func(childComplexity int) int
 		MatchFields      func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__ObjectReference struct {
+		APIVersion      func(childComplexity int) int
+		FieldPath       func(childComplexity int) int
+		Kind            func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Namespace       func(childComplexity int) int
+		ResourceVersion func(childComplexity int) int
+		UID             func(childComplexity int) int
 	}
 
 	K8s__io___api___core___v1__PersistentVolumeClaimCondition struct {
@@ -602,6 +752,51 @@ type ComplexityRoot struct {
 		Phase                     func(childComplexity int) int
 	}
 
+	K8s__io___api___core___v1__PersistentVolumeSpec struct {
+		AccessModes                   func(childComplexity int) int
+		AwsElasticBlockStore          func(childComplexity int) int
+		AzureDisk                     func(childComplexity int) int
+		AzureFile                     func(childComplexity int) int
+		Capacity                      func(childComplexity int) int
+		Cephfs                        func(childComplexity int) int
+		Cinder                        func(childComplexity int) int
+		ClaimRef                      func(childComplexity int) int
+		Csi                           func(childComplexity int) int
+		Fc                            func(childComplexity int) int
+		FlexVolume                    func(childComplexity int) int
+		Flocker                       func(childComplexity int) int
+		GcePersistentDisk             func(childComplexity int) int
+		Glusterfs                     func(childComplexity int) int
+		HostPath                      func(childComplexity int) int
+		Iscsi                         func(childComplexity int) int
+		Local                         func(childComplexity int) int
+		MountOptions                  func(childComplexity int) int
+		Nfs                           func(childComplexity int) int
+		NodeAffinity                  func(childComplexity int) int
+		PersistentVolumeReclaimPolicy func(childComplexity int) int
+		PhotonPersistentDisk          func(childComplexity int) int
+		PortworxVolume                func(childComplexity int) int
+		Quobyte                       func(childComplexity int) int
+		Rbd                           func(childComplexity int) int
+		ScaleIo                       func(childComplexity int) int
+		StorageClassName              func(childComplexity int) int
+		Storageos                     func(childComplexity int) int
+		VolumeMode                    func(childComplexity int) int
+		VsphereVolume                 func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__PersistentVolumeStatus struct {
+		LastPhaseTransitionTime func(childComplexity int) int
+		Message                 func(childComplexity int) int
+		Phase                   func(childComplexity int) int
+		Reason                  func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource struct {
+		FsType func(childComplexity int) int
+		PdID   func(childComplexity int) int
+	}
+
 	K8s__io___api___core___v1__PodAffinity struct {
 		PreferredDuringSchedulingIgnoredDuringExecution func(childComplexity int) int
 		RequiredDuringSchedulingIgnoredDuringExecution  func(childComplexity int) int
@@ -619,9 +814,35 @@ type ComplexityRoot struct {
 		RequiredDuringSchedulingIgnoredDuringExecution  func(childComplexity int) int
 	}
 
+	K8s__io___api___core___v1__PortworxVolumeSource struct {
+		FsType   func(childComplexity int) int
+		ReadOnly func(childComplexity int) int
+		VolumeID func(childComplexity int) int
+	}
+
 	K8s__io___api___core___v1__PreferredSchedulingTerm struct {
 		Preference func(childComplexity int) int
 		Weight     func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__QuobyteVolumeSource struct {
+		Group    func(childComplexity int) int
+		ReadOnly func(childComplexity int) int
+		Registry func(childComplexity int) int
+		Tenant   func(childComplexity int) int
+		User     func(childComplexity int) int
+		Volume   func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__RBDPersistentVolumeSource struct {
+		FsType    func(childComplexity int) int
+		Image     func(childComplexity int) int
+		Keyring   func(childComplexity int) int
+		Monitors  func(childComplexity int) int
+		Pool      func(childComplexity int) int
+		ReadOnly  func(childComplexity int) int
+		SecretRef func(childComplexity int) int
+		User      func(childComplexity int) int
 	}
 
 	K8s__io___api___core___v1__ResourceClaim struct {
@@ -632,6 +853,32 @@ type ComplexityRoot struct {
 		Claims   func(childComplexity int) int
 		Limits   func(childComplexity int) int
 		Requests func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__ScaleIOPersistentVolumeSource struct {
+		FsType           func(childComplexity int) int
+		Gateway          func(childComplexity int) int
+		ProtectionDomain func(childComplexity int) int
+		ReadOnly         func(childComplexity int) int
+		SecretRef        func(childComplexity int) int
+		SslEnabled       func(childComplexity int) int
+		StorageMode      func(childComplexity int) int
+		StoragePool      func(childComplexity int) int
+		System           func(childComplexity int) int
+		VolumeName       func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__SecretReference struct {
+		Name      func(childComplexity int) int
+		Namespace func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__StorageOSPersistentVolumeSource struct {
+		FsType          func(childComplexity int) int
+		ReadOnly        func(childComplexity int) int
+		SecretRef       func(childComplexity int) int
+		VolumeName      func(childComplexity int) int
+		VolumeNamespace func(childComplexity int) int
 	}
 
 	K8s__io___api___core___v1__Taint struct {
@@ -662,9 +909,43 @@ type ComplexityRoot struct {
 		Namespace func(childComplexity int) int
 	}
 
+	K8s__io___api___core___v1__VolumeNodeAffinity struct {
+		Required func(childComplexity int) int
+	}
+
+	K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource struct {
+		FsType            func(childComplexity int) int
+		StoragePolicyID   func(childComplexity int) int
+		StoragePolicyName func(childComplexity int) int
+		VolumePath        func(childComplexity int) int
+	}
+
 	K8s__io___api___core___v1__WeightedPodAffinityTerm struct {
 		PodAffinityTerm func(childComplexity int) int
 		Weight          func(childComplexity int) int
+	}
+
+	K8s__io___api___storage___v1__VolumeAttachmentSource struct {
+		InlineVolumeSpec     func(childComplexity int) int
+		PersistentVolumeName func(childComplexity int) int
+	}
+
+	K8s__io___api___storage___v1__VolumeAttachmentSpec struct {
+		Attacher func(childComplexity int) int
+		NodeName func(childComplexity int) int
+		Source   func(childComplexity int) int
+	}
+
+	K8s__io___api___storage___v1__VolumeAttachmentStatus struct {
+		AttachError        func(childComplexity int) int
+		Attached           func(childComplexity int) int
+		AttachmentMetadata func(childComplexity int) int
+		DetachError        func(childComplexity int) int
+	}
+
+	K8s__io___api___storage___v1__VolumeError struct {
+		Message func(childComplexity int) int
+		Time    func(childComplexity int) int
 	}
 
 	K8s__io___apimachinery___pkg___api___resource__Quantity struct {
@@ -727,6 +1008,32 @@ type ComplexityRoot struct {
 		InfraUpdateNodePool              func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraUpdateProviderSecret        func(childComplexity int, secret entities.CloudProviderSecret) int
 		InfraUpdateVPNDevice             func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
+	}
+
+	Namespace struct {
+		APIVersion        func(childComplexity int) int
+		AccountName       func(childComplexity int) int
+		ClusterName       func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Kind              func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		ObjectMeta        func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		Spec              func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+	}
+
+	NamespaceEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	NamespacePaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
 	}
 
 	Node struct {
@@ -793,6 +1100,21 @@ type ComplexityRoot struct {
 		StartCursor     func(childComplexity int) int
 	}
 
+	PersistentVolume struct {
+		APIVersion        func(childComplexity int) int
+		AccountName       func(childComplexity int) int
+		ClusterName       func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Kind              func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		ObjectMeta        func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		Spec              func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+	}
+
 	PersistentVolumeClaim struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
@@ -820,6 +1142,17 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	PersistentVolumeEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	PersistentVolumePaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
 	Query struct {
 		InfraCheckAwsAccess              func(childComplexity int, cloudproviderName string) int
 		InfraCheckNameAvailability       func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
@@ -828,19 +1161,25 @@ type ComplexityRoot struct {
 		InfraGetDomainEntry              func(childComplexity int, domainName string) int
 		InfraGetHelmRelease              func(childComplexity int, clusterName string, name string) int
 		InfraGetManagedServiceTemplate   func(childComplexity int, category string, name string) int
+		InfraGetNamespace                func(childComplexity int, clusterName string, name string) int
 		InfraGetNodePool                 func(childComplexity int, clusterName string, poolName string) int
 		InfraGetProviderSecret           func(childComplexity int, name string) int
+		InfraGetPv                       func(childComplexity int, clusterName string, name string) int
 		InfraGetPvc                      func(childComplexity int, clusterName string, name string) int
 		InfraGetVPNDevice                func(childComplexity int, clusterName string, name string) int
+		InfraGetVolumeAttachment         func(childComplexity int, clusterName string, name string) int
 		InfraListClusterManagedServices  func(childComplexity int, clusterName string, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) int
 		InfraListClusters                func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
 		InfraListDomainEntries           func(childComplexity int, search *model.SearchDomainEntry, pagination *repos.CursorPagination) int
 		InfraListHelmReleases            func(childComplexity int, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) int
 		InfraListManagedServiceTemplates func(childComplexity int) int
+		InfraListNamespaces              func(childComplexity int, clusterName string, search *model.SearchNamespaces, pq *repos.CursorPagination) int
 		InfraListNodePools               func(childComplexity int, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) int
 		InfraListPVCs                    func(childComplexity int, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) int
+		InfraListPVs                     func(childComplexity int, clusterName string, search *model.SearchPersistentVolumes, pq *repos.CursorPagination) int
 		InfraListProviderSecrets         func(childComplexity int, search *model.SearchProviderSecret, pagination *repos.CursorPagination) int
 		InfraListVPNDevices              func(childComplexity int, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) int
+		InfraListVolumeAttachments       func(childComplexity int, clusterName string, search *model.SearchVolumeAttachments, pq *repos.CursorPagination) int
 		__resolve__service               func(childComplexity int) int
 	}
 
@@ -870,6 +1209,32 @@ type ComplexityRoot struct {
 	}
 
 	VPNDevicePaginatedRecords struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	VolumeAttachment struct {
+		APIVersion        func(childComplexity int) int
+		AccountName       func(childComplexity int) int
+		ClusterName       func(childComplexity int) int
+		CreationTime      func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Kind              func(childComplexity int) int
+		MarkedForDeletion func(childComplexity int) int
+		ObjectMeta        func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
+		Spec              func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UpdateTime        func(childComplexity int) int
+	}
+
+	VolumeAttachmentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	VolumeAttachmentPaginatedRecords struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
@@ -976,6 +1341,14 @@ type MutationResolver interface {
 	InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error)
 }
+type NamespaceResolver interface {
+	CreationTime(ctx context.Context, obj *entities.Namespace) (string, error)
+	ID(ctx context.Context, obj *entities.Namespace) (string, error)
+
+	Spec(ctx context.Context, obj *entities.Namespace) (*model.K8sIoAPICoreV1NamespaceSpec, error)
+	Status(ctx context.Context, obj *entities.Namespace) (*model.K8sIoAPICoreV1NamespaceStatus, error)
+	UpdateTime(ctx context.Context, obj *entities.Namespace) (string, error)
+}
 type NodeResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Node) (string, error)
 	ID(ctx context.Context, obj *entities.Node) (string, error)
@@ -992,6 +1365,14 @@ type NodePoolResolver interface {
 	Spec(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec, error)
 
 	UpdateTime(ctx context.Context, obj *entities.NodePool) (string, error)
+}
+type PersistentVolumeResolver interface {
+	CreationTime(ctx context.Context, obj *entities.PersistentVolume) (string, error)
+	ID(ctx context.Context, obj *entities.PersistentVolume) (string, error)
+
+	Spec(ctx context.Context, obj *entities.PersistentVolume) (*model.K8sIoAPICoreV1PersistentVolumeSpec, error)
+	Status(ctx context.Context, obj *entities.PersistentVolume) (*model.K8sIoAPICoreV1PersistentVolumeStatus, error)
+	UpdateTime(ctx context.Context, obj *entities.PersistentVolume) (string, error)
 }
 type PersistentVolumeClaimResolver interface {
 	CreationTime(ctx context.Context, obj *entities.PersistentVolumeClaim) (string, error)
@@ -1015,14 +1396,20 @@ type QueryResolver interface {
 	InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error)
 	InfraListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error)
 	InfraGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error)
-	InfraListPVCs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) (*model.PersistentVolumeClaimPaginatedRecords, error)
-	InfraGetPvc(ctx context.Context, clusterName string, name string) (*entities.PersistentVolumeClaim, error)
 	InfraListClusterManagedServices(ctx context.Context, clusterName string, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error)
 	InfraGetClusterManagedService(ctx context.Context, clusterName string, name string) (*entities.ClusterManagedService, error)
 	InfraListHelmReleases(ctx context.Context, clusterName string, search *model.SearchHelmRelease, pagination *repos.CursorPagination) (*model.HelmReleasePaginatedRecords, error)
 	InfraGetHelmRelease(ctx context.Context, clusterName string, name string) (*entities.HelmRelease, error)
 	InfraListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error)
 	InfraGetManagedServiceTemplate(ctx context.Context, category string, name string) (*entities.MsvcTemplateEntry, error)
+	InfraListPVCs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) (*model.PersistentVolumeClaimPaginatedRecords, error)
+	InfraGetPvc(ctx context.Context, clusterName string, name string) (*entities.PersistentVolumeClaim, error)
+	InfraListNamespaces(ctx context.Context, clusterName string, search *model.SearchNamespaces, pq *repos.CursorPagination) (*model.NamespacePaginatedRecords, error)
+	InfraGetNamespace(ctx context.Context, clusterName string, name string) (*entities.Namespace, error)
+	InfraListPVs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumes, pq *repos.CursorPagination) (*model.PersistentVolumePaginatedRecords, error)
+	InfraGetPv(ctx context.Context, clusterName string, name string) (*entities.PersistentVolume, error)
+	InfraListVolumeAttachments(ctx context.Context, clusterName string, search *model.SearchVolumeAttachments, pq *repos.CursorPagination) (*model.VolumeAttachmentPaginatedRecords, error)
+	InfraGetVolumeAttachment(ctx context.Context, clusterName string, name string) (*entities.VolumeAttachment, error)
 }
 type VPNDeviceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
@@ -1033,6 +1420,14 @@ type VPNDeviceResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
 	WireguardConfig(ctx context.Context, obj *entities.VPNDevice) (*model.GithubComKloudliteAPIPkgTypesEncodedString, error)
+}
+type VolumeAttachmentResolver interface {
+	CreationTime(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
+	ID(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
+
+	Spec(ctx context.Context, obj *entities.VolumeAttachment) (*model.K8sIoAPIStorageV1VolumeAttachmentSpec, error)
+	Status(ctx context.Context, obj *entities.VolumeAttachment) (*model.K8sIoAPIStorageV1VolumeAttachmentStatus, error)
+	UpdateTime(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
 }
 
 type CloudProviderSecretInResolver interface {
@@ -1057,13 +1452,28 @@ type MetadataInResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
 	Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
 }
+type NamespaceInResolver interface {
+	Metadata(ctx context.Context, obj *entities.Namespace, data *v1.ObjectMeta) error
+	Spec(ctx context.Context, obj *entities.Namespace, data *model.K8sIoAPICoreV1NamespaceSpecIn) error
+	Status(ctx context.Context, obj *entities.Namespace, data *model.K8sIoAPICoreV1NamespaceStatusIn) error
+}
 type NodePoolInResolver interface {
 	Metadata(ctx context.Context, obj *entities.NodePool, data *v1.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.NodePool, data *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn) error
 }
+type PersistentVolumeInResolver interface {
+	Metadata(ctx context.Context, obj *entities.PersistentVolume, data *v1.ObjectMeta) error
+	Spec(ctx context.Context, obj *entities.PersistentVolume, data *model.K8sIoAPICoreV1PersistentVolumeSpecIn) error
+	Status(ctx context.Context, obj *entities.PersistentVolume, data *model.K8sIoAPICoreV1PersistentVolumeStatusIn) error
+}
 type VPNDeviceInResolver interface {
 	Metadata(ctx context.Context, obj *entities.VPNDevice, data *v1.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.VPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error
+}
+type VolumeAttachmentInResolver interface {
+	Metadata(ctx context.Context, obj *entities.VolumeAttachment, data *v1.ObjectMeta) error
+	Spec(ctx context.Context, obj *entities.VolumeAttachment, data *model.K8sIoAPIStorageV1VolumeAttachmentSpecIn) error
+	Status(ctx context.Context, obj *entities.VolumeAttachment, data *model.K8sIoAPIStorageV1VolumeAttachmentStatusIn) error
 }
 
 type executableSchema struct {
@@ -3139,6 +3549,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.HelmReleasePaginatedRecords.TotalCount(childComplexity), true
 
+	case "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.partition":
+		if e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.Partition == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.Partition(childComplexity), true
+
+	case "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.volumeID":
+		if e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.VolumeID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource.VolumeID(childComplexity), true
+
 	case "K8s__io___api___core___v1__Affinity.nodeAffinity":
 		if e.complexity.K8s__io___api___core___v1__Affinity.NodeAffinity == nil {
 			break
@@ -3159,6 +3597,538 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__Affinity.PodAntiAffinity(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureDiskVolumeSource.cachingMode":
+		if e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.CachingMode == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.CachingMode(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureDiskVolumeSource.diskName":
+		if e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.DiskName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.DiskName(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureDiskVolumeSource.diskURI":
+		if e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.DiskURI == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.DiskURI(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureDiskVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureDiskVolumeSource.kind":
+		if e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.Kind == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.Kind(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureDiskVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureDiskVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureFilePersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureFilePersistentVolumeSource.secretName":
+		if e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.SecretName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.SecretName(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureFilePersistentVolumeSource.secretNamespace":
+		if e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.SecretNamespace == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.SecretNamespace(childComplexity), true
+
+	case "K8s__io___api___core___v1__AzureFilePersistentVolumeSource.shareName":
+		if e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.ShareName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__AzureFilePersistentVolumeSource.ShareName(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.controllerExpandSecretRef":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.ControllerExpandSecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.ControllerExpandSecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.controllerPublishSecretRef":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.ControllerPublishSecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.ControllerPublishSecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.driver":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.Driver == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.Driver(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.nodeExpandSecretRef":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.NodeExpandSecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.NodeExpandSecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.nodePublishSecretRef":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.NodePublishSecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.NodePublishSecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.nodeStageSecretRef":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.NodeStageSecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.NodeStageSecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.volumeAttributes":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.VolumeAttributes == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.VolumeAttributes(childComplexity), true
+
+	case "K8s__io___api___core___v1__CSIPersistentVolumeSource.volumeHandle":
+		if e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.VolumeHandle == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CSIPersistentVolumeSource.VolumeHandle(childComplexity), true
+
+	case "K8s__io___api___core___v1__CephFSPersistentVolumeSource.monitors":
+		if e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.Monitors == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.Monitors(childComplexity), true
+
+	case "K8s__io___api___core___v1__CephFSPersistentVolumeSource.path":
+		if e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.Path == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.Path(childComplexity), true
+
+	case "K8s__io___api___core___v1__CephFSPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__CephFSPersistentVolumeSource.secretFile":
+		if e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.SecretFile == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.SecretFile(childComplexity), true
+
+	case "K8s__io___api___core___v1__CephFSPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CephFSPersistentVolumeSource.user":
+		if e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.User == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CephFSPersistentVolumeSource.User(childComplexity), true
+
+	case "K8s__io___api___core___v1__CinderPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__CinderPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__CinderPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__CinderPersistentVolumeSource.volumeID":
+		if e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.VolumeID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__CinderPersistentVolumeSource.VolumeID(childComplexity), true
+
+	case "K8s__io___api___core___v1__FCVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__FCVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FCVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__FCVolumeSource.lun":
+		if e.complexity.K8s__io___api___core___v1__FCVolumeSource.Lun == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FCVolumeSource.Lun(childComplexity), true
+
+	case "K8s__io___api___core___v1__FCVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__FCVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FCVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__FCVolumeSource.targetWWNs":
+		if e.complexity.K8s__io___api___core___v1__FCVolumeSource.TargetWWNs == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FCVolumeSource.TargetWWNs(childComplexity), true
+
+	case "K8s__io___api___core___v1__FCVolumeSource.wwids":
+		if e.complexity.K8s__io___api___core___v1__FCVolumeSource.Wwids == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FCVolumeSource.Wwids(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlexPersistentVolumeSource.driver":
+		if e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.Driver == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.Driver(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlexPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlexPersistentVolumeSource.options":
+		if e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.Options == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.Options(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlexPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlexPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlexPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlockerVolumeSource.datasetName":
+		if e.complexity.K8s__io___api___core___v1__FlockerVolumeSource.DatasetName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlockerVolumeSource.DatasetName(childComplexity), true
+
+	case "K8s__io___api___core___v1__FlockerVolumeSource.datasetUUID":
+		if e.complexity.K8s__io___api___core___v1__FlockerVolumeSource.DatasetUUID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__FlockerVolumeSource.DatasetUUID(childComplexity), true
+
+	case "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.partition":
+		if e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.Partition == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.Partition(childComplexity), true
+
+	case "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.pdName":
+		if e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.PdName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.PdName(childComplexity), true
+
+	case "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GCEPersistentDiskVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.endpoints":
+		if e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.Endpoints == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.Endpoints(childComplexity), true
+
+	case "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.endpointsNamespace":
+		if e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.EndpointsNamespace == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.EndpointsNamespace(childComplexity), true
+
+	case "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.path":
+		if e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.Path == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.Path(childComplexity), true
+
+	case "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__GlusterfsPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__HostPathVolumeSource.path":
+		if e.complexity.K8s__io___api___core___v1__HostPathVolumeSource.Path == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__HostPathVolumeSource.Path(childComplexity), true
+
+	case "K8s__io___api___core___v1__HostPathVolumeSource.type":
+		if e.complexity.K8s__io___api___core___v1__HostPathVolumeSource.Type == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__HostPathVolumeSource.Type(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.chapAuthDiscovery":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.ChapAuthDiscovery == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.ChapAuthDiscovery(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.chapAuthSession":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.ChapAuthSession == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.ChapAuthSession(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.initiatorName":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.InitiatorName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.InitiatorName(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.iqn":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.Iqn == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.Iqn(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.iscsiInterface":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.IscsiInterface == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.IscsiInterface(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.lun":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.Lun == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.Lun(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.portals":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.Portals == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.Portals(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__ISCSIPersistentVolumeSource.targetPortal":
+		if e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.TargetPortal == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ISCSIPersistentVolumeSource.TargetPortal(childComplexity), true
+
+	case "K8s__io___api___core___v1__LocalVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__LocalVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__LocalVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__LocalVolumeSource.path":
+		if e.complexity.K8s__io___api___core___v1__LocalVolumeSource.Path == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__LocalVolumeSource.Path(childComplexity), true
+
+	case "K8s__io___api___core___v1__NFSVolumeSource.path":
+		if e.complexity.K8s__io___api___core___v1__NFSVolumeSource.Path == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NFSVolumeSource.Path(childComplexity), true
+
+	case "K8s__io___api___core___v1__NFSVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__NFSVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NFSVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__NFSVolumeSource.server":
+		if e.complexity.K8s__io___api___core___v1__NFSVolumeSource.Server == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NFSVolumeSource.Server(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceCondition.lastTransitionTime":
+		if e.complexity.K8s__io___api___core___v1__NamespaceCondition.LastTransitionTime == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceCondition.LastTransitionTime(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceCondition.message":
+		if e.complexity.K8s__io___api___core___v1__NamespaceCondition.Message == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceCondition.Message(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceCondition.reason":
+		if e.complexity.K8s__io___api___core___v1__NamespaceCondition.Reason == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceCondition.Reason(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceCondition.status":
+		if e.complexity.K8s__io___api___core___v1__NamespaceCondition.Status == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceCondition.Status(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceCondition.type":
+		if e.complexity.K8s__io___api___core___v1__NamespaceCondition.Type == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceCondition.Type(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceSpec.finalizers":
+		if e.complexity.K8s__io___api___core___v1__NamespaceSpec.Finalizers == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceSpec.Finalizers(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceStatus.conditions":
+		if e.complexity.K8s__io___api___core___v1__NamespaceStatus.Conditions == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceStatus.Conditions(childComplexity), true
+
+	case "K8s__io___api___core___v1__NamespaceStatus.phase":
+		if e.complexity.K8s__io___api___core___v1__NamespaceStatus.Phase == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__NamespaceStatus.Phase(childComplexity), true
 
 	case "K8s__io___api___core___v1__NodeAffinity.preferredDuringSchedulingIgnoredDuringExecution":
 		if e.complexity.K8s__io___api___core___v1__NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution == nil {
@@ -3215,6 +4185,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__NodeSelectorTerm.MatchFields(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.apiVersion":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.APIVersion == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.APIVersion(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.fieldPath":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.FieldPath == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.FieldPath(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.kind":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.Kind == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.Kind(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.name":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.Name == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.Name(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.namespace":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.Namespace == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.Namespace(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.resourceVersion":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.ResourceVersion == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.ResourceVersion(childComplexity), true
+
+	case "K8s__io___api___core___v1__ObjectReference.uid":
+		if e.complexity.K8s__io___api___core___v1__ObjectReference.UID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ObjectReference.UID(childComplexity), true
 
 	case "K8s__io___api___core___v1__PersistentVolumeClaimCondition.lastProbeTime":
 		if e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimCondition.LastProbeTime == nil {
@@ -3356,6 +4375,258 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.K8s__io___api___core___v1__PersistentVolumeClaimStatus.Phase(childComplexity), true
 
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.accessModes":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AccessModes == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AccessModes(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.awsElasticBlockStore":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AwsElasticBlockStore == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AwsElasticBlockStore(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.azureDisk":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AzureDisk == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AzureDisk(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.azureFile":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AzureFile == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.AzureFile(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.capacity":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Capacity == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Capacity(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.cephfs":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Cephfs == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Cephfs(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.cinder":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Cinder == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Cinder(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.claimRef":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.ClaimRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.ClaimRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.csi":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Csi == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Csi(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.fc":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Fc == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Fc(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.flexVolume":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.FlexVolume == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.FlexVolume(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.flocker":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Flocker == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Flocker(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.gcePersistentDisk":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.GcePersistentDisk == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.GcePersistentDisk(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.glusterfs":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Glusterfs == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Glusterfs(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.hostPath":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.HostPath == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.HostPath(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.iscsi":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Iscsi == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Iscsi(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.local":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Local == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Local(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.mountOptions":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.MountOptions == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.MountOptions(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.nfs":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Nfs == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Nfs(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.nodeAffinity":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.NodeAffinity == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.NodeAffinity(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.persistentVolumeReclaimPolicy":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.PersistentVolumeReclaimPolicy == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.PersistentVolumeReclaimPolicy(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.photonPersistentDisk":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.PhotonPersistentDisk == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.PhotonPersistentDisk(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.portworxVolume":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.PortworxVolume == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.PortworxVolume(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.quobyte":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Quobyte == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Quobyte(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.rbd":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Rbd == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Rbd(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.scaleIO":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.ScaleIo == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.ScaleIo(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.storageClassName":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.StorageClassName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.StorageClassName(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.storageos":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Storageos == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.Storageos(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.volumeMode":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.VolumeMode == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.VolumeMode(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeSpec.vsphereVolume":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.VsphereVolume == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeSpec.VsphereVolume(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeStatus.lastPhaseTransitionTime":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.LastPhaseTransitionTime == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.LastPhaseTransitionTime(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeStatus.message":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.Message == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.Message(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeStatus.phase":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.Phase == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.Phase(childComplexity), true
+
+	case "K8s__io___api___core___v1__PersistentVolumeStatus.reason":
+		if e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.Reason == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PersistentVolumeStatus.Reason(childComplexity), true
+
+	case "K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource.pdID":
+		if e.complexity.K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource.PdID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource.PdID(childComplexity), true
+
 	case "K8s__io___api___core___v1__PodAffinity.preferredDuringSchedulingIgnoredDuringExecution":
 		if e.complexity.K8s__io___api___core___v1__PodAffinity.PreferredDuringSchedulingIgnoredDuringExecution == nil {
 			break
@@ -3412,6 +4683,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.K8s__io___api___core___v1__PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution(childComplexity), true
 
+	case "K8s__io___api___core___v1__PortworxVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__PortworxVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PortworxVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__PortworxVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__PortworxVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PortworxVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__PortworxVolumeSource.volumeID":
+		if e.complexity.K8s__io___api___core___v1__PortworxVolumeSource.VolumeID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__PortworxVolumeSource.VolumeID(childComplexity), true
+
 	case "K8s__io___api___core___v1__PreferredSchedulingTerm.preference":
 		if e.complexity.K8s__io___api___core___v1__PreferredSchedulingTerm.Preference == nil {
 			break
@@ -3425,6 +4717,104 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__PreferredSchedulingTerm.Weight(childComplexity), true
+
+	case "K8s__io___api___core___v1__QuobyteVolumeSource.group":
+		if e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Group == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Group(childComplexity), true
+
+	case "K8s__io___api___core___v1__QuobyteVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__QuobyteVolumeSource.registry":
+		if e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Registry == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Registry(childComplexity), true
+
+	case "K8s__io___api___core___v1__QuobyteVolumeSource.tenant":
+		if e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Tenant == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Tenant(childComplexity), true
+
+	case "K8s__io___api___core___v1__QuobyteVolumeSource.user":
+		if e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.User == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.User(childComplexity), true
+
+	case "K8s__io___api___core___v1__QuobyteVolumeSource.volume":
+		if e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Volume == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__QuobyteVolumeSource.Volume(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.image":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Image == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Image(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.keyring":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Keyring == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Keyring(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.monitors":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Monitors == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Monitors(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.pool":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Pool == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.Pool(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__RBDPersistentVolumeSource.user":
+		if e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.User == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__RBDPersistentVolumeSource.User(childComplexity), true
 
 	case "K8s__io___api___core___v1__ResourceClaim.name":
 		if e.complexity.K8s__io___api___core___v1__ResourceClaim.Name == nil {
@@ -3453,6 +4843,125 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__ResourceRequirements.Requests(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.gateway":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.Gateway == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.Gateway(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.protectionDomain":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.ProtectionDomain == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.ProtectionDomain(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.sslEnabled":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.SslEnabled == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.SslEnabled(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.storageMode":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.StorageMode == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.StorageMode(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.storagePool":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.StoragePool == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.StoragePool(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.system":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.System == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.System(childComplexity), true
+
+	case "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.volumeName":
+		if e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.VolumeName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__ScaleIOPersistentVolumeSource.VolumeName(childComplexity), true
+
+	case "K8s__io___api___core___v1__SecretReference.name":
+		if e.complexity.K8s__io___api___core___v1__SecretReference.Name == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__SecretReference.Name(childComplexity), true
+
+	case "K8s__io___api___core___v1__SecretReference.namespace":
+		if e.complexity.K8s__io___api___core___v1__SecretReference.Namespace == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__SecretReference.Namespace(childComplexity), true
+
+	case "K8s__io___api___core___v1__StorageOSPersistentVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__StorageOSPersistentVolumeSource.readOnly":
+		if e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.ReadOnly == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.ReadOnly(childComplexity), true
+
+	case "K8s__io___api___core___v1__StorageOSPersistentVolumeSource.secretRef":
+		if e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.SecretRef == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.SecretRef(childComplexity), true
+
+	case "K8s__io___api___core___v1__StorageOSPersistentVolumeSource.volumeName":
+		if e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.VolumeName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.VolumeName(childComplexity), true
+
+	case "K8s__io___api___core___v1__StorageOSPersistentVolumeSource.volumeNamespace":
+		if e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.VolumeNamespace == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__StorageOSPersistentVolumeSource.VolumeNamespace(childComplexity), true
 
 	case "K8s__io___api___core___v1__Taint.effect":
 		if e.complexity.K8s__io___api___core___v1__Taint.Effect == nil {
@@ -3566,6 +5075,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.K8s__io___api___core___v1__TypedObjectReference.Namespace(childComplexity), true
 
+	case "K8s__io___api___core___v1__VolumeNodeAffinity.required":
+		if e.complexity.K8s__io___api___core___v1__VolumeNodeAffinity.Required == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__VolumeNodeAffinity.Required(childComplexity), true
+
+	case "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.fsType":
+		if e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.FsType == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.FsType(childComplexity), true
+
+	case "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.storagePolicyID":
+		if e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.StoragePolicyID == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.StoragePolicyID(childComplexity), true
+
+	case "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.storagePolicyName":
+		if e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.StoragePolicyName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.StoragePolicyName(childComplexity), true
+
+	case "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.volumePath":
+		if e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.VolumePath == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource.VolumePath(childComplexity), true
+
 	case "K8s__io___api___core___v1__WeightedPodAffinityTerm.podAffinityTerm":
 		if e.complexity.K8s__io___api___core___v1__WeightedPodAffinityTerm.PodAffinityTerm == nil {
 			break
@@ -3579,6 +5123,83 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.K8s__io___api___core___v1__WeightedPodAffinityTerm.Weight(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentSource.inlineVolumeSpec":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSource.InlineVolumeSpec == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSource.InlineVolumeSpec(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentSource.persistentVolumeName":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSource.PersistentVolumeName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSource.PersistentVolumeName(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentSpec.attacher":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSpec.Attacher == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSpec.Attacher(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentSpec.nodeName":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSpec.NodeName == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSpec.NodeName(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentSpec.source":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSpec.Source == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentSpec.Source(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentStatus.attachError":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.AttachError == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.AttachError(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentStatus.attached":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.Attached == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.Attached(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentStatus.attachmentMetadata":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.AttachmentMetadata == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.AttachmentMetadata(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeAttachmentStatus.detachError":
+		if e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.DetachError == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeAttachmentStatus.DetachError(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeError.message":
+		if e.complexity.K8s__io___api___storage___v1__VolumeError.Message == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeError.Message(childComplexity), true
+
+	case "K8s__io___api___storage___v1__VolumeError.time":
+		if e.complexity.K8s__io___api___storage___v1__VolumeError.Time == nil {
+			break
+		}
+
+		return e.complexity.K8s__io___api___storage___v1__VolumeError.Time(childComplexity), true
 
 	case "K8s__io___apimachinery___pkg___api___resource__Quantity.Format":
 		if e.complexity.K8s__io___apimachinery___pkg___api___resource__Quantity.Format == nil {
@@ -3972,6 +5593,125 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraUpdateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
 
+	case "Namespace.apiVersion":
+		if e.complexity.Namespace.APIVersion == nil {
+			break
+		}
+
+		return e.complexity.Namespace.APIVersion(childComplexity), true
+
+	case "Namespace.accountName":
+		if e.complexity.Namespace.AccountName == nil {
+			break
+		}
+
+		return e.complexity.Namespace.AccountName(childComplexity), true
+
+	case "Namespace.clusterName":
+		if e.complexity.Namespace.ClusterName == nil {
+			break
+		}
+
+		return e.complexity.Namespace.ClusterName(childComplexity), true
+
+	case "Namespace.creationTime":
+		if e.complexity.Namespace.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.Namespace.CreationTime(childComplexity), true
+
+	case "Namespace.id":
+		if e.complexity.Namespace.ID == nil {
+			break
+		}
+
+		return e.complexity.Namespace.ID(childComplexity), true
+
+	case "Namespace.kind":
+		if e.complexity.Namespace.Kind == nil {
+			break
+		}
+
+		return e.complexity.Namespace.Kind(childComplexity), true
+
+	case "Namespace.markedForDeletion":
+		if e.complexity.Namespace.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.Namespace.MarkedForDeletion(childComplexity), true
+
+	case "Namespace.metadata":
+		if e.complexity.Namespace.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.Namespace.ObjectMeta(childComplexity), true
+
+	case "Namespace.recordVersion":
+		if e.complexity.Namespace.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.Namespace.RecordVersion(childComplexity), true
+
+	case "Namespace.spec":
+		if e.complexity.Namespace.Spec == nil {
+			break
+		}
+
+		return e.complexity.Namespace.Spec(childComplexity), true
+
+	case "Namespace.status":
+		if e.complexity.Namespace.Status == nil {
+			break
+		}
+
+		return e.complexity.Namespace.Status(childComplexity), true
+
+	case "Namespace.updateTime":
+		if e.complexity.Namespace.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.Namespace.UpdateTime(childComplexity), true
+
+	case "NamespaceEdge.cursor":
+		if e.complexity.NamespaceEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.NamespaceEdge.Cursor(childComplexity), true
+
+	case "NamespaceEdge.node":
+		if e.complexity.NamespaceEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.NamespaceEdge.Node(childComplexity), true
+
+	case "NamespacePaginatedRecords.edges":
+		if e.complexity.NamespacePaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.NamespacePaginatedRecords.Edges(childComplexity), true
+
+	case "NamespacePaginatedRecords.pageInfo":
+		if e.complexity.NamespacePaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.NamespacePaginatedRecords.PageInfo(childComplexity), true
+
+	case "NamespacePaginatedRecords.totalCount":
+		if e.complexity.NamespacePaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.NamespacePaginatedRecords.TotalCount(childComplexity), true
+
 	case "Node.apiVersion":
 		if e.complexity.Node.APIVersion == nil {
 			break
@@ -4273,6 +6013,90 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "PersistentVolume.apiVersion":
+		if e.complexity.PersistentVolume.APIVersion == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.APIVersion(childComplexity), true
+
+	case "PersistentVolume.accountName":
+		if e.complexity.PersistentVolume.AccountName == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.AccountName(childComplexity), true
+
+	case "PersistentVolume.clusterName":
+		if e.complexity.PersistentVolume.ClusterName == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.ClusterName(childComplexity), true
+
+	case "PersistentVolume.creationTime":
+		if e.complexity.PersistentVolume.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.CreationTime(childComplexity), true
+
+	case "PersistentVolume.id":
+		if e.complexity.PersistentVolume.ID == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.ID(childComplexity), true
+
+	case "PersistentVolume.kind":
+		if e.complexity.PersistentVolume.Kind == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.Kind(childComplexity), true
+
+	case "PersistentVolume.markedForDeletion":
+		if e.complexity.PersistentVolume.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.MarkedForDeletion(childComplexity), true
+
+	case "PersistentVolume.metadata":
+		if e.complexity.PersistentVolume.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.ObjectMeta(childComplexity), true
+
+	case "PersistentVolume.recordVersion":
+		if e.complexity.PersistentVolume.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.RecordVersion(childComplexity), true
+
+	case "PersistentVolume.spec":
+		if e.complexity.PersistentVolume.Spec == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.Spec(childComplexity), true
+
+	case "PersistentVolume.status":
+		if e.complexity.PersistentVolume.Status == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.Status(childComplexity), true
+
+	case "PersistentVolume.updateTime":
+		if e.complexity.PersistentVolume.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.UpdateTime(childComplexity), true
+
 	case "PersistentVolumeClaim.apiVersion":
 		if e.complexity.PersistentVolumeClaim.APIVersion == nil {
 			break
@@ -4399,6 +6223,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PersistentVolumeClaimPaginatedRecords.TotalCount(childComplexity), true
 
+	case "PersistentVolumeEdge.cursor":
+		if e.complexity.PersistentVolumeEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumeEdge.Cursor(childComplexity), true
+
+	case "PersistentVolumeEdge.node":
+		if e.complexity.PersistentVolumeEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumeEdge.Node(childComplexity), true
+
+	case "PersistentVolumePaginatedRecords.edges":
+		if e.complexity.PersistentVolumePaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumePaginatedRecords.Edges(childComplexity), true
+
+	case "PersistentVolumePaginatedRecords.pageInfo":
+		if e.complexity.PersistentVolumePaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumePaginatedRecords.PageInfo(childComplexity), true
+
+	case "PersistentVolumePaginatedRecords.totalCount":
+		if e.complexity.PersistentVolumePaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumePaginatedRecords.TotalCount(childComplexity), true
+
 	case "Query.infra_checkAwsAccess":
 		if e.complexity.Query.InfraCheckAwsAccess == nil {
 			break
@@ -4483,6 +6342,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetManagedServiceTemplate(childComplexity, args["category"].(string), args["name"].(string)), true
 
+	case "Query.infra_getNamespace":
+		if e.complexity.Query.InfraGetNamespace == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getNamespace_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetNamespace(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
 	case "Query.infra_getNodePool":
 		if e.complexity.Query.InfraGetNodePool == nil {
 			break
@@ -4507,6 +6378,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetProviderSecret(childComplexity, args["name"].(string)), true
 
+	case "Query.infra_getPV":
+		if e.complexity.Query.InfraGetPv == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getPV_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetPv(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
 	case "Query.infra_getPVC":
 		if e.complexity.Query.InfraGetPvc == nil {
 			break
@@ -4530,6 +6413,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraGetVPNDevice(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
+	case "Query.infra_getVolumeAttachment":
+		if e.complexity.Query.InfraGetVolumeAttachment == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getVolumeAttachment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetVolumeAttachment(childComplexity, args["clusterName"].(string), args["name"].(string)), true
 
 	case "Query.infra_listClusterManagedServices":
 		if e.complexity.Query.InfraListClusterManagedServices == nil {
@@ -4586,6 +6481,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraListManagedServiceTemplates(childComplexity), true
 
+	case "Query.infra_listNamespaces":
+		if e.complexity.Query.InfraListNamespaces == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listNamespaces_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListNamespaces(childComplexity, args["clusterName"].(string), args["search"].(*model.SearchNamespaces), args["pq"].(*repos.CursorPagination)), true
+
 	case "Query.infra_listNodePools":
 		if e.complexity.Query.InfraListNodePools == nil {
 			break
@@ -4610,6 +6517,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraListPVCs(childComplexity, args["clusterName"].(string), args["search"].(*model.SearchPersistentVolumeClaims), args["pq"].(*repos.CursorPagination)), true
 
+	case "Query.infra_listPVs":
+		if e.complexity.Query.InfraListPVs == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listPVs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListPVs(childComplexity, args["clusterName"].(string), args["search"].(*model.SearchPersistentVolumes), args["pq"].(*repos.CursorPagination)), true
+
 	case "Query.infra_listProviderSecrets":
 		if e.complexity.Query.InfraListProviderSecrets == nil {
 			break
@@ -4633,6 +6552,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraListVPNDevices(childComplexity, args["clusterName"].(*string), args["search"].(*model.SearchVPNDevices), args["pq"].(*repos.CursorPagination)), true
+
+	case "Query.infra_listVolumeAttachments":
+		if e.complexity.Query.InfraListVolumeAttachments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listVolumeAttachments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListVolumeAttachments(childComplexity, args["clusterName"].(string), args["search"].(*model.SearchVolumeAttachments), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -4795,6 +6726,125 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VPNDevicePaginatedRecords.TotalCount(childComplexity), true
 
+	case "VolumeAttachment.apiVersion":
+		if e.complexity.VolumeAttachment.APIVersion == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.APIVersion(childComplexity), true
+
+	case "VolumeAttachment.accountName":
+		if e.complexity.VolumeAttachment.AccountName == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.AccountName(childComplexity), true
+
+	case "VolumeAttachment.clusterName":
+		if e.complexity.VolumeAttachment.ClusterName == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.ClusterName(childComplexity), true
+
+	case "VolumeAttachment.creationTime":
+		if e.complexity.VolumeAttachment.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.CreationTime(childComplexity), true
+
+	case "VolumeAttachment.id":
+		if e.complexity.VolumeAttachment.ID == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.ID(childComplexity), true
+
+	case "VolumeAttachment.kind":
+		if e.complexity.VolumeAttachment.Kind == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.Kind(childComplexity), true
+
+	case "VolumeAttachment.markedForDeletion":
+		if e.complexity.VolumeAttachment.MarkedForDeletion == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.MarkedForDeletion(childComplexity), true
+
+	case "VolumeAttachment.metadata":
+		if e.complexity.VolumeAttachment.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.ObjectMeta(childComplexity), true
+
+	case "VolumeAttachment.recordVersion":
+		if e.complexity.VolumeAttachment.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.RecordVersion(childComplexity), true
+
+	case "VolumeAttachment.spec":
+		if e.complexity.VolumeAttachment.Spec == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.Spec(childComplexity), true
+
+	case "VolumeAttachment.status":
+		if e.complexity.VolumeAttachment.Status == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.Status(childComplexity), true
+
+	case "VolumeAttachment.updateTime":
+		if e.complexity.VolumeAttachment.UpdateTime == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.UpdateTime(childComplexity), true
+
+	case "VolumeAttachmentEdge.cursor":
+		if e.complexity.VolumeAttachmentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachmentEdge.Cursor(childComplexity), true
+
+	case "VolumeAttachmentEdge.node":
+		if e.complexity.VolumeAttachmentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachmentEdge.Node(childComplexity), true
+
+	case "VolumeAttachmentPaginatedRecords.edges":
+		if e.complexity.VolumeAttachmentPaginatedRecords.Edges == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachmentPaginatedRecords.Edges(childComplexity), true
+
+	case "VolumeAttachmentPaginatedRecords.pageInfo":
+		if e.complexity.VolumeAttachmentPaginatedRecords.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachmentPaginatedRecords.PageInfo(childComplexity), true
+
+	case "VolumeAttachmentPaginatedRecords.totalCount":
+		if e.complexity.VolumeAttachmentPaginatedRecords.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachmentPaginatedRecords.TotalCount(childComplexity), true
+
 	case "_Service.sdl":
 		if e.complexity._Service.SDL == nil {
 			break
@@ -4839,41 +6889,81 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn,
 		ec.unmarshalInputHelmReleaseIn,
+		ec.unmarshalInputK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__AffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__AzureDiskVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__CSIPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__CinderPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__FCVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__FlexPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__FlockerVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__HostPathVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__LocalVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NFSVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NamespaceConditionIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NamespaceSpecIn,
+		ec.unmarshalInputK8s__io___api___core___v1__NamespaceStatusIn,
 		ec.unmarshalInputK8s__io___api___core___v1__NodeAffinityIn,
 		ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorIn,
 		ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorRequirementIn,
 		ec.unmarshalInputK8s__io___api___core___v1__NodeSelectorTermIn,
+		ec.unmarshalInputK8s__io___api___core___v1__ObjectReferenceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeClaimConditionIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeClaimSpecIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeClaimStatusIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeSpecIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeStatusIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PodAffinityIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PodAffinityTermIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PodAntiAffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__PortworxVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__PreferredSchedulingTermIn,
+		ec.unmarshalInputK8s__io___api___core___v1__QuobyteVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__RBDPersistentVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__ResourceClaimIn,
 		ec.unmarshalInputK8s__io___api___core___v1__ResourceRequirementsIn,
+		ec.unmarshalInputK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__SecretReferenceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__TaintIn,
 		ec.unmarshalInputK8s__io___api___core___v1__TolerationIn,
 		ec.unmarshalInputK8s__io___api___core___v1__TypedLocalObjectReferenceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__TypedObjectReferenceIn,
+		ec.unmarshalInputK8s__io___api___core___v1__VolumeNodeAffinityIn,
+		ec.unmarshalInputK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn,
 		ec.unmarshalInputK8s__io___api___core___v1__WeightedPodAffinityTermIn,
+		ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSourceIn,
+		ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSpecIn,
+		ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentStatusIn,
+		ec.unmarshalInputK8s__io___api___storage___v1__VolumeErrorIn,
 		ec.unmarshalInputK8s__io___apimachinery___pkg___api___resource__QuantityIn,
 		ec.unmarshalInputK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn,
 		ec.unmarshalInputK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn,
 		ec.unmarshalInputMatchFilterIn,
 		ec.unmarshalInputMetadataIn,
+		ec.unmarshalInputNamespaceIn,
 		ec.unmarshalInputNodeIn,
 		ec.unmarshalInputNodePoolIn,
+		ec.unmarshalInputPersistentVolumeIn,
 		ec.unmarshalInputSearchCluster,
 		ec.unmarshalInputSearchClusterManagedService,
 		ec.unmarshalInputSearchDomainEntry,
 		ec.unmarshalInputSearchHelmRelease,
+		ec.unmarshalInputSearchNamespaces,
 		ec.unmarshalInputSearchNodepool,
 		ec.unmarshalInputSearchPersistentVolumeClaims,
+		ec.unmarshalInputSearchPersistentVolumes,
 		ec.unmarshalInputSearchProviderSecret,
 		ec.unmarshalInputSearchVPNDevices,
+		ec.unmarshalInputSearchVolumeAttachments,
 		ec.unmarshalInputVPNDeviceIn,
+		ec.unmarshalInputVolumeAttachmentIn,
 	)
 	first := true
 
@@ -4994,6 +7084,18 @@ input SearchPersistentVolumeClaims {
   text: MatchFilterIn
 }
 
+input SearchPersistentVolumes {
+  text: MatchFilterIn
+}
+
+input SearchNamespaces {
+  text: MatchFilterIn
+}
+
+input SearchVolumeAttachments {
+  text: MatchFilterIn
+}
+
 type CheckAwsAccessOutput {
     result: Boolean!
     installationUrl: String
@@ -5022,9 +7124,6 @@ type Query {
     infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
 
-    infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount
-
     infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
 
@@ -5034,6 +7133,18 @@ type Query {
     infra_listManagedServiceTemplates: [MsvcTemplate!]
     infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
 
+    # kubernetes native resources
+    infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount
+
+    infra_listNamespaces(clusterName: String!, search: SearchNamespaces, pq: CursorPaginationIn): NamespacePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getNamespace(clusterName: String!, name: String!): Namespace @isLoggedInAndVerified @hasAccount
+
+    infra_listPVs(clusterName: String!, search: SearchPersistentVolumes, pq: CursorPaginationIn): PersistentVolumePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPV(clusterName: String!, name: String!): PersistentVolume @isLoggedInAndVerified @hasAccount
+
+    infra_listVolumeAttachments(clusterName: String!, search: SearchVolumeAttachments, pq: CursorPaginationIn): VolumeAttachmentPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -5494,10 +7605,144 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource @shareable {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
 type K8s__io___api___core___v1__Affinity @shareable {
   nodeAffinity: K8s__io___api___core___v1__NodeAffinity
   podAffinity: K8s__io___api___core___v1__PodAffinity
   podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinity
+}
+
+type K8s__io___api___core___v1__AzureDiskVolumeSource @shareable {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__AzureFilePersistentVolumeSource @shareable {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+type K8s__io___api___core___v1__CSIPersistentVolumeSource @shareable {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReference
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReference
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReference
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+type K8s__io___api___core___v1__CephFSPersistentVolumeSource @shareable {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+type K8s__io___api___core___v1__CinderPersistentVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__FCVolumeSource @shareable {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+type K8s__io___api___core___v1__FlexPersistentVolumeSource @shareable {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+}
+
+type K8s__io___api___core___v1__FlockerVolumeSource @shareable {
+  datasetName: String
+  datasetUUID: String
+}
+
+type K8s__io___api___core___v1__GCEPersistentDiskVolumeSource @shareable {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__GlusterfsPersistentVolumeSource @shareable {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__HostPathVolumeSource @shareable {
+  path: String!
+  type: String
+}
+
+type K8s__io___api___core___v1__ISCSIPersistentVolumeSource @shareable {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  targetPortal: String!
+}
+
+type K8s__io___api___core___v1__LocalVolumeSource @shareable {
+  fsType: String
+  path: String!
+}
+
+type K8s__io___api___core___v1__NFSVolumeSource @shareable {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+type K8s__io___api___core___v1__NamespaceCondition @shareable {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+type K8s__io___api___core___v1__NamespaceSpec @shareable {
+  finalizers: [String!]
+}
+
+type K8s__io___api___core___v1__NamespaceStatus @shareable {
+  conditions: [K8s__io___api___core___v1__NamespaceCondition!]
+  phase: K8s__io___api___core___v1__NamespacePhase
 }
 
 type K8s__io___api___core___v1__NodeAffinity @shareable {
@@ -5518,6 +7763,16 @@ type K8s__io___api___core___v1__NodeSelectorRequirement @shareable {
 type K8s__io___api___core___v1__NodeSelectorTerm @shareable {
   matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirement!]
   matchFields: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+}
+
+type K8s__io___api___core___v1__ObjectReference @shareable {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
 }
 
 type K8s__io___api___core___v1__PersistentVolumeClaimCondition @shareable {
@@ -5549,6 +7804,51 @@ type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
+type K8s__io___api___core___v1__PersistentVolumeSpec @shareable {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSource
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSource
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSource
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSource
+  claimRef: K8s__io___api___core___v1__ObjectReference
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSource
+  fc: K8s__io___api___core___v1__FCVolumeSource
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSource
+  flocker: K8s__io___api___core___v1__FlockerVolumeSource
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSource
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSource
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSource
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSource
+  local: K8s__io___api___core___v1__LocalVolumeSource
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSource
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinity
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSource
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSource
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSource
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
+}
+
+type K8s__io___api___core___v1__PersistentVolumeStatus @shareable {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+type K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource @shareable {
+  fsType: String
+  pdID: String!
+}
+
 type K8s__io___api___core___v1__PodAffinity @shareable {
   preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
@@ -5566,9 +7866,35 @@ type K8s__io___api___core___v1__PodAntiAffinity @shareable {
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
 }
 
+type K8s__io___api___core___v1__PortworxVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
 type K8s__io___api___core___v1__PreferredSchedulingTerm @shareable {
   preference: K8s__io___api___core___v1__NodeSelectorTerm!
   weight: Int!
+}
+
+type K8s__io___api___core___v1__QuobyteVolumeSource @shareable {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+type K8s__io___api___core___v1__RBDPersistentVolumeSource @shareable {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim @shareable {
@@ -5579,6 +7905,32 @@ type K8s__io___api___core___v1__ResourceRequirements @shareable {
   claims: [K8s__io___api___core___v1__ResourceClaim!]
   limits: Map
   requests: Map
+}
+
+type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource @shareable {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__SecretReference @shareable {
+  name: String
+  namespace: String
+}
+
+type K8s__io___api___core___v1__StorageOSPersistentVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReference
+  volumeName: String
+  volumeNamespace: String
 }
 
 type K8s__io___api___core___v1__Taint @shareable {
@@ -5609,9 +7961,43 @@ type K8s__io___api___core___v1__TypedObjectReference @shareable {
   namespace: String
 }
 
+type K8s__io___api___core___v1__VolumeNodeAffinity @shareable {
+  required: K8s__io___api___core___v1__NodeSelector
+}
+
+type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource @shareable {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
 type K8s__io___api___core___v1__WeightedPodAffinityTerm @shareable {
   podAffinityTerm: K8s__io___api___core___v1__PodAffinityTerm!
   weight: Int!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSource @shareable {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpec
+  persistentVolumeName: String
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSpec @shareable {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSource!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentStatus @shareable {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeError
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeError
+}
+
+type K8s__io___api___storage___v1__VolumeError @shareable {
+  message: String
+  time: Date
 }
 
 type K8s__io___apimachinery___pkg___api___resource__Quantity @shareable {
@@ -5782,10 +8168,144 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   targetPort: Int
 }
 
+input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
 input K8s__io___api___core___v1__AffinityIn {
   nodeAffinity: K8s__io___api___core___v1__NodeAffinityIn
   podAffinity: K8s__io___api___core___v1__PodAffinityIn
   podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinityIn
+}
+
+input K8s__io___api___core___v1__AzureDiskVolumeSourceIn {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+input K8s__io___api___core___v1__CSIPersistentVolumeSourceIn {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+input K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+input K8s__io___api___core___v1__CinderPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__FCVolumeSourceIn {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+input K8s__io___api___core___v1__FlexPersistentVolumeSourceIn {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+}
+
+input K8s__io___api___core___v1__FlockerVolumeSourceIn {
+  datasetName: String
+  datasetUUID: String
+}
+
+input K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__HostPathVolumeSourceIn {
+  path: String!
+  type: String
+}
+
+input K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  targetPortal: String!
+}
+
+input K8s__io___api___core___v1__LocalVolumeSourceIn {
+  fsType: String
+  path: String!
+}
+
+input K8s__io___api___core___v1__NFSVolumeSourceIn {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+input K8s__io___api___core___v1__NamespaceConditionIn {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+input K8s__io___api___core___v1__NamespaceSpecIn {
+  finalizers: [String!]
+}
+
+input K8s__io___api___core___v1__NamespaceStatusIn {
+  conditions: [K8s__io___api___core___v1__NamespaceConditionIn!]
+  phase: K8s__io___api___core___v1__NamespacePhase
 }
 
 input K8s__io___api___core___v1__NodeAffinityIn {
@@ -5806,6 +8326,16 @@ input K8s__io___api___core___v1__NodeSelectorRequirementIn {
 input K8s__io___api___core___v1__NodeSelectorTermIn {
   matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
   matchFields: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+}
+
+input K8s__io___api___core___v1__ObjectReferenceIn {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
 }
 
 input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
@@ -5837,6 +8367,51 @@ input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
+input K8s__io___api___core___v1__PersistentVolumeSpecIn {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSourceIn
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSourceIn
+  claimRef: K8s__io___api___core___v1__ObjectReferenceIn
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSourceIn
+  fc: K8s__io___api___core___v1__FCVolumeSourceIn
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSourceIn
+  flocker: K8s__io___api___core___v1__FlockerVolumeSourceIn
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSourceIn
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn
+  local: K8s__io___api___core___v1__LocalVolumeSourceIn
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSourceIn
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinityIn
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSourceIn
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSourceIn
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSourceIn
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
+}
+
+input K8s__io___api___core___v1__PersistentVolumeStatusIn {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+input K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn {
+  fsType: String
+  pdID: String!
+}
+
 input K8s__io___api___core___v1__PodAffinityIn {
   preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTermIn!]
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
@@ -5854,9 +8429,35 @@ input K8s__io___api___core___v1__PodAntiAffinityIn {
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
 }
 
+input K8s__io___api___core___v1__PortworxVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
 input K8s__io___api___core___v1__PreferredSchedulingTermIn {
   preference: K8s__io___api___core___v1__NodeSelectorTermIn!
   weight: Int!
+}
+
+input K8s__io___api___core___v1__QuobyteVolumeSourceIn {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
 }
 
 input K8s__io___api___core___v1__ResourceClaimIn {
@@ -5867,6 +8468,32 @@ input K8s__io___api___core___v1__ResourceRequirementsIn {
   claims: [K8s__io___api___core___v1__ResourceClaimIn!]
   limits: Map
   requests: Map
+}
+
+input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__SecretReferenceIn {
+  name: String
+  namespace: String
+}
+
+input K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReferenceIn
+  volumeName: String
+  volumeNamespace: String
 }
 
 input K8s__io___api___core___v1__TaintIn {
@@ -5897,9 +8524,43 @@ input K8s__io___api___core___v1__TypedObjectReferenceIn {
   namespace: String
 }
 
+input K8s__io___api___core___v1__VolumeNodeAffinityIn {
+  required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+input K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
 input K8s__io___api___core___v1__WeightedPodAffinityTermIn {
   podAffinityTerm: K8s__io___api___core___v1__PodAffinityTermIn!
   weight: Int!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSourceIn {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  persistentVolumeName: String
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSpecIn {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSourceIn!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentStatusIn {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeErrorIn
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeErrorIn
+}
+
+input K8s__io___api___storage___v1__VolumeErrorIn {
+  message: String
+  time: Date
 }
 
 input K8s__io___apimachinery___pkg___api___resource__QuantityIn {
@@ -5963,6 +8624,19 @@ enum K8s__io___api___core___v1__ConditionStatus {
   Unknown
 }
 
+enum K8s__io___api___core___v1__NamespaceConditionType {
+  NamespaceContentRemaining
+  NamespaceDeletionContentFailure
+  NamespaceDeletionDiscoveryFailure
+  NamespaceDeletionGroupVersionParsingFailure
+  NamespaceFinalizersRemaining
+}
+
+enum K8s__io___api___core___v1__NamespacePhase {
+  Active
+  Terminating
+}
+
 enum K8s__io___api___core___v1__NodeSelectorOperator {
   DoesNotExist
   Exists
@@ -5981,6 +8655,20 @@ enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
   Bound
   Lost
   Pending
+}
+
+enum K8s__io___api___core___v1__PersistentVolumePhase {
+  Available
+  Bound
+  Failed
+  Pending
+  Released
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeReclaimPolicy {
+  Delete
+  Recycle
+  Retain
 }
 
 enum K8s__io___api___core___v1__TaintEffect {
@@ -6136,6 +8824,39 @@ enum MatchFilterMatchType {
 }
 
 `, BuiltIn: false},
+	{Name: "../struct-to-graphql/namespace.graphqls", Input: `type Namespace @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__NamespaceSpec
+  status: K8s__io___api___core___v1__NamespaceStatus
+  updateTime: Date!
+}
+
+type NamespaceEdge @shareable {
+  cursor: String!
+  node: Namespace!
+}
+
+type NamespacePaginatedRecords @shareable {
+  edges: [NamespaceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input NamespaceIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__NamespaceSpecIn
+  status: K8s__io___api___core___v1__NamespaceStatusIn
+}
+
+`, BuiltIn: false},
 	{Name: "../struct-to-graphql/node.graphqls", Input: `type Node @shareable {
   accountName: String!
   apiVersion: String!
@@ -6206,6 +8927,39 @@ input NodePoolIn {
 }
 
 `, BuiltIn: false},
+	{Name: "../struct-to-graphql/persistentvolume.graphqls", Input: `type PersistentVolume @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeSpec
+  status: K8s__io___api___core___v1__PersistentVolumeStatus
+  updateTime: Date!
+}
+
+type PersistentVolumeEdge @shareable {
+  cursor: String!
+  node: PersistentVolume!
+}
+
+type PersistentVolumePaginatedRecords @shareable {
+  edges: [PersistentVolumeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input PersistentVolumeIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  status: K8s__io___api___core___v1__PersistentVolumeStatusIn
+}
+
+`, BuiltIn: false},
 	{Name: "../struct-to-graphql/persistentvolumeclaim.graphqls", Input: `type PersistentVolumeClaim @shareable {
   accountName: String!
   apiVersion: String!
@@ -6238,6 +8992,39 @@ type PersistentVolumeClaimPaginatedRecords @shareable {
 scalar Json
 scalar Map
 scalar Date
+`, BuiltIn: false},
+	{Name: "../struct-to-graphql/volumeattachment.graphqls", Input: `type VolumeAttachment @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpec!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatus
+  updateTime: Date!
+}
+
+type VolumeAttachmentEdge @shareable {
+  cursor: String!
+  node: VolumeAttachment!
+}
+
+type VolumeAttachmentPaginatedRecords @shareable {
+  edges: [VolumeAttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input VolumeAttachmentIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpecIn!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatusIn
+}
+
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/vpndevice.graphqls", Input: `type VPNDevice @shareable {
   accountName: String!
@@ -6896,6 +9683,30 @@ func (ec *executionContext) field_Query_infra_getManagedServiceTemplate_args(ctx
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_infra_getNamespace_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_infra_getNodePool_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -6944,6 +9755,30 @@ func (ec *executionContext) field_Query_infra_getPVC_args(ctx context.Context, r
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_infra_getPV_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_infra_getProviderSecret_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -6960,6 +9795,30 @@ func (ec *executionContext) field_Query_infra_getProviderSecret_args(ctx context
 }
 
 func (ec *executionContext) field_Query_infra_getVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getVolumeAttachment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -7097,6 +9956,39 @@ func (ec *executionContext) field_Query_infra_listHelmReleases_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_infra_listNamespaces_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 *model.SearchNamespaces
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchNamespaces2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNamespaces(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_infra_listNodePools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -7163,6 +10055,39 @@ func (ec *executionContext) field_Query_infra_listPVCs_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_infra_listPVs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 *model.SearchPersistentVolumes
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchPersistentVolumes2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchPersistentVolumes(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_infra_listProviderSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -7203,6 +10128,39 @@ func (ec *executionContext) field_Query_infra_listVPNDevices_args(ctx context.Co
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
 		arg1, err = ec.unmarshalOSearchVPNDevices2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVPNDevices(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_listVolumeAttachments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 *model.SearchVolumeAttachments
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchVolumeAttachments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVolumeAttachments(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -20775,6 +23733,173 @@ func (ec *executionContext) fieldContext_HelmReleasePaginatedRecords_totalCount(
 	return fc, nil
 }
 
+func (ec *executionContext) _K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_partition(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_partition(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Partition, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_partition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_volumeID(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_volumeID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_volumeID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _K8s__io___api___core___v1__Affinity_nodeAffinity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1Affinity) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_K8s__io___api___core___v1__Affinity_nodeAffinity(ctx, field)
 	if err != nil {
@@ -20911,6 +24036,3251 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__Affinity_pod
 				return ec.fieldContext_K8s__io___api___core___v1__PodAntiAffinity_requiredDuringSchedulingIgnoredDuringExecution(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PodAntiAffinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource_cachingMode(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_cachingMode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CachingMode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_cachingMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource_diskName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_diskName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DiskName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_diskName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource_diskURI(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_diskURI(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DiskURI, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_diskURI(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource_kind(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureFilePersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureFilePersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureFilePersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretNamespace(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretNamespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretNamespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureFilePersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureFilePersistentVolumeSource_shareName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_shareName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ShareName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_shareName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__AzureFilePersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerExpandSecretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerExpandSecretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ControllerExpandSecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerExpandSecretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerPublishSecretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerPublishSecretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ControllerPublishSecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerPublishSecretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_driver(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_driver(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Driver, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_driver(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeExpandSecretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeExpandSecretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeExpandSecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeExpandSecretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_nodePublishSecretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodePublishSecretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodePublishSecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodePublishSecretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeStageSecretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeStageSecretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeStageSecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeStageSecretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeAttributes(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeAttributes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeAttributes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeAttributes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeHandle(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeHandle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeHandle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeHandle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource_monitors(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_monitors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Monitors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_monitors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CephFSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource_path(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_path(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Path, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CephFSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CephFSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretFile(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretFile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretFile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CephFSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CephFSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource_user(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CephFSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CinderPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CinderPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CinderPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CinderPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CinderPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CinderPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CinderPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CinderPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CinderPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CinderPersistentVolumeSource_volumeID(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1CinderPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_volumeID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_volumeID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__CinderPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FCVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FCVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FCVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource_lun(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FCVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_lun(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lun, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FCVolumeSource_lun(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FCVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FCVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FCVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FCVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource_targetWWNs(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FCVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_targetWWNs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetWWNs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FCVolumeSource_targetWWNs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FCVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource_wwids(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FCVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_wwids(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Wwids, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FCVolumeSource_wwids(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FCVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource_driver(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_driver(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Driver, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_driver(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlexPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlexPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource_options(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_options(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Options, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_options(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlexPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlexPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlexPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlockerVolumeSource_datasetName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlockerVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlockerVolumeSource_datasetName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DatasetName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlockerVolumeSource_datasetName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlockerVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlockerVolumeSource_datasetUUID(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1FlockerVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__FlockerVolumeSource_datasetUUID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DatasetUUID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__FlockerVolumeSource_datasetUUID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__FlockerVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_partition(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_partition(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Partition, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_partition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_pdName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_pdName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PdName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_pdName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GCEPersistentDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpoints(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpoints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Endpoints, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpoints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpointsNamespace(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpointsNamespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndpointsNamespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpointsNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_path(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_path(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Path, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__GlusterfsPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__HostPathVolumeSource_path(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1HostPathVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__HostPathVolumeSource_path(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Path, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__HostPathVolumeSource_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__HostPathVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__HostPathVolumeSource_type(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1HostPathVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__HostPathVolumeSource_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__HostPathVolumeSource_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__HostPathVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthDiscovery(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthDiscovery(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChapAuthDiscovery, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthDiscovery(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthSession(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthSession(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChapAuthSession, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_initiatorName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_initiatorName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InitiatorName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_initiatorName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iqn(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iqn(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Iqn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iqn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iscsiInterface(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iscsiInterface(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IscsiInterface, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iscsiInterface(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_lun(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_lun(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lun, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_lun(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_portals(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_portals(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Portals, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_portals(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource_targetPortal(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_targetPortal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetPortal, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_targetPortal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ISCSIPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__LocalVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1LocalVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__LocalVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__LocalVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__LocalVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__LocalVolumeSource_path(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1LocalVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__LocalVolumeSource_path(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Path, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__LocalVolumeSource_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__LocalVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NFSVolumeSource_path(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NFSVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NFSVolumeSource_path(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Path, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NFSVolumeSource_path(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NFSVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NFSVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NFSVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NFSVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NFSVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NFSVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NFSVolumeSource_server(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NFSVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NFSVolumeSource_server(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Server, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NFSVolumeSource_server(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NFSVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition_lastTransitionTime(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceCondition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_lastTransitionTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastTransitionTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceCondition_lastTransitionTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceCondition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition_message(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceCondition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceCondition_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceCondition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition_reason(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceCondition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_reason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reason, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceCondition_reason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceCondition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition_status(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceCondition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.K8sIoAPICoreV1ConditionStatus)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceCondition_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceCondition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type K8s__io___api___core___v1__ConditionStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition_type(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceCondition) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.K8sIoAPICoreV1NamespaceConditionType)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceCondition_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceCondition",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type K8s__io___api___core___v1__NamespaceConditionType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceSpec_finalizers(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceSpec_finalizers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Finalizers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceSpec_finalizers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceStatus_conditions(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceStatus_conditions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Conditions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.K8sIoAPICoreV1NamespaceCondition)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NamespaceCondition2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceStatus_conditions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lastTransitionTime":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_lastTransitionTime(ctx, field)
+			case "message":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_message(ctx, field)
+			case "reason":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_reason(ctx, field)
+			case "status":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_status(ctx, field)
+			case "type":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceCondition_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NamespaceCondition", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceStatus_phase(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1NamespaceStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__NamespaceStatus_phase(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Phase, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NamespacePhase)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NamespaceStatus_phase(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__NamespaceStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type K8s__io___api___core___v1__NamespacePhase does not have child fields")
 		},
 	}
 	return fc, nil
@@ -21280,6 +27650,293 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__NodeSelector
 				return ec.fieldContext_K8s__io___api___core___v1__NodeSelectorRequirement_values(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelectorRequirement", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_apiVersion(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_fieldPath(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_fieldPath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FieldPath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_fieldPath(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_kind(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_name(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_namespace(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResourceVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference_uid(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ObjectReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ObjectReference_uid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ObjectReference_uid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ObjectReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -22157,6 +28814,1769 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVo
 	return fc, nil
 }
 
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccessModes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AwsElasticBlockStore, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_fsType(ctx, field)
+			case "partition":
+				return ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_partition(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_readOnly(ctx, field)
+			case "volumeID":
+				return ec.fieldContext_K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_volumeID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AzureDisk, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1AzureDiskVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__AzureDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cachingMode":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_cachingMode(ctx, field)
+			case "diskName":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_diskName(ctx, field)
+			case "diskURI":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_diskURI(ctx, field)
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_fsType(ctx, field)
+			case "kind":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_kind(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureDiskVolumeSource_readOnly(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__AzureDiskVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AzureFile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1AzureFilePersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_readOnly(ctx, field)
+			case "secretName":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretName(ctx, field)
+			case "secretNamespace":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretNamespace(ctx, field)
+			case "shareName":
+				return ec.fieldContext_K8s__io___api___core___v1__AzureFilePersistentVolumeSource_shareName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__AzureFilePersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Capacity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cephfs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1CephFSPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__CephFSPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "monitors":
+				return ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_monitors(ctx, field)
+			case "path":
+				return ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_path(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_readOnly(ctx, field)
+			case "secretFile":
+				return ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretFile(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretRef(ctx, field)
+			case "user":
+				return ec.fieldContext_K8s__io___api___core___v1__CephFSPersistentVolumeSource_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__CephFSPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cinder, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1CinderPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__CinderPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_fsType(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_readOnly(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_secretRef(ctx, field)
+			case "volumeID":
+				return ec.fieldContext_K8s__io___api___core___v1__CinderPersistentVolumeSource_volumeID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__CinderPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClaimRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1ObjectReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__ObjectReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_apiVersion(ctx, field)
+			case "fieldPath":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_fieldPath(ctx, field)
+			case "kind":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_kind(ctx, field)
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_namespace(ctx, field)
+			case "resourceVersion":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx, field)
+			case "uid":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_uid(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__ObjectReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Csi, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1CSIPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__CSIPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "controllerExpandSecretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerExpandSecretRef(ctx, field)
+			case "controllerPublishSecretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerPublishSecretRef(ctx, field)
+			case "driver":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_driver(ctx, field)
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_fsType(ctx, field)
+			case "nodeExpandSecretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeExpandSecretRef(ctx, field)
+			case "nodePublishSecretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodePublishSecretRef(ctx, field)
+			case "nodeStageSecretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeStageSecretRef(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_readOnly(ctx, field)
+			case "volumeAttributes":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeAttributes(ctx, field)
+			case "volumeHandle":
+				return ec.fieldContext_K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeHandle(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__CSIPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Fc, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1FCVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__FCVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_fsType(ctx, field)
+			case "lun":
+				return ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_lun(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_readOnly(ctx, field)
+			case "targetWWNs":
+				return ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_targetWWNs(ctx, field)
+			case "wwids":
+				return ec.fieldContext_K8s__io___api___core___v1__FCVolumeSource_wwids(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__FCVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FlexVolume, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1FlexPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__FlexPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "driver":
+				return ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_driver(ctx, field)
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_fsType(ctx, field)
+			case "options":
+				return ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_options(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_readOnly(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__FlexPersistentVolumeSource_secretRef(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__FlexPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Flocker, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1FlockerVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__FlockerVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "datasetName":
+				return ec.fieldContext_K8s__io___api___core___v1__FlockerVolumeSource_datasetName(ctx, field)
+			case "datasetUUID":
+				return ec.fieldContext_K8s__io___api___core___v1__FlockerVolumeSource_datasetUUID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__FlockerVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GcePersistentDisk, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_fsType(ctx, field)
+			case "partition":
+				return ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_partition(ctx, field)
+			case "pdName":
+				return ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_pdName(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_readOnly(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__GCEPersistentDiskVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Glusterfs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endpoints":
+				return ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpoints(ctx, field)
+			case "endpointsNamespace":
+				return ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpointsNamespace(ctx, field)
+			case "path":
+				return ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_path(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_readOnly(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__GlusterfsPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HostPath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1HostPathVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__HostPathVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "path":
+				return ec.fieldContext_K8s__io___api___core___v1__HostPathVolumeSource_path(ctx, field)
+			case "type":
+				return ec.fieldContext_K8s__io___api___core___v1__HostPathVolumeSource_type(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__HostPathVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Iscsi, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1ISCSIPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "chapAuthDiscovery":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthDiscovery(ctx, field)
+			case "chapAuthSession":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthSession(ctx, field)
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_fsType(ctx, field)
+			case "initiatorName":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_initiatorName(ctx, field)
+			case "iqn":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iqn(ctx, field)
+			case "iscsiInterface":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iscsiInterface(ctx, field)
+			case "lun":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_lun(ctx, field)
+			case "portals":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_portals(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_readOnly(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_secretRef(ctx, field)
+			case "targetPortal":
+				return ec.fieldContext_K8s__io___api___core___v1__ISCSIPersistentVolumeSource_targetPortal(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__ISCSIPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Local, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1LocalVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__LocalVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__LocalVolumeSource_fsType(ctx, field)
+			case "path":
+				return ec.fieldContext_K8s__io___api___core___v1__LocalVolumeSource_path(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__LocalVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MountOptions, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nfs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NFSVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NFSVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "path":
+				return ec.fieldContext_K8s__io___api___core___v1__NFSVolumeSource_path(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__NFSVolumeSource_readOnly(ctx, field)
+			case "server":
+				return ec.fieldContext_K8s__io___api___core___v1__NFSVolumeSource_server(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NFSVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeAffinity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1VolumeNodeAffinity)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__VolumeNodeAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "required":
+				return ec.fieldContext_K8s__io___api___core___v1__VolumeNodeAffinity_required(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__VolumeNodeAffinity", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PersistentVolumeReclaimPolicy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PersistentVolumeReclaimPolicy)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type K8s__io___api___core___v1__PersistentVolumeReclaimPolicy does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PhotonPersistentDisk, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_fsType(ctx, field)
+			case "pdID":
+				return ec.fieldContext_K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_pdID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PortworxVolume, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PortworxVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PortworxVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_fsType(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_readOnly(ctx, field)
+			case "volumeID":
+				return ec.fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_volumeID(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PortworxVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quobyte, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1QuobyteVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__QuobyteVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "group":
+				return ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_group(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_readOnly(ctx, field)
+			case "registry":
+				return ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_registry(ctx, field)
+			case "tenant":
+				return ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_tenant(ctx, field)
+			case "user":
+				return ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_user(ctx, field)
+			case "volume":
+				return ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_volume(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__QuobyteVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rbd, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1RBDPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__RBDPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_fsType(ctx, field)
+			case "image":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_image(ctx, field)
+			case "keyring":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_keyring(ctx, field)
+			case "monitors":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_monitors(ctx, field)
+			case "pool":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_pool(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_readOnly(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_secretRef(ctx, field)
+			case "user":
+				return ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__RBDPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ScaleIo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_fsType(ctx, field)
+			case "gateway":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_gateway(ctx, field)
+			case "protectionDomain":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_protectionDomain(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_readOnly(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_secretRef(ctx, field)
+			case "sslEnabled":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_sslEnabled(ctx, field)
+			case "storageMode":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storageMode(ctx, field)
+			case "storagePool":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storagePool(ctx, field)
+			case "system":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_system(ctx, field)
+			case "volumeName":
+				return ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_volumeName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StorageClassName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Storageos, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1StorageOSPersistentVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_fsType(ctx, field)
+			case "readOnly":
+				return ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_readOnly(ctx, field)
+			case "secretRef":
+				return ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_secretRef(ctx, field)
+			case "volumeName":
+				return ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeName(ctx, field)
+			case "volumeNamespace":
+				return ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeNamespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__StorageOSPersistentVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeMode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VsphereVolume, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "fsType":
+				return ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_fsType(ctx, field)
+			case "storagePolicyID":
+				return ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyID(ctx, field)
+			case "storagePolicyName":
+				return ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyName(ctx, field)
+			case "volumePath":
+				return ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_volumePath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeStatus_lastPhaseTransitionTime(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_lastPhaseTransitionTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastPhaseTransitionTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_lastPhaseTransitionTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeStatus_message(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeStatus_phase(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_phase(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Phase, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PersistentVolumePhase)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_phase(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type K8s__io___api___core___v1__PersistentVolumePhase does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PersistentVolumeStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Reason, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PersistentVolumeStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_pdID(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_pdID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PdID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_pdID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PodAffinity) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_K8s__io___api___core___v1__PodAffinity_preferredDuringSchedulingIgnoredDuringExecution(ctx, field)
 	if err != nil {
@@ -22532,6 +30952,132 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PodAntiAffin
 	return fc, nil
 }
 
+func (ec *executionContext) _K8s__io___api___core___v1__PortworxVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PortworxVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PortworxVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PortworxVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PortworxVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PortworxVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PortworxVolumeSource_volumeID(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PortworxVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_volumeID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PortworxVolumeSource_volumeID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__PortworxVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1PreferredSchedulingTerm) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_K8s__io___api___core___v1__PreferredSchedulingTerm_preference(ctx, field)
 	if err != nil {
@@ -22621,6 +31167,598 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__PreferredSch
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource_group(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_group(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Group, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_group(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__QuobyteVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__QuobyteVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource_registry(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_registry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Registry, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_registry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__QuobyteVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource_tenant(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_tenant(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tenant, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_tenant(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__QuobyteVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource_user(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__QuobyteVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource_volume(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_volume(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Volume, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__QuobyteVolumeSource_volume(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__QuobyteVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_image(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_image(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Image, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_image(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_keyring(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_keyring(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Keyring, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_keyring(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_monitors(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_monitors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Monitors, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_monitors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_pool(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_pool(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pool, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_pool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource_user(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__RBDPersistentVolumeSource_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__RBDPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -22792,6 +31930,731 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ResourceRequ
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_gateway(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_gateway(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Gateway, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_gateway(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_protectionDomain(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_protectionDomain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProtectionDomain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_protectionDomain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1SecretReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__SecretReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_sslEnabled(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_sslEnabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SslEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_sslEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storageMode(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storageMode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StorageMode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storageMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storagePool(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storagePool(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StoragePool, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storagePool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_system(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_system(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.System, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_system(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_volumeName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_volumeName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_volumeName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__ScaleIOPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__SecretReference_name(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1SecretReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__SecretReference_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__SecretReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__SecretReference_namespace(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1SecretReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__SecretReference_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__SecretReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__StorageOSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_readOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReadOnly, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_readOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__StorageOSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_secretRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1ObjectReference)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__ObjectReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReference(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_secretRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__StorageOSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_apiVersion(ctx, field)
+			case "fieldPath":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_fieldPath(ctx, field)
+			case "kind":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_kind(ctx, field)
+			case "name":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_namespace(ctx, field)
+			case "resourceVersion":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx, field)
+			case "uid":
+				return ec.fieldContext_K8s__io___api___core___v1__ObjectReference_uid(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__ObjectReference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__StorageOSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeNamespace(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeNamespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumeNamespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__StorageOSPersistentVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23471,6 +33334,218 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__TypedObjectR
 	return fc, nil
 }
 
+func (ec *executionContext) _K8s__io___api___core___v1__VolumeNodeAffinity_required(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1VolumeNodeAffinity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__VolumeNodeAffinity_required(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Required, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NodeSelector)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NodeSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelector(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__VolumeNodeAffinity_required(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__VolumeNodeAffinity",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nodeSelectorTerms":
+				return ec.fieldContext_K8s__io___api___core___v1__NodeSelector_nodeSelectorTerms(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NodeSelector", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_fsType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FsType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_fsType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyID(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StoragePolicyID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StoragePolicyName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_volumePath(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_volumePath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VolumePath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_volumePath(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPICoreV1WeightedPodAffinityTerm) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_K8s__io___api___core___v1__WeightedPodAffinityTerm_podAffinityTerm(ctx, field)
 	if err != nil {
@@ -23564,6 +33639,549 @@ func (ec *executionContext) fieldContext_K8s__io___api___core___v1__WeightedPodA
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSource_inlineVolumeSpec(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSource_inlineVolumeSpec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InlineVolumeSpec, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PersistentVolumeSpec)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PersistentVolumeSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSource_inlineVolumeSpec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessModes":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx, field)
+			case "awsElasticBlockStore":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx, field)
+			case "azureDisk":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx, field)
+			case "azureFile":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx, field)
+			case "capacity":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx, field)
+			case "cephfs":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx, field)
+			case "cinder":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx, field)
+			case "claimRef":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx, field)
+			case "csi":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx, field)
+			case "fc":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx, field)
+			case "flexVolume":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx, field)
+			case "flocker":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx, field)
+			case "gcePersistentDisk":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx, field)
+			case "glusterfs":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx, field)
+			case "hostPath":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx, field)
+			case "iscsi":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx, field)
+			case "local":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx, field)
+			case "mountOptions":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx, field)
+			case "nfs":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx, field)
+			case "nodeAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx, field)
+			case "persistentVolumeReclaimPolicy":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx, field)
+			case "photonPersistentDisk":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx, field)
+			case "portworxVolume":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx, field)
+			case "quobyte":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx, field)
+			case "rbd":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx, field)
+			case "scaleIO":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx, field)
+			case "storageClassName":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx, field)
+			case "storageos":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx, field)
+			case "volumeMode":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx, field)
+			case "vsphereVolume":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PersistentVolumeSpec", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSource_persistentVolumeName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSource_persistentVolumeName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PersistentVolumeName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSource_persistentVolumeName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentSource",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSpec_attacher(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_attacher(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Attacher, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_attacher(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSpec_nodeName(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_nodeName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodeName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_nodeName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSpec_source(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_source(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Source, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPIStorageV1VolumeAttachmentSource)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___storage___v1__VolumeAttachmentSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSource(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_source(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "inlineVolumeSpec":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSource_inlineVolumeSpec(ctx, field)
+			case "persistentVolumeName":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSource_persistentVolumeName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___storage___v1__VolumeAttachmentSource", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentStatus_attached(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attached(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Attached, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attached(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentStatus_attachError(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attachError(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AttachError, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPIStorageV1VolumeError)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___storage___v1__VolumeError2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attachError(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "message":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeError_message(ctx, field)
+			case "time":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeError_time(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___storage___v1__VolumeError", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentStatus_attachmentMetadata(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attachmentMetadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AttachmentMetadata, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attachmentMetadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentStatus_detachError(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeAttachmentStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_detachError(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DetachError, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPIStorageV1VolumeError)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___storage___v1__VolumeError2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_detachError(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeAttachmentStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "message":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeError_message(ctx, field)
+			case "time":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeError_time(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___storage___v1__VolumeError", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeError_message(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeError_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeError_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeError",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeError_time(ctx context.Context, field graphql.CollectedField, obj *model.K8sIoAPIStorageV1VolumeError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_K8s__io___api___storage___v1__VolumeError_time(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Time, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_K8s__io___api___storage___v1__VolumeError_time(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "K8s__io___api___storage___v1__VolumeError",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
 		},
 	}
 	return fc, nil
@@ -26552,6 +37170,810 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteHelmRelease(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _Namespace_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_clusterName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Namespace().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_id(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Namespace().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_kind(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_metadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectMeta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(v1.ObjectMeta)
+	fc.Result = res
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_spec(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_spec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Namespace().Spec(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NamespaceSpec)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NamespaceSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "finalizers":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceSpec_finalizers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NamespaceSpec", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_status(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Namespace().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1NamespaceStatus)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__NamespaceStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "conditions":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceStatus_conditions(ctx, field)
+			case "phase":
+				return ec.fieldContext_K8s__io___api___core___v1__NamespaceStatus_phase(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__NamespaceStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Namespace().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NamespaceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.NamespaceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NamespaceEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NamespaceEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NamespaceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NamespaceEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.NamespaceEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NamespaceEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.Namespace)
+	fc.Result = res
+	return ec.marshalNNamespace2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNamespace(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NamespaceEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NamespaceEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_Namespace_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_Namespace_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_Namespace_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Namespace_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_Namespace_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_Namespace_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Namespace_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_Namespace_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Namespace_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_Namespace_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_Namespace_status(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Namespace_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Namespace", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NamespacePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.NamespacePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NamespacePaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.NamespaceEdge)
+	fc.Result = res
+	return ec.marshalNNamespaceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐNamespaceEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NamespacePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NamespacePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_NamespaceEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_NamespaceEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NamespaceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NamespacePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.NamespacePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NamespacePaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NamespacePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NamespacePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NamespacePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.NamespacePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NamespacePaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NamespacePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NamespacePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Node_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.Node) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Node_accountName(ctx, field)
 	if err != nil {
@@ -28634,6 +40056,610 @@ func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _PersistentVolume_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_clusterName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PersistentVolume().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_id(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PersistentVolume().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_kind(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_metadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectMeta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(v1.ObjectMeta)
+	fc.Result = res
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_spec(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_spec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PersistentVolume().Spec(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PersistentVolumeSpec)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PersistentVolumeSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accessModes":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx, field)
+			case "awsElasticBlockStore":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx, field)
+			case "azureDisk":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx, field)
+			case "azureFile":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx, field)
+			case "capacity":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx, field)
+			case "cephfs":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx, field)
+			case "cinder":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx, field)
+			case "claimRef":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx, field)
+			case "csi":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx, field)
+			case "fc":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx, field)
+			case "flexVolume":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx, field)
+			case "flocker":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx, field)
+			case "gcePersistentDisk":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx, field)
+			case "glusterfs":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx, field)
+			case "hostPath":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx, field)
+			case "iscsi":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx, field)
+			case "local":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx, field)
+			case "mountOptions":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx, field)
+			case "nfs":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx, field)
+			case "nodeAffinity":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx, field)
+			case "persistentVolumeReclaimPolicy":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx, field)
+			case "photonPersistentDisk":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx, field)
+			case "portworxVolume":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx, field)
+			case "quobyte":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx, field)
+			case "rbd":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx, field)
+			case "scaleIO":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx, field)
+			case "storageClassName":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx, field)
+			case "storageos":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx, field)
+			case "volumeMode":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx, field)
+			case "vsphereVolume":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PersistentVolumeSpec", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_status(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PersistentVolume().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPICoreV1PersistentVolumeStatus)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___core___v1__PersistentVolumeStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "lastPhaseTransitionTime":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_lastPhaseTransitionTime(ctx, field)
+			case "message":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_message(ctx, field)
+			case "phase":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_phase(ctx, field)
+			case "reason":
+				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PersistentVolumeStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PersistentVolume().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PersistentVolumeClaim_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolumeClaim) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PersistentVolumeClaim_accountName(ctx, field)
 	if err != nil {
@@ -29510,6 +41536,268 @@ func (ec *executionContext) _PersistentVolumeClaimPaginatedRecords_totalCount(ct
 func (ec *executionContext) fieldContext_PersistentVolumeClaimPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PersistentVolumeClaimPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumeEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.PersistentVolumeEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumeEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumeEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumeEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumeEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.PersistentVolumeEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumeEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.PersistentVolume)
+	fc.Result = res
+	return ec.marshalNPersistentVolume2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolume(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumeEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumeEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_PersistentVolume_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_PersistentVolume_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_PersistentVolume_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_PersistentVolume_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_PersistentVolume_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_PersistentVolume_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_PersistentVolume_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_PersistentVolume_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_PersistentVolume_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_PersistentVolume_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_PersistentVolume_status(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_PersistentVolume_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PersistentVolume", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.PersistentVolumePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumePaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PersistentVolumeEdge)
+	fc.Result = res
+	return ec.marshalNPersistentVolumeEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumeEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumePaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_PersistentVolumeEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_PersistentVolumeEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PersistentVolumeEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.PersistentVolumePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumePaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumePaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.PersistentVolumePaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumePaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumePaginatedRecords",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -30668,198 +42956,6 @@ func (ec *executionContext) fieldContext_Query_infra_getVPNDevice(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_infra_listPVCs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_infra_listPVCs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListPVCs(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchPersistentVolumeClaims), fc.Args["pq"].(*repos.CursorPagination))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.PersistentVolumeClaimPaginatedRecords); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.PersistentVolumeClaimPaginatedRecords`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PersistentVolumeClaimPaginatedRecords)
-	fc.Result = res
-	return ec.marshalOPersistentVolumeClaimPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumeClaimPaginatedRecords(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_infra_listPVCs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_PersistentVolumeClaimPaginatedRecords_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_PersistentVolumeClaimPaginatedRecords_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_PersistentVolumeClaimPaginatedRecords_totalCount(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PersistentVolumeClaimPaginatedRecords", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_infra_listPVCs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_infra_getPVC(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_infra_getPVC(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraGetPvc(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedInAndVerified == nil {
-				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
-			}
-			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*entities.PersistentVolumeClaim); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*entities.PersistentVolumeClaim)
-	fc.Result = res
-	return ec.marshalOPersistentVolumeClaim2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolumeClaim(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_infra_getPVC(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_PersistentVolumeClaim_accountName(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_PersistentVolumeClaim_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_PersistentVolumeClaim_clusterName(ctx, field)
-			case "creationTime":
-				return ec.fieldContext_PersistentVolumeClaim_creationTime(ctx, field)
-			case "id":
-				return ec.fieldContext_PersistentVolumeClaim_id(ctx, field)
-			case "kind":
-				return ec.fieldContext_PersistentVolumeClaim_kind(ctx, field)
-			case "markedForDeletion":
-				return ec.fieldContext_PersistentVolumeClaim_markedForDeletion(ctx, field)
-			case "metadata":
-				return ec.fieldContext_PersistentVolumeClaim_metadata(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_PersistentVolumeClaim_recordVersion(ctx, field)
-			case "spec":
-				return ec.fieldContext_PersistentVolumeClaim_spec(ctx, field)
-			case "status":
-				return ec.fieldContext_PersistentVolumeClaim_status(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_PersistentVolumeClaim_syncStatus(ctx, field)
-			case "updateTime":
-				return ec.fieldContext_PersistentVolumeClaim_updateTime(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PersistentVolumeClaim", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_infra_getPVC_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Query_infra_listClusterManagedServices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_infra_listClusterManagedServices(ctx, field)
 	if err != nil {
@@ -31373,6 +43469,768 @@ func (ec *executionContext) fieldContext_Query_infra_getManagedServiceTemplate(c
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_infra_getManagedServiceTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listPVCs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listPVCs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListPVCs(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchPersistentVolumeClaims), fc.Args["pq"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.PersistentVolumeClaimPaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.PersistentVolumeClaimPaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PersistentVolumeClaimPaginatedRecords)
+	fc.Result = res
+	return ec.marshalOPersistentVolumeClaimPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumeClaimPaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listPVCs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_PersistentVolumeClaimPaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PersistentVolumeClaimPaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PersistentVolumeClaimPaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PersistentVolumeClaimPaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listPVCs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_getPVC(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getPVC(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetPvc(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.PersistentVolumeClaim); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.PersistentVolumeClaim)
+	fc.Result = res
+	return ec.marshalOPersistentVolumeClaim2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolumeClaim(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_getPVC(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_PersistentVolumeClaim_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_PersistentVolumeClaim_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_PersistentVolumeClaim_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_PersistentVolumeClaim_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_PersistentVolumeClaim_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_PersistentVolumeClaim_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_PersistentVolumeClaim_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_PersistentVolumeClaim_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_PersistentVolumeClaim_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_PersistentVolumeClaim_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_PersistentVolumeClaim_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_PersistentVolumeClaim_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_PersistentVolumeClaim_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PersistentVolumeClaim", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_getPVC_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listNamespaces(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listNamespaces(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListNamespaces(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchNamespaces), fc.Args["pq"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.NamespacePaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.NamespacePaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.NamespacePaginatedRecords)
+	fc.Result = res
+	return ec.marshalONamespacePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐNamespacePaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listNamespaces(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_NamespacePaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_NamespacePaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_NamespacePaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NamespacePaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listNamespaces_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_getNamespace(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getNamespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetNamespace(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.Namespace); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.Namespace`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.Namespace)
+	fc.Result = res
+	return ec.marshalONamespace2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNamespace(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_getNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_Namespace_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_Namespace_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_Namespace_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Namespace_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_Namespace_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_Namespace_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Namespace_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_Namespace_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Namespace_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_Namespace_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_Namespace_status(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Namespace_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Namespace", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_getNamespace_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listPVs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listPVs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListPVs(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchPersistentVolumes), fc.Args["pq"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.PersistentVolumePaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.PersistentVolumePaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PersistentVolumePaginatedRecords)
+	fc.Result = res
+	return ec.marshalOPersistentVolumePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumePaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listPVs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_PersistentVolumePaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_PersistentVolumePaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PersistentVolumePaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PersistentVolumePaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listPVs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_getPV(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getPV(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetPv(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.PersistentVolume); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolume`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.PersistentVolume)
+	fc.Result = res
+	return ec.marshalOPersistentVolume2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolume(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_getPV(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_PersistentVolume_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_PersistentVolume_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_PersistentVolume_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_PersistentVolume_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_PersistentVolume_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_PersistentVolume_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_PersistentVolume_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_PersistentVolume_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_PersistentVolume_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_PersistentVolume_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_PersistentVolume_status(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_PersistentVolume_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PersistentVolume", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_getPV_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listVolumeAttachments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listVolumeAttachments(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListVolumeAttachments(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*model.SearchVolumeAttachments), fc.Args["pq"].(*repos.CursorPagination))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.VolumeAttachmentPaginatedRecords); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/app/graph/model.VolumeAttachmentPaginatedRecords`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.VolumeAttachmentPaginatedRecords)
+	fc.Result = res
+	return ec.marshalOVolumeAttachmentPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVolumeAttachmentPaginatedRecords(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_listVolumeAttachments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_VolumeAttachmentPaginatedRecords_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_VolumeAttachmentPaginatedRecords_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_VolumeAttachmentPaginatedRecords_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VolumeAttachmentPaginatedRecords", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_listVolumeAttachments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_getVolumeAttachment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getVolumeAttachment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraGetVolumeAttachment(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.VolumeAttachment); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.VolumeAttachment)
+	fc.Result = res
+	return ec.marshalOVolumeAttachment2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐVolumeAttachment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_getVolumeAttachment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_VolumeAttachment_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_VolumeAttachment_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_VolumeAttachment_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_VolumeAttachment_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_VolumeAttachment_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_VolumeAttachment_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_VolumeAttachment_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_VolumeAttachment_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_VolumeAttachment_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_VolumeAttachment_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_VolumeAttachment_status(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_VolumeAttachment_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VolumeAttachment", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_getVolumeAttachment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -32627,6 +45485,821 @@ func (ec *executionContext) _VPNDevicePaginatedRecords_totalCount(ctx context.Co
 func (ec *executionContext) fieldContext_VPNDevicePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VPNDevicePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_clusterName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_creationTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VolumeAttachment().CreationTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_creationTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_id(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VolumeAttachment().ID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_kind(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_markedForDeletion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarkedForDeletion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_markedForDeletion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_metadata(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ObjectMeta, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(v1.ObjectMeta)
+	fc.Result = res
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_spec(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_spec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VolumeAttachment().Spec(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPIStorageV1VolumeAttachmentSpec)
+	fc.Result = res
+	return ec.marshalNK8s__io___api___storage___v1__VolumeAttachmentSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "attacher":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_attacher(ctx, field)
+			case "nodeName":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_nodeName(ctx, field)
+			case "source":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentSpec_source(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___storage___v1__VolumeAttachmentSpec", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_status(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VolumeAttachment().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.K8sIoAPIStorageV1VolumeAttachmentStatus)
+	fc.Result = res
+	return ec.marshalOK8s__io___api___storage___v1__VolumeAttachmentStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "attached":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attached(ctx, field)
+			case "attachError":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attachError(ctx, field)
+			case "attachmentMetadata":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_attachmentMetadata(ctx, field)
+			case "detachError":
+				return ec.fieldContext_K8s__io___api___storage___v1__VolumeAttachmentStatus_detachError(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___storage___v1__VolumeAttachmentStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_updateTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VolumeAttachment().UpdateTime(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_updateTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachmentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.VolumeAttachmentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachmentEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachmentEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachmentEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.VolumeAttachmentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachmentEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*entities.VolumeAttachment)
+	fc.Result = res
+	return ec.marshalNVolumeAttachment2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐVolumeAttachment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachmentEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachmentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_VolumeAttachment_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_VolumeAttachment_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_VolumeAttachment_clusterName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_VolumeAttachment_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_VolumeAttachment_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_VolumeAttachment_kind(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_VolumeAttachment_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_VolumeAttachment_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_VolumeAttachment_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_VolumeAttachment_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_VolumeAttachment_status(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_VolumeAttachment_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VolumeAttachment", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachmentPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField, obj *model.VolumeAttachmentPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachmentPaginatedRecords_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.VolumeAttachmentEdge)
+	fc.Result = res
+	return ec.marshalNVolumeAttachmentEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVolumeAttachmentEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachmentPaginatedRecords_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachmentPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_VolumeAttachmentEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_VolumeAttachmentEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VolumeAttachmentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachmentPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.VolumeAttachmentPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachmentPaginatedRecords_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachmentPaginatedRecords_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachmentPaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachmentPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.VolumeAttachmentPaginatedRecords) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachmentPaginatedRecords_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachmentPaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachmentPaginatedRecords",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -35777,6 +49450,58 @@ func (ec *executionContext) unmarshalInputHelmReleaseIn(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "partition", "readOnly", "volumeID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "partition":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partition"))
+			it.Partition, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
+			it.VolumeID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1AffinityIn, error) {
 	var it model.K8sIoAPICoreV1AffinityIn
 	asMap := map[string]interface{}{}
@@ -35812,6 +49537,954 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AffinityIn(
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("podAntiAffinity"))
 			it.PodAntiAffinity, err = ec.unmarshalOK8s__io___api___core___v1__PodAntiAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAntiAffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureDiskVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1AzureDiskVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1AzureDiskVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cachingMode", "diskName", "diskURI", "fsType", "kind", "readOnly"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cachingMode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cachingMode"))
+			it.CachingMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "diskName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("diskName"))
+			it.DiskName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "diskURI":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("diskURI"))
+			it.DiskURI, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1AzureFilePersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1AzureFilePersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"readOnly", "secretName", "secretNamespace", "shareName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretName"))
+			it.SecretName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretNamespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretNamespace"))
+			it.SecretNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "shareName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("shareName"))
+			it.ShareName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CSIPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1CSIPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1CSIPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"controllerExpandSecretRef", "controllerPublishSecretRef", "driver", "fsType", "nodeExpandSecretRef", "nodePublishSecretRef", "nodeStageSecretRef", "readOnly", "volumeAttributes", "volumeHandle"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "controllerExpandSecretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controllerExpandSecretRef"))
+			it.ControllerExpandSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "controllerPublishSecretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controllerPublishSecretRef"))
+			it.ControllerPublishSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "driver":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driver"))
+			it.Driver, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodeExpandSecretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeExpandSecretRef"))
+			it.NodeExpandSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodePublishSecretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodePublishSecretRef"))
+			it.NodePublishSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodeStageSecretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeStageSecretRef"))
+			it.NodeStageSecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeAttributes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeAttributes"))
+			it.VolumeAttributes, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeHandle":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeHandle"))
+			it.VolumeHandle, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1CephFSPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1CephFSPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"monitors", "path", "readOnly", "secretFile", "secretRef", "user"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "monitors":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monitors"))
+			it.Monitors, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "path":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+			it.Path, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretFile":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretFile"))
+			it.SecretFile, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "user":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+			it.User, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__CinderPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1CinderPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1CinderPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "readOnly", "secretRef", "volumeID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
+			it.VolumeID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FCVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1FCVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1FCVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "lun", "readOnly", "targetWWNs", "wwids"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "lun":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lun"))
+			it.Lun, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "targetWWNs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetWWNs"))
+			it.TargetWWNs, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "wwids":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("wwids"))
+			it.Wwids, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlexPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1FlexPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1FlexPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"driver", "fsType", "options", "readOnly", "secretRef"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "driver":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driver"))
+			it.Driver, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "options":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
+			it.Options, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__FlockerVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1FlockerVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1FlockerVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"datasetName", "datasetUUID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "datasetName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datasetName"))
+			it.DatasetName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "datasetUUID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datasetUUID"))
+			it.DatasetUUID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "partition", "pdName", "readOnly"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "partition":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partition"))
+			it.Partition, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pdName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pdName"))
+			it.PdName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"endpoints", "endpointsNamespace", "path", "readOnly"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "endpoints":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpoints"))
+			it.Endpoints, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "endpointsNamespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endpointsNamespace"))
+			it.EndpointsNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "path":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__HostPathVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1HostPathVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1HostPathVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"path", "type"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "path":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1ISCSIPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1ISCSIPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"chapAuthDiscovery", "chapAuthSession", "fsType", "initiatorName", "iqn", "iscsiInterface", "lun", "portals", "readOnly", "secretRef", "targetPortal"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "chapAuthDiscovery":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapAuthDiscovery"))
+			it.ChapAuthDiscovery, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "chapAuthSession":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapAuthSession"))
+			it.ChapAuthSession, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "initiatorName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("initiatorName"))
+			it.InitiatorName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "iqn":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iqn"))
+			it.Iqn, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "iscsiInterface":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iscsiInterface"))
+			it.IscsiInterface, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "lun":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lun"))
+			it.Lun, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "portals":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portals"))
+			it.Portals, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "targetPortal":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPortal"))
+			it.TargetPortal, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__LocalVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1LocalVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1LocalVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "path"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "path":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NFSVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NFSVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1NFSVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"path", "readOnly", "server"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "path":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("path"))
+			it.Path, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "server":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("server"))
+			it.Server, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceConditionIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NamespaceConditionIn, error) {
+	var it model.K8sIoAPICoreV1NamespaceConditionIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"lastTransitionTime", "message", "reason", "status", "type"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lastTransitionTime":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastTransitionTime"))
+			it.LastTransitionTime, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "message":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "reason":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			it.Reason, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			it.Status, err = ec.unmarshalNK8s__io___api___core___v1__ConditionStatus2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ConditionStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
+			it.Type, err = ec.unmarshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceSpecIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NamespaceSpecIn, error) {
+	var it model.K8sIoAPICoreV1NamespaceSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"finalizers"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "finalizers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("finalizers"))
+			it.Finalizers, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NamespaceStatusIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1NamespaceStatusIn, error) {
+	var it model.K8sIoAPICoreV1NamespaceStatusIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"conditions", "phase"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "conditions":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("conditions"))
+			it.Conditions, err = ec.unmarshalOK8s__io___api___core___v1__NamespaceConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "phase":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
+			it.Phase, err = ec.unmarshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -35956,6 +50629,82 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__NodeSelecto
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchFields"))
 			it.MatchFields, err = ec.unmarshalOK8s__io___api___core___v1__NodeSelectorRequirementIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorRequirementInᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ObjectReferenceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1ObjectReferenceIn, error) {
+	var it model.K8sIoAPICoreV1ObjectReferenceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"apiVersion", "fieldPath", "kind", "name", "namespace", "resourceVersion", "uid"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "apiVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			it.APIVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fieldPath":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fieldPath"))
+			it.FieldPath, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "namespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "resourceVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resourceVersion"))
+			it.ResourceVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "uid":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("uid"))
+			it.UID, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -36185,6 +50934,354 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentV
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentVolumeSpecIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PersistentVolumeSpecIn, error) {
+	var it model.K8sIoAPICoreV1PersistentVolumeSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessModes", "awsElasticBlockStore", "azureDisk", "azureFile", "capacity", "cephfs", "cinder", "claimRef", "csi", "fc", "flexVolume", "flocker", "gcePersistentDisk", "glusterfs", "hostPath", "iscsi", "local", "mountOptions", "nfs", "nodeAffinity", "persistentVolumeReclaimPolicy", "photonPersistentDisk", "portworxVolume", "quobyte", "rbd", "scaleIO", "storageClassName", "storageos", "volumeMode", "vsphereVolume"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessModes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessModes"))
+			it.AccessModes, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "awsElasticBlockStore":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsElasticBlockStore"))
+			it.AwsElasticBlockStore, err = ec.unmarshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "azureDisk":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureDisk"))
+			it.AzureDisk, err = ec.unmarshalOK8s__io___api___core___v1__AzureDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "azureFile":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azureFile"))
+			it.AzureFile, err = ec.unmarshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "capacity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("capacity"))
+			it.Capacity, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cephfs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cephfs"))
+			it.Cephfs, err = ec.unmarshalOK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cinder":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cinder"))
+			it.Cinder, err = ec.unmarshalOK8s__io___api___core___v1__CinderPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "claimRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimRef"))
+			it.ClaimRef, err = ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "csi":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("csi"))
+			it.Csi, err = ec.unmarshalOK8s__io___api___core___v1__CSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fc":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fc"))
+			it.Fc, err = ec.unmarshalOK8s__io___api___core___v1__FCVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "flexVolume":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("flexVolume"))
+			it.FlexVolume, err = ec.unmarshalOK8s__io___api___core___v1__FlexPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "flocker":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("flocker"))
+			it.Flocker, err = ec.unmarshalOK8s__io___api___core___v1__FlockerVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gcePersistentDisk":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcePersistentDisk"))
+			it.GcePersistentDisk, err = ec.unmarshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "glusterfs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("glusterfs"))
+			it.Glusterfs, err = ec.unmarshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "hostPath":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hostPath"))
+			it.HostPath, err = ec.unmarshalOK8s__io___api___core___v1__HostPathVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "iscsi":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iscsi"))
+			it.Iscsi, err = ec.unmarshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "local":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("local"))
+			it.Local, err = ec.unmarshalOK8s__io___api___core___v1__LocalVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mountOptions":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mountOptions"))
+			it.MountOptions, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nfs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nfs"))
+			it.Nfs, err = ec.unmarshalOK8s__io___api___core___v1__NFSVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodeAffinity":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeAffinity"))
+			it.NodeAffinity, err = ec.unmarshalOK8s__io___api___core___v1__VolumeNodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinityIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "persistentVolumeReclaimPolicy":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistentVolumeReclaimPolicy"))
+			it.PersistentVolumeReclaimPolicy, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "photonPersistentDisk":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photonPersistentDisk"))
+			it.PhotonPersistentDisk, err = ec.unmarshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "portworxVolume":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portworxVolume"))
+			it.PortworxVolume, err = ec.unmarshalOK8s__io___api___core___v1__PortworxVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "quobyte":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quobyte"))
+			it.Quobyte, err = ec.unmarshalOK8s__io___api___core___v1__QuobyteVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rbd":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rbd"))
+			it.Rbd, err = ec.unmarshalOK8s__io___api___core___v1__RBDPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "scaleIO":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scaleIO"))
+			it.ScaleIo, err = ec.unmarshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storageClassName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClassName"))
+			it.StorageClassName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storageos":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageos"))
+			it.Storageos, err = ec.unmarshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeMode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeMode"))
+			it.VolumeMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "vsphereVolume":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vsphereVolume"))
+			it.VsphereVolume, err = ec.unmarshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PersistentVolumeStatusIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PersistentVolumeStatusIn, error) {
+	var it model.K8sIoAPICoreV1PersistentVolumeStatusIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"lastPhaseTransitionTime", "message", "phase", "reason"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lastPhaseTransitionTime":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastPhaseTransitionTime"))
+			it.LastPhaseTransitionTime, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "message":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "phase":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phase"))
+			it.Phase, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "reason":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reason"))
+			it.Reason, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "pdID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pdID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pdID"))
+			it.PdID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PodAffinityIn, error) {
 	var it model.K8sIoAPICoreV1PodAffinityIn
 	asMap := map[string]interface{}{}
@@ -36309,6 +51406,50 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PodAntiAffi
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PortworxVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PortworxVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1PortworxVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "readOnly", "volumeID"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeID"))
+			it.VolumeID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PreferredSchedulingTermIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1PreferredSchedulingTermIn, error) {
 	var it model.K8sIoAPICoreV1PreferredSchedulingTermIn
 	asMap := map[string]interface{}{}
@@ -36336,6 +51477,158 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__PreferredSc
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
 			it.Weight, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__QuobyteVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1QuobyteVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1QuobyteVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"group", "readOnly", "registry", "tenant", "user", "volume"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "group":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("group"))
+			it.Group, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "registry":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("registry"))
+			it.Registry, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "tenant":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tenant"))
+			it.Tenant, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "user":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+			it.User, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volume":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volume"))
+			it.Volume, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__RBDPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1RBDPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1RBDPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "image", "keyring", "monitors", "pool", "readOnly", "secretRef", "user"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "image":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("image"))
+			it.Image, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "keyring":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyring"))
+			it.Keyring, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "monitors":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("monitors"))
+			it.Monitors, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pool":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pool"))
+			it.Pool, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "user":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user"))
+			it.User, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -36408,6 +51701,202 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ResourceReq
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requests"))
 			it.Requests, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "gateway", "protectionDomain", "readOnly", "secretRef", "sslEnabled", "storageMode", "storagePool", "system", "volumeName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gateway":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gateway"))
+			it.Gateway, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "protectionDomain":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("protectionDomain"))
+			it.ProtectionDomain, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "sslEnabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sslEnabled"))
+			it.SslEnabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storageMode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageMode"))
+			it.StorageMode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storagePool":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePool"))
+			it.StoragePool, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "system":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("system"))
+			it.System, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
+			it.VolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__SecretReferenceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1SecretReferenceIn, error) {
+	var it model.K8sIoAPICoreV1SecretReferenceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "namespace"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "namespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "readOnly", "secretRef", "volumeName", "volumeNamespace"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "readOnly":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("readOnly"))
+			it.ReadOnly, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretRef":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretRef"))
+			it.SecretRef, err = ec.unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeName"))
+			it.VolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumeNamespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumeNamespace"))
+			it.VolumeNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -36625,6 +52114,86 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__TypedObject
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VolumeNodeAffinityIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1VolumeNodeAffinityIn, error) {
+	var it model.K8sIoAPICoreV1VolumeNodeAffinityIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"required"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "required":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("required"))
+			it.Required, err = ec.unmarshalOK8s__io___api___core___v1__NodeSelectorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn, error) {
+	var it model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"fsType", "storagePolicyID", "storagePolicyName", "volumePath"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "fsType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fsType"))
+			it.FsType, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storagePolicyID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicyID"))
+			it.StoragePolicyID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storagePolicyName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicyName"))
+			it.StoragePolicyName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "volumePath":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("volumePath"))
+			it.VolumePath, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__WeightedPodAffinityTermIn(ctx context.Context, obj interface{}) (model.K8sIoAPICoreV1WeightedPodAffinityTermIn, error) {
 	var it model.K8sIoAPICoreV1WeightedPodAffinityTermIn
 	asMap := map[string]interface{}{}
@@ -36652,6 +52221,174 @@ func (ec *executionContext) unmarshalInputK8s__io___api___core___v1__WeightedPod
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("weight"))
 			it.Weight, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSourceIn(ctx context.Context, obj interface{}) (model.K8sIoAPIStorageV1VolumeAttachmentSourceIn, error) {
+	var it model.K8sIoAPIStorageV1VolumeAttachmentSourceIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"inlineVolumeSpec", "persistentVolumeName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "inlineVolumeSpec":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inlineVolumeSpec"))
+			it.InlineVolumeSpec, err = ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "persistentVolumeName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("persistentVolumeName"))
+			it.PersistentVolumeName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSpecIn(ctx context.Context, obj interface{}) (model.K8sIoAPIStorageV1VolumeAttachmentSpecIn, error) {
+	var it model.K8sIoAPIStorageV1VolumeAttachmentSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"attacher", "nodeName", "source"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "attacher":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attacher"))
+			it.Attacher, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodeName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeName"))
+			it.NodeName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "source":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			it.Source, err = ec.unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSourceIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentStatusIn(ctx context.Context, obj interface{}) (model.K8sIoAPIStorageV1VolumeAttachmentStatusIn, error) {
+	var it model.K8sIoAPIStorageV1VolumeAttachmentStatusIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"attached", "attachError", "attachmentMetadata", "detachError"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "attached":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attached"))
+			it.Attached, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attachError":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachError"))
+			it.AttachError, err = ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attachmentMetadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachmentMetadata"))
+			it.AttachmentMetadata, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "detachError":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("detachError"))
+			it.DetachError, err = ec.unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputK8s__io___api___storage___v1__VolumeErrorIn(ctx context.Context, obj interface{}) (model.K8sIoAPIStorageV1VolumeErrorIn, error) {
+	var it model.K8sIoAPIStorageV1VolumeErrorIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"message", "time"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "message":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			it.Message, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "time":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("time"))
+			it.Time, err = ec.unmarshalODate2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -36879,6 +52616,59 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNamespaceIn(ctx context.Context, obj interface{}) (entities.Namespace, error) {
+	var it entities.Namespace
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"metadata", "spec", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.NamespaceIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "spec":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespaceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceSpecIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.NamespaceIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__NamespaceStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceStatusIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.NamespaceIn().Status(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interface{}) (model.NodeIn, error) {
 	var it model.NodeIn
 	asMap := map[string]interface{}{}
@@ -36957,6 +52747,59 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 				return it, err
 			}
 			if err = ec.resolvers.NodePoolIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context, obj interface{}) (entities.PersistentVolume, error) {
+	var it entities.PersistentVolume
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"metadata", "spec", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.PersistentVolumeIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "spec":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.PersistentVolumeIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOK8s__io___api___core___v1__PersistentVolumeStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeStatusIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.PersistentVolumeIn().Status(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -37125,6 +52968,34 @@ func (ec *executionContext) unmarshalInputSearchHelmRelease(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSearchNamespaces(ctx context.Context, obj interface{}) (model.SearchNamespaces, error) {
+	var it model.SearchNamespaces
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSearchNodepool(ctx context.Context, obj interface{}) (model.SearchNodepool, error) {
 	var it model.SearchNodepool
 	asMap := map[string]interface{}{}
@@ -37155,6 +53026,34 @@ func (ec *executionContext) unmarshalInputSearchNodepool(ctx context.Context, ob
 
 func (ec *executionContext) unmarshalInputSearchPersistentVolumeClaims(ctx context.Context, obj interface{}) (model.SearchPersistentVolumeClaims, error) {
 	var it model.SearchPersistentVolumeClaims
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSearchPersistentVolumes(ctx context.Context, obj interface{}) (model.SearchPersistentVolumes, error) {
+	var it model.SearchPersistentVolumes
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -37261,6 +53160,34 @@ func (ec *executionContext) unmarshalInputSearchVPNDevices(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSearchVolumeAttachments(ctx context.Context, obj interface{}) (model.SearchVolumeAttachments, error) {
+	var it model.SearchVolumeAttachments
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"text"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "text":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
+			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj interface{}) (entities.VPNDevice, error) {
 	var it entities.VPNDevice
 	asMap := map[string]interface{}{}
@@ -37303,6 +53230,59 @@ func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj i
 				return it, err
 			}
 			if err = ec.resolvers.VPNDeviceIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputVolumeAttachmentIn(ctx context.Context, obj interface{}) (entities.VolumeAttachment, error) {
+	var it entities.VolumeAttachment
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"metadata", "spec", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.VolumeAttachmentIn().Metadata(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "spec":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
+			data, err := ec.unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpecIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.VolumeAttachmentIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOK8s__io___api___storage___v1__VolumeAttachmentStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentStatusIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.VolumeAttachmentIn().Status(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -40716,6 +56696,46 @@ func (ec *executionContext) _HelmReleasePaginatedRecords(ctx context.Context, se
 	return out
 }
 
+var k8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceImplementors = []string{"K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_fsType(ctx, field, obj)
+
+		case "partition":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_partition(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_readOnly(ctx, field, obj)
+
+		case "volumeID":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource_volumeID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var k8s__io___api___core___v1__AffinityImplementors = []string{"K8s__io___api___core___v1__Affinity"}
 
 func (ec *executionContext) _K8s__io___api___core___v1__Affinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1Affinity) graphql.Marshaler {
@@ -40737,6 +56757,730 @@ func (ec *executionContext) _K8s__io___api___core___v1__Affinity(ctx context.Con
 		case "podAntiAffinity":
 
 			out.Values[i] = ec._K8s__io___api___core___v1__Affinity_podAntiAffinity(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__AzureDiskVolumeSourceImplementors = []string{"K8s__io___api___core___v1__AzureDiskVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1AzureDiskVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AzureDiskVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__AzureDiskVolumeSource")
+		case "cachingMode":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_cachingMode(ctx, field, obj)
+
+		case "diskName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_diskName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "diskURI":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_diskURI(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_fsType(ctx, field, obj)
+
+		case "kind":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_kind(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureDiskVolumeSource_readOnly(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__AzureFilePersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__AzureFilePersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__AzureFilePersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__AzureFilePersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__AzureFilePersistentVolumeSource")
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "secretNamespace":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_secretNamespace(ctx, field, obj)
+
+		case "shareName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource_shareName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__CSIPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__CSIPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CSIPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1CSIPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__CSIPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__CSIPersistentVolumeSource")
+		case "controllerExpandSecretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerExpandSecretRef(ctx, field, obj)
+
+		case "controllerPublishSecretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_controllerPublishSecretRef(ctx, field, obj)
+
+		case "driver":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_driver(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "nodeExpandSecretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeExpandSecretRef(ctx, field, obj)
+
+		case "nodePublishSecretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_nodePublishSecretRef(ctx, field, obj)
+
+		case "nodeStageSecretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_nodeStageSecretRef(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "volumeAttributes":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeAttributes(ctx, field, obj)
+
+		case "volumeHandle":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CSIPersistentVolumeSource_volumeHandle(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__CephFSPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__CephFSPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CephFSPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__CephFSPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__CephFSPersistentVolumeSource")
+		case "monitors":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_monitors(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "path":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_path(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretFile":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretFile(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		case "user":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource_user(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__CinderPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__CinderPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__CinderPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1CinderPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__CinderPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__CinderPersistentVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		case "volumeID":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__CinderPersistentVolumeSource_volumeID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__FCVolumeSourceImplementors = []string{"K8s__io___api___core___v1__FCVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FCVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1FCVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__FCVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__FCVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_fsType(ctx, field, obj)
+
+		case "lun":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_lun(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_readOnly(ctx, field, obj)
+
+		case "targetWWNs":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_targetWWNs(ctx, field, obj)
+
+		case "wwids":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FCVolumeSource_wwids(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__FlexPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__FlexPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlexPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1FlexPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__FlexPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__FlexPersistentVolumeSource")
+		case "driver":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_driver(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "options":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_options(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlexPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__FlockerVolumeSourceImplementors = []string{"K8s__io___api___core___v1__FlockerVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__FlockerVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1FlockerVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__FlockerVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__FlockerVolumeSource")
+		case "datasetName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlockerVolumeSource_datasetName(ctx, field, obj)
+
+		case "datasetUUID":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__FlockerVolumeSource_datasetUUID(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__GCEPersistentDiskVolumeSourceImplementors = []string{"K8s__io___api___core___v1__GCEPersistentDiskVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GCEPersistentDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__GCEPersistentDiskVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__GCEPersistentDiskVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_fsType(ctx, field, obj)
+
+		case "partition":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_partition(ctx, field, obj)
+
+		case "pdName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_pdName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource_readOnly(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__GlusterfsPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__GlusterfsPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__GlusterfsPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__GlusterfsPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__GlusterfsPersistentVolumeSource")
+		case "endpoints":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpoints(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "endpointsNamespace":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_endpointsNamespace(ctx, field, obj)
+
+		case "path":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_path(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__HostPathVolumeSourceImplementors = []string{"K8s__io___api___core___v1__HostPathVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__HostPathVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1HostPathVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__HostPathVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__HostPathVolumeSource")
+		case "path":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__HostPathVolumeSource_path(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "type":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__HostPathVolumeSource_type(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__ISCSIPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__ISCSIPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ISCSIPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ISCSIPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ISCSIPersistentVolumeSource")
+		case "chapAuthDiscovery":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthDiscovery(ctx, field, obj)
+
+		case "chapAuthSession":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_chapAuthSession(ctx, field, obj)
+
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "initiatorName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_initiatorName(ctx, field, obj)
+
+		case "iqn":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iqn(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "iscsiInterface":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_iscsiInterface(ctx, field, obj)
+
+		case "lun":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_lun(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "portals":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_portals(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		case "targetPortal":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource_targetPortal(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__LocalVolumeSourceImplementors = []string{"K8s__io___api___core___v1__LocalVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__LocalVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1LocalVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__LocalVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__LocalVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__LocalVolumeSource_fsType(ctx, field, obj)
+
+		case "path":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__LocalVolumeSource_path(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__NFSVolumeSourceImplementors = []string{"K8s__io___api___core___v1__NFSVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NFSVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NFSVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NFSVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NFSVolumeSource")
+		case "path":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NFSVolumeSource_path(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NFSVolumeSource_readOnly(ctx, field, obj)
+
+		case "server":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NFSVolumeSource_server(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__NamespaceConditionImplementors = []string{"K8s__io___api___core___v1__NamespaceCondition"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceCondition(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NamespaceCondition) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NamespaceConditionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NamespaceCondition")
+		case "lastTransitionTime":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_lastTransitionTime(ctx, field, obj)
+
+		case "message":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_message(ctx, field, obj)
+
+		case "reason":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_reason(ctx, field, obj)
+
+		case "status":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "type":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceCondition_type(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__NamespaceSpecImplementors = []string{"K8s__io___api___core___v1__NamespaceSpec"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NamespaceSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NamespaceSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NamespaceSpec")
+		case "finalizers":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceSpec_finalizers(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__NamespaceStatusImplementors = []string{"K8s__io___api___core___v1__NamespaceStatus"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__NamespaceStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1NamespaceStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__NamespaceStatusImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__NamespaceStatus")
+		case "conditions":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceStatus_conditions(ctx, field, obj)
+
+		case "phase":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__NamespaceStatus_phase(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -40862,6 +57606,55 @@ func (ec *executionContext) _K8s__io___api___core___v1__NodeSelectorTerm(ctx con
 		case "matchFields":
 
 			out.Values[i] = ec._K8s__io___api___core___v1__NodeSelectorTerm_matchFields(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__ObjectReferenceImplementors = []string{"K8s__io___api___core___v1__ObjectReference"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ObjectReference(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ObjectReference) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ObjectReferenceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ObjectReference")
+		case "apiVersion":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_apiVersion(ctx, field, obj)
+
+		case "fieldPath":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_fieldPath(ctx, field, obj)
+
+		case "kind":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_kind(ctx, field, obj)
+
+		case "name":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_name(ctx, field, obj)
+
+		case "namespace":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_namespace(ctx, field, obj)
+
+		case "resourceVersion":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_resourceVersion(ctx, field, obj)
+
+		case "uid":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ObjectReference_uid(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -41023,6 +57816,216 @@ func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeClaimSta
 	return out
 }
 
+var k8s__io___api___core___v1__PersistentVolumeSpecImplementors = []string{"K8s__io___api___core___v1__PersistentVolumeSpec"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeSpec")
+		case "accessModes":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_accessModes(ctx, field, obj)
+
+		case "awsElasticBlockStore":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_awsElasticBlockStore(ctx, field, obj)
+
+		case "azureDisk":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_azureDisk(ctx, field, obj)
+
+		case "azureFile":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_azureFile(ctx, field, obj)
+
+		case "capacity":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_capacity(ctx, field, obj)
+
+		case "cephfs":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_cephfs(ctx, field, obj)
+
+		case "cinder":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_cinder(ctx, field, obj)
+
+		case "claimRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_claimRef(ctx, field, obj)
+
+		case "csi":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_csi(ctx, field, obj)
+
+		case "fc":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_fc(ctx, field, obj)
+
+		case "flexVolume":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_flexVolume(ctx, field, obj)
+
+		case "flocker":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_flocker(ctx, field, obj)
+
+		case "gcePersistentDisk":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_gcePersistentDisk(ctx, field, obj)
+
+		case "glusterfs":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_glusterfs(ctx, field, obj)
+
+		case "hostPath":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_hostPath(ctx, field, obj)
+
+		case "iscsi":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_iscsi(ctx, field, obj)
+
+		case "local":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_local(ctx, field, obj)
+
+		case "mountOptions":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_mountOptions(ctx, field, obj)
+
+		case "nfs":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_nfs(ctx, field, obj)
+
+		case "nodeAffinity":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_nodeAffinity(ctx, field, obj)
+
+		case "persistentVolumeReclaimPolicy":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_persistentVolumeReclaimPolicy(ctx, field, obj)
+
+		case "photonPersistentDisk":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_photonPersistentDisk(ctx, field, obj)
+
+		case "portworxVolume":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_portworxVolume(ctx, field, obj)
+
+		case "quobyte":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_quobyte(ctx, field, obj)
+
+		case "rbd":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_rbd(ctx, field, obj)
+
+		case "scaleIO":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_scaleIO(ctx, field, obj)
+
+		case "storageClassName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_storageClassName(ctx, field, obj)
+
+		case "storageos":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_storageos(ctx, field, obj)
+
+		case "volumeMode":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_volumeMode(ctx, field, obj)
+
+		case "vsphereVolume":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeSpec_vsphereVolume(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__PersistentVolumeStatusImplementors = []string{"K8s__io___api___core___v1__PersistentVolumeStatus"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PersistentVolumeStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PersistentVolumeStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PersistentVolumeStatusImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PersistentVolumeStatus")
+		case "lastPhaseTransitionTime":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_lastPhaseTransitionTime(ctx, field, obj)
+
+		case "message":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_message(ctx, field, obj)
+
+		case "phase":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_phase(ctx, field, obj)
+
+		case "reason":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceImplementors = []string{"K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_fsType(ctx, field, obj)
+
+		case "pdID":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource_pdID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var k8s__io___api___core___v1__PodAffinityImplementors = []string{"K8s__io___api___core___v1__PodAffinity"}
 
 func (ec *executionContext) _K8s__io___api___core___v1__PodAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PodAffinity) graphql.Marshaler {
@@ -41121,6 +58124,42 @@ func (ec *executionContext) _K8s__io___api___core___v1__PodAntiAffinity(ctx cont
 	return out
 }
 
+var k8s__io___api___core___v1__PortworxVolumeSourceImplementors = []string{"K8s__io___api___core___v1__PortworxVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__PortworxVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PortworxVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__PortworxVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__PortworxVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PortworxVolumeSource_fsType(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PortworxVolumeSource_readOnly(ctx, field, obj)
+
+		case "volumeID":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__PortworxVolumeSource_volumeID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var k8s__io___api___core___v1__PreferredSchedulingTermImplementors = []string{"K8s__io___api___core___v1__PreferredSchedulingTerm"}
 
 func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1PreferredSchedulingTerm) graphql.Marshaler {
@@ -41145,6 +58184,116 @@ func (ec *executionContext) _K8s__io___api___core___v1__PreferredSchedulingTerm(
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__QuobyteVolumeSourceImplementors = []string{"K8s__io___api___core___v1__QuobyteVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__QuobyteVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1QuobyteVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__QuobyteVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__QuobyteVolumeSource")
+		case "group":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_group(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_readOnly(ctx, field, obj)
+
+		case "registry":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_registry(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "tenant":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_tenant(ctx, field, obj)
+
+		case "user":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_user(ctx, field, obj)
+
+		case "volume":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__QuobyteVolumeSource_volume(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__RBDPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__RBDPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__RBDPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1RBDPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__RBDPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__RBDPersistentVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "image":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_image(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keyring":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_keyring(ctx, field, obj)
+
+		case "monitors":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_monitors(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "pool":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_pool(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		case "user":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__RBDPersistentVolumeSource_user(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -41205,6 +58354,143 @@ func (ec *executionContext) _K8s__io___api___core___v1__ResourceRequirements(ctx
 		case "requests":
 
 			out.Values[i] = ec._K8s__io___api___core___v1__ResourceRequirements_requests(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__ScaleIOPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__ScaleIOPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__ScaleIOPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__ScaleIOPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__ScaleIOPersistentVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "gateway":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_gateway(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "protectionDomain":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_protectionDomain(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		case "sslEnabled":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_sslEnabled(ctx, field, obj)
+
+		case "storageMode":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storageMode(ctx, field, obj)
+
+		case "storagePool":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_storagePool(ctx, field, obj)
+
+		case "system":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_system(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "volumeName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource_volumeName(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__SecretReferenceImplementors = []string{"K8s__io___api___core___v1__SecretReference"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__SecretReference(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1SecretReference) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__SecretReferenceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__SecretReference")
+		case "name":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__SecretReference_name(ctx, field, obj)
+
+		case "namespace":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__SecretReference_namespace(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__StorageOSPersistentVolumeSourceImplementors = []string{"K8s__io___api___core___v1__StorageOSPersistentVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__StorageOSPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__StorageOSPersistentVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__StorageOSPersistentVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_fsType(ctx, field, obj)
+
+		case "readOnly":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_readOnly(ctx, field, obj)
+
+		case "secretRef":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_secretRef(ctx, field, obj)
+
+		case "volumeName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeName(ctx, field, obj)
+
+		case "volumeNamespace":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource_volumeNamespace(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -41383,6 +58669,71 @@ func (ec *executionContext) _K8s__io___api___core___v1__TypedObjectReference(ctx
 	return out
 }
 
+var k8s__io___api___core___v1__VolumeNodeAffinityImplementors = []string{"K8s__io___api___core___v1__VolumeNodeAffinity"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__VolumeNodeAffinity(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1VolumeNodeAffinity) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__VolumeNodeAffinityImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__VolumeNodeAffinity")
+		case "required":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__VolumeNodeAffinity_required(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceImplementors = []string{"K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource"}
+
+func (ec *executionContext) _K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource")
+		case "fsType":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_fsType(ctx, field, obj)
+
+		case "storagePolicyID":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyID(ctx, field, obj)
+
+		case "storagePolicyName":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_storagePolicyName(ctx, field, obj)
+
+		case "volumePath":
+
+			out.Values[i] = ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource_volumePath(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var k8s__io___api___core___v1__WeightedPodAffinityTermImplementors = []string{"K8s__io___api___core___v1__WeightedPodAffinityTerm"}
 
 func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPICoreV1WeightedPodAffinityTerm) graphql.Marshaler {
@@ -41407,6 +58758,146 @@ func (ec *executionContext) _K8s__io___api___core___v1__WeightedPodAffinityTerm(
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___storage___v1__VolumeAttachmentSourceImplementors = []string{"K8s__io___api___storage___v1__VolumeAttachmentSource"}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSource(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeAttachmentSource) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeAttachmentSourceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeAttachmentSource")
+		case "inlineVolumeSpec":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSource_inlineVolumeSpec(ctx, field, obj)
+
+		case "persistentVolumeName":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSource_persistentVolumeName(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___storage___v1__VolumeAttachmentSpecImplementors = []string{"K8s__io___api___storage___v1__VolumeAttachmentSpec"}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentSpec(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeAttachmentSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeAttachmentSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeAttachmentSpec")
+		case "attacher":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSpec_attacher(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nodeName":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSpec_nodeName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "source":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentSpec_source(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___storage___v1__VolumeAttachmentStatusImplementors = []string{"K8s__io___api___storage___v1__VolumeAttachmentStatus"}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeAttachmentStatus(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeAttachmentStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeAttachmentStatusImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeAttachmentStatus")
+		case "attached":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_attached(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "attachError":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_attachError(ctx, field, obj)
+
+		case "attachmentMetadata":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_attachmentMetadata(ctx, field, obj)
+
+		case "detachError":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeAttachmentStatus_detachError(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var k8s__io___api___storage___v1__VolumeErrorImplementors = []string{"K8s__io___api___storage___v1__VolumeError"}
+
+func (ec *executionContext) _K8s__io___api___storage___v1__VolumeError(ctx context.Context, sel ast.SelectionSet, obj *model.K8sIoAPIStorageV1VolumeError) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, k8s__io___api___storage___v1__VolumeErrorImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("K8s__io___api___storage___v1__VolumeError")
+		case "message":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeError_message(ctx, field, obj)
+
+		case "time":
+
+			out.Values[i] = ec._K8s__io___api___storage___v1__VolumeError_time(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -41868,6 +59359,241 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_deleteHelmRelease(ctx, field)
 			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var namespaceImplementors = []string{"Namespace"}
+
+func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet, obj *entities.Namespace) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, namespaceImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Namespace")
+		case "accountName":
+
+			out.Values[i] = ec._Namespace_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "apiVersion":
+
+			out.Values[i] = ec._Namespace_apiVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "clusterName":
+
+			out.Values[i] = ec._Namespace_clusterName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Namespace_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Namespace_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "kind":
+
+			out.Values[i] = ec._Namespace_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "markedForDeletion":
+
+			out.Values[i] = ec._Namespace_markedForDeletion(ctx, field, obj)
+
+		case "metadata":
+
+			out.Values[i] = ec._Namespace_metadata(ctx, field, obj)
+
+		case "recordVersion":
+
+			out.Values[i] = ec._Namespace_recordVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "spec":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Namespace_spec(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Namespace_status(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Namespace_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var namespaceEdgeImplementors = []string{"NamespaceEdge"}
+
+func (ec *executionContext) _NamespaceEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NamespaceEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, namespaceEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NamespaceEdge")
+		case "cursor":
+
+			out.Values[i] = ec._NamespaceEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._NamespaceEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var namespacePaginatedRecordsImplementors = []string{"NamespacePaginatedRecords"}
+
+func (ec *executionContext) _NamespacePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.NamespacePaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, namespacePaginatedRecordsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NamespacePaginatedRecords")
+		case "edges":
+
+			out.Values[i] = ec._NamespacePaginatedRecords_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "pageInfo":
+
+			out.Values[i] = ec._NamespacePaginatedRecords_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._NamespacePaginatedRecords_totalCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -42405,6 +60131,164 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var persistentVolumeImplementors = []string{"PersistentVolume"}
+
+func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.SelectionSet, obj *entities.PersistentVolume) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PersistentVolume")
+		case "accountName":
+
+			out.Values[i] = ec._PersistentVolume_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "apiVersion":
+
+			out.Values[i] = ec._PersistentVolume_apiVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "clusterName":
+
+			out.Values[i] = ec._PersistentVolume_clusterName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersistentVolume_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersistentVolume_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "kind":
+
+			out.Values[i] = ec._PersistentVolume_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "markedForDeletion":
+
+			out.Values[i] = ec._PersistentVolume_markedForDeletion(ctx, field, obj)
+
+		case "metadata":
+
+			out.Values[i] = ec._PersistentVolume_metadata(ctx, field, obj)
+
+		case "recordVersion":
+
+			out.Values[i] = ec._PersistentVolume_recordVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "spec":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersistentVolume_spec(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersistentVolume_status(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PersistentVolume_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var persistentVolumeClaimImplementors = []string{"PersistentVolumeClaim"}
 
 func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.SelectionSet, obj *entities.PersistentVolumeClaim) graphql.Marshaler {
@@ -42632,6 +60516,83 @@ func (ec *executionContext) _PersistentVolumeClaimPaginatedRecords(ctx context.C
 		case "totalCount":
 
 			out.Values[i] = ec._PersistentVolumeClaimPaginatedRecords_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var persistentVolumeEdgeImplementors = []string{"PersistentVolumeEdge"}
+
+func (ec *executionContext) _PersistentVolumeEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PersistentVolumeEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumeEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PersistentVolumeEdge")
+		case "cursor":
+
+			out.Values[i] = ec._PersistentVolumeEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._PersistentVolumeEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var persistentVolumePaginatedRecordsImplementors = []string{"PersistentVolumePaginatedRecords"}
+
+func (ec *executionContext) _PersistentVolumePaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.PersistentVolumePaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, persistentVolumePaginatedRecordsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PersistentVolumePaginatedRecords")
+		case "edges":
+
+			out.Values[i] = ec._PersistentVolumePaginatedRecords_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "pageInfo":
+
+			out.Values[i] = ec._PersistentVolumePaginatedRecords_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._PersistentVolumePaginatedRecords_totalCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -42912,46 +60873,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "infra_listPVCs":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_infra_listPVCs(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "infra_getPVC":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_infra_getPVC(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
 		case "infra_listClusterManagedServices":
 			field := field
 
@@ -43062,6 +60983,166 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_infra_getManagedServiceTemplate(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_listPVCs":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listPVCs(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getPVC":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getPVC(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_listNamespaces":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listNamespaces(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getNamespace":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getNamespace(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_listPVs":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listPVs(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getPV":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getPV(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_listVolumeAttachments":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_listVolumeAttachments(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getVolumeAttachment":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getVolumeAttachment(ctx, field)
 				return res
 			}
 
@@ -43370,6 +61451,244 @@ func (ec *executionContext) _VPNDevicePaginatedRecords(ctx context.Context, sel 
 		case "totalCount":
 
 			out.Values[i] = ec._VPNDevicePaginatedRecords_totalCount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var volumeAttachmentImplementors = []string{"VolumeAttachment"}
+
+func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.SelectionSet, obj *entities.VolumeAttachment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, volumeAttachmentImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VolumeAttachment")
+		case "accountName":
+
+			out.Values[i] = ec._VolumeAttachment_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "apiVersion":
+
+			out.Values[i] = ec._VolumeAttachment_apiVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "clusterName":
+
+			out.Values[i] = ec._VolumeAttachment_clusterName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "creationTime":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VolumeAttachment_creationTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VolumeAttachment_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "kind":
+
+			out.Values[i] = ec._VolumeAttachment_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "markedForDeletion":
+
+			out.Values[i] = ec._VolumeAttachment_markedForDeletion(ctx, field, obj)
+
+		case "metadata":
+
+			out.Values[i] = ec._VolumeAttachment_metadata(ctx, field, obj)
+
+		case "recordVersion":
+
+			out.Values[i] = ec._VolumeAttachment_recordVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "spec":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VolumeAttachment_spec(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VolumeAttachment_status(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "updateTime":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VolumeAttachment_updateTime(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var volumeAttachmentEdgeImplementors = []string{"VolumeAttachmentEdge"}
+
+func (ec *executionContext) _VolumeAttachmentEdge(ctx context.Context, sel ast.SelectionSet, obj *model.VolumeAttachmentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, volumeAttachmentEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VolumeAttachmentEdge")
+		case "cursor":
+
+			out.Values[i] = ec._VolumeAttachmentEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._VolumeAttachmentEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var volumeAttachmentPaginatedRecordsImplementors = []string{"VolumeAttachmentPaginatedRecords"}
+
+func (ec *executionContext) _VolumeAttachmentPaginatedRecords(ctx context.Context, sel ast.SelectionSet, obj *model.VolumeAttachmentPaginatedRecords) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, volumeAttachmentPaginatedRecordsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("VolumeAttachmentPaginatedRecords")
+		case "edges":
+
+			out.Values[i] = ec._VolumeAttachmentPaginatedRecords_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "pageInfo":
+
+			out.Values[i] = ec._VolumeAttachmentPaginatedRecords_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "totalCount":
+
+			out.Values[i] = ec._VolumeAttachmentPaginatedRecords_totalCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -44678,6 +62997,31 @@ func (ec *executionContext) marshalNK8s__io___api___core___v1__ConditionStatus2g
 	return v
 }
 
+func (ec *executionContext) marshalNK8s__io___api___core___v1__NamespaceCondition2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceCondition(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NamespaceCondition) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NamespaceCondition(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NamespaceConditionIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NamespaceConditionIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NamespaceConditionIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx context.Context, v interface{}) (model.K8sIoAPICoreV1NamespaceConditionType, error) {
+	var res model.K8sIoAPICoreV1NamespaceConditionType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___core___v1__NamespaceConditionType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionType(ctx context.Context, sel ast.SelectionSet, v model.K8sIoAPICoreV1NamespaceConditionType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNK8s__io___api___core___v1__NodeSelectorOperator2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NodeSelectorOperator(ctx context.Context, v interface{}) (model.K8sIoAPICoreV1NodeSelectorOperator, error) {
 	var res model.K8sIoAPICoreV1NodeSelectorOperator
 	err := res.UnmarshalGQL(v)
@@ -44904,6 +63248,45 @@ func (ec *executionContext) unmarshalNK8s__io___api___core___v1__WeightedPodAffi
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNK8s__io___api___storage___v1__VolumeAttachmentSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPIStorageV1VolumeAttachmentSource) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___storage___v1__VolumeAttachmentSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPIStorageV1VolumeAttachmentSourceIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___storage___v1__VolumeAttachmentSpec2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpec(ctx context.Context, sel ast.SelectionSet, v model.K8sIoAPIStorageV1VolumeAttachmentSpec) graphql.Marshaler {
+	return ec._K8s__io___api___storage___v1__VolumeAttachmentSpec(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNK8s__io___api___storage___v1__VolumeAttachmentSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpec(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPIStorageV1VolumeAttachmentSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._K8s__io___api___storage___v1__VolumeAttachmentSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSpecIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpecIn(ctx context.Context, v interface{}) (model.K8sIoAPIStorageV1VolumeAttachmentSpecIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSpecIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNK8s__io___api___storage___v1__VolumeAttachmentSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentSpecIn(ctx context.Context, v interface{}) (*model.K8sIoAPIStorageV1VolumeAttachmentSpecIn, error) {
+	res, err := ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNK8s__io___apimachinery___pkg___api___resource__Format2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgAPIResourceFormat(ctx context.Context, v interface{}) (model.K8sIoApimachineryPkgAPIResourceFormat, error) {
 	var res model.K8sIoApimachineryPkgAPIResourceFormat
 	err := res.UnmarshalGQL(v)
@@ -44998,6 +63381,70 @@ func (ec *executionContext) marshalNMsvcTemplate2ᚖgithubᚗcomᚋkloudliteᚋa
 		return graphql.Null
 	}
 	return ec._MsvcTemplate(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNNamespace2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNamespace(ctx context.Context, sel ast.SelectionSet, v *entities.Namespace) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Namespace(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNNamespaceEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐNamespaceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.NamespaceEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNNamespaceEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐNamespaceEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNNamespaceEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐNamespaceEdge(ctx context.Context, sel ast.SelectionSet, v *model.NamespaceEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._NamespaceEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNNode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNode(ctx context.Context, sel ast.SelectionSet, v *entities.Node) graphql.Marshaler {
@@ -45143,6 +63590,16 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapi�
 	return ec._PageInfo(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPersistentVolume2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolume(ctx context.Context, sel ast.SelectionSet, v *entities.PersistentVolume) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PersistentVolume(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPersistentVolumeClaim2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolumeClaim(ctx context.Context, sel ast.SelectionSet, v *entities.PersistentVolumeClaim) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -45205,6 +63662,60 @@ func (ec *executionContext) marshalNPersistentVolumeClaimEdge2ᚖgithubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._PersistentVolumeClaimEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPersistentVolumeEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumeEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PersistentVolumeEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPersistentVolumeEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumeEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPersistentVolumeEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumeEdge(ctx context.Context, sel ast.SelectionSet, v *model.PersistentVolumeEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PersistentVolumeEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋdomainᚐResType(ctx context.Context, v interface{}) (domain.ResType, error) {
@@ -45337,6 +63848,70 @@ func (ec *executionContext) marshalNVPNDeviceEdge2ᚖgithubᚗcomᚋkloudliteᚋ
 func (ec *executionContext) unmarshalNVPNDeviceIn2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, v interface{}) (entities.VPNDevice, error) {
 	res, err := ec.unmarshalInputVPNDeviceIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNVolumeAttachment2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐVolumeAttachment(ctx context.Context, sel ast.SelectionSet, v *entities.VolumeAttachment) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._VolumeAttachment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNVolumeAttachmentEdge2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVolumeAttachmentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VolumeAttachmentEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNVolumeAttachmentEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVolumeAttachmentEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNVolumeAttachmentEdge2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVolumeAttachmentEdge(ctx context.Context, sel ast.SelectionSet, v *model.VolumeAttachmentEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._VolumeAttachmentEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalN_FieldSet2string(ctx context.Context, v interface{}) (string, error) {
@@ -45611,7 +64186,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -45619,7 +64194,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -46337,6 +64912,21 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOK8s__io___api___core___v1__Affinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1Affinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1Affinity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -46349,6 +64939,329 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__AffinityIn2ᚖg
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputK8s__io___api___core___v1__AffinityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__AzureDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1AzureDiskVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__AzureDiskVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__AzureDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureDiskVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1AzureDiskVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__AzureDiskVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1AzureFilePersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__AzureFilePersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1AzureFilePersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1AzureFilePersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__CSIPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1CSIPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__CSIPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__CSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CSIPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1CSIPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__CSIPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__CephFSPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1CephFSPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__CephFSPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CephFSPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1CephFSPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__CephFSPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__CinderPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1CinderPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__CinderPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__CinderPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1CinderPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1CinderPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__CinderPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__FCVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1FCVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__FCVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__FCVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FCVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1FCVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__FCVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__FlexPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1FlexPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__FlexPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__FlexPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlexPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1FlexPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__FlexPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__FlockerVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1FlockerVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__FlockerVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__FlockerVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1FlockerVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1FlockerVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__FlockerVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1GCEPersistentDiskVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__GCEPersistentDiskVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1GlusterfsPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__GlusterfsPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__HostPathVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1HostPathVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__HostPathVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__HostPathVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1HostPathVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1HostPathVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__HostPathVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1ISCSIPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__ISCSIPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ISCSIPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1ISCSIPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__LocalVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1LocalVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__LocalVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__LocalVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1LocalVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1LocalVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__LocalVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NFSVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NFSVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NFSVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NFSVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NFSVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NFSVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NFSVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NamespaceCondition2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1NamespaceCondition) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNK8s__io___api___core___v1__NamespaceCondition2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceCondition(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NamespaceConditionIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionInᚄ(ctx context.Context, v interface{}) ([]*model.K8sIoAPICoreV1NamespaceConditionIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.K8sIoAPICoreV1NamespaceConditionIn, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNK8s__io___api___core___v1__NamespaceConditionIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceConditionIn(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NamespacePhase, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.K8sIoAPICoreV1NamespacePhase)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NamespacePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespacePhase(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NamespacePhase) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NamespaceSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceSpec(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NamespaceSpec) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NamespaceSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NamespaceSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceSpecIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NamespaceSpecIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NamespaceSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__NamespaceStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceStatus(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1NamespaceStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__NamespaceStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NamespaceStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1NamespaceStatusIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1NamespaceStatusIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__NamespaceStatusIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -46449,6 +65362,21 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__NodeSelectorReq
 	return res, nil
 }
 
+func (ec *executionContext) marshalOK8s__io___api___core___v1__ObjectReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReference(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1ObjectReference) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__ObjectReference(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__ObjectReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ObjectReferenceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1ObjectReferenceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__ObjectReferenceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOK8s__io___api___core___v1__PersistentVolumeClaimCondition2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeClaimConditionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1PersistentVolumeClaimCondition) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -46544,6 +65472,83 @@ func (ec *executionContext) marshalOK8s__io___api___core___v1__PersistentVolumeC
 		return graphql.Null
 	}
 	return ec._K8s__io___api___core___v1__PersistentVolumeClaimStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PersistentVolumePhase, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.K8sIoAPICoreV1PersistentVolumePhase)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PersistentVolumePhase2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumePhase(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PersistentVolumePhase) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PersistentVolumeReclaimPolicy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.K8sIoAPICoreV1PersistentVolumeReclaimPolicy)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PersistentVolumeReclaimPolicy2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeReclaimPolicy(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PersistentVolumeReclaimPolicy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PersistentVolumeSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpec(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PersistentVolumeSpec) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PersistentVolumeSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PersistentVolumeSpecIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeSpecIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PersistentVolumeSpecIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PersistentVolumeStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeStatus(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PersistentVolumeStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PersistentVolumeStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PersistentVolumeStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PersistentVolumeStatusIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PersistentVolumeStatusIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PersistentVolumeStatusIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOK8s__io___api___core___v1__PodAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PodAffinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PodAffinity) graphql.Marshaler {
@@ -46643,6 +65648,21 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PodAntiAffinity
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOK8s__io___api___core___v1__PortworxVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1PortworxVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__PortworxVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PortworxVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PortworxVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1PortworxVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__PortworxVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOK8s__io___api___core___v1__PreferredSchedulingTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1PreferredSchedulingTermᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1PreferredSchedulingTerm) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -46708,6 +65728,36 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__PreferredSchedu
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__QuobyteVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1QuobyteVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__QuobyteVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__QuobyteVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1QuobyteVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1QuobyteVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__QuobyteVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__RBDPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1RBDPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__RBDPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__RBDPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1RBDPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1RBDPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__RBDPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOK8s__io___api___core___v1__ResourceClaim2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ResourceClaimᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1ResourceClaim) graphql.Marshaler {
@@ -46789,6 +65839,51 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__ResourceRequire
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputK8s__io___api___core___v1__ResourceRequirementsIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1ScaleIOPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__ScaleIOPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__SecretReference2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReference(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1SecretReference) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__SecretReference(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__SecretReferenceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretReferenceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1SecretReferenceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__SecretReferenceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1StorageOSPersistentVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__StorageOSPersistentVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1StorageOSPersistentVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -46988,6 +66083,36 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__TypedObjectRefe
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOK8s__io___api___core___v1__VolumeNodeAffinity2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinity(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1VolumeNodeAffinity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__VolumeNodeAffinity(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__VolumeNodeAffinityIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VolumeNodeAffinityIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1VolumeNodeAffinityIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__VolumeNodeAffinityIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSource2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSource(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalOK8s__io___api___core___v1__WeightedPodAffinityTerm2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1WeightedPodAffinityTermᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.K8sIoAPICoreV1WeightedPodAffinityTerm) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -47053,6 +66178,36 @@ func (ec *executionContext) unmarshalOK8s__io___api___core___v1__WeightedPodAffi
 		}
 	}
 	return res, nil
+}
+
+func (ec *executionContext) marshalOK8s__io___api___storage___v1__VolumeAttachmentStatus2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentStatus(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPIStorageV1VolumeAttachmentStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___storage___v1__VolumeAttachmentStatus(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___storage___v1__VolumeAttachmentStatusIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeAttachmentStatusIn(ctx context.Context, v interface{}) (*model.K8sIoAPIStorageV1VolumeAttachmentStatusIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___storage___v1__VolumeAttachmentStatusIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___storage___v1__VolumeError2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeError(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPIStorageV1VolumeError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._K8s__io___api___storage___v1__VolumeError(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOK8s__io___api___storage___v1__VolumeErrorIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPIStorageV1VolumeErrorIn(ctx context.Context, v interface{}) (*model.K8sIoAPIStorageV1VolumeErrorIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputK8s__io___api___storage___v1__VolumeErrorIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOK8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoApimachineryPkgApisMetaV1LabelSelector(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoApimachineryPkgApisMetaV1LabelSelector) graphql.Marshaler {
@@ -47220,6 +66375,20 @@ func (ec *executionContext) marshalOMsvcTemplate2ᚕᚖgithubᚗcomᚋkloudlite�
 	return ret
 }
 
+func (ec *executionContext) marshalONamespace2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNamespace(ctx context.Context, sel ast.SelectionSet, v *entities.Namespace) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Namespace(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalONamespacePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐNamespacePaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.NamespacePaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._NamespacePaginatedRecords(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalONodePool2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐNodePool(ctx context.Context, sel ast.SelectionSet, v *entities.NodePool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -47234,6 +66403,13 @@ func (ec *executionContext) marshalONodePoolPaginatedRecords2ᚖgithubᚗcomᚋk
 	return ec._NodePoolPaginatedRecords(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOPersistentVolume2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolume(ctx context.Context, sel ast.SelectionSet, v *entities.PersistentVolume) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PersistentVolume(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOPersistentVolumeClaim2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐPersistentVolumeClaim(ctx context.Context, sel ast.SelectionSet, v *entities.PersistentVolumeClaim) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -47246,6 +66422,13 @@ func (ec *executionContext) marshalOPersistentVolumeClaimPaginatedRecords2ᚖgit
 		return graphql.Null
 	}
 	return ec._PersistentVolumeClaimPaginatedRecords(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPersistentVolumePaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐPersistentVolumePaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.PersistentVolumePaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PersistentVolumePaginatedRecords(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOSearchCluster2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchCluster(ctx context.Context, v interface{}) (*model.SearchCluster, error) {
@@ -47280,6 +66463,14 @@ func (ec *executionContext) unmarshalOSearchHelmRelease2ᚖgithubᚗcomᚋkloudl
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOSearchNamespaces2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNamespaces(ctx context.Context, v interface{}) (*model.SearchNamespaces, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchNamespaces(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOSearchNodepool2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchNodepool(ctx context.Context, v interface{}) (*model.SearchNodepool, error) {
 	if v == nil {
 		return nil, nil
@@ -47296,6 +66487,14 @@ func (ec *executionContext) unmarshalOSearchPersistentVolumeClaims2ᚖgithubᚗc
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOSearchPersistentVolumes2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchPersistentVolumes(ctx context.Context, v interface{}) (*model.SearchPersistentVolumes, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchPersistentVolumes(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOSearchProviderSecret2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchProviderSecret(ctx context.Context, v interface{}) (*model.SearchProviderSecret, error) {
 	if v == nil {
 		return nil, nil
@@ -47309,6 +66508,14 @@ func (ec *executionContext) unmarshalOSearchVPNDevices2ᚖgithubᚗcomᚋkloudli
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputSearchVPNDevices(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOSearchVolumeAttachments2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVolumeAttachments(ctx context.Context, v interface{}) (*model.SearchVolumeAttachments, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchVolumeAttachments(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -47388,6 +66595,20 @@ func (ec *executionContext) marshalOVPNDevicePaginatedRecords2ᚖgithubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._VPNDevicePaginatedRecords(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVolumeAttachment2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋentitiesᚐVolumeAttachment(ctx context.Context, sel ast.SelectionSet, v *entities.VolumeAttachment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._VolumeAttachment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOVolumeAttachmentPaginatedRecords2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVolumeAttachmentPaginatedRecords(ctx context.Context, sel ast.SelectionSet, v *model.VolumeAttachmentPaginatedRecords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._VolumeAttachmentPaginatedRecords(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -31,4 +32,8 @@ func (v ValidationError) Error() string {
 	return string(b)
 }
 
-
+const (
+	CreatedByResourceSyncUsername  string = "created-by-resource-sync-user-name"
+	CreatedByResourceSyncUserEmail string = "created-by-resource-sync-user-email"
+	CreatedByResourceSyncUserId    string = "created-by-resource-sync-user-id"
+)
