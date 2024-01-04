@@ -25,5 +25,6 @@ jobs:
         goarch: ${{ matrix.goarch }}
         goversion: "https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz"
         project_path: "."
+        executable_compression: "upx"
         binary_name: "kl"
         extra_files: LICENSE README.md
