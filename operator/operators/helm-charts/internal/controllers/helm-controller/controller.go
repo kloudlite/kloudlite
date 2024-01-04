@@ -245,8 +245,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			"node-selector":        obj.Spec.JobVars.NodeSelector,
 			"backoff-limit":        obj.Spec.JobVars.BackOffLimit,
 
-			"repo-url":  obj.Spec.ChartRepo.Url,
-			"repo-name": obj.Spec.ChartRepo.Name,
+			"repo-url": obj.Spec.ChartRepoURL,
 
 			"chart-name":    obj.Spec.ChartName,
 			"chart-version": obj.Spec.ChartVersion,
