@@ -77,11 +77,6 @@ Examples:
 			fmt.Println("ports deleted")
 		}
 
-		if _, err := server.ListDevices(); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
 	},
 }
 

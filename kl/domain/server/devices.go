@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -152,13 +151,29 @@ func UpdateDevice(ports []DevicePort) error {
 		return err
 	}
 
-	if clusterName == "" {
-		c, err := SelectCluster("")
-		if err != nil {
-			return err
+	device, err := GetDevice([]fn.Option{
+		fn.MakeOption("deviceName", devName),
+		fn.MakeOption("clusterName", clusterName),
+	}...)
+
+	for _, port := range ports {
+		matched := false
+
+		for i, port2 := range device.Spec.Ports {
+			if port2.Port == port.Port {
+				matched = true
+				device.Spec.Ports[i] = port
+				break
+			}
 		}
 
-		clusterName = c.Metadata.Name
+		if !matched {
+			device.Spec.Ports = append(device.Spec.Ports, port)
+		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	cookie, err := getCookie()
@@ -166,44 +181,10 @@ func UpdateDevice(ports []DevicePort) error {
 		return err
 	}
 
-	//devName, err := client.CurrentDeviceName()
-	//if err != nil {
-	//	return err
-	//}
-
-	//d, err := GetDevice(fn.MakeOption("deviceName", devName))
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//for _, p := range ports {
-	//	matched := false
-	//	for i, p2 := range d.Spec.Ports {
-	//		if p2.Port == p.Port {
-	//			matched = true
-	//			d.Spec.Ports[i] = p
-	//			break
-	//		}
-	//	}
-	//
-	//	if !matched {
-	//		d.Spec.Ports = append(d.Spec.Ports, p)
-	//	}
-	//}
-	var portsMap []map[string]int
-	for _, port := range ports {
-		vpnDevice := map[string]int{
-			"port":       port.Port,
-			"targetPort": port.TargetPort,
-		}
-		portsMap = append(portsMap, vpnDevice)
-	}
-	fmt.Println(clusterName, "\n", devName, "\n", ports, "\n", portsMap)
-
 	respData, err := klFetch("cli_updateDevicePort", map[string]any{
 		"clusterName": clusterName,
 		"deviceName":  devName,
-		"ports":       portsMap,
+		"ports":       device.Spec.Ports,
 	}, &cookie)
 
 	if err != nil {
@@ -218,58 +199,54 @@ func UpdateDevice(ports []DevicePort) error {
 }
 
 func DeleteDevicePort(ports []DevicePort) error {
+	devName, err := EnsureDevice()
+	if err != nil {
+		return err
+	}
+
 	clusterName, err := client.CurrentClusterName()
 	if err != nil {
 		return err
 	}
 
-	if clusterName == "" {
-		c, err := SelectCluster("")
-		if err != nil {
-			return err
-		}
-
-		clusterName = c.Metadata.Name
-	}
-
-	devName, err := client.CurrentDeviceName()
-	if err != nil {
-		return err
-	}
-
-	d, err := GetDevice(fn.MakeOption("deviceName", devName))
-	if err != nil {
-		return err
-	}
+	device, err := GetDevice([]fn.Option{
+		fn.MakeOption("deviceName", devName),
+		fn.MakeOption("clusterName", clusterName),
+	}...)
 
 	newPorts := make([]DevicePort, 0)
-
-	for _, p := range d.Spec.Ports {
+	for _, port := range device.Spec.Ports {
 		matched := false
-		for _, p2 := range ports {
-			if p.Port == p2.Port {
+		for _, port2 := range ports {
+			if port.Port == port2.Port {
 				matched = true
 				break
 			}
 		}
 
 		if !matched {
-			newPorts = append(newPorts, p)
+			newPorts = append(newPorts, port)
 		}
 	}
 
-	d.Spec.Ports = newPorts
+	device.Spec.Ports = newPorts
 
-	respData, err := klFetch("cli_updateDevice", map[string]any{
+	cookie, err := getCookie()
+	if err != nil {
+		return err
+	}
+
+	respData, err := klFetch("cli_updateDevicePort", map[string]any{
 		"clusterName": clusterName,
-		"vpnDevice":   d,
-	}, nil)
+		"deviceName":  devName,
+		"ports":       device.Spec.Ports,
+	}, &cookie)
 
 	if err != nil {
 		return err
 	}
 
-	if _, err := GetFromRespForEdge[Device](respData); err != nil {
+	if _, err := GetFromResp[bool](respData); err != nil {
 		return err
 	}
 
