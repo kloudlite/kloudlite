@@ -7,11 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ChartRepo struct {
-	Url  string `json:"url"`
-	Name string `json:"name"`
-}
-
 type JobVars struct {
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
@@ -22,13 +17,11 @@ type JobVars struct {
 
 // HelmChartSpec defines the desired state of HelmChart
 type HelmChartSpec struct {
-	ChartRepo ChartRepo `json:"chartRepo"`
+	ChartRepoURL string `json:"chartRepoURL"`
 
-	// find chartVersion by running command `helm search repo <chartName> --versions`
-	// 2nd column is the chartVersion
+	// find chartVersion by running command `helm search repo <chartName> --versions` 2nd column is the chartVersion
 	ChartVersion string `json:"chartVersion"`
 
-	// chartName is of the format .spec.chartRepo.name/<chartName>
 	ChartName string `json:"chartName"`
 
 	JobVars JobVars `json:"jobVars,omitempty"`

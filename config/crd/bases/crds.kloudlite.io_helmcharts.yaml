@@ -55,18 +55,9 @@ spec:
             description: HelmChartSpec defines the desired state of HelmChart
             properties:
               chartName:
-                description: chartName is of the format .spec.chartRepo.name/<chartName>
                 type: string
-              chartRepo:
-                properties:
-                  name:
-                    type: string
-                  url:
-                    type: string
-                required:
-                - name
-                - url
-                type: object
+              chartRepoURL:
+                type: string
               chartVersion:
                 description: find chartVersion by running command `helm search repo
                   <chartName> --versions` 2nd column is the chartVersion
@@ -1004,7 +995,7 @@ spec:
                 type: object
             required:
             - chartName
-            - chartRepo
+            - chartRepoURL
             - chartVersion
             - values
             type: object

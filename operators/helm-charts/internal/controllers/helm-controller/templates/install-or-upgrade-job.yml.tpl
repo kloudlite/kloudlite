@@ -10,7 +10,6 @@
 {{- $backoffLimit := get . "backoff-limit" | default 1 }} 
 
 {{- $repoUrl := get . "repo-url" }}
-{{- $repoName := get . "repo-name" }} 
 
 {{- $chartName := get . "chart-name" }} 
 {{- $chartVersion := get . "chart-version" }} 
@@ -21,6 +20,8 @@
 {{- $preInstall := get . "pre-install" }}
 {{- $postInstall := get . "post-install" }}
 {{- $valuesYaml := get . "values-yaml" }} 
+
+{{- $repoName := "helm-repo" }} 
 
 apiVersion: batch/v1
 kind: Job
@@ -69,7 +70,7 @@ spec:
             {{ $valuesYaml | nindent 12 }}
             EOF
 
-            helm upgrade --install {{$releaseName}} {{$chartName}} --namespace {{$releaseNamespace}} --version {{$chartVersion}} --values values.yml 2>&1 | tee /dev/termination-log
+            helm upgrade --install {{$releaseName}} {{$repoName}}/{{$chartName}} --namespace {{$releaseNamespace}} --version {{$chartVersion}} --values values.yml 2>&1 | tee /dev/termination-log
 
             {{- if $postInstall }}
             echo "running post-install job script"
