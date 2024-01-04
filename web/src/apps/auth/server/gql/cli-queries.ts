@@ -17,6 +17,40 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_getEnvironment: executor(
+    gql`
+      query Core_getEnvironment($projectName: String!, $name: String!) {
+        core_getEnvironment(projectName: $projectName, name: $name) {
+          spec {
+            targetNamespace
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getEnvironment,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_updateDeviceNs: executor(
+    gql`
+      mutation Infra_updateVPNDeviceNs(
+        $clusterName: String!
+        $deviceName: String!
+        $namespace: String!
+      ) {
+        infra_updateVPNDeviceNs(
+          clusterName: $clusterName
+          deviceName: $deviceName
+          namespace: $namespace
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_updateVPNDeviceNs,
+      vars: (_: any) => {},
+    }
+  ),
   cli_updateDevicePort: executor(
     gql`
       mutation Mutation(

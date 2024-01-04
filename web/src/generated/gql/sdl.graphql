@@ -1322,6 +1322,16 @@ input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
   type: String!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  targetNamespace: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  targetNamespace: String!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec {
   accountName: String!
   clusterName: String!
@@ -2756,6 +2766,7 @@ type Mutation {
   core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!, projectName: String!): ImagePullSecret
   core_createManagedResource(envName: String!, mres: ManagedResourceIn!, projectName: String!): ManagedResource
   core_createProject(project: ProjectIn!): Project
+  core_createProjectManagedService(pmsvc: ProjectManagedServiceIn!, projectName: String!): ProjectManagedService
   core_createRouter(envName: String!, projectName: String!, router: RouterIn!): Router
   core_createSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
   core_deleteApp(appName: String!, envName: String!, projectName: String!): Boolean!
@@ -2764,6 +2775,7 @@ type Mutation {
   core_deleteImagePullSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
   core_deleteManagedResource(envName: String!, mresName: String!, projectName: String!): Boolean!
   core_deleteProject(name: String!): Boolean!
+  core_deleteProjectManagedService(pmsvcName: String!, projectName: String!): Boolean!
   core_deleteRouter(envName: String!, projectName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
   core_updateApp(app: AppIn!, envName: String!, projectName: String!): App
@@ -2771,6 +2783,7 @@ type Mutation {
   core_updateEnvironment(env: EnvironmentIn!, projectName: String!): Environment
   core_updateManagedResource(envName: String!, mres: ManagedResourceIn!, projectName: String!): ManagedResource
   core_updateProject(project: ProjectIn!): Project
+  core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!, projectName: String!): ProjectManagedService
   core_updateRouter(envName: String!, projectName: String!, router: RouterIn!): Router
   core_updateSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
   cr_addBuild(build: BuildIn!): Build
@@ -2807,6 +2820,7 @@ type Mutation {
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
+  infra_updateVPNDeviceNs(clusterName: String!, deviceName: String!, namespace: String!): Boolean!
   infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!, ports: [PortIn!]!): Boolean!
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
@@ -3041,6 +3055,42 @@ input ProjectIn {
   spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn!
 }
 
+type ProjectManagedService {
+  accountName: String!
+  apiVersion: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ProjectManagedServiceEdge {
+  cursor: String!
+  node: ProjectManagedService!
+}
+
+input ProjectManagedServiceIn {
+  displayName: String!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn
+}
+
+type ProjectManagedServicePaginatedRecords {
+  edges: [ProjectManagedServiceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type ProjectPaginatedRecords {
   edges: [ProjectEdge!]!
   pageInfo: PageInfo!
@@ -3072,6 +3122,7 @@ type Query {
   core_getImagePullSecret(envName: String!, name: String!, projectName: String!): ImagePullSecret
   core_getManagedResource(envName: String!, name: String!, projectName: String!): ManagedResource
   core_getProject(name: String!): Project
+  core_getProjectManagedService(name: String!, projectName: String!): ProjectManagedService
   core_getRouter(envName: String!, name: String!, projectName: String!): Router
   core_getSecret(envName: String!, name: String!, projectName: String!): Secret
   core_getSecretValues(queries: [SecretValuesIn!]): [SecretValuesOut!]
@@ -3080,6 +3131,7 @@ type Query {
   core_listEnvironments(pq: CursorPaginationIn, projectName: String!, search: SearchEnvironments): EnvironmentPaginatedRecords
   core_listImagePullSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
   core_listManagedResources(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchManagedResources): ManagedResourcePaginatedRecords
+  core_listProjectManagedServices(pq: CursorPaginationIn, projectName: String!, search: SearchProjectManagedService): ProjectManagedServicePaginatedRecords
   core_listProjects(clusterName: String, pq: CursorPaginationIn, search: SearchProjects): ProjectPaginatedRecords
   core_listRouters(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchSecrets): SecretPaginatedRecords
@@ -3089,6 +3141,7 @@ type Query {
   core_resyncImagePullSecret(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncManagedResource(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncProject(name: String!): Boolean!
+  core_resyncProjectManagedService(name: String!, projectName: String!): Boolean!
   core_resyncRouter(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncSecret(envName: String!, name: String!, projectName: String!): Boolean!
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
@@ -3299,6 +3352,13 @@ input SearchPersistentVolumeClaims {
 }
 
 input SearchPersistentVolumes {
+  text: MatchFilterIn
+}
+
+input SearchProjectManagedService {
+  isReady: MatchFilterIn
+  managedServiceName: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 

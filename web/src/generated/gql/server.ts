@@ -150,6 +150,13 @@ export type SearchManagedResources = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
+export type SearchProjectManagedService = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  managedServiceName?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type SearchProjects = {
   isReady?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
@@ -557,6 +564,30 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectSpecIn
     targetNamespace: Scalars['String']['input'];
   };
 
+export type ProjectManagedServiceIn = {
+  displayName: Scalars['String']['input'];
+  metadata?: InputMaybe<MetadataIn>;
+  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectManagedServiceSpecIn>;
+};
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectManagedServiceSpecIn =
+  {
+    msvcSpec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
+    targetNamespace: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
+  {
+    serviceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn =
+  {
+    apiVersion: Scalars['String']['input'];
+    kind: Scalars['String']['input'];
+    spec: Scalars['Map']['input'];
+  };
+
 export type RouterIn = {
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -738,18 +769,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManage
   {
     msvcSpec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
     namespace: Scalars['String']['input'];
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
-  {
-    serviceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn =
-  {
-    apiVersion: Scalars['String']['input'];
-    kind: Scalars['String']['input'];
-    spec: Scalars['Map']['input'];
   };
 
 export type DomainEntryIn = {
@@ -3869,6 +3888,25 @@ export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
 
+export type AuthCli_GetEnvironmentQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetEnvironmentQuery = {
+  core_getEnvironment?: { spec?: { targetNamespace?: string } };
+};
+
+export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  namespace: Scalars['String']['input'];
+}>;
+
+export type AuthCli_UpdateDeviceNsMutation = {
+  infra_updateVPNDeviceNs: boolean;
+};
+
 export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
   clusterName: Scalars['String']['input'];
   deviceName: Scalars['String']['input'];
@@ -4053,7 +4091,6 @@ export type AuthCli_ListConfigsQuery = {
 export type AuthCli_ListSecretsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
-  search?: InputMaybe<SearchSecrets>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
@@ -4134,7 +4171,6 @@ export type AuthCli_GetDeviceQuery = {
 
 export type AuthCli_ListEnvironmentsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
-  search?: InputMaybe<SearchEnvironments>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
