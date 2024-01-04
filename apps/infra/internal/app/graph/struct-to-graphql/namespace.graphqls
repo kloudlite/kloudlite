@@ -1,0 +1,32 @@
+type Namespace @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__NamespaceSpec
+  status: K8s__io___api___core___v1__NamespaceStatus
+  updateTime: Date!
+}
+
+type NamespaceEdge @shareable {
+  cursor: String!
+  node: Namespace!
+}
+
+type NamespacePaginatedRecords @shareable {
+  edges: [NamespaceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input NamespaceIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__NamespaceSpecIn
+  status: K8s__io___api___core___v1__NamespaceStatusIn
+}
+

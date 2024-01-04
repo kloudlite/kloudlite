@@ -35,6 +35,7 @@ var (
 	helmreleaseGVK = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
 	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
+	namespaceGVK   = fn.GVK("v1", "Namespace")
 	clusterMsvcGVK = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
 )
 
@@ -141,6 +142,20 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 		case pvcGVK.String():
 			{
 				var pvc entities.PersistentVolumeClaim
+				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnPVCDeleteMessage(dctx, su.ClusterName, pvc)
+				}
+				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
+		case namespaceGVK.String():
+			{
+				var pvc entities.PersistentVolumeClaim
+
 				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
 					return errors.NewE(err)
 				}

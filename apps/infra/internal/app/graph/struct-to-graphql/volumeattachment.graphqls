@@ -1,0 +1,32 @@
+type VolumeAttachment @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpec!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatus
+  updateTime: Date!
+}
+
+type VolumeAttachmentEdge @shareable {
+  cursor: String!
+  node: VolumeAttachment!
+}
+
+type VolumeAttachmentPaginatedRecords @shareable {
+  edges: [VolumeAttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input VolumeAttachmentIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpecIn!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatusIn
+}
+

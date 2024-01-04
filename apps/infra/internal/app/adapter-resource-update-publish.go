@@ -66,7 +66,7 @@ func (r *ResourceEventPublisherImpl) PublishDomainResEvent(domain *entities.Doma
 
 func (r *ResourceEventPublisherImpl) PublishPvcResEvent(pvc *entities.PersistentVolumeClaim, msg domain.PublishMsg) {
 	subject := fmt.Sprintf(
-		"res-updates.account.%s.cluster.%s.vpn-device.%s",
+		"res-updates.account.%s.cluster.%s.persistance-volume-claim.%s",
 		pvc.AccountName, pvc.ClusterName, pvc.Name,
 	)
 
@@ -77,6 +77,24 @@ func (r *ResourceEventPublisherImpl) PublishCMSEvent(cms *entities.ClusterManage
 	subject := fmt.Sprintf(
 		"res-updates.account.%s.cluster.%s.cluster-managed-service.%s",
 		cms.AccountName, cms.ClusterName, cms.Name,
+	)
+
+	r.publish(subject, msg)
+}
+
+func (r *ResourceEventPublisherImpl) PublishPvResEvent(pv *entities.PersistentVolume, msg domain.PublishMsg) {
+	subject := fmt.Sprintf(
+		"res-updates.account.%s.cluster.%s.pv-name.%s",
+		pv.AccountName, pv.ClusterName, pv.Name,
+	)
+
+	r.publish(subject, msg)
+}
+
+func (r *ResourceEventPublisherImpl) PublishVolumeAttachmentEvent(va *entities.VolumeAttachment, msg domain.PublishMsg) {
+	subject := fmt.Sprintf(
+		"res-updates.account.%s.cluster.%s.volume-attachment.%s",
+		va.AccountName, va.ClusterName, va.Name,
 	)
 
 	r.publish(subject, msg)

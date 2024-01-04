@@ -12,7 +12,6 @@ tasks:
     cmds:
       - go run github.com/99designs/gqlgen generate
       - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
-      # - rm ./graph/scalars.resolvers.go
 
   build:
     env:
@@ -40,15 +39,18 @@ tasks:
           --struct github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
           --struct github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
           --struct github.com/kloudlite/api/apps/infra/internal/entities.VPNDevice
-          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
           --struct github.com/kloudlite/api/apps/infra/internal/entities.HelmRelease
           --struct github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolume
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Namespace
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,Node,NodePool,CloudProviderSecret,DomainEntry,VPNDevice,PersistentVolumeClaim,ClusterManagedService,HelmRelease
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,Node,NodePool,CloudProviderSecret,DomainEntry,VPNDevice,PersistentVolumeClaim,ClusterManagedService,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

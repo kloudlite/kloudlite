@@ -58,6 +58,18 @@ input SearchPersistentVolumeClaims {
   text: MatchFilterIn
 }
 
+input SearchPersistentVolumes {
+  text: MatchFilterIn
+}
+
+input SearchNamespaces {
+  text: MatchFilterIn
+}
+
+input SearchVolumeAttachments {
+  text: MatchFilterIn
+}
+
 type CheckAwsAccessOutput {
     result: Boolean!
     installationUrl: String
@@ -86,9 +98,6 @@ type Query {
     infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
 
-    infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount
-
     infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
 
@@ -98,6 +107,18 @@ type Query {
     infra_listManagedServiceTemplates: [MsvcTemplate!]
     infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
 
+    # kubernetes native resources
+    infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount
+
+    infra_listNamespaces(clusterName: String!, search: SearchNamespaces, pq: CursorPaginationIn): NamespacePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getNamespace(clusterName: String!, name: String!): Namespace @isLoggedInAndVerified @hasAccount
+
+    infra_listPVs(clusterName: String!, search: SearchPersistentVolumes, pq: CursorPaginationIn): PersistentVolumePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPV(clusterName: String!, name: String!): PersistentVolume @isLoggedInAndVerified @hasAccount
+
+    infra_listVolumeAttachments(clusterName: String!, search: SearchVolumeAttachments, pq: CursorPaginationIn): VolumeAttachmentPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
