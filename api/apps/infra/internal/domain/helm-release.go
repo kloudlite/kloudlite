@@ -103,6 +103,10 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 	d.resourceEventPublisher.PublishHelmReleaseEvent(&hr, PublishAdd)
 
 	if err = d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: hr.Namespace,
 		},

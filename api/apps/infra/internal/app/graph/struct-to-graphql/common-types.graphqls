@@ -211,11 +211,6 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef @sha
   namespace: String
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__ChartRepo @shareable {
-  name: String!
-  url: String!
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec @shareable {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
   namespace: String!
@@ -223,7 +218,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServic
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
   chartName: String!
-  chartRepo: Github__com___kloudlite___operator___apis___crds___v1__ChartRepo!
+  chartRepoURL: String!
   chartVersion: String!
   jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVars
   postInstall: String
@@ -811,11 +806,6 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   namespace: String
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__ChartRepoIn {
-  name: String!
-  url: String!
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
   namespace: String!
@@ -823,7 +813,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServi
 
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
   chartName: String!
-  chartRepo: Github__com___kloudlite___operator___apis___crds___v1__ChartRepoIn!
+  chartRepoURL: String!
   chartVersion: String!
   jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
   postInstall: String
