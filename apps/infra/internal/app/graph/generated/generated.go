@@ -430,11 +430,6 @@ type ComplexityRoot struct {
 		Namespace func(childComplexity int) int
 	}
 
-	Github__com___kloudlite___operator___apis___crds___v1__ChartRepo struct {
-		Name func(childComplexity int) int
-		URL  func(childComplexity int) int
-	}
-
 	Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec struct {
 		MsvcSpec  func(childComplexity int) int
 		Namespace func(childComplexity int) int
@@ -442,7 +437,7 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec struct {
 		ChartName     func(childComplexity int) int
-		ChartRepo     func(childComplexity int) int
+		ChartRepoURL  func(childComplexity int) int
 		ChartVersion  func(childComplexity int) int
 		JobVars       func(childComplexity int) int
 		PostInstall   func(childComplexity int) int
@@ -1014,14 +1009,18 @@ type ComplexityRoot struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		ClusterName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
+		SyncStatus        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
 
@@ -1104,14 +1103,18 @@ type ComplexityRoot struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		ClusterName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
+		SyncStatus        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
 
@@ -1218,14 +1221,18 @@ type ComplexityRoot struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		ClusterName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
+		SyncStatus        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
 
@@ -1343,10 +1350,12 @@ type MutationResolver interface {
 }
 type NamespaceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Namespace) (string, error)
+
 	ID(ctx context.Context, obj *entities.Namespace) (string, error)
 
 	Spec(ctx context.Context, obj *entities.Namespace) (*model.K8sIoAPICoreV1NamespaceSpec, error)
 	Status(ctx context.Context, obj *entities.Namespace) (*model.K8sIoAPICoreV1NamespaceStatus, error)
+
 	UpdateTime(ctx context.Context, obj *entities.Namespace) (string, error)
 }
 type NodeResolver interface {
@@ -1368,10 +1377,12 @@ type NodePoolResolver interface {
 }
 type PersistentVolumeResolver interface {
 	CreationTime(ctx context.Context, obj *entities.PersistentVolume) (string, error)
+
 	ID(ctx context.Context, obj *entities.PersistentVolume) (string, error)
 
 	Spec(ctx context.Context, obj *entities.PersistentVolume) (*model.K8sIoAPICoreV1PersistentVolumeSpec, error)
 	Status(ctx context.Context, obj *entities.PersistentVolume) (*model.K8sIoAPICoreV1PersistentVolumeStatus, error)
+
 	UpdateTime(ctx context.Context, obj *entities.PersistentVolume) (string, error)
 }
 type PersistentVolumeClaimResolver interface {
@@ -1423,10 +1434,12 @@ type VPNDeviceResolver interface {
 }
 type VolumeAttachmentResolver interface {
 	CreationTime(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
+
 	ID(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
 
 	Spec(ctx context.Context, obj *entities.VolumeAttachment) (*model.K8sIoAPIStorageV1VolumeAttachmentSpec, error)
 	Status(ctx context.Context, obj *entities.VolumeAttachment) (*model.K8sIoAPIStorageV1VolumeAttachmentStatus, error)
+
 	UpdateTime(ctx context.Context, obj *entities.VolumeAttachment) (string, error)
 }
 
@@ -3045,20 +3058,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Namespace(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__ChartRepo.name":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ChartRepo.Name == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ChartRepo.Name(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___crds___v1__ChartRepo.url":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ChartRepo.URL == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ChartRepo.URL(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.msvcSpec":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.MsvcSpec == nil {
 			break
@@ -3080,12 +3079,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartName(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartRepo":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepo == nil {
+	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartRepoURL":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepoURL == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepo(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartRepoURL(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartVersion":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartVersion == nil {
@@ -5614,12 +5613,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Namespace.ClusterName(childComplexity), true
 
+	case "Namespace.createdBy":
+		if e.complexity.Namespace.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Namespace.CreatedBy(childComplexity), true
+
 	case "Namespace.creationTime":
 		if e.complexity.Namespace.CreationTime == nil {
 			break
 		}
 
 		return e.complexity.Namespace.CreationTime(childComplexity), true
+
+	case "Namespace.displayName":
+		if e.complexity.Namespace.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.Namespace.DisplayName(childComplexity), true
 
 	case "Namespace.id":
 		if e.complexity.Namespace.ID == nil {
@@ -5634,6 +5647,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Namespace.Kind(childComplexity), true
+
+	case "Namespace.lastUpdatedBy":
+		if e.complexity.Namespace.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.Namespace.LastUpdatedBy(childComplexity), true
 
 	case "Namespace.markedForDeletion":
 		if e.complexity.Namespace.MarkedForDeletion == nil {
@@ -5669,6 +5689,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Namespace.Status(childComplexity), true
+
+	case "Namespace.syncStatus":
+		if e.complexity.Namespace.SyncStatus == nil {
+			break
+		}
+
+		return e.complexity.Namespace.SyncStatus(childComplexity), true
 
 	case "Namespace.updateTime":
 		if e.complexity.Namespace.UpdateTime == nil {
@@ -6034,12 +6061,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PersistentVolume.ClusterName(childComplexity), true
 
+	case "PersistentVolume.createdBy":
+		if e.complexity.PersistentVolume.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.CreatedBy(childComplexity), true
+
 	case "PersistentVolume.creationTime":
 		if e.complexity.PersistentVolume.CreationTime == nil {
 			break
 		}
 
 		return e.complexity.PersistentVolume.CreationTime(childComplexity), true
+
+	case "PersistentVolume.displayName":
+		if e.complexity.PersistentVolume.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.DisplayName(childComplexity), true
 
 	case "PersistentVolume.id":
 		if e.complexity.PersistentVolume.ID == nil {
@@ -6054,6 +6095,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PersistentVolume.Kind(childComplexity), true
+
+	case "PersistentVolume.lastUpdatedBy":
+		if e.complexity.PersistentVolume.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.LastUpdatedBy(childComplexity), true
 
 	case "PersistentVolume.markedForDeletion":
 		if e.complexity.PersistentVolume.MarkedForDeletion == nil {
@@ -6089,6 +6137,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PersistentVolume.Status(childComplexity), true
+
+	case "PersistentVolume.syncStatus":
+		if e.complexity.PersistentVolume.SyncStatus == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolume.SyncStatus(childComplexity), true
 
 	case "PersistentVolume.updateTime":
 		if e.complexity.PersistentVolume.UpdateTime == nil {
@@ -6747,12 +6802,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VolumeAttachment.ClusterName(childComplexity), true
 
+	case "VolumeAttachment.createdBy":
+		if e.complexity.VolumeAttachment.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.CreatedBy(childComplexity), true
+
 	case "VolumeAttachment.creationTime":
 		if e.complexity.VolumeAttachment.CreationTime == nil {
 			break
 		}
 
 		return e.complexity.VolumeAttachment.CreationTime(childComplexity), true
+
+	case "VolumeAttachment.displayName":
+		if e.complexity.VolumeAttachment.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.DisplayName(childComplexity), true
 
 	case "VolumeAttachment.id":
 		if e.complexity.VolumeAttachment.ID == nil {
@@ -6767,6 +6836,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VolumeAttachment.Kind(childComplexity), true
+
+	case "VolumeAttachment.lastUpdatedBy":
+		if e.complexity.VolumeAttachment.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.LastUpdatedBy(childComplexity), true
 
 	case "VolumeAttachment.markedForDeletion":
 		if e.complexity.VolumeAttachment.MarkedForDeletion == nil {
@@ -6802,6 +6878,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VolumeAttachment.Status(childComplexity), true
+
+	case "VolumeAttachment.syncStatus":
+		if e.complexity.VolumeAttachment.SyncStatus == nil {
+			break
+		}
+
+		return e.complexity.VolumeAttachment.SyncStatus(childComplexity), true
 
 	case "VolumeAttachment.updateTime":
 		if e.complexity.VolumeAttachment.UpdateTime == nil {
@@ -6879,7 +6962,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn,
-		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ChartRepoIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__JobVarsIn,
@@ -7512,11 +7594,6 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef @sha
   namespace: String
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__ChartRepo @shareable {
-  name: String!
-  url: String!
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec @shareable {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
   namespace: String!
@@ -7524,7 +7601,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServic
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
   chartName: String!
-  chartRepo: Github__com___kloudlite___operator___apis___crds___v1__ChartRepo!
+  chartRepoURL: String!
   chartVersion: String!
   jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVars
   postInstall: String
@@ -8112,11 +8189,6 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   namespace: String
 }
 
-input Github__com___kloudlite___operator___apis___crds___v1__ChartRepoIn {
-  name: String!
-  url: String!
-}
-
 input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
   namespace: String!
@@ -8124,7 +8196,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServi
 
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
   chartName: String!
-  chartRepo: Github__com___kloudlite___operator___apis___crds___v1__ChartRepoIn!
+  chartRepoURL: String!
   chartVersion: String!
   jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
   postInstall: String
@@ -8828,14 +8900,18 @@ enum MatchFilterMatchType {
   accountName: String!
   apiVersion: String!
   clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   id: String!
   kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
   spec: K8s__io___api___core___v1__NamespaceSpec
   status: K8s__io___api___core___v1__NamespaceStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -8931,14 +9007,18 @@ input NodePoolIn {
   accountName: String!
   apiVersion: String!
   clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   id: String!
   kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
   spec: K8s__io___api___core___v1__PersistentVolumeSpec
   status: K8s__io___api___core___v1__PersistentVolumeStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -8997,14 +9077,18 @@ scalar Date
   accountName: String!
   apiVersion: String!
   clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   id: String!
   kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
   spec: K8s__io___api___storage___v1__VolumeAttachmentSpec!
   status: K8s__io___api___storage___v1__VolumeAttachmentStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -20445,94 +20529,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ChartRepo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ChartRepo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_url(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ChartRepo) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_url(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.URL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ChartRepo",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_msvcSpec(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_msvcSpec(ctx, field)
 	if err != nil {
@@ -20669,8 +20665,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepo(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepo(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20683,7 +20679,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ChartRepo, nil
+		return obj.ChartRepoURL, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20695,25 +20691,19 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1ChartRepo)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___crds___v1__ChartRepo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ChartRepo(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_name(ctx, field)
-			case "url":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_url(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__ChartRepo", field.Name)
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -23279,8 +23269,8 @@ func (ec *executionContext) fieldContext_HelmRelease_spec(ctx context.Context, f
 			switch field.Name {
 			case "chartName":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartName(ctx, field)
-			case "chartRepo":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepo(ctx, field)
+			case "chartRepoURL":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field)
 			case "chartVersion":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartVersion(ctx, field)
 			case "jobVars":
@@ -37302,6 +37292,58 @@ func (ec *executionContext) fieldContext_Namespace_clusterName(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Namespace_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Namespace_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Namespace_creationTime(ctx, field)
 	if err != nil {
@@ -37341,6 +37383,50 @@ func (ec *executionContext) fieldContext_Namespace_creationTime(ctx context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -37429,6 +37515,58 @@ func (ec *executionContext) fieldContext_Namespace_kind(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Namespace_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -37668,6 +37806,64 @@ func (ec *executionContext) fieldContext_Namespace_status(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Namespace_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Namespace_syncStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyncStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.SyncStatus)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Namespace_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Namespace",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "action":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
+			case "error":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
+			case "syncScheduledAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Namespace_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Namespace_updateTime(ctx, field)
 	if err != nil {
@@ -37801,12 +37997,18 @@ func (ec *executionContext) fieldContext_NamespaceEdge_node(ctx context.Context,
 				return ec.fieldContext_Namespace_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_Namespace_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Namespace_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Namespace_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Namespace_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Namespace_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_Namespace_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Namespace_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Namespace_markedForDeletion(ctx, field)
 			case "metadata":
@@ -37817,6 +38019,8 @@ func (ec *executionContext) fieldContext_NamespaceEdge_node(ctx context.Context,
 				return ec.fieldContext_Namespace_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_Namespace_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_Namespace_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Namespace_updateTime(ctx, field)
 			}
@@ -40188,6 +40392,58 @@ func (ec *executionContext) fieldContext_PersistentVolume_clusterName(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _PersistentVolume_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PersistentVolume_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PersistentVolume_creationTime(ctx, field)
 	if err != nil {
@@ -40227,6 +40483,50 @@ func (ec *executionContext) fieldContext_PersistentVolume_creationTime(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -40315,6 +40615,58 @@ func (ec *executionContext) fieldContext_PersistentVolume_kind(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -40611,6 +40963,64 @@ func (ec *executionContext) fieldContext_PersistentVolume_status(ctx context.Con
 				return ec.fieldContext_K8s__io___api___core___v1__PersistentVolumeStatus_reason(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type K8s__io___api___core___v1__PersistentVolumeStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolume_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolume) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolume_syncStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyncStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.SyncStatus)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolume_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolume",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "action":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
+			case "error":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
+			case "syncScheduledAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -41635,12 +42045,18 @@ func (ec *executionContext) fieldContext_PersistentVolumeEdge_node(ctx context.C
 				return ec.fieldContext_PersistentVolume_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_PersistentVolume_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_PersistentVolume_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_PersistentVolume_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_PersistentVolume_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_PersistentVolume_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_PersistentVolume_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_PersistentVolume_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_PersistentVolume_markedForDeletion(ctx, field)
 			case "metadata":
@@ -41651,6 +42067,8 @@ func (ec *executionContext) fieldContext_PersistentVolumeEdge_node(ctx context.C
 				return ec.fieldContext_PersistentVolume_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_PersistentVolume_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_PersistentVolume_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_PersistentVolume_updateTime(ctx, field)
 			}
@@ -43821,12 +44239,18 @@ func (ec *executionContext) fieldContext_Query_infra_getNamespace(ctx context.Co
 				return ec.fieldContext_Namespace_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_Namespace_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Namespace_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Namespace_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Namespace_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_Namespace_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_Namespace_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Namespace_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Namespace_markedForDeletion(ctx, field)
 			case "metadata":
@@ -43837,6 +44261,8 @@ func (ec *executionContext) fieldContext_Query_infra_getNamespace(ctx context.Co
 				return ec.fieldContext_Namespace_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_Namespace_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_Namespace_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Namespace_updateTime(ctx, field)
 			}
@@ -44011,12 +44437,18 @@ func (ec *executionContext) fieldContext_Query_infra_getPV(ctx context.Context, 
 				return ec.fieldContext_PersistentVolume_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_PersistentVolume_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_PersistentVolume_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_PersistentVolume_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_PersistentVolume_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_PersistentVolume_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_PersistentVolume_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_PersistentVolume_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_PersistentVolume_markedForDeletion(ctx, field)
 			case "metadata":
@@ -44027,6 +44459,8 @@ func (ec *executionContext) fieldContext_Query_infra_getPV(ctx context.Context, 
 				return ec.fieldContext_PersistentVolume_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_PersistentVolume_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_PersistentVolume_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_PersistentVolume_updateTime(ctx, field)
 			}
@@ -44201,12 +44635,18 @@ func (ec *executionContext) fieldContext_Query_infra_getVolumeAttachment(ctx con
 				return ec.fieldContext_VolumeAttachment_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_VolumeAttachment_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_VolumeAttachment_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_VolumeAttachment_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_VolumeAttachment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_VolumeAttachment_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_VolumeAttachment_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_VolumeAttachment_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_VolumeAttachment_markedForDeletion(ctx, field)
 			case "metadata":
@@ -44217,6 +44657,8 @@ func (ec *executionContext) fieldContext_Query_infra_getVolumeAttachment(ctx con
 				return ec.fieldContext_VolumeAttachment_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_VolumeAttachment_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_VolumeAttachment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_VolumeAttachment_updateTime(ctx, field)
 			}
@@ -45627,6 +46069,58 @@ func (ec *executionContext) fieldContext_VolumeAttachment_clusterName(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _VolumeAttachment_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VolumeAttachment_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VolumeAttachment_creationTime(ctx, field)
 	if err != nil {
@@ -45666,6 +46160,50 @@ func (ec *executionContext) fieldContext_VolumeAttachment_creationTime(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -45754,6 +46292,58 @@ func (ec *executionContext) fieldContext_VolumeAttachment_kind(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _VolumeAttachment_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -46004,6 +46594,64 @@ func (ec *executionContext) fieldContext_VolumeAttachment_status(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _VolumeAttachment_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VolumeAttachment_syncStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyncStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.SyncStatus)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VolumeAttachment_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VolumeAttachment",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "action":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
+			case "error":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
+			case "syncScheduledAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VolumeAttachment_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.VolumeAttachment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VolumeAttachment_updateTime(ctx, field)
 	if err != nil {
@@ -46137,12 +46785,18 @@ func (ec *executionContext) fieldContext_VolumeAttachmentEdge_node(ctx context.C
 				return ec.fieldContext_VolumeAttachment_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_VolumeAttachment_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_VolumeAttachment_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_VolumeAttachment_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_VolumeAttachment_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_VolumeAttachment_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_VolumeAttachment_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_VolumeAttachment_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_VolumeAttachment_markedForDeletion(ctx, field)
 			case "metadata":
@@ -46153,6 +46807,8 @@ func (ec *executionContext) fieldContext_VolumeAttachmentEdge_node(ctx context.C
 				return ec.fieldContext_VolumeAttachment_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_VolumeAttachment_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_VolumeAttachment_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_VolumeAttachment_updateTime(ctx, field)
 			}
@@ -48988,42 +49644,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ChartRepoIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1ChartRepoIn, error) {
-	var it model.GithubComKloudliteOperatorApisCrdsV1ChartRepoIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "url"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "url":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
-			it.URL, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn, error) {
 	var it model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn
 	asMap := map[string]interface{}{}
@@ -49067,7 +49687,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"chartName", "chartRepo", "chartVersion", "jobVars", "postInstall", "postUninstall", "preInstall", "preUninstall", "values"}
+	fieldsInOrder := [...]string{"chartName", "chartRepoURL", "chartVersion", "jobVars", "postInstall", "postUninstall", "preInstall", "preUninstall", "values"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -49082,11 +49702,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-		case "chartRepo":
+		case "chartRepoURL":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartRepo"))
-			it.ChartRepo, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ChartRepoIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ChartRepoIn(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chartRepoURL"))
+			it.ChartRepoURL, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -55833,41 +56453,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___common_
 	return out
 }
 
-var github__com___kloudlite___operator___apis___crds___v1__ChartRepoImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__ChartRepo"}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ChartRepo(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1ChartRepo) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___crds___v1__ChartRepoImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___crds___v1__ChartRepo")
-		case "name":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "url":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ChartRepo_url(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecImplementors = []string{"Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec) graphql.Marshaler {
@@ -55920,9 +56505,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "chartRepo":
+		case "chartRepoURL":
 
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepo(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec_chartRepoURL(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -59405,6 +59990,13 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+
+			out.Values[i] = ec._Namespace_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "creationTime":
 			field := field
 
@@ -59425,6 +60017,13 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				return innerFunc(ctx)
 
 			})
+		case "displayName":
+
+			out.Values[i] = ec._Namespace_displayName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "id":
 			field := field
 
@@ -59448,6 +60047,13 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 		case "kind":
 
 			out.Values[i] = ec._Namespace_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "lastUpdatedBy":
+
+			out.Values[i] = ec._Namespace_lastUpdatedBy(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -59501,6 +60107,13 @@ func (ec *executionContext) _Namespace(ctx context.Context, sel ast.SelectionSet
 				return innerFunc(ctx)
 
 			})
+		case "syncStatus":
+
+			out.Values[i] = ec._Namespace_syncStatus(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updateTime":
 			field := field
 
@@ -60162,6 +60775,13 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+
+			out.Values[i] = ec._PersistentVolume_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "creationTime":
 			field := field
 
@@ -60182,6 +60802,13 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				return innerFunc(ctx)
 
 			})
+		case "displayName":
+
+			out.Values[i] = ec._PersistentVolume_displayName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "id":
 			field := field
 
@@ -60205,6 +60832,13 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 		case "kind":
 
 			out.Values[i] = ec._PersistentVolume_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "lastUpdatedBy":
+
+			out.Values[i] = ec._PersistentVolume_lastUpdatedBy(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -60258,6 +60892,13 @@ func (ec *executionContext) _PersistentVolume(ctx context.Context, sel ast.Selec
 				return innerFunc(ctx)
 
 			})
+		case "syncStatus":
+
+			out.Values[i] = ec._PersistentVolume_syncStatus(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updateTime":
 			field := field
 
@@ -61497,6 +62138,13 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+
+			out.Values[i] = ec._VolumeAttachment_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "creationTime":
 			field := field
 
@@ -61517,6 +62165,13 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				return innerFunc(ctx)
 
 			})
+		case "displayName":
+
+			out.Values[i] = ec._VolumeAttachment_displayName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "id":
 			field := field
 
@@ -61540,6 +62195,13 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 		case "kind":
 
 			out.Values[i] = ec._VolumeAttachment_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "lastUpdatedBy":
+
+			out.Values[i] = ec._VolumeAttachment_lastUpdatedBy(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -61596,6 +62258,13 @@ func (ec *executionContext) _VolumeAttachment(ctx context.Context, sel ast.Selec
 				return innerFunc(ctx)
 
 			})
+		case "syncStatus":
+
+			out.Values[i] = ec._VolumeAttachment_syncStatus(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updateTime":
 			field := field
 
@@ -62796,21 +63465,6 @@ func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___
 
 func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn, error) {
 	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___crds___v1__ChartRepo2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ChartRepo(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1ChartRepo) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___crds___v1__ChartRepo(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__ChartRepoIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ChartRepoIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1ChartRepoIn, error) {
-	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___crds___v1__ChartRepoIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
