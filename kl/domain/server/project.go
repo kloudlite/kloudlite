@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -96,8 +95,6 @@ func EnsureProject(options ...fn.Option) (string, error) {
 	if s != "" {
 		return s, nil
 	}
-
-	fmt.Println(s, "here")
 
 	project, err := SelectProject(projectName)
 	if err != nil {

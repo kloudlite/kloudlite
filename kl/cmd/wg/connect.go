@@ -67,7 +67,6 @@ Examples:
 		}
 
 		if foreground {
-			fmt.Println("here start service")
 			if err := startService(connectVerbose); err != nil {
 				fn.PrintError(err)
 				return
