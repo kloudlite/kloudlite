@@ -29,8 +29,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-const ClusterScopeNamespace = "kloudlite-cluster-scope"
-
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
@@ -288,14 +286,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					if err != nil {
 						return nil
 					}
-					if obj.GetNamespace() == "" {
-						return []reconcile.Request{
-							{NamespacedName: fn.NN(ClusterScopeNamespace, wName)},
-						}
-					} else {
-						return []reconcile.Request{
-							{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
-						}
+
+					return []reconcile.Request{
+						{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
 					}
 				},
 			),
