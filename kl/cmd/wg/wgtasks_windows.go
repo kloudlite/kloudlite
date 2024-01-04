@@ -2,9 +2,9 @@ package wg
 
 import (
 	"errors"
-	"github.com/kloudlite/kl/pkg/ui/text"
-	"github.com/vishvananda/netlink"
 	"net"
+
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 const (
@@ -56,14 +56,9 @@ func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) err
 	)
 }
 
-func ipRouteAdd(ip string, _ string, devName string, _ bool) error {
-	return errors.New(
-		text.Colored("This command is not available for windows, will be available soon", 209),
-	)
-}
-
 func stopService(verbose bool) error {
 	return errors.New(
 		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
 }
+
