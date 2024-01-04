@@ -304,10 +304,144 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource @shareable {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
 type K8s__io___api___core___v1__Affinity @shareable {
   nodeAffinity: K8s__io___api___core___v1__NodeAffinity
   podAffinity: K8s__io___api___core___v1__PodAffinity
   podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinity
+}
+
+type K8s__io___api___core___v1__AzureDiskVolumeSource @shareable {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__AzureFilePersistentVolumeSource @shareable {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+type K8s__io___api___core___v1__CSIPersistentVolumeSource @shareable {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReference
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReference
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReference
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+type K8s__io___api___core___v1__CephFSPersistentVolumeSource @shareable {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+type K8s__io___api___core___v1__CinderPersistentVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__FCVolumeSource @shareable {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+type K8s__io___api___core___v1__FlexPersistentVolumeSource @shareable {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+}
+
+type K8s__io___api___core___v1__FlockerVolumeSource @shareable {
+  datasetName: String
+  datasetUUID: String
+}
+
+type K8s__io___api___core___v1__GCEPersistentDiskVolumeSource @shareable {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__GlusterfsPersistentVolumeSource @shareable {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__HostPathVolumeSource @shareable {
+  path: String!
+  type: String
+}
+
+type K8s__io___api___core___v1__ISCSIPersistentVolumeSource @shareable {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  targetPortal: String!
+}
+
+type K8s__io___api___core___v1__LocalVolumeSource @shareable {
+  fsType: String
+  path: String!
+}
+
+type K8s__io___api___core___v1__NFSVolumeSource @shareable {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+type K8s__io___api___core___v1__NamespaceCondition @shareable {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+type K8s__io___api___core___v1__NamespaceSpec @shareable {
+  finalizers: [String!]
+}
+
+type K8s__io___api___core___v1__NamespaceStatus @shareable {
+  conditions: [K8s__io___api___core___v1__NamespaceCondition!]
+  phase: K8s__io___api___core___v1__NamespacePhase
 }
 
 type K8s__io___api___core___v1__NodeAffinity @shareable {
@@ -328,6 +462,16 @@ type K8s__io___api___core___v1__NodeSelectorRequirement @shareable {
 type K8s__io___api___core___v1__NodeSelectorTerm @shareable {
   matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirement!]
   matchFields: [K8s__io___api___core___v1__NodeSelectorRequirement!]
+}
+
+type K8s__io___api___core___v1__ObjectReference @shareable {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
 }
 
 type K8s__io___api___core___v1__PersistentVolumeClaimCondition @shareable {
@@ -359,6 +503,51 @@ type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
+type K8s__io___api___core___v1__PersistentVolumeSpec @shareable {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSource
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSource
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSource
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSource
+  claimRef: K8s__io___api___core___v1__ObjectReference
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSource
+  fc: K8s__io___api___core___v1__FCVolumeSource
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSource
+  flocker: K8s__io___api___core___v1__FlockerVolumeSource
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSource
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSource
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSource
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSource
+  local: K8s__io___api___core___v1__LocalVolumeSource
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSource
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinity
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSource
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSource
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSource
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
+}
+
+type K8s__io___api___core___v1__PersistentVolumeStatus @shareable {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+type K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource @shareable {
+  fsType: String
+  pdID: String!
+}
+
 type K8s__io___api___core___v1__PodAffinity @shareable {
   preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
@@ -376,9 +565,35 @@ type K8s__io___api___core___v1__PodAntiAffinity @shareable {
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
 }
 
+type K8s__io___api___core___v1__PortworxVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
 type K8s__io___api___core___v1__PreferredSchedulingTerm @shareable {
   preference: K8s__io___api___core___v1__NodeSelectorTerm!
   weight: Int!
+}
+
+type K8s__io___api___core___v1__QuobyteVolumeSource @shareable {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+type K8s__io___api___core___v1__RBDPersistentVolumeSource @shareable {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim @shareable {
@@ -389,6 +604,32 @@ type K8s__io___api___core___v1__ResourceRequirements @shareable {
   claims: [K8s__io___api___core___v1__ResourceClaim!]
   limits: Map
   requests: Map
+}
+
+type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource @shareable {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__SecretReference @shareable {
+  name: String
+  namespace: String
+}
+
+type K8s__io___api___core___v1__StorageOSPersistentVolumeSource @shareable {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReference
+  volumeName: String
+  volumeNamespace: String
 }
 
 type K8s__io___api___core___v1__Taint @shareable {
@@ -419,9 +660,43 @@ type K8s__io___api___core___v1__TypedObjectReference @shareable {
   namespace: String
 }
 
+type K8s__io___api___core___v1__VolumeNodeAffinity @shareable {
+  required: K8s__io___api___core___v1__NodeSelector
+}
+
+type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource @shareable {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
 type K8s__io___api___core___v1__WeightedPodAffinityTerm @shareable {
   podAffinityTerm: K8s__io___api___core___v1__PodAffinityTerm!
   weight: Int!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSource @shareable {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpec
+  persistentVolumeName: String
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSpec @shareable {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSource!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentStatus @shareable {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeError
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeError
+}
+
+type K8s__io___api___storage___v1__VolumeError @shareable {
+  message: String
+  time: Date
 }
 
 type K8s__io___apimachinery___pkg___api___resource__Quantity @shareable {
@@ -592,10 +867,144 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   targetPort: Int
 }
 
+input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
 input K8s__io___api___core___v1__AffinityIn {
   nodeAffinity: K8s__io___api___core___v1__NodeAffinityIn
   podAffinity: K8s__io___api___core___v1__PodAffinityIn
   podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinityIn
+}
+
+input K8s__io___api___core___v1__AzureDiskVolumeSourceIn {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+input K8s__io___api___core___v1__CSIPersistentVolumeSourceIn {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+input K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+input K8s__io___api___core___v1__CinderPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__FCVolumeSourceIn {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+input K8s__io___api___core___v1__FlexPersistentVolumeSourceIn {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+}
+
+input K8s__io___api___core___v1__FlockerVolumeSourceIn {
+  datasetName: String
+  datasetUUID: String
+}
+
+input K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__HostPathVolumeSourceIn {
+  path: String!
+  type: String
+}
+
+input K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  targetPortal: String!
+}
+
+input K8s__io___api___core___v1__LocalVolumeSourceIn {
+  fsType: String
+  path: String!
+}
+
+input K8s__io___api___core___v1__NFSVolumeSourceIn {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+input K8s__io___api___core___v1__NamespaceConditionIn {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+input K8s__io___api___core___v1__NamespaceSpecIn {
+  finalizers: [String!]
+}
+
+input K8s__io___api___core___v1__NamespaceStatusIn {
+  conditions: [K8s__io___api___core___v1__NamespaceConditionIn!]
+  phase: K8s__io___api___core___v1__NamespacePhase
 }
 
 input K8s__io___api___core___v1__NodeAffinityIn {
@@ -616,6 +1025,16 @@ input K8s__io___api___core___v1__NodeSelectorRequirementIn {
 input K8s__io___api___core___v1__NodeSelectorTermIn {
   matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
   matchFields: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+}
+
+input K8s__io___api___core___v1__ObjectReferenceIn {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
 }
 
 input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
@@ -647,6 +1066,51 @@ input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
+input K8s__io___api___core___v1__PersistentVolumeSpecIn {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSourceIn
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSourceIn
+  claimRef: K8s__io___api___core___v1__ObjectReferenceIn
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSourceIn
+  fc: K8s__io___api___core___v1__FCVolumeSourceIn
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSourceIn
+  flocker: K8s__io___api___core___v1__FlockerVolumeSourceIn
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSourceIn
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn
+  local: K8s__io___api___core___v1__LocalVolumeSourceIn
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSourceIn
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinityIn
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSourceIn
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSourceIn
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSourceIn
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
+}
+
+input K8s__io___api___core___v1__PersistentVolumeStatusIn {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+input K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn {
+  fsType: String
+  pdID: String!
+}
+
 input K8s__io___api___core___v1__PodAffinityIn {
   preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTermIn!]
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
@@ -664,9 +1128,35 @@ input K8s__io___api___core___v1__PodAntiAffinityIn {
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
 }
 
+input K8s__io___api___core___v1__PortworxVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
 input K8s__io___api___core___v1__PreferredSchedulingTermIn {
   preference: K8s__io___api___core___v1__NodeSelectorTermIn!
   weight: Int!
+}
+
+input K8s__io___api___core___v1__QuobyteVolumeSourceIn {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
 }
 
 input K8s__io___api___core___v1__ResourceClaimIn {
@@ -677,6 +1167,32 @@ input K8s__io___api___core___v1__ResourceRequirementsIn {
   claims: [K8s__io___api___core___v1__ResourceClaimIn!]
   limits: Map
   requests: Map
+}
+
+input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__SecretReferenceIn {
+  name: String
+  namespace: String
+}
+
+input K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReferenceIn
+  volumeName: String
+  volumeNamespace: String
 }
 
 input K8s__io___api___core___v1__TaintIn {
@@ -707,9 +1223,43 @@ input K8s__io___api___core___v1__TypedObjectReferenceIn {
   namespace: String
 }
 
+input K8s__io___api___core___v1__VolumeNodeAffinityIn {
+  required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+input K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
 input K8s__io___api___core___v1__WeightedPodAffinityTermIn {
   podAffinityTerm: K8s__io___api___core___v1__PodAffinityTermIn!
   weight: Int!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSourceIn {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  persistentVolumeName: String
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSpecIn {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSourceIn!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentStatusIn {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeErrorIn
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeErrorIn
+}
+
+input K8s__io___api___storage___v1__VolumeErrorIn {
+  message: String
+  time: Date
 }
 
 input K8s__io___apimachinery___pkg___api___resource__QuantityIn {
@@ -773,6 +1323,19 @@ enum K8s__io___api___core___v1__ConditionStatus {
   Unknown
 }
 
+enum K8s__io___api___core___v1__NamespaceConditionType {
+  NamespaceContentRemaining
+  NamespaceDeletionContentFailure
+  NamespaceDeletionDiscoveryFailure
+  NamespaceDeletionGroupVersionParsingFailure
+  NamespaceFinalizersRemaining
+}
+
+enum K8s__io___api___core___v1__NamespacePhase {
+  Active
+  Terminating
+}
+
 enum K8s__io___api___core___v1__NodeSelectorOperator {
   DoesNotExist
   Exists
@@ -791,6 +1354,20 @@ enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
   Bound
   Lost
   Pending
+}
+
+enum K8s__io___api___core___v1__PersistentVolumePhase {
+  Available
+  Bound
+  Failed
+  Pending
+  Released
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeReclaimPolicy {
+  Delete
+  Recycle
+  Retain
 }
 
 enum K8s__io___api___core___v1__TaintEffect {

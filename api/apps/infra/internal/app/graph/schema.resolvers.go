@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"encoding/base64"
-
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -584,57 +583,6 @@ func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName strin
 	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
 
-// InfraListPVCs is the resolver for the infra_listPVCs field.
-func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) (*model.PersistentVolumeClaimPaginatedRecords, error) {
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-	}
-
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	pvcs, err := r.Domain.ListPVCs(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	ve := make([]*model.PersistentVolumeClaimEdge, len(pvcs.Edges))
-	for i := range pvcs.Edges {
-		ve[i] = &model.PersistentVolumeClaimEdge{
-			Node:   pvcs.Edges[i].Node,
-			Cursor: pvcs.Edges[i].Cursor,
-		}
-	}
-
-	m := model.PersistentVolumeClaimPaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pvcs.PageInfo.EndCursor,
-			HasNextPage:     pvcs.PageInfo.HasNextPage,
-			HasPreviousPage: pvcs.PageInfo.HasPrevPage,
-			StartCursor:     &pvcs.PageInfo.StartCursor,
-		},
-		TotalCount: int(pvcs.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// InfraGetPvc is the resolver for the infra_getPVC field.
-func (r *queryResolver) InfraGetPvc(ctx context.Context, clusterName string, name string) (*entities.PersistentVolumeClaim, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.GetPVC(cc, clusterName, name)
-}
-
 // InfraListClusterManagedServices is the resolver for the infra_listClusterManagedServices field.
 func (r *queryResolver) InfraListClusterManagedServices(ctx context.Context, clusterName string, search *model.SearchClusterManagedService, pagination *repos.CursorPagination) (*model.ClusterManagedServicePaginatedRecords, error) {
 	ictx, err := toInfraContext(ctx)
@@ -765,13 +713,212 @@ func (r *queryResolver) InfraGetManagedServiceTemplate(ctx context.Context, cate
 	return r.Domain.GetManagedSvcTemplate(category, name)
 }
 
+// InfraListPVCs is the resolver for the infra_listPVCs field.
+func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) (*model.PersistentVolumeClaimPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	pvcs, err := r.Domain.ListPVCs(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ve := make([]*model.PersistentVolumeClaimEdge, len(pvcs.Edges))
+	for i := range pvcs.Edges {
+		ve[i] = &model.PersistentVolumeClaimEdge{
+			Node:   pvcs.Edges[i].Node,
+			Cursor: pvcs.Edges[i].Cursor,
+		}
+	}
+
+	m := model.PersistentVolumeClaimPaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pvcs.PageInfo.EndCursor,
+			HasNextPage:     pvcs.PageInfo.HasNextPage,
+			HasPreviousPage: pvcs.PageInfo.HasPrevPage,
+			StartCursor:     &pvcs.PageInfo.StartCursor,
+		},
+		TotalCount: int(pvcs.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetPvc is the resolver for the infra_getPVC field.
+func (r *queryResolver) InfraGetPvc(ctx context.Context, clusterName string, name string) (*entities.PersistentVolumeClaim, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetPVC(cc, clusterName, name)
+}
+
+// InfraListNamespaces is the resolver for the infra_listNamespaces field.
+func (r *queryResolver) InfraListNamespaces(ctx context.Context, clusterName string, search *model.SearchNamespaces, pq *repos.CursorPagination) (*model.NamespacePaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	namespaces, err := r.Domain.ListNamespaces(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ve := make([]*model.NamespaceEdge, len(namespaces.Edges))
+	for i := range namespaces.Edges {
+		ve[i] = &model.NamespaceEdge{
+			Node:   namespaces.Edges[i].Node,
+			Cursor: namespaces.Edges[i].Cursor,
+		}
+	}
+
+	m := model.NamespacePaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &namespaces.PageInfo.EndCursor,
+			HasNextPage:     namespaces.PageInfo.HasNextPage,
+			HasPreviousPage: namespaces.PageInfo.HasPrevPage,
+			StartCursor:     &namespaces.PageInfo.StartCursor,
+		},
+		TotalCount: int(namespaces.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetNamespace is the resolver for the infra_getNamespace field.
+func (r *queryResolver) InfraGetNamespace(ctx context.Context, clusterName string, name string) (*entities.Namespace, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetNamespace(cc, clusterName, name)
+}
+
+// InfraListPVs is the resolver for the infra_listPVs field.
+func (r *queryResolver) InfraListPVs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumes, pq *repos.CursorPagination) (*model.PersistentVolumePaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	pvs, err := r.Domain.ListPVs(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ve := make([]*model.PersistentVolumeEdge, len(pvs.Edges))
+	for i := range pvs.Edges {
+		ve[i] = &model.PersistentVolumeEdge{
+			Node:   pvs.Edges[i].Node,
+			Cursor: pvs.Edges[i].Cursor,
+		}
+	}
+
+	m := model.PersistentVolumePaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pvs.PageInfo.EndCursor,
+			HasNextPage:     pvs.PageInfo.HasNextPage,
+			HasPreviousPage: pvs.PageInfo.HasPrevPage,
+			StartCursor:     &pvs.PageInfo.StartCursor,
+		},
+		TotalCount: int(pvs.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetPv is the resolver for the infra_getPV field.
+func (r *queryResolver) InfraGetPv(ctx context.Context, clusterName string, name string) (*entities.PersistentVolume, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetPV(cc, clusterName, name)
+}
+
+// InfraListVolumeAttachments is the resolver for the infra_listVolumeAttachments field.
+func (r *queryResolver) InfraListVolumeAttachments(ctx context.Context, clusterName string, search *model.SearchVolumeAttachments, pq *repos.CursorPagination) (*model.VolumeAttachmentPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	volatt, err := r.Domain.ListVolumeAttachments(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ve := make([]*model.VolumeAttachmentEdge, len(volatt.Edges))
+	for i := range volatt.Edges {
+		ve[i] = &model.VolumeAttachmentEdge{
+			Node:   volatt.Edges[i].Node,
+			Cursor: volatt.Edges[i].Cursor,
+		}
+	}
+
+	m := model.VolumeAttachmentPaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &volatt.PageInfo.EndCursor,
+			HasNextPage:     volatt.PageInfo.HasNextPage,
+			HasPreviousPage: volatt.PageInfo.HasPrevPage,
+			StartCursor:     &volatt.PageInfo.StartCursor,
+		},
+		TotalCount: int(volatt.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetVolumeAttachment is the resolver for the infra_getVolumeAttachment field.
+func (r *queryResolver) InfraGetVolumeAttachment(ctx context.Context, clusterName string, name string) (*entities.VolumeAttachment, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetVolumeAttachment(cc, clusterName, name)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type (
-	mutationResolver struct{ *Resolver }
-	queryResolver    struct{ *Resolver }
-)
+type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

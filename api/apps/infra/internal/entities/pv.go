@@ -3,23 +3,22 @@ package entities
 import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
-	t "github.com/kloudlite/api/pkg/types"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/api/pkg/types"
+	corev1 "k8s.io/api/core/v1"
 )
 
-type HelmRelease struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	crdsv1.HelmChart `json:",inline" graphql:"uri=k8s://helmcharts.crds.kloudlite.io"`
-
-	common.ResourceMetadata `json:",inline"`
+type PersistentVolume struct {
+	repos.BaseEntity        `json:",inline" graphql:"noinput"`
+	corev1.PersistentVolume `json:",inline"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 
-	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	common.ResourceMetadata `json:",inline" graphql:"noinput"`
+	SyncStatus              types.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-var HelmReleaseIndices = []repos.IndexField{
+var PersistentVolumeIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},

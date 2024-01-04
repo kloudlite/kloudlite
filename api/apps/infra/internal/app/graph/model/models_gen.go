@@ -470,6 +470,20 @@ type HelmReleasePaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource struct {
+	FsType    *string `json:"fsType,omitempty"`
+	Partition *int    `json:"partition,omitempty"`
+	ReadOnly  *bool   `json:"readOnly,omitempty"`
+	VolumeID  string  `json:"volumeID"`
+}
+
+type K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn struct {
+	FsType    *string `json:"fsType,omitempty"`
+	Partition *int    `json:"partition,omitempty"`
+	ReadOnly  *bool   `json:"readOnly,omitempty"`
+	VolumeID  string  `json:"volumeID"`
+}
+
 type K8sIoAPICoreV1Affinity struct {
 	NodeAffinity    *K8sIoAPICoreV1NodeAffinity    `json:"nodeAffinity,omitempty"`
 	PodAffinity     *K8sIoAPICoreV1PodAffinity     `json:"podAffinity,omitempty"`
@@ -480,6 +494,260 @@ type K8sIoAPICoreV1AffinityIn struct {
 	NodeAffinity    *K8sIoAPICoreV1NodeAffinityIn    `json:"nodeAffinity,omitempty"`
 	PodAffinity     *K8sIoAPICoreV1PodAffinityIn     `json:"podAffinity,omitempty"`
 	PodAntiAffinity *K8sIoAPICoreV1PodAntiAffinityIn `json:"podAntiAffinity,omitempty"`
+}
+
+type K8sIoAPICoreV1AzureDiskVolumeSource struct {
+	CachingMode *string `json:"cachingMode,omitempty"`
+	DiskName    string  `json:"diskName"`
+	DiskURI     string  `json:"diskURI"`
+	FsType      *string `json:"fsType,omitempty"`
+	Kind        *string `json:"kind,omitempty"`
+	ReadOnly    *bool   `json:"readOnly,omitempty"`
+}
+
+type K8sIoAPICoreV1AzureDiskVolumeSourceIn struct {
+	CachingMode *string `json:"cachingMode,omitempty"`
+	DiskName    string  `json:"diskName"`
+	DiskURI     string  `json:"diskURI"`
+	FsType      *string `json:"fsType,omitempty"`
+	Kind        *string `json:"kind,omitempty"`
+	ReadOnly    *bool   `json:"readOnly,omitempty"`
+}
+
+type K8sIoAPICoreV1AzureFilePersistentVolumeSource struct {
+	ReadOnly        *bool   `json:"readOnly,omitempty"`
+	SecretName      string  `json:"secretName"`
+	SecretNamespace *string `json:"secretNamespace,omitempty"`
+	ShareName       string  `json:"shareName"`
+}
+
+type K8sIoAPICoreV1AzureFilePersistentVolumeSourceIn struct {
+	ReadOnly        *bool   `json:"readOnly,omitempty"`
+	SecretName      string  `json:"secretName"`
+	SecretNamespace *string `json:"secretNamespace,omitempty"`
+	ShareName       string  `json:"shareName"`
+}
+
+type K8sIoAPICoreV1CSIPersistentVolumeSource struct {
+	ControllerExpandSecretRef  *K8sIoAPICoreV1SecretReference `json:"controllerExpandSecretRef,omitempty"`
+	ControllerPublishSecretRef *K8sIoAPICoreV1SecretReference `json:"controllerPublishSecretRef,omitempty"`
+	Driver                     string                         `json:"driver"`
+	FsType                     *string                        `json:"fsType,omitempty"`
+	NodeExpandSecretRef        *K8sIoAPICoreV1SecretReference `json:"nodeExpandSecretRef,omitempty"`
+	NodePublishSecretRef       *K8sIoAPICoreV1SecretReference `json:"nodePublishSecretRef,omitempty"`
+	NodeStageSecretRef         *K8sIoAPICoreV1SecretReference `json:"nodeStageSecretRef,omitempty"`
+	ReadOnly                   *bool                          `json:"readOnly,omitempty"`
+	VolumeAttributes           map[string]interface{}         `json:"volumeAttributes,omitempty"`
+	VolumeHandle               string                         `json:"volumeHandle"`
+}
+
+type K8sIoAPICoreV1CSIPersistentVolumeSourceIn struct {
+	ControllerExpandSecretRef  *K8sIoAPICoreV1SecretReferenceIn `json:"controllerExpandSecretRef,omitempty"`
+	ControllerPublishSecretRef *K8sIoAPICoreV1SecretReferenceIn `json:"controllerPublishSecretRef,omitempty"`
+	Driver                     string                           `json:"driver"`
+	FsType                     *string                          `json:"fsType,omitempty"`
+	NodeExpandSecretRef        *K8sIoAPICoreV1SecretReferenceIn `json:"nodeExpandSecretRef,omitempty"`
+	NodePublishSecretRef       *K8sIoAPICoreV1SecretReferenceIn `json:"nodePublishSecretRef,omitempty"`
+	NodeStageSecretRef         *K8sIoAPICoreV1SecretReferenceIn `json:"nodeStageSecretRef,omitempty"`
+	ReadOnly                   *bool                            `json:"readOnly,omitempty"`
+	VolumeAttributes           map[string]interface{}           `json:"volumeAttributes,omitempty"`
+	VolumeHandle               string                           `json:"volumeHandle"`
+}
+
+type K8sIoAPICoreV1CephFSPersistentVolumeSource struct {
+	Monitors   []string                       `json:"monitors"`
+	Path       *string                        `json:"path,omitempty"`
+	ReadOnly   *bool                          `json:"readOnly,omitempty"`
+	SecretFile *string                        `json:"secretFile,omitempty"`
+	SecretRef  *K8sIoAPICoreV1SecretReference `json:"secretRef,omitempty"`
+	User       *string                        `json:"user,omitempty"`
+}
+
+type K8sIoAPICoreV1CephFSPersistentVolumeSourceIn struct {
+	Monitors   []string                         `json:"monitors"`
+	Path       *string                          `json:"path,omitempty"`
+	ReadOnly   *bool                            `json:"readOnly,omitempty"`
+	SecretFile *string                          `json:"secretFile,omitempty"`
+	SecretRef  *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
+	User       *string                          `json:"user,omitempty"`
+}
+
+type K8sIoAPICoreV1CinderPersistentVolumeSource struct {
+	FsType    *string                        `json:"fsType,omitempty"`
+	ReadOnly  *bool                          `json:"readOnly,omitempty"`
+	SecretRef *K8sIoAPICoreV1SecretReference `json:"secretRef,omitempty"`
+	VolumeID  string                         `json:"volumeID"`
+}
+
+type K8sIoAPICoreV1CinderPersistentVolumeSourceIn struct {
+	FsType    *string                          `json:"fsType,omitempty"`
+	ReadOnly  *bool                            `json:"readOnly,omitempty"`
+	SecretRef *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
+	VolumeID  string                           `json:"volumeID"`
+}
+
+type K8sIoAPICoreV1FCVolumeSource struct {
+	FsType     *string  `json:"fsType,omitempty"`
+	Lun        *int     `json:"lun,omitempty"`
+	ReadOnly   *bool    `json:"readOnly,omitempty"`
+	TargetWWNs []string `json:"targetWWNs,omitempty"`
+	Wwids      []string `json:"wwids,omitempty"`
+}
+
+type K8sIoAPICoreV1FCVolumeSourceIn struct {
+	FsType     *string  `json:"fsType,omitempty"`
+	Lun        *int     `json:"lun,omitempty"`
+	ReadOnly   *bool    `json:"readOnly,omitempty"`
+	TargetWWNs []string `json:"targetWWNs,omitempty"`
+	Wwids      []string `json:"wwids,omitempty"`
+}
+
+type K8sIoAPICoreV1FlexPersistentVolumeSource struct {
+	Driver    string                         `json:"driver"`
+	FsType    *string                        `json:"fsType,omitempty"`
+	Options   map[string]interface{}         `json:"options,omitempty"`
+	ReadOnly  *bool                          `json:"readOnly,omitempty"`
+	SecretRef *K8sIoAPICoreV1SecretReference `json:"secretRef,omitempty"`
+}
+
+type K8sIoAPICoreV1FlexPersistentVolumeSourceIn struct {
+	Driver    string                           `json:"driver"`
+	FsType    *string                          `json:"fsType,omitempty"`
+	Options   map[string]interface{}           `json:"options,omitempty"`
+	ReadOnly  *bool                            `json:"readOnly,omitempty"`
+	SecretRef *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
+}
+
+type K8sIoAPICoreV1FlockerVolumeSource struct {
+	DatasetName *string `json:"datasetName,omitempty"`
+	DatasetUUID *string `json:"datasetUUID,omitempty"`
+}
+
+type K8sIoAPICoreV1FlockerVolumeSourceIn struct {
+	DatasetName *string `json:"datasetName,omitempty"`
+	DatasetUUID *string `json:"datasetUUID,omitempty"`
+}
+
+type K8sIoAPICoreV1GCEPersistentDiskVolumeSource struct {
+	FsType    *string `json:"fsType,omitempty"`
+	Partition *int    `json:"partition,omitempty"`
+	PdName    string  `json:"pdName"`
+	ReadOnly  *bool   `json:"readOnly,omitempty"`
+}
+
+type K8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn struct {
+	FsType    *string `json:"fsType,omitempty"`
+	Partition *int    `json:"partition,omitempty"`
+	PdName    string  `json:"pdName"`
+	ReadOnly  *bool   `json:"readOnly,omitempty"`
+}
+
+type K8sIoAPICoreV1GlusterfsPersistentVolumeSource struct {
+	Endpoints          string  `json:"endpoints"`
+	EndpointsNamespace *string `json:"endpointsNamespace,omitempty"`
+	Path               string  `json:"path"`
+	ReadOnly           *bool   `json:"readOnly,omitempty"`
+}
+
+type K8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn struct {
+	Endpoints          string  `json:"endpoints"`
+	EndpointsNamespace *string `json:"endpointsNamespace,omitempty"`
+	Path               string  `json:"path"`
+	ReadOnly           *bool   `json:"readOnly,omitempty"`
+}
+
+type K8sIoAPICoreV1HostPathVolumeSource struct {
+	Path string  `json:"path"`
+	Type *string `json:"type,omitempty"`
+}
+
+type K8sIoAPICoreV1HostPathVolumeSourceIn struct {
+	Path string  `json:"path"`
+	Type *string `json:"type,omitempty"`
+}
+
+type K8sIoAPICoreV1ISCSIPersistentVolumeSource struct {
+	ChapAuthDiscovery *bool                          `json:"chapAuthDiscovery,omitempty"`
+	ChapAuthSession   *bool                          `json:"chapAuthSession,omitempty"`
+	FsType            *string                        `json:"fsType,omitempty"`
+	InitiatorName     *string                        `json:"initiatorName,omitempty"`
+	Iqn               string                         `json:"iqn"`
+	IscsiInterface    *string                        `json:"iscsiInterface,omitempty"`
+	Lun               int                            `json:"lun"`
+	Portals           []string                       `json:"portals,omitempty"`
+	ReadOnly          *bool                          `json:"readOnly,omitempty"`
+	SecretRef         *K8sIoAPICoreV1SecretReference `json:"secretRef,omitempty"`
+	TargetPortal      string                         `json:"targetPortal"`
+}
+
+type K8sIoAPICoreV1ISCSIPersistentVolumeSourceIn struct {
+	ChapAuthDiscovery *bool                            `json:"chapAuthDiscovery,omitempty"`
+	ChapAuthSession   *bool                            `json:"chapAuthSession,omitempty"`
+	FsType            *string                          `json:"fsType,omitempty"`
+	InitiatorName     *string                          `json:"initiatorName,omitempty"`
+	Iqn               string                           `json:"iqn"`
+	IscsiInterface    *string                          `json:"iscsiInterface,omitempty"`
+	Lun               int                              `json:"lun"`
+	Portals           []string                         `json:"portals,omitempty"`
+	ReadOnly          *bool                            `json:"readOnly,omitempty"`
+	SecretRef         *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
+	TargetPortal      string                           `json:"targetPortal"`
+}
+
+type K8sIoAPICoreV1LocalVolumeSource struct {
+	FsType *string `json:"fsType,omitempty"`
+	Path   string  `json:"path"`
+}
+
+type K8sIoAPICoreV1LocalVolumeSourceIn struct {
+	FsType *string `json:"fsType,omitempty"`
+	Path   string  `json:"path"`
+}
+
+type K8sIoAPICoreV1NFSVolumeSource struct {
+	Path     string `json:"path"`
+	ReadOnly *bool  `json:"readOnly,omitempty"`
+	Server   string `json:"server"`
+}
+
+type K8sIoAPICoreV1NFSVolumeSourceIn struct {
+	Path     string `json:"path"`
+	ReadOnly *bool  `json:"readOnly,omitempty"`
+	Server   string `json:"server"`
+}
+
+type K8sIoAPICoreV1NamespaceCondition struct {
+	LastTransitionTime *string                              `json:"lastTransitionTime,omitempty"`
+	Message            *string                              `json:"message,omitempty"`
+	Reason             *string                              `json:"reason,omitempty"`
+	Status             K8sIoAPICoreV1ConditionStatus        `json:"status"`
+	Type               K8sIoAPICoreV1NamespaceConditionType `json:"type"`
+}
+
+type K8sIoAPICoreV1NamespaceConditionIn struct {
+	LastTransitionTime *string                              `json:"lastTransitionTime,omitempty"`
+	Message            *string                              `json:"message,omitempty"`
+	Reason             *string                              `json:"reason,omitempty"`
+	Status             K8sIoAPICoreV1ConditionStatus        `json:"status"`
+	Type               K8sIoAPICoreV1NamespaceConditionType `json:"type"`
+}
+
+type K8sIoAPICoreV1NamespaceSpec struct {
+	Finalizers []string `json:"finalizers,omitempty"`
+}
+
+type K8sIoAPICoreV1NamespaceSpecIn struct {
+	Finalizers []string `json:"finalizers,omitempty"`
+}
+
+type K8sIoAPICoreV1NamespaceStatus struct {
+	Conditions []*K8sIoAPICoreV1NamespaceCondition `json:"conditions,omitempty"`
+	Phase      *K8sIoAPICoreV1NamespacePhase       `json:"phase,omitempty"`
+}
+
+type K8sIoAPICoreV1NamespaceStatusIn struct {
+	Conditions []*K8sIoAPICoreV1NamespaceConditionIn `json:"conditions,omitempty"`
+	Phase      *K8sIoAPICoreV1NamespacePhase         `json:"phase,omitempty"`
 }
 
 type K8sIoAPICoreV1NodeAffinity struct {
@@ -520,6 +788,26 @@ type K8sIoAPICoreV1NodeSelectorTerm struct {
 type K8sIoAPICoreV1NodeSelectorTermIn struct {
 	MatchExpressions []*K8sIoAPICoreV1NodeSelectorRequirementIn `json:"matchExpressions,omitempty"`
 	MatchFields      []*K8sIoAPICoreV1NodeSelectorRequirementIn `json:"matchFields,omitempty"`
+}
+
+type K8sIoAPICoreV1ObjectReference struct {
+	APIVersion      *string `json:"apiVersion,omitempty"`
+	FieldPath       *string `json:"fieldPath,omitempty"`
+	Kind            *string `json:"kind,omitempty"`
+	Name            *string `json:"name,omitempty"`
+	Namespace       *string `json:"namespace,omitempty"`
+	ResourceVersion *string `json:"resourceVersion,omitempty"`
+	UID             *string `json:"uid,omitempty"`
+}
+
+type K8sIoAPICoreV1ObjectReferenceIn struct {
+	APIVersion      *string `json:"apiVersion,omitempty"`
+	FieldPath       *string `json:"fieldPath,omitempty"`
+	Kind            *string `json:"kind,omitempty"`
+	Name            *string `json:"name,omitempty"`
+	Namespace       *string `json:"namespace,omitempty"`
+	ResourceVersion *string `json:"resourceVersion,omitempty"`
+	UID             *string `json:"uid,omitempty"`
 }
 
 type K8sIoAPICoreV1PersistentVolumeClaimCondition struct {
@@ -580,6 +868,96 @@ type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
 	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
 }
 
+type K8sIoAPICoreV1PersistentVolumeSpec struct {
+	AccessModes                   []string                                        `json:"accessModes,omitempty"`
+	AwsElasticBlockStore          *K8sIoAPICoreV1AWSElasticBlockStoreVolumeSource `json:"awsElasticBlockStore,omitempty"`
+	AzureDisk                     *K8sIoAPICoreV1AzureDiskVolumeSource            `json:"azureDisk,omitempty"`
+	AzureFile                     *K8sIoAPICoreV1AzureFilePersistentVolumeSource  `json:"azureFile,omitempty"`
+	Capacity                      map[string]interface{}                          `json:"capacity,omitempty"`
+	Cephfs                        *K8sIoAPICoreV1CephFSPersistentVolumeSource     `json:"cephfs,omitempty"`
+	Cinder                        *K8sIoAPICoreV1CinderPersistentVolumeSource     `json:"cinder,omitempty"`
+	ClaimRef                      *K8sIoAPICoreV1ObjectReference                  `json:"claimRef,omitempty"`
+	Csi                           *K8sIoAPICoreV1CSIPersistentVolumeSource        `json:"csi,omitempty"`
+	Fc                            *K8sIoAPICoreV1FCVolumeSource                   `json:"fc,omitempty"`
+	FlexVolume                    *K8sIoAPICoreV1FlexPersistentVolumeSource       `json:"flexVolume,omitempty"`
+	Flocker                       *K8sIoAPICoreV1FlockerVolumeSource              `json:"flocker,omitempty"`
+	GcePersistentDisk             *K8sIoAPICoreV1GCEPersistentDiskVolumeSource    `json:"gcePersistentDisk,omitempty"`
+	Glusterfs                     *K8sIoAPICoreV1GlusterfsPersistentVolumeSource  `json:"glusterfs,omitempty"`
+	HostPath                      *K8sIoAPICoreV1HostPathVolumeSource             `json:"hostPath,omitempty"`
+	Iscsi                         *K8sIoAPICoreV1ISCSIPersistentVolumeSource      `json:"iscsi,omitempty"`
+	Local                         *K8sIoAPICoreV1LocalVolumeSource                `json:"local,omitempty"`
+	MountOptions                  []string                                        `json:"mountOptions,omitempty"`
+	Nfs                           *K8sIoAPICoreV1NFSVolumeSource                  `json:"nfs,omitempty"`
+	NodeAffinity                  *K8sIoAPICoreV1VolumeNodeAffinity               `json:"nodeAffinity,omitempty"`
+	PersistentVolumeReclaimPolicy *K8sIoAPICoreV1PersistentVolumeReclaimPolicy    `json:"persistentVolumeReclaimPolicy,omitempty"`
+	PhotonPersistentDisk          *K8sIoAPICoreV1PhotonPersistentDiskVolumeSource `json:"photonPersistentDisk,omitempty"`
+	PortworxVolume                *K8sIoAPICoreV1PortworxVolumeSource             `json:"portworxVolume,omitempty"`
+	Quobyte                       *K8sIoAPICoreV1QuobyteVolumeSource              `json:"quobyte,omitempty"`
+	Rbd                           *K8sIoAPICoreV1RBDPersistentVolumeSource        `json:"rbd,omitempty"`
+	ScaleIo                       *K8sIoAPICoreV1ScaleIOPersistentVolumeSource    `json:"scaleIO,omitempty"`
+	StorageClassName              *string                                         `json:"storageClassName,omitempty"`
+	Storageos                     *K8sIoAPICoreV1StorageOSPersistentVolumeSource  `json:"storageos,omitempty"`
+	VolumeMode                    *string                                         `json:"volumeMode,omitempty"`
+	VsphereVolume                 *K8sIoAPICoreV1VsphereVirtualDiskVolumeSource   `json:"vsphereVolume,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeSpecIn struct {
+	AccessModes                   []string                                          `json:"accessModes,omitempty"`
+	AwsElasticBlockStore          *K8sIoAPICoreV1AWSElasticBlockStoreVolumeSourceIn `json:"awsElasticBlockStore,omitempty"`
+	AzureDisk                     *K8sIoAPICoreV1AzureDiskVolumeSourceIn            `json:"azureDisk,omitempty"`
+	AzureFile                     *K8sIoAPICoreV1AzureFilePersistentVolumeSourceIn  `json:"azureFile,omitempty"`
+	Capacity                      map[string]interface{}                            `json:"capacity,omitempty"`
+	Cephfs                        *K8sIoAPICoreV1CephFSPersistentVolumeSourceIn     `json:"cephfs,omitempty"`
+	Cinder                        *K8sIoAPICoreV1CinderPersistentVolumeSourceIn     `json:"cinder,omitempty"`
+	ClaimRef                      *K8sIoAPICoreV1ObjectReferenceIn                  `json:"claimRef,omitempty"`
+	Csi                           *K8sIoAPICoreV1CSIPersistentVolumeSourceIn        `json:"csi,omitempty"`
+	Fc                            *K8sIoAPICoreV1FCVolumeSourceIn                   `json:"fc,omitempty"`
+	FlexVolume                    *K8sIoAPICoreV1FlexPersistentVolumeSourceIn       `json:"flexVolume,omitempty"`
+	Flocker                       *K8sIoAPICoreV1FlockerVolumeSourceIn              `json:"flocker,omitempty"`
+	GcePersistentDisk             *K8sIoAPICoreV1GCEPersistentDiskVolumeSourceIn    `json:"gcePersistentDisk,omitempty"`
+	Glusterfs                     *K8sIoAPICoreV1GlusterfsPersistentVolumeSourceIn  `json:"glusterfs,omitempty"`
+	HostPath                      *K8sIoAPICoreV1HostPathVolumeSourceIn             `json:"hostPath,omitempty"`
+	Iscsi                         *K8sIoAPICoreV1ISCSIPersistentVolumeSourceIn      `json:"iscsi,omitempty"`
+	Local                         *K8sIoAPICoreV1LocalVolumeSourceIn                `json:"local,omitempty"`
+	MountOptions                  []string                                          `json:"mountOptions,omitempty"`
+	Nfs                           *K8sIoAPICoreV1NFSVolumeSourceIn                  `json:"nfs,omitempty"`
+	NodeAffinity                  *K8sIoAPICoreV1VolumeNodeAffinityIn               `json:"nodeAffinity,omitempty"`
+	PersistentVolumeReclaimPolicy *K8sIoAPICoreV1PersistentVolumeReclaimPolicy      `json:"persistentVolumeReclaimPolicy,omitempty"`
+	PhotonPersistentDisk          *K8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn `json:"photonPersistentDisk,omitempty"`
+	PortworxVolume                *K8sIoAPICoreV1PortworxVolumeSourceIn             `json:"portworxVolume,omitempty"`
+	Quobyte                       *K8sIoAPICoreV1QuobyteVolumeSourceIn              `json:"quobyte,omitempty"`
+	Rbd                           *K8sIoAPICoreV1RBDPersistentVolumeSourceIn        `json:"rbd,omitempty"`
+	ScaleIo                       *K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn    `json:"scaleIO,omitempty"`
+	StorageClassName              *string                                           `json:"storageClassName,omitempty"`
+	Storageos                     *K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn  `json:"storageos,omitempty"`
+	VolumeMode                    *string                                           `json:"volumeMode,omitempty"`
+	VsphereVolume                 *K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn   `json:"vsphereVolume,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeStatus struct {
+	LastPhaseTransitionTime *string                              `json:"lastPhaseTransitionTime,omitempty"`
+	Message                 *string                              `json:"message,omitempty"`
+	Phase                   *K8sIoAPICoreV1PersistentVolumePhase `json:"phase,omitempty"`
+	Reason                  *string                              `json:"reason,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeStatusIn struct {
+	LastPhaseTransitionTime *string                              `json:"lastPhaseTransitionTime,omitempty"`
+	Message                 *string                              `json:"message,omitempty"`
+	Phase                   *K8sIoAPICoreV1PersistentVolumePhase `json:"phase,omitempty"`
+	Reason                  *string                              `json:"reason,omitempty"`
+}
+
+type K8sIoAPICoreV1PhotonPersistentDiskVolumeSource struct {
+	FsType *string `json:"fsType,omitempty"`
+	PdID   string  `json:"pdID"`
+}
+
+type K8sIoAPICoreV1PhotonPersistentDiskVolumeSourceIn struct {
+	FsType *string `json:"fsType,omitempty"`
+	PdID   string  `json:"pdID"`
+}
+
 type K8sIoAPICoreV1PodAffinity struct {
 	PreferredDuringSchedulingIgnoredDuringExecution []*K8sIoAPICoreV1WeightedPodAffinityTerm `json:"preferredDuringSchedulingIgnoredDuringExecution,omitempty"`
 	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTerm         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
@@ -614,6 +992,18 @@ type K8sIoAPICoreV1PodAntiAffinityIn struct {
 	RequiredDuringSchedulingIgnoredDuringExecution  []*K8sIoAPICoreV1PodAffinityTermIn         `json:"requiredDuringSchedulingIgnoredDuringExecution,omitempty"`
 }
 
+type K8sIoAPICoreV1PortworxVolumeSource struct {
+	FsType   *string `json:"fsType,omitempty"`
+	ReadOnly *bool   `json:"readOnly,omitempty"`
+	VolumeID string  `json:"volumeID"`
+}
+
+type K8sIoAPICoreV1PortworxVolumeSourceIn struct {
+	FsType   *string `json:"fsType,omitempty"`
+	ReadOnly *bool   `json:"readOnly,omitempty"`
+	VolumeID string  `json:"volumeID"`
+}
+
 type K8sIoAPICoreV1PreferredSchedulingTerm struct {
 	Preference *K8sIoAPICoreV1NodeSelectorTerm `json:"preference"`
 	Weight     int                             `json:"weight"`
@@ -622,6 +1012,46 @@ type K8sIoAPICoreV1PreferredSchedulingTerm struct {
 type K8sIoAPICoreV1PreferredSchedulingTermIn struct {
 	Preference *K8sIoAPICoreV1NodeSelectorTermIn `json:"preference"`
 	Weight     int                               `json:"weight"`
+}
+
+type K8sIoAPICoreV1QuobyteVolumeSource struct {
+	Group    *string `json:"group,omitempty"`
+	ReadOnly *bool   `json:"readOnly,omitempty"`
+	Registry string  `json:"registry"`
+	Tenant   *string `json:"tenant,omitempty"`
+	User     *string `json:"user,omitempty"`
+	Volume   string  `json:"volume"`
+}
+
+type K8sIoAPICoreV1QuobyteVolumeSourceIn struct {
+	Group    *string `json:"group,omitempty"`
+	ReadOnly *bool   `json:"readOnly,omitempty"`
+	Registry string  `json:"registry"`
+	Tenant   *string `json:"tenant,omitempty"`
+	User     *string `json:"user,omitempty"`
+	Volume   string  `json:"volume"`
+}
+
+type K8sIoAPICoreV1RBDPersistentVolumeSource struct {
+	FsType    *string                        `json:"fsType,omitempty"`
+	Image     string                         `json:"image"`
+	Keyring   *string                        `json:"keyring,omitempty"`
+	Monitors  []string                       `json:"monitors"`
+	Pool      *string                        `json:"pool,omitempty"`
+	ReadOnly  *bool                          `json:"readOnly,omitempty"`
+	SecretRef *K8sIoAPICoreV1SecretReference `json:"secretRef,omitempty"`
+	User      *string                        `json:"user,omitempty"`
+}
+
+type K8sIoAPICoreV1RBDPersistentVolumeSourceIn struct {
+	FsType    *string                          `json:"fsType,omitempty"`
+	Image     string                           `json:"image"`
+	Keyring   *string                          `json:"keyring,omitempty"`
+	Monitors  []string                         `json:"monitors"`
+	Pool      *string                          `json:"pool,omitempty"`
+	ReadOnly  *bool                            `json:"readOnly,omitempty"`
+	SecretRef *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
+	User      *string                          `json:"user,omitempty"`
 }
 
 type K8sIoAPICoreV1ResourceClaim struct {
@@ -642,6 +1072,58 @@ type K8sIoAPICoreV1ResourceRequirementsIn struct {
 	Claims   []*K8sIoAPICoreV1ResourceClaimIn `json:"claims,omitempty"`
 	Limits   map[string]interface{}           `json:"limits,omitempty"`
 	Requests map[string]interface{}           `json:"requests,omitempty"`
+}
+
+type K8sIoAPICoreV1ScaleIOPersistentVolumeSource struct {
+	FsType           *string                        `json:"fsType,omitempty"`
+	Gateway          string                         `json:"gateway"`
+	ProtectionDomain *string                        `json:"protectionDomain,omitempty"`
+	ReadOnly         *bool                          `json:"readOnly,omitempty"`
+	SecretRef        *K8sIoAPICoreV1SecretReference `json:"secretRef,omitempty"`
+	SslEnabled       *bool                          `json:"sslEnabled,omitempty"`
+	StorageMode      *string                        `json:"storageMode,omitempty"`
+	StoragePool      *string                        `json:"storagePool,omitempty"`
+	System           string                         `json:"system"`
+	VolumeName       *string                        `json:"volumeName,omitempty"`
+}
+
+type K8sIoAPICoreV1ScaleIOPersistentVolumeSourceIn struct {
+	FsType           *string                          `json:"fsType,omitempty"`
+	Gateway          string                           `json:"gateway"`
+	ProtectionDomain *string                          `json:"protectionDomain,omitempty"`
+	ReadOnly         *bool                            `json:"readOnly,omitempty"`
+	SecretRef        *K8sIoAPICoreV1SecretReferenceIn `json:"secretRef,omitempty"`
+	SslEnabled       *bool                            `json:"sslEnabled,omitempty"`
+	StorageMode      *string                          `json:"storageMode,omitempty"`
+	StoragePool      *string                          `json:"storagePool,omitempty"`
+	System           string                           `json:"system"`
+	VolumeName       *string                          `json:"volumeName,omitempty"`
+}
+
+type K8sIoAPICoreV1SecretReference struct {
+	Name      *string `json:"name,omitempty"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type K8sIoAPICoreV1SecretReferenceIn struct {
+	Name      *string `json:"name,omitempty"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type K8sIoAPICoreV1StorageOSPersistentVolumeSource struct {
+	FsType          *string                        `json:"fsType,omitempty"`
+	ReadOnly        *bool                          `json:"readOnly,omitempty"`
+	SecretRef       *K8sIoAPICoreV1ObjectReference `json:"secretRef,omitempty"`
+	VolumeName      *string                        `json:"volumeName,omitempty"`
+	VolumeNamespace *string                        `json:"volumeNamespace,omitempty"`
+}
+
+type K8sIoAPICoreV1StorageOSPersistentVolumeSourceIn struct {
+	FsType          *string                          `json:"fsType,omitempty"`
+	ReadOnly        *bool                            `json:"readOnly,omitempty"`
+	SecretRef       *K8sIoAPICoreV1ObjectReferenceIn `json:"secretRef,omitempty"`
+	VolumeName      *string                          `json:"volumeName,omitempty"`
+	VolumeNamespace *string                          `json:"volumeNamespace,omitempty"`
 }
 
 type K8sIoAPICoreV1Taint struct {
@@ -700,6 +1182,28 @@ type K8sIoAPICoreV1TypedObjectReferenceIn struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
+type K8sIoAPICoreV1VolumeNodeAffinity struct {
+	Required *K8sIoAPICoreV1NodeSelector `json:"required,omitempty"`
+}
+
+type K8sIoAPICoreV1VolumeNodeAffinityIn struct {
+	Required *K8sIoAPICoreV1NodeSelectorIn `json:"required,omitempty"`
+}
+
+type K8sIoAPICoreV1VsphereVirtualDiskVolumeSource struct {
+	FsType            *string `json:"fsType,omitempty"`
+	StoragePolicyID   *string `json:"storagePolicyID,omitempty"`
+	StoragePolicyName *string `json:"storagePolicyName,omitempty"`
+	VolumePath        string  `json:"volumePath"`
+}
+
+type K8sIoAPICoreV1VsphereVirtualDiskVolumeSourceIn struct {
+	FsType            *string `json:"fsType,omitempty"`
+	StoragePolicyID   *string `json:"storagePolicyID,omitempty"`
+	StoragePolicyName *string `json:"storagePolicyName,omitempty"`
+	VolumePath        string  `json:"volumePath"`
+}
+
 type K8sIoAPICoreV1WeightedPodAffinityTerm struct {
 	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTerm `json:"podAffinityTerm"`
 	Weight          int                            `json:"weight"`
@@ -708,6 +1212,52 @@ type K8sIoAPICoreV1WeightedPodAffinityTerm struct {
 type K8sIoAPICoreV1WeightedPodAffinityTermIn struct {
 	PodAffinityTerm *K8sIoAPICoreV1PodAffinityTermIn `json:"podAffinityTerm"`
 	Weight          int                              `json:"weight"`
+}
+
+type K8sIoAPIStorageV1VolumeAttachmentSource struct {
+	InlineVolumeSpec     *K8sIoAPICoreV1PersistentVolumeSpec `json:"inlineVolumeSpec,omitempty"`
+	PersistentVolumeName *string                             `json:"persistentVolumeName,omitempty"`
+}
+
+type K8sIoAPIStorageV1VolumeAttachmentSourceIn struct {
+	InlineVolumeSpec     *K8sIoAPICoreV1PersistentVolumeSpecIn `json:"inlineVolumeSpec,omitempty"`
+	PersistentVolumeName *string                               `json:"persistentVolumeName,omitempty"`
+}
+
+type K8sIoAPIStorageV1VolumeAttachmentSpec struct {
+	Attacher string                                   `json:"attacher"`
+	NodeName string                                   `json:"nodeName"`
+	Source   *K8sIoAPIStorageV1VolumeAttachmentSource `json:"source"`
+}
+
+type K8sIoAPIStorageV1VolumeAttachmentSpecIn struct {
+	Attacher string                                     `json:"attacher"`
+	NodeName string                                     `json:"nodeName"`
+	Source   *K8sIoAPIStorageV1VolumeAttachmentSourceIn `json:"source"`
+}
+
+type K8sIoAPIStorageV1VolumeAttachmentStatus struct {
+	Attached           bool                          `json:"attached"`
+	AttachError        *K8sIoAPIStorageV1VolumeError `json:"attachError,omitempty"`
+	AttachmentMetadata map[string]interface{}        `json:"attachmentMetadata,omitempty"`
+	DetachError        *K8sIoAPIStorageV1VolumeError `json:"detachError,omitempty"`
+}
+
+type K8sIoAPIStorageV1VolumeAttachmentStatusIn struct {
+	Attached           bool                            `json:"attached"`
+	AttachError        *K8sIoAPIStorageV1VolumeErrorIn `json:"attachError,omitempty"`
+	AttachmentMetadata map[string]interface{}          `json:"attachmentMetadata,omitempty"`
+	DetachError        *K8sIoAPIStorageV1VolumeErrorIn `json:"detachError,omitempty"`
+}
+
+type K8sIoAPIStorageV1VolumeError struct {
+	Message *string `json:"message,omitempty"`
+	Time    *string `json:"time,omitempty"`
+}
+
+type K8sIoAPIStorageV1VolumeErrorIn struct {
+	Message *string `json:"message,omitempty"`
+	Time    *string `json:"time,omitempty"`
 }
 
 type K8sIoApimachineryPkgAPIResourceQuantity struct {
@@ -738,6 +1288,17 @@ type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn struct {
 	Key      string                                              `json:"key"`
 	Operator K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator `json:"operator"`
 	Values   []string                                            `json:"values,omitempty"`
+}
+
+type NamespaceEdge struct {
+	Cursor string              `json:"cursor"`
+	Node   *entities.Namespace `json:"node"`
+}
+
+type NamespacePaginatedRecords struct {
+	Edges      []*NamespaceEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
 }
 
 type NodeEdge struct {
@@ -785,6 +1346,17 @@ type PersistentVolumeClaimPaginatedRecords struct {
 	TotalCount int                          `json:"totalCount"`
 }
 
+type PersistentVolumeEdge struct {
+	Cursor string                     `json:"cursor"`
+	Node   *entities.PersistentVolume `json:"node"`
+}
+
+type PersistentVolumePaginatedRecords struct {
+	Edges      []*PersistentVolumeEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount int                     `json:"totalCount"`
+}
+
 type SearchCluster struct {
 	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -807,11 +1379,19 @@ type SearchHelmRelease struct {
 	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
 }
 
+type SearchNamespaces struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
 type SearchNodepool struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchPersistentVolumeClaims struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchPersistentVolumes struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
@@ -826,6 +1406,10 @@ type SearchVPNDevices struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
+type SearchVolumeAttachments struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
 type VPNDeviceEdge struct {
 	Cursor string              `json:"cursor"`
 	Node   *entities.VPNDevice `json:"node"`
@@ -835,6 +1419,17 @@ type VPNDevicePaginatedRecords struct {
 	Edges      []*VPNDeviceEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
+}
+
+type VolumeAttachmentEdge struct {
+	Cursor string                     `json:"cursor"`
+	Node   *entities.VolumeAttachment `json:"node"`
+}
+
+type VolumeAttachmentPaginatedRecords struct {
+	Edges      []*VolumeAttachmentEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount int                     `json:"totalCount"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSPoolType string
@@ -1007,6 +1602,94 @@ func (e K8sIoAPICoreV1ConditionStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type K8sIoAPICoreV1NamespaceConditionType string
+
+const (
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceContentRemaining                   K8sIoAPICoreV1NamespaceConditionType = "NamespaceContentRemaining"
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionContentFailure             K8sIoAPICoreV1NamespaceConditionType = "NamespaceDeletionContentFailure"
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionDiscoveryFailure           K8sIoAPICoreV1NamespaceConditionType = "NamespaceDeletionDiscoveryFailure"
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionGroupVersionParsingFailure K8sIoAPICoreV1NamespaceConditionType = "NamespaceDeletionGroupVersionParsingFailure"
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceFinalizersRemaining                K8sIoAPICoreV1NamespaceConditionType = "NamespaceFinalizersRemaining"
+)
+
+var AllK8sIoAPICoreV1NamespaceConditionType = []K8sIoAPICoreV1NamespaceConditionType{
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceContentRemaining,
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionContentFailure,
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionDiscoveryFailure,
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionGroupVersionParsingFailure,
+	K8sIoAPICoreV1NamespaceConditionTypeNamespaceFinalizersRemaining,
+}
+
+func (e K8sIoAPICoreV1NamespaceConditionType) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1NamespaceConditionTypeNamespaceContentRemaining, K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionContentFailure, K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionDiscoveryFailure, K8sIoAPICoreV1NamespaceConditionTypeNamespaceDeletionGroupVersionParsingFailure, K8sIoAPICoreV1NamespaceConditionTypeNamespaceFinalizersRemaining:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1NamespaceConditionType) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1NamespaceConditionType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1NamespaceConditionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__NamespaceConditionType", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1NamespaceConditionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1NamespacePhase string
+
+const (
+	K8sIoAPICoreV1NamespacePhaseActive      K8sIoAPICoreV1NamespacePhase = "Active"
+	K8sIoAPICoreV1NamespacePhaseTerminating K8sIoAPICoreV1NamespacePhase = "Terminating"
+)
+
+var AllK8sIoAPICoreV1NamespacePhase = []K8sIoAPICoreV1NamespacePhase{
+	K8sIoAPICoreV1NamespacePhaseActive,
+	K8sIoAPICoreV1NamespacePhaseTerminating,
+}
+
+func (e K8sIoAPICoreV1NamespacePhase) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1NamespacePhaseActive, K8sIoAPICoreV1NamespacePhaseTerminating:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1NamespacePhase) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1NamespacePhase) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1NamespacePhase(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__NamespacePhase", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1NamespacePhase) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type K8sIoAPICoreV1NodeSelectorOperator string
 
 const (
@@ -1137,6 +1820,96 @@ func (e *K8sIoAPICoreV1PersistentVolumeClaimPhase) UnmarshalGQL(v interface{}) e
 }
 
 func (e K8sIoAPICoreV1PersistentVolumeClaimPhase) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1PersistentVolumePhase string
+
+const (
+	K8sIoAPICoreV1PersistentVolumePhaseAvailable K8sIoAPICoreV1PersistentVolumePhase = "Available"
+	K8sIoAPICoreV1PersistentVolumePhaseBound     K8sIoAPICoreV1PersistentVolumePhase = "Bound"
+	K8sIoAPICoreV1PersistentVolumePhaseFailed    K8sIoAPICoreV1PersistentVolumePhase = "Failed"
+	K8sIoAPICoreV1PersistentVolumePhasePending   K8sIoAPICoreV1PersistentVolumePhase = "Pending"
+	K8sIoAPICoreV1PersistentVolumePhaseReleased  K8sIoAPICoreV1PersistentVolumePhase = "Released"
+)
+
+var AllK8sIoAPICoreV1PersistentVolumePhase = []K8sIoAPICoreV1PersistentVolumePhase{
+	K8sIoAPICoreV1PersistentVolumePhaseAvailable,
+	K8sIoAPICoreV1PersistentVolumePhaseBound,
+	K8sIoAPICoreV1PersistentVolumePhaseFailed,
+	K8sIoAPICoreV1PersistentVolumePhasePending,
+	K8sIoAPICoreV1PersistentVolumePhaseReleased,
+}
+
+func (e K8sIoAPICoreV1PersistentVolumePhase) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1PersistentVolumePhaseAvailable, K8sIoAPICoreV1PersistentVolumePhaseBound, K8sIoAPICoreV1PersistentVolumePhaseFailed, K8sIoAPICoreV1PersistentVolumePhasePending, K8sIoAPICoreV1PersistentVolumePhaseReleased:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1PersistentVolumePhase) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1PersistentVolumePhase) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1PersistentVolumePhase(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__PersistentVolumePhase", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1PersistentVolumePhase) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1PersistentVolumeReclaimPolicy string
+
+const (
+	K8sIoAPICoreV1PersistentVolumeReclaimPolicyDelete  K8sIoAPICoreV1PersistentVolumeReclaimPolicy = "Delete"
+	K8sIoAPICoreV1PersistentVolumeReclaimPolicyRecycle K8sIoAPICoreV1PersistentVolumeReclaimPolicy = "Recycle"
+	K8sIoAPICoreV1PersistentVolumeReclaimPolicyRetain  K8sIoAPICoreV1PersistentVolumeReclaimPolicy = "Retain"
+)
+
+var AllK8sIoAPICoreV1PersistentVolumeReclaimPolicy = []K8sIoAPICoreV1PersistentVolumeReclaimPolicy{
+	K8sIoAPICoreV1PersistentVolumeReclaimPolicyDelete,
+	K8sIoAPICoreV1PersistentVolumeReclaimPolicyRecycle,
+	K8sIoAPICoreV1PersistentVolumeReclaimPolicyRetain,
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeReclaimPolicy) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1PersistentVolumeReclaimPolicyDelete, K8sIoAPICoreV1PersistentVolumeReclaimPolicyRecycle, K8sIoAPICoreV1PersistentVolumeReclaimPolicyRetain:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeReclaimPolicy) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1PersistentVolumeReclaimPolicy) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1PersistentVolumeReclaimPolicy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__PersistentVolumeReclaimPolicy", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeReclaimPolicy) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

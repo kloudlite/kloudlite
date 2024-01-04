@@ -49,8 +49,13 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("cloud_provider_secrets", "cps", entities.CloudProviderSecretIndices),
 	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vpnd", entities.VPNDeviceIndexes),
-	repos.NewFxMongoRepo[*entities.PersistentVolumeClaim]("pvcs", "pvc", entities.PersistentVolumeClaimIndices),
 	repos.NewFxMongoRepo[*entities.HelmRelease]("helm_releases", "hr", entities.HelmReleaseIndices),
+
+	// kubernetes native resources, not managed by kloudlite
+	repos.NewFxMongoRepo[*entities.PersistentVolumeClaim]("pvcs", "pvc", entities.PersistentVolumeClaimIndices),
+	repos.NewFxMongoRepo[*entities.Namespace]("namespaces", "ns", entities.NamespaceIndices),
+	repos.NewFxMongoRepo[*entities.PersistentVolume]("pv", "pv", entities.PersistentVolumeIndices),
+	repos.NewFxMongoRepo[*entities.VolumeAttachment]("volume_attachments", "volatt", entities.VolumeAttachmentIndices),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {

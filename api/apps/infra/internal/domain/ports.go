@@ -30,6 +30,8 @@ type ResourceEventPublisher interface {
 	PublishVpnDeviceEvent(dev *entities.VPNDevice, msg PublishMsg)
 	PublishDomainResEvent(domain *entities.DomainEntry, msg PublishMsg)
 	PublishPvcResEvent(pvc *entities.PersistentVolumeClaim, msg PublishMsg)
-	PublishCMSEvent(pvc *entities.ClusterManagedService, msg PublishMsg)
+	PublishCMSEvent(cms *entities.ClusterManagedService, msg PublishMsg)
 	PublishHelmReleaseEvent(hr *entities.HelmRelease, msg PublishMsg)
+	PublishPvResEvent(pv *entities.PersistentVolume, msg PublishMsg)
+	PublishVolumeAttachmentEvent(volatt *entities.VolumeAttachment, msg PublishMsg)
 }

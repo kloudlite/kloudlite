@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sigs.k8s.io/yaml"
 	"strconv"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/k8s"
-
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
@@ -39,6 +39,9 @@ type domain struct {
 	secretRepo                repos.DbRepo[*entities.CloudProviderSecret]
 	vpnDeviceRepo             repos.DbRepo[*entities.VPNDevice]
 	pvcRepo                   repos.DbRepo[*entities.PersistentVolumeClaim]
+	namespaceRepo             repos.DbRepo[*entities.Namespace]
+	pvRepo                    repos.DbRepo[*entities.PersistentVolume]
+	volumeAttachmentRepo      repos.DbRepo[*entities.VolumeAttachment]
 
 	iamClient                   iam.IAMClient
 	accountsSvc                 AccountsSvc
@@ -155,9 +158,7 @@ var Module = fx.Module("domain",
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 			logger logging.Logger,
 			resourceEventPublisher ResourceEventPublisher,
-
 		) (Domain, error) {
-
 			open, err := os.Open(env.MsvcTemplateFilePath)
 			if err != nil {
 				return nil, errors.NewE(err)
@@ -185,11 +186,9 @@ var Module = fx.Module("domain",
 				}
 			}
 
-
-
 			return &domain{
-				msvcTemplatesMap: msvcTemplatesMap,
-				msvcTemplates:    templates,
+				msvcTemplatesMap:            msvcTemplatesMap,
+				msvcTemplates:               templates,
 				logger:                      logger,
 				env:                         env,
 				clusterRepo:                 clusterRepo,
