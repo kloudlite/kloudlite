@@ -12,6 +12,11 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
+func configureDarwin(_ string, _ bool) error {
+	// not required to implement
+	return nil
+}
+
 func connect(verbose bool) error {
 	success := false
 	defer func() {

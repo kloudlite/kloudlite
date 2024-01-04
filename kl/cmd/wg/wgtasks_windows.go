@@ -10,6 +10,11 @@ const (
 	KlWgInterface = "wgkl"
 )
 
+func configureDarwin(_ string, _ bool) error {
+	// not required to implement
+	return nil
+}
+
 func connect(verbose bool) error {
 	return errors.New(
 		text.Colored("This command is not available for windows, will be available soon", 209),
