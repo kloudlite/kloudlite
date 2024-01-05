@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/nats"
 
 	"go.uber.org/fx"
@@ -71,9 +71,9 @@ var Module fx.Option = fx.Module(
 	}),
 
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
 			cxt := context.TODO()
-			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+			return kv.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
 

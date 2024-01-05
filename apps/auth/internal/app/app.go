@@ -14,8 +14,8 @@ import (
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
-	"github.com/kloudlite/api/pkg/cache"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -27,15 +27,15 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
 	repos.NewFxMongoRepo[*domain.RemoteLogin]("remote_logins", "rlgn", domain.RemoteTokenIndexes),
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*domain.VerifyToken], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*domain.VerifyToken], error) {
 			cxt := context.TODO()
-			return cache.NewNatsKVRepo[*domain.VerifyToken](cxt, ev.VerifyTokenKVBucket, jc)
+			return kv.NewNatsKVRepo[*domain.VerifyToken](cxt, ev.VerifyTokenKVBucket, jc)
 		},
 	),
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*domain.ResetPasswordToken], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*domain.ResetPasswordToken], error) {
 			cxt := context.TODO()
-			return cache.NewNatsKVRepo[*domain.ResetPasswordToken](cxt, ev.ResetPasswordTokenKVBucket, jc)
+			return kv.NewNatsKVRepo[*domain.ResetPasswordToken](cxt, ev.ResetPasswordTokenKVBucket, jc)
 		},
 	),
 
@@ -61,7 +61,7 @@ var Module = fx.Module(
 			server httpServer.Server,
 			d domain.Domain,
 			ev *env.Env,
-			repo cache.Repo[*common.AuthSession],
+			repo kv.Repo[*common.AuthSession],
 		) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{Resolvers: graph.NewResolver(d, ev)},

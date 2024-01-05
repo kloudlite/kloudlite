@@ -13,7 +13,7 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type Impl struct {
 	iamClient      iam.IAMClient
 	envs           *env.Env
 	logger         logging.Logger
-	cacheClient    cache.BinaryDataRepo
+	cacheClient    kv.BinaryDataRepo
 
 	authClient auth.AuthClient
 
@@ -39,7 +39,6 @@ type Impl struct {
 	resourceEventPublisher ResourceEventPublisher
 	dispatcher             ResourceDispatcher
 }
-
 
 func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
 	l := logger.WithName("registry-event")
@@ -216,7 +215,7 @@ var Module = fx.Module(
 			tagRepo repos.DbRepo[*entities.Digest],
 			buildRunRepo repos.DbRepo[*entities.BuildRun],
 			iamClient iam.IAMClient,
-			cacheClient cache.BinaryDataRepo,
+			cacheClient kv.BinaryDataRepo,
 			authClient auth.AuthClient,
 			github Github,
 			gitlab Gitlab,
@@ -224,21 +223,21 @@ var Module = fx.Module(
 			dispatcher ResourceDispatcher,
 		) (Domain, error) {
 			return &Impl{
-				repositoryRepo: repositoryRepo,
-				credentialRepo: credentialRepo,
-				iamClient:      iamClient,
-				envs:           e,
-				digestRepo:     tagRepo,
-				logger:         logger,
-				cacheClient:    cacheClient,
-				buildRepo:      buildRepo,
-				buildCacheRepo: buildCacheRepo,
-				buildRunRepo:   buildRunRepo,
-				authClient:     authClient,
-				github:         github,
-				gitlab:         gitlab,
+				repositoryRepo:         repositoryRepo,
+				credentialRepo:         credentialRepo,
+				iamClient:              iamClient,
+				envs:                   e,
+				digestRepo:             tagRepo,
+				logger:                 logger,
+				cacheClient:            cacheClient,
+				buildRepo:              buildRepo,
+				buildCacheRepo:         buildCacheRepo,
+				buildRunRepo:           buildRunRepo,
+				authClient:             authClient,
+				github:                 github,
+				gitlab:                 gitlab,
 				resourceEventPublisher: resourceEventPublisher,
-				dispatcher: dispatcher,
+				dispatcher:             dispatcher,
 			}, nil
 		}),
 )

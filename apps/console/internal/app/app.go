@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
@@ -17,17 +18,17 @@ import (
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
-	domain "github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
-	"github.com/kloudlite/api/pkg/cache"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	loki_client "github.com/kloudlite/api/pkg/loki-client"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
@@ -57,23 +58,24 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 		return domain.ConsoleContext{}, errors.Newf("no cookie named '%s' present in request", clusterCookieName)
 	}
 
-	return domain.NewConsoleContext(requestCtx, sess.UserId, klAccount, klCluster), nil
+	return domain.NewConsoleContext(requestCtx, sess.UserId, klAccount), nil
 }
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
-	repos.NewFxMongoRepo[*entities.Workspace]("workspaces", "ws", entities.WorkspaceIndexes),
+	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mres", entities.MresIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
+	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
 
 	// streaming logs
 	fx.Invoke(
 		func(logAndMetricsServer LogsAndMetricsHttpServer, client loki_client.LokiClient,
-			ev *env.Env, sessionRepo cache.Repo[*common.AuthSession], d domain.Domain, logger logging.Logger,
+			ev *env.Env, sessionRepo kv.Repo[*common.AuthSession], d domain.Domain, logger logging.Logger,
 			infraClient infra.InfraClient,
 		) {
 			a := logAndMetricsServer.Raw()
@@ -89,6 +91,7 @@ var Module = fx.Module("app",
 
 			a.Use("/observability", func(c *fiber.Ctx) error {
 				cc, err := toConsoleContext(c.Context(), ev.AccountCookieName, ev.ClusterCookieName)
+
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -117,7 +120,7 @@ var Module = fx.Module("app",
 
 				args := ObservabilityArgs{
 					AccountName: cc.AccountName,
-					ClusterName: cc.ClusterName,
+					//ClusterName: cc.ClusterName,
 
 					ResourceName:      c.Query("resource_name"),
 					ResourceNamespace: c.Query("resource_namespace"),
@@ -161,18 +164,27 @@ var Module = fx.Module("app",
 							Operation: "=",
 							Value:     cc.AccountName,
 						},
-						loki_client.StreamSelector{
-							Key:       "kl_cluster_name",
-							Operation: "=",
-							Value:     cc.ClusterName,
-						},
+						//loki_client.StreamSelector{
+						//	Key:       "kl_cluster_name",
+						//	Operation: "=",
+						//	Value:     cc.ClusterName,
+						//},
 					)
 
 					resourceType := c.Params("resource_type")
 					switch resourceType {
 					case "app":
 						{
-							app, err := d.GetApp(cc, args.ResourceNamespace, args.ResourceName)
+							mapping, err := d.GetResourceMapping(cc, entities.ResourceType(args.ResourceType), args.ResourceNamespace, args.ResourceName)
+							if err != nil {
+								return errors.NewE(err)
+							}
+
+							app, err := d.GetApp(domain.ResourceContext{
+								ConsoleContext:  cc,
+								ProjectName:     mapping.ProjectName,
+								EnvironmentName: mapping.EnvironmentName,
+							}, args.ResourceName)
 							if err != nil {
 								return errors.NewE(err)
 							}
@@ -193,57 +205,59 @@ var Module = fx.Module("app",
 						}
 					case "cluster-job":
 						{
-							out, err := infraClient.GetCluster(cc, &infra.GetClusterIn{
-								UserId:      string(cc.UserId),
-								UserName:    cc.UserName,
-								UserEmail:   cc.UserEmail,
-								AccountName: cc.AccountName,
-								ClusterName: cc.ClusterName,
-							})
-							if err != nil {
-								return errors.NewE(err)
-							}
-							logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName)
-							streamSelectors = nil
-							streamSelectors = append(streamSelectors,
-								loki_client.StreamSelector{
-									Key:       "kl_job_name",
-									Operation: "=",
-									Value:     out.IACJobName,
-								},
-								loki_client.StreamSelector{
-									Key:       "kl_job_namespace",
-									Operation: "=",
-									Value:     out.IACJobNamespace,
-								},
-							)
+							return &fiber.Error{Code: fiber.ErrBadRequest.Code, Message: "observability for cluster job is work-in-progress"}
+							//out, err := infraClient.GetCluster(cc, &infra.GetClusterIn{
+							//	UserId:      string(cc.UserId),
+							//	UserName:    cc.UserName,
+							//	UserEmail:   cc.UserEmail,
+							//	AccountName: cc.AccountName,
+							//	//ClusterName: cc.ClusterName,
+							//})
+							//if err != nil {
+							//	return errors.NewE(err)
+							//}
+							//logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName)
+							//streamSelectors = nil
+							//streamSelectors = append(streamSelectors,
+							//	loki_client.StreamSelector{
+							//		Key:       "kl_job_name",
+							//		Operation: "=",
+							//		Value:     out.IACJobName,
+							//	},
+							//	loki_client.StreamSelector{
+							//		Key:       "kl_job_namespace",
+							//		Operation: "=",
+							//		Value:     out.IACJobNamespace,
+							//	},
+							//)
 						}
 					case "nodepool-job":
 						{
-							out, err := infraClient.GetNodepool(cc, &infra.GetNodepoolIn{
-								UserId:       string(cc.UserId),
-								UserName:     cc.UserName,
-								UserEmail:    cc.UserEmail,
-								AccountName:  cc.AccountName,
-								ClusterName:  cc.ClusterName,
-								NodepoolName: args.ResourceName,
-							})
-							if err != nil {
-								return errors.NewE(err)
-							}
-							logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName, args.ResourceName)
-							streamSelectors = append(streamSelectors,
-								loki_client.StreamSelector{
-									Key:       "kl_job_name",
-									Operation: "=",
-									Value:     out.IACJobName,
-								},
-								loki_client.StreamSelector{
-									Key:       "kl_job_namespace",
-									Operation: "=",
-									Value:     out.IACJobNamespace,
-								},
-							)
+							return &fiber.Error{Code: fiber.ErrBadRequest.Code, Message: "observability for nodepool job is work-in-progress"}
+							//out, err := infraClient.GetNodepool(cc, &infra.GetNodepoolIn{
+							//	UserId:       string(cc.UserId),
+							//	UserName:     cc.UserName,
+							//	UserEmail:    cc.UserEmail,
+							//	AccountName:  cc.AccountName,
+							//	ClusterName:  cc.ClusterName,
+							//	NodepoolName: args.ResourceName,
+							//})
+							//if err != nil {
+							//	return errors.NewE(err)
+							//}
+							//logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName, args.ResourceName)
+							//streamSelectors = append(streamSelectors,
+							//	loki_client.StreamSelector{
+							//		Key:       "kl_job_name",
+							//		Operation: "=",
+							//		Value:     out.IACJobName,
+							//	},
+							//	loki_client.StreamSelector{
+							//		Key:       "kl_job_namespace",
+							//		Operation: "=",
+							//		Value:     out.IACJobNamespace,
+							//	},
+							//)
 						}
 					default:
 						{
@@ -426,7 +440,7 @@ var Module = fx.Module("app",
 	),
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, sessionRepo cache.Repo[*common.AuthSession], ev *env.Env) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -452,29 +466,6 @@ var Module = fx.Module("app",
 				}
 
 				return next(context.WithValue(ctx, "user-session", sess))
-			}
-
-			gqlConfig.Directives.HasAccountAndCluster = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
-				sess := httpServer.GetSession[*common.AuthSession](ctx)
-				if sess == nil {
-					return nil, fiber.ErrUnauthorized
-				}
-
-				m := httpServer.GetHttpCookies(ctx)
-				klAccount := m[ev.AccountCookieName]
-				if klAccount == "" {
-					return nil, errors.Newf("no cookie named '%s' present in request", ev.AccountCookieName)
-				}
-
-				klCluster := m[ev.ClusterCookieName]
-				if klCluster == "" {
-					return nil, errors.Newf("no cookie named '%s' present in request", ev.ClusterCookieName)
-				}
-
-				nctx := context.WithValue(ctx, "user-session", sess)
-				nctx = context.WithValue(nctx, "account-name", klAccount)
-				nctx = context.WithValue(nctx, "cluster-name", klCluster)
-				return next(nctx)
 			}
 
 			gqlConfig.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {

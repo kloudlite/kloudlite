@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/logging"
@@ -41,8 +42,8 @@ func (r *ResourceEventPublisherImpl) PublishRouterEvent(router *entities.Router,
 	}
 }
 
-func (r *ResourceEventPublisherImpl) PublishWorkspaceEvent(workspace *entities.Workspace, msg domain.PublishMsg) {
-	subject := workSpaceUpdateSubject(workspace)
+func (r *ResourceEventPublisherImpl) PublishWorkspaceEvent(workspace *entities.Environment, msg domain.PublishMsg) {
+	subject := environmentUpdateSubject(workspace)
 	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
 		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
 	}
@@ -56,21 +57,21 @@ func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.R
 }
 
 func appUpdateSubject(app *entities.App) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.app.%s", app.AccountName, app.ClusterName, app.Name)
+	return fmt.Sprintf("res-updates.account.%s.project.%s.app.%s", app.AccountName, app.ProjectName, app.Name)
 }
 
 func mresUpdateSubject(mres *entities.ManagedResource) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.mres.%s", mres.AccountName, mres.ClusterName, mres.Name)
+	return fmt.Sprintf("res-updates.account.%s.project.%s.mres.%s", mres.AccountName, mres.ProjectName, mres.Name)
 }
 
 func projectUpdateSubject(project *entities.Project) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.project.%s", project.AccountName, project.ClusterName, project.Name)
+	return fmt.Sprintf("res-updates.account.%s.project.%s.project.%s", project.AccountName, project.Name, project.Name)
 }
 
 func routerUpdateSubject(router *entities.Router) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.router.%s", router.AccountName, router.ClusterName, router.Name)
+	return fmt.Sprintf("res-updates.account.%s.project.%s.router.%s", router.AccountName, router.ProjectName, router.Name)
 }
 
-func workSpaceUpdateSubject(workspace *entities.Workspace) string {
-	return fmt.Sprintf("res-updates.account.%s.cluster.%s.workspace.%s", workspace.AccountName, workspace.ClusterName, workspace.Name)
+func environmentUpdateSubject(env *entities.Environment) string {
+	return fmt.Sprintf("res-updates.account.%s.project.%s.environment.%s", env.AccountName, env.ProjectName, env.Name)
 }

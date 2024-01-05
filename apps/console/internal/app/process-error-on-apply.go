@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
@@ -18,6 +19,15 @@ type ErrorOnApplyConsumer messaging.Consumer
 
 func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
+
+	getResourceContext := func(ctx domain.ConsoleContext, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, obj.GetNamespace(), obj.GetName())
+		if err != nil {
+			return domain.ResourceContext{}, err
+		}
+
+		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
+	}
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
 		counter += 1
@@ -41,7 +51,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		}()
 
 		kind := obj.GroupVersionKind().Kind
-		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", errMsg.AccountName, errMsg.ClusterName)
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", errMsg.AccountName)
 
 		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
 
@@ -50,29 +60,54 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			{
 				return d.OnProjectApplyError(dctx, errMsg.Error, obj.GetName(), opts)
 			}
-		case "Env":
+		case "Environment":
 			{
-				return d.OnWorkspaceApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				return d.OnEnvironmentApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
 			}
 		case "App":
 			{
-				return d.OnAppApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				rctx, err := getResourceContext(dctx, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				return d.OnAppApplyError(rctx, errMsg.Error, obj.GetName(), opts)
 			}
 		case "Config":
 			{
-				return d.OnConfigApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				rctx, err := getResourceContext(dctx, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				return d.OnConfigApplyError(rctx, errMsg.Error, obj.GetName(), opts)
 			}
 		case "Secret":
 			{
-				return d.OnSecretApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				rctx, err := getResourceContext(dctx, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				return d.OnSecretApplyError(rctx, errMsg.Error, obj.GetName(), opts)
 			}
 		case "Router":
 			{
-				return d.OnRouterApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				rctx, err := getResourceContext(dctx, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				return d.OnRouterApplyError(rctx, errMsg.Error, obj.GetName(), opts)
 			}
 		case "ManagedResource":
 			{
-				return d.OnManagedResourceApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				rctx, err := getResourceContext(dctx, obj)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				return d.OnManagedResourceApplyError(rctx, errMsg.Error, obj.GetName(), opts)
 			}
 		default:
 			{

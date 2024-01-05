@@ -1,53 +1,35 @@
 ---
 global:
-  # namespace: sample
-  namespace: "sample-nxtcoder17"
-  accountName: kloudlite-dev
-  # namespace: kl-init-operators
-  # namespace: sample-default
-  # namespace: sample-5828
-  name: s1
+  projectName: "sample"
+  envName: "sample2"
+  name: sample-app
 ---
 
 label: List Apps
 query: |+
-  query Core_listApps($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
-    core_listApps(project: $project, scope: $scope) {
+  query Core_listApps($projectName: String!, $envName: String!) {
+    core_listApps(projectName: $projectName, envName: $envName) {
       edges {
         node {
-          metadata {
-            name
-            namespace
+          id
+          environmentName
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
           }
-          clusterName
-          status {
-            isReady
-            resources {
-              apiVersion
-              kind
-              name
-              namespace
-            }
-          }
-          syncStatus {
-            state
-            error
-            recordVersion
-            action
-          }
+          projectName
+          recordVersion
+          kind
+          displayName
+          accountName
         }
       }
     }
   }
 variables:
-  project:
-    type: name
-    value: sample
-  scope:
-    # type: workspaceName
-    # value: sample
-    type: workspaceTargetNamespace
-    value: "{{.namespace}}"
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
 ---
 
 label: Get App
@@ -81,10 +63,17 @@ variables:
 
 label: Create App
 query: |+
-  mutation Core_createApps($app: AppIn!) {
-    core_createApp(app: $app) {
+  mutation Core_createApp($projectName: String!, $envName: String!, $app: AppIn!) {
+    core_createApp(projectName: $projectName, envName: $envName, app: $app) {
       metadata {
         name
+      }
+      syncStatus {
+        state
+        recordVersion
+        error
+        action
+        lastSyncedAt
       }
       createdBy{
         userId
@@ -94,15 +83,14 @@ query: |+
     }
   }
 variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
   app:
     displayName: "sample app"
     metadata:
       name: "{{.name}}"
-      namespace: "{{.namespace}}"
+      # namespace: "{{.namespace}}"
     spec:
-      # region: r1
-      # region: dev-sample1-mumbai-1
-      # accountName: '{{.accountName}}'
       containers:
         - name: main
           # image: kong/httpbin

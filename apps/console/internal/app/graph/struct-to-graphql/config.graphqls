@@ -1,19 +1,20 @@
 type Config @shareable {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
+  binaryData: Map
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
-  enabled: Boolean
+  environmentName: String!
   id: String!
+  immutable: Boolean
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
+  projectName: String!
   recordVersion: Int!
-  status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
@@ -30,9 +31,10 @@ type ConfigPaginatedRecords @shareable {
 }
 
 input ConfigIn {
+  binaryData: Map
   data: Map
   displayName: String!
-  enabled: Boolean
+  immutable: Boolean
   metadata: MetadataIn
 }
 

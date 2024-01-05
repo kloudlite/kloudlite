@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/kv"
 	"strconv"
+
+	"github.com/kloudlite/api/pkg/logging"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -41,8 +43,8 @@ type domain struct {
 	iamClient   iam.IAMClient
 	infraClient infra.InfraClient
 
-	projectRepo   repos.DbRepo[*entities.Project]
-	workspaceRepo repos.DbRepo[*entities.Workspace]
+	projectRepo     repos.DbRepo[*entities.Project]
+	environmentRepo repos.DbRepo[*entities.Environment]
 
 	appRepo         repos.DbRepo[*entities.App]
 	configRepo      repos.DbRepo[*entities.Config]
@@ -54,6 +56,8 @@ type domain struct {
 	envVars *env.Env
 
 	resourceEventPublisher ResourceEventPublisher
+	projectClusterMap      kv.BinaryDataRepo
+	resourceMappingRepo    repos.DbRepo[*entities.ResourceMapping]
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
@@ -65,7 +69,24 @@ func errAlreadyMarkedForDeletion(label, namespace, name string) error {
 	)
 }
 
-func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordVersion int) error {
+var ErrNoClusterAttached = errors.New("cluster not attached")
+
+type K8sContext interface {
+	context.Context
+	GetAccountName() string
+}
+
+func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client.Object, recordVersion int) error {
+	clusterName, err := d.getClusterAttachedToProject(ctx, projectName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if clusterName == nil {
+		d.logger.Infof("skipping apply of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
+		return nil
+	}
+
 	ann := obj.GetAnnotations()
 	if ann == nil {
 		ann = make(map[string]string, 1)
@@ -78,8 +99,8 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 		return errors.NewE(err)
 	}
 	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.AccountName,
-		ClusterName: ctx.ClusterName,
+		AccountName: ctx.GetAccountName(),
+		ClusterName: *clusterName,
 		Action:      t.ActionApply,
 		Object:      m,
 	})
@@ -88,20 +109,30 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 	}
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, ctx.ClusterName),
+		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName),
 		Payload: b,
 	})
 	return errors.NewE(err)
 }
 
-func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error {
+func (d *domain) deleteK8sResource(ctx K8sContext, projectName string, obj client.Object) error {
+	clusterName, err := d.getClusterAttachedToProject(ctx, projectName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if clusterName == nil {
+		d.logger.Infof("skipping delete of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
+		return ErrNoClusterAttached
+	}
+
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
 		return errors.NewE(err)
 	}
 	b, err := json.Marshal(t.AgentMessage{
-		AccountName: ctx.AccountName,
-		ClusterName: ctx.ClusterName,
+		AccountName: ctx.GetAccountName(),
+		ClusterName: *clusterName,
 		Action:      t.ActionDelete,
 		Object:      m,
 	})
@@ -110,22 +141,22 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 	}
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.AccountName, ctx.ClusterName),
+		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName),
 		Payload: b,
 	})
 
 	return errors.NewE(err)
 }
 
-func (d *domain) resyncK8sResource(ctx ConsoleContext, action types.SyncAction, obj client.Object, rv int) error {
+func (d *domain) resyncK8sResource(ctx K8sContext, projectName string, action types.SyncAction, obj client.Object, rv int) error {
 	switch action {
 	case types.SyncActionApply:
 		{
-			return d.applyK8sResource(ctx, obj, rv)
+			return d.applyK8sResource(ctx, projectName, obj, rv)
 		}
 	case types.SyncActionDelete:
 		{
-			return d.deleteK8sResource(ctx, obj)
+			return d.deleteK8sResource(ctx, projectName, obj)
 		}
 	default:
 		{
@@ -161,17 +192,12 @@ func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) error
 	return nil
 }
 
-func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace string) error {
-	prj, err := d.findProjectByTargetNs(ctx, targetNamespace)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
+func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, projectName string) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, prj.Name),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
 		},
 		Action: string(iamT.MutateResourcesInProject),
 	})
@@ -179,50 +205,17 @@ func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace
 		return errors.NewE(err)
 	}
 	if !co.Status {
-		return errors.Newf("unauthorized to mutate resources in project %q", prj.Name)
+		return errors.Newf("unauthorized to mutate resources in project (%s)", projectName)
 	}
 	return nil
 }
 
-func (d *domain) canMutateResourcesInWorkspace(ctx ConsoleContext, targetNamespace string) error {
-	ws, err := d.findWorkspaceByTargetNs(ctx, targetNamespace)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	wsp, err := d.findWorkspace(ctx, ws.Namespace, ws.Name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
+func (d *domain) canReadResourcesInProject(ctx ConsoleContext, projectName string) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, wsp.Spec.ProjectName),
-		},
-		Action: string(iamT.MutateResourcesInProject),
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-	if !co.Status {
-		return errors.Newf("unauthorized to mutate resources in workspace %q", wsp.Name)
-	}
-	return nil
-}
-
-func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace string) error {
-	ws, err := d.findWorkspaceByTargetNs(ctx, targetNamespace)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, ws.Spec.ProjectName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
 		},
 		Action: string(iamT.GetProject),
 	})
@@ -230,30 +223,7 @@ func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace
 		return errors.NewE(err)
 	}
 	if !co.Status {
-		return errors.Newf("unauthorized to read resources in project %q", ws.Spec.ProjectName)
-	}
-	return nil
-}
-
-func (d *domain) canReadResourcesInProject(ctx ConsoleContext, targetNamespace string) error {
-	prj, err := d.findProjectByTargetNs(ctx, targetNamespace)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, prj.Name),
-		},
-		Action: string(iamT.GetProject),
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-	if !co.Status {
-		return errors.Newf("unauthorized to read resources in project %q", prj.Name)
+		return errors.Newf("unauthorized to read resources in project (%s)", projectName)
 	}
 	return nil
 }
@@ -311,13 +281,13 @@ func (d *domain) checkProjectAccess(ctx ConsoleContext, projectName string, acti
 	return nil
 }
 
-func (d *domain) checkWorkspaceAccess(ctx ConsoleContext, projectName string, workspaceName string, action iamT.Action) error {
+func (d *domain) checkEnvironmentAccess(ctx ResourceContext, action iamT.Action) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceWorkspace, workspaceName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, ctx.ProjectName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, ctx.EnvironmentName),
 		},
 		Action: string(action),
 	})
@@ -326,44 +296,20 @@ func (d *domain) checkWorkspaceAccess(ctx ConsoleContext, projectName string, wo
 	}
 
 	if !co.Status {
-		return errors.Newf("unauthorized to access workspace %q", workspaceName)
+		return errors.Newf("unauthorized to access environment %q", ctx.EnvironmentName)
 	}
 	return nil
 }
 
-func (d *domain) checkEnvironmentAccess(ctx ConsoleContext, projectName string, environmentName string, action iamT.Action) error {
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, environmentName),
-		},
-		Action: string(action),
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if !co.Status {
-		return errors.Newf("unauthorized to access environment %q", environmentName)
-	}
-	return nil
+func (d *domain) canMutateResourcesInEnvironment(ctx ResourceContext) error {
+	return d.checkEnvironmentAccess(ctx, iamT.MutateResourcesInEnvironment)
 }
 
-func (d *domain) canMutateResourcesInWorkspaceOrEnv(ctx ConsoleContext, projectName string, workspace *entities.Workspace) error {
-	if workspace.Spec.IsEnvironment != nil && *workspace.Spec.IsEnvironment {
-		return d.checkEnvironmentAccess(ctx, projectName, workspace.Name, iamT.MutateResourcesInEnvironment)
-	}
-	return d.checkWorkspaceAccess(ctx, projectName, workspace.Name, iamT.MutateResourcesInWorkspace)
+func (d *domain) canReadResourcesInEnvironment(ctx ResourceContext) error {
+	return d.checkEnvironmentAccess(ctx, iamT.ReadResourcesInEnvironment)
 }
 
-func (d *domain) canReadResourcesInWorkspaceOrEnv(ctx ConsoleContext, projectName string, workspace *entities.Workspace) error {
-	if workspace.Spec.IsEnvironment != nil && *workspace.Spec.IsEnvironment {
-		return d.checkEnvironmentAccess(ctx, projectName, workspace.Name, iamT.ReadResourcesInEnvironment)
-	}
-	return d.checkWorkspaceAccess(ctx, projectName, workspace.Name, iamT.ReadResourcesInWorkspace)
-}
+type ProjectClusterMap kv.BinaryDataRepo
 
 var Module = fx.Module("domain",
 	fx.Provide(func(
@@ -375,20 +321,22 @@ var Module = fx.Module("domain",
 		infraClient infra.InfraClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
-		workspaceRepo repos.DbRepo[*entities.Workspace],
-
+		environmentRepo repos.DbRepo[*entities.Environment],
 		appRepo repos.DbRepo[*entities.App],
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
 		routerRepo repos.DbRepo[*entities.Router],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
+		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
+
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,
 
 		ev *env.Env,
-	) Domain {
 
+		projectClusterMap ProjectClusterMap,
+	) Domain {
 		return &domain{
 			k8sClient: k8sClient,
 
@@ -398,18 +346,20 @@ var Module = fx.Module("domain",
 			infraClient: infraClient,
 			logger:      logger,
 
-			projectRepo:     projectRepo,
-			workspaceRepo:   workspaceRepo,
-			appRepo:         appRepo,
-			configRepo:      configRepo,
-			routerRepo:      routerRepo,
-			secretRepo:      secretRepo,
-			mresRepo:        mresRepo,
-			pullSecretsRepo: ipsRepo,
+			projectRepo:         projectRepo,
+			environmentRepo:     environmentRepo,
+			appRepo:             appRepo,
+			configRepo:          configRepo,
+			routerRepo:          routerRepo,
+			secretRepo:          secretRepo,
+			mresRepo:            mresRepo,
+			pullSecretsRepo:     ipsRepo,
+			resourceMappingRepo: resourceMappingRepo,
 
 			envVars: ev,
 
 			resourceEventPublisher: resourceEventPublisher,
+			projectClusterMap:      projectClusterMap,
 		}
 	}),
 )

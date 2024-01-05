@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *managedResourceResolver) CreationTime(ctx context.Context, obj *entities.ManagedResource) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilManagedResource
 	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,7 +27,7 @@ func (r *managedResourceResolver) CreationTime(ctx context.Context, obj *entitie
 // ID is the resolver for the id field.
 func (r *managedResourceResolver) ID(ctx context.Context, obj *entities.ManagedResource) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilManagedResource
 	}
 	return string(obj.Id), nil
 }
@@ -44,21 +44,26 @@ func (r *managedResourceResolver) Spec(ctx context.Context, obj *entities.Manage
 // UpdateTime is the resolver for the updateTime field.
 func (r *managedResourceResolver) UpdateTime(ctx context.Context, obj *entities.ManagedResource) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilManagedResource
 	}
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
 }
 
 // Metadata is the resolver for the metadata field.
 func (r *managedResourceInResolver) Metadata(ctx context.Context, obj *entities.ManagedResource, data *v1.ObjectMeta) error {
-	obj.ObjectMeta = *data
+	if obj == nil {
+		return errNilManagedResource
+	}
+	if data != nil {
+		obj.ObjectMeta = *data
+	}
 	return nil
 }
 
 // Spec is the resolver for the spec field.
 func (r *managedResourceInResolver) Spec(ctx context.Context, obj *entities.ManagedResource, data *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn) error {
 	if obj == nil {
-		return errors.Newf("resource is nil")
+		return errNilManagedResource
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }

@@ -11,8 +11,8 @@ global:
 
 label: List Environments
 query: |+
-  query Core_listEnvironments($project: ProjectId!, $pq: CursorPaginationIn) {
-    core_listEnvironments(project: $project, pq: $pq) {
+  query Core_listEnvironments($projectName: String!) {
+    core_listEnvironments(projectName: $projectName) {
       edges {
         cursor
         node {
@@ -55,16 +55,14 @@ query: |+
     }
   }
 variables:
-  project: 
-    type: name
-    value: "{{.projectName}}"
+  projectName: "{{.projectName}}"
 
 ---
 
 label: Create Environment
 query: |+
-  mutation Core_createEnvironment($env: WorkspaceIn!) {
-    core_createEnvironment(env: $env) {
+  mutation Core_createEnvironment($projectName: String!, $env: EnvironmentIn!) {
+    core_createEnvironment(projectName: $projectName, env: $env) {
       apiVersion
       kind
       spec {
@@ -81,8 +79,9 @@ query: |+
     }
   }
 variables:
+  projectName: "{{.projectName}}"
   env:
-    displayName: This is Sample Workspace
+    displayName: Display Name of a sample environment
     metadata:
       name: sample2
       namespace: "{{.projectTargetNamespace}}"

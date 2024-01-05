@@ -156,7 +156,7 @@ func queryProm(promAddr string, resType PromMetricsType, filters map[Observabili
 		return errors.NewE(err)
 	}
 
-	fmt.Printf("[DEBUG]: prometheus actual request: %s\n", req.URL.String())
+	//fmt.Printf("[DEBUG]: prometheus actual request: %s\n", req.URL.String())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

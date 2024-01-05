@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -13,98 +12,99 @@ import (
 )
 
 func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
-	session, ok := ctx.Value("user-session").(*common.AuthSession)
+	missingContextValue := "context value (%s) is missing"
 
-	errMsgs := []string{}
+	errMsgs := make([]string, 0, 3)
+
+	session, ok := ctx.Value("user-session").(*common.AuthSession)
 	if !ok {
-		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "user-session"))
+		errMsgs = append(errMsgs, fmt.Sprintf(missingContextValue, "user-session"))
 	}
 
 	accountName, ok := ctx.Value("account-name").(string)
 	if !ok {
-		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "account-name"))
+		errMsgs = append(errMsgs, fmt.Sprintf(missingContextValue, "account-name"))
 	}
 
-	clusterName, ok := ctx.Value("cluster-name").(string)
-	if !ok {
-		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "cluster-name"))
-	}
+	//clusterName, ok := ctx.Value("cluster-name").(string)
+	//if !ok {
+	//	errMsgs = append(errMsgs, fmt.Sprintf(missingContextValue, "cluster-name"))
+	//}
 
 	var err error
 	if len(errMsgs) != 0 {
 		err = errors.NewE(errors.Newf("%v", strings.Join(errMsgs, ",")))
 	}
 
+	if err != nil {
+		return domain.ConsoleContext{}, errors.NewE(err)
+	}
+
 	return domain.ConsoleContext{
 		Context:     ctx,
-		ClusterName: clusterName,
 		AccountName: accountName,
 
 		UserId:    session.UserId,
 		UserEmail: session.UserEmail,
 		UserName:  session.UserName,
-	}, errors.NewE(err)
+	}, nil
 }
 
-func (r *queryResolver) getNamespaceFromProjectID(ctx context.Context, project model.ProjectID) (string, error) {
-	switch project.Type {
-	case model.ProjectIDTypeName:
-		{
-			cc, err := toConsoleContext(ctx)
-			if err != nil {
-				return "", errors.NewE(err)
-			}
-			proj, err := r.Domain.GetProject(cc, project.Value)
-			if err != nil {
-				return "", errors.NewE(err)
-			}
-			return proj.Spec.TargetNamespace, nil
-		}
-	case model.ProjectIDTypeTargetNamespace:
-		{
-			return project.Value, nil
-		}
-	default:
-		return "", errors.Newf("invalid project type %q", project.Type)
-	}
-}
+// func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID) (string, error) {
+// 	pTargetNs, err := r.getNamespaceFromProjectID(ctx, project)
+// 	if err != nil {
+// 		return "", errors.NewE(err)
+// 	}
+//
+// 	switch scope.Type {
+// 	case model.WorkspaceOrEnvIDTypeEnvironmentName:
+// 		{
+// 			cc, err := toConsoleContext(ctx)
+// 			if err != nil {
+// 				return "", errors.NewE(err)
+// 			}
+// 			env, err := r.Domain.GetEnvironment(cc, pTargetNs, scope.Value)
+// 			if err != nil {
+// 				return "", errors.NewE(err)
+// 			}
+// 			return env.Spec.TargetNamespace, nil
+// 		}
+// 	case model.WorkspaceOrEnvIDTypeWorkspaceName:
+// 		{
+// 			cc, err := toConsoleContext(ctx)
+// 			if err != nil {
+// 				return "", errors.NewE(err)
+// 			}
+// 			ws, err := r.Domain.GetEnvironment(cc, pTargetNs, scope.Value)
+// 			if err != nil {
+// 				return "", errors.NewE(err)
+// 			}
+// 			return ws.Spec.TargetNamespace, nil
+// 		}
+// 	case model.WorkspaceOrEnvIDTypeEnvironmentTargetNamespace:
+// 		return scope.Value, nil
+// 	case model.WorkspaceOrEnvIDTypeWorkspaceTargetNamespace:
+// 		return scope.Value, nil
+// 	default:
+// 		return "", errors.Newf("invalid scope type %q", scope.Type)
+// 	}
+// }
 
-func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID) (string, error) {
-	pTargetNs, err := r.getNamespaceFromProjectID(ctx, project)
-	if err != nil {
-		return "", errors.NewE(err)
-	}
+var (
+	errNilApp             = errors.Newf("app obj is nil")
+	errNilConfig          = errors.Newf("config obj is nil")
+	errNilSecret          = errors.Newf("secret obj is nil")
+	errNilEnvironment     = errors.Newf("environment obj is nil")
+	errNilImagePullSecret = errors.Newf("imagePullSecret obj is nil")
+	errNilManagedResource = errors.Newf("managed resource obj is nil")
+	errNilProject         = errors.Newf("project obj is nil")
+	errNilRouter          = errors.Newf("router obj is nil")
+)
 
-	switch scope.Type {
-	case model.WorkspaceOrEnvIDTypeEnvironmentName:
-		{
-			cc, err := toConsoleContext(ctx)
-			if err != nil {
-				return "", errors.NewE(err)
-			}
-			env, err := r.Domain.GetEnvironment(cc, pTargetNs, scope.Value)
-			if err != nil {
-				return "", errors.NewE(err)
-			}
-			return env.Spec.TargetNamespace, nil
-		}
-	case model.WorkspaceOrEnvIDTypeWorkspaceName:
-		{
-			cc, err := toConsoleContext(ctx)
-			if err != nil {
-				return "", errors.NewE(err)
-			}
-			ws, err := r.Domain.GetWorkspace(cc, pTargetNs, scope.Value)
-			if err != nil {
-				return "", errors.NewE(err)
-			}
-			return ws.Spec.TargetNamespace, nil
-		}
-	case model.WorkspaceOrEnvIDTypeEnvironmentTargetNamespace:
-		return scope.Value, nil
-	case model.WorkspaceOrEnvIDTypeWorkspaceTargetNamespace:
-		return scope.Value, nil
-	default:
-		return "", errors.Newf("invalid scope type %q", scope.Type)
+func newResourceContext(ctx domain.ConsoleContext, projectName string, environmentName string) domain.ResourceContext {
+	return domain.ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     projectName,
+		EnvironmentName: environmentName,
 	}
 }

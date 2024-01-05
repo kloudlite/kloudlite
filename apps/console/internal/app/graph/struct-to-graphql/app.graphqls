@@ -1,11 +1,11 @@
 type App @shareable {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
+  environmentName: String!
   id: String!
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -17,7 +17,6 @@ type App @shareable {
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
-  workspaceName: String!
 }
 
 type AppEdge @shareable {

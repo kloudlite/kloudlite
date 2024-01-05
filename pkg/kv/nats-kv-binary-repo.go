@@ -1,4 +1,4 @@
-package cache
+package kv
 
 import (
 	"context"
@@ -44,6 +44,10 @@ func (r *natsKVBinaryRepo) Set(c context.Context, key string, value []byte) erro
 func (r *natsKVBinaryRepo) Get(c context.Context, key string) ([]byte, error) {
 	get, err := r.keyValue.Get(c, key)
 	if err != nil {
+		if errors.Is(err, jetstream.ErrKeyNotFound) {
+			return nil, ErrKeyNotFound
+		}
+
 		var x []byte
 		return x, errors.NewE(err)
 	}
@@ -79,16 +83,12 @@ func (r *natsKVBinaryRepo) Drop(c context.Context, key string) error {
 	return r.keyValue.Delete(c, key)
 }
 
-func (r *natsKVBinaryRepo) ErrNoRecord(err error) bool {
-	return err == nil
-}
-
 func NewNatsKVBinaryRepo(ctx context.Context, bucketName string, jc *nats.JetstreamClient) (BinaryDataRepo, error) {
-	if value, err := jc.Jetstream.KeyValue(ctx, bucketName); err != nil {
+	value, err := jc.Jetstream.KeyValue(ctx, bucketName)
+	if err != nil {
 		return nil, err
-	} else {
-		return &natsKVBinaryRepo{
-			value,
-		}, nil
 	}
+	return &natsKVBinaryRepo{
+		value,
+	}, nil
 }

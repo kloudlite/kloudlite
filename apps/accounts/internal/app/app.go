@@ -17,14 +17,14 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 )
 
-type AuthCacheClient cache.Client
+type AuthCacheClient kv.Client
 
 type AuthClient grpc.Client
 
@@ -40,8 +40,8 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Account]("accounts", "acc", entities.AccountIndices),
 	repos.NewFxMongoRepo[*entities.Invitation]("invitations", "invite", entities.InvitationIndices),
 
-	fx.Provide(func(client AuthCacheClient) cache.Repo[*entities.Invitation] {
-		return cache.NewRepo[*entities.Invitation](client)
+	fx.Provide(func(client AuthCacheClient) kv.Repo[*entities.Invitation] {
+		return kv.NewRepo[*entities.Invitation](client)
 	}),
 
 	// grpc clients
@@ -72,7 +72,7 @@ var Module = fx.Module("app",
 	domain.Module,
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, env *env.Env, sessionRepo cache.Repo[*common.AuthSession]) {
+		func(server httpServer.Server, d domain.Domain, env *env.Env, sessionRepo kv.Repo[*common.AuthSession]) {
 			gqlConfig := generated.Config{Resolvers: graph.NewResolver(d)}
 
 			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {

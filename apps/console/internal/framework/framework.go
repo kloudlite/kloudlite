@@ -3,15 +3,16 @@ package framework
 import (
 	"context"
 	"fmt"
+	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 
 	app "github.com/kloudlite/api/apps/console/internal/app"
 	"github.com/kloudlite/api/apps/console/internal/env"
-	"github.com/kloudlite/api/pkg/cache"
 	rpc "github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	loki_client "github.com/kloudlite/api/pkg/loki-client"
 	"github.com/kloudlite/api/pkg/nats"
@@ -47,9 +48,15 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
 			cxt := context.TODO()
-			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+			return kv.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+		},
+	),
+
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (domain.ProjectClusterMap, error) {
+			return kv.NewNatsKVBinaryRepo(context.TODO(), ev.ProjectClusterMapKVBucket, jc)
 		},
 	),
 

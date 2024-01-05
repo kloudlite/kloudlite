@@ -10,16 +10,18 @@ import (
 type App struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	crdsv1.App `json:",inline" graphql:"uri=k8s://apps.crds.kloudlite.io"`
+	crdsv1.App `json:",inline"`
+
+	AccountName     string `json:"accountName" graphql:"noinput"`
+	ProjectName     string `json:"projectName" graphql:"noinput"`
+	EnvironmentName string `json:"environmentName" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
+	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+}
 
-	AccountName   string `json:"accountName" graphql:"noinput"`
-	ClusterName   string `json:"clusterName" graphql:"noinput"`
-	ProjectName   string `json:"projectName" graphql:"noinput"`
-	WorkspaceName string `json:"workspaceName" graphql:"noinput"`
-
-	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+func (a *App) GetResourceType() ResourceType {
+	return ResourceTypeApp
 }
 
 var AppIndexes = []repos.IndexField{
@@ -33,8 +35,9 @@ var AppIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
 			{Key: "metadata.namespace", Value: repos.IndexAsc},
-			{Key: "clusterName", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "projectName", Value: repos.IndexAsc},
+			{Key: "environmentName", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
