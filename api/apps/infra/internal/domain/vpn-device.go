@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
@@ -92,6 +93,47 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, errors.NewE(err)
 	}
 	return nDevice, nil
+}
+
+func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devName string, ports []*wgv1.Port) error {
+
+	currDevice, err := d.findVPNDevice(ctx, clusterName, devName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	currDevice.IncrementRecordVersion()
+	currDevice.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
+	currDevice.Spec.Ports = func() []wgv1.Port {
+		prt := []wgv1.Port{}
+
+		for _, p := range ports {
+			if p != nil {
+				prt = append(prt, *p)
+
+			}
+		}
+		return prt
+	}()
+
+	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
+
+	nDevice, err := d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishVpnDeviceEvent(nDevice, PublishUpdate)
+
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+	return nil
+
 }
 
 func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string) (*entities.VPNDevice, error) {

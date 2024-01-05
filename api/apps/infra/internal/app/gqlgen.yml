@@ -95,6 +95,9 @@ models:
     model: github.com/kloudlite/api/apps/infra/internal/entities.VPNDevice
   VPNDeviceIn: *vpn-device-model
 
+  PortIn:
+    model: github.com/kloudlite/operator/apis/wireguard/v1.Port
+
   ClusterManagedService: &cluster-managed-service
     model: github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService
   ClusterManagedServiceIn: *cluster-managed-service
