@@ -46,12 +46,6 @@ func listapps(args []string) error {
 		apps, err = server.ListApps(fn.MakeOption("projectId", args[0]))
 	}
 
-	//for _, l := range a {
-	//	if !l.IsLambda {
-	//		apps = append(apps, l)
-	//	}
-	//}
-
 	if err != nil {
 		return err
 	}

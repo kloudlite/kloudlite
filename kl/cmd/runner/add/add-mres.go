@@ -5,9 +5,9 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	server2 "github.com/kloudlite/kl/domain/server"
 	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -67,18 +67,18 @@ func selectAndAddMres(cmd *cobra.Command) error {
 		return fmt.Errorf("no managed service found with the provided name")
 	} else {
 
-		selectedMsvcIndex, e := fuzzyfinder.Find(
+		selecetedMres, e := fzf.FindOne(
 			mreses,
-			func(i int) string {
-				return mreses[i].Name
+			func(item *server2.Mres) string {
+				return item.Name
 			},
-			fuzzyfinder.WithPromptString("Select managed service >"),
+			fzf.WithPrompt("Select managed service >"),
 		)
 
 		if e != nil {
 			return e
 		}
-		selectedMsvc = mreses[selectedMsvcIndex]
+		selectedMsvc = *selecetedMres
 	}
 
 	if len(selectedMsvc.Resources) == 0 {
@@ -99,19 +99,19 @@ func selectAndAddMres(cmd *cobra.Command) error {
 
 	} else {
 
-		selectedMresIndex, e := fuzzyfinder.Find(
+		selectedResource, e := fzf.FindOne(
 			selectedMsvc.Resources,
-			func(i int) string {
-				return selectedMsvc.Resources[i].Name
+			func(item server2.ResourceType) string {
+				return item.Name
 			},
-			fuzzyfinder.WithPromptString(fmt.Sprintf("Select resource of %s >", selectedMsvc.Name)),
+			fzf.WithPrompt(fmt.Sprintf("Select resource of %s >", selectedMsvc.Name)),
 		)
 
 		if e != nil {
 			return e
 		}
 
-		selectedMres = selectedMsvc.Resources[selectedMresIndex]
+		selectedMres = *selectedResource
 
 	}
 

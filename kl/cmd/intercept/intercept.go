@@ -5,8 +5,8 @@ import (
 	"fmt"
 	server2 "github.com/kloudlite/kl/domain/server"
 	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -95,14 +95,14 @@ func triggerDeviceSelect(dName string) (string, error) {
 }
 
 func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
-	aId := cmd.Flag("app-id").Value.String()
+	aName := cmd.Flag("app-id").Value.String()
 
-	if aId == "" {
-		aId = cmd.Flag("app-readable-id").Value.String()
+	if aName == "" {
+		aName = cmd.Flag("app-readable-id").Value.String()
 	}
 
-	if len(args) >= 2 && aId == "" {
-		aId = args[1]
+	if len(args) >= 2 && aName == "" {
+		aName = args[1]
 	}
 
 	apps, err := server2.ListApps()
@@ -110,28 +110,27 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 		return "", err
 	}
 
-	if aId != "" {
+	if aName != "" {
 		for _, a := range apps {
-			if a.Id == aId || a.ReadableId == aId {
-				return a.Id, nil
+			if a.Metadata.Name == aName {
+				return a.Metadata.Name, nil
 			}
 		}
 		return "", errors.New("provided app id not found in selected project")
 	}
 
-	selectedIndex, err := fuzzyfinder.Find(
+	appName, err := fzf.FindOne(
 		apps,
-		func(i int) string {
-			return apps[i].Name
+		func(item server2.App) string {
+			return item.Metadata.Name
 		},
-		fuzzyfinder.WithPromptString("Select App >"),
+		fzf.WithPrompt("Select App >"),
 	)
 
 	if err != nil {
 		return "", err
 	}
-
-	return apps[selectedIndex].Id, nil
+	return appName.Metadata.Name, nil
 }
 
 func init() {

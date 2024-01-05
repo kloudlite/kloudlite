@@ -9,7 +9,6 @@ require (
 	github.com/charmbracelet/gum v0.13.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/koki-develop/go-fzf v0.15.0
-	github.com/ktr0731/go-fuzzyfinder v0.8.0
 	github.com/lixiangzhong/dnsutil v1.4.0
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/spf13/cobra v1.8.0

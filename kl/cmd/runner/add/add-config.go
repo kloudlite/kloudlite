@@ -11,7 +11,6 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -77,18 +76,18 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return errors.New("can't find configs with provided name")
 	} else {
 
-		selectedGroupIndex, e := fuzzyfinder.Find(
+		selectedGroup, e := fzf.FindOne(
 			configs,
-			func(i int) string {
-				return configs[i].Metadata.Name
+			func(item server.Config) string {
+				return item.Metadata.Name
 			},
-			fuzzyfinder.WithPromptString("Select Config Group >"),
+			fzf.WithPrompt("Select Config Group >"),
 		)
 		if e != nil {
 			return e
 		}
 
-		selectedConfigGroup = configs[selectedGroupIndex]
+		selectedConfigGroup = *selectedGroup
 	}
 
 	if len(selectedConfigGroup.Data) == 0 {

@@ -5,9 +5,9 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -63,18 +63,21 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 
 	} else {
 		csName := []string{"config", "secret"}
-		cOrsIndex, err := fuzzyfinder.Find(
+		cOrsValue, err := fzf.FindOne(
 			csName,
-			func(i int) string {
-				return csName[i]
+			//func(i int) string {
+			//	return csName[i]
+			//},
+			func(item string) string {
+				return item
 			},
-			fuzzyfinder.WithPromptString("Mount from Config/Secret >"),
+			fzf.WithPrompt("Mount from Config/Secret >"),
 		)
 		if err != nil {
 			return err
 		}
 
-		cOrs = csName[cOrsIndex]
+		cOrs = *cOrsValue
 	}
 
 	items := make([]server.ConfigORSecret, 0)
@@ -130,19 +133,19 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 
 		return fmt.Errorf("provided %s name not found", cOrs)
 	} else {
-		selectedItemIndex, err := fuzzyfinder.Find(
+		selectedItemVal, err := fzf.FindOne(
 			items,
-			func(i int) string {
-				return items[i].Name
+			func(item server.ConfigORSecret) string {
+				return item.Name
 			},
-			fuzzyfinder.WithPromptString(fmt.Sprintf("Select %s >", cOrs)),
+			fzf.WithPrompt(fmt.Sprintf("Select %s >", cOrs)),
 		)
 
 		if err != nil {
 			fn.PrintError(err)
 		}
 
-		selectedItem = items[selectedItemIndex]
+		selectedItem = *selectedItemVal
 	}
 
 	matchedIndex := -1

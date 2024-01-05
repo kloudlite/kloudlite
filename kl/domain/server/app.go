@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -60,7 +59,6 @@ func ListApps(options ...fn.Option) ([]App, error) {
 	if fromResp, err := GetFromRespForEdge[App](respData); err != nil {
 		return nil, err
 	} else {
-		fmt.Println(fromResp)
 		return fromResp, nil
 	}
 }

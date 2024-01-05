@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -43,24 +43,22 @@ func removeMreses() error {
 		return fmt.Errorf(es)
 	}
 
-	selectedMresIndex, err := fuzzyfinder.Find(
+	selectedMres, err := fzf.FindOne(
 		klFile.Mres,
-		func(i int) string {
-			return klFile.Mres[i].Name
+		func(item client.ResType) string {
+			return item.Name
 		},
-		fuzzyfinder.WithPromptString("Select managed service >"),
+		fzf.WithPrompt("Select managed service >"),
 	)
 
 	if err != nil {
 		return err
 	}
 
-	selectedMres := klFile.Mres[selectedMresIndex]
-
 	newMres := make([]client.ResType, 0)
 
-	for i, rt := range klFile.Mres {
-		if i == selectedMresIndex {
+	for _, rt := range klFile.Mres {
+		if rt.Name == selectedMres.Name {
 			continue
 		}
 		newMres = append(newMres, rt)

@@ -11,7 +11,6 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -77,18 +76,18 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return errors.New("can't find secrets with provided name")
 
 	} else {
-		selectedGroupIndex, err := fuzzyfinder.Find(
+		selectedGroup, err := fzf.FindOne(
 			secrets,
-			func(i int) string {
-				return secrets[i].Metadata.Name
+			func(item server.Secret) string {
+				return item.Metadata.Name
 			},
-			fuzzyfinder.WithPromptString("Select Secret Group >"),
+			fzf.WithPrompt("Select Secret Group >"),
 		)
 		if err != nil {
 			return err
 		}
 
-		selectedSecretGroup = secrets[selectedGroupIndex]
+		selectedSecretGroup = *selectedGroup
 	}
 
 	if len(selectedSecretGroup.StringData) == 0 {

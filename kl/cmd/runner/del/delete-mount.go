@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -29,12 +29,12 @@ func removeConfigMount() {
 		return
 	}
 
-	selectedMount, err := fuzzyfinder.Find(
+	selectedMount, err := fzf.FindOne(
 		klFile.FileMount.Mounts,
-		func(i int) string {
-			return fmt.Sprintf("%s | %s | %s", klFile.FileMount.Mounts[i].Type, klFile.FileMount.Mounts[i].Path, klFile.FileMount.Mounts[i].Name)
+		func(item client.FileEntry) string {
+			return fmt.Sprintf("%s | %s | %s", item.Type, item.Path, item.Name)
 		},
-		fuzzyfinder.WithPromptString("Select Config Group >"),
+		fzf.WithPrompt("Select Config Group >"),
 	)
 
 	if err != nil {
@@ -43,8 +43,8 @@ func removeConfigMount() {
 	}
 
 	newMounts := make([]client.FileEntry, 0)
-	for i, fe := range klFile.FileMount.Mounts {
-		if i == selectedMount {
+	for _, fe := range klFile.FileMount.Mounts {
+		if fe.Name == selectedMount.Name {
 			continue
 		}
 		newMounts = append(newMounts, fe)

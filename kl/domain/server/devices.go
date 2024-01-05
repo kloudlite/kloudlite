@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -141,6 +142,11 @@ func SelectDevice(devName string) (*Device, error) {
 
 func UpdateDevice(ports []DevicePort) error {
 
+	devName, err := EnsureDevice()
+	if err != nil {
+		return err
+	}
+
 	clusterName, err := client.CurrentClusterName()
 	if err != nil {
 		return err
@@ -155,44 +161,59 @@ func UpdateDevice(ports []DevicePort) error {
 		clusterName = c.Metadata.Name
 	}
 
-	devName, err := client.CurrentDeviceName()
+	cookie, err := getCookie()
 	if err != nil {
 		return err
 	}
 
-	d, err := GetDevice(fn.MakeOption("deviceName", devName))
-	if err != nil {
-		return err
-	}
+	//devName, err := client.CurrentDeviceName()
+	//if err != nil {
+	//	return err
+	//}
 
-	for _, p := range ports {
-		matched := false
-		for i, p2 := range d.Spec.Ports {
-			if p2.Port == p.Port {
-				matched = true
-				d.Spec.Ports[i] = p
-				break
-			}
+	//d, err := GetDevice(fn.MakeOption("deviceName", devName))
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//for _, p := range ports {
+	//	matched := false
+	//	for i, p2 := range d.Spec.Ports {
+	//		if p2.Port == p.Port {
+	//			matched = true
+	//			d.Spec.Ports[i] = p
+	//			break
+	//		}
+	//	}
+	//
+	//	if !matched {
+	//		d.Spec.Ports = append(d.Spec.Ports, p)
+	//	}
+	//}
+	var portsMap []map[string]int
+	for _, port := range ports {
+		vpnDevice := map[string]int{
+			"port":       port.Port,
+			"targetPort": port.TargetPort,
 		}
-
-		if !matched {
-			d.Spec.Ports = append(d.Spec.Ports, p)
-		}
+		portsMap = append(portsMap, vpnDevice)
 	}
+	fmt.Println(clusterName, "\n", devName, "\n", ports, "\n", portsMap)
 
-	respData, err := klFetch("cli_updateDevice", map[string]any{
+	respData, err := klFetch("cli_updateDevicePort", map[string]any{
 		"clusterName": clusterName,
-		"vpnDevice":   d,
-	}, nil)
+		"deviceName":  devName,
+		"ports":       portsMap,
+	}, &cookie)
 
 	if err != nil {
 		return err
 	}
 
-	if _, err := GetFromRespForEdge[Device](respData); err != nil {
+	_, err = GetFromResp[bool](respData)
+	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
