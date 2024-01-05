@@ -2,18 +2,19 @@ package domain
 
 import (
 	"context"
+	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
-func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, accountName string, namespace *string, name string) (*CheckNameAvailabilityOutput, error) {
+func (d *domain) CheckNameAvailability(ctx context.Context, resType entities.ResourceType, accountName string, namespace *string, name string) (*CheckNameAvailabilityOutput, error) {
 	errNamespaceRequired := func() error {
 		return errors.Newf("namespace is required for resource type %q", resType)
 	}
 
 	switch resType {
-	case ResTypeProject:
+	case entities.ResourceTypeProject:
 		{
 			if fn.IsValidK8sResourceName(name) {
 				p, err := d.projectRepo.FindOne(ctx, repos.Filter{
@@ -32,13 +33,13 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeEnvironment, ResTypeWorkspace:
+	case entities.ResourceTypeEnvironment:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()
 			}
 			if fn.IsValidK8sResourceName(name) {
-				p, err := d.workspaceRepo.FindOne(ctx, repos.Filter{
+				p, err := d.environmentRepo.FindOne(ctx, repos.Filter{
 					"accountName":        accountName,
 					"metadata.namespace": namespace,
 					"metadata.name":      name,
@@ -55,7 +56,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeApp:
+	case entities.ResourceTypeApp:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()
@@ -78,7 +79,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
 			}, nil
 		}
-	case ResTypeConfig:
+	case entities.ResourceTypeConfig:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()
@@ -101,7 +102,8 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeSecret:
+
+	case entities.ResourceTypeSecret:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()
@@ -124,7 +126,8 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeRouter:
+
+	case entities.ResourceTypeRouter:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()
@@ -147,7 +150,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeManagedResource:
+	case entities.ResourceTypeManagedResource:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()

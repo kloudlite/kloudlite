@@ -1,7 +1,8 @@
-package cache
+package kv
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
 	"time"
 )
 
@@ -19,7 +20,6 @@ type Repo[T any] interface {
 	SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error
 	Get(c context.Context, key string) (T, error)
 	Drop(c context.Context, key string) error
-	ErrNoRecord(err error) bool
 }
 
 type BinaryDataRepo interface {
@@ -27,5 +27,6 @@ type BinaryDataRepo interface {
 	SetWithExpiry(c context.Context, key string, value []byte, duration time.Duration) error
 	Get(c context.Context, key string) ([]byte, error)
 	Drop(c context.Context, key string) error
-	ErrNoRecord(err error) bool
 }
+
+var ErrKeyNotFound = errors.New("key not found")

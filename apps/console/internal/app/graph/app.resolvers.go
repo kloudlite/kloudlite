@@ -18,6 +18,9 @@ import (
 
 // CreationTime is the resolver for the creationTime field.
 func (r *appResolver) CreationTime(ctx context.Context, obj *entities.App) (string, error) {
+	if obj == nil {
+		return "", errNilApp
+	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
 
@@ -46,12 +49,20 @@ func (r *appResolver) UpdateTime(ctx context.Context, obj *entities.App) (string
 
 // Metadata is the resolver for the metadata field.
 func (r *appInResolver) Metadata(ctx context.Context, obj *entities.App, data *v1.ObjectMeta) error {
-	obj.ObjectMeta = *data
+	if obj == nil {
+		return errNilApp
+	}
+	if data != nil {
+		obj.ObjectMeta = *data
+	}
 	return nil
 }
 
 // Spec is the resolver for the spec field.
 func (r *appInResolver) Spec(ctx context.Context, obj *entities.App, data *model.GithubComKloudliteOperatorApisCrdsV1AppSpecIn) error {
+	if obj == nil {
+		return errNilApp
+	}
 	return fn.JsonConversion(data, &obj.Spec)
 }
 

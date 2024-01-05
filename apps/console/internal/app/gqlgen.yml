@@ -1,3 +1,4 @@
+
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
   - graph/*.graphqls
@@ -75,9 +76,9 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.Project
   ProjectIn: *project-model
 
-  Workspace: &workspace-model
-    model: github.com/kloudlite/api/apps/console/internal/entities.Workspace
-  WorkspaceIn: *workspace-model
+  Environment: &environment-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.Environment
+  EnvironmentIn: *environment-model
 
   Secret: &secret-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Secret
@@ -125,7 +126,7 @@ models:
     model: github.com/kloudlite/api/pkg/types.SyncState
 
   ConsoleResType:
-    model: github.com/kloudlite/api/apps/console/internal/domain.ResType
+    model: github.com/kloudlite/api/apps/console/internal/entities.ResourceType
 
   ConsoleCheckNameAvailabilityOutput:
     model: github.com/kloudlite/api/apps/console/internal/domain.CheckNameAvailabilityOutput
@@ -153,5 +154,4 @@ models:
   Github__com___kloudlite___api___pkg___types__SyncStatus: &sync-status-model
     model: github.com/kloudlite/api/pkg/types.SyncStatus
   Github__com___kloudlite___api___pkg___types__SyncStatusIn: *sync-status-model
-
 

@@ -33,9 +33,31 @@ type ConfigPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
+type ConfigValuesIn struct {
+	ConfigmapName string `json:"configmapName"`
+	Key           string `json:"key"`
+}
+
+type ConfigValuesOut struct {
+	ConfigmapName string `json:"configmapName"`
+	Key           string `json:"key"`
+	Value         string `json:"value"`
+}
+
 type EnvOrWorkspaceOrProjectID struct {
 	Type EnvOrWorkspaceOrProjectIDType `json:"type"`
 	Name string                        `json:"name"`
+}
+
+type EnvironmentEdge struct {
+	Cursor string                `json:"cursor"`
+	Node   *entities.Environment `json:"node"`
+}
+
+type EnvironmentPaginatedRecords struct {
+	Edges      []*EnvironmentEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppContainer struct {
@@ -385,15 +407,15 @@ type GithubComKloudliteOperatorApisCrdsV1TCPProbeIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec struct {
-	IsEnvironment   *bool  `json:"isEnvironment,omitempty"`
-	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
+	IsEnvironment   *bool   `json:"isEnvironment,omitempty"`
+	ProjectName     string  `json:"projectName"`
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn struct {
-	IsEnvironment   *bool  `json:"isEnvironment,omitempty"`
-	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
+	IsEnvironment   *bool   `json:"isEnvironment,omitempty"`
+	ProjectName     string  `json:"projectName"`
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
@@ -463,11 +485,6 @@ type ProjectEdge struct {
 	Node   *entities.Project `json:"node"`
 }
 
-type ProjectID struct {
-	Type  ProjectIDType `json:"type"`
-	Value string        `json:"value"`
-}
-
 type ProjectPaginatedRecords struct {
 	Edges      []*ProjectEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -535,13 +552,6 @@ type SearchSecrets struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
-type SearchWorkspaces struct {
-	Text              *repos.MatchFilter `json:"text,omitempty"`
-	ProjectName       *repos.MatchFilter `json:"projectName,omitempty"`
-	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
-	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
-}
-
 type SecretEdge struct {
 	Cursor string           `json:"cursor"`
 	Node   *entities.Secret `json:"node"`
@@ -553,20 +563,15 @@ type SecretPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
-type WorkspaceEdge struct {
-	Cursor string              `json:"cursor"`
-	Node   *entities.Workspace `json:"node"`
+type SecretValuesIn struct {
+	SecretName string `json:"secretName"`
+	Key        string `json:"key"`
 }
 
-type WorkspaceOrEnvID struct {
-	Type  WorkspaceOrEnvIDType `json:"type"`
-	Value string               `json:"value"`
-}
-
-type WorkspacePaginatedRecords struct {
-	Edges      []*WorkspaceEdge `json:"edges"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount int              `json:"totalCount"`
+type SecretValuesOut struct {
+	SecretName string `json:"secretName"`
+	Key        string `json:"key"`
+	Value      string `json:"value"`
 }
 
 type EnvOrWorkspaceOrProjectIDType string
@@ -615,6 +620,47 @@ func (e *EnvOrWorkspaceOrProjectIDType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e EnvOrWorkspaceOrProjectIDType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat string
+
+const (
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatDockerConfigJSON GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat = "dockerConfigJson"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatParams           GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat = "params"
+)
+
+var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat = []GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat{
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatDockerConfigJSON,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatParams,
+}
+
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) IsValid() bool {
+	switch e {
+	case GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatDockerConfigJSON, GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatParams:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
@@ -793,91 +839,5 @@ func (e *K8sIoAPICoreV1TolerationOperator) UnmarshalGQL(v interface{}) error {
 }
 
 func (e K8sIoAPICoreV1TolerationOperator) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type ProjectIDType string
-
-const (
-	ProjectIDTypeName            ProjectIDType = "name"
-	ProjectIDTypeTargetNamespace ProjectIDType = "targetNamespace"
-)
-
-var AllProjectIDType = []ProjectIDType{
-	ProjectIDTypeName,
-	ProjectIDTypeTargetNamespace,
-}
-
-func (e ProjectIDType) IsValid() bool {
-	switch e {
-	case ProjectIDTypeName, ProjectIDTypeTargetNamespace:
-		return true
-	}
-	return false
-}
-
-func (e ProjectIDType) String() string {
-	return string(e)
-}
-
-func (e *ProjectIDType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ProjectIDType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ProjectIdType", str)
-	}
-	return nil
-}
-
-func (e ProjectIDType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type WorkspaceOrEnvIDType string
-
-const (
-	WorkspaceOrEnvIDTypeWorkspaceName              WorkspaceOrEnvIDType = "workspaceName"
-	WorkspaceOrEnvIDTypeWorkspaceTargetNamespace   WorkspaceOrEnvIDType = "workspaceTargetNamespace"
-	WorkspaceOrEnvIDTypeEnvironmentName            WorkspaceOrEnvIDType = "environmentName"
-	WorkspaceOrEnvIDTypeEnvironmentTargetNamespace WorkspaceOrEnvIDType = "environmentTargetNamespace"
-)
-
-var AllWorkspaceOrEnvIDType = []WorkspaceOrEnvIDType{
-	WorkspaceOrEnvIDTypeWorkspaceName,
-	WorkspaceOrEnvIDTypeWorkspaceTargetNamespace,
-	WorkspaceOrEnvIDTypeEnvironmentName,
-	WorkspaceOrEnvIDTypeEnvironmentTargetNamespace,
-}
-
-func (e WorkspaceOrEnvIDType) IsValid() bool {
-	switch e {
-	case WorkspaceOrEnvIDTypeWorkspaceName, WorkspaceOrEnvIDTypeWorkspaceTargetNamespace, WorkspaceOrEnvIDTypeEnvironmentName, WorkspaceOrEnvIDTypeEnvironmentTargetNamespace:
-		return true
-	}
-	return false
-}
-
-func (e WorkspaceOrEnvIDType) String() string {
-	return string(e)
-}
-
-func (e *WorkspaceOrEnvIDType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = WorkspaceOrEnvIDType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid WorkspaceOrEnvIdType", str)
-	}
-	return nil
-}
-
-func (e WorkspaceOrEnvIDType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

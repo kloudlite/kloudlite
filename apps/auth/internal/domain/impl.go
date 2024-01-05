@@ -15,9 +15,9 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	"golang.org/x/oauth2"
@@ -45,8 +45,8 @@ type domainI struct {
 	userRepo        repos.DbRepo[*User]
 	accessTokenRepo repos.DbRepo[*AccessToken]
 	commsClient     comms.CommsClient
-	verifyTokenRepo cache.Repo[*VerifyToken]
-	resetTokenRepo  cache.Repo[*ResetPasswordToken]
+	verifyTokenRepo kv.Repo[*VerifyToken]
+	resetTokenRepo  kv.Repo[*ResetPasswordToken]
 	logger          logging.Logger
 	github          Github
 	gitlab          Gitlab
@@ -403,7 +403,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		user = u
 		user.Joined = time.Now()
 		user, err = d.userRepo.Create(ctx, user)
-		if _,err:=d.commsClient.SendWelcomeEmail(
+		if _, err := d.commsClient.SendWelcomeEmail(
 			ctx, &comms.WelcomeEmailInput{
 				Email: user.Email,
 				Name:  user.Name,
@@ -651,8 +651,8 @@ func fxDomain(
 	userRepo repos.DbRepo[*User],
 	accessTokenRepo repos.DbRepo[*AccessToken],
 	remoteLoginRepo repos.DbRepo[*RemoteLogin],
-	verifyTokenRepo cache.Repo[*VerifyToken],
-	resetTokenRepo cache.Repo[*ResetPasswordToken],
+	verifyTokenRepo kv.Repo[*VerifyToken],
+	resetTokenRepo kv.Repo[*ResetPasswordToken],
 	github Github,
 	gitlab Gitlab,
 	google Google,

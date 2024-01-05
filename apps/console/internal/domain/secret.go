@@ -4,6 +4,7 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -11,51 +12,44 @@ import (
 
 // query
 
-func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) ListSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	filter := repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}
-
-	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filter, search), pq)
+	filters := ctx.DBFilters()
+	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filters, search), pq)
 }
 
-func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
-	exSecret, err := d.secretRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
+func (d *domain) findSecret(ctx ResourceContext, name string) (*entities.Secret, error) {
+	filters := ctx.DBFilters()
+	filters.Add("metadata.name", name)
+
+	xSecret, err := d.secretRepo.FindOne(ctx, filters)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	if exSecret == nil {
-		return nil, errors.Newf("no secret with name=%s,namespace=%s found", name, namespace)
+	if xSecret == nil {
+		return nil, errors.Newf("no secret with name (%s) found", name)
 	}
-	return exSecret, nil
+	return xSecret, nil
 }
 
-func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) GetSecret(ctx ResourceContext, name string) (*entities.Secret, error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
-	return d.findSecret(ctx, namespace, name)
+	return d.findSecret(ctx, name)
 }
 
 // mutations
 
-func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, secret.Namespace); err != nil {
+func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	secret.EnsureGVK()
+	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
 	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -69,8 +63,13 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	secret.LastUpdatedBy = secret.CreatedBy
 
 	secret.AccountName = ctx.AccountName
-	secret.ClusterName = ctx.ClusterName
+	secret.ProjectName = ctx.ProjectName
+	secret.EnvironmentName = ctx.EnvironmentName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
+
+	if _, err := d.upsertResourceMapping(ctx, &secret); err != nil {
+		return nil, errors.NewE(err)
+	}
 
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
@@ -81,121 +80,137 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &s.Secret, s.RecordVersion); err != nil {
+	if s.Labels == nil {
+		s.Labels = make(map[string]string)
+	}
+
+	for k, v := range types.SecretWatchingLabel {
+		s.Labels[k] = v
+	}
+
+	if err := d.applyK8sResource(ctx, s.ProjectName, &s.Secret, s.RecordVersion); err != nil {
 		return s, errors.NewE(err)
 	}
 
 	return s, nil
 }
 
-func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, secret.Namespace); err != nil {
+func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	secret.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
-		return nil, errors.NewE(err)
-	}
+	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
 
-	exSecret, err := d.findSecret(ctx, secret.Namespace, secret.Name)
+	// FIXME: our validation can't validate k8s secret, as it does not belong to a Custom Resource
+	//if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
+	//	return nil, errors.NewE(err)
+	//}
+
+	xSecret, err := d.findSecret(ctx, secret.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if exSecret.Type != secret.Type {
+	if xSecret.Type != secret.Type {
 		return nil, errors.Newf("updating secret.type is forbidden")
 	}
 
-	exSecret.IncrementRecordVersion()
-	exSecret.LastUpdatedBy = common.CreatedOrUpdatedBy{
+	xSecret.IncrementRecordVersion()
+	xSecret.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
 
-	exSecret.DisplayName = secret.DisplayName
+	xSecret.DisplayName = secret.DisplayName
 
-	exSecret.ObjectMeta.Labels = secret.ObjectMeta.Labels
-	exSecret.ObjectMeta.Annotations = secret.ObjectMeta.Annotations
-	exSecret.Data = secret.Data
-	exSecret.StringData = secret.StringData
-	exSecret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exSecret.RecordVersion)
+	xSecret.Labels = secret.Labels
+	xSecret.Annotations = secret.Annotations
+	xSecret.Data = secret.Data
+	xSecret.StringData = secret.StringData
+	xSecret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xSecret.RecordVersion)
 
-	upSecret, err := d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret)
+	upSecret, err := d.secretRepo.UpdateById(ctx, xSecret.Id, xSecret)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &upSecret.Secret, upSecret.RecordVersion); err != nil {
+	if upSecret.Labels == nil {
+		upSecret.Labels = make(map[string]string)
+	}
+
+	for k, v := range types.SecretWatchingLabel {
+		upSecret.Labels[k] = v
+	}
+
+	if err := d.applyK8sResource(ctx, upSecret.ProjectName, &upSecret.Secret, upSecret.RecordVersion); err != nil {
 		return upSecret, errors.NewE(err)
 	}
 
 	return upSecret, nil
 }
 
-func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
 
-	exSecret, err := d.findSecret(ctx, namespace, name)
+	secret, err := d.findSecret(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	exSecret.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, exSecret.RecordVersion)
-	if _, err := d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret); err != nil {
+	secret.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, secret.RecordVersion)
+	if _, err := d.secretRepo.UpdateById(ctx, secret.Id, secret); err != nil {
 		return errors.NewE(err)
 	}
 
-	return d.deleteK8sResource(ctx, &exSecret.Secret)
+	return d.deleteK8sResource(ctx, secret.ProjectName, &secret.Secret)
 }
 
-func (d *domain) OnSecretDeleteMessage(ctx ConsoleContext, secret entities.Secret) error {
-	exSecret, err := d.findSecret(ctx, secret.Namespace, secret.Name)
+func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secret) error {
+	exSecret, err := d.findSecret(ctx, secret.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(secret.Annotations, exSecret.RecordVersion); err != nil {
-		return errors.NewE(err)
+		return d.resyncK8sResource(ctx, secret.ProjectName, secret.SyncStatus.Action, &secret.Secret, secret.RecordVersion)
 	}
 
 	return d.secretRepo.DeleteById(ctx, exSecret.Id)
 }
 
-func (d *domain) OnSecretUpdateMessage(ctx ConsoleContext, secret entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	exSecret, err := d.findSecret(ctx, secret.Namespace, secret.Name)
+func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secret entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xSecret, err := d.findSecret(ctx, secret.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(secret.Annotations, exSecret.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, exSecret.SyncStatus.Action, &exSecret.Secret, exSecret.RecordVersion)
+	if err := d.MatchRecordVersion(secret.Annotations, xSecret.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, xSecret.ProjectName, xSecret.SyncStatus.Action, &xSecret.Secret, xSecret.RecordVersion)
 	}
 
-	exSecret.CreationTimestamp = secret.CreationTimestamp
-	exSecret.Labels = secret.Labels
-	exSecret.Annotations = secret.Annotations
+	xSecret.CreationTimestamp = secret.CreationTimestamp
+	xSecret.Labels = secret.Labels
+	xSecret.Annotations = secret.Annotations
 
-	exSecret.Status = secret.Status
-
-	exSecret.SyncStatus.State = func() t.SyncState {
+	xSecret.SyncStatus.State = func() t.SyncState {
 		if status == types.ResourceStatusDeleting {
 			return t.SyncStateDeletedAtAgent
 		}
 		return t.SyncStateUpdatedAtAgent
 	}()
-	exSecret.SyncStatus.Error = nil
-	exSecret.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+	xSecret.SyncStatus.Error = nil
+	xSecret.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
-	_, err = d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret)
+	_, err = d.secretRepo.UpdateById(ctx, xSecret.Id, xSecret)
 	return errors.NewE(err)
 }
 
-func (d *domain) OnSecretApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error {
-	exSecret, err2 := d.findSecret(ctx, namespace, name)
+func (d *domain) OnSecretApplyError(ctx ResourceContext, errMsg, name string, opts UpdateAndDeleteOpts) error {
+	exSecret, err2 := d.findSecret(ctx, name)
 	if err2 != nil {
 		return err2
 	}
@@ -208,15 +223,15 @@ func (d *domain) OnSecretApplyError(ctx ConsoleContext, errMsg, namespace, name 
 	return errors.NewE(err)
 }
 
-func (d *domain) ResyncSecret(ctx ConsoleContext, namespace, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) ResyncSecret(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
 
-	exSecret, err := d.findSecret(ctx, namespace, name)
+	secret, err := d.findSecret(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, exSecret.SyncStatus.Action, &exSecret.Secret, exSecret.RecordVersion)
+	return d.resyncK8sResource(ctx, secret.ProjectName, secret.SyncStatus.Action, &secret.Secret, secret.RecordVersion)
 }

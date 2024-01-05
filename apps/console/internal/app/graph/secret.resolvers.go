@@ -13,20 +13,23 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CreationTime is the resolver for the creationTime field.
 func (r *secretResolver) CreationTime(ctx context.Context, obj *entities.Secret) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilSecret
 	}
 	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
 
 // Data is the resolver for the data field.
 func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, errNilSecret
+	}
+
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Data, &m); err != nil {
 		return m, errors.NewE(err)
@@ -37,7 +40,7 @@ func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[st
 // ID is the resolver for the id field.
 func (r *secretResolver) ID(ctx context.Context, obj *entities.Secret) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilSecret
 	}
 	return string(obj.Id), nil
 }
@@ -53,13 +56,13 @@ func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (
 
 // Type is the resolver for the type field.
 func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*model.K8sIoAPICoreV1SecretType, error) {
-	return fn.New(model.K8sIoAPICoreV1SecretType(string(obj.Type))), nil
+	return fn.New(model.K8sIoAPICoreV1SecretType(obj.Type)), nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
 func (r *secretResolver) UpdateTime(ctx context.Context, obj *entities.Secret) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilSecret
 	}
 	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
 }
@@ -67,7 +70,7 @@ func (r *secretResolver) UpdateTime(ctx context.Context, obj *entities.Secret) (
 // Data is the resolver for the data field.
 func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
 	if obj == nil {
-		return errors.Newf("obj is nil")
+		return errNilSecret
 	}
 	return fn.JsonConversion(data, &obj.Data)
 }
@@ -75,11 +78,11 @@ func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data 
 // Metadata is the resolver for the metadata field.
 func (r *secretInResolver) Metadata(ctx context.Context, obj *entities.Secret, data *v1.ObjectMeta) error {
 	if data == nil {
-		return errors.Newf("data is nil")
+		return errors.Newf("object meta is nil")
 	}
 
 	if obj == nil {
-		return errors.Newf("obj is nil")
+		return errNilSecret
 	}
 
 	obj.ObjectMeta = *data
@@ -93,11 +96,11 @@ func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret,
 
 // Type is the resolver for the type field.
 func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *model.K8sIoAPICoreV1SecretType) error {
-	if data == nil {
-		return errors.Newf("secret type is nil")
+	if obj == nil {
+		return errNilSecret
 	}
-	obj.Type = corev1.SecretType(*data)
-	return nil
+
+	return fn.JsonConversion(data, &obj.Type)
 }
 
 // Secret returns generated.SecretResolver implementation.

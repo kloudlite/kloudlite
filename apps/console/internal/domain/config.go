@@ -4,62 +4,53 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
-func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
-	//
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) ListConfigs(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
-	filter := repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}
-
+	filter := ctx.DBFilters()
 	return d.configRepo.FindPaginated(ctx, d.configRepo.MergeMatchFilters(filter, search), pq)
 }
 
-func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
-	cfg, err := d.configRepo.FindOne(ctx, repos.Filter{
-		"clusterName":        ctx.ClusterName,
-		"accountName":        ctx.AccountName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
+func (d *domain) findConfig(ctx ResourceContext, name string) (*entities.Config, error) {
+	filters := ctx.DBFilters()
+	filters.Add("metadata.name", name)
+
+	cfg, err := d.configRepo.FindOne(ctx, filters)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 	if cfg == nil {
-		return nil, errors.Newf("no config with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no config with name (%q)", name)
 	}
 	return cfg, nil
 }
 
-func (d *domain) GetConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) GetConfig(ctx ResourceContext, name string) (*entities.Config, error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
-	return d.findConfig(ctx, namespace, name)
+	return d.findConfig(ctx, name)
 }
 
-// mutations
-
-func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
+func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	config.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &config.Config); err != nil {
-		return nil, errors.NewE(err)
-	}
+	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
+	// WARN: can not pre validate configmap, because it is not a CRD
+	//if err := d.k8sClient.ValidateObject(ctx, &config.ConfigMap); err != nil {
+	//	return nil, errors.NewE(err)
+	//}
 
 	config.IncrementRecordVersion()
-
 	config.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -68,10 +59,16 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	config.LastUpdatedBy = config.CreatedBy
 
 	config.AccountName = ctx.AccountName
-	config.ClusterName = ctx.ClusterName
+	config.ProjectName = ctx.ProjectName
+	config.EnvironmentName = ctx.EnvironmentName
+
 	config.SyncStatus = t.GenSyncStatus(t.SyncActionApply, config.RecordVersion)
 
-	c, err := d.configRepo.Create(ctx, &config)
+	if _, err := d.upsertResourceMapping(ctx, &config); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	cfg, err := d.configRepo.Create(ctx, &config)
 	if err != nil {
 		if d.configRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -80,61 +77,79 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &c.Config, c.RecordVersion); err != nil {
-		return c, errors.NewE(err)
+	if cfg.Labels == nil {
+		cfg.Labels = make(map[string]string)
 	}
 
-	return c, nil
+	for k, v := range types.ConfigWatchingLabel {
+		cfg.Labels[k] = v
+	}
+
+	if err := d.applyK8sResource(ctx, config.ProjectName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
+		return cfg, errors.NewE(err)
+	}
+
+	return cfg, nil
 }
 
-func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
+func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	config.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &config.Config); err != nil {
-		return nil, errors.NewE(err)
-	}
+	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
 
-	currConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
+	// WARN: can not pre validate configmap, because it is not a CRD
+	//if err := d.k8sClient.ValidateObject(ctx, &config.ConfigMap); err != nil {
+	//	return nil, errors.NewE(err)
+	//}
+
+	xconfig, err := d.findConfig(ctx, config.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	currConfig.IncrementRecordVersion()
+	xconfig.IncrementRecordVersion()
 
-	currConfig.LastUpdatedBy = common.CreatedOrUpdatedBy{
+	xconfig.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
-	currConfig.DisplayName = config.DisplayName
+	xconfig.DisplayName = config.DisplayName
 
-	currConfig.Labels = config.Labels
-	currConfig.Annotations = config.Annotations
-	currConfig.Data = config.Data
+	xconfig.Labels = config.Labels
+	xconfig.Annotations = config.Annotations
+	xconfig.Data = config.Data
 
-	currConfig.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currConfig.RecordVersion)
+	xconfig.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xconfig.RecordVersion)
 
-	upConfig, err := d.configRepo.UpdateById(ctx, currConfig.Id, currConfig)
+	upConfig, err := d.configRepo.UpdateById(ctx, xconfig.Id, xconfig)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &upConfig.Config, upConfig.RecordVersion); err != nil {
+	if upConfig.Labels == nil {
+		upConfig.Labels = make(map[string]string)
+	}
+
+	for k, v := range types.ConfigWatchingLabel {
+		upConfig.Labels[k] = v
+	}
+
+	if err := d.applyK8sResource(ctx, xconfig.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
 		return upConfig, errors.NewE(err)
 	}
 
 	return upConfig, nil
 }
 
-func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
 
-	c, err := d.findConfig(ctx, namespace, name)
+	c, err := d.findConfig(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -144,11 +159,17 @@ func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string)
 		return errors.NewE(err)
 	}
 
-	return d.deleteK8sResource(ctx, &c.Config)
+	if err := d.deleteK8sResource(ctx, c.ProjectName, &c.ConfigMap); err != nil {
+		if errors.Is(err, ErrNoClusterAttached) {
+			return d.configRepo.DeleteById(ctx, c.Id)
+		}
+		return errors.NewE(err)
+	}
+	return nil
 }
 
-func (d *domain) OnConfigApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error {
-	c, err := d.findConfig(ctx, namespace, name)
+func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, opts UpdateAndDeleteOpts) error {
+	c, err := d.findConfig(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -161,59 +182,57 @@ func (d *domain) OnConfigApplyError(ctx ConsoleContext, errMsg, namespace, name 
 	return errors.NewE(err)
 }
 
-func (d *domain) OnConfigDeleteMessage(ctx ConsoleContext, config entities.Config) error {
-	c, err := d.findConfig(ctx, config.Namespace, config.Name)
+func (d *domain) OnConfigDeleteMessage(ctx ResourceContext, config entities.Config) error {
+	c, err := d.findConfig(ctx, config.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(config.Annotations, c.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config, c.RecordVersion)
+		return d.resyncK8sResource(ctx, c.ProjectName, c.SyncStatus.Action, &c.ConfigMap, c.RecordVersion)
 	}
 
 	return d.configRepo.DeleteById(ctx, c.Id)
 }
 
-func (d *domain) OnConfigUpdateMessage(ctx ConsoleContext, config entities.Config, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	exConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
+func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, config entities.Config, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xconfig, err := d.findConfig(ctx, config.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(config.Annotations, exConfig.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, exConfig.SyncStatus.Action, &exConfig.Config, exConfig.RecordVersion)
+	if err := d.MatchRecordVersion(config.Annotations, xconfig.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, xconfig.ProjectName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
 	}
 
-	exConfig.CreationTimestamp = config.CreationTimestamp
-	exConfig.Labels = config.Labels
-	exConfig.Annotations = config.Annotations
-	exConfig.Generation = config.Generation
+	xconfig.CreationTimestamp = config.CreationTimestamp
+	xconfig.Labels = config.Labels
+	xconfig.Annotations = config.Annotations
+	xconfig.Generation = config.Generation
 
-	exConfig.Status = config.Status
-
-	exConfig.SyncStatus.State = func() t.SyncState {
+	xconfig.SyncStatus.State = func() t.SyncState {
 		if status == types.ResourceStatusDeleting {
 			return t.SyncStateDeletingAtAgent
 		}
 		return t.SyncStateUpdatedAtAgent
 	}()
-	exConfig.SyncStatus.RecordVersion = exConfig.RecordVersion
-	exConfig.SyncStatus.Error = nil
-	exConfig.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+	xconfig.SyncStatus.RecordVersion = xconfig.RecordVersion
+	xconfig.SyncStatus.Error = nil
+	xconfig.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 
-	_, err = d.configRepo.UpdateById(ctx, exConfig.Id, exConfig)
+	_, err = d.configRepo.UpdateById(ctx, xconfig.Id, xconfig)
 	return errors.NewE(err)
 }
 
-func (d *domain) ResyncConfig(ctx ConsoleContext, namespace, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+func (d *domain) ResyncConfig(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
 
-	c, err := d.findConfig(ctx, namespace, name)
+	cfg, err := d.findConfig(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config, c.RecordVersion)
+	return d.resyncK8sResource(ctx, cfg.ProjectName, cfg.SyncStatus.Action, &cfg.ConfigMap, cfg.RecordVersion)
 }
