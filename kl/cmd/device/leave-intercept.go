@@ -1,4 +1,4 @@
-package intercept
+package device
 
 import (
 	"errors"

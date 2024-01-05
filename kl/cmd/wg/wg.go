@@ -14,5 +14,4 @@ func init() {
 	Cmd.AddCommand(disconnectCmd)
 	Cmd.AddCommand(reconnectCmd)
 	Cmd.AddCommand(showCmd)
-	Cmd.AddCommand(exposeCmd)
 }

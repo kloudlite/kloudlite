@@ -17,8 +17,8 @@ const (
 )
 
 type Env struct {
-	Name          string `json:"name"`
-	IsEnvironment bool   `json:"isEnvironment"`
+	Name     string `json:"name"`
+	TargetNs string `json:"targetNamespace"`
 }
 
 type KLContext struct {

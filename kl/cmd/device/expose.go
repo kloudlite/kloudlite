@@ -1,4 +1,4 @@
-package wg
+package device
 
 import (
 	"errors"

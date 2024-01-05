@@ -280,218 +280,35 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 	return dev.Metadata.Name, nil
 }
 
-// func InterceptApp(devieId, appId string) error {
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	respData, err := klFetch("cli_interceptApp", map[string]any{
-// 		"deviceId": devieId,
-// 		"appId":    appId,
-// 	}, &cookie)
-//
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	var resp struct {
-// 		Inercepted bool `json:"data"`
-// 	}
-//
-// 	err = json.Unmarshal(respData, &resp)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	if resp.Inercepted {
-// 		return nil
-// 	}
+func UpdateDeviceNS(namespace string) error {
+	devName, err := EnsureDevice()
+	if err != nil {
+		return err
+	}
 
-// 	return errors.New("SOMETHING WENT WRONG... PLEASE TRY AGAIN")
-// }
+	clusterName, err := client.CurrentClusterName()
+	if err != nil {
+		return err
+	}
 
-// func CloseInterceptApp(appId string) error {
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	respData, err := klFetch("cli_closeIntercept", map[string]any{
-// 		"appId": appId,
-// 	}, &cookie)
-//
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	var resp struct {
-// 		Inercepted bool `json:"data"`
-// 	}
-//
-// 	err = json.Unmarshal(respData, &resp)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	if resp.Inercepted {
-// 		return nil
-// 	}
-//
-// 	return errors.New("SOMETHING WENT WRONG... PLEASE TRY AGAIN")
-// }
-//
-// func CreateDevice(deviceName string) error {
-//
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	accId, err := client.CurrentAccountName()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	_, err = klFetch("cli_createDevice", map[string]any{
-// 		"name":      deviceName,
-// 		"accountId": accId,
-// 	}, &cookie)
-//
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	return nil
-// }
-//
-// func UpdateDevice(ports []Port, region *string) error {
-//
-// 	if !(region != nil || len(ports) >= 1) {
-// 		return errors.New("nothing to change")
-// 	}
-//
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	deviceId, err := CurrentDeviceId()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	devices, err := GetDevices()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	var activeDevice *Device
-//
-// 	for i, d := range devices {
-// 		if d.Id == deviceId {
-// 			dv := devices[i]
-// 			activeDevice = &dv
-// 		}
-// 	}
-//
-// 	if activeDevice == nil {
-// 		return errors.New("selected device is not present in the selected account")
-// 	}
-//
-// 	if region != nil {
-// 		activeDevice.Region = *region
-// 	}
-//
-// 	if len(ports) >= 1 {
-// 		for _, p := range ports {
-// 			matched := false
-// 			for i, p2 := range activeDevice.Ports {
-// 				if p2.Port == p.Port {
-// 					matched = true
-// 					activeDevice.Ports[i] = p
-// 					break
-// 				}
-// 			}
-//
-// 			if !matched {
-// 				activeDevice.Ports = append(activeDevice.Ports, p)
-// 			}
-// 		}
-// 	}
-//
-// 	if region != nil || len(ports) >= 1 {
-// 		if _, err = klFetch("cli_updateDevice", map[string]any{
-// 			"deviceId": activeDevice.Id,
-// 			"name":     activeDevice.Name,
-// 			"region":   activeDevice.Region,
-// 			"ports":    activeDevice.Ports,
-// 		}, &cookie); err != nil {
-// 			return err
-// 		}
-// 	}
-//
-// 	return nil
-// }
-//
-// func DeleteDevicePort(ports []Port) error {
-//
-// 	if len(ports) == 0 {
-// 		return errors.New("nothing to change")
-// 	}
-//
-// 	cookie, err := getCookie()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	deviceId, err := CurrentDeviceId()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	devices, err := GetDevices()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	var activeDevice *Device
-//
-// 	for i, d := range devices {
-// 		if d.Id == deviceId {
-// 			dv := devices[i]
-// 			activeDevice = &dv
-// 		}
-// 	}
-//
-// 	if activeDevice == nil {
-// 		return errors.New("selected device is not present in the selected account")
-// 	}
-//
-// 	newPorts := make([]Port, 0)
-//
-// 	for _, p := range activeDevice.Ports {
-// 		matched := false
-// 		for _, p2 := range ports {
-// 			if p.Port == p2.Port {
-// 				matched = true
-// 				break
-// 			}
-// 		}
-//
-// 		if !matched {
-// 			newPorts = append(newPorts, p)
-// 		}
-// 	}
-//
-// 	if _, err = klFetch("cli_updateDevice", map[string]any{
-// 		"deviceId": activeDevice.Id,
-// 		"name":     activeDevice.Name,
-// 		"region":   activeDevice.Region,
-// 		"ports":    newPorts,
-// 	}, &cookie); err != nil {
-// 		return err
-// 	}
-//
-// 	return nil
-// }
+	cookie, err := getCookie()
+	if err != nil {
+		return err
+	}
+
+	respData, err := klFetch("cli_updateDeviceNs", map[string]any{
+		"clusterName": clusterName,
+		"deviceName":  devName,
+		"namespace":   namespace,
+	}, &cookie)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := GetFromResp[bool](respData); err != nil {
+		return err
+	}
+
+	return nil
+}

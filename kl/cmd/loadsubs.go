@@ -4,8 +4,8 @@ import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/cluster"
 	// "github.com/kloudlite/kl/cmd/create"
+	"github.com/kloudlite/kl/cmd/device"
 	"github.com/kloudlite/kl/cmd/get"
-	// "github.com/kloudlite/kl/cmd/intercept"
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/runner"
 	"github.com/kloudlite/kl/cmd/runner/add"
@@ -39,7 +39,7 @@ func init() {
 	rootCmd.AddCommand(runner.ShowCommand)
 
 	// rootCmd.AddCommand(intercept.Cmd)
-	// rootCmd.AddCommand(intercept.LeaveCmd)
+	rootCmd.AddCommand(device.Cmd)
 
 	rootCmd.AddCommand(add.Command)
 	// rootCmd.AddCommand(del.DeleteCommand)

@@ -1,16 +1,16 @@
-package intercept
+package device
 
 import (
 	"errors"
 	"fmt"
-	server2 "github.com/kloudlite/kl/domain/server"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
 )
 
-var Cmd = &cobra.Command{
+var interceptCmd = &cobra.Command{
 	Use:   "intercept",
 	Short: "intercept an app with your device",
 	Long: `Intercept app to tunnel your local
@@ -24,7 +24,7 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := triggerSelectApp(cmd, args)
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 
@@ -102,7 +102,7 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 	//	return "", errors.New("please provide an app name in the selected project")
 	//}
 
-	apps, err := server2.ListApps()
+	apps, err := server.ListApps()
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +118,7 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 
 	appName, err := fzf.FindOne(
 		apps,
-		func(item server2.App) string {
+		func(item server.App) string {
 			return item.Metadata.Name
 		},
 		fzf.WithPrompt("Select App >"),
