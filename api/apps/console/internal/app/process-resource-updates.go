@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
@@ -13,22 +15,42 @@ import (
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"strings"
 )
 
 type ResourceUpdateConsumer messaging.Consumer
+
+func newResourceContext(ctx domain.ConsoleContext, projectName string, environmentName string) domain.ResourceContext {
+	return domain.ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     projectName,
+		EnvironmentName: environmentName,
+	}
+}
 
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
 	projectGVK := fn.GVK("crds.kloudlite.io/v1", "Project")
 	appsGVK := fn.GVK("crds.kloudlite.io/v1", "App")
+	// workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Environment") //FIXME
 	workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Workspace")
 	imagePullSecretGVK := fn.GVK("crds.kloudlite.io/v1", "ImagePullSecret")
 	configGVK := fn.GVK("crds.kloudlite.io/v1", "Config")
 	secretGVK := fn.GVK("crds.kloudlite.io/v1", "Secret")
 	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
 	managedResourceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
+
+	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, obj.GetNamespace(), obj.GetName())
+		if err != nil {
+			return domain.ResourceContext{}, err
+		}
+		if mapping == nil {
+			return domain.ResourceContext{}, errors.Newf("mapping not found for %s %s/%s", rt, obj.GetNamespace(), obj.GetName())
+		}
+
+		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
+	}
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
 		logger := logger.WithKV("subject", msg.Subject)
@@ -70,7 +92,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			return nil
 		}
 
-		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName, ru.ClusterName)
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:console-resource-updater", ru.AccountName)
 
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
@@ -108,74 +130,100 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 		case workspaceGVK.String():
 			{
-				var ws entities.Workspace
+				var ws entities.Environment
 				if err := fn.JsonConversion(ru.Object, &ws); err != nil {
 					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnWorkspaceDeleteMessage(dctx, ws)
+					return d.OnEnvironmentDeleteMessage(dctx, ws)
 				}
-				return d.OnWorkspaceUpdateMessage(dctx, ws, resStatus, opts)
+				return d.OnEnvironmentUpdateMessage(dctx, ws, resStatus, opts)
 			}
 		case appsGVK.String():
 			{
-				var a entities.App
-				if err := fn.JsonConversion(ru.Object, &a); err != nil {
+				var app entities.App
+				if err := fn.JsonConversion(ru.Object, &app); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				if err != nil {
 					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnAppDeleteMessage(dctx, a)
+					return d.OnAppDeleteMessage(rctx, app)
 				}
-				return d.OnAppUpdateMessage(dctx, a, resStatus, opts)
+				return d.OnAppUpdateMessage(rctx, app, resStatus, opts)
 			}
 		case configGVK.String():
 			{
-				var c entities.Config
-				if err := fn.JsonConversion(ru.Object, &c); err != nil {
+				var config entities.Config
+				if err := fn.JsonConversion(ru.Object, &config); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				if err != nil {
 					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnConfigDeleteMessage(dctx, c)
+					return d.OnConfigDeleteMessage(rctx, config)
 				}
-				return d.OnConfigUpdateMessage(dctx, c, resStatus, opts)
+				return d.OnConfigUpdateMessage(rctx, config, resStatus, opts)
 			}
 		case secretGVK.String():
 			{
-				var s entities.Secret
-				if err := fn.JsonConversion(ru.Object, &s); err != nil {
+				var secret entities.Secret
+				if err := fn.JsonConversion(ru.Object, &secret); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				if err != nil {
 					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnSecretDeleteMessage(dctx, s)
+					return d.OnSecretDeleteMessage(rctx, secret)
 				}
-				return d.OnSecretUpdateMessage(dctx, s, resStatus, opts)
+				return d.OnSecretUpdateMessage(rctx, secret, resStatus, opts)
 			}
 		case imagePullSecretGVK.String():
 			{
-				var s entities.ImagePullSecret
-				if err := fn.JsonConversion(ru.Object, &s); err != nil {
+				var ips entities.ImagePullSecret
+				if err := fn.JsonConversion(ru.Object, &ips); err != nil {
+					return errors.NewE(err)
+				}
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				if err != nil {
 					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnImagePullSecretDeleteMessage(dctx, s)
+					return d.OnImagePullSecretDeleteMessage(rctx, ips)
 				}
-				return d.OnImagePullSecretUpdateMessage(dctx, s, resStatus, opts)
+				return d.OnImagePullSecretUpdateMessage(rctx, ips, resStatus, opts)
 			}
 		case routerGVK.String():
 			{
-				var r entities.Router
-				if err := fn.JsonConversion(ru.Object, &r); err != nil {
+				var router entities.Router
+				if err := fn.JsonConversion(ru.Object, &router); err != nil {
 					return errors.NewE(err)
 				}
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnRouterDeleteMessage(dctx, r)
+
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				if err != nil {
+					return errors.NewE(err)
 				}
-				return d.OnRouterUpdateMessage(dctx, r, resStatus, opts)
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnRouterDeleteMessage(rctx, router)
+				}
+				return d.OnRouterUpdateMessage(rctx, router, resStatus, opts)
 			}
 		case managedResourceGVK.String():
 			{
@@ -184,10 +232,15 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnManagedResourceDeleteMessage(dctx, mres)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				if err != nil {
+					return errors.NewE(err)
 				}
-				return d.OnManagedResourceUpdateMessage(dctx, mres, resStatus, opts)
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnManagedResourceDeleteMessage(rctx, mres)
+				}
+				return d.OnManagedResourceUpdateMessage(rctx, mres, resStatus, opts)
 			}
 		}
 

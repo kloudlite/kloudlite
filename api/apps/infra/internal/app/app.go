@@ -18,9 +18,9 @@ import (
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
@@ -28,7 +28,7 @@ import (
 	"go.uber.org/fx"
 )
 
-type AuthCacheClient cache.Client
+type AuthCacheClient kv.Client
 
 type (
 	IAMGrpcClient                   grpc.Client
@@ -158,7 +158,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, sessionRepo cache.Repo[*common.AuthSession], env *env.Env) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], env *env.Env) {
 			config := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			config.Directives.IsLoggedIn = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {

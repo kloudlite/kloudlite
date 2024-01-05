@@ -1,7 +1,6 @@
-type Workspace @shareable {
+type Environment @shareable {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -18,18 +17,18 @@ type Workspace @shareable {
   updateTime: Date!
 }
 
-type WorkspaceEdge @shareable {
+type EnvironmentEdge @shareable {
   cursor: String!
-  node: Workspace!
+  node: Environment!
 }
 
-type WorkspacePaginatedRecords @shareable {
-  edges: [WorkspaceEdge!]!
+type EnvironmentPaginatedRecords @shareable {
+  edges: [EnvironmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input WorkspaceIn {
+input EnvironmentIn {
   displayName: String!
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn

@@ -34,18 +34,19 @@ tasks:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
           --struct github.com/kloudlite/api/apps/console/internal/entities.Project
-          --struct github.com/kloudlite/api/apps/console/internal/entities.Workspace
+          --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
           --struct github.com/kloudlite/api/apps/console/internal/entities.App
           --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
           --struct github.com/kloudlite/api/apps/console/internal/entities.Config
           --struct github.com/kloudlite/api/apps/console/internal/entities.Router
           --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
+          --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Workspace,App,Secret,Config,Router,ManagedResource
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,App,Secret,Config,Router,ManagedResource,ImagePullSecret
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -56,9 +57,6 @@ tasks:
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}

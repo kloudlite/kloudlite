@@ -6,45 +6,34 @@ package graph
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CreationTime is the resolver for the creationTime field.
 func (r *imagePullSecretResolver) CreationTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("obj is nil")
+		return "", errNilImagePullSecret
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
 
-// DockerConfigJSON is the resolver for the dockerConfigJson field.
-func (r *imagePullSecretResolver) DockerConfigJSON(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(errors.Newf("not implemented: DockerConfigJSON - dockerConfigJson"))
-}
-
-// DockerPassword is the resolver for the dockerPassword field.
-func (r *imagePullSecretResolver) DockerPassword(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(errors.Newf("not implemented: DockerPassword - dockerPassword"))
-}
-
-// DockerRegistryEndpoint is the resolver for the dockerRegistryEndpoint field.
-func (r *imagePullSecretResolver) DockerRegistryEndpoint(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(errors.Newf("not implemented: DockerRegistryEndpoint - dockerRegistryEndpoint"))
-}
-
-// DockerUsername is the resolver for the dockerUsername field.
-func (r *imagePullSecretResolver) DockerUsername(ctx context.Context, obj *entities.ImagePullSecret) (*string, error) {
-	panic(errors.Newf("not implemented: DockerUsername - dockerUsername"))
+// Format is the resolver for the format field.
+func (r *imagePullSecretResolver) Format(ctx context.Context, obj *entities.ImagePullSecret) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat, error) {
+	if obj == nil {
+		return "", errNilImagePullSecret
+	}
+	return model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(obj.Format), nil
 }
 
 // ID is the resolver for the id field.
 func (r *imagePullSecretResolver) ID(ctx context.Context, obj *entities.ImagePullSecret) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("obj is nil")
+		return "", errNilImagePullSecret
 	}
 	return string(obj.Id), nil
 }
@@ -52,29 +41,32 @@ func (r *imagePullSecretResolver) ID(ctx context.Context, obj *entities.ImagePul
 // UpdateTime is the resolver for the updateTime field.
 func (r *imagePullSecretResolver) UpdateTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("obj is nil")
+		return "", errNilImagePullSecret
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
-// DockerConfigJSON is the resolver for the dockerConfigJson field.
-func (r *imagePullSecretInResolver) DockerConfigJSON(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(errors.Newf("not implemented: DockerConfigJSON - dockerConfigJson"))
+// Format is the resolver for the format field.
+func (r *imagePullSecretInResolver) Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) error {
+	if obj == nil {
+		return errNilImagePullSecret
+	}
+
+	obj.Format = entities.ImagePullSecretFormat(data)
+	return nil
 }
 
-// DockerPassword is the resolver for the dockerPassword field.
-func (r *imagePullSecretInResolver) DockerPassword(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(errors.Newf("not implemented: DockerPassword - dockerPassword"))
-}
+// Metadata is the resolver for the metadata field.
+func (r *imagePullSecretInResolver) Metadata(ctx context.Context, obj *entities.ImagePullSecret, data *v1.ObjectMeta) error {
+	if obj == nil {
+		return errNilImagePullSecret
+	}
 
-// DockerRegistryEndpoint is the resolver for the dockerRegistryEndpoint field.
-func (r *imagePullSecretInResolver) DockerRegistryEndpoint(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(errors.Newf("not implemented: DockerRegistryEndpoint - dockerRegistryEndpoint"))
-}
+	if data != nil {
+		obj.ObjectMeta = *data
+	}
 
-// DockerUsername is the resolver for the dockerUsername field.
-func (r *imagePullSecretInResolver) DockerUsername(ctx context.Context, obj *entities.ImagePullSecret, data *string) error {
-	panic(errors.Newf("not implemented: DockerUsername - dockerUsername"))
+	return nil
 }
 
 // ImagePullSecret returns generated.ImagePullSecretResolver implementation.

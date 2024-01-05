@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kloudlite/api/pkg/cache"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 const userContextKey = "__local_user_context__"
 
 func NewSessionMiddleware(
-	repo cache.Repo[*common.AuthSession],
+	repo kv.Repo[*common.AuthSession],
 	cookieName string,
 	cookieDomain string,
 	sessionKeyPrefix string,
@@ -35,7 +35,7 @@ func NewSessionMiddleware(
 			var get any
 			get, err := repo.Get(ctx.Context(), key)
 			if err != nil {
-				if !repo.ErrNoRecord(err) {
+				if !errors.Is(err, kv.ErrKeyNotFound) {
 					return errors.NewE(err)
 				}
 			}

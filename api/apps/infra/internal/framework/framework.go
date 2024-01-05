@@ -7,10 +7,10 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/app"
 	"github.com/kloudlite/api/apps/infra/internal/env"
 	"github.com/kloudlite/api/common"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/nats"
 
@@ -53,9 +53,9 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (cache.Repo[*common.AuthSession], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
 			cxt := context.TODO()
-			return cache.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+			return kv.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
 
@@ -107,10 +107,10 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-  fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
-    corsOrigins := "https://studio.apollographql.com"
-    return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
-  }),
+	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
+	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
 		lf.Append(fx.Hook{

@@ -57,91 +57,6 @@ variables:
   #   sortBy: ASC
 ---
 
-label: List Projects web
-query: |+
-  query Core_listProjects(
-      $clusterName: String
-      $pagination: CursorPaginationIn
-      $search: SearchProjects
-    ) {
-      core_listProjects(
-        clusterName: $clusterName
-        pq: $pagination
-        search: $search
-      ) {
-        totalCount
-        edges {
-          node {
-            id
-            displayName
-            creationTime
-            clusterName
-            apiVersion
-            kind
-            metadata {
-              namespace
-              name
-              labels
-              deletionTimestamp
-              generation
-              creationTimestamp
-              annotations
-            }
-            recordVersion
-            spec {
-              targetNamespace
-              logo
-              displayName
-              clusterName
-              accountName
-            }
-            status {
-              resources {
-                name
-                kind
-                apiVersion
-                namespace
-              }
-              message {
-                RawMessage
-              }
-              lastReconcileTime
-              isReady
-              checks
-            }
-            syncStatus {
-              syncScheduledAt
-              state
-              recordVersion
-              lastSyncedAt
-              error
-              action
-            }
-            updateTime
-            accountName
-          }
-        }
-        pageInfo {
-          startCursor
-          hasNextPage
-          endCursor
-          hasPreviousPage
-        }
-      }
-    }
-
-variables:
-  search:
-    # markedForDeletion:
-    #   matchType: exact
-    #   exact: false
-    isReady:
-      matchType: exact
-      exact: true
-
-
----
-
 label: Get Project
 query: |+
   query Core_getProject($name: String!) {
@@ -153,11 +68,17 @@ query: |+
         accountName
         targetNamespace
       }
+      syncStatus {
+        state
+        action
+        error
+        recordVersion
+        lastSyncedAt
+      }
     }
   }
 variables:
   name: "{{.name}}"
-  # name: "sample123"
 ---
 
 label: Create Project

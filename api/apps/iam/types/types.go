@@ -9,7 +9,6 @@ const (
 	ResourceProject ResourceType = "project"
 
 	ResourceEnvironment ResourceType = "environment"
-	ResourceWorkspace   ResourceType = "workspace"
 	ResourceVPNDevice   ResourceType = "vpn_device"
 )
 
@@ -117,15 +116,6 @@ const (
 
 	MutateResourcesInEnvironment Action = "mutate-resources-in-environment"
 	ReadResourcesInEnvironment   Action = "read-resources-in-environment"
-
-	CreateWorkspace Action = "create-workspace"
-	UpdateWorkspace Action = "update-workspace"
-	DeleteWorkspace Action = "delete-workspace"
-	GetWorkspace    Action = "get-workspace"
-	ListWorkspaces  Action = "list-workspaces"
-
-	MutateResourcesInWorkspace Action = "mutate-resources-in-workspace"
-	ReadResourcesInWorkspace   Action = "read-resources-in-workspace"
 
 	ListVPNDevices  Action = "list-vpn-devices"
 	GetVPNDevice    Action = "get-vpn-device"

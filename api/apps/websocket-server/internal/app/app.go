@@ -8,14 +8,14 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
 )
 
-type AuthCacheClient cache.Client
+type AuthCacheClient kv.Client
 
 type AuthClient grpc.Client
 
@@ -36,7 +36,7 @@ var Module = fx.Module("app",
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, env *env.Env,
 			logr logging.Logger,
-			sessionRepo cache.Repo[*common.AuthSession],
+			sessionRepo kv.Repo[*common.AuthSession],
 		) {
 
 			a := server.Raw()

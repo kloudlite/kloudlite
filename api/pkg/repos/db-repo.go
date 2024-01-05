@@ -26,6 +26,11 @@ type Entity interface {
 type Opts map[string]interface{}
 type SortOpts map[string]int32
 type Filter map[string]interface{}
+
+func (f *Filter) Add(key string, value interface{}) {
+	(*f)[key] = value
+}
+
 type Query struct {
 	Filter Filter
 	Sort   map[string]interface{}

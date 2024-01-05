@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/kloudlite/api/pkg/cache"
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/kv"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
 
@@ -77,9 +77,9 @@ var Module = fx.Module("app",
 		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
 			Stream: ev.EventsNatsStream,
 			ConsumerConfig: msg_nats.ConsumerConfig{
-				Name:           consumerName,
-				Durable:        consumerName,
-				Description:    "this consumer reads message from a subject dedicated to errors, that occurred when the resource was applied at the agent",
+				Name:        consumerName,
+				Durable:     consumerName,
+				Description: "this consumer reads message from a subject dedicated to errors, that occurred when the resource was applied at the agent",
 				FilterSubjects: []string{
 					topic,
 				},
@@ -88,7 +88,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, consumer GitWebhookConsumer, d domain.Domain, logr logging.Logger) {
-			lf.Append(fx.Hook{
+		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				go func() {
 					err := processGitWebhooks(ctx, d, consumer, logr)
@@ -101,7 +101,8 @@ var Module = fx.Module("app",
 			OnStop: func(ctx context.Context) error {
 				return nil
 			},
-		})	}),
+		})
+	}),
 
 	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) BuildRunProducer {
 		return msg_nats.NewJetstreamProducer(jc)
@@ -174,8 +175,6 @@ var Module = fx.Module("app",
 		return NewResourceEventPublisher(cli, logger)
 	}),
 
-
-
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
 			return iam.NewIAMClient(conn)
@@ -196,7 +195,7 @@ var Module = fx.Module("app",
 	fxGitlab[*venv](),
 
 	fx.Invoke(
-		func(server httpServer.Server, d domain.Domain, sessionRepo cache.Repo[*common.AuthSession], ev *env.Env) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {

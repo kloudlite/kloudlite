@@ -191,7 +191,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe @shareable 
 type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec @shareable {
   isEnvironment: Boolean
   projectName: String!
-  targetNamespace: String!
+  targetNamespace: String
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -419,7 +419,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
 input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
   isEnvironment: Boolean
   projectName: String!
-  targetNamespace: String!
+  targetNamespace: String
 }
 
 input K8s__io___api___core___v1__TolerationIn {
@@ -435,6 +435,11 @@ input MetadataIn {
   labels: Map
   name: String!
   namespace: String
+}
+
+enum Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat {
+  dockerConfigJson
+  params
 }
 
 enum Github__com___kloudlite___api___pkg___types__SyncAction {

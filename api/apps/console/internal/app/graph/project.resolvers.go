@@ -19,7 +19,7 @@ import (
 // CreationTime is the resolver for the creationTime field.
 func (r *projectResolver) CreationTime(ctx context.Context, obj *entities.Project) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilProject
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
 }
@@ -27,13 +27,17 @@ func (r *projectResolver) CreationTime(ctx context.Context, obj *entities.Projec
 // ID is the resolver for the id field.
 func (r *projectResolver) ID(ctx context.Context, obj *entities.Project) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilProject
 	}
 	return string(obj.Id), nil
 }
 
 // Spec is the resolver for the spec field.
 func (r *projectResolver) Spec(ctx context.Context, obj *entities.Project) (*model.GithubComKloudliteOperatorApisCrdsV1ProjectSpec, error) {
+	if obj == nil {
+		return nil, errNilProject
+	}
+
 	m := &model.GithubComKloudliteOperatorApisCrdsV1ProjectSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, errors.NewE(err)
@@ -44,21 +48,28 @@ func (r *projectResolver) Spec(ctx context.Context, obj *entities.Project) (*mod
 // UpdateTime is the resolver for the updateTime field.
 func (r *projectResolver) UpdateTime(ctx context.Context, obj *entities.Project) (string, error) {
 	if obj == nil {
-		return "", errors.Newf("resource is nil")
+		return "", errNilProject
 	}
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
 // Metadata is the resolver for the metadata field.
 func (r *projectInResolver) Metadata(ctx context.Context, obj *entities.Project, data *v1.ObjectMeta) error {
-	obj.ObjectMeta = *data
+	if obj == nil {
+		return errNilProject
+	}
+
+	if data != nil {
+		obj.ObjectMeta = *data
+	}
+
 	return nil
 }
 
 // Spec is the resolver for the spec field.
 func (r *projectInResolver) Spec(ctx context.Context, obj *entities.Project, data *model.GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn) error {
 	if obj == nil {
-		return errors.Newf("resource is nil")
+		return errNilProject
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }

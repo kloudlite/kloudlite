@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
@@ -18,7 +19,40 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 )
 
-// query
+func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string) (*string, error) {
+	clusterName, err := d.projectClusterMap.Get(ctx, projectName)
+
+	if err != nil {
+		if !errors.Is(err, kv.ErrKeyNotFound) {
+			return nil, err
+		}
+
+		proj, err := d.projectRepo.FindOne(ctx, repos.Filter{
+			"accountName":   ctx.GetAccountName(),
+			"metadata.name": projectName,
+		})
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+		if proj == nil {
+			return nil, errors.Newf("no cluster attached to project")
+		}
+
+		defer func() {
+			if err := d.projectClusterMap.Set(ctx, projectName, []byte(fn.DefaultIfNil(proj.ClusterName))); err != nil {
+				d.logger.Infof("failed to set project cluster map: %v", err)
+			}
+		}()
+
+		return proj.ClusterName, nil
+	}
+
+	if clusterName == nil {
+		return nil, nil
+	}
+
+	return fn.New(string(clusterName)), nil
+}
 
 func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
@@ -48,7 +82,6 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
 		"accountName":   ctx.AccountName,
-		"clusterName":   ctx.ClusterName,
 		"metadata.name": name,
 	})
 	if err != nil {
@@ -63,7 +96,6 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
 		"accountName":          ctx.AccountName,
-		"clusterName":          ctx.ClusterName,
 		"spec.targetNamespace": targetNamespace,
 	})
 	if err != nil {
@@ -128,11 +160,9 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	project.LastUpdatedBy = project.CreatedBy
 
 	project.AccountName = ctx.AccountName
-	project.ClusterName = ctx.ClusterName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
 
 	project.Spec.AccountName = ctx.AccountName
-	project.Spec.ClusterName = ctx.ClusterName
 	if project.Spec.TargetNamespace == "" {
 		project.Spec.TargetNamespace = fmt.Sprintf("prj-%s", project.Name)
 	}
@@ -148,10 +178,13 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	d.resourceEventPublisher.PublishProjectEvent(prj, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, &corev1.Namespace{
+	if err := d.applyK8sResource(ctx, prj.Name, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: prj.Spec.TargetNamespace,
+			Annotations: map[string]string{
+				constants.DescriptionKey: "This namespace is managed (created/updated/deleted) by kloudlite.io control plane. This namespace belongs to a project",
+			},
 			Labels: map[string]string{
 				constants.ProjectNameKey: prj.Name,
 			},
@@ -160,30 +193,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &prj.Project, prj.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, prj.Name, &prj.Project, prj.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
-	}
-
-	defaultWs := entities.Workspace{
-		Workspace: crdsv1.Workspace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:       d.envVars.DefaultProjectWorkspaceName,
-				Namespace:  project.Spec.TargetNamespace,
-				Generation: 1,
-			},
-			Spec: crdsv1.WorkspaceSpec{
-				ProjectName:     project.Name,
-				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectWorkspaceName),
-			},
-		},
-		AccountName: ctx.AccountName,
-		ClusterName: ctx.ClusterName,
-	}
-
-	if _, err = d.findWorkspace(ctx, defaultWs.Namespace, defaultWs.Name); err != nil {
-		if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
-			return nil, errors.NewE(err)
-		}
 	}
 
 	return prj, nil
@@ -216,7 +227,7 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 	}
 	d.resourceEventPublisher.PublishProjectEvent(prj, PublishUpdate)
 
-	return d.deleteK8sResource(ctx, &prj.Project)
+	return d.deleteK8sResource(ctx, prj.Name, &prj.Project)
 }
 
 func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
@@ -241,34 +252,34 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errors.NewE(err)
 	}
 
-	exProject, err := d.findProject(ctx, project.Name)
+	xProject, err := d.findProject(ctx, project.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if exProject.GetDeletionTimestamp() != nil {
+	if xProject.GetDeletionTimestamp() != nil {
 		return nil, errAlreadyMarkedForDeletion("project", "", project.Name)
 	}
 
-	exProject.IncrementRecordVersion()
+	xProject.IncrementRecordVersion()
 
-	exProject.LastUpdatedBy = common.CreatedOrUpdatedBy{
+	xProject.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
-	exProject.DisplayName = project.DisplayName
+	xProject.DisplayName = project.DisplayName
 
-	exProject.Spec = project.Spec
-	exProject.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exProject.RecordVersion)
+	xProject.Spec = project.Spec
+	xProject.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xProject.RecordVersion)
 
-	upProject, err := d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
+	upProject, err := d.projectRepo.UpdateById(ctx, xProject.Id, xProject)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishProjectEvent(upProject, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, &upProject.Project, upProject.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upProject.Name, &upProject.Project, upProject.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -282,7 +293,7 @@ func (d *domain) OnProjectDeleteMessage(ctx ConsoleContext, project entities.Pro
 	}
 
 	if err := d.MatchRecordVersion(project.Annotations, p.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project, p.RecordVersion)
+		return d.resyncK8sResource(ctx, p.Name, p.SyncStatus.Action, &p.Project, p.RecordVersion)
 	}
 
 	err = d.projectRepo.DeleteById(ctx, p.Id)
@@ -322,7 +333,7 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 
 	_, err = d.projectRepo.UpdateById(ctx, proj.Id, proj)
 	if err != nil {
-	  return errors.NewE(err)
+		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishProjectEvent(proj, PublishUpdate)
 	return nil
@@ -358,22 +369,25 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 		return errors.Newf("unauthorized to update project %q", name)
 	}
 
-	p, err := d.findProject(ctx, name)
+	project, err := d.findProject(ctx, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.resyncK8sResource(ctx, t.SyncActionApply, &corev1.Namespace{
+	if err := d.resyncK8sResource(ctx, project.Name, project.SyncStatus.Action, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Spec.TargetNamespace,
+			Name: project.Spec.TargetNamespace,
+			Annotations: map[string]string{
+				constants.DescriptionKey: "This namespace is managed (created/updated/deleted) by kloudlite.io control plane. This namespace belongs to a project",
+			},
 			Labels: map[string]string{
-				constants.ProjectNameKey: p.Name,
+				constants.ProjectNameKey: project.Name,
 			},
 		},
 	}, 0); err != nil {
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project, p.RecordVersion)
+	return d.resyncK8sResource(ctx, project.Name, project.SyncStatus.Action, &project.Project, project.RecordVersion)
 }
