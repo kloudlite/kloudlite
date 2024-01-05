@@ -1347,6 +1347,11 @@ type PersistentVolumePaginatedRecords struct {
 	TotalCount int                     `json:"totalCount"`
 }
 
+type Port struct {
+	Port       *int `json:"port,omitempty"`
+	TargetPort *int `json:"targetPort,omitempty"`
+}
+
 type SearchCluster struct {
 	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`

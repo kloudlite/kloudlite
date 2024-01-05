@@ -20,10 +20,11 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -1003,6 +1004,7 @@ type ComplexityRoot struct {
 		InfraUpdateNodePool              func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraUpdateProviderSecret        func(childComplexity int, secret entities.CloudProviderSecret) int
 		InfraUpdateVPNDevice             func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
+		InfraUpdateVPNDevicePorts        func(childComplexity int, clusterName string, deviceName string, ports []*v1.Port) int
 	}
 
 	Namespace struct {
@@ -1154,6 +1156,11 @@ type ComplexityRoot struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
 		TotalCount func(childComplexity int) int
+	}
+
+	Port struct {
+		Port       func(childComplexity int) int
+		TargetPort func(childComplexity int) int
 	}
 
 	Query struct {
@@ -1319,11 +1326,11 @@ type HelmReleaseResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.HelmRelease) (string, error)
 }
 type MetadataResolver interface {
-	Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
-	CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error)
-	DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error)
+	Annotations(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
+	CreationTimestamp(ctx context.Context, obj *v11.ObjectMeta) (string, error)
+	DeletionTimestamp(ctx context.Context, obj *v11.ObjectMeta) (*string, error)
 
-	Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
+	Labels(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
 }
 type MutationResolver interface {
 	InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error)
@@ -1340,6 +1347,7 @@ type MutationResolver interface {
 	InfraDeleteNodePool(ctx context.Context, clusterName string, poolName string) (bool, error)
 	InfraCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
 	InfraUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
+	InfraUpdateVPNDevicePorts(ctx context.Context, clusterName string, deviceName string, ports []*v1.Port) (bool, error)
 	InfraDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error)
 	InfraCreateClusterManagedService(ctx context.Context, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	InfraUpdateClusterManagedService(ctx context.Context, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
@@ -1447,44 +1455,44 @@ type CloudProviderSecretInResolver interface {
 	Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentialsIn) error
 	CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret, data model.GithubComKloudliteOperatorApisCommonTypesCloudProvider) error
 
-	Metadata(ctx context.Context, obj *entities.CloudProviderSecret, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.CloudProviderSecret, data *v11.ObjectMeta) error
 }
 type ClusterInResolver interface {
-	Metadata(ctx context.Context, obj *entities.Cluster, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Cluster, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.Cluster, data *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn) error
 }
 type ClusterManagedServiceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.ClusterManagedService, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.ClusterManagedService, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.ClusterManagedService, data *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn) error
 }
 type HelmReleaseInResolver interface {
-	Metadata(ctx context.Context, obj *entities.HelmRelease, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.HelmRelease, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.HelmRelease, data *model.GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn) error
 }
 type MetadataInResolver interface {
-	Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
-	Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
+	Annotations(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
+	Labels(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
 }
 type NamespaceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.Namespace, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Namespace, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.Namespace, data *model.K8sIoAPICoreV1NamespaceSpecIn) error
 	Status(ctx context.Context, obj *entities.Namespace, data *model.K8sIoAPICoreV1NamespaceStatusIn) error
 }
 type NodePoolInResolver interface {
-	Metadata(ctx context.Context, obj *entities.NodePool, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.NodePool, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.NodePool, data *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn) error
 }
 type PersistentVolumeInResolver interface {
-	Metadata(ctx context.Context, obj *entities.PersistentVolume, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.PersistentVolume, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.PersistentVolume, data *model.K8sIoAPICoreV1PersistentVolumeSpecIn) error
 	Status(ctx context.Context, obj *entities.PersistentVolume, data *model.K8sIoAPICoreV1PersistentVolumeStatusIn) error
 }
 type VPNDeviceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.VPNDevice, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.VPNDevice, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.VPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error
 }
 type VolumeAttachmentInResolver interface {
-	Metadata(ctx context.Context, obj *entities.VolumeAttachment, data *v1.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.VolumeAttachment, data *v11.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.VolumeAttachment, data *model.K8sIoAPIStorageV1VolumeAttachmentSpecIn) error
 	Status(ctx context.Context, obj *entities.VolumeAttachment, data *model.K8sIoAPIStorageV1VolumeAttachmentStatusIn) error
 }
@@ -5592,6 +5600,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraUpdateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
 
+	case "Mutation.infra_updateVPNDevicePorts":
+		if e.complexity.Mutation.InfraUpdateVPNDevicePorts == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateVPNDevicePorts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateVPNDevicePorts(childComplexity, args["clusterName"].(string), args["deviceName"].(string), args["ports"].([]*v1.Port)), true
+
 	case "Namespace.apiVersion":
 		if e.complexity.Namespace.APIVersion == nil {
 			break
@@ -6313,6 +6333,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PersistentVolumePaginatedRecords.TotalCount(childComplexity), true
 
+	case "Port.port":
+		if e.complexity.Port.Port == nil {
+			break
+		}
+
+		return e.complexity.Port.Port(childComplexity), true
+
+	case "Port.targetPort":
+		if e.complexity.Port.TargetPort == nil {
+			break
+		}
+
+		return e.complexity.Port.TargetPort(childComplexity), true
+
 	case "Query.infra_checkAwsAccess":
 		if e.complexity.Query.InfraCheckAwsAccess == nil {
 			break
@@ -7033,6 +7067,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNodeIn,
 		ec.unmarshalInputNodePoolIn,
 		ec.unmarshalInputPersistentVolumeIn,
+		ec.unmarshalInputPortIn,
 		ec.unmarshalInputSearchCluster,
 		ec.unmarshalInputSearchClusterManagedService,
 		ec.unmarshalInputSearchDomainEntry,
@@ -7250,6 +7285,9 @@ type Mutation {
 
     infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
     infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+
+    infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
+
     infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
@@ -9068,6 +9106,17 @@ type PersistentVolumeClaimPaginatedRecords @shareable {
 }
 
 `, BuiltIn: false},
+	{Name: "../struct-to-graphql/port.graphqls", Input: `type Port @shareable {
+  port: Int
+  targetPort: Int
+}
+
+input PortIn {
+  port: Int
+  targetPort: Int
+}
+
+`, BuiltIn: false},
 	{Name: "../struct-to-graphql/scalars.graphqls", Input: `scalar Any
 scalar Json
 scalar Map
@@ -9146,7 +9195,6 @@ input VPNDeviceIn {
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
-
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	scalar _Any
@@ -9575,6 +9623,39 @@ func (ec *executionContext) field_Mutation_infra_updateProviderSecret_args(ctx c
 		}
 	}
 	args["secret"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateVPNDevicePorts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg1
+	var arg2 []*v1.Port
+	if tmp, ok := rawArgs["ports"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ports"))
+		arg2, err = ec.unmarshalNPortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPortᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ports"] = arg2
 	return args, nil
 }
 
@@ -10923,7 +11004,7 @@ func (ec *executionContext) _CloudProviderSecret_metadata(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -11742,7 +11823,7 @@ func (ec *executionContext) _Cluster_metadata(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -12700,7 +12781,7 @@ func (ec *executionContext) _ClusterManagedService_metadata(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -23153,7 +23234,7 @@ func (ec *executionContext) _HelmRelease_metadata(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -34607,7 +34688,7 @@ func (ec *executionContext) fieldContext_MatchFilter_regex(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_annotations(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_annotations(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_annotations(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -34648,7 +34729,7 @@ func (ec *executionContext) fieldContext_Metadata_annotations(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_creationTimestamp(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -34692,7 +34773,7 @@ func (ec *executionContext) fieldContext_Metadata_creationTimestamp(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -34733,7 +34814,7 @@ func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_generation(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_generation(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_generation(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -34777,7 +34858,7 @@ func (ec *executionContext) fieldContext_Metadata_generation(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_labels(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -34818,7 +34899,7 @@ func (ec *executionContext) fieldContext_Metadata_labels(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -34862,7 +34943,7 @@ func (ec *executionContext) fieldContext_Metadata_name(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_namespace(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -36469,6 +36550,87 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateVPNDevice(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_infra_updateVPNDevicePorts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_updateVPNDevicePorts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraUpdateVPNDevicePorts(rctx, fc.Args["clusterName"].(string), fc.Args["deviceName"].(string), fc.Args["ports"].([]*v1.Port))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_updateVPNDevicePorts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_updateVPNDevicePorts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_infra_deleteVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_infra_deleteVPNDevice(ctx, field)
 	if err != nil {
@@ -37636,7 +37798,7 @@ func (ec *executionContext) _Namespace_metadata(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -38506,7 +38668,7 @@ func (ec *executionContext) _Node_metadata(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -39529,7 +39691,7 @@ func (ec *executionContext) _NodePool_metadata(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -40736,7 +40898,7 @@ func (ec *executionContext) _PersistentVolume_metadata(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -41398,7 +41560,7 @@ func (ec *executionContext) _PersistentVolumeClaim_metadata(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -42216,6 +42378,88 @@ func (ec *executionContext) _PersistentVolumePaginatedRecords_totalCount(ctx con
 func (ec *executionContext) fieldContext_PersistentVolumePaginatedRecords_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PersistentVolumePaginatedRecords",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Port_port(ctx context.Context, field graphql.CollectedField, obj *model.Port) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Port_port(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Port, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Port_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Port",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Port_targetPort(ctx context.Context, field graphql.CollectedField, obj *model.Port) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Port_targetPort(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetPort, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Port_targetPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Port",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -45332,7 +45576,7 @@ func (ec *executionContext) _VPNDevice_metadata(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -46413,7 +46657,7 @@ func (ec *executionContext) _VolumeAttachment_metadata(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v1.ObjectMeta)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -53178,8 +53422,8 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj interface{}) (v1.ObjectMeta, error) {
-	var it v1.ObjectMeta
+func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj interface{}) (v11.ObjectMeta, error) {
+	var it v11.ObjectMeta
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -53420,6 +53664,42 @@ func (ec *executionContext) unmarshalInputPersistentVolumeIn(ctx context.Context
 				return it, err
 			}
 			if err = ec.resolvers.PersistentVolumeIn().Status(ctx, &it, data); err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interface{}) (v1.Port, error) {
+	var it v1.Port
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"port", "targetPort"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "port":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("port"))
+			it.Port, err = ec.unmarshalOInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "targetPort":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
+			it.TargetPort, err = ec.unmarshalOInt2int32(ctx, v)
+			if err != nil {
 				return it, err
 			}
 		}
@@ -59632,7 +59912,7 @@ func (ec *executionContext) _MatchFilter(ctx context.Context, sel ast.SelectionS
 
 var metadataImplementors = []string{"Metadata"}
 
-func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *v1.ObjectMeta) graphql.Marshaler {
+func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *v11.ObjectMeta) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, metadataImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -59897,6 +60177,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_infra_updateVPNDevice(ctx, field)
 			})
 
+		case "infra_updateVPNDevicePorts":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_updateVPNDevicePorts(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "infra_deleteVPNDevice":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -61238,6 +61527,35 @@ func (ec *executionContext) _PersistentVolumePaginatedRecords(ctx context.Contex
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var portImplementors = []string{"Port"}
+
+func (ec *executionContext) _Port(ctx context.Context, sel ast.SelectionSet, obj *model.Port) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, portImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Port")
+		case "port":
+
+			out.Values[i] = ec._Port_port(ctx, field, obj)
+
+		case "targetPort":
+
+			out.Values[i] = ec._Port_targetPort(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -64013,16 +64331,16 @@ func (ec *executionContext) marshalNMatchFilterMatchType2githubᚗcomᚋkloudlit
 	return res
 }
 
-func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v1.ObjectMeta) graphql.Marshaler {
+func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v11.ObjectMeta) graphql.Marshaler {
 	return ec._Metadata(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (v1.ObjectMeta, error) {
+func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (v11.ObjectMeta, error) {
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v1.ObjectMeta, error) {
+func (ec *executionContext) unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v11.ObjectMeta, error) {
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -64370,6 +64688,28 @@ func (ec *executionContext) marshalNPersistentVolumeEdge2ᚖgithubᚗcomᚋkloud
 		return graphql.Null
 	}
 	return ec._PersistentVolumeEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPortᚄ(ctx context.Context, v interface{}) ([]*v1.Port, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*v1.Port, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNPortIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPort(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNPortIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPort(ctx context.Context, v interface{}) (*v1.Port, error) {
+	res, err := ec.unmarshalInputPortIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNResType2githubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋdomainᚐResType(ctx context.Context, v interface{}) (domain.ResType, error) {
@@ -65522,6 +65862,16 @@ func (ec *executionContext) marshalOHelmReleasePaginatedRecords2ᚖgithubᚗcom�
 		return graphql.Null
 	}
 	return ec._HelmReleasePaginatedRecords(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOInt2int32(ctx context.Context, v interface{}) (int32, error) {
+	res, err := graphql.UnmarshalInt32(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	res := graphql.MarshalInt32(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
@@ -66970,11 +67320,11 @@ func (ec *executionContext) unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudlite�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v1.ObjectMeta) graphql.Marshaler {
+func (ec *executionContext) marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v11.ObjectMeta) graphql.Marshaler {
 	return ec._Metadata(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v1.ObjectMeta, error) {
+func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v11.ObjectMeta, error) {
 	if v == nil {
 		return nil, nil
 	}

@@ -34,4 +34,3 @@ input VPNDeviceIn {
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
-
