@@ -142,6 +142,9 @@ type Mutation {
 
     infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
     infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+
+    infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
+
     infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount

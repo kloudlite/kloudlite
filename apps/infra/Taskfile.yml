@@ -35,6 +35,7 @@ tasks:
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Cluster
           --struct github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
           --struct github.com/kloudlite/api/apps/infra/internal/entities.Node
+          --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
           --struct github.com/kloudlite/api/apps/infra/internal/entities.NodePool
           --struct github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
           --struct github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry

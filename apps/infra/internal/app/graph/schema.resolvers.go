@@ -7,13 +7,16 @@ package graph
 import (
 	"context"
 	"encoding/base64"
+
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
-	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
+	v1 "github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 // AdminKubeconfig is the resolver for the adminKubeconfig field.
@@ -181,6 +184,20 @@ func (r *mutationResolver) InfraUpdateVPNDevice(ctx context.Context, clusterName
 		return nil, errors.NewE(err)
 	}
 	return r.Domain.UpdateVPNDevice(cc, clusterName, vpnDevice)
+}
+
+// InfraUpdateVPNDevicePorts is the resolver for the infra_updateVPNDevicePorts field.
+func (r *mutationResolver) InfraUpdateVPNDevicePorts(ctx context.Context, clusterName string, deviceName string, ports []*v1.Port) (bool, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.UpdateVpnDevicePorts(cc, clusterName, deviceName, ports); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // InfraDeleteVPNDevice is the resolver for the infra_deleteVPNDevice field.
