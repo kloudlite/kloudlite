@@ -20,7 +20,7 @@ import (
 )
 
 func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string) (*string, error) {
-	clusterName, err := d.projectClusterMap.Get(ctx, projectName)
+	clusterName, err := d.consoleCacheStore.Get(ctx, projectName)
 
 	if err != nil {
 		if !errors.Is(err, kv.ErrKeyNotFound) {
@@ -39,7 +39,7 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 		}
 
 		defer func() {
-			if err := d.projectClusterMap.Set(ctx, projectName, []byte(fn.DefaultIfNil(proj.ClusterName))); err != nil {
+			if err := d.consoleCacheStore.Set(ctx, projectName, []byte(fn.DefaultIfNil(proj.ClusterName))); err != nil {
 				d.logger.Infof("failed to set project cluster map: %v", err)
 			}
 		}()

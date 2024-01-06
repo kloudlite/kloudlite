@@ -46,6 +46,13 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	router.Namespace = env.Spec.TargetNamespace
+
 	router.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
 		return nil, errors.NewE(err)

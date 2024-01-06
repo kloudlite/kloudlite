@@ -49,6 +49,13 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.NewE(err)
 	}
 
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	mres.Namespace = env.Spec.TargetNamespace
+
 	mres.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
 		return nil, errors.NewE(err)

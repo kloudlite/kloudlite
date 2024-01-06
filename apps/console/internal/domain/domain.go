@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/kv"
 	"strconv"
+
+	"github.com/kloudlite/api/pkg/kv"
 
 	"github.com/kloudlite/api/pkg/logging"
 
@@ -56,7 +57,7 @@ type domain struct {
 	envVars *env.Env
 
 	resourceEventPublisher ResourceEventPublisher
-	projectClusterMap      kv.BinaryDataRepo
+	consoleCacheStore      kv.BinaryDataRepo
 	resourceMappingRepo    repos.DbRepo[*entities.ResourceMapping]
 }
 
@@ -309,7 +310,7 @@ func (d *domain) canReadResourcesInEnvironment(ctx ResourceContext) error {
 	return d.checkEnvironmentAccess(ctx, iamT.ReadResourcesInEnvironment)
 }
 
-type ProjectClusterMap kv.BinaryDataRepo
+type ConsoleCacheStore kv.BinaryDataRepo
 
 var Module = fx.Module("domain",
 	fx.Provide(func(
@@ -335,7 +336,7 @@ var Module = fx.Module("domain",
 
 		ev *env.Env,
 
-		projectClusterMap ProjectClusterMap,
+		consoleCacheStore ConsoleCacheStore,
 	) Domain {
 		return &domain{
 			k8sClient: k8sClient,
@@ -359,7 +360,7 @@ var Module = fx.Module("domain",
 			envVars: ev,
 
 			resourceEventPublisher: resourceEventPublisher,
-			projectClusterMap:      projectClusterMap,
+			consoleCacheStore:      consoleCacheStore,
 		}
 	}),
 )
