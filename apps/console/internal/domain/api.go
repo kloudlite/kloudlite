@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"time"
+
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
@@ -11,7 +12,7 @@ import (
 
 type ConsoleContext struct {
 	context.Context
-	//ClusterName string
+	// ClusterName string
 	AccountName string
 
 	UserId    repos.ID
@@ -25,8 +26,8 @@ func (c ConsoleContext) GetAccountName() string {
 
 type ResourceContext struct {
 	ConsoleContext
-	ProjectName     string
-	EnvironmentName string
+	ProjectName                string
+	EnvironmentName            string
 }
 
 func (r ResourceContext) DBFilters() repos.Filter {

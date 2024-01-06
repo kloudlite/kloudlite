@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -55,8 +56,8 @@ var Module = fx.Module("framework",
 	),
 
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (domain.ProjectClusterMap, error) {
-			return kv.NewNatsKVBinaryRepo(context.TODO(), ev.ProjectClusterMapKVBucket, jc)
+		func(ev *env.Env, jc *nats.JetstreamClient) (domain.ConsoleCacheStore, error) {
+			return kv.NewNatsKVBinaryRepo(context.TODO(), ev.ConsoleCacheKVBucket, jc)
 		},
 	),
 
@@ -108,7 +109,7 @@ var Module = fx.Module("framework",
 		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.LogsAndMetricsHttpServer, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.LogsAndMetricsHttpServer) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				return server.Listen(fmt.Sprintf(":%d", ev.LogsAndMetricsHttpPort))

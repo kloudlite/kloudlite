@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -98,6 +99,13 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	if err := ips.Validate(); err != nil {
 		return nil, errors.NewE(err)
 	}
+
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ips.Namespace = env.Spec.TargetNamespace
 
 	ips.IncrementRecordVersion()
 

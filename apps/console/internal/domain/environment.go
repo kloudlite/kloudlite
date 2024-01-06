@@ -7,6 +7,7 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/constants"
@@ -34,10 +35,32 @@ func (d *domain) findEnvironment(ctx ConsoleContext, projectName string, name st
 	return env, nil
 }
 
+func (d *domain) envTargetNamespace(ctx ConsoleContext, projectName string, envName string) (string, error) {
+	key := fmt.Sprintf("environment-namespace.%s/%s/%s", ctx.AccountName, projectName, envName)
+	b, err := d.consoleCacheStore.Get(ctx, key)
+	if err != nil {
+		if errors.Is(err, kv.ErrKeyNotFound) {
+			env, err := d.findEnvironment(ctx, projectName, envName)
+			if err != nil {
+				return "", err
+			}
+			defer func() {
+				if err := d.consoleCacheStore.Set(ctx, key, []byte(env.Spec.TargetNamespace)); err != nil {
+					d.logger.Errorf(err, "while caching environment target namespace")
+				}
+			}()
+			return env.Spec.TargetNamespace, nil
+		}
+	}
+
+	return string(b), nil
+}
+
 func (d *domain) GetEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error) {
 	if err := d.canReadResourcesInProject(ctx, projectName); err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	return d.findEnvironment(ctx, projectName, name)
 }
 
