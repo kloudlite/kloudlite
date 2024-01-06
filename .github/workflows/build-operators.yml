@@ -25,24 +25,24 @@ jobs:
           - platform
           - resource-watcher
           - agent
-          - account
-          - app
-          - clusters
-          - distribution
-          - helm-charts
-          - msvc-elasticsearch
-          - msvc-influx
-          - msvc-mongo
-          - msvc-mysql
-          - msvc-n-mres
-          - msvc-neo4j
-          - msvc-redis
-          - msvc-redpanda
-          - msvc-zookeeper
-          - nodepool
-          - project
-          - resource-watcher
-          - routers
+          # - account
+          # - app
+          # - clusters
+          # - distribution
+          # - helm-charts
+          # - msvc-elasticsearch
+          # - msvc-influx
+          # - msvc-mongo
+          # - msvc-mysql
+          # - msvc-n-mres
+          # - msvc-neo4j
+          # - msvc-redis
+          # - msvc-redpanda
+          # - msvc-zookeeper
+          # - nodepool
+          # - project
+          # - resource-watcher
+          # - routers
           - wireguard
         include:
           - name: platform
@@ -146,7 +146,6 @@ jobs:
           version_string="v${branch_name#release-}-nightly"
           
           cd .github/workflows/container-build
-
 
           upx ./app
           task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:$version_string"

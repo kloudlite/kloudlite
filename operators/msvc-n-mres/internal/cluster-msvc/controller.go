@@ -1,9 +1,8 @@
-package project_msvc
+package cluster_msvc
 
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
@@ -22,8 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Reconciler struct {
@@ -46,7 +43,7 @@ const (
 	MsvcReady   string = "msvc-ready"
 	MsvcDeleted string = "msvc-deleted"
 
-	NamespaceCreatedByLabel string = "kloudlite.io/created-by-project-msvc-controller"
+	NamespaceCreatedByLabel string = "kloudlite.io/created-by-cluster-msvc-controller"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -54,7 +51,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ProjectManagedService{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.ClusterManagedService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -97,7 +94,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ClusterManagedService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
 	check := rApi.Check{Generation: obj.Generation}
@@ -144,7 +141,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ProjectManagedService]) 
 	return req.Finalize()
 }
 
-func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
+func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ClusterManagedService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -153,7 +150,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ProjectManagedSer
 	}
 
 	if obj.Spec.TargetNamespace == "" {
-		obj.Spec.TargetNamespace = fmt.Sprintf("pmsvc-%s", obj.Name)
+		obj.Spec.TargetNamespace = fmt.Sprintf("cmsvc-%s", obj.Name)
 
 		if err := r.Update(ctx, obj); err != nil {
 			return failed(err)
@@ -181,7 +178,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.ProjectManagedSer
 	return req.Next()
 }
 
-func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectManagedService]) stepResult.Result {
+func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ClusterManagedService]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -191,7 +188,9 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
-		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s/%s", obj.Namespace, obj.Name))
+		msvc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceNameKey, obj.Name)
+
 		msvc.Spec = obj.Spec.MSVCSepec
 
 		return nil
@@ -247,27 +246,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return err
 	}
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ProjectManagedService{})
-	msvcs := []client.Object{
-		&crdsv1.ManagedService{},
-	}
-
-	for _, obj := range msvcs {
-		builder.Watches(
-			obj,
-			handler.EnqueueRequestsFromMapFunc(
-				func(_ context.Context, obj client.Object) []reconcile.Request {
-					if v, ok := obj.GetLabels()[constants.ProjectManagedServiceRefKey]; ok {
-						sp := strings.SplitN(v, "/", 2)
-						if len(sp) != 2 {
-							return nil
-						}
-						return []reconcile.Request{{NamespacedName: fn.NN(sp[0], sp[1])}}
-					}
-					return nil
-				}),
-		)
-	}
+	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ClusterManagedService{})
+	builder.Owns(&crdsv1.ManagedService{})
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
