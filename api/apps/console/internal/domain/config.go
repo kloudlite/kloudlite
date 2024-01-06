@@ -50,6 +50,12 @@ func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*ent
 	//	return nil, errors.NewE(err)
 	//}
 
+	var err error
+	config.Namespace, err = d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
+		return nil, err
+	}
+
 	config.IncrementRecordVersion()
 	config.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -77,12 +83,12 @@ func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if cfg.Labels == nil {
-		cfg.Labels = make(map[string]string)
+	if cfg.Annotations == nil {
+		cfg.Annotations = make(map[string]string)
 	}
 
-	for k, v := range types.ConfigWatchingLabel {
-		cfg.Labels[k] = v
+	for k, v := range types.ConfigWatchingAnnotation {
+		cfg.Annotations[k] = v
 	}
 
 	if err := d.applyK8sResource(ctx, config.ProjectName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
@@ -129,12 +135,12 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if upConfig.Labels == nil {
-		upConfig.Labels = make(map[string]string)
+	if upConfig.Annotations == nil {
+		upConfig.Annotations = make(map[string]string)
 	}
 
-	for k, v := range types.ConfigWatchingLabel {
-		upConfig.Labels[k] = v
+	for k, v := range types.ConfigWatchingAnnotation {
+		upConfig.Annotations[k] = v
 	}
 
 	if err := d.applyK8sResource(ctx, xconfig.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {

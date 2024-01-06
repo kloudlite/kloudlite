@@ -27,12 +27,12 @@ type Env struct {
 
 	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
 
-	LokiServerHttpAddr        string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
-	PromHttpAddr              string `env:"PROM_HTTP_ADDR" required:"true"`
-	SessionKVBucket           string `env:"SESSION_KV_BUCKET" required:"true"`
-	ProjectClusterMapKVBucket string `env:"PROJECT_CLUSTER_MAP_KV_BUCKET" required:"true"`
-	IsDev                     bool
-	KubernetesApiProxy        string `env:"KUBERNETES_API_PROXY"`
+	LokiServerHttpAddr   string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
+	PromHttpAddr         string `env:"PROM_HTTP_ADDR" required:"true"`
+	SessionKVBucket      string `env:"SESSION_KV_BUCKET" required:"true"`
+	ConsoleCacheKVBucket string `env:"CONSOLE_CACHE_KV_BUCKET" required:"true"`
+	IsDev                bool
+	KubernetesApiProxy   string `env:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {

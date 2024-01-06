@@ -49,6 +49,13 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		return nil, errors.NewE(err)
 	}
 
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	secret.Namespace = env.Spec.TargetNamespace
+
 	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
 	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
 		return nil, errors.NewE(err)
@@ -80,12 +87,12 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if s.Labels == nil {
-		s.Labels = make(map[string]string)
+	if s.Annotations == nil {
+		s.Annotations = make(map[string]string)
 	}
 
-	for k, v := range types.SecretWatchingLabel {
-		s.Labels[k] = v
+	for k, v := range types.SecretWatchingAnnotation {
+		s.Annotations[k] = v
 	}
 
 	if err := d.applyK8sResource(ctx, s.ProjectName, &s.Secret, s.RecordVersion); err != nil {
@@ -136,12 +143,12 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if upSecret.Labels == nil {
-		upSecret.Labels = make(map[string]string)
+	if upSecret.Annotations == nil {
+		upSecret.Annotations = make(map[string]string)
 	}
 
-	for k, v := range types.SecretWatchingLabel {
-		upSecret.Labels[k] = v
+	for k, v := range types.SecretWatchingAnnotation {
+		upSecret.Annotations[k] = v
 	}
 
 	if err := d.applyK8sResource(ctx, upSecret.ProjectName, &upSecret.Secret, upSecret.RecordVersion); err != nil {

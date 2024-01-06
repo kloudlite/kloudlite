@@ -35,13 +35,13 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 	// workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Environment") //FIXME
 	workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Workspace")
 	imagePullSecretGVK := fn.GVK("crds.kloudlite.io/v1", "ImagePullSecret")
-	configGVK := fn.GVK("crds.kloudlite.io/v1", "Config")
-	secretGVK := fn.GVK("crds.kloudlite.io/v1", "Secret")
+	configGVK := fn.GVK("v1", "ConfigMap")
+	secretGVK := fn.GVK("v1", "Secret")
 	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
 	managedResourceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
 
 	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, obj unstructured.Unstructured) (domain.ResourceContext, error) {
-		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, obj.GetNamespace(), obj.GetName())
+		mapping, err := d.GetResourceMapping(ctx, rt, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
@@ -164,7 +164,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeConfig, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -181,7 +181,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeSecret, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -198,7 +198,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeImagePullSecret, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -215,7 +215,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeRouter, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -232,7 +232,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeManagedResource, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
