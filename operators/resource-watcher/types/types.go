@@ -44,3 +44,11 @@ func HasOtherKloudliteFinalizers(obj client.Object) bool {
 
 	return hasOtherKloudliteFinalizers
 }
+
+var SecretWatchingAnnotation = map[string]string{
+	"kloudlite.io/watch-secret": "true",
+}
+
+var ConfigWatchingAnnotation = map[string]string{
+	"kloudlite.io/watch-configmap": "true",
+}

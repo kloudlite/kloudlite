@@ -11,19 +11,14 @@ import (
 	"github.com/kloudlite/operator/pkg/errors"
 	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
 type grpcMsgSender struct {
-	getResourceMessagesCli func() (messages.MessageDispatchService_ReceiveResourceUpdatesClient, error)
-	rmc                    messages.MessageDispatchService_ReceiveResourceUpdatesClient
-	getInfraMessagesCli    func() (messages.MessageDispatchService_ReceiveInfraUpdatesClient, error)
-	imc                    messages.MessageDispatchService_ReceiveInfraUpdatesClient
-
-	getCRMessagesCli func() (messages.MessageDispatchService_ReceiveContainerRegistryUpdatesClient, error)
-	crmc             messages.MessageDispatchService_ReceiveContainerRegistryUpdatesClient
-
-	logger logging.Logger
+	logger         logging.Logger
+	accountName    string
+	clusterName    string
+	accessToken    string
+	msgDispatchCli messages.MessageDispatchServiceClient
 }
 
 func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Context, stu t.ResourceUpdate) error {
@@ -38,9 +33,12 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Con
 	errCh := make(chan error, 1)
 	execCh := make(chan struct{}, 1)
 	go func() {
-		if err = g.crmc.Send(&messages.ContainerRegistryUpdate{Message: b}); err != nil {
-			// replace streaming client
-			g.crmc, err = g.getCRMessagesCli()
+		if _, err := g.msgDispatchCli.ReceiveContainerRegistryUpdate(dctx, &messages.ResourceUpdate{
+			AccountName: g.accountName,
+			ClusterName: g.clusterName,
+			AccessToken: g.accessToken,
+			Message:     b,
+		}); err != nil {
 			errCh <- err
 			return
 		}
@@ -51,7 +49,7 @@ func (g *grpcMsgSender) DispatchContainerRegistryResourceUpdates(ctx context.Con
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched container registry resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -71,9 +69,12 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.R
 	errCh := make(chan error, 1)
 	execCh := make(chan struct{}, 1)
 	go func() {
-		if err = g.imc.Send(&messages.InfraUpdate{Message: b}); err != nil {
-			// replace streaming client
-			g.imc, err = g.getInfraMessagesCli()
+		if _, err := g.msgDispatchCli.ReceiveInfraResourceUpdate(ctx, &messages.ResourceUpdate{
+			AccountName: g.accountName,
+			ClusterName: g.clusterName,
+			AccessToken: g.accessToken,
+			Message:     b,
+		}); err != nil {
 			errCh <- err
 			return
 		}
@@ -84,7 +85,7 @@ func (g *grpcMsgSender) DispatchInfraResourceUpdates(ctx context.Context, ru t.R
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched infra resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -105,9 +106,12 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 	execCh := make(chan struct{}, 1)
 
 	go func() {
-		if err = g.rmc.Send(&messages.ResourceUpdate{Message: b}); err != nil {
-			// replace streaming client
-			g.rmc, err = g.getResourceMessagesCli()
+		if _, err = g.msgDispatchCli.ReceiveConsoleResourceUpdate(ctx, &messages.ResourceUpdate{
+			AccountName: g.accountName,
+			ClusterName: g.clusterName,
+			AccessToken: g.accessToken,
+			Message:     b,
+		}); err != nil {
 			errCh <- err
 			return
 		}
@@ -118,7 +122,7 @@ func (g *grpcMsgSender) DispatchConsoleResourceUpdates(ctx context.Context, ru t
 	case <-dctx.Done():
 		return dctx.Err()
 	case <-execCh:
-		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+		g.logger.WithKV("timestamp", time.Now()).Infof("dispatched console resource update to message office api")
 		return nil
 	case err := <-errCh:
 		return err
@@ -143,44 +147,11 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 		return nil, err
 	}
 
-	outgoingCtx := func() context.Context {
-		return metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", ev.AccessToken))
-	}
-
-	getResourceMessagesCli := func() (messages.MessageDispatchService_ReceiveResourceUpdatesClient, error) {
-		return msgDispatchCli.ReceiveResourceUpdates(outgoingCtx())
-	}
-
-	getContainerRegistryMessagesCli := func() (messages.MessageDispatchService_ReceiveContainerRegistryUpdatesClient, error) {
-		return msgDispatchCli.ReceiveContainerRegistryUpdates(outgoingCtx())
-	}
-
-	getInfraMessagesCli := func() (messages.MessageDispatchService_ReceiveInfraUpdatesClient, error) {
-		return msgDispatchCli.ReceiveInfraUpdates(outgoingCtx())
-	}
-
-	rmc, err := getResourceMessagesCli()
-	if err != nil {
-		return nil, err
-	}
-
-	imc, err := getInfraMessagesCli()
-	if err != nil {
-		return nil, err
-	}
-
-	crmc, err := getContainerRegistryMessagesCli()
-	if err != nil {
-		return nil, err
-	}
-
 	return &grpcMsgSender{
-		logger:                 logger,
-		getResourceMessagesCli: getResourceMessagesCli,
-		rmc:                    rmc,
-		imc:                    imc,
-		crmc:                   crmc,
-		getInfraMessagesCli:    getInfraMessagesCli,
-		getCRMessagesCli:       getContainerRegistryMessagesCli,
+		logger:         logger,
+		msgDispatchCli: msgDispatchCli,
+		accountName:    ev.AccountName,
+		clusterName:    ev.ClusterName,
+		accessToken:    ev.AccessToken,
 	}, nil
 }

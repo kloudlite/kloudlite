@@ -9,7 +9,7 @@ import (
 
 type WorkspaceSpec struct {
 	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
+	TargetNamespace string `json:"targetNamespace,omitempty"`
 	IsEnvironment   *bool  `json:"isEnvironment,omitempty"`
 }
 
@@ -26,7 +26,7 @@ type Workspace struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   WorkspaceSpec `json:"spec,omitempty"`
-  Status rApi.Status   `json:"status,omitempty" graphql:"noinput"`
+	Status rApi.Status   `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (e *Workspace) EnsureGVK() {

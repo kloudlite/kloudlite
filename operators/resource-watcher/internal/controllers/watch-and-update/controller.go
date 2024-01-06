@@ -57,10 +57,12 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
+  r.logger.Infof("r.MsgSender is pointed to %p", r.MsgSender)
+
 	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
 	switch gvk.String() {
-	case ProjectGVK.String(), AppGVK.String(), ManagedResourceGVK.String(), WorkspaceGVK.String(), RouterGVK.String():
+	case ProjectGVK.String(), AppGVK.String(), ManagedResourceGVK.String(), WorkspaceGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
 		{
 			// dispatch to console
 			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
@@ -238,6 +240,8 @@ var (
 	PersistentVolumeGVK      = newGVK("v1", "PersistentVolume")
 	VolumeAttachmentGVK      = newGVK("storage.k8s.io/v1", "VolumeAttachment")
 	IngressGVK               = newGVK("networking.k8s.io/v1", "Ingress")
+	SecretGVK                = newGVK("v1", "Secret")
+	ConfigmapGVK             = newGVK("v1", "ConfigMap")
 )
 
 // SetupWithManager sets up the controllers with the Manager.
@@ -269,6 +273,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		PersistentVolumeGVK,
 		VolumeAttachmentGVK,
 		IngressGVK,
+
+		// filtered watch
+		SecretGVK,
+		ConfigmapGVK,
 	}
 
 	for i := range watchList {
@@ -278,6 +286,14 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			handler.EnqueueRequestsFromMapFunc(
 				func(_ context.Context, obj client.Object) []reconcile.Request {
 					gvk := obj.GetObjectKind().GroupVersionKind().String()
+
+					if (gvk == SecretGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.SecretWatchingAnnotation) {
+						return nil
+					}
+
+					if (gvk == ConfigmapGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.ConfigWatchingAnnotation) {
+						return nil
+					}
 
 					b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
 					if len(b64Group) == 0 {
