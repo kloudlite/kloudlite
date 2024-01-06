@@ -5,33 +5,34 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: workspaces.crds.kloudlite.io
+  name: clustermanagedservices.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: Workspace
-    listKind: WorkspaceList
-    plural: workspaces
-    singular: workspace
-  scope: Namespaced
+    kind: ClusterManagedService
+    listKind: ClusterManagedServiceList
+    plural: clustermanagedservices
+    singular: clustermanagedservice
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.projectName
-      name: Project
+    - jsonPath: .metadata.annotations.kloudlite\.io\/service-gvk
+      name: Service GVK
       type: string
-    - jsonPath: .spec.targetNamespace
-      name: target-namespace
-      type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1
     schema:
       openAPIV3Schema:
-        description: Workspace is the Schema for the envs API
+        description: ClusterManagedService is the Schema for the clustermanagedservices
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -46,15 +47,34 @@ spec:
           metadata:
             type: object
           spec:
+            description: ProjectManagedServiceSpec defines the desired state of ProjectManagedService
             properties:
-              isEnvironment:
-                type: boolean
-              projectName:
-                type: string
+              msvcSpec:
+                description: ManagedServiceSpec defines the desired state of ManagedService
+                properties:
+                  serviceTemplate:
+                    properties:
+                      apiVersion:
+                        type: string
+                      kind:
+                        type: string
+                      spec:
+                        additionalProperties:
+                          x-kubernetes-preserve-unknown-fields: true
+                        type: object
+                    required:
+                    - apiVersion
+                    - kind
+                    - spec
+                    type: object
+                required:
+                - serviceTemplate
+                type: object
               targetNamespace:
                 type: string
             required:
-            - projectName
+            - msvcSpec
+            - targetNamespace
             type: object
           status:
             properties:
