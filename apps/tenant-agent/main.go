@@ -34,11 +34,10 @@ type grpcHandler struct {
 	yamlClient     kubectl.YAMLClient
 	logger         logging.Logger
 	ev             *env.Env
-	errorsCli      messages.MessageDispatchService_ReceiveErrorsClient
 	msgDispatchCli messages.MessageDispatchServiceClient
 }
 
-func (g *grpcHandler) handleErrorOnApply(err error, msg t.AgentMessage) error {
+func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.AgentMessage) error {
 	g.logger.Debugf("[ERROR]: %s", err.Error())
 
 	b, err := json.Marshal(t.AgentErrMessage{
@@ -52,7 +51,13 @@ func (g *grpcHandler) handleErrorOnApply(err error, msg t.AgentMessage) error {
 		return errors.NewE(err)
 	}
 
-	return g.errorsCli.Send(&messages.ErrorData{Message: b})
+	_, err = g.msgDispatchCli.ReceiveError(ctx, &messages.ErrorData{
+		AccountName: msg.AccountName,
+		ClusterName: msg.ClusterName,
+		AccessToken: g.ev.AccessToken,
+		Message:     b,
+	})
+	return err
 }
 
 func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
@@ -71,7 +76,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	mLogger.Infof("[%d] received message", g.inMemCounter)
 
 	if len(strings.TrimSpace(msg.AccountName)) == 0 {
-		return g.handleErrorOnApply(errors.Newf("field 'accountName' must be defined in message"), msg)
+		return g.handleErrorOnApply(ctx, errors.Newf("field 'accountName' must be defined in message"), msg)
 	}
 
 	switch msg.Action {
@@ -79,7 +84,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 		{
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
-				return g.handleErrorOnApply(err, msg)
+				return g.handleErrorOnApply(ctx, err, msg)
 			}
 
 			if msg.Action == "apply" {
@@ -87,7 +92,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 				if err != nil {
 					mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
 					mLogger.Infof("[%d] failed to process message", g.inMemCounter)
-					return g.handleErrorOnApply(err, msg)
+					return g.handleErrorOnApply(ctx, err, msg)
 				}
 				mLogger.Infof("[%d] processed message", g.inMemCounter)
 				return nil
@@ -97,7 +102,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 				err := g.yamlClient.DeleteYAML(ctx, b)
 				if err != nil {
 					mLogger.Infof("[%d] [error-on-delete]: %s", err.Error())
-					return g.handleErrorOnApply(err, msg)
+					return g.handleErrorOnApply(ctx, err, msg)
 				}
 				mLogger.Infof("[%d] processed message", g.inMemCounter)
 				return nil
@@ -109,7 +114,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			err := errors.Newf("invalid action (%s)", msg.Action)
 			mLogger.Infof("[%d] [error]: %s", err.Error())
 			mLogger.Infof("[%d] failed to process message", g.inMemCounter)
-			return g.handleErrorOnApply(err, msg)
+			return g.handleErrorOnApply(ctx, err, msg)
 		}
 	}
 }
@@ -185,13 +190,6 @@ func (g *grpcHandler) run() error {
 	defer cf()
 
 	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", g.ev.AccessToken))
-
-	errorsCli, err := g.msgDispatchCli.ReceiveErrors(outgoingCtx)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	g.errorsCli = errorsCli
 
 	g.logger.Infof("asking message office to start sending actions")
 	msgActionsCli, err := g.msgDispatchCli.SendActions(outgoingCtx, &messages.Empty{})
