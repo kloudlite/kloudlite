@@ -1,6 +1,6 @@
 ---
 global:
-  name: s1
+  name: sample-config
 ---
 
 label: List Configs
@@ -24,6 +24,7 @@ query: |+
               error
               recordVersion
               action
+              lastSyncedAt
             }
             recordVersion
           }
@@ -44,15 +45,11 @@ variables:
 
 label: Create Config
 query: |+
-  mutation Core_createConfig($config: ConfigIn!) {
-    core_createConfig(config: $config) {
+  mutation Core_createConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
+    core_createConfig(projectName: $projectName, envName: $envName, config: $config) {
       metadata {
         name
         namespace
-      }
-      status {
-        checks
-        lastReconcileTime
       }
       syncStatus {
         state
@@ -65,7 +62,10 @@ query: |+
   }
 
 variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
   config:
+    displayName: "Sample Config"
     metadata:
       name: '{{.name}}'
       namespace: '{{.namespace}}'
@@ -104,36 +104,35 @@ variables:
 
 label: Update Config
 query: |+
-  mutation Core_updateConfig($config: ConfigIn!) {
-    core_updateConfig(config: $config) {
-      metadata {
-        name
-        namespace
-        generation
-      }
-      status {
-        isReady
-        checks
-        lastReconcileTime
-      }
-      syncStatus{
-        state
-        action
-        generation
-      }
-      data
+  mutation Core_updateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
+    core_updateConfig(projectName: $projectName, envName: $envName, config: $config) {
+        metadata {
+          name
+          namespace
+          generation
+        }
+        syncStatus{
+          state
+          action
+          lastSyncedAt
+        }
+        data
     }
   }
 variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
   config:
+    displayName: "Sample Config Update"
     metadata:
       name: '{{.name}}'
       namespace: '{{.namespace}}'
     data:
       key1: valueX
       key2: value-for-key-2
-      key3: |+
-        this is the value for key-3
+      key3: Fdsfafaskfjsdfjasfj
+      # keyN: |+
+      #   this is the value for key-3
 ---
 
 label: Delete Config

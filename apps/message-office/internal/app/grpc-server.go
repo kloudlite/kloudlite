@@ -47,14 +47,91 @@ type (
 	}
 )
 
+// ReceiveConsoleResourceUpdate implements messages.MessageDispatchServiceServer.
+func (g *grpcServer) ReceiveConsoleResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (*messages.Empty, error) {
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("cluster", msg.ClusterName)
+	logger.Debugf("console resource update request received")
+	defer func() {
+		logger.Debugf("console resource update request processed")
+	}()
+
+	if _, _, err := validateAndDecodeAccessToken(msg.AccessToken, g.ev.TokenHashingSecret); err != nil {
+		return nil, err
+	}
+
+	if err := g.processConsoleResourceUpdate(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	return &messages.Empty{}, nil
+}
+
+// ReceiveContainerRegistryUpdate implements messages.MessageDispatchServiceServer.
+func (g *grpcServer) ReceiveContainerRegistryUpdate(ctx context.Context, msg *messages.ResourceUpdate) (*messages.Empty, error) {
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("cluster", msg.ClusterName)
+	logger.Debugf("container registry resource update request received")
+	defer func() {
+		logger.Debugf("container registry resource update request processed")
+	}()
+
+	if _, _, err := validateAndDecodeAccessToken(msg.AccessToken, g.ev.TokenHashingSecret); err != nil {
+		return nil, err
+	}
+
+	if err := g.processContainerRegistryResourceUpdate(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	return &messages.Empty{}, nil
+}
+
+// ReceiveError implements messages.MessageDispatchServiceServer.
+func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) (*messages.Empty, error) {
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("cluster", msg.ClusterName)
+	logger.Debugf("request received for access token validation")
+	isValid := true
+
+	defer func() {
+		logger.Debugf("is access token valid? (%v)", isValid)
+	}()
+
+	if _, _, err := validateAndDecodeAccessToken(msg.AccessToken, g.ev.TokenHashingSecret); err != nil {
+		return nil, err
+	}
+
+	if err := g.processError(ctx, msg.AccountName, msg.ClusterName, msg.Message); err != nil {
+		return nil, err
+	}
+
+	return &messages.Empty{}, nil
+}
+
+// ReceiveInfraResourceUpdate implements messages.MessageDispatchServiceServer.
+func (g *grpcServer) ReceiveInfraResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (*messages.Empty, error) {
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("cluster", msg.ClusterName)
+	logger.Debugf("infra resource update request received")
+	defer func() {
+		logger.Debugf("infra resource update request processed")
+	}()
+
+	if _, _, err := validateAndDecodeAccessToken(msg.AccessToken, g.ev.TokenHashingSecret); err != nil {
+		return nil, err
+	}
+
+	if err := g.processInfraResourceUpdate(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	return &messages.Empty{}, nil
+}
+
+// ReceiveError implements messages.MessageDispatchServiceServer.
+// func (g *grpcServer) ReceiveError(ctx context.Context, msg *messages.ErrorData) (*messages.Empty, error) {
+// }
+
 // Ping implements messages.MessageDispatchServiceServer.
 func (*grpcServer) Ping(context.Context, *messages.Empty) (*messages.PingOutput, error) {
 	return &messages.PingOutput{Ok: true}, nil
-}
-
-// mustEmbedUnimplementedMessageDispatchServiceServer implements messages.MessageDispatchServiceServer.
-func (*grpcServer) mustEmbedUnimplementedMessageDispatchServiceServer() {
-	panic("unimplemented")
 }
 
 func encodeAccessToken(accountName, clusterName, clusterToken string, tokenSecret string) string {
@@ -169,8 +246,7 @@ func (g *grpcServer) ValidateAccessToken(ctx context.Context, msg *messages.Vali
 	return &messages.ValidateAccessTokenOut{Valid: isValid}, nil
 }
 
-// FIXME: this should be split into 2 methods, one for console resource errors, and other for infra errors
-func (g *grpcServer) parseError(ctx context.Context, accountName string, clusterName string, errMsg *messages.ErrorData) (err error) {
+func (g *grpcServer) processError(ctx context.Context, accountName string, clusterName string, msg []byte) (err error) {
 	g.errorMessagesCounter++
 	logger := g.logger.WithKV("accountName", accountName).WithKV("cluster", clusterName)
 
@@ -187,27 +263,12 @@ func (g *grpcServer) parseError(ctx context.Context, accountName string, cluster
 	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventErrorOnApply)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
-		Payload: errMsg.Message,
+		Payload: msg,
 	}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("while producing to topic (%s)", msgTopic))
 	}
 	logger.Infof("[%v] dispatched error-on-apply message", g.errorMessagesCounter)
 	return nil
-}
-
-// ReceiveErrors implements messages.MessageDispatchServiceServer
-func (g *grpcServer) ReceiveErrors(server messages.MessageDispatchService_ReceiveErrorsServer) error {
-	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
-	if err != nil {
-		return klErrors.NewE(err)
-	}
-	for {
-		errorMsg, err := server.Recv()
-		if err != nil {
-			return klErrors.NewE(err)
-		}
-		_ = g.parseError(server.Context(), accountName, clusterName, errorMsg)
-	}
 }
 
 // GetAccessToken implements messages.MessageDispatchServiceServer
@@ -279,10 +340,10 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 	return nil
 }
 
-func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName string, clusterName string, msg *messages.ResourceUpdate) (err error) {
+func (g *grpcServer) processConsoleResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (err error) {
 	g.resourceUpdatesCounter++
 
-	logger := g.logger.WithKV("accountName", accountName).WithKV("clusterName", clusterName).WithKV("component", "console-resource-update")
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("clusterName", msg.ClusterName).WithKV("component", "console-resource-update")
 	logger.Infof("[%v] received resource status update", g.resourceUpdatesCounter)
 	defer func() {
 		if err != nil {
@@ -293,7 +354,7 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName stri
 		logger.Infof("[%v] processed resource status update", g.resourceUpdatesCounter)
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ConsoleReceiver, common.EventResourceUpdate)
+	msgTopic := common.GetPlatformClusterMessagingTopic(msg.AccountName, msg.ClusterName, common.ConsoleReceiver, common.EventResourceUpdate)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: msg.Message,
@@ -305,66 +366,9 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName stri
 	return nil
 }
 
-func (g *grpcServer) ReceiveResourceUpdates(server messages.MessageDispatchService_ReceiveResourceUpdatesServer) error {
-	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
-	if err != nil {
-		return klErrors.NewE(err)
-	}
-	for {
-		statusMsg, err := server.Recv()
-		if err != nil {
-			return klErrors.NewE(err)
-		}
-		if err := g.processResourceUpdate(server.Context(), accountName, clusterName, statusMsg); err != nil {
-			return err
-		}
-	}
-}
-
-func (g *grpcServer) processClusterUpdate(ctx context.Context, accountName string, clusterName string, msg *messages.ClusterUpdate) (err error) {
-	g.clusterUpdatesCounter++
-	logger := g.logger.WithKV("accountName", accountName).WithKV("clusterName", clusterName)
-
-	logger.Infof("[%v] received Cluster update", g.clusterUpdatesCounter)
-	defer func() {
-		if err != nil {
-			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed Cluster update", g.clusterUpdatesCounter))
-			logger.Errorf(err)
-			return
-		}
-		logger.Infof("[%v] processed Cluster update", g.infraUpdatesCounter)
-	}()
-
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventResourceUpdate)
-	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
-		Subject: msgTopic,
-		Payload: msg.Message,
-	}); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", msgTopic))
-	}
-
-	logger.Infof("%v dispatched cluster updates into topic=%q", g.clusterUpdatesCounter, msgTopic)
-	return nil
-}
-
-func (g *grpcServer) ReceiveClusterUpdates(server messages.MessageDispatchService_ReceiveClusterUpdatesServer) (err error) {
-	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
-	if err != nil {
-		return klErrors.NewE(err)
-	}
-	for {
-		clientUpdateMsg, err := server.Recv()
-		if err != nil {
-			return klErrors.NewE(err)
-		}
-
-		_ = g.processClusterUpdate(server.Context(), accountName, clusterName, clientUpdateMsg)
-	}
-}
-
-func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string, clusterName string, msg *messages.InfraUpdate) (err error) {
+func (g *grpcServer) processInfraResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (err error) {
 	g.infraUpdatesCounter++
-	logger := g.logger.WithKV("accountName", accountName).WithKV("clusterName", clusterName).WithKV("component", "infra-resource-update")
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("clusterName", msg.ClusterName).WithKV("component", "infra-resource-update")
 
 	logger.Infof("[%v] received infra update", g.infraUpdatesCounter)
 	defer func() {
@@ -376,7 +380,7 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 		logger.Infof("[%v] processed infra update", g.infraUpdatesCounter)
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventResourceUpdate)
+	msgTopic := common.GetPlatformClusterMessagingTopic(msg.AccountName, msg.ClusterName, common.InfraReceiver, common.EventResourceUpdate)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: msg.Message,
@@ -388,10 +392,9 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 	return nil
 }
 
-func (g *grpcServer) processCRUpdate(ctx context.Context, accountName string, clusterName string, msg *messages.ContainerRegistryUpdate) (err error) {
-
+func (g *grpcServer) processContainerRegistryResourceUpdate(ctx context.Context, msg *messages.ResourceUpdate) (err error) {
 	g.crUpdatesCounter++
-	logger := g.logger.WithKV("accountName", accountName).WithKV("clusterName", clusterName).WithKV("component", "container-registry-update")
+	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("clusterName", msg.ClusterName).WithKV("component", "container-registry-update")
 
 	logger.Infof("[%v] received cr update", g.crUpdatesCounter)
 	defer func() {
@@ -401,10 +404,9 @@ func (g *grpcServer) processCRUpdate(ctx context.Context, accountName string, cl
 			return
 		}
 		logger.Infof("[%v] processed cr update", g.crUpdatesCounter)
-
 	}()
 
-	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ContainerRegistryReceiver, common.EventResourceUpdate)
+	msgTopic := common.GetPlatformClusterMessagingTopic(msg.AccountName, msg.ClusterName, common.ContainerRegistryReceiver, common.EventResourceUpdate)
 	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
 		Subject: msgTopic,
 		Payload: msg.Message,
@@ -412,42 +414,9 @@ func (g *grpcServer) processCRUpdate(ctx context.Context, accountName string, cl
 		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", msgTopic))
 	}
 
-
 	logger.Infof("[%v] processed cr update", g.crUpdatesCounter)
 	return nil
 }
-
-// ReceiveInfraUpdates implements messages.MessageDispatchServiceServer
-func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) (err error) {
-	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
-	if err != nil {
-		return klErrors.NewE(err)
-	}
-	for {
-		statusMsg, err := server.Recv()
-		if err != nil {
-			return klErrors.NewE(err)
-		}
-		_ = g.processInfraUpdate(server.Context(), accountName, clusterName, statusMsg)
-	}
-}
-
-
-func (g *grpcServer) ReceiveContainerRegistryUpdates(server messages.MessageDispatchService_ReceiveContainerRegistryUpdatesServer) error {
-
-	accountName, clusterName, err := g.validateAndDecodeFromGrpcContext(server.Context(), g.ev.TokenHashingSecret)
-	if err != nil {
-		return klErrors.NewE(err)
-	}
-	for {
-		statusMsg, err := server.Recv()
-		if err != nil {
-			return klErrors.NewE(err)
-		}
-		_ = g.processCRUpdate(server.Context(), accountName, clusterName, statusMsg)
-	}
-}
-
 
 func NewMessageOfficeServer(producer UpdatesProducer, jc *nats.JetstreamClient, ev *env.Env, d domain.Domain, logger logging.Logger) (messages.MessageDispatchServiceServer, error) {
 	return &grpcServer{
