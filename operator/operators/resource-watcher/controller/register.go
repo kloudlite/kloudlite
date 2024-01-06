@@ -58,12 +58,12 @@ func RegisterInto(mgr operator.Operator) {
 		ctx, cf := context.WithTimeout(context.TODO(), 500*time.Millisecond)
 		defer cf()
 		msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
-		_, err := msgDispatchCli.Ping(ctx, &messages.Empty{})
+		out, err := msgDispatchCli.Ping(ctx, &messages.Empty{})
 		if err != nil {
 			logger.Infof("ping failed, client is disconnected")
 			return err
 		}
-		logger.Debugf("ping is successfull, client is connected")
+		logger.Infof("ping is successfull, client is connected: %v, client conn: %p", out.Ok, cc)
 		return nil
 	}
 
@@ -103,6 +103,7 @@ func RegisterInto(mgr operator.Operator) {
 			return err
 		}
 
+		logger.Infof("msg sender address: %p", msgSender)
 		watchAndUpdateReconciler.MsgSender = msgSender
 
 		defer func() {

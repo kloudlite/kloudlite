@@ -7,11 +7,11 @@ service MessageDispatchService {
 
   rpc SendActions (Empty) returns (stream Action) {}
 
-  rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
-  rpc ReceiveResourceUpdates (stream ResourceUpdate) returns (Empty) {}
-  rpc ReceiveInfraUpdates (stream InfraUpdate) returns (Empty) {}
-  rpc ReceiveContainerRegistryUpdates (stream ContainerRegistryUpdate) returns (Empty) {}
-  rpc ReceiveClusterUpdates (stream ClusterUpdate) returns (Empty) {}
+  rpc ReceiveError(ErrorData) returns (Empty) {}
+
+  rpc ReceiveConsoleResourceUpdate (ResourceUpdate) returns (Empty) {}
+  rpc ReceiveInfraResourceUpdate (ResourceUpdate) returns (Empty) {}
+  rpc ReceiveContainerRegistryUpdate(ResourceUpdate) returns (Empty) {}
 
   rpc Ping(Empty) returns (PingOutput) {}
 }
@@ -41,23 +41,19 @@ message Action {
 }
 
 message ErrorData {
-  bytes message = 1;
+  string accountName = 1;
+  string clusterName = 2;
+  string accessToken = 3;
+
+  bytes message = 4;
 }
 
 message ResourceUpdate {
-  bytes message = 1;
-}
+  string accountName = 1;
+  string clusterName = 2;
+  string accessToken = 3;
 
-message InfraUpdate {
-  bytes message = 1;
-}
-
-message ContainerRegistryUpdate {
-  bytes message = 1;
-}
-
-message ClusterUpdate {
-  bytes message = 1;
+  bytes message = 4;
 }
 
 message PingOutput {
