@@ -113,10 +113,6 @@ vector:
   enabled: true
   name: vector
 
-kubeapps:
-  enabled: true
-  name: kubeapps
-
 
 grafana:
   enabled: true
