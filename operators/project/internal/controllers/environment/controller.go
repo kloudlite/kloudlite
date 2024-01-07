@@ -150,14 +150,16 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 	req.LogPreCheck(NamespacedRBACsReady)
 	defer req.LogPreCheck(NamespacedRBACsReady)
 
-	var pullSecrets crdsv1.ImagePullSecretList
+	var pullSecrets corev1.SecretList
 	if err := r.List(ctx, &pullSecrets, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
 		return req.CheckFailed(NamespacedRBACsReady, check, err.Error())
 	}
 
 	secretNames := make([]string, 0, len(pullSecrets.Items))
 	for i := range pullSecrets.Items {
-		secretNames = append(secretNames, pullSecrets.Items[i].Name)
+		if pullSecrets.Items[i].Type == corev1.SecretTypeDockerConfigJson {
+			secretNames = append(secretNames, pullSecrets.Items[i].Name)
+		}
 	}
 
 	b, err := templates.Parse(
@@ -266,7 +268,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder.Watches(&crdsv1.Router{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
 		if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
-			var envList crdsv1.WorkspaceList
+			var envList crdsv1.EnvironmentList
 			if err := r.List(context.TODO(), &envList, &client.ListOptions{
 				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
 					constants.ProjectNameKey: v,
