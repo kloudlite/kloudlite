@@ -6,10 +6,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ProjectManagedServiceSpec defines the desired state of ProjectManagedService
+// ClusterManagedServiceSpec defines the desired state of ClusterManagedService
 type ClusterManagedServiceSpec struct {
 	TargetNamespace string             `json:"targetNamespace"`
-	MSVCSepec       ManagedServiceSpec `json:"msvcSpec"`
+	MSVCSpec        ManagedServiceSpec `json:"msvcSpec"`
 }
 
 //+kubebuilder:object:root=true

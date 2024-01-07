@@ -37,7 +37,7 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	CreadsAvailable string = "creds-available"
+	CredsAvailable string = "creds-available"
 
 	PVCReady     string = "pvc-ready"
 	JobCreated   string = "job-created"
@@ -70,7 +70,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(CreadsAvailable, PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
+	if step := req.EnsureChecks(CredsAvailable, PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -98,7 +98,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
+func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -248,7 +248,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&dbv1.BuildRun{})
 	builder.WithEventFilter(rApi.ReconcileFilter())

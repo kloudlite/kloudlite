@@ -5,20 +5,36 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: anchors.crds.kloudlite.io
+  name: environments.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: Anchor
-    listKind: AnchorList
-    plural: anchors
-    singular: anchor
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.projectName
+      name: Project
+      type: string
+    - jsonPath: .spec.targetNamespace
+      name: target-namespace
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
-        description: Anchor is the Schema for the anchors API
+        description: Environment is the Schema for the environments API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,28 +49,14 @@ spec:
           metadata:
             type: object
           spec:
+            description: EnvironmentSpec defines the desired state of Environment
             properties:
-              parentGVK:
-                description: GroupVersionKind unambiguously identifies a kind.  It
-                  doesn't anonymously include GroupVersion to avoid automatic coercion.  It
-                  doesn't use a GroupVersion to avoid custom marshalling
-                properties:
-                  group:
-                    type: string
-                  kind:
-                    type: string
-                  version:
-                    type: string
-                required:
-                - group
-                - kind
-                - version
-                type: object
-              type:
+              projectName:
+                type: string
+              targetNamespace:
                 type: string
             required:
-            - parentGVK
-            - type
+            - projectName
             type: object
           status:
             properties:

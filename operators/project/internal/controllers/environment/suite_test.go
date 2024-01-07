@@ -1,9 +1,7 @@
-package workspace
+package environment
 
 import (
 	"testing"
-	"time"
-
 	// artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
@@ -27,21 +25,15 @@ var _ = BeforeSuite(func() {
 		Client: nil,
 		Scheme: Suite.Scheme,
 		Env: &env.Env{
-			ReconcilePeriod:         30 * time.Second,
 			MaxConcurrentReconciles: 1,
-
-			// ProjectCfgName:    "project-config",
-			// DockerSecretName:  "harbor-docker-secret",
-			// AdminRoleName:     "harbor-admin-role",
-			SvcAccountName: "kloudlite-svc-account",
-			// AccountRouterName: "account-router",
+			SvcAccountName:          "kloudlite-svc-account",
 		},
 		logger: logging.NewOrDie(&logging.Options{
 			Name: "env",
 			Dev:  true,
 		}),
 		Name:       "env",
-		yamlClient: *Suite.K8sYamlClient,
+		yamlClient: Suite.K8sYamlClient,
 	}
 
 })

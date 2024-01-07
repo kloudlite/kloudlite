@@ -1,13 +1,10 @@
 package project
 
 import (
-	// artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
-	"testing"
-	"time"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/logging"
+	"testing"
 
 	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
@@ -28,9 +25,8 @@ var _ = BeforeSuite(func() {
 		Scheme:     Suite.Scheme,
 		logger:     logging.NewOrDie(&logging.Options{Name: "project", Dev: true}),
 		Name:       "project",
-		yamlClient: *Suite.K8sYamlClient,
+		yamlClient: Suite.K8sYamlClient,
 		Env: &env.Env{
-			ReconcilePeriod:         30 * time.Second,
 			MaxConcurrentReconciles: 10,
 			SvcAccountName:          "kloudlite-svc-account",
 		},

@@ -356,7 +356,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&zookeeperMsvcv1.Service{})
 	builder.Owns(fn.NewUnstructured(constants.HelmZookeeperType))

@@ -1,4 +1,4 @@
-package workspace
+package environment
 
 import (
 	"context"
@@ -51,7 +51,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Workspace{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Environment{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -94,11 +94,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Workspace]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Workspace]) stepResult.Result {
+func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -125,7 +125,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Workspace]) stepR
 
 		ns.Labels[constants.AccountNameKey] = project.Spec.AccountName
 		ns.Labels[constants.ClusterNameKey] = project.Spec.ClusterName
-		ns.Labels[constants.WorkspaceNameKey] = obj.Name
+		ns.Labels[constants.EnvironmentNameKey] = obj.Name
 		ns.Labels[constants.ProjectNameKey] = obj.Spec.ProjectName
 
 		return nil
@@ -143,7 +143,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Workspace]) stepR
 	return req.Next()
 }
 
-func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Workspace]) stepResult.Result {
+func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -189,7 +189,7 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Workspace]) 
 	return req.Next()
 }
 
-func (r *Reconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Workspace]) stepResult.Result {
+func (r *Reconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -254,11 +254,11 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
-	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Workspace{})
+	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Environment{})
 	builder.Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-		if v, ok := obj.GetLabels()[constants.WorkspaceNameKey]; ok {
+		if v, ok := obj.GetLabels()[constants.EnvironmentNameKey]; ok {
 			return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 		}
 		return nil

@@ -1,20 +1,20 @@
-# permissions for end users to edit imagepullsecrets.
+# permissions for end users to edit environments.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: imagepullsecret-editor-role
+    app.kubernetes.io/instance: environment-editor-role
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: app
     app.kubernetes.io/part-of: app
     app.kubernetes.io/managed-by: kustomize
-  name: imagepullsecret-editor-role
+  name: environment-editor-role
 rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - imagepullsecrets
+  - environments
   verbs:
   - create
   - delete
@@ -26,6 +26,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - imagepullsecrets/status
+  - environments/status
   verbs:
   - get

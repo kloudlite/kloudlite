@@ -50,7 +50,7 @@ type BuildObj struct {
 	OwnerReferences []metav1.OwnerReference
 }
 
-func (r Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra []byte, rp []byte, rh []byte, gp []byte) {
+func (r *Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra []byte, rp []byte, rh []byte, gp []byte) {
 	ctx, obj := req.Context(), req.Object
 
 	if err := func() error {

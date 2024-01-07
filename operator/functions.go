@@ -106,7 +106,7 @@ func New(name string) Operator {
 		return ctrl.GetConfigOrDie(), cOpts
 	}()
 
-	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig)
+	k8sYamlClient, err := kubectl.NewYAMLClient(mgrConfig, kubectl.YAMLClientOpts{Logger: logger})
 	if err != nil {
 		log.Fatalln(err)
 	}

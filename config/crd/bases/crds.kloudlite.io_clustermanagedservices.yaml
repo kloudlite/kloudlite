@@ -47,7 +47,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: ProjectManagedServiceSpec defines the desired state of ProjectManagedService
+            description: ClusterManagedServiceSpec defines the desired state of ClusterManagedService
             properties:
               msvcSpec:
                 description: ManagedServiceSpec defines the desired state of ManagedService

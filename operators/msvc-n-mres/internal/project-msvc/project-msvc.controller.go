@@ -192,7 +192,7 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
 		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s/%s", obj.Namespace, obj.Name))
-		msvc.Spec = obj.Spec.MSVCSepec
+		msvc.Spec = obj.Spec.MSVCSpec
 
 		return nil
 	}); err != nil {
@@ -239,7 +239,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	var err error
 	r.templateCommonMsvc, err = templates.Read(templates.CommonMsvcTemplate)
