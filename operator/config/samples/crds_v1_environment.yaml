@@ -1,12 +1,12 @@
 apiVersion: crds.kloudlite.io/v1
-kind: ImagePullSecret
+kind: Environment
 metadata:
   labels:
-    app.kubernetes.io/name: imagepullsecret
-    app.kubernetes.io/instance: imagepullsecret-sample
+    app.kubernetes.io/name: environment
+    app.kubernetes.io/instance: environment-sample
     app.kubernetes.io/part-of: app
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: app
-  name: imagepullsecret-sample
+  name: environment-sample
 spec:
   # TODO(user): Add fields here

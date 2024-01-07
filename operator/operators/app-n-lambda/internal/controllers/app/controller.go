@@ -162,7 +162,7 @@ func (r *Reconciler) findProjectAndWorkspaceForNs(ctx context.Context, ns string
 	var ws crdsv1.Workspace
 	var proj crdsv1.Project
 
-	if _, ok := namespace.Labels[constants.WorkspaceNameKey]; ok {
+	if _, ok := namespace.Labels[constants.EnvironmentNameKey]; ok {
 		var wsList crdsv1.WorkspaceList
 		if err := r.List(ctx, &wsList, &client.ListOptions{
 			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
@@ -319,7 +319,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.Logger = logger.WithName(r.Name)
-	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})

@@ -90,7 +90,7 @@ const (
 	AccountRouterNameKey         string = "kloudlite.io/account-router.name"
 	EdgeNameKey                  string = "kloudlite.io/edge.name"
 	EdgeRouterNameKey            string = "kloudlite.io/edge-router.name"
-	WorkspaceNameKey             string = "kloudlite.io/workspace.name"
+	EnvironmentNameKey           string = "kloudlite.io/environment.name"
 	TargetNamespaceKey           string = "kloudlite.io/target-namespace"
 	ImagePullSecretNameKey       string = "kloudlite.io/image-pull-secret.name"
 	CsiDriverNameKey             string = "kloudlite.io/csi-driver.name"

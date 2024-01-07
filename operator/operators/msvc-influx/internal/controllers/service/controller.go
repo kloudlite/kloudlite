@@ -352,7 +352,7 @@ func (r *Reconciler) reconSts(req *rApi.Request[*influxdbMsvcv1.Service]) stepRe
 	if check != checks[StsReady] {
 		checks[StsReady] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-		  return sr
+			return sr
 		}
 	}
 
@@ -363,7 +363,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&influxdbMsvcv1.Service{})
 	builder.Owns(&corev1.Secret{})

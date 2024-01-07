@@ -1,12 +1,10 @@
 package router
 
 import (
-	"os"
-	"testing"
-	"time"
-
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	"github.com/kloudlite/operator/pkg/logging"
+	"os"
+	"testing"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
@@ -44,10 +42,7 @@ var _ = BeforeSuite(func() {
 		logger: logging.NewOrDie(&logging.Options{Name: "router", Dev: true}),
 		Name:   testNamespace,
 		Env: &env.Env{
-			ReconcilePeriod:          30 * time.Second,
-			MaxConcurrentReconciles:  10,
-			DefaultClusterIssuerName: "kl-cert-issuer",
-			AcmeEmail:                "sample@gmail.com",
+			MaxConcurrentReconciles: 10,
 		},
 		yamlClient: Suite.K8sYamlClient,
 	}
