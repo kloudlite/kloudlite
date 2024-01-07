@@ -381,7 +381,7 @@ envVars:
         storage: file
       consoleCacheBucket:
         name: console-cache
-        storage: memory
+        storage: file
       resetTokenBucket:
         name: reset-token
         storage: file

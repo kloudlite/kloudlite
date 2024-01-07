@@ -59,7 +59,7 @@ spec:
           value: {{.Values.envVars.nats.buckets.resetTokenBucket.name}}
 
         - key: VERIFY_TOKEN_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.verifyTokenBucketName}}
+          value: {{.Values.envVars.nats.buckets.verifyTokenBucket.name}}
 
         - key: NATS_URL
           value: {{.Values.envVars.nats.url}}

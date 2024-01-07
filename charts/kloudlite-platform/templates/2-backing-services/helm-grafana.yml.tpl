@@ -9,7 +9,7 @@ metadata:
 spec:
   chartRepoURL: https://charts.bitnami.com/bitnami
 
-  chartName: bitnami/grafana
+  chartName: grafana
   chartVersion: 9.6.2
 
   values:

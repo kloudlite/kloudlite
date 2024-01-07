@@ -9,7 +9,7 @@ metadata:
 spec:
   chartRepoURL: https://charts.bitnami.com/bitnami
 
-  chartName: bitnami/kube-prometheus
+  chartName: kube-prometheus
 
   chartVersion: 8.15.1
 

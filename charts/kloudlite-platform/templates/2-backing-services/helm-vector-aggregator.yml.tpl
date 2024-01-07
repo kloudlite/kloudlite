@@ -10,7 +10,7 @@ metadata:
 spec:
   chartRepoURL: https://helm.vector.dev
 
-  chartName: vector/vector
+  chartName: vector
   chartVersion: 0.23.0
 
   values:
