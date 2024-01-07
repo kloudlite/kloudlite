@@ -92,6 +92,11 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom @shareable {
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @shareable {
+  projectName: String!
+  targetNamespace: String
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
   enabled: Boolean
   maxReplicas: Int
@@ -186,12 +191,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareabl
 
 type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe @shareable {
   port: Int!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec @shareable {
-  isEnvironment: Boolean
-  projectName: String!
-  targetNamespace: String
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -324,6 +323,11 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn {
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
+  projectName: String!
+  targetNamespace: String
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
   enabled: Boolean
   maxReplicas: Int
@@ -414,12 +418,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
   port: Int!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
-  isEnvironment: Boolean
-  projectName: String!
-  targetNamespace: String
 }
 
 input K8s__io___api___core___v1__TolerationIn {

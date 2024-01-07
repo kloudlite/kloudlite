@@ -10,8 +10,6 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
-// query
-
 func (d *domain) ListSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
 	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
@@ -42,8 +40,6 @@ func (d *domain) GetSecret(ctx ResourceContext, name string) (*entities.Secret, 
 	return d.findSecret(ctx, name)
 }
 
-// mutations
-
 func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
@@ -55,11 +51,6 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	}
 
 	secret.Namespace = env.Spec.TargetNamespace
-
-	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
-	if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
-		return nil, errors.NewE(err)
-	}
 
 	secret.IncrementRecordVersion()
 	secret.CreatedBy = common.CreatedOrUpdatedBy{
@@ -108,11 +99,6 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	}
 
 	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
-
-	// FIXME: our validation can't validate k8s secret, as it does not belong to a Custom Resource
-	//if err := d.k8sClient.ValidateObject(ctx, &secret.Secret); err != nil {
-	//	return nil, errors.NewE(err)
-	//}
 
 	xSecret, err := d.findSecret(ctx, secret.Name)
 	if err != nil {

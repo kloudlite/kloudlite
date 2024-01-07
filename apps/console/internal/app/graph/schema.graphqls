@@ -10,7 +10,6 @@ enum ConsoleResType {
     router
     managed_service
     managed_resource
-    workspace
     environment
 }
 
@@ -69,21 +68,21 @@ input SearchManagedResources {
     markedForDeletion: MatchFilterIn
 }
 
-enum EnvOrWorkspaceOrProjectIdType {
-    workspaceName
-    workspaceTargetNamespace
-
-    environmentName
-    environmentTargetNamespace
-
-    projectName
-    projectTargetNamespace
-}
-
-input EnvOrWorkspaceOrProjectId {
-    type: EnvOrWorkspaceOrProjectIdType!
-    name: String!
-}
+# enum EnvOrWorkspaceOrProjectIdType {
+#     workspaceName
+#     workspaceTargetNamespace
+#
+#     environmentName
+#     environmentTargetNamespace
+#
+#     projectName
+#     projectTargetNamespace
+# }
+#
+# input EnvOrWorkspaceOrProjectId {
+#     type: EnvOrWorkspaceOrProjectIdType!
+#     name: String!
+# }
 
 input ConfigValuesIn {
     configmapName: String!

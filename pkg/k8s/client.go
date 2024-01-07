@@ -124,7 +124,7 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 		scheme = runtime.NewScheme()
 	}
 
-	if err := clientgoscheme.AddToScheme(scheme); err!= nil {
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
 		fmt.Println(err)
 	}
 
@@ -141,7 +141,7 @@ func NewClient(cfg *rest.Config, scheme *runtime.Scheme) (Client, error) {
 		return nil, errors.NewE(err)
 	}
 
-	yamlclient, err := kubectl.NewYAMLClient(cfg)
+	yamlclient, err := kubectl.NewYAMLClient(cfg, kubectl.YAMLClientOpts{})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
