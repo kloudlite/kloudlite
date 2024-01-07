@@ -8,7 +8,6 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://charts.bitnami.com/bitnami
-
   chartName: bitnami/kubeapps
   chartVersion: 14.1.2
 
