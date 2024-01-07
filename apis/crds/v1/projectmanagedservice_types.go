@@ -9,7 +9,7 @@ import (
 // ProjectManagedServiceSpec defines the desired state of ProjectManagedService
 type ProjectManagedServiceSpec struct {
 	TargetNamespace string             `json:"targetNamespace"`
-	MSVCSepec       ManagedServiceSpec `json:"msvcSpec"`
+	MSVCSpec        ManagedServiceSpec `json:"msvcSpec"`
 }
 
 //+kubebuilder:object:root=true

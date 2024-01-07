@@ -7,7 +7,7 @@ operators for
   - edge workers
     - cluster issuer setup
     - edge ingress setup
-    - csi drivers for each providers (AWS, Digitalocean)
+    - csi drivers for each provider (AWS, Digitalocean)
   - automated services
     + mongo
     + mysql

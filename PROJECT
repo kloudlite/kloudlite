@@ -266,22 +266,6 @@ resources:
     namespaced: true
   domain: kloudlite.io
   group: crds
-  kind: Config
-  path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: crds
-  kind: Secret
-  path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
-  group: crds
   kind: Account
   path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
@@ -341,14 +325,6 @@ resources:
     crdVersion: v1
     namespaced: true
   domain: kloudlite.io
-  group: crds
-  kind: Environment
-  path: github.com/kloudlite/operator/apis/crds/v1
-  version: v1
-- api:
-    crdVersion: v1
-    namespaced: true
-  domain: kloudlite.io
   group: clusters
   kind: AccountS3Bucket
   path: github.com/kloudlite/operator/apis/clusters/v1
@@ -375,6 +351,14 @@ resources:
   domain: kloudlite.io
   group: crds
   kind: ClusterManagedService
+  path: github.com/kloudlite/operator/apis/crds/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Environment
   path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 version: "3"

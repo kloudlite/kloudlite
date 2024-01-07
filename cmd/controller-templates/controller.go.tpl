@@ -83,7 +83,7 @@ func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, logger logging.Logge
   r.Client = mgr.GetClient()
   r.Scheme = mgr.GetScheme()
   r.logger = logger.WithName(r.Name)
-  r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+  r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
   builder := ctrl.NewControllerManagedBy(mgr).For(&{{$kindObjName}}{})
   builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})

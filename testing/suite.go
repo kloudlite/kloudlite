@@ -24,7 +24,7 @@ var Suite struct {
 	K8sClient     client.Client
 	Config        *rest.Config
 	Scheme        *runtime.Scheme
-	K8sYamlClient *kubectl.YAMLClient
+	K8sYamlClient kubectl.YAMLClient
 	NewManager    func(options manager.Options) manager.Manager
 	Manager       manager.Manager
 	Context       context.Context
@@ -55,15 +55,16 @@ func withoutManager() {
 	c, err := client.New(Suite.Config, client.Options{
 		Scheme: Suite.Scheme,
 		Mapper: nil,
-		Opts: client.WarningHandlerOptions{
-			SuppressWarnings: true,
+		WarningHandler: client.WarningHandlerOptions{
+			SuppressWarnings:   true,
+			AllowDuplicateLogs: false,
 		},
 	})
 	Expect(err).NotTo(HaveOccurred())
 
 	Suite.K8sClient = c
 
-	k8sYamlClient, err := kubectl.NewYAMLClient(Suite.Config)
+	k8sYamlClient, err := kubectl.NewYAMLClient(Suite.Config, kubectl.YAMLClientOpts{})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sYamlClient).NotTo(BeNil())
 	Suite.K8sYamlClient = k8sYamlClient

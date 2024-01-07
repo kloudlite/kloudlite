@@ -1,4 +1,4 @@
-package workspace
+package environment
 
 import (
 	. "github.com/onsi/ginkgo/v2"
