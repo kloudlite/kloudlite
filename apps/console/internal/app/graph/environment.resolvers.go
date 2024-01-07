@@ -33,11 +33,11 @@ func (r *environmentResolver) ID(ctx context.Context, obj *entities.Environment)
 }
 
 // Spec is the resolver for the spec field.
-func (r *environmentResolver) Spec(ctx context.Context, obj *entities.Environment) (*model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec, error) {
+func (r *environmentResolver) Spec(ctx context.Context, obj *entities.Environment) (*model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec, error) {
 	if obj == nil {
 		return nil, errNilEnvironment
 	}
-	m := &model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec{}
+	m := &model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -64,7 +64,7 @@ func (r *environmentInResolver) Metadata(ctx context.Context, obj *entities.Envi
 }
 
 // Spec is the resolver for the spec field.
-func (r *environmentInResolver) Spec(ctx context.Context, obj *entities.Environment, data *model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn) error {
+func (r *environmentInResolver) Spec(ctx context.Context, obj *entities.Environment, data *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn) error {
 	if obj == nil {
 		return errNilEnvironment
 	}

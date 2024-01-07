@@ -10,7 +10,7 @@ import (
 type Environment struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	crdsv1.Workspace `json:",inline"`
+	crdsv1.Environment `json:",inline"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ProjectName string `json:"projectName" graphql:"noinput"`

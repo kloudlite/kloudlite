@@ -236,13 +236,13 @@ func main() {
 	yamlClient := func() kubectl.YAMLClient {
 		if isDev {
 			logger.Debugf("connecting to k8s over host addr (%s)", "localhost:8081")
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"})
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"}, kubectl.YAMLClientOpts{Logger: logger})
 		}
 		config, err := rest.InClusterConfig()
 		if err != nil {
 			panic(err)
 		}
-		return kubectl.NewYAMLClientOrDie(config)
+		return kubectl.NewYAMLClientOrDie(config, kubectl.YAMLClientOpts{Logger: logger})
 	}()
 
 	g := grpcHandler{

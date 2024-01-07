@@ -106,7 +106,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	env.ProjectName = project.Name
 
 	env.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &env.Workspace); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -149,7 +149,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		d.logger.Errorf(err, "error while adding membership")
 	}
 
-	if err := d.applyK8sResource(ctx, env.ProjectName, &nenv.Workspace, nenv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, env.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -162,7 +162,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 	}
 
 	env.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &env.Workspace); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -172,7 +172,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 	}
 
 	if xenv.GetDeletionTimestamp() != nil {
-		return nil, errAlreadyMarkedForDeletion("workspace", "", env.Name)
+		return nil, errAlreadyMarkedForDeletion("environment", env.Namespace, env.Name)
 	}
 
 	xenv.IncrementRecordVersion()
@@ -194,7 +194,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 	}
 	d.resourceEventPublisher.PublishWorkspaceEvent(upEnv, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, xenv.ProjectName, &upEnv.Workspace, upEnv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, xenv.ProjectName, &upEnv.Environment, upEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -218,7 +218,7 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 	}
 	d.resourceEventPublisher.PublishWorkspaceEvent(env, PublishUpdate)
 
-	if err := d.deleteK8sResource(ctx, env.ProjectName, &env.Workspace); err != nil {
+	if err := d.deleteK8sResource(ctx, env.ProjectName, &env.Environment); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -311,7 +311,7 @@ func (d *domain) ResyncEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	if err := d.resyncK8sResource(ctx, "", t.SyncActionApply, &corev1.Namespace{
+	if err := d.resyncK8sResource(ctx, e.ProjectName, t.SyncActionApply, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: e.Spec.TargetNamespace,
@@ -323,5 +323,5 @@ func (d *domain) ResyncEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, "", e.SyncStatus.Action, &e.Workspace, e.RecordVersion)
+	return d.resyncK8sResource(ctx, "", e.SyncStatus.Action, &e.Environment, e.RecordVersion)
 }
