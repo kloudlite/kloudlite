@@ -8,7 +8,9 @@ spec:
     cpu:
       min: 300m
       max: 500m
-    memory: 500Mi
+    memory: 
+      min: 500Mi
+      max: 500Mi
     storage:
       size: 2Gi
       storageClass: sc-xfs

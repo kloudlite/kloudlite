@@ -8,8 +8,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://grafana.github.io/helm-charts
-
-  chartName: grafana/loki-stack
+  chartName: loki-stack
   chartVersion: 2.9.10
 
   values:

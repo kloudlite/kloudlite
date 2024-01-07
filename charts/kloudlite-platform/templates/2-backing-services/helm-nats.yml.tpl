@@ -8,7 +8,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://nats-io.github.io/k8s/helm/charts/
-  chartName: nats/nats
+  chartName: nats
   chartVersion: 1.1.5
   jobVars:
     tolerations:

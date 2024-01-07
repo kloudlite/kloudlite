@@ -15,19 +15,14 @@ spec:
         args:
          - -c
          - |
-            {{- range $k,$bucket := .Values.envVars.nats.buckets -}}
-            {{- if $.Values.nats.runAsCluster }}
-            nats --server nats://nats:4222 kv add {{ $bucket.name }} --replicas={{$.Values.nats.replicas}} --storage={{$bucket.storage}}
-            {{- else }}
-            nats --server nats://nats:4222 kv add {{ $bucket.name }} --storage={{$bucket.storage}}
+            echo "creatings NATS KVs"
+            {{- range $k,$bucket := .Values.envVars.nats.buckets }}
+            nats --server nats://nats:4222 kv add {{ $bucket.name }} {{- if $.Values.nats.runAsCluster}}  --replicas={{$.Values.nats.replicas}} {{- end }} --storage={{$bucket.storage}}
             {{- end }}
-            {{- end }}
-            {{- range $k,$stream := .Values.envVars.nats.streams -}}
-            {{- if $.Values.nats.runAsCluster }}
+
+            echo "creatings NATS STREAMs"
+            {{- range $k,$stream := .Values.envVars.nats.streams }}
             nats --server nats://nats:4222 stream add {{ $stream.name }} --replicas={{$.Values.nats.replicas}} --subjects={{ $stream.subjects | squote }} --max-msg-size={{ $stream.maxMsgBytes }} --storage=file --defaults
-            {{- else }}
-            nats --server nats://nats:4222 stream add {{ $stream.name }}  --replicas={{$.Values.nats.replicas}} --subjects={{ $stream.subjects | squote }} --max-msg-size={{ $stream.maxMsgBytes }} --storage=file --defaults
-            {{- end }}
             {{- end }}
       restartPolicy: Never
   backoffLimit: 0
