@@ -153,17 +153,17 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	return req.Next()
 }
 
-func (r *Reconciler) findProjectAndWorkspaceForNs(ctx context.Context, ns string) (*crdsv1.Workspace, *crdsv1.Project, error) {
+func (r *Reconciler) findProjectAndWorkspaceForNs(ctx context.Context, ns string) (*crdsv1.Environment, *crdsv1.Project, error) {
 	namespace, err := rApi.Get(ctx, r.Client, fn.NN("", ns), &corev1.Namespace{})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var ws crdsv1.Workspace
+	var ws crdsv1.Environment
 	var proj crdsv1.Project
 
 	if _, ok := namespace.Labels[constants.EnvironmentNameKey]; ok {
-		var wsList crdsv1.WorkspaceList
+		var wsList crdsv1.EnvironmentList
 		if err := r.List(ctx, &wsList, &client.ListOptions{
 			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
 				constants.TargetNamespaceKey: namespace.Name,
