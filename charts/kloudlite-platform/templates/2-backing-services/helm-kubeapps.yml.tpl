@@ -7,9 +7,7 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: bitnami
-    url: https://charts.bitnami.com/bitnami
+  chartRepoURL: https://charts.bitnami.com/bitnami
 
   chartName: bitnami/kubeapps
   chartVersion: 14.1.2

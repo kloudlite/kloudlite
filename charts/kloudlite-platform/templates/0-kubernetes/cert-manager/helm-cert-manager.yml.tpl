@@ -7,9 +7,7 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: jetstack
-    url: https://charts.jetstack.io
+  chartRepoURL: https://charts.jetstack.io
 
   chartName: jetstack/cert-manager
   chartVersion: v1.11.0

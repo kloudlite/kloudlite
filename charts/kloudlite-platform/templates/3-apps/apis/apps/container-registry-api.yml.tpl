@@ -144,7 +144,7 @@ spec:
           value: {{.Values.envVars.nats.streams.events.name}}
 
         - key: SESSION_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.sessionKVBucketName}}
+          value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
 
       volumes:
         - mountPath: /github

@@ -49,7 +49,7 @@ spec:
           refKey: DB_NAME
 
         - key: SESSION_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.sessionKVBucketName}}
+          value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
 
         - key: NATS_URL
           value: {{.Values.envVars.nats.url}}

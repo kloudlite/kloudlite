@@ -7,9 +7,7 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: grafana
-    url: https://grafana.github.io/helm-charts
+  chartRepoURL: https://grafana.github.io/helm-charts
 
   chartName: grafana/loki-stack
   chartVersion: 2.9.10

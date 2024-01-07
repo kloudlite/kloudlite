@@ -67,7 +67,7 @@ spec:
           value: {{.Values.envVars.nats.streams.resourceSync.name}}
 
         - key: SESSION_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.sessionKVBucketName}}
+          value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
 
         - key: IAM_GRPC_ADDR
           value: "iam:3001"
@@ -77,6 +77,9 @@ spec:
 
         - key: DEFAULT_PROJECT_WORKSPACE_NAME
           value: {{.Values.global.defaultProjectWorkspaceName}}
+
+        - key: CONSOLE_CACHE_KV_BUCKET
+          value: {{.Values.envVars.nats.buckets.consoleCacheBucket.name}}
 
         - key: MSVC_TEMPLATE_FILE_PATH
           value: /console.d/templates/managed-svc-templates.yml
@@ -90,6 +93,6 @@ spec:
       volumes:
         - mountPath: /console.d/templates
           type: config
-          refName: console-api-managed-svc-template
+          refName: managed-svc-template
           items:
             - key: managed-svc-templates.yml

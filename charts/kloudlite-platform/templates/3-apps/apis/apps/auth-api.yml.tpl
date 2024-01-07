@@ -53,10 +53,10 @@ spec:
           value: "3001"
 
         - key: SESSION_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.sessionKVBucketName}}
+          value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
 
         - key: RESET_PASSWORD_TOKEN_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.resetTokenBucketName}}
+          value: {{.Values.envVars.nats.buckets.resetTokenBucket.name}}
 
         - key: VERIFY_TOKEN_KV_BUCKET
           value: {{.Values.envVars.nats.buckets.verifyTokenBucketName}}
