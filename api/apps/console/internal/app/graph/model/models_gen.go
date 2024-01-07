@@ -44,11 +44,6 @@ type ConfigValuesOut struct {
 	Value         string `json:"value"`
 }
 
-type EnvOrWorkspaceOrProjectID struct {
-	Type EnvOrWorkspaceOrProjectIDType `json:"type"`
-	Name string                        `json:"name"`
-}
-
 type EnvironmentEdge struct {
 	Cursor string                `json:"cursor"`
 	Node   *entities.Environment `json:"node"`
@@ -216,6 +211,16 @@ type GithubComKloudliteOperatorApisCrdsV1EnvFrom struct {
 type GithubComKloudliteOperatorApisCrdsV1EnvFromIn struct {
 	RefName string                                             `json:"refName"`
 	Type    GithubComKloudliteOperatorApisCrdsV1ConfigOrSecret `json:"type"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec struct {
+	ProjectName     string  `json:"projectName"`
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn struct {
+	ProjectName     string  `json:"projectName"`
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Hpa struct {
@@ -406,18 +411,6 @@ type GithubComKloudliteOperatorApisCrdsV1TCPProbeIn struct {
 	Port int `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec struct {
-	IsEnvironment   *bool   `json:"isEnvironment,omitempty"`
-	ProjectName     string  `json:"projectName"`
-	TargetNamespace *string `json:"targetNamespace,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn struct {
-	IsEnvironment   *bool   `json:"isEnvironment,omitempty"`
-	ProjectName     string  `json:"projectName"`
-	TargetNamespace *string `json:"targetNamespace,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
 	Generation *int    `json:"generation,omitempty"`
 	Message    *string `json:"message,omitempty"`
@@ -572,55 +565,6 @@ type SecretValuesOut struct {
 	SecretName string `json:"secretName"`
 	Key        string `json:"key"`
 	Value      string `json:"value"`
-}
-
-type EnvOrWorkspaceOrProjectIDType string
-
-const (
-	EnvOrWorkspaceOrProjectIDTypeWorkspaceName              EnvOrWorkspaceOrProjectIDType = "workspaceName"
-	EnvOrWorkspaceOrProjectIDTypeWorkspaceTargetNamespace   EnvOrWorkspaceOrProjectIDType = "workspaceTargetNamespace"
-	EnvOrWorkspaceOrProjectIDTypeEnvironmentName            EnvOrWorkspaceOrProjectIDType = "environmentName"
-	EnvOrWorkspaceOrProjectIDTypeEnvironmentTargetNamespace EnvOrWorkspaceOrProjectIDType = "environmentTargetNamespace"
-	EnvOrWorkspaceOrProjectIDTypeProjectName                EnvOrWorkspaceOrProjectIDType = "projectName"
-	EnvOrWorkspaceOrProjectIDTypeProjectTargetNamespace     EnvOrWorkspaceOrProjectIDType = "projectTargetNamespace"
-)
-
-var AllEnvOrWorkspaceOrProjectIDType = []EnvOrWorkspaceOrProjectIDType{
-	EnvOrWorkspaceOrProjectIDTypeWorkspaceName,
-	EnvOrWorkspaceOrProjectIDTypeWorkspaceTargetNamespace,
-	EnvOrWorkspaceOrProjectIDTypeEnvironmentName,
-	EnvOrWorkspaceOrProjectIDTypeEnvironmentTargetNamespace,
-	EnvOrWorkspaceOrProjectIDTypeProjectName,
-	EnvOrWorkspaceOrProjectIDTypeProjectTargetNamespace,
-}
-
-func (e EnvOrWorkspaceOrProjectIDType) IsValid() bool {
-	switch e {
-	case EnvOrWorkspaceOrProjectIDTypeWorkspaceName, EnvOrWorkspaceOrProjectIDTypeWorkspaceTargetNamespace, EnvOrWorkspaceOrProjectIDTypeEnvironmentName, EnvOrWorkspaceOrProjectIDTypeEnvironmentTargetNamespace, EnvOrWorkspaceOrProjectIDTypeProjectName, EnvOrWorkspaceOrProjectIDTypeProjectTargetNamespace:
-		return true
-	}
-	return false
-}
-
-func (e EnvOrWorkspaceOrProjectIDType) String() string {
-	return string(e)
-}
-
-func (e *EnvOrWorkspaceOrProjectIDType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = EnvOrWorkspaceOrProjectIDType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid EnvOrWorkspaceOrProjectIdType", str)
-	}
-	return nil
-}
-
-func (e EnvOrWorkspaceOrProjectIDType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat string
