@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: console-api-managed-svc-template
+  name: managed-svc-template
   namespace: {{.Release.Namespace}}
 data:
   managed-svc-templates.yml: |+
@@ -67,26 +67,45 @@ data:
           logoUrl: https://img.icons8.com/color/344/mongodb.png
           displayName: MongoDB Standalone
           description: MongoDB Standalone
-          apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
-          kind: Service
+          apiVersion: mongodb.msvc.kloudlite.io/v1
+          kind: StandaloneService
           active: true
           fields:
-            - name: cpu
-              label: CPU Allocation
+            - name: resources.storage.size
+              label: Storage
               inputType: Number
-              defaultValue: 0.5
-              min: 0.500
+              defaultValue: 0.4
+              min: 0.1
+              step: 0.1
+              max: 1000
+              required: true
+              displayUnit: GB
+              unit: Gi
+
+            - name: resources.cpu
+              label: Cpu
+              inputType: Resource
+              defaultValue: 0.4
+              min: 0.4
+              step: 0.1
               max: 2
               required: true
-              unit: vCpu
+              displayUnit: vCPU
+              multiplier: 1000
+              unit: "m"
 
-            - name: size
-              label: Capacity in GB
-              inputType: Number
-              defaultValue: 10
-              min: 1
+            - name: resources.memory
+              label: Memory
+              inputType: Resource
+              defaultValue: 400
+              min: 0.4
+              step: 0.1
+              max: 2
               required: true
-              unit: Gi
+              multiplier: 1000
+              displayUnit: GB
+              unit: "Mi"
+
           inputMiddleware: |-
             const inputMiddleware = (inputs) => {
               return {
@@ -160,12 +179,10 @@ data:
                   label: Password
                 - name: DB_URL
                   label: Connection String
-        - apiVersion: mongodb.msvc.kloudlite.io/v1
+        - name: mysql_standalone
           kind: StandaloneService
-          name: mysql_standalone
           logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
           apiVersion: mysql-standalone.msvc.kloudlite.io/v1
-          kind: Service
           displayName: MySQL Standalone
           description: MySQL Standalone
           fields:
@@ -248,9 +265,7 @@ data:
               label: Mysql Root URI
 
           resources:
-            - apiVersion: mongodb.msvc.kloudlite.io/v1
-              kind: Database
-              name: db
+            - name: db
               apiVersion: mysql-standalone.msvc.kloudlite.io/v1
               kind: Database
               displayName: Database
@@ -481,5 +496,6 @@ data:
           displayName: RabbitMQ Cluster
           description: RabbitMQ Cluster
           active: false
+
 
 

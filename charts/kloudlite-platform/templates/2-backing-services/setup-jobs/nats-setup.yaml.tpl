@@ -15,11 +15,11 @@ spec:
         args:
          - -c
          - |
-            {{- range $k,$bucketName := .Values.envVars.nats.buckets -}}
+            {{- range $k,$bucket := .Values.envVars.nats.buckets -}}
             {{- if $.Values.nats.runAsCluster }}
-            nats --server nats://nats:4222 kv add {{ $bucketName }} --replicas={{$.Values.nats.replicas}} --storage=file
+            nats --server nats://nats:4222 kv add {{ $bucket.name }} --replicas={{$.Values.nats.replicas}} --storage={{$bucket.storage}}
             {{- else }}
-            nats --server nats://nats:4222 kv add {{ $bucketName }} --storage=file
+            nats --server nats://nats:4222 kv add {{ $bucket.name }} --storage={{$bucket.storage}}
             {{- end }}
             {{- end }}
             {{- range $k,$stream := .Values.envVars.nats.streams -}}

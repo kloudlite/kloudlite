@@ -7,9 +7,7 @@ metadata:
   name: {{$chartName}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: nats
-    url: https://nats-io.github.io/k8s/helm/charts/
+  chartRepoURL: https://nats-io.github.io/k8s/helm/charts/
   chartName: nats/nats
   chartVersion: 1.1.5
   jobVars:

@@ -69,7 +69,7 @@ spec:
           value: {{.Values.envVars.nats.streams.resourceSync.name}}
 
         - key: SESSION_KV_BUCKET
-          value: {{.Values.envVars.nats.buckets.sessionKVBucketName}}
+          value: {{.Values.envVars.nats.buckets.sessionKVBucket.name}}
 
         - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
           value: "message-office:3002"
@@ -97,5 +97,15 @@ spec:
 
         - key: PUBLIC_DNS_HOST_SUFFIX
           value: {{.Values.global.baseDomain}}
+
+        - key: MSVC_TEMPLATE_FILE_PATH
+          value: /infra.d/templates/managed-svc-templates.yml
+
+      volumes:
+        - mountPath: /infra.d/templates
+          type: config
+          refName: managed-svc-template
+          items:
+            - key: managed-svc-templates.yml
 
 

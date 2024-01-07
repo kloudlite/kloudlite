@@ -377,6 +377,15 @@ envVars:
         subjects: "resource-sync.>"
         maxMsgBytes: 2MB
     buckets:
-      sessionKVBucketName: auth-session
-      verifyTokenBucketName: verify-token
-      resetTokenBucketName: reset-token
+      sessionKVBucket:
+        name: auth-session
+        storage: file
+      verifyTokenBucket:
+        name: verify-token
+        storage: file
+      consoleCacheBucket:
+        name: console-cache
+        storage: memory
+      resetTokenBucket:
+        name: reset-token
+        storage: file

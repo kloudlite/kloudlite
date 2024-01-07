@@ -8,9 +8,7 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: vector
-    url: https://helm.vector.dev
+  chartRepoURL: https://helm.vector.dev
 
   chartName: vector/vector
   chartVersion: 0.23.0

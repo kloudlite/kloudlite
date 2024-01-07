@@ -6,9 +6,7 @@ metadata:
   name: descheduler
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    url: https://kubernetes-sigs.github.io/descheduler/
-    name: descheduler
+  chartRepoURL: https://kubernetes-sigs.github.io/descheduler/
   chartName: "descheduler/descheduler"
   chartVersion: "0.28.0"
   values: {}
