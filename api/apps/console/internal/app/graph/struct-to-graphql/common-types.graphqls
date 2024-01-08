@@ -125,6 +125,10 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec 
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
   apiVersion: String!
   kind: String!
@@ -147,6 +151,11 @@ type Github__com___kloudlite___operator___apis___crds___v1__Probe @shareable {
   shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbe
   tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbe
   type: String!
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec @shareable {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
+  targetNamespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec @shareable {
@@ -183,6 +192,12 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareabl
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
   region: String
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
+}
+
+type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @shareable {
+  apiVersion: String!
+  kind: String!
+  spec: Map!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareable {
@@ -356,6 +371,10 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
+  serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
   msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
   spec: Map!
@@ -376,6 +395,11 @@ input Github__com___kloudlite___operator___apis___crds___v1__ProbeIn {
   shell: Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn
   tcp: Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn
   type: String!
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn {
+  msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
+  targetNamespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn {
@@ -410,6 +434,12 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
   region: String
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
+  apiVersion: String!
+  kind: String!
+  spec: Map!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {

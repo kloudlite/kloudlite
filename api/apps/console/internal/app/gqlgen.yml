@@ -107,6 +107,10 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedService
   ManagedServiceIn: *managed-service-model
 
+  ProjectManagedService: &project-managed-service-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.ProjectManagedService
+  ProjectManagedServiceIn: *project-managed-service-model
+
   ManagedResource: &managed-resource-model
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
