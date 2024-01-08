@@ -61,6 +61,9 @@ func (d *domain) OnVolumeAttachmentUpdateMessage(ctx InfraContext, clusterName s
 	}
 
 	if vatt == nil {
+		volumeAttachment.AccountName = ctx.AccountName
+		volumeAttachment.ClusterName = clusterName
+
 		volumeAttachment.CreatedBy = common.CreatedOrUpdatedBy{
 			UserId:    repos.ID(common.CreatedByResourceSyncUserId),
 			UserName:  common.CreatedByResourceSyncUsername,

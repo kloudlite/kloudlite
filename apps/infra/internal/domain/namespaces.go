@@ -60,12 +60,16 @@ func (d *domain) OnNamespaceUpdateMessage(ctx InfraContext, clusterName string, 
 	}
 
 	if ns == nil {
+		namespace.AccountName = ctx.AccountName
+		namespace.ClusterName = clusterName
+
 		namespace.CreatedBy = common.CreatedOrUpdatedBy{
 			UserId:    repos.ID(common.CreatedByResourceSyncUserId),
 			UserName:  common.CreatedByResourceSyncUsername,
 			UserEmail: common.CreatedByResourceSyncUserEmail,
 		}
 		namespace.LastUpdatedBy = namespace.CreatedBy
+
 		ns, err = d.namespaceRepo.Create(ctx, &namespace)
 		if err != nil {
 			return errors.NewE(err)
