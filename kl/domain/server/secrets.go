@@ -36,20 +36,8 @@ func ListSecrets(options ...fn.Option) ([]Secret, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"project": map[string]any{
-			"type":  "name",
-			"value": strings.TrimSpace(projectName),
-		},
-		"scope": map[string]any{
-			"type": func() string {
-				if env.IsEnvironment {
-					return "environmentName"
-				}
-
-				return "workspaceName"
-			}(),
-			"value": strings.TrimSpace(env.Name),
-		},
+		"projectName": strings.TrimSpace(projectName),
+		"envName":     strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {
@@ -130,21 +118,9 @@ func GetSecret(options ...fn.Option) (*Secret, error) {
 	}
 
 	respData, err := klFetch("cli_getSecret", map[string]any{
-		"name": secName,
-		"project": map[string]any{
-			"type":  "name",
-			"value": strings.TrimSpace(projectName),
-		},
-		"scope": map[string]any{
-			"type": func() string {
-				if env.IsEnvironment {
-					return "environmentName"
-				}
-
-				return "workspaceName"
-			}(),
-			"value": strings.TrimSpace(env.Name),
-		},
+		"name":        secName,
+		"projectName": strings.TrimSpace(projectName),
+		"envName":     strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {

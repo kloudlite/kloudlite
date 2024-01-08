@@ -15,17 +15,14 @@ var Cmd = &cobra.Command{
 	Short: "intercept an app with your device",
 	Long: `Intercept app to tunnel your local
 Examples:
-  # intercept an app with device id and appid
-  kl intercept <device_id> <app_id>
-
-  # intercept an app with device name and app readable id
-  kl intercept <device_name> <app_readable_id>
+  # intercept an app with device name and app name
+  kl intercept <device_name> <app_name>
 
   # alternative way
-  kl intercept --device-id=<divice_id> --app-readable-id=<app_readable_id>
+  kl intercept --device-name=<device_name> --app-name=<app_name>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := interceptApp(cmd, args)
+		_, err := triggerSelectApp(cmd, args)
 		if err != nil {
 			common_util.PrintError(err)
 			return
@@ -95,15 +92,15 @@ func triggerDeviceSelect(dName string) (string, error) {
 }
 
 func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
-	aName := cmd.Flag("app-id").Value.String()
-
-	if aName == "" {
-		aName = cmd.Flag("app-readable-id").Value.String()
-	}
+	aName := cmd.Flag("app-name").Value.String()
 
 	if len(args) >= 2 && aName == "" {
 		aName = args[1]
 	}
+	//
+	//if aName == "" {
+	//	return "", errors.New("please provide an app name in the selected project")
+	//}
 
 	apps, err := server2.ListApps()
 	if err != nil {
@@ -116,7 +113,7 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 				return a.Metadata.Name, nil
 			}
 		}
-		return "", errors.New("provided app id not found in selected project")
+		return "", errors.New("provided app name not found in selected project")
 	}
 
 	appName, err := fzf.FindOne(
@@ -134,8 +131,6 @@ func triggerSelectApp(cmd *cobra.Command, args []string) (string, error) {
 }
 
 func init() {
-	Cmd.Flags().StringP("device-id", "", "", "device id")
 	Cmd.Flags().StringP("device-name", "", "", "device name")
-	Cmd.Flags().StringP("app-id", "", "", "app/lambda id")
-	Cmd.Flags().StringP("app-readable-id", "", "", "app/lambda  readable id")
+	Cmd.Flags().StringP("app-name", "", "", "app/lambda name")
 }

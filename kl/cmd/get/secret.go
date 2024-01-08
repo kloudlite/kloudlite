@@ -15,7 +15,7 @@ import (
 var secretCmd = &cobra.Command{
 	Use:   "secret",
 	Short: "get secret entries",
-	Long: `get secret entries
+	Long: `get secret entries for the selected project
 Examples:
   # get secret entries in table
   kl get secret <secretname>

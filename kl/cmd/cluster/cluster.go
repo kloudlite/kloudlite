@@ -16,7 +16,7 @@ import (
 var Command = &cobra.Command{
 	Use:   "cluster",
 	Short: "get access of your cluster",
-	Long: `This command let you login to the kloudlite.
+	Long: `This command will let you perform different actions on your cluster.
 Example:
   # get detail about selected account
   kl cluster
@@ -30,8 +30,6 @@ Example:
   kl cluster -- kubectl get pods
   kl cluster -- kubectl apply -f deployment.yaml
 
-  when you execute the above command a link will be opened on your browser. 
-  visit your browser and approve there to access your account using this cli.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var fn func() error

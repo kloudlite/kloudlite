@@ -18,11 +18,14 @@ var clustersCmd = &cobra.Command{
 	Short: "list all the clusters accessible to you",
 	Long: `List Clusters
 
-This command will help you to see list of all the clusters that's accessible to you. 
+This command will provide the list of all the clusters that's accessible to you. 
 
 Examples:
   # list clusters accessible to you
   kl list clusters
+
+Note: selected project will be highlighted with green color.
+
 `,
 	Run: func(_ *cobra.Command, _ []string) {
 		err := listClusters()

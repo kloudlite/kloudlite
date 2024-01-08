@@ -15,12 +15,14 @@ var configsCmd = &cobra.Command{
 	Use:   "configs",
 	Short: "list all the configs available in selected project",
 	Long: `List all the configs available in project.
+
 Examples:
-	# list all the configs with selected project
+
+This command will provide the list of all the configs for the selected project.
   kl list configs
 
-	# list all the configs with projectId
-  kl list configs <projectId>
+This command will provide the list of all the configs for the provided project name.
+  kl list configs <projectName>
 `,
 	Run: func(_ *cobra.Command, args []string) {
 		pName := ""

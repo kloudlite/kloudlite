@@ -20,8 +20,6 @@ Examples:
 	# list all the secrets with selected project
   kl list secrets
 
-	# list all the secrets with projectId
-  kl list secrets <projectId>
 `,
 	Run: func(_ *cobra.Command, args []string) {
 

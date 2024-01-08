@@ -17,11 +17,14 @@ var accountsCmd = &cobra.Command{
 	Short: "list all the accounts accessible to you",
 	Long: `List Accounts
 
-This command will help you to see list of all the accounts that's accessible to you. 
+This command will provide the list of all the accounts that's accessible to you. 
 
 Examples:
   # list accounts accessible to you
   kl list accounts
+
+Note: selected project will be highlighted with green color.
+
 `,
 	Run: func(_ *cobra.Command, _ []string) {
 		err := listAccounts()

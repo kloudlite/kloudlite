@@ -15,12 +15,12 @@ var appsCmd = &cobra.Command{
 	Use:   "apps",
 	Short: "list all the apps available in selected project",
 	Long: `List all the apps available in project.
+
+This command will provide the list of all the apps that's accessible for the selected environment or workspace.
+
 Examples:
-	# list all the apps with selected project
   kl list apps
 
-	# list all the apps with projectId
-  kl list apps <projectId>
 	`,
 	Run: func(_ *cobra.Command, args []string) {
 		if err := listapps(args); err != nil {

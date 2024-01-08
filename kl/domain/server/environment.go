@@ -3,11 +3,10 @@ package server
 import (
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"strings"
 )
 
 type Env struct {
@@ -36,14 +35,11 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	}
 
 	respData, err := klFetch("cli_listEnvironments", map[string]any{
+		"projectName": strings.TrimSpace(projectName),
 		"pq": map[string]any{
 			"orderBy":       "name",
 			"sortDirection": "ASC",
 			"first":         99999999,
-		},
-		"project": map[string]any{
-			"type":  "name",
-			"value": strings.TrimSpace(projectName),
 		},
 	}, &cookie)
 

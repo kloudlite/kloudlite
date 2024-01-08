@@ -17,11 +17,14 @@ var envsCmd = &cobra.Command{
 	Short: "list all the environments accessible to you",
 	Long: `List Environments
 
-This command will help you to see list of all the environments that's accessible to you.
+This command will provide the list of all the environments that's accessible to you. 
 
 Examples:
   # list environments accessible to you
   kl list envs
+
+Note: selected project will be highlighted with green color.
+
 `,
 	Run: func(_ *cobra.Command, args []string) {
 		err := listEnvironments(args)

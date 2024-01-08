@@ -41,20 +41,8 @@ func ListConfigs(options ...fn.Option) ([]Config, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"project": map[string]any{
-			"type":  "name",
-			"value": strings.TrimSpace(projectName),
-		},
-		"scope": map[string]any{
-			"type": func() string {
-				if env.IsEnvironment {
-					return "environmentName"
-				}
-
-				return "workspaceName"
-			}(),
-			"value": strings.TrimSpace(env.Name),
-		},
+		"projectName": strings.TrimSpace(projectName),
+		"envName":     strings.TrimSpace(env.Name),
 	}, &cookie)
 
 	if err != nil {
@@ -135,21 +123,9 @@ func GetConfig(options ...fn.Option) (*Config, error) {
 	}
 
 	respData, err := klFetch("cli_getConfig", map[string]any{
-		"name": configName,
-		"project": map[string]any{
-			"type":  "name",
-			"value": strings.TrimSpace(projectName),
-		},
-		"scope": map[string]any{
-			"type": func() string {
-				if env.IsEnvironment {
-					return "environmentName"
-				}
-
-				return "workspaceName"
-			}(),
-			"value": strings.TrimSpace(env.Name),
-		},
+		"name":        configName,
+		"envName":     strings.TrimSpace(env.Name),
+		"projectName": strings.TrimSpace(projectName),
 	}, &cookie)
 
 	if err != nil {

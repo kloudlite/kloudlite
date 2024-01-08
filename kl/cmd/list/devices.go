@@ -16,9 +16,13 @@ var devicesCmd = &cobra.Command{
 	Use:   "devices",
 	Short: "list all your devices in selected account",
 	Long: `List all your devices in selected account.
+
+This command will provide the list of all the devices in the selected account.
 Examples:
-	# list all the devices with selected account
   kl list [devices|device|dev|devs]
+
+Note: selected project will be highlighted with green color.
+
 `,
 	Run: func(_ *cobra.Command, _ []string) {
 		if err := listDevices(); err != nil {

@@ -17,11 +17,8 @@ var projectsCmd = &cobra.Command{
 	Short: "list all the projects accessible to you in selected account",
 	Long: `list projects
 Examples:
-  # list all the projects present in selected account
+This command will provide the list of all the projects in selected account. 
   kl list projects
-
-	# list all the projects in specific account 
-	kl list projects <accountId>
 
 Note: selected project will be highlighted with green color.
   `,
