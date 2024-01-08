@@ -336,21 +336,32 @@ input ConfigIn {
   metadata: MetadataIn
 }
 
+type ConfigKeyRef {
+  configName: String!
+  key: String!
+}
+
+input ConfigKeyRefIn {
+  configName: String!
+  key: String!
+}
+
+type ConfigKeyValueRef {
+  configName: String!
+  key: String!
+  value: String!
+}
+
+input ConfigKeyValueRefIn {
+  configName: String!
+  key: String!
+  value: String!
+}
+
 type ConfigPaginatedRecords {
   edges: [ConfigEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
-}
-
-input ConfigValuesIn {
-  configmapName: String!
-  key: String!
-}
-
-type ConfigValuesOut {
-  configmapName: String!
-  key: String!
-  value: String!
 }
 
 type ConsoleCheckNameAvailabilityOutput {
@@ -1153,13 +1164,30 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn {
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting {
+  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+  privateIngressClass: String
+  publicIngressClass: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn {
+  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode {
+  private
+  public
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec {
   projectName: String!
+  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
   targetNamespace: String
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   projectName: String!
+  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
   targetNamespace: String
 }
 
@@ -1227,11 +1255,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Https {
+  clusterIssuer: String
   enabled: Boolean!
   forceRedirect: Boolean
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
+  clusterIssuer: String
   enabled: Boolean!
   forceRedirect: Boolean
 }
@@ -1385,7 +1415,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec {
   ingressClass: String
   maxBodySizeInMB: Int
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
-  region: String
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
 }
 
@@ -1398,7 +1427,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
   ingressClass: String
   maxBodySizeInMB: Int
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
-  region: String
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
 }
 
@@ -2760,6 +2788,7 @@ type Mutation {
   auth_setRemoteAuthHeader(authHeader: String, loginId: String!): Boolean!
   auth_signup(email: String!, name: String!, password: String!): Session
   auth_verifyEmail(token: String!): Session!
+  core_cloneEnvironment(envName: String!, projectName: String!, sourceEnvName: String!): Environment
   core_createApp(app: AppIn!, envName: String!, projectName: String!): App
   core_createConfig(config: ConfigIn!, envName: String!, projectName: String!): Config
   core_createEnvironment(env: EnvironmentIn!, projectName: String!): Environment
@@ -2778,6 +2807,7 @@ type Mutation {
   core_deleteProjectManagedService(pmsvcName: String!, projectName: String!): Boolean!
   core_deleteRouter(envName: String!, projectName: String!, routerName: String!): Boolean!
   core_deleteSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
+  core_interceptApp(appname: String!, deviceName: String!, envName: String!, intercept: Boolean!, projectName: String!): Boolean!
   core_updateApp(app: AppIn!, envName: String!, projectName: String!): App
   core_updateConfig(config: ConfigIn!, envName: String!, projectName: String!): Config
   core_updateEnvironment(env: EnvironmentIn!, projectName: String!): Environment
@@ -3117,7 +3147,7 @@ type Query {
   core_checkNameAvailability(name: String!, namespace: String, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
   core_getApp(envName: String!, name: String!, projectName: String!): App
   core_getConfig(envName: String!, name: String!, projectName: String!): Config
-  core_getConfigValues(queries: [ConfigValuesIn!]): [ConfigValuesOut!]
+  core_getConfigValues(envName: String!, projectName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
   core_getEnvironment(name: String!, projectName: String!): Environment
   core_getImagePullSecret(envName: String!, name: String!, projectName: String!): ImagePullSecret
   core_getManagedResource(envName: String!, name: String!, projectName: String!): ManagedResource
@@ -3125,7 +3155,7 @@ type Query {
   core_getProjectManagedService(name: String!, projectName: String!): ProjectManagedService
   core_getRouter(envName: String!, name: String!, projectName: String!): Router
   core_getSecret(envName: String!, name: String!, projectName: String!): Secret
-  core_getSecretValues(queries: [SecretValuesIn!]): [SecretValuesOut!]
+  core_getSecretValues(envName: String!, projectName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!]
   core_listApps(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchApps): AppPaginatedRecords
   core_listConfigs(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchConfigs): ConfigPaginatedRecords
   core_listEnvironments(pq: CursorPaginationIn, projectName: String!, search: SearchEnvironments): EnvironmentPaginatedRecords
@@ -3435,21 +3465,32 @@ input SecretIn {
   type: K8s__io___api___core___v1__SecretType
 }
 
+type SecretKeyRef {
+  key: String!
+  secretName: String!
+}
+
+input SecretKeyRefIn {
+  key: String!
+  secretName: String!
+}
+
+type SecretKeyValueRef {
+  key: String!
+  secretName: String!
+  value: String!
+}
+
+input SecretKeyValueRefIn {
+  key: String!
+  secretName: String!
+  value: String!
+}
+
 type SecretPaginatedRecords {
   edges: [SecretEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
-}
-
-input SecretValuesIn {
-  key: String!
-  secretName: String!
-}
-
-type SecretValuesOut {
-  key: String!
-  secretName: String!
-  value: String!
 }
 
 type Session {

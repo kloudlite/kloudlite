@@ -17,6 +17,112 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_infraCheckNameAvailability: executor(
+    gql`
+      query Infra_checkNameAvailability(
+        $resType: ResType!
+        $name: String!
+        $clusterName: String
+      ) {
+        infra_checkNameAvailability(
+          resType: $resType
+          name: $name
+          clusterName: $clusterName
+        ) {
+          result
+          suggestedNames
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_checkNameAvailability,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_createDevice: executor(
+    gql`
+      mutation Infra_createVPNDevice(
+        $clusterName: String!
+        $vpnDevice: VPNDeviceIn!
+      ) {
+        infra_createVPNDevice(
+          clusterName: $clusterName
+          vpnDevice: $vpnDevice
+        ) {
+          metadata {
+            name
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_createVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getConfigSecretMap: executor(
+    gql`
+      query Core_getConfigValues(
+        $projectName: String!
+        $envName: String!
+        $configQueries: [ConfigKeyRefIn]
+        $secretQueries: [SecretKeyRefIn!]
+      ) {
+        configs: core_getConfigValues(
+          projectName: $projectName
+          envName: $envName
+          queries: $configQueries
+        ) {
+          configName
+          key
+          value
+        }
+        secrets: core_getSecretValues(
+          projectName: $projectName
+          envName: $envName
+          queries: $secretQueries
+        ) {
+          key
+          secretName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => {
+        return {
+          configs: data.configs,
+          secrets: data.secrets,
+        };
+      },
+
+      vars: (_: any) => {},
+    }
+  ),
+  cli_interceptApp: executor(
+    gql`
+      mutation Core_interceptApp(
+        $projectName: String!
+        $envName: String!
+        $appname: String!
+        $deviceName: String!
+        $intercept: Boolean!
+      ) {
+        core_interceptApp(
+          projectName: $projectName
+          envName: $envName
+          appname: $appname
+          deviceName: $deviceName
+          intercept: $intercept
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_interceptApp,
+      vars: (_: any) => {},
+    }
+  ),
   cli_getEnvironment: executor(
     gql`
       query Core_getEnvironment($projectName: String!, $name: String!) {

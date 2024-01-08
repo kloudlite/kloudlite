@@ -8,6 +8,12 @@ export const action = async (ctx: IRemixCtx) => {
     const res = await RootAPIAction(GQLServerHandler)(ctx);
     return res;
   } catch (err) {
-    return json({ errors: [(err as Error).message] }, 500);
+    return json({
+      errors: [
+        {
+          message: (err as Error).message,
+        },
+      ],
+    });
   }
 };

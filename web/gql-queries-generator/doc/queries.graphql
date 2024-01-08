@@ -2540,6 +2540,56 @@ mutation consoleDeleteHelmChart($clusterName: String!, $releaseName: String!) {
   infra_deleteHelmRelease(clusterName: $clusterName, releaseName: $releaseName)
 }
 
+query authCli_infraCheckNameAvailability($resType: ResType!, $name: String!, $clusterName: String) {
+  infra_checkNameAvailability(
+    resType: $resType
+    name: $name
+    clusterName: $clusterName
+  ) {
+    result
+    suggestedNames
+  }
+}
+
+mutation authCli_createDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+    metadata {
+      name
+    }
+  }
+}
+
+query authCli_getConfigSecretMap($projectName: String!, $envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!]) {
+  configs: core_getConfigValues(
+    projectName: $projectName
+    envName: $envName
+    queries: $configQueries
+  ) {
+    configName
+    key
+    value
+  }
+  secrets: core_getSecretValues(
+    projectName: $projectName
+    envName: $envName
+    queries: $secretQueries
+  ) {
+    key
+    secretName
+    value
+  }
+}
+
+mutation authCli_interceptApp($projectName: String!, $envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+  core_interceptApp(
+    projectName: $projectName
+    envName: $envName
+    appname: $appname
+    deviceName: $deviceName
+    intercept: $intercept
+  )
+}
+
 query authCli_getEnvironment($projectName: String!, $name: String!) {
   core_getEnvironment(projectName: $projectName, name: $name) {
     spec {

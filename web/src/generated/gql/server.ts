@@ -75,10 +75,13 @@ export type Github__Com___Kloudlite___Api___Pkg___Types__SyncState =
   | 'RECEIVED_UPDATE_FROM_AGENT'
   | 'UPDATED_AT_AGENT';
 
-export type ConfigValuesIn = {
-  configmapName: Scalars['String']['input'];
+export type ConfigKeyRefIn = {
+  configName: Scalars['String']['input'];
   key: Scalars['String']['input'];
 };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode =
+  'private' | 'public';
 
 export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ImagePullSecretFormat =
   'dockerConfigJson' | 'params';
@@ -93,7 +96,7 @@ export type K8s__Io___Api___Core___V1__SecretType =
   | 'kubernetes__io___tls'
   | 'Opaque';
 
-export type SecretValuesIn = {
+export type SecretKeyRefIn = {
   key: Scalars['String']['input'];
   secretName: Scalars['String']['input'];
 };
@@ -512,7 +515,13 @@ export type EnvironmentIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentSpecIn =
   {
     projectName: Scalars['String']['input'];
+    routing?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingIn>;
     targetNamespace?: InputMaybe<Scalars['String']['input']>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingIn =
+  {
+    mode?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode>;
   };
 
 export type ImagePullSecretIn = {
@@ -605,7 +614,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouterSpecIn 
     ingressClass?: InputMaybe<Scalars['String']['input']>;
     maxBodySizeInMB?: InputMaybe<Scalars['Int']['input']>;
     rateLimit?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn>;
-    region?: InputMaybe<Scalars['String']['input']>;
     routes?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn>
     >;
@@ -625,6 +633,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn = {
 };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn = {
+  clusterIssuer?: InputMaybe<Scalars['String']['input']>;
   enabled: Scalars['Boolean']['input'];
   forceRedirect?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -1000,6 +1009,12 @@ export type AccountMembershipIn = {
   accountName: Scalars['String']['input'];
   role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
   userId: Scalars['String']['input'];
+};
+
+export type ConfigKeyValueRefIn = {
+  configName: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  value: Scalars['String']['input'];
 };
 
 export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GithubUserAccountIn =
@@ -1404,6 +1419,12 @@ export type PersistentVolumeIn = {
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeSpecIn>;
   status?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeStatusIn>;
+};
+
+export type SecretKeyValueRefIn = {
+  key: Scalars['String']['input'];
+  secretName: Scalars['String']['input'];
+  value: Scalars['String']['input'];
 };
 
 export type VolumeAttachmentIn = {
@@ -3887,6 +3908,52 @@ export type ConsoleDeleteHelmChartMutationVariables = Exact<{
 export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
+
+export type AuthCli_InfraCheckNameAvailabilityQueryVariables = Exact<{
+  resType: ResType;
+  name: Scalars['String']['input'];
+  clusterName?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthCli_InfraCheckNameAvailabilityQuery = {
+  infra_checkNameAvailability: {
+    result: boolean;
+    suggestedNames: Array<string>;
+  };
+};
+
+export type AuthCli_CreateDeviceMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  vpnDevice: VpnDeviceIn;
+}>;
+
+export type AuthCli_CreateDeviceMutation = {
+  infra_createVPNDevice?: { metadata?: { name: string } };
+};
+
+export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  configQueries?: InputMaybe<
+    Array<InputMaybe<ConfigKeyRefIn>> | InputMaybe<ConfigKeyRefIn>
+  >;
+  secretQueries?: InputMaybe<Array<SecretKeyRefIn> | SecretKeyRefIn>;
+}>;
+
+export type AuthCli_GetConfigSecretMapQuery = {
+  configs?: Array<{ configName: string; key: string; value: string }>;
+  secrets?: Array<{ key: string; secretName: string; value: string }>;
+};
+
+export type AuthCli_InterceptAppMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  appname: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  intercept: Scalars['Boolean']['input'];
+}>;
+
+export type AuthCli_InterceptAppMutation = { core_interceptApp: boolean };
 
 export type AuthCli_GetEnvironmentQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
