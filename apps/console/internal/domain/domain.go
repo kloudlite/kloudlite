@@ -88,6 +88,10 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 		return nil
 	}
 
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		return errors.Newf("object GVK is not set, can not apply")
+	}
+
 	ann := obj.GetAnnotations()
 	if ann == nil {
 		ann = make(map[string]string, 1)
@@ -125,6 +129,10 @@ func (d *domain) deleteK8sResource(ctx K8sContext, projectName string, obj clien
 	if clusterName == nil {
 		d.logger.Infof("skipping delete of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
 		return ErrNoClusterAttached
+	}
+
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		return errors.Newf("object GVK is not set, can not apply")
 	}
 
 	m, err := fn.K8sObjToMap(obj)
