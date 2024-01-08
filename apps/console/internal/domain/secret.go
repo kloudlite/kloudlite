@@ -45,12 +45,14 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	targetNamespace, err := d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	secret.Namespace = env.Spec.TargetNamespace
+	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
+
+	secret.Namespace = targetNamespace
 
 	secret.IncrementRecordVersion()
 	secret.CreatedBy = common.CreatedOrUpdatedBy{
@@ -97,8 +99,6 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
-
-	secret.SetGroupVersionKind(fn.GVK("v1", "Secret"))
 
 	xSecret, err := d.findSecret(ctx, secret.Name)
 	if err != nil {
