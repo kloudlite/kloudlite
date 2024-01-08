@@ -14,7 +14,7 @@ import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
-import { IWorkspaceContext } from '../routes/_main+/$account+/$cluster+/$project+/$scope+/$workspace+/_layout';
+import { IEnvironmentContext } from '../routes/_main+/$account+/$project+/$environment+/_layout';
 
 interface IidSelector {
   name: string;
@@ -57,7 +57,7 @@ export const IdSelector = ({
   const api = useAPIClient();
   const params = useParams();
   const { cluster } = params;
-  const { workspace, project } = useOutletContext<IWorkspaceContext>();
+  const { environment, project } = useOutletContext<IEnvironmentContext>();
 
   const checkApi = (() => {
     switch (resType) {
@@ -70,7 +70,6 @@ export const IdSelector = ({
       case 'helm_release':
       case 'router':
       case 'secret':
-      case 'workspace':
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;
@@ -108,13 +107,13 @@ export const IdSelector = ({
             resType,
             name: `${name}`,
             // eslint-disable-next-line no-nested-ternary
-            ...(resType === 'workspace' || resType === 'environment'
+            ...(resType === 'environment'
               ? {
                   namespace: project.spec?.targetNamespace,
                 }
-              : workspace
+              : environment
               ? {
-                  namespace: workspace.spec?.targetNamespace,
+                  namespace: environment.spec?.targetNamespace,
                 }
               : {}),
             ...(resType === 'nodepool' || resType === 'vpn_device'

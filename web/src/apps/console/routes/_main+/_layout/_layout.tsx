@@ -201,6 +201,8 @@ const Console = () => {
 
   const accountMenu = useHandleFromMatches('accountMenu', null);
 
+  const headerExtra = useHandleFromMatches('headerExtra', null);
+
   const breadcrum = useCallback(() => {
     return matches.filter((m) => m.handle?.breadcrum);
   }, [matches])();
@@ -233,7 +235,8 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {!!accountMenu && accountMenu}
+            {/* {!!accountMenu && accountMenu} */}
+            {!!headerExtra && headerExtra()}
             <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
           </div>
         }

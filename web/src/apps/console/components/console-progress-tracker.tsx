@@ -32,14 +32,16 @@ function ProgressTrackerItem(
         completed ? 'border-l-border-primary' : 'border-l-icon-disabled'
       )}
     >
-      <div onClick={onClick}>
+      <div>
         <div
+          onClick={onClick}
           className={cn(
             'border-2 border-surface-basic-default headingXs box-content w-3xl h-3xl rounded-full flex items-center justify-center absolute left-0 -ml-[12px]',
             completed
               ? 'bg-surface-primary-default text-text-on-primary'
               : 'bg-surface-primary-selected',
-            active && !completed ? 'text-text-primary' : 'text-text-disabled'
+            active && !completed ? 'text-text-primary' : 'text-text-disabled',
+            onClick ? 'cursor-pointer' : ''
           )}
         >
           {completed ? <Check size={12} /> : index}
@@ -60,7 +62,12 @@ function ProgressTrackerItem(
 
 export interface IProgressTracker {
   items: Array<Omit<IProgressTrackerItem, 'hasBorder' | 'index'>>;
-  onClick?: (item: Omit<IProgressTrackerItem, 'hasBorder' | 'index'>) => void;
+  onClick?: (
+    item: Omit<
+      IProgressTrackerItem,
+      'hasBorder' | 'index' | 'onClick' | 'children'
+    >
+  ) => void;
 }
 const Root = ({ items = [], onClick }: IProgressTracker) => {
   return (

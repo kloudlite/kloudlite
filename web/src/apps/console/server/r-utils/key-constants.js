@@ -1,4 +1,5 @@
 export const keyconstants = {
+  selectionModeKey: 'kloudlite.io/ui-selection-mode',
   displayName: 'kloudlite.io/ui-display-name',
   node_type: 'kloudlite.io/ui-node-type',
   description: 'kloudlite.io/ui-description',

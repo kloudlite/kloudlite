@@ -5,6 +5,8 @@ import {
   ConsoleListAppsQuery,
   ConsoleListAppsQueryVariables,
   ConsoleCreateAppMutation,
+  ConsoleDeleteAppMutation,
+  ConsoleDeleteAppMutationVariables,
   ConsoleCreateAppMutationVariables,
   ConsoleGetAppQuery,
   ConsoleGetAppQueryVariables,
@@ -18,22 +20,38 @@ export type IApps = NN<ConsoleListAppsQuery['core_listApps']>;
 export const appQueries = (executor: IExecutor) => ({
   createApp: executor(
     gql`
-      mutation Core_createApp($app: AppIn!) {
-        core_createApp(app: $app) {
+      mutation Core_createApp(
+        $projectName: String!
+        $envName: String!
+        $app: AppIn!
+      ) {
+        core_createApp(
+          projectName: $projectName
+          envName: $envName
+          app: $app
+        ) {
           id
         }
       }
     `,
     {
       transformer: (data: ConsoleCreateAppMutation) => data.core_createApp,
-      vars(_: ConsoleCreateAppMutationVariables) {},
+      vars(_: ConsoleCreateAppMutationVariables) { },
     }
   ),
 
   updateApp: executor(
     gql`
-      mutation Mutation($app: AppIn!) {
-        core_updateApp(app: $app) {
+      mutation Core_updateApp(
+        $projectName: String!
+        $envName: String!
+        $app: AppIn!
+      ) {
+        core_updateApp(
+          projectName: $projectName
+          envName: $envName
+          app: $app
+        ) {
           id
         }
       }
@@ -42,158 +60,168 @@ export const appQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleUpdateAppMutation) => {
         return data.core_updateApp;
       },
-      vars(_: ConsoleUpdateAppMutationVariables) {},
+      vars(_: ConsoleUpdateAppMutationVariables) { },
     }
   ),
-
+  deleteApp: executor(
+    gql`
+      mutation Core_deleteApp(
+        $projectName: String!
+        $envName: String!
+        $appName: String!
+      ) {
+        core_deleteApp(
+          projectName: $projectName
+          envName: $envName
+          appName: $appName
+        )
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteAppMutation) => data.core_deleteApp,
+      vars(_: ConsoleDeleteAppMutationVariables) { },
+    }
+  ),
   getApp: executor(
     gql`
       query Core_getApp(
-        $project: ProjectId!
-        $scope: WorkspaceOrEnvId!
+        $projectName: String!
+        $envName: String!
         $name: String!
       ) {
-        core_getApp(project: $project, scope: $scope, name: $name) {
-          creationTime
-          accountName
-          displayName
+        core_getApp(projectName: $projectName, envName: $envName, name: $name) {
           createdBy {
-            userName
-            userId
             userEmail
+            userId
+            userName
           }
+          creationTime
+          displayName
+          enabled
+          environmentName
           lastUpdatedBy {
-            userName
-            userId
             userEmail
+            userId
+            userName
           }
           markedForDeletion
           metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
             name
             namespace
-            annotations
           }
-
-          updateTime
+          projectName
           spec {
-            tolerations {
-              value
-              tolerationSeconds
-              operator
-              key
-              effect
-            }
-            services {
-              type
-              targetPort
-              port
-              name
-            }
-            serviceAccount
-            replicas
-            region
-            nodeSelector
-            intercept {
-              enabled
-              toDevice
-            }
-            hpa {
-              maxReplicas
-              enabled
-              minReplicas
-              thresholdCpu
-              thresholdMemory
-            }
-            freeze
-            displayName
             containers {
               args
               command
               env {
-                refName
-                refKey
-                optional
                 key
+                optional
+                refKey
+                refName
                 type
                 value
               }
               envFrom {
-                type
                 refName
+                type
               }
               image
               imagePullPolicy
               livenessProbe {
-                type
-                tcp {
-                  port
-                }
-                shell {
-                  command
-                }
-                interval
-                initialDelay
+                failureThreshold
                 httpGet {
                   httpHeaders
                   path
                   port
                 }
-                failureThreshold
+                initialDelay
+                interval
+                shell {
+                  command
+                }
+                tcp {
+                  port
+                }
+                type
               }
               name
               readinessProbe {
-                type
-                tcp {
-                  port
-                }
-                shell {
-                  command
-                }
-                interval
-                initialDelay
-                httpGet {
-                  httpHeaders
-                  path
-                  port
-                }
                 failureThreshold
+                initialDelay
+                interval
+                type
               }
               resourceCpu {
-                min
                 max
+                min
               }
               resourceMemory {
-                min
                 max
+                min
               }
               volumes {
-                type
-                refName
-                mountPath
                 items {
                   fileName
                   key
                 }
+                mountPath
+                refName
+                type
               }
             }
+            displayName
+            freeze
+            hpa {
+              enabled
+              maxReplicas
+              minReplicas
+              thresholdCpu
+              thresholdMemory
+            }
+            intercept {
+              enabled
+              toDevice
+            }
+            nodeSelector
+            region
+            replicas
+            serviceAccount
+            services {
+              name
+              port
+              targetPort
+              type
+            }
+            tolerations {
+              effect
+              key
+              operator
+              tolerationSeconds
+              value
+            }
           }
-
           status {
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
             message {
               RawMessage
             }
-            lastReconcileTime
-            isReady
-            checks
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
           }
-          syncStatus {
-            syncScheduledAt
-            state
-            recordVersion
-            lastSyncedAt
-            error
-            action
-          }
+          updateTime
         }
       }
     `,
@@ -201,81 +229,87 @@ export const appQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetAppQuery) {
         return data.core_getApp;
       },
-      vars(_: ConsoleGetAppQueryVariables) {},
+      vars(_: ConsoleGetAppQueryVariables) { },
     }
   ),
   listApps: executor(
     gql`
       query Core_listApps(
-        $project: ProjectId!
-        $scope: WorkspaceOrEnvId!
+        $projectName: String!
+        $envName: String!
         $search: SearchApps
-        $pagination: CursorPaginationIn
+        $pq: CursorPaginationIn
       ) {
         core_listApps(
-          project: $project
-          scope: $scope
+          projectName: $projectName
+          envName: $envName
           search: $search
-          pq: $pagination
+          pq: $pq
         ) {
-          totalCount
-          pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
-            endCursor
-          }
-
           edges {
             cursor
             node {
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
               creationTime
               displayName
-              createdBy {
-                userName
-                userId
-                userEmail
-              }
+              enabled
+              environmentName
+              kind
               lastUpdatedBy {
-                userName
-                userId
                 userEmail
+                userId
+                userName
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
                 name
+                namespace
               }
-
-              updateTime
+              projectName
               spec {
-                freeze
                 displayName
+                freeze
               }
-
               status {
+                checks
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
                 message {
                   RawMessage
                 }
-                lastReconcileTime
-                isReady
-                checks
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
               }
-              syncStatus {
-                syncScheduledAt
-                state
-                recordVersion
-                lastSyncedAt
-                error
-                action
-              }
+              updateTime
             }
           }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
         }
       }
     `,
     {
       transformer: (data: ConsoleListAppsQuery) => data.core_listApps,
-      vars(_: ConsoleListAppsQueryVariables) {},
+      vars(_: ConsoleListAppsQueryVariables) { },
     }
   ),
 });

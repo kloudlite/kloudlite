@@ -128,10 +128,10 @@ interface IStatusMeta {
     isReady: boolean;
     message?: { RawMessage?: any };
   };
-  syncStatus: {
-    action: SyncAction;
+  syncStatus?: {
+    action?: SyncAction;
     error?: string;
-    state: SyncState;
+    state?: SyncState;
   };
 }
 

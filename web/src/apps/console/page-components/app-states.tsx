@@ -10,9 +10,15 @@ import {
 const defaultApp: AppIn = {
   metadata: {
     name: '',
+    annotations: [],
   },
   spec: {
-    containers: [],
+    containers: [
+      {
+        image: '',
+        name: 'container-1',
+      },
+    ],
   },
   displayName: '',
 };
@@ -23,11 +29,11 @@ type ISetContainer<T = any> = (fn: ((val: T) => T) | T, index?: number) => void;
 const CreateAppContext = createContext<any>(null);
 
 export type createAppTabs =
-  | 'environment'
-  | 'application_details'
-  | 'compute'
-  | 'network'
-  | 'review'
+  | 'Environment'
+  | 'Application details'
+  | 'Compute'
+  | 'Network'
+  | 'Review'
   | NonNullableString;
 
 export type createAppEnvPage =
@@ -111,7 +117,7 @@ export const useAppState = () => {
 
   useEffect(() => {
     if (!page) {
-      setPage('application_details');
+      setPage('Application details');
     }
     if (!envPage) {
       setEnvPage('environment_variables');
@@ -179,7 +185,7 @@ export const useAppState = () => {
 
   const resetState = (iApp?: AppIn) => {
     setState({
-      page: 'application_details',
+      page: 'Application details',
       app: iApp || defaultApp,
       completePages: {},
       envPage: 'environment_variables',

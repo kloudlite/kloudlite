@@ -1,5 +1,5 @@
 import { Trash } from '@jengaicons/react';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -7,7 +7,6 @@ import List from '~/console/components/list';
 import {
   ExtractNodeType,
   parseName,
-  parseTargetNs,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
@@ -24,7 +23,6 @@ import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { ISecrets } from '../server/gql/queries/secret-queries';
-import { IWorkspaceContext } from '../routes/_main+/$account+/$cluster+/$project+/$scope+/$workspace+/_layout';
 
 const RESOURCE_NAME = 'secret';
 type BaseType = ExtractNodeType<ISecrets>;
@@ -73,7 +71,7 @@ const GridView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, cluster, project, scope, workspace } = useParams();
+  const { account, project, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -94,7 +92,7 @@ const GridView = ({
             key={id}
             to={
               linkComponent !== null
-                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/secret/${id}`
+                ? `/${account}/${project}/${environment}/secret/${id}`
                 : undefined
             }
             rows={[
@@ -147,7 +145,7 @@ const ListView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, cluster, project, scope, workspace } = useParams();
+  const { account, project, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -170,7 +168,7 @@ const ListView = ({
             className="!p-3xl"
             to={
               linkComponent !== null
-                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/secret/${id}`
+                ? `/${account}/${project}/${environment}/secret/${id}`
                 : undefined
             }
             columns={[
@@ -226,8 +224,7 @@ const SecretResources = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { workspace } = useOutletContext<IWorkspaceContext>();
-
+  const { project, environment } = useParams();
   const props: IResource = {
     items,
     hasActions,
@@ -249,10 +246,14 @@ const SecretResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!environment || !project) {
+            throw new Error('Project and Environment is required!.');
+          }
           try {
             const { errors } = await api.deleteSecret({
-              name: parseName(showDeleteDialog),
-              namespace: parseTargetNs(workspace),
+              envName: environment,
+              projectName: project,
+              secretName: parseName(showDeleteDialog),
             });
 
             if (errors) {

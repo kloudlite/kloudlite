@@ -1,5 +1,8 @@
-import { AWSlogoFill } from '@jengaicons/react';
+import { AWSlogoFill, ChevronRight } from '@jengaicons/react';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
+import { ReactNode } from 'react';
+import { Truncate } from '~/root/lib/utils/common';
+import { cn } from '~/components/utils';
 import {
   IMSvTemplate,
   IMSvTemplates,
@@ -135,3 +138,26 @@ export const flatMap = (data: any) => {
   );
   return jsonObject;
 };
+
+export const breadcrumIconSize = 14;
+export const BreadcrumChevronRight = () => (
+  <span className="text-icon-disabled">
+    <ChevronRight size={breadcrumIconSize} />
+  </span>
+);
+
+export const BreadcrumSlash = () => (
+  <span className="text-text-disabled font-light">/</span>
+);
+
+export const BreadcrumButtonContent = ({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) => (
+  <div className={cn('flex flex-row items-center', className)}>
+    <span className="">{content}</span>
+  </div>
+);

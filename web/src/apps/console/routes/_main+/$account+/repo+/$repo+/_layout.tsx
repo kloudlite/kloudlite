@@ -9,7 +9,7 @@ import {
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 
-import { IProjectContext } from '../../$cluster+/$project+/_layout';
+import { IProjectContext } from '../../$project+/_layout';
 
 const LocalBreadcrum = () => {
   const { repo, account } = useParams();

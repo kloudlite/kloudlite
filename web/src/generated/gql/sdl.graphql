@@ -57,11 +57,11 @@ scalar Any
 type App {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
+  environmentName: String!
   id: String!
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -73,7 +73,6 @@ type App {
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
-  workspaceName: String!
 }
 
 type AppEdge {
@@ -306,19 +305,20 @@ type ClusterPaginatedRecords {
 type Config {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
+  binaryData: Map
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
-  enabled: Boolean
+  environmentName: String!
   id: String!
+  immutable: Boolean
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
+  projectName: String!
   recordVersion: Int!
-  status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
@@ -329,9 +329,10 @@ type ConfigEdge {
 }
 
 input ConfigIn {
+  binaryData: Map
   data: Map
   displayName: String!
-  enabled: Boolean
+  immutable: Boolean
   metadata: MetadataIn
 }
 
@@ -339,6 +340,17 @@ type ConfigPaginatedRecords {
   edges: [ConfigEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+input ConfigValuesIn {
+  configmapName: String!
+  key: String!
+}
+
+type ConfigValuesOut {
+  configmapName: String!
+  key: String!
+  value: String!
 }
 
 type ConsoleCheckNameAvailabilityOutput {
@@ -355,7 +367,6 @@ enum ConsoleResType {
   project
   router
   secret
-  workspace
 }
 
 type CRCheckNameAvailabilityOutput {
@@ -486,23 +497,50 @@ type EncodedValue {
   value: String!
 }
 
-input EnvOrWorkspaceOrProjectId {
-  name: String!
-  type: EnvOrWorkspaceOrProjectIdType!
+type Environment {
+  accountName: String!
+  apiVersion: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  projectName: String!
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
 }
 
-enum EnvOrWorkspaceOrProjectIdType {
-  environmentName
-  environmentTargetNamespace
-  projectName
-  projectTargetNamespace
-  workspaceName
-  workspaceTargetNamespace
+type EnvironmentEdge {
+  cursor: String!
+  node: Environment!
+}
+
+input EnvironmentIn {
+  displayName: String!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn
+}
+
+type EnvironmentPaginatedRecords {
+  edges: [EnvironmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type GitBranch {
   name: String
   protected: Boolean
+}
+
+enum Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat {
+  dockerConfigJson
+  params
 }
 
 enum Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus {
@@ -1026,16 +1064,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__BasicAuthIn {
   username: String
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__ChartRepo {
-  name: String!
-  url: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__ChartRepoIn {
-  name: String!
-  url: String!
-}
-
 type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
   namespace: String!
@@ -1125,9 +1153,19 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn {
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec {
+  projectName: String!
+  targetNamespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
+  projectName: String!
+  targetNamespace: String
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec {
   chartName: String!
-  chartRepo: Github__com___kloudlite___operator___apis___crds___v1__ChartRepo!
+  chartRepoURL: String!
   chartVersion: String!
   jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVars
   postInstall: String
@@ -1139,7 +1177,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec {
 
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
   chartName: String!
-  chartRepo: Github__com___kloudlite___operator___apis___crds___v1__ChartRepoIn!
+  chartRepoURL: String!
   chartVersion: String!
   jobVars: Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn
   postInstall: String
@@ -1380,18 +1418,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe {
 
 input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
   port: Int!
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec {
-  isEnvironment: Boolean
-  projectName: String!
-  targetNamespace: String!
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn {
-  isEnvironment: Boolean
-  projectName: String!
-  targetNamespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions {
@@ -1642,13 +1668,22 @@ type HelmReleasePaginatedRecords {
 
 type ImagePullSecret {
   accountName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   dockerConfigJson: String
-  dockerPassword: String
-  dockerRegistryEndpoint: String
-  dockerUsername: String
+  environmentName: String!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat!
   id: String!
-  name: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata!
+  projectName: String!
+  recordVersion: Int!
+  registryPassword: String
+  registryURL: String
+  registryUsername: String
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -1658,12 +1693,13 @@ type ImagePullSecretEdge {
 }
 
 input ImagePullSecretIn {
-  accountName: String!
+  displayName: String!
   dockerConfigJson: String
-  dockerPassword: String
-  dockerRegistryEndpoint: String
-  dockerUsername: String
-  name: String!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat!
+  metadata: MetadataIn!
+  registryPassword: String
+  registryURL: String
+  registryUsername: String
 }
 
 type ImagePullSecretPaginatedRecords {
@@ -1708,10 +1744,291 @@ input K8s__io___api___core___v1__AffinityIn {
   podAntiAffinity: K8s__io___api___core___v1__PodAntiAffinityIn
 }
 
+type K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {
+  fsType: String
+  partition: Int
+  readOnly: Boolean
+  volumeID: String!
+}
+
+type K8s__io___api___core___v1__AzureDiskVolumeSource {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__AzureDiskVolumeSourceIn {
+  cachingMode: String
+  diskName: String!
+  diskURI: String!
+  fsType: String
+  kind: String
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__AzureFilePersistentVolumeSource {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+input K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn {
+  readOnly: Boolean
+  secretName: String!
+  secretNamespace: String
+  shareName: String!
+}
+
+type K8s__io___api___core___v1__CephFSPersistentVolumeSource {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+input K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn {
+  monitors: [String!]!
+  path: String
+  readOnly: Boolean
+  secretFile: String
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
+}
+
+type K8s__io___api___core___v1__CinderPersistentVolumeSource {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__CinderPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  volumeID: String!
+}
+
 enum K8s__io___api___core___v1__ConditionStatus {
   False
   True
   Unknown
+}
+
+type K8s__io___api___core___v1__CSIPersistentVolumeSource {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReference
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReference
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReference
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReference
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+input K8s__io___api___core___v1__CSIPersistentVolumeSourceIn {
+  controllerExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  controllerPublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  driver: String!
+  fsType: String
+  nodeExpandSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodePublishSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  nodeStageSecretRef: K8s__io___api___core___v1__SecretReferenceIn
+  readOnly: Boolean
+  volumeAttributes: Map
+  volumeHandle: String!
+}
+
+type K8s__io___api___core___v1__FCVolumeSource {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+input K8s__io___api___core___v1__FCVolumeSourceIn {
+  fsType: String
+  lun: Int
+  readOnly: Boolean
+  targetWWNs: [String!]
+  wwids: [String!]
+}
+
+type K8s__io___api___core___v1__FlexPersistentVolumeSource {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+}
+
+input K8s__io___api___core___v1__FlexPersistentVolumeSourceIn {
+  driver: String!
+  fsType: String
+  options: Map
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+}
+
+type K8s__io___api___core___v1__FlockerVolumeSource {
+  datasetName: String
+  datasetUUID: String
+}
+
+input K8s__io___api___core___v1__FlockerVolumeSourceIn {
+  datasetName: String
+  datasetUUID: String
+}
+
+type K8s__io___api___core___v1__GCEPersistentDiskVolumeSource {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn {
+  fsType: String
+  partition: Int
+  pdName: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__GlusterfsPersistentVolumeSource {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+input K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn {
+  endpoints: String!
+  endpointsNamespace: String
+  path: String!
+  readOnly: Boolean
+}
+
+type K8s__io___api___core___v1__HostPathVolumeSource {
+  path: String!
+  type: String
+}
+
+input K8s__io___api___core___v1__HostPathVolumeSourceIn {
+  path: String!
+  type: String
+}
+
+type K8s__io___api___core___v1__ISCSIPersistentVolumeSource {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  targetPortal: String!
+}
+
+input K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn {
+  chapAuthDiscovery: Boolean
+  chapAuthSession: Boolean
+  fsType: String
+  initiatorName: String
+  iqn: String!
+  iscsiInterface: String
+  lun: Int!
+  portals: [String!]
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  targetPortal: String!
+}
+
+type K8s__io___api___core___v1__LocalVolumeSource {
+  fsType: String
+  path: String!
+}
+
+input K8s__io___api___core___v1__LocalVolumeSourceIn {
+  fsType: String
+  path: String!
+}
+
+type K8s__io___api___core___v1__NamespaceCondition {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+input K8s__io___api___core___v1__NamespaceConditionIn {
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__NamespaceConditionType!
+}
+
+enum K8s__io___api___core___v1__NamespaceConditionType {
+  NamespaceContentRemaining
+  NamespaceDeletionContentFailure
+  NamespaceDeletionDiscoveryFailure
+  NamespaceDeletionGroupVersionParsingFailure
+  NamespaceFinalizersRemaining
+}
+
+enum K8s__io___api___core___v1__NamespacePhase {
+  Active
+  Terminating
+}
+
+type K8s__io___api___core___v1__NamespaceSpec {
+  finalizers: [String!]
+}
+
+input K8s__io___api___core___v1__NamespaceSpecIn {
+  finalizers: [String!]
+}
+
+type K8s__io___api___core___v1__NamespaceStatus {
+  conditions: [K8s__io___api___core___v1__NamespaceCondition!]
+  phase: K8s__io___api___core___v1__NamespacePhase
+}
+
+input K8s__io___api___core___v1__NamespaceStatusIn {
+  conditions: [K8s__io___api___core___v1__NamespaceConditionIn!]
+  phase: K8s__io___api___core___v1__NamespacePhase
+}
+
+type K8s__io___api___core___v1__NFSVolumeSource {
+  path: String!
+  readOnly: Boolean
+  server: String!
+}
+
+input K8s__io___api___core___v1__NFSVolumeSourceIn {
+  path: String!
+  readOnly: Boolean
+  server: String!
 }
 
 type K8s__io___api___core___v1__NodeAffinity {
@@ -1761,6 +2078,26 @@ type K8s__io___api___core___v1__NodeSelectorTerm {
 input K8s__io___api___core___v1__NodeSelectorTermIn {
   matchExpressions: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
   matchFields: [K8s__io___api___core___v1__NodeSelectorRequirementIn!]
+}
+
+type K8s__io___api___core___v1__ObjectReference {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
+}
+
+input K8s__io___api___core___v1__ObjectReferenceIn {
+  apiVersion: String
+  fieldPath: String
+  kind: String
+  name: String
+  namespace: String
+  resourceVersion: String
+  uid: String
 }
 
 type K8s__io___api___core___v1__PersistentVolumeClaimCondition {
@@ -1832,6 +2169,110 @@ input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
   phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
 }
 
+enum K8s__io___api___core___v1__PersistentVolumePhase {
+  Available
+  Bound
+  Failed
+  Pending
+  Released
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeReclaimPolicy {
+  Delete
+  Recycle
+  Retain
+}
+
+type K8s__io___api___core___v1__PersistentVolumeSpec {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSource
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSource
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSource
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSource
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSource
+  claimRef: K8s__io___api___core___v1__ObjectReference
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSource
+  fc: K8s__io___api___core___v1__FCVolumeSource
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSource
+  flocker: K8s__io___api___core___v1__FlockerVolumeSource
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSource
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSource
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSource
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSource
+  local: K8s__io___api___core___v1__LocalVolumeSource
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSource
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinity
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSource
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSource
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSource
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSource
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSource
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource
+}
+
+input K8s__io___api___core___v1__PersistentVolumeSpecIn {
+  accessModes: [String!]
+  awsElasticBlockStore: K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn
+  azureDisk: K8s__io___api___core___v1__AzureDiskVolumeSourceIn
+  azureFile: K8s__io___api___core___v1__AzureFilePersistentVolumeSourceIn
+  capacity: Map
+  cephfs: K8s__io___api___core___v1__CephFSPersistentVolumeSourceIn
+  cinder: K8s__io___api___core___v1__CinderPersistentVolumeSourceIn
+  claimRef: K8s__io___api___core___v1__ObjectReferenceIn
+  csi: K8s__io___api___core___v1__CSIPersistentVolumeSourceIn
+  fc: K8s__io___api___core___v1__FCVolumeSourceIn
+  flexVolume: K8s__io___api___core___v1__FlexPersistentVolumeSourceIn
+  flocker: K8s__io___api___core___v1__FlockerVolumeSourceIn
+  gcePersistentDisk: K8s__io___api___core___v1__GCEPersistentDiskVolumeSourceIn
+  glusterfs: K8s__io___api___core___v1__GlusterfsPersistentVolumeSourceIn
+  hostPath: K8s__io___api___core___v1__HostPathVolumeSourceIn
+  iscsi: K8s__io___api___core___v1__ISCSIPersistentVolumeSourceIn
+  local: K8s__io___api___core___v1__LocalVolumeSourceIn
+  mountOptions: [String!]
+  nfs: K8s__io___api___core___v1__NFSVolumeSourceIn
+  nodeAffinity: K8s__io___api___core___v1__VolumeNodeAffinityIn
+  persistentVolumeReclaimPolicy: K8s__io___api___core___v1__PersistentVolumeReclaimPolicy
+  photonPersistentDisk: K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn
+  portworxVolume: K8s__io___api___core___v1__PortworxVolumeSourceIn
+  quobyte: K8s__io___api___core___v1__QuobyteVolumeSourceIn
+  rbd: K8s__io___api___core___v1__RBDPersistentVolumeSourceIn
+  scaleIO: K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn
+  storageClassName: String
+  storageos: K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn
+  volumeMode: String
+  vsphereVolume: K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn
+}
+
+type K8s__io___api___core___v1__PersistentVolumeStatus {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeStatusIn {
+  lastPhaseTransitionTime: Date
+  message: String
+  phase: K8s__io___api___core___v1__PersistentVolumePhase
+  reason: String
+}
+
+type K8s__io___api___core___v1__PhotonPersistentDiskVolumeSource {
+  fsType: String
+  pdID: String!
+}
+
+input K8s__io___api___core___v1__PhotonPersistentDiskVolumeSourceIn {
+  fsType: String
+  pdID: String!
+}
+
 type K8s__io___api___core___v1__PodAffinity {
   preferredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__WeightedPodAffinityTerm!]
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTerm!]
@@ -1866,6 +2307,18 @@ input K8s__io___api___core___v1__PodAntiAffinityIn {
   requiredDuringSchedulingIgnoredDuringExecution: [K8s__io___api___core___v1__PodAffinityTermIn!]
 }
 
+type K8s__io___api___core___v1__PortworxVolumeSource {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
+input K8s__io___api___core___v1__PortworxVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  volumeID: String!
+}
+
 type K8s__io___api___core___v1__PreferredSchedulingTerm {
   preference: K8s__io___api___core___v1__NodeSelectorTerm!
   weight: Int!
@@ -1874,6 +2327,46 @@ type K8s__io___api___core___v1__PreferredSchedulingTerm {
 input K8s__io___api___core___v1__PreferredSchedulingTermIn {
   preference: K8s__io___api___core___v1__NodeSelectorTermIn!
   weight: Int!
+}
+
+type K8s__io___api___core___v1__QuobyteVolumeSource {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+input K8s__io___api___core___v1__QuobyteVolumeSourceIn {
+  group: String
+  readOnly: Boolean
+  registry: String!
+  tenant: String
+  user: String
+  volume: String!
+}
+
+type K8s__io___api___core___v1__RBDPersistentVolumeSource {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  user: String
+}
+
+input K8s__io___api___core___v1__RBDPersistentVolumeSourceIn {
+  fsType: String
+  image: String!
+  keyring: String
+  monitors: [String!]!
+  pool: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  user: String
 }
 
 type K8s__io___api___core___v1__ResourceClaim {
@@ -1896,6 +2389,42 @@ input K8s__io___api___core___v1__ResourceRequirementsIn {
   requests: Map
 }
 
+type K8s__io___api___core___v1__ScaleIOPersistentVolumeSource {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReference
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn {
+  fsType: String
+  gateway: String!
+  protectionDomain: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__SecretReferenceIn
+  sslEnabled: Boolean
+  storageMode: String
+  storagePool: String
+  system: String!
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__SecretReference {
+  name: String
+  namespace: String
+}
+
+input K8s__io___api___core___v1__SecretReferenceIn {
+  name: String
+  namespace: String
+}
+
 enum K8s__io___api___core___v1__SecretType {
   bootstrap__kubernetes__io___token
   kubernetes__io___basic____auth
@@ -1905,6 +2434,22 @@ enum K8s__io___api___core___v1__SecretType {
   kubernetes__io___ssh____auth
   kubernetes__io___tls
   Opaque
+}
+
+type K8s__io___api___core___v1__StorageOSPersistentVolumeSource {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReference
+  volumeName: String
+  volumeNamespace: String
+}
+
+input K8s__io___api___core___v1__StorageOSPersistentVolumeSourceIn {
+  fsType: String
+  readOnly: Boolean
+  secretRef: K8s__io___api___core___v1__ObjectReferenceIn
+  volumeName: String
+  volumeNamespace: String
 }
 
 type K8s__io___api___core___v1__Taint {
@@ -1974,6 +2519,28 @@ input K8s__io___api___core___v1__TypedObjectReferenceIn {
   namespace: String
 }
 
+type K8s__io___api___core___v1__VolumeNodeAffinity {
+  required: K8s__io___api___core___v1__NodeSelector
+}
+
+input K8s__io___api___core___v1__VolumeNodeAffinityIn {
+  required: K8s__io___api___core___v1__NodeSelectorIn
+}
+
+type K8s__io___api___core___v1__VsphereVirtualDiskVolumeSource {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
+input K8s__io___api___core___v1__VsphereVirtualDiskVolumeSourceIn {
+  fsType: String
+  storagePolicyID: String
+  storagePolicyName: String
+  volumePath: String!
+}
+
 type K8s__io___api___core___v1__WeightedPodAffinityTerm {
   podAffinityTerm: K8s__io___api___core___v1__PodAffinityTerm!
   weight: Int!
@@ -1982,6 +2549,52 @@ type K8s__io___api___core___v1__WeightedPodAffinityTerm {
 input K8s__io___api___core___v1__WeightedPodAffinityTermIn {
   podAffinityTerm: K8s__io___api___core___v1__PodAffinityTermIn!
   weight: Int!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSource {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpec
+  persistentVolumeName: String
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSourceIn {
+  inlineVolumeSpec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  persistentVolumeName: String
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentSpec {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSource!
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentSpecIn {
+  attacher: String!
+  nodeName: String!
+  source: K8s__io___api___storage___v1__VolumeAttachmentSourceIn!
+}
+
+type K8s__io___api___storage___v1__VolumeAttachmentStatus {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeError
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeError
+}
+
+input K8s__io___api___storage___v1__VolumeAttachmentStatusIn {
+  attached: Boolean!
+  attachError: K8s__io___api___storage___v1__VolumeErrorIn
+  attachmentMetadata: Map
+  detachError: K8s__io___api___storage___v1__VolumeErrorIn
+}
+
+type K8s__io___api___storage___v1__VolumeError {
+  message: String
+  time: Date
+}
+
+input K8s__io___api___storage___v1__VolumeErrorIn {
+  message: String
+  time: Date
 }
 
 enum K8s__io___apimachinery___pkg___api___resource__Format {
@@ -2030,16 +2643,17 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementI
 type ManagedResource {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
+  environmentName: String!
   id: String!
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
+  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -2136,32 +2750,29 @@ type Mutation {
   auth_setRemoteAuthHeader(authHeader: String, loginId: String!): Boolean!
   auth_signup(email: String!, name: String!, password: String!): Session
   auth_verifyEmail(token: String!): Session!
-  core_createApp(app: AppIn!): App
-  core_createConfig(config: ConfigIn!): Config
-  core_createEnvironment(env: WorkspaceIn!): Workspace
-  core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret
-  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource
+  core_createApp(app: AppIn!, envName: String!, projectName: String!): App
+  core_createConfig(config: ConfigIn!, envName: String!, projectName: String!): Config
+  core_createEnvironment(env: EnvironmentIn!, projectName: String!): Environment
+  core_createImagePullSecret(envName: String!, imagePullSecretIn: ImagePullSecretIn!, projectName: String!): ImagePullSecret
+  core_createManagedResource(envName: String!, mres: ManagedResourceIn!, projectName: String!): ManagedResource
   core_createProject(project: ProjectIn!): Project
-  core_createRouter(router: RouterIn!): Router
-  core_createSecret(secret: SecretIn!): Secret
-  core_createWorkspace(env: WorkspaceIn!): Workspace
-  core_deleteApp(name: String!, namespace: String!): Boolean!
-  core_deleteConfig(name: String!, namespace: String!): Boolean!
-  core_deleteEnvironment(name: String!, namespace: String!): Boolean!
-  core_deleteImagePullSecret(name: String!, namespace: String!): Boolean!
-  core_deleteManagedResource(name: String!, namespace: String!): Boolean!
+  core_createRouter(envName: String!, projectName: String!, router: RouterIn!): Router
+  core_createSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
+  core_deleteApp(appName: String!, envName: String!, projectName: String!): Boolean!
+  core_deleteConfig(configName: String!, envName: String!, projectName: String!): Boolean!
+  core_deleteEnvironment(envName: String!, projectName: String!): Boolean!
+  core_deleteImagePullSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
+  core_deleteManagedResource(envName: String!, mresName: String!, projectName: String!): Boolean!
   core_deleteProject(name: String!): Boolean!
-  core_deleteRouter(name: String!, namespace: String!): Boolean!
-  core_deleteSecret(name: String!, namespace: String!): Boolean!
-  core_deleteWorkspace(name: String!, namespace: String!): Boolean!
-  core_updateApp(app: AppIn!): App
-  core_updateConfig(config: ConfigIn!): Config
-  core_updateEnvironment(env: WorkspaceIn!): Workspace
-  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource
+  core_deleteRouter(envName: String!, projectName: String!, routerName: String!): Boolean!
+  core_deleteSecret(envName: String!, projectName: String!, secretName: String!): Boolean!
+  core_updateApp(app: AppIn!, envName: String!, projectName: String!): App
+  core_updateConfig(config: ConfigIn!, envName: String!, projectName: String!): Config
+  core_updateEnvironment(env: EnvironmentIn!, projectName: String!): Environment
+  core_updateManagedResource(envName: String!, mres: ManagedResourceIn!, projectName: String!): ManagedResource
   core_updateProject(project: ProjectIn!): Project
-  core_updateRouter(router: RouterIn!): Router
-  core_updateSecret(secret: SecretIn!): Secret
-  core_updateWorkspace(env: WorkspaceIn!): Workspace
+  core_updateRouter(envName: String!, projectName: String!, router: RouterIn!): Router
+  core_updateSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
   cr_addBuild(build: BuildIn!): Build
   cr_addBuildCacheKey(buildCacheKey: BuildCacheKeyIn!): BuildCacheKey
   cr_createCred(credential: CredentialIn!): Credential
@@ -2196,8 +2807,45 @@ type Mutation {
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
+  infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!, ports: [PortIn!]!): Boolean!
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
+}
+
+type Namespace {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__NamespaceSpec
+  status: K8s__io___api___core___v1__NamespaceStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type NamespaceEdge {
+  cursor: String!
+  node: Namespace!
+}
+
+input NamespaceIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__NamespaceSpecIn
+  status: K8s__io___api___core___v1__NamespaceStatusIn
+}
+
+type NamespacePaginatedRecords {
+  edges: [NamespaceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type Node {
@@ -2290,6 +2938,25 @@ input PaginationIn {
   per_page: Int
 }
 
+type PersistentVolume {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeSpec
+  status: K8s__io___api___core___v1__PersistentVolumeStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
 type PersistentVolumeClaim {
   accountName: String!
   apiVersion: String!
@@ -2317,10 +2984,37 @@ type PersistentVolumeClaimPaginatedRecords {
   totalCount: Int!
 }
 
+type PersistentVolumeEdge {
+  cursor: String!
+  node: PersistentVolume!
+}
+
+input PersistentVolumeIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___core___v1__PersistentVolumeSpecIn
+  status: K8s__io___api___core___v1__PersistentVolumeStatusIn
+}
+
+type PersistentVolumePaginatedRecords {
+  edges: [PersistentVolumeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Port {
+  port: Int
+  targetPort: Int
+}
+
+input PortIn {
+  port: Int
+  targetPort: Int
+}
+
 type Project {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
+  clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -2339,16 +3033,6 @@ type Project {
 type ProjectEdge {
   cursor: String!
   node: Project!
-}
-
-input ProjectId {
-  type: ProjectIdType!
-  value: String!
-}
-
-enum ProjectIdType {
-  name
-  targetNamespace
 }
 
 input ProjectIn {
@@ -2381,32 +3065,32 @@ type Query {
   auth_listOAuthProviders: [OAuthProviderStatus!]
   auth_me: User
   core_checkNameAvailability(name: String!, namespace: String, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
-  core_getApp(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): App
-  core_getConfig(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Config
-  core_getEnvironment(name: String!, project: ProjectId!): Workspace
-  core_getImagePullSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId): ImagePullSecret
-  core_getManagedResource(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): ManagedResource
+  core_getApp(envName: String!, name: String!, projectName: String!): App
+  core_getConfig(envName: String!, name: String!, projectName: String!): Config
+  core_getConfigValues(queries: [ConfigValuesIn!]): [ConfigValuesOut!]
+  core_getEnvironment(name: String!, projectName: String!): Environment
+  core_getImagePullSecret(envName: String!, name: String!, projectName: String!): ImagePullSecret
+  core_getManagedResource(envName: String!, name: String!, projectName: String!): ManagedResource
   core_getProject(name: String!): Project
-  core_getRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Router
-  core_getSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Secret
-  core_getWorkspace(name: String!, project: ProjectId!): Workspace
-  core_listApps(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps): AppPaginatedRecords
-  core_listConfigs(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchConfigs): ConfigPaginatedRecords
-  core_listEnvironments(pq: CursorPaginationIn, project: ProjectId!, search: SearchWorkspaces): WorkspacePaginatedRecords
-  core_listImagePullSecrets(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
-  core_listManagedResources(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedResources): ManagedResourcePaginatedRecords
+  core_getRouter(envName: String!, name: String!, projectName: String!): Router
+  core_getSecret(envName: String!, name: String!, projectName: String!): Secret
+  core_getSecretValues(queries: [SecretValuesIn!]): [SecretValuesOut!]
+  core_listApps(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchApps): AppPaginatedRecords
+  core_listConfigs(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchConfigs): ConfigPaginatedRecords
+  core_listEnvironments(pq: CursorPaginationIn, projectName: String!, search: SearchEnvironments): EnvironmentPaginatedRecords
+  core_listImagePullSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchImagePullSecrets): ImagePullSecretPaginatedRecords
+  core_listManagedResources(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchManagedResources): ManagedResourcePaginatedRecords
   core_listProjects(clusterName: String, pq: CursorPaginationIn, search: SearchProjects): ProjectPaginatedRecords
-  core_listRouters(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchRouters): RouterPaginatedRecords
-  core_listSecrets(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchSecrets): SecretPaginatedRecords
-  core_resyncApp(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
-  core_resyncConfig(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
-  core_resyncEnvironment(name: String!, project: ProjectId!): Boolean!
-  core_resyncImagePullSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId): Boolean!
-  core_resyncManagedResource(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
+  core_listRouters(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchRouters): RouterPaginatedRecords
+  core_listSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchSecrets): SecretPaginatedRecords
+  core_resyncApp(envName: String!, name: String!, projectName: String!): Boolean!
+  core_resyncConfig(envName: String!, name: String!, projectName: String!): Boolean!
+  core_resyncEnvironment(name: String!, projectName: String!): Boolean!
+  core_resyncImagePullSecret(envName: String!, name: String!, projectName: String!): Boolean!
+  core_resyncManagedResource(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncProject(name: String!): Boolean!
-  core_resyncRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
-  core_resyncSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
-  core_resyncWorkspace(name: String!, project: ProjectId!): Boolean!
+  core_resyncRouter(envName: String!, name: String!, projectName: String!): Boolean!
+  core_resyncSecret(envName: String!, name: String!, projectName: String!): Boolean!
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_getBuild(id: ID!): Build
   cr_getBuildRun(buildRunName: String!, repoName: String!): BuildRun
@@ -2431,18 +3115,24 @@ type Query {
   infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getHelmRelease(clusterName: String!, name: String!): HelmRelease
   infra_getManagedServiceTemplate(category: String!, name: String!): Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry
+  infra_getNamespace(clusterName: String!, name: String!): Namespace
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool
   infra_getProviderSecret(name: String!): CloudProviderSecret
+  infra_getPV(clusterName: String!, name: String!): PersistentVolume
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
+  infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment
   infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice
   infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
   infra_listHelmReleases(clusterName: String!, pagination: CursorPaginationIn, search: SearchHelmRelease): HelmReleasePaginatedRecords
   infra_listManagedServiceTemplates: [MsvcTemplate!]
+  infra_listNamespaces(clusterName: String!, pq: CursorPaginationIn, search: SearchNamespaces): NamespacePaginatedRecords
   infra_listNodePools(clusterName: String!, pagination: CursorPaginationIn, search: SearchNodepool): NodePoolPaginatedRecords
   infra_listProviderSecrets(pagination: CursorPaginationIn, search: SearchProviderSecret): CloudProviderSecretPaginatedRecords
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
+  infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
+  infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
   infra_listVPNDevices(clusterName: String, pq: CursorPaginationIn, search: SearchVPNDevices): VPNDevicePaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
 }
@@ -2490,16 +3180,17 @@ enum ResType {
 type Router {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
+  environmentName: String!
   id: String!
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
+  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -2595,11 +3286,19 @@ input SearchManagedResources {
   text: MatchFilterIn
 }
 
+input SearchNamespaces {
+  text: MatchFilterIn
+}
+
 input SearchNodepool {
   text: MatchFilterIn
 }
 
 input SearchPersistentVolumeClaims {
+  text: MatchFilterIn
+}
+
+input SearchPersistentVolumes {
   text: MatchFilterIn
 }
 
@@ -2630,35 +3329,32 @@ input SearchSecrets {
   text: MatchFilterIn
 }
 
+input SearchVolumeAttachments {
+  text: MatchFilterIn
+}
+
 input SearchVPNDevices {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
-input SearchWorkspaces {
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
-  projectName: MatchFilterIn
-  text: MatchFilterIn
-}
-
 type Secret {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
-  enabled: Boolean
+  environmentName: String!
   id: String!
+  immutable: Boolean
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
+  projectName: String!
   recordVersion: Int!
-  status: Github__com___kloudlite___operator___pkg___operator__Status
   stringData: Map
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   type: K8s__io___api___core___v1__SecretType
@@ -2673,7 +3369,7 @@ type SecretEdge {
 input SecretIn {
   data: Map
   displayName: String!
-  enabled: Boolean
+  immutable: Boolean
   metadata: MetadataIn
   stringData: Map
   type: K8s__io___api___core___v1__SecretType
@@ -2683,6 +3379,17 @@ type SecretPaginatedRecords {
   edges: [SecretEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+input SecretValuesIn {
+  key: String!
+  secretName: String!
+}
+
+type SecretValuesOut {
+  key: String!
+  secretName: String!
+  value: String!
 }
 
 type Session {
@@ -2709,6 +3416,42 @@ type User {
   providerGitlab: ProviderDetail
   providerGoogle: ProviderDetail
   verified: Boolean!
+}
+
+type VolumeAttachment {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpec!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatus
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type VolumeAttachmentEdge {
+  cursor: String!
+  node: VolumeAttachment!
+}
+
+input VolumeAttachmentIn {
+  metadata: MetadataIn
+  spec: K8s__io___api___storage___v1__VolumeAttachmentSpecIn!
+  status: K8s__io___api___storage___v1__VolumeAttachmentStatusIn
+}
+
+type VolumeAttachmentPaginatedRecords {
+  edges: [VolumeAttachmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type VPNDevice {
@@ -2744,55 +3487,6 @@ input VPNDeviceIn {
 
 type VPNDevicePaginatedRecords {
   edges: [VPNDeviceEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type Workspace {
-  accountName: String!
-  apiVersion: String!
-  clusterName: String!
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: String!
-  kind: String!
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  metadata: Metadata
-  projectName: String!
-  recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpec
-  status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-}
-
-type WorkspaceEdge {
-  cursor: String!
-  node: Workspace!
-}
-
-input WorkspaceIn {
-  displayName: String!
-  metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__WorkspaceSpecIn
-}
-
-input WorkspaceOrEnvId {
-  type: WorkspaceOrEnvIdType!
-  value: String!
-}
-
-enum WorkspaceOrEnvIdType {
-  environmentName
-  environmentTargetNamespace
-  workspaceName
-  workspaceTargetNamespace
-}
-
-type WorkspacePaginatedRecords {
-  edges: [WorkspaceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }

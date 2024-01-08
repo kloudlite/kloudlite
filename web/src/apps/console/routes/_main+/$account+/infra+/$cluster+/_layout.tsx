@@ -14,6 +14,7 @@ import {
   ChevronRight,
   CirclesThreePlus,
   Cpu,
+  Crosshair,
   Database,
   GearSix,
   HouseLine,
@@ -93,12 +94,12 @@ const ClusterTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
-              <BackingServices size={iconSize} />
-              Managed services
+              <Crosshair size={iconSize} />
+              Helm charts
             </span>
           ),
-          to: '/managedservices/kl-operator-services',
-          value: '/managedservices',
+          to: '/helm-charts',
+          value: '/helm-charts',
         },
         {
           label: (

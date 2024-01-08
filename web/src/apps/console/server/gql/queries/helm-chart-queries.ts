@@ -37,25 +37,13 @@ export const helmChartQueries = (executor: IExecutor) => ({
           }
           markedForDeletion
           metadata {
-            annotations
-            creationTimestamp
-            deletionTimestamp
-            generation
-            labels
             name
             namespace
           }
           spec {
             chartName
-            chartRepo {
-              name
-              url
-            }
+            chartRepoURL
             chartVersion
-            postInstall
-            postUninstall
-            preInstall
-            preUninstall
             values
           }
           status {
@@ -90,8 +78,8 @@ export const helmChartQueries = (executor: IExecutor) => ({
     gql`
       query Infra_listHelmReleases($clusterName: String!) {
         infra_listHelmReleases(clusterName: $clusterName) {
+          totalCount
           edges {
-            cursor
             node {
               createdBy {
                 userEmail
@@ -107,26 +95,13 @@ export const helmChartQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
                 name
                 namespace
               }
               spec {
                 chartName
-                chartRepo {
-                  name
-                  url
-                }
+                chartRepoURL
                 chartVersion
-
-                postInstall
-                postUninstall
-                preInstall
-                preUninstall
                 values
               }
               status {
@@ -149,13 +124,6 @@ export const helmChartQueries = (executor: IExecutor) => ({
               updateTime
             }
           }
-          pageInfo {
-            endCursor
-            hasNextPage
-            hasPreviousPage
-            startCursor
-          }
-          totalCount
         }
       }
     `,

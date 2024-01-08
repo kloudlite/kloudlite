@@ -65,7 +65,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${cluster}/${id}/environments`}
+            to={`/${account}/${id}/environments`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -109,13 +109,13 @@ const ListView = ({ items }: { items: BaseType[] }) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, cluster, updateInfo } = parseItem(item);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${cluster}/${id}/environments`}
+            to={`/${account}/${id}/environments`}
             columns={[
               {
                 key: generateKey(keyPrefix, 0),
@@ -127,16 +127,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
-              },
-              // {
-              //   key: generateKey(keyPrefix, path),
-              //   className: 'w-[230px] text-start',
-              //   render: () => <ListBody data={path} />,
-              // },
-              {
-                key: generateKey(keyPrefix, cluster),
-                className: 'w-[120px] text-start',
-                render: () => <ListBody data={cluster} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),

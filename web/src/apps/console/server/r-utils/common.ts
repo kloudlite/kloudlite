@@ -5,10 +5,8 @@ import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
   Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProvider,
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
-  ProjectId,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as SyncAction,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncState,
-  WorkspaceOrEnvId,
 } from '~/root/src/generated/gql/server';
 
 type IparseNodes<T> = {
@@ -19,51 +17,40 @@ interface IParamsCtx {
   params: Params<string>;
 }
 
-const getScopeQuery = (ctx: IParamsCtx): WorkspaceOrEnvId => {
-  const { scope, workspace } = ctx.params;
-  if (!workspace || !scope) {
-    throw Error('scope and workspace is required, which is not provided');
-  }
-  return {
-    value: workspace,
-    type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
-  };
-};
+// export const getProjectQuery = (ctx: IParamsCtx): ProjectId => {
+//   const { project } = ctx.params;
+//   if (!project) {
+//     throw Error(
+//       'project is required to render this page, which is not provide'
+//     );
+//   }
+//   return {
+//     type: 'name',
+//     value: project,
+//   };
+// };
 
-export const getProjectQuery = (ctx: IParamsCtx): ProjectId => {
-  const { project } = ctx.params;
-  if (!project) {
-    throw Error(
-      'project is required to render this page, which is not provide'
-    );
-  }
-  return {
-    type: 'name',
-    value: project,
-  };
-};
-
-export const getScopeAndProjectQuery = (
-  ctx: IParamsCtx
-): {
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-} => {
-  return {
-    project: getProjectQuery(ctx),
-    scope: getScopeQuery(ctx),
-  };
-};
+// export const getScopeAndProjectQuery = (
+//   ctx: IParamsCtx
+// ): {
+//   project: ProjectId;
+//   scope: WorkspaceOrEnvId;
+// } => {
+//   return {
+//     project: getProjectQuery(ctx),
+//     scope: getScopeQuery(ctx),
+//   };
+// };
 
 export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
   resources?.edges.map(({ node }) => node) || [];
 
 type IparseName =
   | {
-      metadata?: {
-        name: string;
-      };
-    }
+    metadata?: {
+      name: string;
+    };
+  }
   | undefined
   | null;
 
@@ -87,10 +74,10 @@ export const parseName = (resource: IparseName, ensure = false) => {
 
 type IparseNamespace =
   | {
-      metadata: {
-        namespace: string;
-      };
-    }
+    metadata: {
+      namespace: string;
+    };
+  }
   | undefined
   | null;
 
@@ -99,10 +86,10 @@ export const parseNamespace = (resource: IparseNamespace) =>
 
 type IparseTargetNs =
   | {
-      spec?: {
-        targetNamespace: string;
-      };
-    }
+    spec?: {
+      targetNamespace: string;
+    };
+  }
   | undefined
   | null;
 
@@ -225,7 +212,7 @@ export interface SyncStatus {
 
 interface IStatusProps {
   status?: Status;
-  syncStatus: SyncStatus;
+  syncStatus?: SyncStatus;
 }
 
 type IStatus = 'running' | 'error' | 'unknown' | 'syncing' | 'warning';
@@ -236,22 +223,22 @@ export const parseStatus = ({
 }: IStatusProps): {
   status: IStatus;
 } => {
-  if (syncStatus.state === 'ERRORED_AT_AGENT') {
+  if (syncStatus?.state === 'ERRORED_AT_AGENT') {
     return {
       status: 'error',
     };
   }
 
   if (
-    syncStatus.state === 'APPLIED_AT_AGENT' ||
-    syncStatus.state === 'IN_QUEUE'
+    syncStatus?.state === 'APPLIED_AT_AGENT' ||
+    syncStatus?.state === 'IN_QUEUE'
   ) {
     return {
       status: 'syncing',
     };
   }
 
-  if (status?.isReady && syncStatus.state === 'RECEIVED_UPDATE_FROM_AGENT') {
+  if (status?.isReady && syncStatus?.state === 'RECEIVED_UPDATE_FROM_AGENT') {
     return {
       status: 'running',
     };
