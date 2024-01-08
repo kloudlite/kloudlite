@@ -1004,6 +1004,7 @@ type ComplexityRoot struct {
 		InfraUpdateNodePool              func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraUpdateProviderSecret        func(childComplexity int, secret entities.CloudProviderSecret) int
 		InfraUpdateVPNDevice             func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
+		InfraUpdateVPNDeviceNs           func(childComplexity int, clusterName string, deviceName string, namespace string) int
 		InfraUpdateVPNDevicePorts        func(childComplexity int, clusterName string, deviceName string, ports []*v1.Port) int
 	}
 
@@ -1348,6 +1349,7 @@ type MutationResolver interface {
 	InfraCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
 	InfraUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
 	InfraUpdateVPNDevicePorts(ctx context.Context, clusterName string, deviceName string, ports []*v1.Port) (bool, error)
+	InfraUpdateVPNDeviceNs(ctx context.Context, clusterName string, deviceName string, namespace string) (bool, error)
 	InfraDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error)
 	InfraCreateClusterManagedService(ctx context.Context, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
 	InfraUpdateClusterManagedService(ctx context.Context, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
@@ -5600,6 +5602,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraUpdateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
 
+	case "Mutation.infra_updateVPNDeviceNs":
+		if e.complexity.Mutation.InfraUpdateVPNDeviceNs == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateVPNDeviceNs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateVPNDeviceNs(childComplexity, args["clusterName"].(string), args["deviceName"].(string), args["namespace"].(string)), true
+
 	case "Mutation.infra_updateVPNDevicePorts":
 		if e.complexity.Mutation.InfraUpdateVPNDevicePorts == nil {
 			break
@@ -7287,6 +7301,7 @@ type Mutation {
     infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
 
     infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_updateVPNDeviceNs(clusterName: String!, deviceName: String!, namespace: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
@@ -9623,6 +9638,39 @@ func (ec *executionContext) field_Mutation_infra_updateProviderSecret_args(ctx c
 		}
 	}
 	args["secret"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_updateVPNDeviceNs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["namespace"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["namespace"] = arg2
 	return args, nil
 }
 
@@ -36631,6 +36679,87 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateVPNDevicePorts(ctx
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_infra_updateVPNDeviceNs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_updateVPNDeviceNs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraUpdateVPNDeviceNs(rctx, fc.Args["clusterName"].(string), fc.Args["deviceName"].(string), fc.Args["namespace"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_updateVPNDeviceNs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_updateVPNDeviceNs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_infra_deleteVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_infra_deleteVPNDevice(ctx, field)
 	if err != nil {
@@ -60181,6 +60310,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_infra_updateVPNDevicePorts(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "infra_updateVPNDeviceNs":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_updateVPNDeviceNs(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
