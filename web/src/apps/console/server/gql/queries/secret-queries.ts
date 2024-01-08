@@ -21,34 +21,30 @@ export const secretQueries = (executor: IExecutor) => ({
   listSecrets: executor(
     gql`
       query Core_listSecrets(
-        $project: ProjectId!
-        $scope: WorkspaceOrEnvId!
+        $projectName: String!
+        $envName: String!
         $search: SearchSecrets
         $pq: CursorPaginationIn
       ) {
         core_listSecrets(
-          project: $project
-          scope: $scope
+          projectName: $projectName
+          envName: $envName
           search: $search
           pq: $pq
         ) {
           edges {
             cursor
             node {
-              accountName
-              apiVersion
-              clusterName
               createdBy {
                 userEmail
                 userId
                 userName
               }
               creationTime
-              data
               displayName
-              enabled
-              id
-              kind
+              stringData
+              environmentName
+              immutable
               lastUpdatedBy {
                 userEmail
                 userId
@@ -64,30 +60,7 @@ export const secretQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              recordVersion
-              status {
-                checks
-                isReady
-                lastReconcileTime
-                message {
-                  RawMessage
-                }
-                resources {
-                  apiVersion
-                  kind
-                  name
-                  namespace
-                }
-              }
-              stringData
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
+              projectName
               type
               updateTime
             }
@@ -104,13 +77,21 @@ export const secretQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListSecretsQuery) => data.core_listSecrets,
-      vars(_: ConsoleListSecretsQueryVariables) {},
+      vars(_: ConsoleListSecretsQueryVariables) { },
     }
   ),
   createSecret: executor(
     gql`
-      mutation createSecret($secret: SecretIn!) {
-        core_createSecret(secret: $secret) {
+      mutation Core_createSecret(
+        $projectName: String!
+        $envName: String!
+        $secret: SecretIn!
+      ) {
+        core_createSecret(
+          projectName: $projectName
+          envName: $envName
+          secret: $secret
+        ) {
           id
         }
       }
@@ -118,57 +99,85 @@ export const secretQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateSecretMutation) =>
         data.core_createSecret,
-      vars(_: ConsoleCreateSecretMutationVariables) {},
+      vars(_: ConsoleCreateSecretMutationVariables) { },
     }
   ),
 
   getSecret: executor(
     gql`
       query Core_getSecret(
-        $project: ProjectId!
-        $scope: WorkspaceOrEnvId!
+        $projectName: String!
+        $envName: String!
         $name: String!
       ) {
-        core_getSecret(project: $project, scope: $scope, name: $name) {
-          stringData
-          updateTime
+        core_getSecret(
+          projectName: $projectName
+          envName: $envName
+          name: $name
+        ) {
+          data
           displayName
+          environmentName
+          immutable
+          markedForDeletion
           metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
             name
             namespace
-            annotations
-            labels
           }
+          projectName
+          stringData
+          type
         }
       }
     `,
     {
       transformer: (data: ConsoleGetSecretQuery) => data.core_getSecret,
-      vars(_: ConsoleGetSecretQueryVariables) {},
+      vars(_: ConsoleGetSecretQueryVariables) { },
     }
   ),
   updateSecret: executor(
     gql`
-      mutation Core_updateSecret($secret: SecretIn!) {
-        core_updateSecret(secret: $secret) {
+      mutation Core_updateSecret(
+        $projectName: String!
+        $envName: String!
+        $secret: SecretIn!
+      ) {
+        core_updateSecret(
+          projectName: $projectName
+          envName: $envName
+          secret: $secret
+        ) {
           id
         }
       }
     `,
     {
       transformer: (data: ConsoleUpdateSecretMutation) => data,
-      vars(_: ConsoleUpdateSecretMutationVariables) {},
+      vars(_: ConsoleUpdateSecretMutationVariables) { },
     }
   ),
   deleteSecret: executor(
     gql`
-      mutation Core_deleteSecret($namespace: String!, $name: String!) {
-        core_deleteSecret(namespace: $namespace, name: $name)
+      mutation Core_deleteSecret(
+        $projectName: String!
+        $envName: String!
+        $secretName: String!
+      ) {
+        core_deleteSecret(
+          projectName: $projectName
+          envName: $envName
+          secretName: $secretName
+        )
       }
     `,
     {
       transformer: (data: ConsoleDeleteSecretMutation) => data,
-      vars(_: ConsoleDeleteSecretMutationVariables) {},
+      vars(_: ConsoleDeleteSecretMutationVariables) { },
     }
   ),
 });

@@ -1,5 +1,5 @@
 import { ArrowRight } from '@jengaicons/react';
-import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
+import { useNavigate, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
@@ -24,7 +24,7 @@ import {
   validateClusterCloudProvider,
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
-import { IAccountContext } from '../routes/_main+/$account+/_layout';
+// import { IAccountContext } from '../routes/_main+/$account+/_layout';
 import ProgressWrapper from '../components/progress-wrapper';
 
 type props =
@@ -41,7 +41,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 
-  const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
+  // const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const api = useConsoleApi();
 
   const cloudProviders = useMemo(
@@ -63,7 +63,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const { a: accountName } = useParams();
 
-  const { account } = useOutletContext<IAccountContext>();
+  // const { account } = useOutletContext<IAccountContext>();
 
   const navigate = useNavigate();
 
@@ -110,12 +110,12 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         .oneOf(['HA', 'dev']),
     }),
     onSubmit: async (val) => {
-      type Merge<T, M> = Omit<T, keyof M> & M;
+      // type Merge<T, M> = Omit<T, keyof M> & M;
 
-      type nt = { availabilityMode: 'HA' | 'dev' | string };
-      const k: Merge<typeof val, nt> = val;
+      // type nt = { availabilityMode: 'HA' | 'dev' | string };
+      // const k: Merge<typeof val, nt> = val;
 
-      console.log(k);
+      // console.log(k);
       // val.availabilityMode
       if (!accountName || !val.availabilityMode) {
         return;

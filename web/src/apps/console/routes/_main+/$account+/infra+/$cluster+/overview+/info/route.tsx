@@ -176,7 +176,7 @@ const ClusterInfo = () => {
           </span>
           <span className="bodyMd">
             Log into your account and start accessing your cluster config using
-            <code className="mx-md">kl exec</code>command as shown below.
+            <code className="mx-md">kl cluster</code>command as shown below.
           </span>
         </div>
         <DetailItem
@@ -184,9 +184,9 @@ const ClusterInfo = () => {
           value={
             <CodeView
               copy
-              data={`kl exec --cluster-name=${parseName(
+              data={`kl cluter --cluster=${parseName(
                 cluster
-              )} --account-name=${parseName(account)} -- kubectl ...`}
+              )} --account=${parseName(account)} -- kubectl ...`}
             />
           }
         />

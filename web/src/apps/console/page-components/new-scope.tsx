@@ -13,21 +13,10 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { IWorkspace } from '../server/gql/queries/workspace-queries';
 import { DIALOG_TYPE } from '../utils/commons';
+import { IEnvironment } from '../server/gql/queries/environment-queries';
 
-export const SCOPE = Object.freeze({
-  ENVIRONMENT: 'environment',
-  WORKSPACE: 'workspace',
-});
-
-const HandleScope = ({
-  show,
-  setShow,
-  scope,
-}: IDialog<IWorkspace | null> & {
-  scope: 'environment' | 'workspace';
-}) => {
+const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
@@ -57,13 +46,13 @@ const HandleScope = ({
     validationSchema,
 
     onSubmit: async (val) => {
+      if (!projectName) {
+        throw new Error('Project name is required!.');
+      }
       try {
         if (show?.type === DIALOG_TYPE.ADD) {
-          const createApi =
-            scope === SCOPE.ENVIRONMENT
-              ? api.createEnvironment
-              : api.createWorkspace;
-          const { errors: e } = await createApi({
+          const { errors: e } = await api.createEnvironment({
+            projectName,
             env: {
               metadata: {
                 name: val.name,
@@ -79,13 +68,10 @@ const HandleScope = ({
           if (e) {
             throw e[0];
           }
-          toast.success('workspace created successfully');
+          toast.success('Environment created successfully');
         } else {
-          const updateApi =
-            scope === SCOPE.ENVIRONMENT
-              ? api.updateEnvironment
-              : api.updateWorkspace;
-          const { errors: e } = await updateApi({
+          const { errors: e } = await api.updateEnvironment({
+            projectName,
             env: {
               metadata: {
                 namespace: projectName,
@@ -137,8 +123,8 @@ const HandleScope = ({
     >
       <Popup.Header>
         {show?.type === DIALOG_TYPE.ADD
-          ? `Create new ${scope}`
-          : `Edit ${scope}`}
+          ? `Create new environment`
+          : `Edit environment`}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
@@ -167,9 +153,7 @@ const HandleScope = ({
           {show?.type === DIALOG_TYPE.ADD && (
             <IdSelector
               name={values.displayName}
-              resType={
-                scope === SCOPE.ENVIRONMENT ? 'environment' : 'workspace'
-              }
+              resType="environment"
               onChange={(id) => {
                 handleChange('name')({ target: { value: id } });
               }}

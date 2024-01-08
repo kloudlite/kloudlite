@@ -1,19 +1,20 @@
-import { AWSlogoFill } from '@jengaicons/react';
+import { AWSlogoFill, ChevronRight } from '@jengaicons/react';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
+import { cn } from '~/components/utils';
 import {
-  IManagedServiceTemplate,
-  IManagedServiceTemplates,
-} from '../server/gql/queries/managed-service-queries';
+  IMSvTemplate,
+  IMSvTemplates,
+} from '../server/gql/queries/managed-templates-queries';
 
 export const getManagedTemplate = ({
   templates,
   kind,
   apiVersion,
 }: {
-  templates: IManagedServiceTemplates;
+  templates: IMSvTemplates;
   kind: string;
   apiVersion: string;
-}): IManagedServiceTemplate | undefined => {
+}): IMSvTemplate | undefined => {
   return templates
     ?.flatMap((t) => t.items.flat())
     .find((t) => t.kind === kind && t.apiVersion === apiVersion);
@@ -125,3 +126,36 @@ export const renderCloudProvider = ({
       return cloudprovider;
   }
 };
+
+export const flatMap = (data: any) => {
+  const keys = data.split('.');
+
+  const jsonObject = keys.reduceRight(
+    (acc: any, key: string) => ({ [key]: acc }),
+    null
+  );
+  return jsonObject;
+};
+
+export const breadcrumIconSize = 14;
+export const BreadcrumChevronRight = () => (
+  <span className="text-icon-disabled">
+    <ChevronRight size={breadcrumIconSize} />
+  </span>
+);
+
+export const BreadcrumSlash = () => (
+  <span className="text-text-disabled font-light">/</span>
+);
+
+export const BreadcrumButtonContent = ({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) => (
+  <div className={cn('flex flex-row items-center', className)}>
+    <span className="">{content}</span>
+  </div>
+);

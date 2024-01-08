@@ -7,9 +7,11 @@ const ClusterSettings = () => {
   const subNavAction = useSubNavData();
   return (
     <SidebarLayout
-      navItems={[{ label: 'General', value: 'general' }]}
+      navItems={[
+        { label: 'General', value: 'general' },
+        { label: 'Domains', value: 'domain' },
+      ]}
       parentPath="/settings"
-      headerTitle="Settings"
       headerActions={subNavAction.data}
     >
       <Outlet context={rootContext} />

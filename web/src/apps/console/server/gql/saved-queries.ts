@@ -13,8 +13,6 @@ import { crQueries } from './queries/cr-queries';
 import { domainQueries } from './queries/domain-queries';
 import { environmentQueries } from './queries/environment-queries';
 import { gitQueries } from './queries/git-queries';
-import { managedResourceQueries } from './queries/managed-resource-queries';
-import { managedServiceQueries } from './queries/managed-service-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
 import { projectQueries } from './queries/project-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
@@ -23,8 +21,10 @@ import { routerQueries } from './queries/router-queries';
 import { secretQueries } from './queries/secret-queries';
 import { tagsQueries } from './queries/tags-queries';
 import { vpnQueries } from './queries/vpn-queries';
-import { workspaceQueries } from './queries/workspace-queries';
 import { pvcQueries } from './queries/pvc-queries';
+import { clusterManagedServicesQueries } from './queries/cluster-managed-services-queries';
+import { managedTemplateQueries } from './queries/managed-templates-queries';
+import { helmChartQueries } from './queries/helm-chart-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -35,7 +35,6 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...clusterQueries(executor),
     ...providerSecretQueries(executor),
     ...nodepoolQueries(executor),
-    ...workspaceQueries(executor),
     ...environmentQueries(executor),
     ...appQueries(executor),
     ...routerQueries(executor),
@@ -43,8 +42,6 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...secretQueries(executor),
     ...vpnQueries(executor),
     ...accessQueries(executor),
-    ...managedServiceQueries(executor),
-    ...managedResourceQueries(executor),
     ...crQueries(executor),
     ...repoQueries(executor),
     ...tagsQueries(executor),
@@ -54,6 +51,9 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...buildCachesQueries(executor),
     ...pvcQueries(executor),
     ...buildRunQueries(executor),
+    ...clusterManagedServicesQueries(executor),
+    ...managedTemplateQueries(executor),
+    ...helmChartQueries(executor),
   };
 };
 

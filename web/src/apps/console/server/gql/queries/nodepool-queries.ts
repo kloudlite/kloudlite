@@ -96,14 +96,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
               namespace
             }
           }
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            recordVersion
-            state
-            syncScheduledAt
-          }
           updateTime
         }
       }
@@ -112,7 +104,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetNodePoolQuery) {
         return data.infra_getNodePool;
       },
-      vars(_: ConsoleGetNodePoolQueryVariables) {},
+      vars(_: ConsoleGetNodePoolQueryVariables) { },
     }
   ),
   createNodePool: executor(
@@ -126,7 +118,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateNodePoolMutation) =>
         data.infra_createNodePool,
-      vars(_: ConsoleCreateNodePoolMutationVariables) {},
+      vars(_: ConsoleCreateNodePoolMutationVariables) { },
     }
   ),
   updateNodePool: executor(
@@ -140,7 +132,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateNodePoolMutation) =>
         data.infra_createNodePool,
-      vars(_: ConsoleCreateNodePoolMutationVariables) {},
+      vars(_: ConsoleCreateNodePoolMutationVariables) { },
     }
   ),
   listNodePools: executor(
@@ -227,14 +219,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
+
               updateTime
             }
           }
@@ -244,7 +229,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListNodePoolsQuery) =>
         data.infra_listNodePools,
-      vars(_: ConsoleListNodePoolsQueryVariables) {},
+      vars(_: ConsoleListNodePoolsQueryVariables) { },
     }
   ),
   deleteNodePool: executor(
@@ -256,7 +241,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteNodePoolMutation) =>
         data.infra_deleteNodePool,
-      vars(_: ConsoleDeleteNodePoolMutationVariables) {},
+      vars(_: ConsoleDeleteNodePoolMutationVariables) { },
     }
   ),
 });

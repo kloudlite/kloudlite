@@ -47,7 +47,6 @@ const SignUpWithEmail = () => {
         .required('confirm password is required'),
     }),
     onSubmit: async (v) => {
-      console.log(v);
       try {
         const { errors: _errors } = await api.signUpWithEmail({
           email: v.email,

@@ -214,7 +214,7 @@ export const headers: HeadersFunction = ({
   parentHeaders,
   errorHeaders,
 }) => {
-  console.log(loaderHeaders, actionHeaders, parentHeaders, errorHeaders);
+  // console.log(loaderHeaders, actionHeaders, parentHeaders, errorHeaders);
   return {
     'X-Stretchy-Pants': 'its for fun',
     'Cache-Control': 'max-age=300, s-maxage=3600',

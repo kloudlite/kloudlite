@@ -1,4 +1,4 @@
-import { CaretDownFill, Plus } from '@jengaicons/react';
+import { CaretDownFill, ChevronUpDown, Plus } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
   Outlet,
@@ -17,12 +17,17 @@ import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
 
-
-import { IAccount, IAccounts } from '~/console/server/gql/queries/account-queries';
+import {
+  IAccount,
+  IAccounts,
+} from '~/console/server/gql/queries/account-queries';
 import { parseName } from '~/console/server/r-utils/common';
 
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import MenuSelect from '~/console/components/menu-select';
+import Breadcrum from '~/console/components/breadcrum';
+import { BreadcrumButtonContent } from '~/console/utils/commons';
 import { IConsoleRootContext } from '../_layout/_layout';
 
 // OptionList for various actions
@@ -79,6 +84,36 @@ const AccountMenu = ({ account }: { account: IAccount }) => {
   );
 };
 
+const AccountMenu2 = ({ account }: { account: IAccount }) => {
+  const accounts = useDataFromMatches<IAccounts>('accounts', {});
+  const { account: accountName } = useParams();
+  const navigate = useNavigate();
+  return (
+    <MenuSelect
+      value={accountName}
+      items={accounts.map((acc) => ({
+        label: acc.displayName,
+        value: parseName(acc),
+      }))}
+      onChange={(value) => {
+        navigate(`/${value}/infra/clusters`);
+      }}
+      trigger={
+        <Breadcrum.Button
+          content={
+            <span className="flex flex-row items-center gap-md">
+              <BreadcrumButtonContent content={account.displayName} />
+              <span className="text-icon-disabled">
+                <ChevronUpDown color="currentColor" size={11} />
+              </span>
+            </span>
+          }
+        />
+      }
+    />
+  );
+};
+
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext<IConsoleRootContext>();
@@ -118,7 +153,7 @@ const Account = () => {
 
 export const handle = ({ account }: any) => {
   return {
-    accountMenu: <AccountMenu account={account} />,
+    breadcrum: () => <AccountMenu2 account={account} />,
   };
 };
 

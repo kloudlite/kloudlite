@@ -23,11 +23,8 @@ export type IEnvironments = NN<
 export const environmentQueries = (executor: IExecutor) => ({
   getEnvironment: executor(
     gql`
-      query Core_getEnvironment($project: ProjectId!, $name: String!) {
-        core_getEnvironment(project: $project, name: $name) {
-          accountName
-          apiVersion
-          clusterName
+      query Core_getEnvironment($projectName: String!, $name: String!) {
+        core_getEnvironment(projectName: $projectName, name: $name) {
           createdBy {
             userEmail
             userId
@@ -35,8 +32,6 @@ export const environmentQueries = (executor: IExecutor) => ({
           }
           creationTime
           displayName
-          id
-          kind
           lastUpdatedBy {
             userEmail
             userId
@@ -53,15 +48,14 @@ export const environmentQueries = (executor: IExecutor) => ({
             namespace
           }
           projectName
-          recordVersion
           spec {
-            isEnvironment
             projectName
             targetNamespace
           }
           status {
             checks
             isReady
+            lastReadyGeneration
             lastReconcileTime
             message {
               RawMessage
@@ -73,14 +67,6 @@ export const environmentQueries = (executor: IExecutor) => ({
               namespace
             }
           }
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            recordVersion
-            state
-            syncScheduledAt
-          }
           updateTime
         }
       }
@@ -88,13 +74,16 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetEnvironmentQuery) =>
         data.core_getEnvironment,
-      vars(_: ConsoleGetEnvironmentQueryVariables) {},
+      vars(_: ConsoleGetEnvironmentQueryVariables) { },
     }
   ),
   createEnvironment: executor(
     gql`
-      mutation Core_createEnvironment($env: WorkspaceIn!) {
-        core_createEnvironment(env: $env) {
+      mutation Core_createEnvironment(
+        $projectName: String!
+        $env: EnvironmentIn!
+      ) {
+        core_createEnvironment(projectName: $projectName, env: $env) {
           id
         }
       }
@@ -102,13 +91,16 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateEnvironmentMutation) =>
         data.core_createEnvironment,
-      vars(_: ConsoleCreateEnvironmentMutationVariables) {},
+      vars(_: ConsoleCreateEnvironmentMutationVariables) { },
     }
   ),
   updateEnvironment: executor(
     gql`
-      mutation Core_updateEnvironment($env: WorkspaceIn!) {
-        core_updateEnvironment(env: $env) {
+      mutation Core_updateEnvironment(
+        $projectName: String!
+        $env: EnvironmentIn!
+      ) {
+        core_updateEnvironment(projectName: $projectName, env: $env) {
           id
         }
       }
@@ -117,28 +109,25 @@ export const environmentQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleUpdateEnvironmentMutation) {
         return data.core_updateEnvironment;
       },
-      vars(_: ConsoleUpdateEnvironmentMutationVariables) {},
+      vars(_: ConsoleUpdateEnvironmentMutationVariables) { },
     }
   ),
 
   listEnvironments: executor(
     gql`
       query Core_listEnvironments(
-        $project: ProjectId!
-        $search: SearchWorkspaces
-        $pagination: CursorPaginationIn
+        $projectName: String!
+        $search: SearchEnvironments
+        $pq: CursorPaginationIn
       ) {
         core_listEnvironments(
-          project: $project
+          projectName: $projectName
           search: $search
-          pq: $pagination
+          pq: $pq
         ) {
           edges {
             cursor
             node {
-              accountName
-              apiVersion
-              clusterName
               createdBy {
                 userEmail
                 userId
@@ -146,8 +135,6 @@ export const environmentQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
-              id
-              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -164,15 +151,14 @@ export const environmentQueries = (executor: IExecutor) => ({
                 namespace
               }
               projectName
-              recordVersion
               spec {
-                isEnvironment
                 projectName
                 targetNamespace
               }
               status {
                 checks
                 isReady
+                lastReadyGeneration
                 lastReconcileTime
                 message {
                   RawMessage
@@ -183,14 +169,6 @@ export const environmentQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
-              }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
               }
               updateTime
             }
@@ -208,7 +186,7 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListEnvironmentsQuery) =>
         data.core_listEnvironments,
-      vars(_: ConsoleListEnvironmentsQueryVariables) {},
+      vars(_: ConsoleListEnvironmentsQueryVariables) { },
     }
   ),
 });

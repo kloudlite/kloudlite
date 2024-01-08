@@ -1,29 +1,16 @@
-import {
-  ArrowRight,
-  CircleDashed,
-  CircleFill,
-  Search,
-} from '@jengaicons/react';
+/* eslint-disable no-nested-ternary */
+import { ArrowRight, CircleNotch } from '@jengaicons/react';
 import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import Radio from '~/components/atoms/radio';
-import { dayjs } from '~/components/molecule/dayjs';
 import { toast } from '~/components/molecule/toast';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { IdSelector } from '../components/id-selector';
-import NoResultsFound from '../components/no-results-found';
-import { SearchBox } from '../components/search-box';
-import {
-  parseName,
-  parseNamespace,
-  parseNodes,
-  parseTargetNs,
-} from '../server/r-utils/common';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import Select from '~/components/atoms/select';
+import { parseName, parseNodes } from '../server/r-utils/common';
 import { keyconstants } from '../server/r-utils/key-constants';
 import {
   ensureAccountClientSide,
@@ -44,7 +31,8 @@ const NewProject = () => {
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  const { a: accountName } = useParams();
+  const params = useParams();
+  const { a: accountName } = params;
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -95,6 +83,65 @@ const NewProject = () => {
     },
   });
 
+  const [nameValid, setNameValid] = useState(false);
+  const [nameLoading, setNameLoading] = useState(false);
+  useDebounce(
+    async () => {
+      if (values.name) {
+        try {
+          ensureAccountClientSide(params);
+          ensureClusterClientSide(params);
+          const { data, errors } = await api.coreCheckNameAvailability({
+            resType: 'project',
+            name: `${values.name}`,
+          });
+
+          if (errors) {
+            throw errors[0];
+          }
+          if (data.result) {
+            setNameValid(true);
+          } else {
+            setNameValid(false);
+          }
+        } catch (err) {
+          handleError(err);
+        } finally {
+          setNameLoading(false);
+        }
+      }
+    },
+    500,
+    [values.name]
+  );
+
+  const checkNameAvailable = () => {
+    if (errors.name) {
+      return errors.name;
+    }
+    if (!values.name) {
+      return null;
+    }
+    if (nameLoading) {
+      return (
+        <div className="flex flex-row items-center gap-md">
+          <span className="animate-spin">
+            <CircleNotch size={10} />
+          </span>
+          <span>Checking availability</span>
+        </div>
+      );
+    }
+    if (nameValid) {
+      return (
+        <span className="text-text-success bodySm-semibold">
+          {values.name} is available.
+        </span>
+      );
+    }
+    return 'This name is not available. Please try different.';
+  };
+
   const getView = () => {
     return (
       <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
@@ -104,83 +151,59 @@ const NewProject = () => {
         <div className="flex flex-col">
           <TextInput
             label="Project name"
-            name="name"
+            name="displayNmae"
             value={values.displayName}
-            onChange={handleChange('displayName')}
-            size="lg"
-            error={!!errors.displayName}
-            message={errors.displayName}
-          />
-          <IdSelector
-            className="pt-lg"
-            resType="project"
-            name={values.displayName}
-            onChange={(v) => {
-              handleChange('name')(dummyEvent(v));
+            onChange={(e) => {
+              handleChange('displayName')(e);
+              handleChange('name')(
+                dummyEvent(e.target.value.toLowerCase().replace(' ', '-'))
+              );
+              if (e.target.value) {
+                setNameLoading(true);
+              } else {
+                setNameLoading(false);
+              }
             }}
+            size="lg"
+            error={
+              ((!nameValid && !!values.name) || !!errors.name) && !nameLoading
+            }
+            message={checkNameAvailable()}
+            prefix={
+              <span className="text-text-soft mr-sm">{accountName} /</span>
+            }
           />
         </div>
+
         {!isOnboarding && (
-          <div className="flex flex-col border border-border-disabled bg-surface-basic-default rounded-md">
-            <div className="bg-surface-basic-subdued flex flex-row items-center py-lg pr-lg pl-2xl">
-              <span className="headingMd text-text-default flex-1">
-                Cluster(s)
-              </span>
-              <div className="flex-1">
-                <SearchBox InputElement={TextInput} />
-              </div>
-            </div>
-            {clusters.length > 0 && (
-              <Radio.Root
-                withBounceEffect={false}
-                value={values.clusterName}
-                onChange={(e) => {
-                  handleChange('clusterName')(dummyEvent(e));
-                }}
-                className="flex flex-col pr-2xl !gap-y-0 min-h-[288px]"
-                labelPlacement="left"
-              >
-                {clusters?.map((c) => {
-                  return (
-                    <Radio.Item
-                      value={parseName(c)}
-                      withBounceEffect={false}
-                      className="justify-between w-full"
-                      key={parseName(c)}
-                    >
-                      <div className="p-2xl pl-lg flex flex-row gap-lg items-center">
-                        <CircleDashed size={24} />
-                        <div className="flex flex-row flex-1 items-center gap-lg">
-                          <div className="flex items-center flex-row flex-1 gap-lg">
-                            <span className="headingMd text-text-default">
-                              {c.displayName}
-                            </span>
-                            <span>
-                              <CircleFill size={2} />
-                            </span>
-                            <span className="bodySm text-text-soft">
-                              {parseName(c)}
-                            </span>
-                          </div>
-                          <span className="bodyMd text-text-default ">
-                            {dayjs(c.updateTime).fromNow()}
-                          </span>
-                        </div>
-                      </div>
-                    </Radio.Item>
-                  );
-                })}
-              </Radio.Root>
-            )}
-            {clusters.length === 0 && (
-              <NoResultsFound
-                title="No search results found."
-                image={<Search size={40} />}
-                border={false}
-                shadow={false}
-              />
-            )}
-          </div>
+          <Select
+            label="Cluster"
+            placeholder="Select a cluster"
+            value={{
+              label:
+                clusters.find((c) => parseName(c) === values.clusterName)
+                  ?.displayName || values.clusterName,
+              value: values.clusterName,
+            }}
+            options={async () => [
+              ...clusters.map((clster) => ({
+                label: clster.displayName,
+                value: parseName(clster),
+                cluster: clster,
+                render: () => (
+                  <div className="flex flex-col">
+                    <div>{clster.displayName}</div>
+                    <div className="bodySm text-text-soft">
+                      {parseName(clster)}
+                    </div>
+                  </div>
+                ),
+              })),
+            ]}
+            onChange={(v) => {
+              handleChange('clusterName')(dummyEvent(v.value));
+            }}
+          />
         )}
         <div className="flex flex-row justify-start">
           <Button

@@ -11,7 +11,7 @@ const ClusterOverview = () => {
     <SidebarLayout
       navItems={[
         { label: 'Info', value: 'info' },
-        { label: 'Logs', value: 'logs' },
+        // { label: 'Logs', value: 'logs' },
         { label: 'Metrics', value: 'metrics' },
       ]}
       headerTitle=""

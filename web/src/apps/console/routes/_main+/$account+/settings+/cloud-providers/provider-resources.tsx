@@ -206,19 +206,20 @@ const ExtraButton = ({
   onDelete: () => void;
   onEdit: () => void;
 }) => {
+  const iconSize = 16;
   return (
     <ResourceExtraAction
       options={[
         {
           label: 'Edit',
-          icon: <PencilSimple size={16} />,
+          icon: <PencilSimple size={iconSize} />,
           type: 'item',
           onClick: onEdit,
           key: 'edit',
         },
         {
           label: 'Delete',
-          icon: <Trash size={16} />,
+          icon: <Trash size={iconSize} />,
           type: 'item',
           onClick: onDelete,
           key: 'delete',

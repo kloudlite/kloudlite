@@ -10,8 +10,6 @@ const restActions = async (ctx: IExtRemixCtx) => {
   const cookie = getCookie(ctx);
   if (cookie.get('cliLogin')) {
     try {
-      console.log('here', 'lskdfjsldfj');
-
       const { data, errors } = await GQLServerHandler(
         ctx.request
       ).setRemoteAuthHeader({
@@ -21,7 +19,6 @@ const restActions = async (ctx: IExtRemixCtx) => {
 
       logger.log(data, 'loggedin');
       if (errors) {
-        console.log('here', errors);
         throw errors[0];
       }
 

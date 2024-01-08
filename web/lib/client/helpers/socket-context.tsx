@@ -184,7 +184,6 @@ export const useWatch = (...topics: string[]) => {
   useSubscribe(
     topics,
     () => {
-      console.log('hi');
       reloadPage();
     },
     topics

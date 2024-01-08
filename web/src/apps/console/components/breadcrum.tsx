@@ -6,7 +6,7 @@ interface IBreadcrum {
 }
 
 const Root = ({ children }: IBreadcrum) => {
-  return <div className="flex flex-row gap-md items-center">{children}</div>;
+  return <div className="flex flex-row items-center">{children}</div>;
 };
 
 const Button = React.forwardRef<HTMLButtonElement, IButton>((props, ref) => {

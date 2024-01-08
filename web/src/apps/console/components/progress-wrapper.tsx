@@ -17,17 +17,19 @@ const TitleSection = ({ title, subTitle }: ITitleSection) => {
 
 interface IProgressWrapper extends ITitleSection {
   progressItems: IProgressTracker;
+  onClick?: (item: IProgressTracker['items'][number]) => void;
 }
 const ProgressWrapper = ({
   progressItems,
   subTitle,
   title,
+  onClick,
 }: IProgressWrapper) => {
   return (
     <div className="min-h-screen p-10xl pb-4xl max-w-[1024px] bg-surface-basic-default">
       <div className="max-w-[568px] flex flex-col gap-7xl">
         <TitleSection title={title} subTitle={subTitle} />
-        <ProgressTracker.Root {...progressItems} />
+        <ProgressTracker.Root onClick={onClick} {...progressItems} />
       </div>
     </div>
   );

@@ -18,73 +18,87 @@ export type IConfigs = NN<ConsoleListConfigsQuery['core_listConfigs']>;
 export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
     gql`
-      mutation updateConfig($config: ConfigIn!) {
-        core_updateConfig(config: $config) {
+      mutation Core_updateConfig(
+        $projectName: String!
+        $envName: String!
+        $config: ConfigIn!
+      ) {
+        core_updateConfig(
+          projectName: $projectName
+          envName: $envName
+          config: $config
+        ) {
           id
         }
       }
     `,
     {
       transformer: (data: ConsoleUpdateConfigMutation) => data,
-      vars(_: ConsoleUpdateConfigMutationVariables) {},
+      vars(_: ConsoleUpdateConfigMutationVariables) { },
     }
   ),
   getConfig: executor(
     gql`
       query Core_getConfig(
-        $project: ProjectId!
-        $scope: WorkspaceOrEnvId!
+        $projectName: String!
+        $envName: String!
         $name: String!
       ) {
-        core_getConfig(project: $project, scope: $scope, name: $name) {
-          metadata {
-            namespace
-            name
-            annotations
-            labels
-          }
-          displayName
-          updateTime
+        core_getConfig(
+          projectName: $projectName
+          envName: $envName
+          name: $name
+        ) {
+          binaryData
           data
+          displayName
+          environmentName
+          immutable
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          projectName
         }
       }
     `,
     {
       transformer: (data: ConsoleGetConfigQuery) => data.core_getConfig,
-      vars(_: ConsoleGetConfigQueryVariables) {},
+      vars(_: ConsoleGetConfigQueryVariables) { },
     }
   ),
   listConfigs: executor(
     gql`
       query Core_listConfigs(
-        $project: ProjectId!
-        $scope: WorkspaceOrEnvId!
-        $pq: CursorPaginationIn
+        $projectName: String!
+        $envName: String!
         $search: SearchConfigs
+        $pq: CursorPaginationIn
       ) {
         core_listConfigs(
-          project: $project
-          scope: $scope
-          pq: $pq
+          projectName: $projectName
+          envName: $envName
           search: $search
+          pq: $pq
         ) {
           edges {
             cursor
             node {
-              accountName
-              apiVersion
-              clusterName
               createdBy {
                 userEmail
                 userId
                 userName
               }
               creationTime
-              data
               displayName
-              enabled
-              id
-              kind
+              data
+              environmentName
+              immutable
               lastUpdatedBy {
                 userEmail
                 userId
@@ -100,29 +114,7 @@ export const configQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              recordVersion
-              status {
-                checks
-                isReady
-                lastReconcileTime
-                message {
-                  RawMessage
-                }
-                resources {
-                  apiVersion
-                  kind
-                  name
-                  namespace
-                }
-              }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
+              projectName
               updateTime
             }
           }
@@ -138,13 +130,21 @@ export const configQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListConfigsQuery) => data.core_listConfigs,
-      vars(_: ConsoleListConfigsQueryVariables) {},
+      vars(_: ConsoleListConfigsQueryVariables) { },
     }
   ),
   createConfig: executor(
     gql`
-      mutation Core_createConfig($config: ConfigIn!) {
-        core_createConfig(config: $config) {
+      mutation Core_createConfig(
+        $projectName: String!
+        $envName: String!
+        $config: ConfigIn!
+      ) {
+        core_createConfig(
+          projectName: $projectName
+          envName: $envName
+          config: $config
+        ) {
           id
         }
       }
@@ -152,7 +152,7 @@ export const configQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateConfigMutation) =>
         data.core_createConfig,
-      vars(_: ConsoleCreateConfigMutationVariables) {},
+      vars(_: ConsoleCreateConfigMutationVariables) { },
     }
   ),
 });

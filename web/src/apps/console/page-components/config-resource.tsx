@@ -1,5 +1,5 @@
 import { Trash } from '@jengaicons/react';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -20,11 +20,9 @@ import { IConfigs } from '../server/gql/queries/config-queries';
 import {
   ExtractNodeType,
   parseName,
-  parseTargetNs,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '../server/r-utils/common';
-import { IWorkspaceContext } from '../routes/_main+/$account+/$cluster+/$project+/$scope+/$workspace+/_layout';
 
 const RESOURCE_NAME = 'config';
 type BaseType = ExtractNodeType<IConfigs>;
@@ -73,7 +71,7 @@ const GridView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, cluster, project, scope, workspace } = useParams();
+  const { account, project, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -94,7 +92,7 @@ const GridView = ({
             key={id}
             to={
               linkComponent !== null
-                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/config/${id}`
+                ? `/${account}/${project}/${environment}/config/${id}`
                 : undefined
             }
             rows={[
@@ -147,7 +145,7 @@ const ListView = ({
   onDelete = (_) => _,
   linkComponent = null,
 }: IResource) => {
-  const { account, cluster, project, scope, workspace } = useParams();
+  const { account, project, environment } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
@@ -170,7 +168,7 @@ const ListView = ({
             className="!p-3xl"
             to={
               linkComponent !== null
-                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/config/${id}`
+                ? `/${account}/${project}/${environment}/config/${id}`
                 : undefined
             }
             columns={[
@@ -226,8 +224,7 @@ const ConfigResources = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { workspace } = useOutletContext<IWorkspaceContext>();
-
+  const { project, workspace } = useParams();
   const props: IResource = {
     items,
     hasActions,
@@ -249,10 +246,14 @@ const ConfigResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!project || !workspace) {
+            throw new Error('Project and Environment name is required!.');
+          }
           try {
             const { errors } = await api.deleteSecret({
-              name: parseName(showDeleteDialog),
-              namespace: parseTargetNs(workspace),
+              secretName: parseName(showDeleteDialog),
+              projectName: project,
+              envName: workspace,
             });
 
             if (errors) {

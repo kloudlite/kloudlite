@@ -123,14 +123,13 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
 
 const ListView = ({ items, onDelete, onEdit }: IResource) => {
   return (
-    <List.Root linkComponent={Link}>
+    <List.Root>
       {items.map((item, index) => {
         const { name, id, status, updateInfo, cluster } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
-            to={`../${name}`}
             className="!p-3xl"
             columns={[
               {

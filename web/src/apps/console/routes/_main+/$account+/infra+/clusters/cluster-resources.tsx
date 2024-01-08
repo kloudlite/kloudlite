@@ -185,10 +185,10 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
               statusRender,
               {
                 key: generateKey(keyPrefix, `${provider}`),
-                className: 'w-[150px] text-start',
+                className: 'min-w-[150px] text-start',
                 render: () => <ListBody data={provider} />,
               },
-              lR.authorRender({ className: 'w-[180px]' }),
+              lR.authorRender({ className: 'min-w-[180px] w-[180px]' }),
               {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => (

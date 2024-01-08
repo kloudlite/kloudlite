@@ -49,26 +49,7 @@ export type ConsoleResType =
   | 'managed_service'
   | 'project'
   | 'router'
-  | 'secret'
-  | 'workspace';
-
-export type ProjectId = {
-  type: ProjectIdType;
-  value: Scalars['String']['input'];
-};
-
-export type ProjectIdType = 'name' | 'targetNamespace';
-
-export type WorkspaceOrEnvId = {
-  type: WorkspaceOrEnvIdType;
-  value: Scalars['String']['input'];
-};
-
-export type WorkspaceOrEnvIdType =
-  | 'environmentName'
-  | 'environmentTargetNamespace'
-  | 'workspaceName'
-  | 'workspaceTargetNamespace';
+  | 'secret';
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret =
   'config' | 'secret';
@@ -80,16 +61,27 @@ export type K8s__Io___Api___Core___V1__TaintEffect =
 
 export type K8s__Io___Api___Core___V1__TolerationOperator = 'Equal' | 'Exists';
 
-export type Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction =
+export type Github__Com___Kloudlite___Api___Pkg___Types__SyncAction =
   | 'APPLY'
   | 'DELETE';
 
-export type Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState =
+export type Github__Com___Kloudlite___Api___Pkg___Types__SyncState =
   | 'APPLIED_AT_AGENT'
+  | 'DELETED_AT_AGENT'
+  | 'DELETING_AT_AGENT'
   | 'ERRORED_AT_AGENT'
   | 'IDLE'
   | 'IN_QUEUE'
-  | 'RECEIVED_UPDATE_FROM_AGENT';
+  | 'RECEIVED_UPDATE_FROM_AGENT'
+  | 'UPDATED_AT_AGENT';
+
+export type ConfigValuesIn = {
+  configmapName: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+};
+
+export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ImagePullSecretFormat =
+  'dockerConfigJson' | 'params';
 
 export type K8s__Io___Api___Core___V1__SecretType =
   | 'bootstrap__kubernetes__io___token'
@@ -100,6 +92,11 @@ export type K8s__Io___Api___Core___V1__SecretType =
   | 'kubernetes__io___ssh____auth'
   | 'kubernetes__io___tls'
   | 'Opaque';
+
+export type SecretValuesIn = {
+  key: Scalars['String']['input'];
+  secretName: Scalars['String']['input'];
+};
 
 export type CursorPaginationIn = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -133,7 +130,7 @@ export type SearchConfigs = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type SearchWorkspaces = {
+export type SearchEnvironments = {
   isReady?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
   projectName?: InputMaybe<MatchFilterIn>;
@@ -149,12 +146,6 @@ export type SearchImagePullSecrets = {
 export type SearchManagedResources = {
   isReady?: InputMaybe<MatchFilterIn>;
   managedServiceName?: InputMaybe<MatchFilterIn>;
-  markedForDeletion?: InputMaybe<MatchFilterIn>;
-  text?: InputMaybe<MatchFilterIn>;
-};
-
-export type SearchManagedServices = {
-  isReady?: InputMaybe<MatchFilterIn>;
   markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
@@ -214,7 +205,12 @@ export type PaginationIn = {
   per_page?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type ResType = 'cluster' | 'nodepool' | 'providersecret' | 'vpn_device';
+export type ResType =
+  | 'cluster'
+  | 'helm_release'
+  | 'nodepool'
+  | 'providersecret'
+  | 'vpn_device';
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode =
   'dev' | 'HA';
@@ -222,8 +218,13 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider =
   'aws' | 'azure' | 'do' | 'gcp';
 
-export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType =
-  'ec2' | 'spot';
+export type K8s__Io___Api___Core___V1__NodeSelectorOperator =
+  | 'DoesNotExist'
+  | 'Exists'
+  | 'Gt'
+  | 'In'
+  | 'Lt'
+  | 'NotIn';
 
 export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator =
   'DoesNotExist' | 'Exists' | 'In' | 'NotIn';
@@ -232,6 +233,32 @@ export type K8s__Io___Api___Core___V1__ConditionStatus =
   | 'False'
   | 'True'
   | 'Unknown';
+
+export type K8s__Io___Api___Core___V1__NamespaceConditionType =
+  | 'NamespaceContentRemaining'
+  | 'NamespaceDeletionContentFailure'
+  | 'NamespaceDeletionDiscoveryFailure'
+  | 'NamespaceDeletionGroupVersionParsingFailure'
+  | 'NamespaceFinalizersRemaining';
+
+export type K8s__Io___Api___Core___V1__NamespacePhase =
+  | 'Active'
+  | 'Terminating';
+
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType =
+  'ec2' | 'spot';
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeReclaimPolicy =
+  | 'Delete'
+  | 'Recycle'
+  | 'Retain';
+
+export type K8s__Io___Api___Core___V1__PersistentVolumePhase =
+  | 'Available'
+  | 'Bound'
+  | 'Failed'
+  | 'Pending'
+  | 'Released';
 
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionType =
   | 'FileSystemResizePending'
@@ -259,6 +286,15 @@ export type SearchDomainEntry = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
+export type SearchHelmRelease = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchNamespaces = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type SearchNodepool = {
   text?: InputMaybe<MatchFilterIn>;
 };
@@ -269,6 +305,14 @@ export type SearchProviderSecret = {
 };
 
 export type SearchPersistentVolumeClaims = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchPersistentVolumes = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchVolumeAttachments = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -445,32 +489,33 @@ export type K8s__Io___Api___Core___V1__TolerationIn = {
 };
 
 export type ConfigIn = {
+  binaryData?: InputMaybe<Scalars['Map']['input']>;
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  immutable?: InputMaybe<Scalars['Boolean']['input']>;
   metadata?: InputMaybe<MetadataIn>;
 };
 
-export type WorkspaceIn = {
+export type EnvironmentIn = {
   displayName: Scalars['String']['input'];
   metadata?: InputMaybe<MetadataIn>;
-  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__WorkspaceSpecIn>;
+  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentSpecIn>;
 };
 
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__WorkspaceSpecIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentSpecIn =
   {
-    isEnvironment?: InputMaybe<Scalars['Boolean']['input']>;
     projectName: Scalars['String']['input'];
-    targetNamespace: Scalars['String']['input'];
+    targetNamespace?: InputMaybe<Scalars['String']['input']>;
   };
 
 export type ImagePullSecretIn = {
-  accountName: Scalars['String']['input'];
+  displayName: Scalars['String']['input'];
   dockerConfigJson?: InputMaybe<Scalars['String']['input']>;
-  dockerPassword?: InputMaybe<Scalars['String']['input']>;
-  dockerRegistryEndpoint?: InputMaybe<Scalars['String']['input']>;
-  dockerUsername?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
+  format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ImagePullSecretFormat;
+  metadata: MetadataIn;
+  registryPassword?: InputMaybe<Scalars['String']['input']>;
+  registryURL?: InputMaybe<Scalars['String']['input']>;
+  registryUsername?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ManagedResourceIn = {
@@ -496,23 +541,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefI
     apiVersion: Scalars['String']['input'];
     kind: Scalars['String']['input'];
     name: Scalars['String']['input'];
-  };
-
-export type ManagedServiceIn = {
-  displayName: Scalars['String']['input'];
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  metadata?: InputMaybe<MetadataIn>;
-  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
-};
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
-  {
-    serviceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn =
-  {
-    spec: Scalars['Map']['input'];
+    namespace: Scalars['String']['input'];
   };
 
 export type ProjectIn = {
@@ -588,7 +617,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn = {
 export type SecretIn = {
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  immutable?: InputMaybe<Scalars['Boolean']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   stringData?: InputMaybe<Scalars['Map']['input']>;
   type?: InputMaybe<K8s__Io___Api___Core___V1__SecretType>;
@@ -711,10 +740,129 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManage
     namespace: Scalars['String']['input'];
   };
 
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
+  {
+    serviceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn =
+  {
+    apiVersion: Scalars['String']['input'];
+    kind: Scalars['String']['input'];
+    spec: Scalars['Map']['input'];
+  };
+
 export type DomainEntryIn = {
   clusterName: Scalars['String']['input'];
   displayName: Scalars['String']['input'];
   domainName: Scalars['String']['input'];
+};
+
+export type HelmReleaseIn = {
+  displayName: Scalars['String']['input'];
+  metadata?: InputMaybe<MetadataIn>;
+  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__HelmChartSpecIn>;
+};
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HelmChartSpecIn =
+  {
+    chartName: Scalars['String']['input'];
+    chartRepoURL: Scalars['String']['input'];
+    chartVersion: Scalars['String']['input'];
+    jobVars?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__JobVarsIn>;
+    postInstall?: InputMaybe<Scalars['String']['input']>;
+    postUninstall?: InputMaybe<Scalars['String']['input']>;
+    preInstall?: InputMaybe<Scalars['String']['input']>;
+    preUninstall?: InputMaybe<Scalars['String']['input']>;
+    values: Scalars['Map']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__JobVarsIn = {
+  affinity?: InputMaybe<K8s__Io___Api___Core___V1__AffinityIn>;
+  backOffLimit?: InputMaybe<Scalars['Int']['input']>;
+  nodeSelector?: InputMaybe<Scalars['Map']['input']>;
+  tolerations?: InputMaybe<Array<K8s__Io___Api___Core___V1__TolerationIn>>;
+};
+
+export type K8s__Io___Api___Core___V1__AffinityIn = {
+  nodeAffinity?: InputMaybe<K8s__Io___Api___Core___V1__NodeAffinityIn>;
+  podAffinity?: InputMaybe<K8s__Io___Api___Core___V1__PodAffinityIn>;
+  podAntiAffinity?: InputMaybe<K8s__Io___Api___Core___V1__PodAntiAffinityIn>;
+};
+
+export type K8s__Io___Api___Core___V1__NodeAffinityIn = {
+  preferredDuringSchedulingIgnoredDuringExecution?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__PreferredSchedulingTermIn>
+  >;
+  requiredDuringSchedulingIgnoredDuringExecution?: InputMaybe<K8s__Io___Api___Core___V1__NodeSelectorIn>;
+};
+
+export type K8s__Io___Api___Core___V1__PreferredSchedulingTermIn = {
+  preference: K8s__Io___Api___Core___V1__NodeSelectorTermIn;
+  weight: Scalars['Int']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__NodeSelectorTermIn = {
+  matchExpressions?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__NodeSelectorRequirementIn>
+  >;
+  matchFields?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__NodeSelectorRequirementIn>
+  >;
+};
+
+export type K8s__Io___Api___Core___V1__NodeSelectorRequirementIn = {
+  key: Scalars['String']['input'];
+  operator: K8s__Io___Api___Core___V1__NodeSelectorOperator;
+  values?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type K8s__Io___Api___Core___V1__NodeSelectorIn = {
+  nodeSelectorTerms: Array<K8s__Io___Api___Core___V1__NodeSelectorTermIn>;
+};
+
+export type K8s__Io___Api___Core___V1__PodAffinityIn = {
+  preferredDuringSchedulingIgnoredDuringExecution?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__WeightedPodAffinityTermIn>
+  >;
+  requiredDuringSchedulingIgnoredDuringExecution?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__PodAffinityTermIn>
+  >;
+};
+
+export type K8s__Io___Api___Core___V1__WeightedPodAffinityTermIn = {
+  podAffinityTerm: K8s__Io___Api___Core___V1__PodAffinityTermIn;
+  weight: Scalars['Int']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__PodAffinityTermIn = {
+  labelSelector?: InputMaybe<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn>;
+  namespaces?: InputMaybe<Array<Scalars['String']['input']>>;
+  namespaceSelector?: InputMaybe<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn>;
+  topologyKey: Scalars['String']['input'];
+};
+
+export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn = {
+  matchExpressions?: InputMaybe<
+    Array<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequirementIn>
+  >;
+  matchLabels?: InputMaybe<Scalars['Map']['input']>;
+};
+
+export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequirementIn =
+  {
+    key: Scalars['String']['input'];
+    operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
+    values?: InputMaybe<Array<Scalars['String']['input']>>;
+  };
+
+export type K8s__Io___Api___Core___V1__PodAntiAffinityIn = {
+  preferredDuringSchedulingIgnoredDuringExecution?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__WeightedPodAffinityTermIn>
+  >;
+  requiredDuringSchedulingIgnoredDuringExecution?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__PodAffinityTermIn>
+  >;
 };
 
 export type NodePoolIn = {
@@ -802,13 +950,20 @@ export type VpnDeviceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn =
   {
-    accountName: Scalars['String']['input'];
-    clusterName: Scalars['String']['input'];
+    cnameRecords?: InputMaybe<
+      Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__CNameRecordIn>
+    >;
     deviceNamespace?: InputMaybe<Scalars['String']['input']>;
     nodeSelector?: InputMaybe<Scalars['Map']['input']>;
     ports?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn>
     >;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__CNameRecordIn =
+  {
+    host?: InputMaybe<Scalars['String']['input']>;
+    target?: InputMaybe<Scalars['String']['input']>;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn =
@@ -817,24 +972,16 @@ export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn =
     targetPort?: InputMaybe<Scalars['Int']['input']>;
   };
 
+export type PortIn = {
+  port?: InputMaybe<Scalars['Int']['input']>;
+  targetPort?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type AccountMembershipIn = {
   accountName: Scalars['String']['input'];
   role: Github__Com___Kloudlite___Api___Apps___Iam___Types__Role;
   userId: Scalars['String']['input'];
 };
-
-export type EnvOrWorkspaceOrProjectId = {
-  name: Scalars['String']['input'];
-  type: EnvOrWorkspaceOrProjectIdType;
-};
-
-export type EnvOrWorkspaceOrProjectIdType =
-  | 'environmentName'
-  | 'environmentTargetNamespace'
-  | 'projectName'
-  | 'projectTargetNamespace'
-  | 'workspaceName'
-  | 'workspaceTargetNamespace';
 
 export type Github__Com___Kloudlite___Api___Apps___Container____Registry___Internal___Domain___Entities__GithubUserAccountIn =
   {
@@ -883,6 +1030,157 @@ export type Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn =
     RawMessage?: InputMaybe<Scalars['Any']['input']>;
   };
 
+export type K8s__Io___Api___Core___V1__AwsElasticBlockStoreVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  partition?: InputMaybe<Scalars['Int']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  volumeID: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__AzureDiskVolumeSourceIn = {
+  cachingMode?: InputMaybe<Scalars['String']['input']>;
+  diskName: Scalars['String']['input'];
+  diskURI: Scalars['String']['input'];
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__AzureFilePersistentVolumeSourceIn = {
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretName: Scalars['String']['input'];
+  secretNamespace?: InputMaybe<Scalars['String']['input']>;
+  shareName: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__CephFsPersistentVolumeSourceIn = {
+  monitors: Array<Scalars['String']['input']>;
+  path?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretFile?: InputMaybe<Scalars['String']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  user?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__SecretReferenceIn = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  namespace?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__CinderPersistentVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  volumeID: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__CsiPersistentVolumeSourceIn = {
+  controllerExpandSecretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  controllerPublishSecretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  driver: Scalars['String']['input'];
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  nodeExpandSecretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  nodePublishSecretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  nodeStageSecretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  volumeAttributes?: InputMaybe<Scalars['Map']['input']>;
+  volumeHandle: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__FcVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  lun?: InputMaybe<Scalars['Int']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  targetWWNs?: InputMaybe<Array<Scalars['String']['input']>>;
+  wwids?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type K8s__Io___Api___Core___V1__FlexPersistentVolumeSourceIn = {
+  driver: Scalars['String']['input'];
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  options?: InputMaybe<Scalars['Map']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+};
+
+export type K8s__Io___Api___Core___V1__FlockerVolumeSourceIn = {
+  datasetName?: InputMaybe<Scalars['String']['input']>;
+  datasetUUID?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__GcePersistentDiskVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  partition?: InputMaybe<Scalars['Int']['input']>;
+  pdName: Scalars['String']['input'];
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__GlusterfsPersistentVolumeSourceIn = {
+  endpoints: Scalars['String']['input'];
+  endpointsNamespace?: InputMaybe<Scalars['String']['input']>;
+  path: Scalars['String']['input'];
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__HostPathVolumeSourceIn = {
+  path: Scalars['String']['input'];
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__IscsiPersistentVolumeSourceIn = {
+  chapAuthDiscovery?: InputMaybe<Scalars['Boolean']['input']>;
+  chapAuthSession?: InputMaybe<Scalars['Boolean']['input']>;
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  initiatorName?: InputMaybe<Scalars['String']['input']>;
+  iqn: Scalars['String']['input'];
+  iscsiInterface?: InputMaybe<Scalars['String']['input']>;
+  lun: Scalars['Int']['input'];
+  portals?: InputMaybe<Array<Scalars['String']['input']>>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  targetPortal: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__LocalVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  path: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__NamespaceConditionIn = {
+  lastTransitionTime?: InputMaybe<Scalars['Date']['input']>;
+  message?: InputMaybe<Scalars['String']['input']>;
+  reason?: InputMaybe<Scalars['String']['input']>;
+  status: K8s__Io___Api___Core___V1__ConditionStatus;
+  type: K8s__Io___Api___Core___V1__NamespaceConditionType;
+};
+
+export type K8s__Io___Api___Core___V1__NamespaceSpecIn = {
+  finalizers?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type K8s__Io___Api___Core___V1__NamespaceStatusIn = {
+  conditions?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__NamespaceConditionIn>
+  >;
+  phase?: InputMaybe<K8s__Io___Api___Core___V1__NamespacePhase>;
+};
+
+export type K8s__Io___Api___Core___V1__NfsVolumeSourceIn = {
+  path: Scalars['String']['input'];
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  server: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__ObjectReferenceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
+  fieldPath?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  namespace?: InputMaybe<Scalars['String']['input']>;
+  resourceVersion?: InputMaybe<Scalars['String']['input']>;
+  uid?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn = {
   lastProbeTime?: InputMaybe<Scalars['Date']['input']>;
   lastTransitionTime?: InputMaybe<Scalars['Date']['input']>;
@@ -926,20 +1224,6 @@ export type K8s__Io___Api___Core___V1__ResourceClaimIn = {
   name: Scalars['String']['input'];
 };
 
-export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn = {
-  matchExpressions?: InputMaybe<
-    Array<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequirementIn>
-  >;
-  matchLabels?: InputMaybe<Scalars['Map']['input']>;
-};
-
-export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequirementIn =
-  {
-    key: Scalars['String']['input'];
-    operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
-    values?: InputMaybe<Array<Scalars['String']['input']>>;
-  };
-
 export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
   accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
   allocatedResources?: InputMaybe<Scalars['Map']['input']>;
@@ -951,6 +1235,132 @@ export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
   phase?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase>;
 };
 
+export type K8s__Io___Api___Core___V1__PersistentVolumeSpecIn = {
+  accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
+  awsElasticBlockStore?: InputMaybe<K8s__Io___Api___Core___V1__AwsElasticBlockStoreVolumeSourceIn>;
+  azureDisk?: InputMaybe<K8s__Io___Api___Core___V1__AzureDiskVolumeSourceIn>;
+  azureFile?: InputMaybe<K8s__Io___Api___Core___V1__AzureFilePersistentVolumeSourceIn>;
+  capacity?: InputMaybe<Scalars['Map']['input']>;
+  cephfs?: InputMaybe<K8s__Io___Api___Core___V1__CephFsPersistentVolumeSourceIn>;
+  cinder?: InputMaybe<K8s__Io___Api___Core___V1__CinderPersistentVolumeSourceIn>;
+  claimRef?: InputMaybe<K8s__Io___Api___Core___V1__ObjectReferenceIn>;
+  csi?: InputMaybe<K8s__Io___Api___Core___V1__CsiPersistentVolumeSourceIn>;
+  fc?: InputMaybe<K8s__Io___Api___Core___V1__FcVolumeSourceIn>;
+  flexVolume?: InputMaybe<K8s__Io___Api___Core___V1__FlexPersistentVolumeSourceIn>;
+  flocker?: InputMaybe<K8s__Io___Api___Core___V1__FlockerVolumeSourceIn>;
+  gcePersistentDisk?: InputMaybe<K8s__Io___Api___Core___V1__GcePersistentDiskVolumeSourceIn>;
+  glusterfs?: InputMaybe<K8s__Io___Api___Core___V1__GlusterfsPersistentVolumeSourceIn>;
+  hostPath?: InputMaybe<K8s__Io___Api___Core___V1__HostPathVolumeSourceIn>;
+  iscsi?: InputMaybe<K8s__Io___Api___Core___V1__IscsiPersistentVolumeSourceIn>;
+  local?: InputMaybe<K8s__Io___Api___Core___V1__LocalVolumeSourceIn>;
+  mountOptions?: InputMaybe<Array<Scalars['String']['input']>>;
+  nfs?: InputMaybe<K8s__Io___Api___Core___V1__NfsVolumeSourceIn>;
+  nodeAffinity?: InputMaybe<K8s__Io___Api___Core___V1__VolumeNodeAffinityIn>;
+  persistentVolumeReclaimPolicy?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeReclaimPolicy>;
+  photonPersistentDisk?: InputMaybe<K8s__Io___Api___Core___V1__PhotonPersistentDiskVolumeSourceIn>;
+  portworxVolume?: InputMaybe<K8s__Io___Api___Core___V1__PortworxVolumeSourceIn>;
+  quobyte?: InputMaybe<K8s__Io___Api___Core___V1__QuobyteVolumeSourceIn>;
+  rbd?: InputMaybe<K8s__Io___Api___Core___V1__RbdPersistentVolumeSourceIn>;
+  scaleIO?: InputMaybe<K8s__Io___Api___Core___V1__ScaleIoPersistentVolumeSourceIn>;
+  storageClassName?: InputMaybe<Scalars['String']['input']>;
+  storageos?: InputMaybe<K8s__Io___Api___Core___V1__StorageOsPersistentVolumeSourceIn>;
+  volumeMode?: InputMaybe<Scalars['String']['input']>;
+  vsphereVolume?: InputMaybe<K8s__Io___Api___Core___V1__VsphereVirtualDiskVolumeSourceIn>;
+};
+
+export type K8s__Io___Api___Core___V1__VolumeNodeAffinityIn = {
+  required?: InputMaybe<K8s__Io___Api___Core___V1__NodeSelectorIn>;
+};
+
+export type K8s__Io___Api___Core___V1__PhotonPersistentDiskVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  pdID: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__PortworxVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  volumeID: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__QuobyteVolumeSourceIn = {
+  group?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  registry: Scalars['String']['input'];
+  tenant?: InputMaybe<Scalars['String']['input']>;
+  user?: InputMaybe<Scalars['String']['input']>;
+  volume: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__RbdPersistentVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  image: Scalars['String']['input'];
+  keyring?: InputMaybe<Scalars['String']['input']>;
+  monitors: Array<Scalars['String']['input']>;
+  pool?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  user?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__ScaleIoPersistentVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  gateway: Scalars['String']['input'];
+  protectionDomain?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__SecretReferenceIn>;
+  sslEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  storageMode?: InputMaybe<Scalars['String']['input']>;
+  storagePool?: InputMaybe<Scalars['String']['input']>;
+  system: Scalars['String']['input'];
+  volumeName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__StorageOsPersistentVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  readOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  secretRef?: InputMaybe<K8s__Io___Api___Core___V1__ObjectReferenceIn>;
+  volumeName?: InputMaybe<Scalars['String']['input']>;
+  volumeNamespace?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__VsphereVirtualDiskVolumeSourceIn = {
+  fsType?: InputMaybe<Scalars['String']['input']>;
+  storagePolicyID?: InputMaybe<Scalars['String']['input']>;
+  storagePolicyName?: InputMaybe<Scalars['String']['input']>;
+  volumePath: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeStatusIn = {
+  lastPhaseTransitionTime?: InputMaybe<Scalars['Date']['input']>;
+  message?: InputMaybe<Scalars['String']['input']>;
+  phase?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumePhase>;
+  reason?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Storage___V1__VolumeAttachmentSourceIn = {
+  inlineVolumeSpec?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeSpecIn>;
+  persistentVolumeName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Storage___V1__VolumeAttachmentSpecIn = {
+  attacher: Scalars['String']['input'];
+  nodeName: Scalars['String']['input'];
+  source: K8s__Io___Api___Storage___V1__VolumeAttachmentSourceIn;
+};
+
+export type K8s__Io___Api___Storage___V1__VolumeAttachmentStatusIn = {
+  attached: Scalars['Boolean']['input'];
+  attachError?: InputMaybe<K8s__Io___Api___Storage___V1__VolumeErrorIn>;
+  attachmentMetadata?: InputMaybe<Scalars['Map']['input']>;
+  detachError?: InputMaybe<K8s__Io___Api___Storage___V1__VolumeErrorIn>;
+};
+
+export type K8s__Io___Api___Storage___V1__VolumeErrorIn = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  time?: InputMaybe<Scalars['Date']['input']>;
+};
+
 export type K8s__Io___Apimachinery___Pkg___Api___Resource__Format =
   | 'BinarySI'
   | 'DecimalExponent'
@@ -960,16 +1370,27 @@ export type K8s__Io___Apimachinery___Pkg___Api___Resource__QuantityIn = {
   Format: K8s__Io___Apimachinery___Pkg___Api___Resource__Format;
 };
 
+export type NamespaceIn = {
+  metadata?: InputMaybe<MetadataIn>;
+  spec?: InputMaybe<K8s__Io___Api___Core___V1__NamespaceSpecIn>;
+  status?: InputMaybe<K8s__Io___Api___Core___V1__NamespaceStatusIn>;
+};
+
 export type NodeIn = {
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodeSpecIn;
 };
 
-export type SearchEnvironments = {
-  isReady?: InputMaybe<MatchFilterIn>;
-  markedForDeletion?: InputMaybe<MatchFilterIn>;
-  projectName?: InputMaybe<MatchFilterIn>;
-  text?: InputMaybe<MatchFilterIn>;
+export type PersistentVolumeIn = {
+  metadata?: InputMaybe<MetadataIn>;
+  spec?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeSpecIn>;
+  status?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeStatusIn>;
+};
+
+export type VolumeAttachmentIn = {
+  metadata?: InputMaybe<MetadataIn>;
+  spec: K8s__Io___Api___Storage___V1__VolumeAttachmentSpecIn;
+  status?: InputMaybe<K8s__Io___Api___Storage___V1__VolumeAttachmentStatusIn>;
 };
 
 export type ConsoleAccountCheckNameAvailabilityQueryVariables = Exact<{
@@ -1098,7 +1519,7 @@ export type ConsoleGetProjectQuery = {
     id: string;
     displayName: string;
     creationTime: any;
-    clusterName: string;
+    clusterName?: string;
     apiVersion: string;
     kind: string;
     recordVersion: number;
@@ -1134,11 +1555,11 @@ export type ConsoleGetProjectQuery = {
     };
     syncStatus: {
       syncScheduledAt?: any;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
       recordVersion: number;
       lastSyncedAt?: any;
       error?: string;
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
     };
   };
 };
@@ -1157,7 +1578,7 @@ export type ConsoleListProjectsQuery = {
         id: string;
         displayName: string;
         creationTime: any;
-        clusterName: string;
+        clusterName?: string;
         apiVersion: string;
         kind: string;
         recordVersion: number;
@@ -1192,14 +1613,6 @@ export type ConsoleListProjectsQuery = {
             namespace: string;
           }>;
           message?: { RawMessage?: any };
-        };
-        syncStatus: {
-          syncScheduledAt?: any;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          recordVersion: number;
-          lastSyncedAt?: any;
-          error?: string;
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
         };
       };
     }>;
@@ -1263,9 +1676,7 @@ export type ConsoleListClustersQuery = {
           syncScheduledAt?: any;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
           error?: string;
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
         };
         status?: {
           lastReconcileTime?: any;
@@ -1402,11 +1813,9 @@ export type ConsoleGetClusterQuery = {
       }>;
     };
     syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -1575,14 +1984,6 @@ export type ConsoleGetNodePoolQuery = {
         namespace: string;
       }>;
     };
-    syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-      error?: string;
-      lastSyncedAt?: any;
-      recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-      syncScheduledAt?: any;
-    };
   };
 };
 
@@ -1662,14 +2063,6 @@ export type ConsoleListNodePoolsQuery = {
             namespace: string;
           }>;
         };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          syncScheduledAt?: any;
-        };
       };
     }>;
   };
@@ -1682,94 +2075,17 @@ export type ConsoleDeleteNodePoolMutationVariables = Exact<{
 
 export type ConsoleDeleteNodePoolMutation = { infra_deleteNodePool: boolean };
 
-export type ConsoleGetWorkspaceQueryVariables = Exact<{
-  project: ProjectId;
-  name: Scalars['String']['input'];
-}>;
-
-export type ConsoleGetWorkspaceQuery = {
-  core_getWorkspace?: {
-    displayName: string;
-    clusterName: string;
-    updateTime: any;
-    metadata?: {
-      name: string;
-      namespace?: string;
-      labels?: any;
-      annotations?: any;
-    };
-    spec?: { targetNamespace: string; projectName: string };
-  };
-};
-
-export type ConsoleCreateWorkspaceMutationVariables = Exact<{
-  env: WorkspaceIn;
-}>;
-
-export type ConsoleCreateWorkspaceMutation = {
-  core_createWorkspace?: { id: string };
-};
-
-export type ConsoleUpdateWorkspaceMutationVariables = Exact<{
-  env: WorkspaceIn;
-}>;
-
-export type ConsoleUpdateWorkspaceMutation = {
-  core_updateWorkspace?: { id: string };
-};
-
-export type ConsoleListWorkspacesQueryVariables = Exact<{
-  project: ProjectId;
-  search?: InputMaybe<SearchWorkspaces>;
-  pagination?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type ConsoleListWorkspacesQuery = {
-  core_listWorkspaces?: {
-    totalCount: number;
-    pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
-      endCursor?: string;
-    };
-    edges: Array<{
-      node: {
-        displayName: string;
-        clusterName: string;
-        updateTime: any;
-        creationTime: any;
-        metadata?: {
-          name: string;
-          namespace?: string;
-          labels?: any;
-          annotations?: any;
-        };
-        spec?: { targetNamespace: string; projectName: string };
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-      };
-    }>;
-  };
-};
-
 export type ConsoleGetEnvironmentQueryVariables = Exact<{
-  project: ProjectId;
+  projectName: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
 export type ConsoleGetEnvironmentQuery = {
   core_getEnvironment?: {
-    accountName: string;
-    apiVersion: string;
-    clusterName: string;
     creationTime: any;
     displayName: string;
-    id: string;
-    kind: string;
     markedForDeletion?: boolean;
     projectName: string;
-    recordVersion: number;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -1782,14 +2098,11 @@ export type ConsoleGetEnvironmentQuery = {
       name: string;
       namespace?: string;
     };
-    spec?: {
-      isEnvironment?: boolean;
-      projectName: string;
-      targetNamespace: string;
-    };
+    spec?: { projectName: string; targetNamespace?: string };
     status?: {
       checks?: any;
       isReady: boolean;
+      lastReadyGeneration?: number;
       lastReconcileTime?: any;
       message?: { RawMessage?: any };
       resources?: Array<{
@@ -1799,19 +2112,12 @@ export type ConsoleGetEnvironmentQuery = {
         namespace: string;
       }>;
     };
-    syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-      error?: string;
-      lastSyncedAt?: any;
-      recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-      syncScheduledAt?: any;
-    };
   };
 };
 
 export type ConsoleCreateEnvironmentMutationVariables = Exact<{
-  env: WorkspaceIn;
+  projectName: Scalars['String']['input'];
+  env: EnvironmentIn;
 }>;
 
 export type ConsoleCreateEnvironmentMutation = {
@@ -1819,7 +2125,8 @@ export type ConsoleCreateEnvironmentMutation = {
 };
 
 export type ConsoleUpdateEnvironmentMutationVariables = Exact<{
-  env: WorkspaceIn;
+  projectName: Scalars['String']['input'];
+  env: EnvironmentIn;
 }>;
 
 export type ConsoleUpdateEnvironmentMutation = {
@@ -1827,9 +2134,9 @@ export type ConsoleUpdateEnvironmentMutation = {
 };
 
 export type ConsoleListEnvironmentsQueryVariables = Exact<{
-  project: ProjectId;
-  search?: InputMaybe<SearchWorkspaces>;
-  pagination?: InputMaybe<CursorPaginationIn>;
+  projectName: Scalars['String']['input'];
+  search?: InputMaybe<SearchEnvironments>;
+  pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListEnvironmentsQuery = {
@@ -1838,16 +2145,10 @@ export type ConsoleListEnvironmentsQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        accountName: string;
-        apiVersion: string;
-        clusterName: string;
         creationTime: any;
         displayName: string;
-        id: string;
-        kind: string;
         markedForDeletion?: boolean;
         projectName: string;
-        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -1860,14 +2161,11 @@ export type ConsoleListEnvironmentsQuery = {
           name: string;
           namespace?: string;
         };
-        spec?: {
-          isEnvironment?: boolean;
-          projectName: string;
-          targetNamespace: string;
-        };
+        spec?: { projectName: string; targetNamespace?: string };
         status?: {
           checks?: any;
           isReady: boolean;
+          lastReadyGeneration?: number;
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
@@ -1876,14 +2174,6 @@ export type ConsoleListEnvironmentsQuery = {
             name: string;
             namespace: string;
           }>;
-        };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          syncScheduledAt?: any;
         };
       };
     }>;
@@ -1897,61 +2187,62 @@ export type ConsoleListEnvironmentsQuery = {
 };
 
 export type ConsoleCreateAppMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   app: AppIn;
 }>;
 
 export type ConsoleCreateAppMutation = { core_createApp?: { id: string } };
 
 export type ConsoleUpdateAppMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   app: AppIn;
 }>;
 
 export type ConsoleUpdateAppMutation = { core_updateApp?: { id: string } };
 
+export type ConsoleDeleteAppMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  appName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteAppMutation = { core_deleteApp: boolean };
+
 export type ConsoleGetAppQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
 export type ConsoleGetAppQuery = {
   core_getApp?: {
     creationTime: any;
-    accountName: string;
     displayName: string;
+    enabled?: boolean;
+    environmentName: string;
     markedForDeletion?: boolean;
+    projectName: string;
     updateTime: any;
-    createdBy: { userName: string; userId: string; userEmail: string };
-    lastUpdatedBy: { userName: string; userId: string; userEmail: string };
-    metadata?: { name: string; namespace?: string; annotations?: any };
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
     spec: {
-      serviceAccount?: string;
-      replicas?: number;
-      region?: string;
-      nodeSelector?: any;
-      freeze?: boolean;
       displayName?: string;
-      tolerations?: Array<{
-        value?: string;
-        tolerationSeconds?: number;
-        operator?: K8s__Io___Api___Core___V1__TolerationOperator;
-        key?: string;
-        effect?: K8s__Io___Api___Core___V1__TaintEffect;
-      }>;
-      services?: Array<{
-        type?: string;
-        targetPort?: number;
-        port: number;
-        name?: string;
-      }>;
-      intercept?: { enabled: boolean; toDevice: string };
-      hpa?: {
-        maxReplicas?: number;
-        enabled?: boolean;
-        minReplicas?: number;
-        thresholdCpu?: number;
-        thresholdMemory?: number;
-      };
+      freeze?: boolean;
+      nodeSelector?: any;
+      region?: string;
+      replicas?: number;
+      serviceAccount?: string;
       containers: Array<{
         args?: Array<string>;
         command?: Array<string>;
@@ -1959,186 +2250,99 @@ export type ConsoleGetAppQuery = {
         imagePullPolicy?: string;
         name: string;
         env?: Array<{
-          refName?: string;
-          refKey?: string;
-          optional?: boolean;
           key: string;
+          optional?: boolean;
+          refKey?: string;
+          refName?: string;
           type?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
           value?: string;
         }>;
         envFrom?: Array<{
-          type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
           refName: string;
+          type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
         }>;
         livenessProbe?: {
-          type: string;
-          interval?: number;
-          initialDelay?: number;
           failureThreshold?: number;
-          tcp?: { port: number };
-          shell?: { command?: Array<string> };
+          initialDelay?: number;
+          interval?: number;
+          type: string;
           httpGet?: { httpHeaders?: any; path: string; port: number };
+          shell?: { command?: Array<string> };
+          tcp?: { port: number };
         };
         readinessProbe?: {
-          type: string;
-          interval?: number;
-          initialDelay?: number;
           failureThreshold?: number;
-          tcp?: { port: number };
-          shell?: { command?: Array<string> };
-          httpGet?: { httpHeaders?: any; path: string; port: number };
+          initialDelay?: number;
+          interval?: number;
+          type: string;
         };
-        resourceCpu?: { min?: string; max?: string };
-        resourceMemory?: { min?: string; max?: string };
+        resourceCpu?: { max?: string; min?: string };
+        resourceMemory?: { max?: string; min?: string };
         volumes?: Array<{
-          type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
-          refName: string;
           mountPath: string;
+          refName: string;
+          type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
           items?: Array<{ fileName?: string; key: string }>;
         }>;
       }>;
+      hpa?: {
+        enabled?: boolean;
+        maxReplicas?: number;
+        minReplicas?: number;
+        thresholdCpu?: number;
+        thresholdMemory?: number;
+      };
+      intercept?: { enabled: boolean; toDevice: string };
+      services?: Array<{
+        name?: string;
+        port: number;
+        targetPort?: number;
+        type?: string;
+      }>;
+      tolerations?: Array<{
+        effect?: K8s__Io___Api___Core___V1__TaintEffect;
+        key?: string;
+        operator?: K8s__Io___Api___Core___V1__TolerationOperator;
+        tolerationSeconds?: number;
+        value?: string;
+      }>;
     };
     status?: {
-      lastReconcileTime?: any;
-      isReady: boolean;
       checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
       message?: { RawMessage?: any };
-    };
-    syncStatus: {
-      syncScheduledAt?: any;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-      recordVersion: number;
-      lastSyncedAt?: any;
-      error?: string;
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
     };
   };
 };
 
 export type ConsoleListAppsQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   search?: InputMaybe<SearchApps>;
-  pagination?: InputMaybe<CursorPaginationIn>;
+  pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListAppsQuery = {
   core_listApps?: {
     totalCount: number;
-    pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
-      endCursor?: string;
-    };
     edges: Array<{
       cursor: string;
       node: {
         creationTime: any;
-        displayName: string;
-        markedForDeletion?: boolean;
-        updateTime: any;
-        createdBy: { userName: string; userId: string; userEmail: string };
-        lastUpdatedBy: { userName: string; userId: string; userEmail: string };
-        metadata?: { name: string };
-        spec: { freeze?: boolean; displayName?: string };
-        status?: {
-          lastReconcileTime?: any;
-          isReady: boolean;
-          checks?: any;
-          message?: { RawMessage?: any };
-        };
-        syncStatus: {
-          syncScheduledAt?: any;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          recordVersion: number;
-          lastSyncedAt?: any;
-          error?: string;
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-        };
-      };
-    }>;
-  };
-};
-
-export type ConsoleListRoutersQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-  search?: InputMaybe<SearchRouters>;
-  pq?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type ConsoleListRoutersQuery = {
-  core_listRouters?: {
-    edges: Array<{
-      cursor: string;
-      node: {
-        metadata?: {
-          name: string;
-          namespace?: string;
-          annotations?: any;
-          labels?: any;
-        };
-        spec: {
-          routes?: Array<{ app?: string; lambda?: string; path: string }>;
-        };
-      };
-    }>;
-  };
-};
-
-export type ConsoleUpdateConfigMutationVariables = Exact<{
-  config: ConfigIn;
-}>;
-
-export type ConsoleUpdateConfigMutation = {
-  core_updateConfig?: { id: string };
-};
-
-export type ConsoleGetConfigQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-  name: Scalars['String']['input'];
-}>;
-
-export type ConsoleGetConfigQuery = {
-  core_getConfig?: {
-    displayName: string;
-    updateTime: any;
-    data?: any;
-    metadata?: {
-      namespace?: string;
-      name: string;
-      annotations?: any;
-      labels?: any;
-    };
-  };
-};
-
-export type ConsoleListConfigsQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-  pq?: InputMaybe<CursorPaginationIn>;
-  search?: InputMaybe<SearchConfigs>;
-}>;
-
-export type ConsoleListConfigsQuery = {
-  core_listConfigs?: {
-    totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        accountName: string;
-        apiVersion: string;
-        clusterName: string;
-        creationTime: any;
-        data?: any;
         displayName: string;
         enabled?: boolean;
-        id: string;
+        environmentName: string;
         kind: string;
         markedForDeletion?: boolean;
-        recordVersion: number;
+        projectName: string;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -2151,9 +2355,11 @@ export type ConsoleListConfigsQuery = {
           name: string;
           namespace?: string;
         };
+        spec: { displayName?: string; freeze?: boolean };
         status?: {
           checks?: any;
           isReady: boolean;
+          lastReadyGeneration?: number;
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
@@ -2163,13 +2369,148 @@ export type ConsoleListConfigsQuery = {
             namespace: string;
           }>;
         };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          syncScheduledAt?: any;
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleListRoutersQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchRouters>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListRoutersQuery = {
+  core_listRouters?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        enabled?: boolean;
+        environmentName: string;
+        markedForDeletion?: boolean;
+        projectName: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec: {
+          routes?: Array<{
+            app?: string;
+            lambda?: string;
+            path: string;
+            port: number;
+            rewrite?: boolean;
+          }>;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleUpdateConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  config: ConfigIn;
+}>;
+
+export type ConsoleUpdateConfigMutation = {
+  core_updateConfig?: { id: string };
+};
+
+export type ConsoleGetConfigQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetConfigQuery = {
+  core_getConfig?: {
+    binaryData?: any;
+    data?: any;
+    displayName: string;
+    environmentName: string;
+    immutable?: boolean;
+    projectName: string;
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+  };
+};
+
+export type ConsoleListConfigsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchConfigs>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListConfigsQuery = {
+  core_listConfigs?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        data?: any;
+        environmentName: string;
+        immutable?: boolean;
+        markedForDeletion?: boolean;
+        projectName: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
         };
       };
     }>;
@@ -2183,6 +2524,8 @@ export type ConsoleListConfigsQuery = {
 };
 
 export type ConsoleCreateConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   config: ConfigIn;
 }>;
 
@@ -2191,8 +2534,8 @@ export type ConsoleCreateConfigMutation = {
 };
 
 export type ConsoleListSecretsQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   search?: InputMaybe<SearchSecrets>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
@@ -2203,18 +2546,13 @@ export type ConsoleListSecretsQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        accountName: string;
-        apiVersion: string;
-        clusterName: string;
         creationTime: any;
-        data?: any;
         displayName: string;
-        enabled?: boolean;
-        id: string;
-        kind: string;
-        markedForDeletion?: boolean;
-        recordVersion: number;
         stringData?: any;
+        environmentName: string;
+        immutable?: boolean;
+        markedForDeletion?: boolean;
+        projectName: string;
         type?: K8s__Io___Api___Core___V1__SecretType;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
@@ -2228,26 +2566,6 @@ export type ConsoleListSecretsQuery = {
           name: string;
           namespace?: string;
         };
-        status?: {
-          checks?: any;
-          isReady: boolean;
-          lastReconcileTime?: any;
-          message?: { RawMessage?: any };
-          resources?: Array<{
-            apiVersion: string;
-            kind: string;
-            name: string;
-            namespace: string;
-          }>;
-        };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          syncScheduledAt?: any;
-        };
       };
     }>;
     pageInfo: {
@@ -2260,6 +2578,8 @@ export type ConsoleListSecretsQuery = {
 };
 
 export type ConsoleCreateSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   secret: SecretIn;
 }>;
 
@@ -2268,26 +2588,36 @@ export type ConsoleCreateSecretMutation = {
 };
 
 export type ConsoleGetSecretQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   name: Scalars['String']['input'];
 }>;
 
 export type ConsoleGetSecretQuery = {
   core_getSecret?: {
-    stringData?: any;
-    updateTime: any;
+    data?: any;
     displayName: string;
+    environmentName: string;
+    immutable?: boolean;
+    markedForDeletion?: boolean;
+    projectName: string;
+    stringData?: any;
+    type?: K8s__Io___Api___Core___V1__SecretType;
     metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
       name: string;
       namespace?: string;
-      annotations?: any;
-      labels?: any;
     };
   };
 };
 
 export type ConsoleUpdateSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
   secret: SecretIn;
 }>;
 
@@ -2296,8 +2626,9 @@ export type ConsoleUpdateSecretMutation = {
 };
 
 export type ConsoleDeleteSecretMutationVariables = Exact<{
-  namespace: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  secretName: Scalars['String']['input'];
 }>;
 
 export type ConsoleDeleteSecretMutation = { core_deleteSecret: boolean };
@@ -2348,11 +2679,7 @@ export type ConsoleListVpnDevicesQuery = {
           name: string;
           namespace?: string;
         };
-        spec?: {
-          accountName: string;
-          clusterName: string;
-          ports?: Array<{ port?: number; targetPort?: number }>;
-        };
+        spec?: { ports?: Array<{ port?: number; targetPort?: number }> };
         status?: {
           checks?: any;
           isReady: boolean;
@@ -2367,11 +2694,11 @@ export type ConsoleListVpnDevicesQuery = {
           }>;
         };
         syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
           syncScheduledAt?: any;
         };
       };
@@ -2408,11 +2735,7 @@ export type ConsoleGetVpnDeviceQuery = {
       name: string;
       namespace?: string;
     };
-    spec?: {
-      accountName: string;
-      clusterName: string;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
+    spec?: { ports?: Array<{ port?: number; targetPort?: number }> };
     status?: {
       checks?: any;
       isReady: boolean;
@@ -2427,11 +2750,11 @@ export type ConsoleGetVpnDeviceQuery = {
       }>;
     };
     syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
       syncScheduledAt?: any;
     };
     wireguardConfig?: { value: string; encoding: string };
@@ -2544,330 +2867,6 @@ export type ConsoleDeleteAccountMembershipMutationVariables = Exact<{
 
 export type ConsoleDeleteAccountMembershipMutation = {
   accounts_removeAccountMembership: boolean;
-};
-
-export type ConsoleGetTemplateQueryVariables = Exact<{
-  category: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-}>;
-
-export type ConsoleGetTemplateQuery = {
-  core_getManagedServiceTemplate?: {
-    active: boolean;
-    apiVersion?: string;
-    description: string;
-    displayName: string;
-    kind?: string;
-    logoUrl: string;
-    name: string;
-    fields: Array<{
-      defaultValue?: any;
-      inputType: string;
-      label: string;
-      max?: number;
-      min?: number;
-      name: string;
-      required?: boolean;
-      unit?: string;
-    }>;
-    outputs: Array<{ description: string; label: string; name: string }>;
-    resources: Array<{
-      apiVersion?: string;
-      description: string;
-      displayName: string;
-      kind?: string;
-      name: string;
-      fields: Array<{
-        defaultValue?: any;
-        inputType: string;
-        label: string;
-        max?: number;
-        min?: number;
-        name: string;
-        required?: boolean;
-        unit?: string;
-      }>;
-      outputs: Array<{ description: string; label: string; name: string }>;
-    }>;
-  };
-};
-
-export type ConsoleListTemplatesQueryVariables = Exact<{
-  [key: string]: never;
-}>;
-
-export type ConsoleListTemplatesQuery = {
-  core_listManagedServiceTemplates?: Array<{
-    category: string;
-    displayName: string;
-    items: Array<{
-      description: string;
-      active: boolean;
-      displayName: string;
-      logoUrl: string;
-      name: string;
-      kind?: string;
-      apiVersion?: string;
-      fields: Array<{
-        defaultValue?: any;
-        inputType: string;
-        label: string;
-        max?: number;
-        min?: number;
-        name: string;
-        required?: boolean;
-        unit?: string;
-      }>;
-      outputs: Array<{ name: string; label: string; description: string }>;
-      resources: Array<{
-        description: string;
-        displayName: string;
-        name: string;
-        kind?: string;
-        apiVersion?: string;
-        fields: Array<{
-          defaultValue?: any;
-          inputType: string;
-          label: string;
-          max?: number;
-          min?: number;
-          name: string;
-          required?: boolean;
-          unit?: string;
-        }>;
-        outputs: Array<{ description: string; label: string; name: string }>;
-      }>;
-    }>;
-  }>;
-};
-
-export type ConsoleGetManagedServiceQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-  name: Scalars['String']['input'];
-}>;
-
-export type ConsoleGetManagedServiceQuery = {
-  core_getManagedService?: {
-    accountName: string;
-    apiVersion: string;
-    clusterName: string;
-    creationTime: any;
-    displayName: string;
-    enabled?: boolean;
-    id: string;
-    kind: string;
-    markedForDeletion?: boolean;
-    recordVersion: number;
-    updateTime: any;
-    createdBy: { userEmail: string; userId: string; userName: string };
-    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata?: {
-      annotations?: any;
-      creationTimestamp: any;
-      deletionTimestamp?: any;
-      generation: number;
-      labels?: any;
-      name: string;
-      namespace?: string;
-    };
-    spec: { serviceTemplate: { apiVersion: string; kind: string; spec: any } };
-    status?: {
-      checks?: any;
-      isReady: boolean;
-      lastReconcileTime?: any;
-      message?: { RawMessage?: any };
-      resources?: Array<{
-        apiVersion: string;
-        kind: string;
-        name: string;
-        namespace: string;
-      }>;
-    };
-    syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-      error?: string;
-      lastSyncedAt?: any;
-      recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-      syncScheduledAt?: any;
-    };
-  };
-};
-
-export type ConsoleListManagedServicesQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-}>;
-
-export type ConsoleListManagedServicesQuery = {
-  core_listManagedServices?: {
-    totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        accountName: string;
-        apiVersion: string;
-        clusterName: string;
-        creationTime: any;
-        displayName: string;
-        enabled?: boolean;
-        id: string;
-        kind: string;
-        markedForDeletion?: boolean;
-        recordVersion: number;
-        updateTime: any;
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: {
-          annotations?: any;
-          creationTimestamp: any;
-          deletionTimestamp?: any;
-          generation: number;
-          labels?: any;
-          name: string;
-          namespace?: string;
-        };
-        spec: {
-          serviceTemplate: { apiVersion: string; kind: string; spec: any };
-        };
-        status?: {
-          checks?: any;
-          isReady: boolean;
-          lastReconcileTime?: any;
-          message?: { RawMessage?: any };
-          resources?: Array<{
-            apiVersion: string;
-            kind: string;
-            name: string;
-            namespace: string;
-          }>;
-        };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-          syncScheduledAt?: any;
-        };
-      };
-    }>;
-    pageInfo: {
-      endCursor?: string;
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
-      startCursor?: string;
-    };
-  };
-};
-
-export type ConsoleCreateManagedServiceMutationVariables = Exact<{
-  msvc: ManagedServiceIn;
-}>;
-
-export type ConsoleCreateManagedServiceMutation = {
-  core_createManagedService?: { id: string };
-};
-
-export type ConsoleGetManagedResourceQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-  name: Scalars['String']['input'];
-}>;
-
-export type ConsoleGetManagedResourceQuery = {
-  core_getManagedResource?: {
-    accountName: string;
-    apiVersion: string;
-    clusterName: string;
-    creationTime: any;
-    displayName: string;
-    enabled?: boolean;
-    id: string;
-    kind: string;
-    markedForDeletion?: boolean;
-    recordVersion: number;
-    updateTime: any;
-    createdBy: { userEmail: string; userId: string; userName: string };
-    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata?: {
-      annotations?: any;
-      creationTimestamp: any;
-      deletionTimestamp?: any;
-      generation: number;
-      labels?: any;
-      name: string;
-      namespace?: string;
-    };
-    spec: {
-      resourceTemplate: {
-        apiVersion: string;
-        kind: string;
-        spec: any;
-        msvcRef: { name: string; kind: string; apiVersion: string };
-      };
-    };
-    status?: {
-      checks?: any;
-      isReady: boolean;
-      lastReconcileTime?: any;
-      message?: { RawMessage?: any };
-      resources?: Array<{
-        apiVersion: string;
-        kind: string;
-        name: string;
-        namespace: string;
-      }>;
-    };
-    syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusAction;
-      error?: string;
-      lastSyncedAt?: any;
-      recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncStatusState;
-      syncScheduledAt?: any;
-    };
-  };
-};
-
-export type ConsoleListManagedResourceQueryVariables = Exact<{
-  project: ProjectId;
-  scope: WorkspaceOrEnvId;
-  search?: InputMaybe<SearchManagedResources>;
-  pq?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type ConsoleListManagedResourceQuery = {
-  core_listManagedResources?: {
-    totalCount: number;
-    pageInfo: {
-      endCursor?: string;
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
-      startCursor?: string;
-    };
-    edges: Array<{
-      cursor: string;
-      node: {
-        updateTime: any;
-        kind: string;
-        displayName: string;
-        creationTime: any;
-        metadata?: { name: string };
-        lastUpdatedBy: { userEmail: string; userName: string };
-        createdBy: { userEmail: string; userName: string };
-      };
-    }>;
-  };
-};
-
-export type ConsoleCreateManagedResourceMutationVariables = Exact<{
-  mres: ManagedResourceIn;
-}>;
-
-export type ConsoleCreateManagedResourceMutation = {
-  core_createManagedResource?: { id: string };
 };
 
 export type ConsoleGetCredTokenQueryVariables = Exact<{
@@ -3565,6 +3564,617 @@ export type ConsoleGetBuildRunQuery = {
         namespace: string;
       }>;
     };
+  };
+};
+
+export type ConsoleGetClusterMSvQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetClusterMSvQuery = {
+  infra_getClusterManagedService?: {
+    displayName: string;
+    creationTime: any;
+    clusterName: string;
+    markedForDeletion?: boolean;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec?: {
+      namespace: string;
+      msvcSpec: {
+        serviceTemplate: { apiVersion: string; kind: string; spec: any };
+      };
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+  };
+};
+
+export type ConsoleCreateClusterMSvMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  service: ClusterManagedServiceIn;
+}>;
+
+export type ConsoleCreateClusterMSvMutation = {
+  infra_createClusterManagedService?: { id: string };
+};
+
+export type ConsoleUpdateClusterMSvMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  service: ClusterManagedServiceIn;
+}>;
+
+export type ConsoleUpdateClusterMSvMutation = {
+  infra_updateClusterManagedService?: { id: string };
+};
+
+export type ConsoleListClusterMSvsQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+}>;
+
+export type ConsoleListClusterMSvsQuery = {
+  infra_listClusterManagedServices?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        markedForDeletion?: boolean;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: { name: string };
+        spec?: {
+          msvcSpec: {
+            serviceTemplate: { apiVersion: string; kind: string; spec: any };
+          };
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleDeleteClusterMSvMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  serviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteClusterMSvMutation = {
+  infra_deleteClusterManagedService: boolean;
+};
+
+export type ConsoleGetMSvTemplateQueryVariables = Exact<{
+  category: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetMSvTemplateQuery = {
+  infra_getManagedServiceTemplate?: {
+    active: boolean;
+    apiVersion?: string;
+    description: string;
+    displayName: string;
+    kind?: string;
+    logoUrl: string;
+    name: string;
+    fields: Array<{
+      defaultValue?: any;
+      inputType: string;
+      label: string;
+      max?: number;
+      min?: number;
+      name: string;
+      required?: boolean;
+      unit?: string;
+      displayUnit?: string;
+      multiplier?: number;
+    }>;
+    outputs: Array<{ description: string; label: string; name: string }>;
+    resources: Array<{
+      apiVersion?: string;
+      description: string;
+      displayName: string;
+      kind?: string;
+      name: string;
+    }>;
+  };
+};
+
+export type ConsoleListMSvTemplatesQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type ConsoleListMSvTemplatesQuery = {
+  infra_listManagedServiceTemplates?: Array<{
+    category: string;
+    displayName: string;
+    items: Array<{
+      active: boolean;
+      apiVersion?: string;
+      description: string;
+      displayName: string;
+      kind?: string;
+      logoUrl: string;
+      name: string;
+      fields: Array<{
+        defaultValue?: any;
+        inputType: string;
+        label: string;
+        max?: number;
+        min?: number;
+        name: string;
+        required?: boolean;
+        unit?: string;
+        displayUnit?: string;
+        multiplier?: number;
+      }>;
+      outputs: Array<{ description: string; label: string; name: string }>;
+      resources: Array<{
+        apiVersion?: string;
+        description: string;
+        displayName: string;
+        kind?: string;
+        name: string;
+      }>;
+    }>;
+  }>;
+};
+
+export type ConsoleGetHelmChartQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetHelmChartQuery = {
+  infra_getHelmRelease?: {
+    creationTime: any;
+    displayName: string;
+    markedForDeletion?: boolean;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: { name: string; namespace?: string };
+    spec?: {
+      chartName: string;
+      chartRepoURL: string;
+      chartVersion: string;
+      values: any;
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      releaseNotes: string;
+      releaseStatus: string;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+  };
+};
+
+export type ConsoleListHelmChartQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+}>;
+
+export type ConsoleListHelmChartQuery = {
+  infra_listHelmReleases?: {
+    totalCount: number;
+    edges: Array<{
+      node: {
+        creationTime: any;
+        displayName: string;
+        markedForDeletion?: boolean;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: { name: string; namespace?: string };
+        spec?: {
+          chartName: string;
+          chartRepoURL: string;
+          chartVersion: string;
+          values: any;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          releaseNotes: string;
+          releaseStatus: string;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+      };
+    }>;
+  };
+};
+
+export type ConsoleCreateHelmChartMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  release: HelmReleaseIn;
+}>;
+
+export type ConsoleCreateHelmChartMutation = {
+  infra_createHelmRelease?: { id: string };
+};
+
+export type ConsoleUpdateHelmChartMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  release: HelmReleaseIn;
+}>;
+
+export type ConsoleUpdateHelmChartMutation = {
+  infra_updateHelmRelease?: { id: string };
+};
+
+export type ConsoleDeleteHelmChartMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  releaseName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteHelmChartMutation = {
+  infra_deleteHelmRelease: boolean;
+};
+
+export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  ports: Array<PortIn> | PortIn;
+}>;
+
+export type AuthCli_UpdateDevicePortMutation = {
+  infra_updateVPNDevicePorts: boolean;
+};
+
+export type AuthCli_GetSecretQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetSecretQuery = {
+  core_getSecret?: {
+    displayName: string;
+    stringData?: any;
+    metadata?: { name: string; namespace?: string };
+  };
+};
+
+export type AuthCli_GetConfigQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetConfigQuery = {
+  core_getConfig?: {
+    data?: any;
+    displayName: string;
+    metadata?: { name: string; namespace?: string };
+  };
+};
+
+export type AuthCli_ListAppsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_ListAppsQuery = {
+  core_listApps?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        enabled?: boolean;
+        environmentName: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        projectName: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec: {
+          displayName?: string;
+          freeze?: boolean;
+          nodeSelector?: any;
+          region?: string;
+          replicas?: number;
+          serviceAccount?: string;
+          containers: Array<{
+            args?: Array<string>;
+            command?: Array<string>;
+            image: string;
+            imagePullPolicy?: string;
+            name: string;
+            env?: Array<{
+              key: string;
+              optional?: boolean;
+              refKey?: string;
+              refName?: string;
+              type?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
+              value?: string;
+            }>;
+            envFrom?: Array<{
+              refName: string;
+              type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
+            }>;
+            livenessProbe?: {
+              failureThreshold?: number;
+              initialDelay?: number;
+              interval?: number;
+              type: string;
+              httpGet?: { httpHeaders?: any; path: string; port: number };
+              shell?: { command?: Array<string> };
+              tcp?: { port: number };
+            };
+            readinessProbe?: {
+              failureThreshold?: number;
+              initialDelay?: number;
+              interval?: number;
+              type: string;
+            };
+            resourceCpu?: { max?: string; min?: string };
+            resourceMemory?: { max?: string; min?: string };
+            volumes?: Array<{
+              mountPath: string;
+              refName: string;
+              type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
+              items?: Array<{ fileName?: string; key: string }>;
+            }>;
+          }>;
+          hpa?: {
+            enabled?: boolean;
+            maxReplicas?: number;
+            minReplicas?: number;
+            thresholdCpu?: number;
+            thresholdMemory?: number;
+          };
+          intercept?: { enabled: boolean; toDevice: string };
+          services?: Array<{
+            name?: string;
+            port: number;
+            targetPort?: number;
+            type?: string;
+          }>;
+          tolerations?: Array<{
+            effect?: K8s__Io___Api___Core___V1__TaintEffect;
+            key?: string;
+            operator?: K8s__Io___Api___Core___V1__TolerationOperator;
+            tolerationSeconds?: number;
+            value?: string;
+          }>;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type AuthCli_ListConfigsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_ListConfigsQuery = {
+  core_listConfigs?: {
+    totalCount: number;
+    edges: Array<{
+      node: {
+        data?: any;
+        displayName: string;
+        metadata?: { name: string; namespace?: string };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_ListSecretsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchSecrets>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListSecretsQuery = {
+  core_listSecrets?: {
+    edges: Array<{
+      cursor: string;
+      node: {
+        displayName: string;
+        markedForDeletion?: boolean;
+        stringData?: any;
+        metadata?: { name: string; namespace?: string };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_UpdateDeviceMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  vpnDevice: VpnDeviceIn;
+}>;
+
+export type AuthCli_UpdateDeviceMutation = {
+  infra_updateVPNDevice?: {
+    metadata?: { name: string };
+    spec?: {
+      deviceNamespace?: string;
+      cnameRecords?: Array<{ target?: string; host?: string }>;
+      ports?: Array<{ targetPort?: number; port?: number }>;
+    };
+    status?: { isReady: boolean; message?: { RawMessage?: any } };
+  };
+};
+
+export type AuthCli_ListDevicesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+  clusterName?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthCli_ListDevicesQuery = {
+  infra_listVPNDevices?: {
+    edges: Array<{
+      node: {
+        displayName: string;
+        markedForDeletion?: boolean;
+        metadata?: { name: string; namespace?: string };
+        spec?: {
+          deviceNamespace?: string;
+          cnameRecords?: Array<{ host?: string; target?: string }>;
+          ports?: Array<{ port?: number; targetPort?: number }>;
+        };
+        status?: { isReady: boolean; message?: { RawMessage?: any } };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_GetDeviceQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetDeviceQuery = {
+  infra_getVPNDevice?: {
+    displayName: string;
+    markedForDeletion?: boolean;
+    metadata?: { name: string; namespace?: string };
+    spec?: {
+      deviceNamespace?: string;
+      nodeSelector?: any;
+      cnameRecords?: Array<{ host?: string; target?: string }>;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+    status?: { isReady: boolean; message?: { RawMessage?: any } };
+    wireguardConfig?: { encoding: string; value: string };
+  };
+};
+
+export type AuthCli_ListEnvironmentsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  search?: InputMaybe<SearchEnvironments>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListEnvironmentsQuery = {
+  core_listEnvironments?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        displayName: string;
+        markedForDeletion?: boolean;
+        metadata?: { name: string; namespace?: string };
+        spec?: { projectName: string; targetNamespace?: string };
+        status?: { isReady: boolean; message?: { RawMessage?: any } };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type AuthCli_ListProjectsQueryVariables = Exact<{
+  clusterName?: InputMaybe<Scalars['String']['input']>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListProjectsQuery = {
+  core_listProjects?: {
+    edges: Array<{
+      node: {
+        displayName: string;
+        markedForDeletion?: boolean;
+        metadata?: { name: string; namespace?: string };
+        status?: { isReady: boolean; message?: { RawMessage?: any } };
+      };
+    }>;
   };
 };
 
