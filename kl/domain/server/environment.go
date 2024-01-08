@@ -15,7 +15,7 @@ type Env struct {
 	Metadata    Metadata `json:"metadata"`
 	Status      Status   `json:"status"`
 	Spec        struct {
-		targetNamespace string `json:"targetNamespace"`
+		TargetNamespace string `json:"targetNamespace"`
 	} `json:"spec"`
 }
 
@@ -107,7 +107,7 @@ func SelectEnv(envName string) (*Env, error) {
 			if a.Metadata.Name == envName {
 				if err := persistSelectedEnv(client.Env{
 					Name:     a.Metadata.Name,
-					TargetNs: a.Spec.targetNamespace,
+					TargetNs: a.Spec.TargetNamespace,
 				}); err != nil {
 					return nil, err
 				}
@@ -131,7 +131,7 @@ func SelectEnv(envName string) (*Env, error) {
 
 	if err := persistSelectedEnv(client.Env{
 		Name:     env.Metadata.Name,
-		TargetNs: env.Spec.targetNamespace,
+		TargetNs: env.Spec.TargetNamespace,
 	}); err != nil {
 		return nil, err
 	}
@@ -166,6 +166,6 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 
 	return &client.Env{
 		Name:     mEnv.Metadata.Name,
-		TargetNs: mEnv.Spec.targetNamespace,
+		TargetNs: mEnv.Spec.TargetNamespace,
 	}, nil
 }

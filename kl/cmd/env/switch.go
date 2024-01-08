@@ -43,8 +43,7 @@ Examples:
 }
 
 func init() {
-	switchCmd.Aliases = append(switchCmd.Aliases, "envs")
-	switchCmd.Aliases = append(switchCmd.Aliases, "environment")
+	switchCmd.Aliases = append(switchCmd.Aliases, "sw")
 
 	switchCmd.Flags().StringP("name", "n", "", "environment name")
 }

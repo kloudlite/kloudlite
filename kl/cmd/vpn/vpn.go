@@ -1,6 +1,7 @@
 package vpn
 
 import (
+	"github.com/kloudlite/kl/cmd/vpn/intercept"
 	"github.com/spf13/cobra"
 )
 
@@ -43,4 +44,5 @@ func init() {
 	Cmd.AddCommand(stopCmd)
 	Cmd.AddCommand(statusCmd)
 	Cmd.AddCommand(activateCmd)
+	Cmd.AddCommand(intercept.Cmd)
 }
