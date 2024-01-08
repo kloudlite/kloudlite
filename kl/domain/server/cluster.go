@@ -26,7 +26,6 @@ type Cluster struct {
 }
 
 func ListClusters() ([]Cluster, error) {
-
 	s, _ := client.CurrentAccountName()
 	if s == "" {
 		if _, err := SelectAccount(s); err != nil {

@@ -1,4 +1,4 @@
-package wg
+package vpn
 
 import (
 	"errors"
@@ -165,7 +165,7 @@ func resetDNS(verbose bool) error {
 	return nil
 }
 
-func setDeviceIp(deviceIp  net.IPNet, _ string, verbose bool) error {
+func setDeviceIp(deviceIp net.IPNet, _ string, verbose bool) error {
 	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
 }
 

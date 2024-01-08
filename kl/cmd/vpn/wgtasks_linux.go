@@ -1,4 +1,4 @@
-package wg
+package vpn
 
 import (
 	"errors"

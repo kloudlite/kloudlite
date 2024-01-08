@@ -1,4 +1,4 @@
-package switch_cmd
+package env
 
 import (
 	"fmt"
@@ -10,24 +10,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var envCmd = &cobra.Command{
-	Use:   "env",
+var switchCmd = &cobra.Command{
+	Use:   "switch",
 	Short: "switch to a different environment",
 	Long: `Switch Environment
 Examples:
   # switch to a different environment
-  kl switch envs
+  kl env switch
 
   # switch to a different environment with environment name
-  kl switch envs <environment_name>
+  kl env switch --name <env_name>
 
 	`,
 
-	Run: func(_ *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		envName := ""
 
-		if len(args) >= 1 {
-			envName = args[0]
+		if cmd.Flags().Changed("name") {
+			envName, _ = cmd.Flags().GetString("name")
 		}
 
 		env, err := server.SelectEnv(envName)
@@ -43,6 +43,8 @@ Examples:
 }
 
 func init() {
-	envCmd.Aliases = append(envCmd.Aliases, "envs")
-	envCmd.Aliases = append(envCmd.Aliases, "environment")
+	switchCmd.Aliases = append(switchCmd.Aliases, "envs")
+	switchCmd.Aliases = append(switchCmd.Aliases, "environment")
+
+	switchCmd.Flags().StringP("name", "n", "", "environment name")
 }

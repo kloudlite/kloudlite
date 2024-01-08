@@ -27,8 +27,8 @@ Examples:
 	# switch to vpn
 	kl vpn switch <vpn_name>
 
-	# delete vpn
-	kl vpn delete <vpn_name>
+	# remove vpn
+	kl vpn remove <vpn_name>
 	`,
 }
 
@@ -41,5 +41,6 @@ func init() {
 	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(startCmd)
 	Cmd.AddCommand(stopCmd)
-	Cmd.AddCommand(switchCmd)
+	Cmd.AddCommand(statusCmd)
+	Cmd.AddCommand(activateCmd)
 }

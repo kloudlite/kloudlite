@@ -9,19 +9,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var switchCmd = &cobra.Command{
-	Use:   "switch",
-	Short: "switch to context",
-	Long: `This command let switch between contexts.
+var removeCmd = &cobra.Command{
+	Use:   "remove",
+	Short: "remove existing context from contexts list",
+	Long: `This command let you remove existing context from contexts list.
 Example:
-  # switch to existing context by selecting one from list 
-  kl context switch
+  # remove context
+  kl context [remove|rm] <context_name>
 
-	# switch to context with context name
-	kl context switch --name <context_name>
+	# interactive delete context
+  kl context [remove|rm]
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		name := ""
+
 		if cmd.Flags().Changed("name") {
 			name, _ = cmd.Flags().GetString("name")
 		}
@@ -55,25 +56,16 @@ Example:
 			name = *n
 		}
 
-		if name == "" {
-			fn.PrintError(fmt.Errorf("context name is required"))
-			return
-		}
-
-		if _, ok := c.Contexts[name]; !ok {
-			fn.PrintError(fmt.Errorf("context %s not found", name))
-			return
-		}
-
-		if err := client.SetActiveContext(name); err != nil {
+		if err := client.DeleteContext(name); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
+		fn.Log(fmt.Sprintf("context %s removed", name))
 	},
 }
 
 func init() {
-	switchCmd.Flags().StringP("name", "n", "", "context name")
-	switchCmd.Aliases = append(switchCmd.Aliases, "sw")
+	removeCmd.Aliases = append(removeCmd.Aliases, "rm")
+	removeCmd.Flags().StringP("name", "n", "", "context name")
 }

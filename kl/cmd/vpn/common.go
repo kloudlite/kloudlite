@@ -1,4 +1,4 @@
-package wg
+package vpn
 
 import (
 	"encoding/base64"

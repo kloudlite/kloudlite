@@ -6,8 +6,7 @@ import (
 )
 
 func SelectEnv(envName Env) error {
-
-	k, err := GetContextFile()
+	k, err := GetExtraData()
 	if err != nil {
 		return err
 	}
@@ -16,27 +15,20 @@ func SelectEnv(envName Env) error {
 	if err != nil {
 		return err
 	}
+
 	if k.SelectedEnvs == nil {
 		k.SelectedEnvs = map[string]*Env{}
 	}
 
 	k.SelectedEnvs[dir] = &envName
-	if err := WriteContextFile(*k); err != nil {
-		return err
-	}
 
-	return nil
-
+	return SaveExtraData(k)
 }
 
 func CurrentEnv() (*Env, error) {
-	file, err := GetContextFile()
+	c, err := GetExtraData()
 	if err != nil {
 		return nil, err
-	}
-
-	if file.SelectedEnvs == nil {
-		return nil, errors.New("No selected environment")
 	}
 
 	dir, err := os.Getwd()
@@ -44,9 +36,13 @@ func CurrentEnv() (*Env, error) {
 		return nil, err
 	}
 
-	if file.SelectedEnvs[dir] == nil {
+	if c.SelectedEnvs == nil {
 		return nil, errors.New("No selected environment")
 	}
 
-	return file.SelectedEnvs[dir], nil
+	if c.SelectedEnvs[dir] == nil {
+		return nil, errors.New("No selected environment")
+	}
+
+	return c.SelectedEnvs[dir], nil
 }

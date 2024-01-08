@@ -3,10 +3,11 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"net/http"
 	"time"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/ui/spinner"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
@@ -67,16 +68,11 @@ func Login(loginId string) error {
 			return err
 		}
 		if loginStatusResponse.RemoteLogin.Status == "succeeded" {
-			file, err := client.GetContextFile()
-			if err != nil {
-				return err
-			}
 			req, _ := http.NewRequest("GET", "/", nil)
 			req.Header.Set("Cookie", loginStatusResponse.RemoteLogin.AuthHeader)
 			cookie, _ := req.Cookie("hotspot-session")
-			file.Session = cookie.Value
-			err = client.WriteContextFile(*file)
-			return err
+
+			return client.SaveAuthSession(cookie.Value)
 		}
 		if loginStatusResponse.RemoteLogin.Status == "failed" {
 			return errors.New("remote login failed")
@@ -92,19 +88,7 @@ func Login(loginId string) error {
 }
 
 func getCookie() (string, error) {
-
-	file, err := client.GetContextFile()
-
-	if err != nil {
-		return "", err
-	}
-
-	if file.Session == "" {
-		return "",
-			errors.New("you are not logged in yet. please login using \"kl login\"")
-	}
-
-	return file.GetCookieString(), nil
+	return client.GetCookieString()
 }
 
 type Response[T any] struct {

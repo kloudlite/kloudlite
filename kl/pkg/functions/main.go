@@ -45,6 +45,33 @@ type resType struct {
 	}
 }
 
+func GetPrintRow2(printValue interface{}, active bool, prefix ...bool) string {
+	if active {
+		return text.Green(fmt.Sprintf("%s%s",
+			func() string {
+				if len(prefix) > 0 && prefix[0] {
+					return "*"
+				}
+
+				return ""
+			}(),
+
+			func() string {
+				s := strings.Split(fmt.Sprint(printValue), "\n")
+				if len(s) > 1 {
+					for i, v := range s {
+						s[i] = text.Green(v)
+					}
+				}
+
+				return strings.Join(s, "\n")
+			}(),
+		))
+	}
+
+	return fmt.Sprint(printValue)
+}
+
 func GetPrintRow(res any, activeName string, printValue interface{}, prefix ...bool) string {
 	var item resType
 	if err := JsonConversion(res, &item); err != nil {

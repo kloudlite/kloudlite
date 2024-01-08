@@ -15,19 +15,19 @@ Examples:
   # list all contexts
   kl context list
 
-	# switch to context
-	kl context switch <context_name>
+  # switch to context
+  kl context switch <context_name>
 
-	# delete context
-	kl context delete <context_name>
+  # remove context
+  kl context remove <context_name>
 	`,
 }
 
 func init() {
-	Cmd.Aliases = append(Cmd.Aliases, "dev")
+	Cmd.Aliases = append(Cmd.Aliases, "ctx")
 
 	Cmd.AddCommand(newCmd)
 	Cmd.AddCommand(listCmd)
 	Cmd.AddCommand(switchCmd)
-	Cmd.AddCommand(delCmd)
+	Cmd.AddCommand(removeCmd)
 }

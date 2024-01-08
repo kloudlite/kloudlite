@@ -16,7 +16,6 @@ func init() {
 	Cmd.AddCommand(clustersCmd)
 	Cmd.AddCommand(projectsCmd)
 	Cmd.AddCommand(envsCmd)
-	Cmd.AddCommand(devicesCmd)
 	Cmd.AddCommand(configsCmd)
 	Cmd.AddCommand(secretsCmd)
 	Cmd.AddCommand(appsCmd)
