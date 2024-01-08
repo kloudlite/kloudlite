@@ -10,8 +10,8 @@ type Env struct {
 	WorkspaceRouteSwitcherService string `env:"WORKSPACE_ROUTE_SWITCHER_SERVICE" required:"true"`
 	WorkspaceRouteSwitcherPort    uint16 `env:"WORKSPACE_ROUTE_SWITCHER_PORT" required:"true"`
 
-	IngressClass  string `env:"INGRESS_CLASS"`
-	ClusterIssuer string `env:"CLUSTER_ISSUER"`
+	DefaultIngressClass  string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
+	DefaultClusterIssuer string `env:"DEFAULT_CLUSTER_ISSUER" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

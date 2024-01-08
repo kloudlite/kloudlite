@@ -95,8 +95,7 @@ snippet robj "creates template for recocilation step functino"
 
   check.Status = true
   if check != obj.Status.Checks[checkName] {
-    obj.Status.Checks[checkName] = check
-    fn.MapSet(obj.Status.Checks, checkName, check)
+    fn.MapSet(&obj.Status.Checks, checkName, check)
     if sr := req.UpdateStatus(); !sr.ShouldProceed() {
       return sr
     }

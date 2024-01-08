@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +24,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/templates"
+	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -133,7 +135,7 @@ func (r *Reconciler) rollout(req *rApi.Request[*wgv1.Device]) error {
 	ctx, obj := req.Context(), req.Object
 
 	depName := fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)
-	_, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, depName), &appsv1.Deployment{})
+	deployment, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, depName), &appsv1.Deployment{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return err
@@ -141,7 +143,12 @@ func (r *Reconciler) rollout(req *rApi.Request[*wgv1.Device]) error {
 		return nil
 	}
 
-	if _, err := fn.Kubectl("-n", r.Env.DeviceInfoNamespace, "rollout", "restart", fmt.Sprintf("deployment/%s", depName)); err != nil {
+	if deployment.Spec.Template.Annotations == nil {
+		deployment.Spec.Template.Annotations = make(map[string]string, 1)
+	}
+	deployment.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+
+	if err := r.Update(ctx, deployment); err != nil {
 		return err
 	}
 
@@ -205,7 +212,6 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 	dnsConfigName := fmt.Sprint(DNS_NAME_PREFIX, obj.Name)
 
 	getDnsConfig := func() ([]byte, *string, error) {
-
 		rewriteRules := ""
 
 		for _, cn := range obj.Spec.CNameRecords {
@@ -232,6 +238,23 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 					return r.Env.ClusterInternalDns
 				}(),
 			)
+
+			// device namespace => ingress domains => rewrite rule: rewrite name s1.sample-cluster.kloudlite-dev.tenants.devc.kloudlite.io env-ingress.env-nxtcoder172.svc.cluster.local
+			var ingressList networkingv1.IngressList
+			if err := r.List(ctx, &ingressList, client.InNamespace(*obj.Spec.DeviceNamespace)); err != nil {
+				return nil, nil, err
+			}
+
+			domains := make(map[string]struct{})
+			for i := range ingressList.Items {
+				for j := range ingressList.Items[i].Spec.Rules {
+					domains[ingressList.Items[i].Spec.Rules[j].Host] = struct{}{}
+				}
+			}
+
+			for k := range domains {
+				rewriteRules += fmt.Sprintf("\n\trewrite name %s %s.%s.svc.cluster.local", k, r.Env.EnvironmentIngressName, *obj.Spec.DeviceNamespace)
+			}
 		}
 
 		rewriteRules = fmt.Sprintf(
@@ -259,7 +282,6 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 			"labels":        map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
 			"ownerRefs":     []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		})
-
 		if err != nil {
 			return nil, nil, err
 		}
@@ -268,7 +290,6 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 	}
 
 	applyDnsCoinfig := func(configYaml []byte) error {
-
 		if _, err := r.yamlClient.ApplyYAML(ctx, configYaml); err != nil {
 			return err
 		}
@@ -277,7 +298,6 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 	}
 
 	if err := func() error {
-
 		b, conf, err := getDnsConfig()
 		if err != nil {
 			return err
@@ -291,7 +311,6 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 
 			return applyDnsCoinfig(b)
 		} else {
-
 			if strings.TrimSpace(string(dConf.Data["Corefile"])) != strings.TrimSpace(string(*conf)) {
 				return applyDnsCoinfig(b)
 			}
@@ -392,7 +411,6 @@ func (r *Reconciler) generateDeviceConfig(req *rApi.Request[*wgv1.Device]) (devC
 	secName := fmt.Sprint(DEVICE_KEY_PREFIX, obj.Name)
 
 	if err := func() error {
-
 		wgService, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.Service{})
 		if err != nil {
 			return err
@@ -461,7 +479,6 @@ func (r *Reconciler) generateDeviceConfig(req *rApi.Request[*wgv1.Device]) (devC
 }
 
 func (r *Reconciler) applyDeviceConfig(req *rApi.Request[*wgv1.Device], deviceConfig []byte, serverConfig []byte) error {
-
 	ctx, obj := req.Context(), req.Object
 	configName := fmt.Sprint(DEVICE_CONFIG_PREFIX, obj.Name)
 
@@ -532,7 +549,6 @@ func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResul
 }
 
 func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
@@ -557,7 +573,6 @@ func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Re
 			return failed(err)
 		}
 	} else {
-
 		if string(conf.Data["config"]) != string(devConfig) || string(conf.Data["server-config"]) != string(serverConfig) {
 			if err := r.applyDeviceConfig(req, devConfig, serverConfig); err != nil {
 				return failed(err)
@@ -810,7 +825,6 @@ func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result
 			return failed(err)
 		}
 	} else {
-
 		for _, svc := range services.Items {
 			if err := r.Delete(ctx, &svc); err != nil {
 				return failed(err)

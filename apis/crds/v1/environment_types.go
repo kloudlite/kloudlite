@@ -10,6 +10,8 @@ import (
 type EnvironmentSpec struct {
 	ProjectName     string `json:"projectName"`
 	TargetNamespace string `json:"targetNamespace,omitempty"`
+
+	IngressClassName string `json:"ingressClassName,omitempty"`
 }
 
 //+kubebuilder:object:root=true

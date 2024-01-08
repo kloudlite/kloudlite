@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/logging"
 	"io"
 	"time"
+
+	"github.com/kloudlite/operator/pkg/logging"
 
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -88,8 +89,12 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		}
 
 		resourceClient := func() dynamic.ResourceInterface {
-			if obj.GetNamespace() == "" {
-				return yc.dynamicClient.Resource(mapping.Resource).Namespace("default")
+			if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+				ns := obj.GetNamespace()
+				if ns == "" {
+					ns = "default"
+				}
+				return yc.dynamicClient.Resource(mapping.Resource).Namespace(ns)
 			}
 			return yc.dynamicClient.Resource(mapping.Resource)
 		}()
@@ -103,6 +108,8 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		if labels == nil {
 			labels = make(map[string]string)
 		}
+
+		delete(obj.Object, "status")
 
 		b, err := json.Marshal(obj.Object)
 		if err != nil {
@@ -154,6 +161,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			}
 		}
 
+		obj.Object["metadata"] = cobj.Object["metadata"]
 		obj.SetAnnotations(ann)
 		obj.SetLabels(labels)
 		// If exists, update it

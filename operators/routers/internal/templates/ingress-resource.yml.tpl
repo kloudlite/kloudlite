@@ -12,8 +12,6 @@
 {{- $ingressClass := get . "ingress-class" }}
 {{- $clusterIssuer := get . "cluster-issuer" }}
 
-{{- $routeToWorkspaceSwitcher := get . "route-to-workspace-switcher" }} 
-
 {{- $routes := get . "routes" }} 
 
 {{ $isHttpsEnabled := get . "is-https-enabled" }} 
