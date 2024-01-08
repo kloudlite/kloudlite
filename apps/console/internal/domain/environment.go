@@ -2,7 +2,6 @@ package domain
 
 import (
 	"fmt"
-
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -156,6 +155,143 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	return nenv, nil
 }
 
+func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, envName string) (*entities.Environment, error) {
+	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	env, err := d.findEnvironment(ctx, projectName, sourceEnvName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	env.ProjectName = projectName
+	env.DisplayName = envName
+	env.Name = envName
+	env.Id = d.environmentRepo.NewId()
+	env.PrimitiveId = ""
+
+	env.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	env.IncrementRecordVersion()
+
+	env.Spec.TargetNamespace = fmt.Sprintf("env-%s", envName)
+
+	env.SyncStatus = t.GenSyncStatus(t.SyncActionApply, env.RecordVersion)
+
+	if _, err := d.upsertResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, env); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	nenv, err := d.environmentRepo.Create(ctx, env)
+	if err != nil {
+		if d.environmentRepo.ErrAlreadyExists(err) {
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, errors.NewE(err)
+		}
+		return nil, errors.NewE(err)
+	}
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     env.ProjectName,
+		EnvironmentName: nenv.Name,
+	}
+	filters := repos.Filter{
+		"accountName":     resContext.AccountName,
+		"projectName":     resContext.ProjectName,
+		"environmentName": sourceEnvName,
+	}
+
+	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	secrets, err := d.secretRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	configs, err := d.configRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	routers, err := d.routerRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
+		Filter: filters,
+		Sort:   nil,
+	})
+	for _, app := range apps {
+		app.Namespace = env.Spec.TargetNamespace
+		app.EnvironmentName = envName
+		app.Id = d.appRepo.NewId()
+		app.PrimitiveId = ""
+		err := cloneResource(resContext, d, d.appRepo, app, &app.App)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+	}
+	for _, secret := range secrets {
+		secret.Namespace = env.Spec.TargetNamespace
+		secret.EnvironmentName = envName
+		secret.Id = d.secretRepo.NewId()
+		secret.PrimitiveId = ""
+		err := cloneResource(resContext, d, d.secretRepo, secret, &secret.Secret)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+	}
+	for _, config := range configs {
+		config.Namespace = env.Spec.TargetNamespace
+		config.EnvironmentName = envName
+		config.Id = d.configRepo.NewId()
+		config.PrimitiveId = ""
+		err := cloneResource(resContext, d, d.configRepo, config, &config.ConfigMap)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+	}
+	for _, router := range routers {
+		router.Namespace = env.Spec.TargetNamespace
+		router.EnvironmentName = envName
+		router.Id = d.routerRepo.NewId()
+		router.PrimitiveId = ""
+		err := cloneResource(resContext, d, d.routerRepo, router, &router.Router)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+	}
+	for _, managedResource := range managedResources {
+		managedResource.Namespace = env.Spec.TargetNamespace
+		managedResource.EnvironmentName = envName
+		managedResource.Id = d.mresRepo.NewId()
+		managedResource.PrimitiveId = ""
+		err := cloneResource(resContext, d, d.mresRepo, managedResource, &managedResource.ManagedResource)
+		if err != nil {
+			return nil, errors.NewE(err)
+		}
+	}
+
+	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
+		UserId:       string(ctx.UserId),
+		ResourceType: string(iamT.ResourceEnvironment),
+		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, nenv.Name),
+		Role:         string(iamT.RoleResourceOwner),
+	}); err != nil {
+		d.logger.Errorf(err, "error while adding membership")
+	}
+
+	if err := d.applyK8sResource(ctx, env.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return nenv, nil
+}
+
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error) {
 	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
 		return nil, errors.NewE(err)
@@ -217,6 +353,67 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishWorkspaceEvent(env, PublishUpdate)
+
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     env.ProjectName,
+		EnvironmentName: name,
+	}
+	apps, err := d.appRepo.Find(ctx, repos.Query{
+		Filter: resContext.DBFilters(),
+		Sort:   nil,
+	})
+	secrets, err := d.secretRepo.Find(ctx, repos.Query{
+		Filter: resContext.DBFilters(),
+		Sort:   nil,
+	})
+	configs, err := d.configRepo.Find(ctx, repos.Query{
+		Filter: resContext.DBFilters(),
+		Sort:   nil,
+	})
+	routers, err := d.routerRepo.Find(ctx, repos.Query{
+		Filter: resContext.DBFilters(),
+		Sort:   nil,
+	})
+	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
+		Filter: resContext.DBFilters(),
+		Sort:   nil,
+	})
+
+	for _, app := range apps {
+		err := d.DeleteApp(resContext, app.Name)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	for _, secret := range secrets {
+		err := d.DeleteSecret(resContext, secret.Name)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	for _, config := range configs {
+		err := d.DeleteConfig(resContext, config.Name)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	for _, router := range routers {
+		err := d.DeleteRouter(resContext, router.Name)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	for _, managedResource := range managedResources {
+		err := d.DeleteManagedResource(resContext, managedResource.Name)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
 
 	if err := d.deleteK8sResource(ctx, env.ProjectName, &env.Environment); err != nil {
 		return errors.NewE(err)
