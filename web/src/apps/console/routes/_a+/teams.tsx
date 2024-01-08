@@ -207,7 +207,7 @@ const Accounts = () => {
           >
             <List.Root plain linkComponent={Link}>
               {page.map((account, index) => {
-                console.log('here....', account);
+                // console.log('here....', account);
 
                 const name = parseName(account);
                 const { isInvite, displayName, inviteToken } = account;

@@ -187,7 +187,7 @@ export const EnvironmentVariables = () => {
     refKey: Yup.string()
       .when(['type'], ([type], schema) => {
         if (type === 'config' || type === 'secret') {
-          console.log('here', type);
+          // console.log('here', type);
           return schema.required();
         }
         return schema;
@@ -239,11 +239,11 @@ export const EnvironmentVariables = () => {
 
   const vSchema = Yup.object({
     refKey: Yup.string().when('$textInputValue', ([v], schema) => {
-      console.log(v, 'here');
+      // console.log(v, 'here');
       return schema;
     }),
     refName: Yup.string().when('$textInputValue', ([v], schema) => {
-      console.log(v);
+      // console.log(v);
       return schema;
     }),
   });

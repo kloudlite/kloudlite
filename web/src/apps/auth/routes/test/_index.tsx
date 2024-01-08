@@ -1,4 +1,4 @@
-import CodeMirrorClient from './editor-client';
+import CodeMirrorClient from '~/root/lib/client/components/editor-client';
 
 const Editor = () => {
   return (

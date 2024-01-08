@@ -156,7 +156,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
         if (errors) {
           throw errors[0];
         }
-        console.log(data);
+        // console.log(data);
 
         setEnvironments(parseNodes(data));
       } catch (err) {

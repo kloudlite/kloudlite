@@ -1,4 +1,4 @@
-import { CaretDownFill, Plus } from '@jengaicons/react';
+import { CaretDownFill, ChevronUpDown, Plus } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
   Outlet,
@@ -100,7 +100,14 @@ const AccountMenu2 = ({ account }: { account: IAccount }) => {
       }}
       trigger={
         <Breadcrum.Button
-          content={<BreadcrumButtonContent content={account.displayName} />}
+          content={
+            <span className="flex flex-row items-center gap-md">
+              <BreadcrumButtonContent content={account.displayName} />
+              <span className="text-icon-disabled">
+                <ChevronUpDown color="currentColor" size={11} />
+              </span>
+            </span>
+          }
         />
       }
     />

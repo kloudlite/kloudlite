@@ -10,9 +10,7 @@ import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import {
-  BackingServices,
   ChevronRight,
-  CirclesThreePlus,
   Cpu,
   Crosshair,
   Database,

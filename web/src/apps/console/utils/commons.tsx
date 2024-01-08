@@ -1,7 +1,5 @@
 import { AWSlogoFill, ChevronRight } from '@jengaicons/react';
 import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
-import { ReactNode } from 'react';
-import { Truncate } from '~/root/lib/utils/common';
 import { cn } from '~/components/utils';
 import {
   IMSvTemplate,

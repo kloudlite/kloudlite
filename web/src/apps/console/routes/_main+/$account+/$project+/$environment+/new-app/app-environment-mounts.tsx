@@ -23,7 +23,6 @@ import {
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

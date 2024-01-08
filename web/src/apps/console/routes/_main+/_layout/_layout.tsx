@@ -117,7 +117,7 @@ const Logo = () => {
   const { account } = useParams();
   return (
     <LogoWrapper to={`/${account}/infra/clusters`}>
-      <BrandLogo detailed />
+      <BrandLogo />
     </LogoWrapper>
   );
 };
