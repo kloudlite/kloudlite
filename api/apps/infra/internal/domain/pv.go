@@ -61,6 +61,9 @@ func (d *domain) OnPVUpdateMessage(ctx InfraContext, clusterName string, pv enti
 	}
 
 	if pvol == nil {
+		pv.AccountName = ctx.AccountName
+		pv.ClusterName = clusterName
+
 		pv.CreatedBy = common.CreatedOrUpdatedBy{
 			UserId:    repos.ID(common.CreatedByResourceSyncUserId),
 			UserName:  common.CreatedByResourceSyncUsername,

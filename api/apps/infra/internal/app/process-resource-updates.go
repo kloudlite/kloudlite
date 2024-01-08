@@ -30,13 +30,15 @@ func gvk(obj client.Object) string {
 }
 
 var (
-	clusterGVK     = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
-	nodepoolGVK    = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
-	helmreleaseGVK = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
-	deviceGVK      = fn.GVK("wireguard.kloudlite.io/v1", "Device")
-	pvcGVK         = fn.GVK("v1", "PersistentVolumeClaim")
-	namespaceGVK   = fn.GVK("v1", "Namespace")
-	clusterMsvcGVK = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
+	clusterGVK          = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
+	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
+	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
+	deviceGVK           = fn.GVK("wireguard.kloudlite.io/v1", "Device")
+	pvcGVK              = fn.GVK("v1", "PersistentVolumeClaim")
+	pvGVK               = fn.GVK("v1", "PersistentVolume")
+	volumeAttachmentGVK = fn.GVK("storage.k8s.io/v1", "VolumeAttachment")
+	namespaceGVK        = fn.GVK("v1", "Namespace")
+	clusterMsvcGVK      = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
@@ -152,6 +154,32 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
+		case pvGVK.String():
+			{
+				var pv entities.PersistentVolume
+				if err := fn.JsonConversion(su.Object, &pv); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnPVDeleteMessage(dctx, su.ClusterName, pv)
+				}
+				return d.OnPVUpdateMessage(dctx, su.ClusterName, pv, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
+		case volumeAttachmentGVK.String():
+			{
+				var volatt entities.VolumeAttachment
+				if err := fn.JsonConversion(su.Object, &volatt); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnVolumeAttachmentDeleteMessage(dctx, su.ClusterName, volatt)
+				}
+				return d.OnVolumeAttachmentUpdateMessage(dctx, su.ClusterName, volatt, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
 		case helmreleaseGVK.String():
 			{
 				var hr entities.HelmRelease
@@ -167,16 +195,16 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		case namespaceGVK.String():
 			{
-				var pvc entities.PersistentVolumeClaim
+				var ns entities.Namespace
 
-				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
+				if err := fn.JsonConversion(su.Object, &ns); err != nil {
 					return errors.NewE(err)
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnPVCDeleteMessage(dctx, su.ClusterName, pvc)
+					return d.OnNamespaceDeleteMessage(dctx, su.ClusterName, ns)
 				}
-				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnNamespaceUpdateMessage(dctx, su.ClusterName, ns, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
 		case clusterMsvcGVK.String():

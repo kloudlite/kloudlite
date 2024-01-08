@@ -208,18 +208,23 @@ func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, n
 }
 
 func (d *domain) OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, hr entities.HelmRelease) error {
-	svc, _ := d.findHelmRelease(ctx, clusterName, hr.Name)
-	if svc == nil {
+	xhr, err := d.findHelmRelease(ctx, clusterName, hr.Name)
+	if err != nil {
+		return err
+	}
+	if xhr == nil {
 		// does not exist, (maybe already deleted)
 		return nil
 	}
 
-	if err := d.matchRecordVersion(hr.Annotations, svc.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, svc.SyncStatus.Action, clusterName, svc, svc.RecordVersion)
+	if err := d.matchRecordVersion(hr.Annotations, xhr.RecordVersion); err != nil {
+		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, clusterName, xhr, xhr.RecordVersion)
 	}
 
-	err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id)
-	d.resourceEventPublisher.PublishHelmReleaseEvent(svc, PublishDelete)
+	if err = d.helmReleaseRepo.DeleteById(ctx, xhr.Id); err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishHelmReleaseEvent(xhr, PublishDelete)
 	return err
 }
 
