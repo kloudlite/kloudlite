@@ -46,3 +46,24 @@ func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action)
 	}
 	return nil
 }
+
+func (d *domain) canPerformActionInDevice(ctx InfraContext, action iamT.Action, devName string) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceVPNDevice, devName),
+		},
+		Action: string(action),
+	})
+	if err != nil {
+		return ErrGRPCCall{Err: err}
+	}
+	if !co.Status {
+		return ErrIAMUnauthorized{
+			UserId:   string(ctx.UserId),
+			Resource: fmt.Sprintf("device: %s", devName),
+			Action:   string(action),
+		}
+	}
+	return nil
+}
