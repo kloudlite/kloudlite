@@ -1,12 +1,6 @@
 ---
 global:
-  accountName: kloudlite-dev
-  projectName: sample
-  worksapceName: sample
-  projectTargetNamespace: sample
-  clusterName: sample
-  namespace: sample
-  envTargetNamespace: "sample-nxtcoder17"
+  envTargetNamespace: "nxtcoder17"
 ---
 
 label: List Environments
@@ -16,6 +10,7 @@ query: |+
       edges {
         cursor
         node {
+          id
           creationTime
           accountName
           apiVersion 
@@ -33,7 +28,6 @@ query: |+
             userName
           }
           spec { 
-            isEnvironment
             targetNamespace
           }
           syncStatus {
@@ -83,9 +77,17 @@ variables:
   env:
     displayName: Display Name of a sample environment
     metadata:
-      name: sample2
-      namespace: "{{.projectTargetNamespace}}"
+      name: "{{.envName}}2"
     spec:
       projectName: "{{.projectName}}"
-      targetNamespace: "{{.envTargetNamespace}}"
+---
+
+label: resync environment
+query: |+
+  query Query($projectName: String!, $name: String!) {
+    core_resyncEnvironment(projectName: $projectName, name: $name)
+  }
+variables:
+  projectName: "{{.projectName}}"
+  name: "{{.envName}}"
 ---

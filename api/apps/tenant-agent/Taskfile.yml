@@ -31,8 +31,8 @@ tasks:
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
-      Name: kl-agent
-      Image: ghcr.io/kloudlite/agents/{{.Name}}:{{.Tag}}
+      Name: tenant-agent
+      Image: ghcr.io/kloudlite/api/{{.Name}}:{{.Tag}}
     env:
       CGO_ENABLED: 0
       GOOS: linux

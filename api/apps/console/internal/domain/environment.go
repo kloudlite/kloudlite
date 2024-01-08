@@ -103,6 +103,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	}
 
 	env.ProjectName = project.Name
+	env.Namespace = project.Spec.TargetNamespace
 
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
@@ -520,5 +521,5 @@ func (d *domain) ResyncEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, "", e.SyncStatus.Action, &e.Environment, e.RecordVersion)
+	return d.resyncK8sResource(ctx, e.ProjectName, e.SyncStatus.Action, &e.Environment, e.RecordVersion)
 }
