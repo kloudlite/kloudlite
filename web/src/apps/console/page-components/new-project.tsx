@@ -19,6 +19,7 @@ import {
 import { INewProjectFromAccountLoader } from '../routes/_a+/$a+/new-project';
 import ProgressWrapper from '../components/progress-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
+import { NameIdView } from '../components/name-id-view';
 
 const NewProject = () => {
   const { cluster: clusterName } = useParams();
@@ -83,64 +84,64 @@ const NewProject = () => {
     },
   });
 
-  const [nameValid, setNameValid] = useState(false);
-  const [nameLoading, setNameLoading] = useState(false);
-  useDebounce(
-    async () => {
-      if (values.name) {
-        try {
-          ensureAccountClientSide(params);
-          ensureClusterClientSide(params);
-          const { data, errors } = await api.coreCheckNameAvailability({
-            resType: 'project',
-            name: `${values.name}`,
-          });
+  // const [nameValid, setNameValid] = useState(false);
+  // const [nameLoading, setNameLoading] = useState(false);
+  // useDebounce(
+  //   async () => {
+  //     if (values.name) {
+  //       try {
+  //         ensureAccountClientSide(params);
+  //         ensureClusterClientSide(params);
+  //         const { data, errors } = await api.coreCheckNameAvailability({
+  //           resType: 'project',
+  //           name: `${values.name}`,
+  //         });
 
-          if (errors) {
-            throw errors[0];
-          }
-          if (data.result) {
-            setNameValid(true);
-          } else {
-            setNameValid(false);
-          }
-        } catch (err) {
-          handleError(err);
-        } finally {
-          setNameLoading(false);
-        }
-      }
-    },
-    500,
-    [values.name]
-  );
+  //         if (errors) {
+  //           throw errors[0];
+  //         }
+  //         if (data.result) {
+  //           setNameValid(true);
+  //         } else {
+  //           setNameValid(false);
+  //         }
+  //       } catch (err) {
+  //         handleError(err);
+  //       } finally {
+  //         setNameLoading(false);
+  //       }
+  //     }
+  //   },
+  //   500,
+  //   [values.name]
+  // );
 
-  const checkNameAvailable = () => {
-    if (errors.name) {
-      return errors.name;
-    }
-    if (!values.name) {
-      return null;
-    }
-    if (nameLoading) {
-      return (
-        <div className="flex flex-row items-center gap-md">
-          <span className="animate-spin">
-            <CircleNotch size={10} />
-          </span>
-          <span>Checking availability</span>
-        </div>
-      );
-    }
-    if (nameValid) {
-      return (
-        <span className="text-text-success bodySm-semibold">
-          {values.name} is available.
-        </span>
-      );
-    }
-    return 'This name is not available. Please try different.';
-  };
+  // const checkNameAvailable = () => {
+  //   if (errors.name) {
+  //     return errors.name;
+  //   }
+  //   if (!values.name) {
+  //     return null;
+  //   }
+  //   if (nameLoading) {
+  //     return (
+  //       <div className="flex flex-row items-center gap-md">
+  //         <span className="animate-spin">
+  //           <CircleNotch size={10} />
+  //         </span>
+  //         <span>Checking availability</span>
+  //       </div>
+  //     );
+  //   }
+  //   if (nameValid) {
+  //     return (
+  //       <span className="text-text-success bodySm-semibold">
+  //         {values.name} is available.
+  //       </span>
+  //     );
+  //   }
+  //   return 'This name is not available. Please try different.';
+  // };
 
   const getView = () => {
     return (
@@ -148,7 +149,7 @@ const NewProject = () => {
         <div className="bodyMd text-text-soft">
           Create your project under production effortlessly.
         </div>
-        <div className="flex flex-col">
+        {/* <div className="flex flex-col">
           <TextInput
             label="Project name"
             name="displayNmae"
@@ -173,7 +174,20 @@ const NewProject = () => {
               <span className="text-text-soft mr-sm">{accountName} /</span>
             }
           />
-        </div>
+        </div> */}
+
+        <NameIdView
+          label="Project name"
+          resType="project"
+          name={values.name}
+          displayName={values.displayName}
+          errors={errors.name}
+          prefix={accountName}
+          onChange={({ name, id }) => {
+            handleChange('displayName')(dummyEvent(name));
+            handleChange('name')(dummyEvent(id));
+          }}
+        />
 
         {!isOnboarding && (
           <Select

@@ -26,65 +26,10 @@ import { parseName } from '~/console/server/r-utils/common';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import MenuSelect from '~/console/components/menu-select';
-import Breadcrum from '~/console/components/breadcrum';
 import { BreadcrumButtonContent } from '~/console/utils/commons';
 import { IConsoleRootContext } from '../_layout/_layout';
 
-// OptionList for various actions
 const AccountMenu = ({ account }: { account: IAccount }) => {
-  const accounts = useDataFromMatches<IAccounts>('accounts', {});
-  const { account: accountName } = useParams();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <Button
-          content={account.displayName}
-          variant="outline"
-          suffix={<CaretDownFill />}
-          size="sm"
-        />
-      </OptionList.Trigger>
-      <OptionList.Content className="!pt-lg !pb-md">
-        {accounts.map((acc) => {
-          const name = parseName(acc);
-          return (
-            <OptionList.Item
-              key={name}
-              onClick={() => {
-                if (accountName !== name) {
-                  navigate(`/${name}/infra/clusters`);
-                }
-              }}
-              active={accountName === name}
-            >
-              {/* <span>
-                {name} {accountName === name ? '. active' : null}
-              </span> */}
-              {/* <div className="flex flex-col">
-                <span className="bodyMd-medium text-text-default">
-                  {acc.displayName}
-                </span>
-                <span className="bodySm text-text-soft">{name}</span>
-              </div> */}
-              <span title={name}>{acc.displayName}</span>
-            </OptionList.Item>
-          );
-        })}
-        <OptionList.Separator />
-        <OptionList.Link to="/new-team" className="text-text-primary">
-          <span className="text-icon-primary">
-            <Plus size={16} />
-          </span>
-          <span>Create new team</span>
-        </OptionList.Link>
-      </OptionList.Content>
-    </OptionList.Root>
-  );
-};
-
-const AccountMenu2 = ({ account }: { account: IAccount }) => {
   const accounts = useDataFromMatches<IAccounts>('accounts', {});
   const { account: accountName } = useParams();
   const navigate = useNavigate();
@@ -99,16 +44,12 @@ const AccountMenu2 = ({ account }: { account: IAccount }) => {
         navigate(`/${value}/infra/clusters`);
       }}
       trigger={
-        <Breadcrum.Button
-          content={
-            <span className="flex flex-row items-center gap-md">
-              <BreadcrumButtonContent content={account.displayName} />
-              <span className="text-icon-disabled">
-                <ChevronUpDown color="currentColor" size={11} />
-              </span>
-            </span>
-          }
-        />
+        <span className="flex flex-row items-center gap-md bodyMd text-text-default px-md py-sm">
+          <BreadcrumButtonContent content={account.displayName} />
+          <span className="text-icon-disabled">
+            <ChevronUpDown color="currentColor" size={11} />
+          </span>
+        </span>
       }
     />
   );
@@ -153,7 +94,7 @@ const Account = () => {
 
 export const handle = ({ account }: any) => {
   return {
-    breadcrum: () => <AccountMenu2 account={account} />,
+    breadcrum: () => <AccountMenu account={account} />,
   };
 };
 

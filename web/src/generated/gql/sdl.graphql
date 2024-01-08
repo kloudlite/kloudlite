@@ -2711,6 +2711,28 @@ input ManagedResourceIn {
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn!
 }
 
+type ManagedResourceKeyRef {
+  key: String!
+  mresName: String!
+}
+
+input ManagedResourceKeyRefIn {
+  key: String!
+  mresName: String!
+}
+
+type ManagedResourceKeyValueRef {
+  key: String!
+  mresName: String!
+  value: String!
+}
+
+input ManagedResourceKeyValueRefIn {
+  key: String!
+  mresName: String!
+  value: String!
+}
+
 type ManagedResourcePaginatedRecords {
   edges: [ManagedResourceEdge!]!
   pageInfo: PageInfo!
@@ -3150,6 +3172,8 @@ type Query {
   core_getConfigValues(envName: String!, projectName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]
   core_getEnvironment(name: String!, projectName: String!): Environment
   core_getImagePullSecret(envName: String!, name: String!, projectName: String!): ImagePullSecret
+  core_getManagedResouceOutputKeys(envName: String!, name: String!, projectName: String!): [String!]!
+  core_getManagedResouceOutputKeyValues(envName: String!, keyrefs: [ManagedResourceKeyRefIn], projectName: String!): [ManagedResourceKeyValueRef!]!
   core_getManagedResource(envName: String!, name: String!, projectName: String!): ManagedResource
   core_getProject(name: String!): Project
   core_getProjectManagedService(name: String!, projectName: String!): ProjectManagedService

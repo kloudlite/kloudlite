@@ -7,7 +7,6 @@ import {
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import {
   ExtractNodeType,
   parseName,
@@ -24,9 +23,10 @@ import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 
 const RESOURCE_NAME = 'managed service';
-type BaseType = ExtractNodeType<IClusterMSvs>;
+type BaseType = ExtractNodeType<IProjectMSvs>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   const template = getManagedTemplate({
@@ -209,10 +209,13 @@ const BackendServicesResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!params.project) {
+            throw new Error('Project is required!.');
+          }
           try {
-            const { errors } = await api.deleteClusterMSv({
-              serviceName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
+            const { errors } = await api.deleteProjectMSv({
+              pmsvcName: parseName(showDeleteDialog),
+              projectName: params.project,
             });
 
             if (errors) {

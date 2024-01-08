@@ -10,6 +10,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
+import { Plus } from '@jengaicons/react';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
 import Tools from './tools';
@@ -53,6 +54,13 @@ const Builds = () => {
               empty={{
                 is: builds.length === 0,
                 title: 'This is where you’ll manage your Build Configs.',
+                action: {
+                  content: 'create build',
+                  onClick: () => {
+                    setVisible(true);
+                  },
+                  prefix: <Plus />,
+                },
                 content: (
                   <p>
                     You can create a new Build Config and manage the listed

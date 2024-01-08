@@ -137,6 +137,7 @@ export const flatMap = (data: any) => {
   return jsonObject;
 };
 
+export const tabIconSize = 16;
 export const breadcrumIconSize = 14;
 export const BreadcrumChevronRight = () => (
   <span className="text-icon-disabled">

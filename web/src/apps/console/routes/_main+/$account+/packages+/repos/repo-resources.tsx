@@ -146,12 +146,12 @@ const ListView = ({ items, onDelete }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1 min-w-[200px] max-w-[200px]',
+                className: 'flex-1 min-w-[100px] max-w-[100px]',
                 render: () => <ListTitle title={name} />,
               },
               {
                 key: generateKey(keyPrefix, 'repo-url'),
-                className: 'min-w-[200px] basis-full  mr-[20px]',
+                className: 'min-w-[100px] w-[100px] basis-full  mr-[20px]',
                 render: () => <RepoUrlView name={name} />,
               },
               {

@@ -68,7 +68,7 @@ const ListTitle = ({
 }) => {
   return (
     <div className={cn(BaseStyle, className)}>
-      <div className="flex flex-row items-center gap-xl flex-1">
+      <div className="flex flex-row items-center gap-xl flex-1 truncate">
         {avatar}
         <div className="flex flex-col gap-sm flex-1 truncate">
           {title && (

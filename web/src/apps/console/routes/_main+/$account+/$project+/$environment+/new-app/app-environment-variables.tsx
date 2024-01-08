@@ -21,6 +21,7 @@ import { useAppState } from '~/console/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import AppDialog from './app-dialogs';
 
 interface IEnvVariable {
@@ -48,17 +49,17 @@ const EnvironmentVariablesList = ({
 }: IEnvVariablesList) => {
   const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
     usePagination({
-      items: envVariables,
+      items: envVariables || [],
       itemsPerPage: 5,
     });
 
   useEffect(() => {
-    setItems(envVariables);
+    setItems(envVariables || []);
   }, [envVariables]);
 
   return (
     <div className="flex flex-col bg-surface-basic-default">
-      {envVariables.length > 0 && (
+      {envVariables?.length > 0 && (
         <List.Root
           className="min-h-[347px] !shadow-none"
           header={
@@ -153,7 +154,7 @@ const EnvironmentVariablesList = ({
           })}
         </List.Root>
       )}
-      {envVariables.length === 0 && (
+      {envVariables?.length === 0 && (
         <div className="rounded border-border-default border min-h-[347px] flex flex-row items-center justify-center">
           <NoResultsFound
             title={null}
@@ -173,6 +174,9 @@ export const EnvironmentVariables = () => {
   const { setContainer, getContainer } = useAppState();
 
   const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
+
+  // for updating
+  const { hasChanges } = useUnsavedChanges();
 
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
@@ -203,8 +207,13 @@ export const EnvironmentVariables = () => {
       .notRequired(),
   });
 
-  const { values, setValues, submit } = useForm({
-    initialValues: getContainer().env || [],
+  const {
+    values,
+    setValues,
+    submit,
+    resetValues: resetAppValue,
+  } = useForm({
+    initialValues: getContainer().env,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
       setContainer((c) => ({
@@ -217,15 +226,27 @@ export const EnvironmentVariables = () => {
     submit();
   }, [values]);
 
+  // for updating
+  useEffect(() => {
+    if (!hasChanges) {
+      resetAppValue();
+    }
+  }, [hasChanges]);
+
   const addEntry = (val: IEnvVariable) => {
     setValues((v) => {
-      v?.push({
+      const data = {
         key: val.key,
         type: val.type,
         refName: val.refName || '',
         refKey: val.refKey || '',
         value: val.value || '',
-      });
+      };
+      if (v) {
+        v?.push(data);
+      } else {
+        return [data];
+      }
       return v;
     });
   };
@@ -346,6 +367,7 @@ export const EnvironmentVariables = () => {
                     {eValues.value.refName}
                   </div>
                   <button
+                    aria-label="clear"
                     tabIndex={-1}
                     type="button"
                     className="outline-none p-lg text-text-default rounded-full"

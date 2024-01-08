@@ -3,7 +3,6 @@ import {
   Link,
   Outlet,
   useLoaderData,
-  useNavigate,
   useOutletContext,
   useParams,
 } from '@remix-run/react';
@@ -21,27 +20,56 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import Breadcrum from '~/console/components/breadcrum';
-import {
-  Database,
-  GearSix,
-  VirtualMachine,
-  InfraAsCode,
-  Container as ContainerIcon,
-  Project as ProjectIcon,
-} from '@jengaicons/react';
+import { Database, GearSix, VirtualMachine } from '@jengaicons/react';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
-import MenuSelect from '~/console/components/menu-select';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import {
   BreadcrumButtonContent,
   BreadcrumSlash,
+  tabIconSize,
 } from '~/console/utils/commons';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import { cn } from '~/components/utils';
 import { IClusterContext } from '../infra+/$cluster+/_layout';
 
 export interface IProjectContext extends IClusterContext {
   project: IProject;
 }
+const iconSize = tabIconSize;
+const tabs = [
+  {
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <VirtualMachine size={iconSize} />
+        Environments
+      </span>
+    ),
+    to: '/environments',
+    value: '/environments',
+  },
+  {
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <Database size={iconSize} />
+        Managed services
+      </span>
+    ),
+    to: '/managed-services',
+    value: '/managed-services',
+  },
+
+  {
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <GearSix size={iconSize} />
+        Settings
+      </span>
+    ),
+    to: '/settings/general',
+    value: '/settings',
+  },
+];
 
 const Project = () => {
   const rootContext = useOutletContext<IClusterContext>();
@@ -53,72 +81,30 @@ const Project = () => {
   );
 };
 
-const ProjectsDropdown = () => {
-  const navigate = useNavigate();
-  const { account } = useParams();
-  const iconSize = 14;
-
-  const menuItems = [
-    {
-      label: (
-        <span className="flex flex-row items-center gap-lg">
-          <ProjectIcon size={iconSize} />
-          Projects
-        </span>
-      ),
-      value: `/${account}/projects`,
-    },
-    {
-      label: (
-        <span className="flex flex-row items-center gap-lg">
-          <InfraAsCode size={iconSize} />
-          Infrastructure
-        </span>
-      ),
-      value: `/${account}/infra`,
-    },
-    {
-      label: (
-        <span className="flex flex-row items-center gap-lg">
-          <ContainerIcon size={iconSize} />
-          Packages
-        </span>
-      ),
-      value: `/${account}/packages`,
-    },
-  ];
-  return (
-    <MenuSelect
-      items={menuItems}
-      value={`/${account}/projects`}
-      onClick={(value) => navigate(value)}
-      trigger={
-        <Breadcrum.Button
-          content={<BreadcrumButtonContent content="Projects" />}
-        />
-      }
-    />
-  );
-};
-
 const LocalBreadcrum = ({
   project,
 }: {
   project: ExtractNodeType<IProjects>;
 }) => {
-  const iconSize = 14;
-  const { account, cluster } = useParams();
+  const { account } = useParams();
+  const { activePath } = useActivePath({
+    parent: `/${account}/${parseName(project)}`,
+  });
+
   return (
     <div className="flex flex-row items-center">
-      {/* <ProjectsDropdown project={project} /> */}
       <BreadcrumSlash />
       <Breadcrum.Button
-        to={`/${account}/${cluster}/${parseName(project)}/environments`}
+        to={`/${account}/${parseName(project)}/environments`}
         LinkComponent={Link}
         content={
-          <div className="flex flex-row items-center">
+          <div
+            className={cn(
+              'flex flex-row items-center',
+              tabs.find((tab) => tab.to === activePath) ? 'bodyMd-semibold' : ''
+            )}
+          >
             <BreadcrumButtonContent content={project.displayName} />
-            {/* <span className="capitalize"></span> */}
           </div>
         }
       />
@@ -126,47 +112,10 @@ const LocalBreadcrum = ({
   );
 };
 
-const ProjectTabs = () => {
+const Tabs = () => {
   const { account, project } = useParams();
-  const iconSize = 16;
-  return (
-    <CommonTabs
-      baseurl={`/${account}/${project}`}
-      tabs={[
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <VirtualMachine size={iconSize} />
-              Environments
-            </span>
-          ),
-          to: '/environments',
-          value: '/environments',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <Database size={iconSize} />
-              Managed services
-            </span>
-          ),
-          to: '/managed-services',
-          value: '/managed-services',
-        },
 
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
-              <GearSix size={iconSize} />
-              Settings
-            </span>
-          ),
-          to: '/settings/general',
-          value: '/settings',
-        },
-      ]}
-    />
-  );
+  return <CommonTabs baseurl={`/${account}/${project}`} tabs={tabs} />;
 };
 
 const Logo = () => {
@@ -184,7 +133,7 @@ export const handle = ({
   project: ExtractNodeType<IProjects>;
 }) => {
   return {
-    navbar: <ProjectTabs />,
+    navbar: <Tabs />,
     breadcrum: () => <LocalBreadcrum project={project} />,
     logo: <Logo />,
   };
@@ -193,7 +142,7 @@ export const handle = ({
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
-  const { account, project, cluster } = ctx.params;
+  const { account, project } = ctx.params;
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getProject({
       name: project,
@@ -206,7 +155,7 @@ export const loader = async (ctx: IRemixCtx) => {
     };
   } catch (err) {
     logger.log(err);
-    return redirect(`/${account}/${cluster}/projects`);
+    return redirect(`/${account}/projects`);
   }
 };
 

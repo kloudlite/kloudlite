@@ -13,7 +13,6 @@ import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useInputSearch } from '~/root/lib/client/helpers/search-filter';
@@ -24,8 +23,9 @@ import { handleError } from '~/root/lib/utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { cn } from '~/components/utils';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 
-type IDialog = IDialogBase<ExtractNodeType<IClusterMSvs>> & {
+type IDialog = IDialogBase<ExtractNodeType<IProjectMSvs>> & {
   templates: IMSvTemplates;
 };
 
@@ -446,10 +446,8 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reload = useReload();
 
-  const { cluster } = useParams();
+  const { project } = useParams();
   const [step, setStep] = useState<'choose' | 'fill'>('choose');
-
-  console.log(selectedService);
 
   const {
     values,
@@ -473,8 +471,8 @@ const Root = (props: IDialog) => {
       delete tempVal.displayName;
 
       try {
-        if (!cluster) {
-          throw new Error('Cluster not found.');
+        if (!project) {
+          throw new Error('Project is required!.');
         }
         if (
           !selectedService?.service.apiVersion ||
@@ -482,9 +480,9 @@ const Root = (props: IDialog) => {
         ) {
           throw new Error('Service apiversion or kind error.');
         }
-        const { errors: e } = await api.createClusterMSv({
-          clusterName: cluster,
-          service: {
+        const { errors: e } = await api.createProjectMSv({
+          projectName: project,
+          pmsvc: {
             displayName: val.displayName,
             metadata: {
               name: val.name,
@@ -500,7 +498,7 @@ const Root = (props: IDialog) => {
                   },
                 },
               },
-              namespace: '',
+              targetNamespace: '',
             },
           },
         });
@@ -620,7 +618,7 @@ const HandleBackendService = (props: IDialog) => {
       onOpenChange={(v) => setVisible(v)}
     >
       <Popup.Header>
-        {isUpdate ? 'Edit cloud provider' : 'Add new cloud provider'}
+        {isUpdate ? 'Edit managed service' : 'Add managed service'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>

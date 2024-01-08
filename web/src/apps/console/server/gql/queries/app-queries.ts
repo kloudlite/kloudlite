@@ -107,10 +107,6 @@ export const appQueries = (executor: IExecutor) => ({
           markedForDeletion
           metadata {
             annotations
-            creationTimestamp
-            deletionTimestamp
-            generation
-            labels
             name
             namespace
           }
@@ -267,17 +263,100 @@ export const appQueries = (executor: IExecutor) => ({
               markedForDeletion
               metadata {
                 annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
                 name
                 namespace
               }
               projectName
               spec {
+                containers {
+                  args
+                  command
+                  env {
+                    key
+                    optional
+                    refKey
+                    refName
+                    type
+                    value
+                  }
+                  envFrom {
+                    refName
+                    type
+                  }
+                  image
+                  imagePullPolicy
+                  livenessProbe {
+                    failureThreshold
+                    httpGet {
+                      httpHeaders
+                      path
+                      port
+                    }
+                    initialDelay
+                    interval
+                    shell {
+                      command
+                    }
+                    tcp {
+                      port
+                    }
+                    type
+                  }
+                  name
+                  readinessProbe {
+                    failureThreshold
+                    initialDelay
+                    interval
+                    type
+                  }
+                  resourceCpu {
+                    max
+                    min
+                  }
+                  resourceMemory {
+                    max
+                    min
+                  }
+                  volumes {
+                    items {
+                      fileName
+                      key
+                    }
+                    mountPath
+                    refName
+                    type
+                  }
+                }
                 displayName
                 freeze
+                hpa {
+                  enabled
+                  maxReplicas
+                  minReplicas
+                  thresholdCpu
+                  thresholdMemory
+                }
+                intercept {
+                  enabled
+                  toDevice
+                }
+                nodeSelector
+                region
+                replicas
+                serviceAccount
+                services {
+                  name
+                  port
+                  targetPort
+                  type
+                }
+                tolerations {
+                  effect
+                  key
+                  operator
+                  tolerationSeconds
+                  value
+                }
               }
               status {
                 checks

@@ -782,6 +782,10 @@ mutation consoleUpdateEnvironment($projectName: String!, $env: EnvironmentIn!) {
   }
 }
 
+mutation consoleDeleteEnvironment($projectName: String!, $envName: String!) {
+  core_deleteEnvironment(projectName: $projectName, envName: $envName)
+}
+
 query consoleListEnvironments($projectName: String!, $search: SearchEnvironments, $pq: CursorPaginationIn) {
   core_listEnvironments(projectName: $projectName, search: $search, pq: $pq) {
     edges {
@@ -877,10 +881,6 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
     markedForDeletion
     metadata {
       annotations
-      creationTimestamp
-      deletionTimestamp
-      generation
-      labels
       name
       namespace
     }
@@ -1023,17 +1023,100 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
         markedForDeletion
         metadata {
           annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
           name
           namespace
         }
         projectName
         spec {
+          containers {
+            args
+            command
+            env {
+              key
+              optional
+              refKey
+              refName
+              type
+              value
+            }
+            envFrom {
+              refName
+              type
+            }
+            image
+            imagePullPolicy
+            livenessProbe {
+              failureThreshold
+              httpGet {
+                httpHeaders
+                path
+                port
+              }
+              initialDelay
+              interval
+              shell {
+                command
+              }
+              tcp {
+                port
+              }
+              type
+            }
+            name
+            readinessProbe {
+              failureThreshold
+              initialDelay
+              interval
+              type
+            }
+            resourceCpu {
+              max
+              min
+            }
+            resourceMemory {
+              max
+              min
+            }
+            volumes {
+              items {
+                fileName
+                key
+              }
+              mountPath
+              refName
+              type
+            }
+          }
           displayName
           freeze
+          hpa {
+            enabled
+            maxReplicas
+            minReplicas
+            thresholdCpu
+            thresholdMemory
+          }
+          intercept {
+            enabled
+            toDevice
+          }
+          nodeSelector
+          region
+          replicas
+          serviceAccount
+          services {
+            name
+            port
+            targetPort
+            type
+          }
+          tolerations {
+            effect
+            key
+            operator
+            tolerationSeconds
+            value
+          }
         }
         status {
           checks
@@ -1061,6 +1144,26 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
     }
     totalCount
   }
+}
+
+mutation consoleCreateRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
+  core_createRouter(projectName: $projectName, envName: $envName, router: $router) {
+    id
+  }
+}
+
+mutation consoleUpdateRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
+  core_updateRouter(projectName: $projectName, envName: $envName, router: $router) {
+    id
+  }
+}
+
+mutation consoleDeleteRouter($projectName: String!, $envName: String!, $routerName: String!) {
+  core_deleteRouter(
+    projectName: $projectName
+    envName: $envName
+    routerName: $routerName
+  )
 }
 
 query consoleListRouters($projectName: String!, $envName: String!, $search: SearchRouters, $pq: CursorPaginationIn) {
@@ -1099,6 +1202,30 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
         }
         projectName
         spec {
+          backendProtocol
+          basicAuth {
+            enabled
+            secretName
+            username
+          }
+          cors {
+            allowCredentials
+            enabled
+            origins
+          }
+          domains
+          https {
+            enabled
+            forceRedirect
+          }
+          ingressClass
+          maxBodySizeInMB
+          rateLimit {
+            connections
+            enabled
+            rpm
+            rps
+          }
           routes {
             app
             lambda
@@ -1132,6 +1259,80 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
       startCursor
     }
     totalCount
+  }
+}
+
+query consoleGetRouter($projectName: String!, $envName: String!, $name: String!) {
+  core_getRouter(projectName: $projectName, envName: $envName, name: $name) {
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    enabled
+    environmentName
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      name
+      namespace
+    }
+    projectName
+    spec {
+      backendProtocol
+      basicAuth {
+        enabled
+        secretName
+        username
+      }
+      cors {
+        allowCredentials
+        enabled
+        origins
+      }
+      domains
+      https {
+        enabled
+        forceRedirect
+      }
+      ingressClass
+      maxBodySizeInMB
+      rateLimit {
+        connections
+        enabled
+        rpm
+        rps
+      }
+      routes {
+        app
+        lambda
+        path
+        port
+        rewrite
+      }
+    }
+    status {
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    updateTime
   }
 }
 
@@ -2348,6 +2549,147 @@ mutation consoleDeleteClusterMSv($clusterName: String!, $serviceName: String!) {
   infra_deleteClusterManagedService(
     clusterName: $clusterName
     serviceName: $serviceName
+  )
+}
+
+query consoleGetProjectMSv($projectName: String!, $name: String!) {
+  core_getProjectManagedService(projectName: $projectName, name: $name) {
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      msvcSpec {
+        serviceTemplate {
+          apiVersion
+          kind
+          spec
+        }
+      }
+      targetNamespace
+    }
+    status {
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    updateTime
+  }
+}
+
+mutation consoleCreateProjectMSv($projectName: String!, $pmsvc: ProjectManagedServiceIn!) {
+  core_createProjectManagedService(projectName: $projectName, pmsvc: $pmsvc) {
+    id
+  }
+}
+
+mutation consoleUpdateProjectMSv($projectName: String!, $pmsvc: ProjectManagedServiceIn!) {
+  core_updateProjectManagedService(projectName: $projectName, pmsvc: $pmsvc) {
+    id
+  }
+}
+
+query consoleListProjectMSvs($projectName: String!, $search: SearchProjectManagedService, $pq: CursorPaginationIn) {
+  core_listProjectManagedServices(
+    projectName: $projectName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        spec {
+          msvcSpec {
+            serviceTemplate {
+              apiVersion
+              kind
+              spec
+            }
+          }
+          targetNamespace
+        }
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleDeleteProjectMSv($projectName: String!, $pmsvcName: String!) {
+  core_deleteProjectManagedService(
+    projectName: $projectName
+    pmsvcName: $pmsvcName
   )
 }
 
