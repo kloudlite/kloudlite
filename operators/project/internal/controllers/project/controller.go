@@ -16,7 +16,6 @@ import (
 	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -41,9 +40,8 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	NamespacedRBACsReady        string = "namespaced-rbacs-ready"
-	NamespaceExists             string = "namespace-exists"
-	WorkspaceRouteSwitcherReady string = "workspace-route-switcher-ready"
+	NamespacedRBACsReady string = "namespaced-rbacs-ready"
+	NamespaceExists      string = "namespace-exists"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -86,10 +84,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureWorkspaceRouteSwitcher(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
 }
@@ -105,13 +99,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepRes
 	req.LogPreCheck(NamespaceExists)
 	defer req.LogPostCheck(NamespaceExists)
 
-	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
-		}
-		ns = &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
-	}
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
 		if ns.Labels == nil {
@@ -121,6 +109,12 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepRes
 		ns.Labels[constants.AccountNameKey] = obj.Spec.AccountName
 		ns.Labels[constants.ClusterNameKey] = obj.Spec.ClusterName
 		ns.Labels[constants.ProjectNameKey] = obj.Name
+
+		if ns.Annotations == nil {
+			ns.Annotations = make(map[string]string, 1)
+		}
+
+		ns.Annotations[constants.DescriptionKey] = "this namespace is now being managed by kloudlite project"
 		return nil
 	}); err != nil {
 		return req.CheckFailed(NamespaceExists, check, err.Error())
@@ -128,7 +122,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepRes
 
 	check.Status = true
 	if check != obj.Status.Checks[NamespaceExists] {
-		obj.Status.Checks[NamespaceExists] = check
+		fn.MapSet(&obj.Status.Checks, NamespaceExists, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -177,81 +171,6 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*crdsv1.Project]) s
 	if check != checks[NamespacedRBACsReady] {
 		checks[NamespacedRBACsReady] = check
 		req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *Reconciler) ensureWorkspaceRouteSwitcher(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(WorkspaceRouteSwitcherReady)
-	defer req.LogPostCheck(WorkspaceRouteSwitcherReady)
-
-	d := &crdsv1.App{ObjectMeta: metav1.ObjectMeta{Name: r.Env.WorkspaceRouteSwitcherName, Namespace: obj.Spec.TargetNamespace}}
-
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, d, func() error {
-		d.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		d.Spec = crdsv1.AppSpec{
-			DisplayName: "workspace router switcher",
-			Replicas:    0,
-			Services: []crdsv1.AppSvc{
-				{
-					Port:       80,
-					TargetPort: 80,
-					Type:       "tcp",
-					Name:       "http",
-				},
-			},
-			Containers: []crdsv1.AppContainer{
-				{
-					Name:            "main",
-					Image:           r.Env.WorkspaceRouteSwitcherImage,
-					ImagePullPolicy: "Always",
-					LivenessProbe: &crdsv1.Probe{
-						Type: "httpGet",
-						HttpGet: &crdsv1.HttpGetProbe{
-							Path: "/.kl/healthz",
-							Port: 80,
-						},
-						FailureThreshold: 3,
-						InitialDelay:     3,
-						Interval:         10,
-					},
-					ReadinessProbe: &crdsv1.Probe{
-						Type: "httpGet",
-						HttpGet: &crdsv1.HttpGetProbe{
-							Path: "/.kl/healthz",
-							Port: 80,
-						},
-						FailureThreshold: 3,
-						InitialDelay:     3,
-						Interval:         10,
-					},
-				},
-			},
-		}
-		return nil
-	}); err != nil {
-		return req.CheckFailed(WorkspaceRouteSwitcherReady, check, err.Error()).Err(nil)
-	}
-
-	a, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, "workspace-route-switcher"), &crdsv1.App{})
-	if err != nil {
-		return req.CheckFailed(WorkspaceRouteSwitcherReady, check, err.Error())
-	}
-
-	if !a.Status.IsReady {
-		return req.CheckFailed(WorkspaceRouteSwitcherReady, check, "waiting for workspace-route-switcher to be ready").Err(nil)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[WorkspaceRouteSwitcherReady] {
-		obj.Status.Checks[WorkspaceRouteSwitcherReady] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
 	}
 
 	return req.Next()

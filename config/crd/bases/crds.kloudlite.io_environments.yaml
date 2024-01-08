@@ -51,6 +51,8 @@ spec:
           spec:
             description: EnvironmentSpec defines the desired state of Environment
             properties:
+              ingressClassName:
+                type: string
               projectName:
                 type: string
               targetNamespace:

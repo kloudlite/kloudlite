@@ -2,7 +2,6 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -252,26 +251,34 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) (
 
 	var wcDomains, nonWcDomains []string
 
-	issuerName := r.Env.ClusterIssuer
 	wcdMap := make(map[string]bool, cap(wcDomains))
 
 	if obj.Spec.Https.Enabled {
-		cIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), fn.NewUnstructured(constants.ClusterIssuerType))
+		issuerName := obj.Spec.Https.ClusterIssuer
+		if issuerName == "" {
+			issuerName = r.Env.DefaultClusterIssuer
+		}
+
+		if issuerName == "" {
+			return nil, nil, fmt.Errorf("no cluster issuer found, could not proceed, when https is enabled")
+		}
+
+		clusterIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", issuerName), &certmanagerv1.ClusterIssuer{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return nil, nil, err
 			}
 		}
 
-		if cIssuer != nil {
-			var clusterIssuer certmanagerv1.ClusterIssuer
-			b, err := json.Marshal(cIssuer.Object)
-			if err != nil {
-				return nil, nil, err
-			}
-			if err := json.Unmarshal(b, &clusterIssuer); err != nil {
-				return nil, nil, err
-			}
+		if clusterIssuer != nil {
+			// var clusterIssuer certmanagerv1.ClusterIssuer
+			// b, err := json.Marshal(cIssuer.Object)
+			// if err != nil {
+			// 	return nil, nil, err
+			// }
+			// if err := json.Unmarshal(b, &clusterIssuer); err != nil {
+			// 	return nil, nil, err
+			// }
 
 			for _, solver := range clusterIssuer.Spec.ACME.Solvers {
 				if solver.DNS01 != nil {
@@ -329,7 +336,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	}
 
 	if obj.Spec.Https != nil && obj.Spec.Https.Enabled {
-		annotations["cert-manager.io/cluster-issuer"] = r.Env.ClusterIssuer
+		annotations["cert-manager.io/cluster-issuer"] = r.Env.DefaultClusterIssuer
 		annotations["nginx.kubernetes.io/ssl-redirect"] = "true"
 		annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"] = fmt.Sprintf("%v", obj.Spec.Https.ForceRedirect)
 	}
@@ -361,8 +368,6 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		annotations["nginx.ingress.kubernetes.io/auth-secret"] = obj.Spec.BasicAuth.SecretName
 		annotations["nginx.ingress.kubernetes.io/auth-realm"] = "route is protected by basic auth"
 	}
-
-	// issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
 
 	// lambdaGroups := map[string][]crdsv1.Route{}
 	var appRoutes []crdsv1.Route
@@ -432,11 +437,20 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 				"wildcard-domains":     wcDomains,
 				"router-domains":       obj.Spec.Domains,
 
-				"ingress-class":  r.Env.IngressClass,
-				"cluster-issuer": r.Env.ClusterIssuer,
+				"ingress-class": func() string {
+					if obj.Spec.IngressClass != "" {
+						return obj.Spec.IngressClass
+					}
+					return r.Env.DefaultIngressClass
+				}(),
+				"cluster-issuer": func() string {
+					if obj.Spec.Https != nil && obj.Spec.Https.ClusterIssuer != "" {
+						return obj.Spec.Https.ClusterIssuer
+					}
+					return r.Env.DefaultClusterIssuer
+				}(),
 
-				"route-to-workspace-switcher": r.isInProjectNamespace(ctx, obj),
-				"routes":                      appRoutes,
+				"routes": appRoutes,
 
 				"is-https-enabled": obj.Spec.Https != nil && obj.Spec.Https.Enabled,
 			},
@@ -456,26 +470,26 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	req.AddToOwnedResources(rr...)
 
 	// INFO: since, nginx controller behaviour is dictated by annotations, and on kubectl apply, removed annotations will be left over on the resource, we need to manually ensure all the correct and only those annotations are there on the real ingress resource
-	for i := range rr {
-		ing := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: rr[i].Name, Namespace: rr[i].Namespace}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ing, func() error {
-			matches := true
-
-			for k := range ing.GetAnnotations() {
-				if _, ok := annotations[k]; !ok && !strings.HasPrefix(k, "kloudlite.io") {
-					matches = false
-					break
-				}
-			}
-
-			if !matches {
-				ing.SetAnnotations(annotations)
-			}
-			return nil
-		}); err != nil {
-			return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
-		}
-	}
+	// for i := range rr {
+	// 	ing := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: rr[i].Name, Namespace: rr[i].Namespace}}
+	// 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ing, func() error {
+	// 		matches := true
+	//
+	// 		for k := range ing.GetAnnotations() {
+	// 			if _, ok := annotations[k]; !ok && !strings.HasPrefix(k, "kloudlite.io") {
+	// 				matches = false
+	// 				break
+	// 			}
+	// 		}
+	//
+	// 		if !matches {
+	// 			ing.SetAnnotations(annotations)
+	// 		}
+	// 		return nil
+	// 	}); err != nil {
+	// 		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
+	// 	}
+	// }
 
 	check.Status = true
 	if check != checks[IngressReady] {
