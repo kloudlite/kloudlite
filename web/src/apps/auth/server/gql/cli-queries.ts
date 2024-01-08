@@ -17,6 +17,78 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_updateDevicePort: executor(
+    gql`
+      mutation Mutation(
+        $clusterName: String!
+        $deviceName: String!
+        $ports: [PortIn!]!
+      ) {
+        infra_updateVPNDevicePorts(
+          clusterName: $clusterName
+          deviceName: $deviceName
+          ports: $ports
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_updateVPNDevicePorts,
+      vars: (_: any) => { },
+    }
+  ),
+  cli_getSecret: executor(
+    gql`
+      query Core_getSecret(
+        $projectName: String!
+        $envName: String!
+        $name: String!
+      ) {
+        core_getSecret(
+          projectName: $projectName
+          envName: $envName
+          name: $name
+        ) {
+          displayName
+          metadata {
+            name
+            namespace
+          }
+          stringData
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getSecret,
+      vars: (_: any) => { },
+    }
+  ),
+  cli_getConfig: executor(
+    gql`
+      query Core_getConfig(
+        $projectName: String!
+        $envName: String!
+        $name: String!
+      ) {
+        core_getConfig(
+          projectName: $projectName
+          envName: $envName
+          name: $name
+        ) {
+          data
+          displayName
+          metadata {
+            name
+            namespace
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getConfig,
+      vars: (_: any) => { },
+    }
+  ),
+
   cli_listApps: executor(
     gql`
       query Core_listApps($projectName: String!, $envName: String!) {
@@ -171,6 +243,29 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listApps,
+      vars: (_: any) => { },
+    }
+  ),
+  cli_listConfigs: executor(
+    gql`
+      query Core_listConfigs($projectName: String!, $envName: String!) {
+        core_listConfigs(projectName: $projectName, envName: $envName) {
+          totalCount
+          edges {
+            node {
+              data
+              displayName
+              metadata {
+                name
+                namespace
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listConfigs,
       vars: (_: any) => { },
     }
   ),

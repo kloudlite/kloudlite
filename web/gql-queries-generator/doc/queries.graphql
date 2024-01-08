@@ -2540,6 +2540,36 @@ mutation consoleDeleteHelmChart($clusterName: String!, $releaseName: String!) {
   infra_deleteHelmRelease(clusterName: $clusterName, releaseName: $releaseName)
 }
 
+mutation authCli_updateDevicePort($clusterName: String!, $deviceName: String!, $ports: [PortIn!]!) {
+  infra_updateVPNDevicePorts(
+    clusterName: $clusterName
+    deviceName: $deviceName
+    ports: $ports
+  )
+}
+
+query authCli_getSecret($projectName: String!, $envName: String!, $name: String!) {
+  core_getSecret(projectName: $projectName, envName: $envName, name: $name) {
+    displayName
+    metadata {
+      name
+      namespace
+    }
+    stringData
+  }
+}
+
+query authCli_getConfig($projectName: String!, $envName: String!, $name: String!) {
+  core_getConfig(projectName: $projectName, envName: $envName, name: $name) {
+    data
+    displayName
+    metadata {
+      name
+      namespace
+    }
+  }
+}
+
 query authCli_listApps($projectName: String!, $envName: String!) {
   core_listApps(projectName: $projectName, envName: $envName) {
     edges {
@@ -2687,6 +2717,22 @@ query authCli_listApps($projectName: String!, $envName: String!) {
       startCursor
     }
     totalCount
+  }
+}
+
+query authCli_listConfigs($projectName: String!, $envName: String!) {
+  core_listConfigs(projectName: $projectName, envName: $envName) {
+    totalCount
+    edges {
+      node {
+        data
+        displayName
+        metadata {
+          name
+          namespace
+        }
+      }
+    }
   }
 }
 

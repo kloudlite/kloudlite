@@ -3869,6 +3869,44 @@ export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
 
+export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  ports: Array<PortIn> | PortIn;
+}>;
+
+export type AuthCli_UpdateDevicePortMutation = {
+  infra_updateVPNDevicePorts: boolean;
+};
+
+export type AuthCli_GetSecretQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetSecretQuery = {
+  core_getSecret?: {
+    displayName: string;
+    stringData?: any;
+    metadata?: { name: string; namespace?: string };
+  };
+};
+
+export type AuthCli_GetConfigQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetConfigQuery = {
+  core_getConfig?: {
+    data?: any;
+    displayName: string;
+    metadata?: { name: string; namespace?: string };
+  };
+};
+
 export type AuthCli_ListAppsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
@@ -3991,6 +4029,24 @@ export type AuthCli_ListAppsQuery = {
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+  };
+};
+
+export type AuthCli_ListConfigsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_ListConfigsQuery = {
+  core_listConfigs?: {
+    totalCount: number;
+    edges: Array<{
+      node: {
+        data?: any;
+        displayName: string;
+        metadata?: { name: string; namespace?: string };
+      };
+    }>;
   };
 };
 
