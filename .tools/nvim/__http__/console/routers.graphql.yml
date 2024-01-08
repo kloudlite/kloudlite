@@ -7,8 +7,8 @@ global:
 
 label: List Routers
 query: |+
-  query Core_listRouters($namespace: String!) {
-    core_listRouters(namespace: $namespace) {
+  query Core_listRouters($projectName: String!, $envName: String!) {
+    core_listRouters(projectName: $projectName, envName: $envName) {
       edges {
         cursor
         node {
@@ -31,6 +31,7 @@ query: |+
           syncStatus {
             state
             recordVersion
+            error
           }
         }
       }
@@ -42,29 +43,39 @@ query: |+
       }
       totalCount
     }
-
   }
 variables:
-  namespace: "{{.projectNamespace}}"
+  projectName: '{{.projectName}}'
+  envName: "{{.envName}}"
 ---
 
 label: Create Router
 query: |+
-  mutation Core_createRouter($router: RouterIn!) {
-    core_createRouter(router: $router) {
+  mutation Core_createRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
+    core_createRouter(projectName: $projectName, envName: $envName, router: $router) {
       spec {
         domains
       }
     }
   }
 variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName2}}"
   router:
+    displayName: "this is a test router"
     metadata:
       name: '{{.name}}'
-      namespace: '{{.projectNamespace}}'
     spec:
+      ingressClass: "{{.ingressClass2}}"
+      https:
+        enabled: true
+        # clusterIssuer: cluster-issuer
       domains:
-        - nginx.dev.kloudlite.io
+        - "{{.name}}.{{.baseDomain}}"
+      routes:
+        - app: sample-app
+          path: /
+          port: 80
 ---
 
 label: Get Router
@@ -89,39 +100,42 @@ variables:
 
 label: Update Router
 query: |+
-  mutation Core_updateRouter($router: RouterIn!) {
-    core_updateRouter(router: $router) {
+  mutation Core_updateRouter($projectName: String!, $envName: String!, $router: RouterIn!) {
+    core_updateRouter(projectName: $projectName, envName: $envName, router: $router) {
       spec {
         domains
       }
     }
   }
 variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
   router:
+    displayName: "this is a test router"
     metadata:
       name: '{{.name}}'
-      namespace: '{{.projectNamespace}}'
     spec:
-      ingressClass: nginx
+      ingressClass: "{{.ingressClass2}}"
       https:
         enabled: true
-        clusterIssuer: cluster-issuer
+        # clusterIssuer: cluster-issuer
       domains:
-        - nginx.client-1.dev.kloudlite.io
+        - "example.{{.baseDomain}}"
       routes:
-        - app: s1
+        - app: sample-app
           path: /
           port: 80
 ---
 
 label: Delete Router
 query: |+
-  mutation Core_deleteRouter($namespace: String!, $name: String!) {
-    core_deleteRouter(namespace: $namespace, name: $name)
+  mutation Core_deleteRouter($projectName: String!, $envName: String!, $routerName: String!) {
+    core_deleteRouter(projectName: $projectName, envName: $envName, routerName: $routerName)
   }
 variables:
-  namespace: '{{.projectNamespace}}'
-  name: "{{.name}}"
+  projectName: '{{.projectName}}'
+  envName: '{{.envName}}'
+  routerName: "{{.name}}"
 ---
 
 label: Resync Routers
