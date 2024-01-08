@@ -99,9 +99,9 @@ type Domain interface {
 	UpdateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
 
 	DeleteHelmRelease(ctx InfraContext, clusterName string, name string) error
-	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error
+	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 	OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
-	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
+	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
 	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
