@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"encoding/base64"
-
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
@@ -16,7 +15,7 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
-	v1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	"github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 // AdminKubeconfig is the resolver for the adminKubeconfig field.
@@ -194,6 +193,20 @@ func (r *mutationResolver) InfraUpdateVPNDevicePorts(ctx context.Context, cluste
 	}
 
 	if err := r.Domain.UpdateVpnDevicePorts(cc, clusterName, deviceName, ports); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// InfraUpdateVPNDeviceNs is the resolver for the infra_updateVPNDeviceNs field.
+func (r *mutationResolver) InfraUpdateVPNDeviceNs(ctx context.Context, clusterName string, deviceName string, namespace string) (bool, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.UpdateVpnDeviceNs(cc, clusterName, deviceName, namespace); err != nil {
 		return false, err
 	}
 
