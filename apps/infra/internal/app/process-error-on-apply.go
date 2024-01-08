@@ -62,7 +62,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 			}
 		case helmreleaseGVK.String():
 			{
-				return d.OnHelmReleaseApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error)
+				return d.OnHelmReleaseApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		default:
 			{

@@ -152,6 +152,19 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 
+		case helmreleaseGVK.String():
+			{
+				var hr entities.HelmRelease
+				if err := fn.JsonConversion(su.Object, &hr); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnHelmReleaseDeleteMessage(dctx, su.ClusterName, hr)
+				}
+				return d.OnHelmReleaseUpdateMessage(dctx, su.ClusterName, hr, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
 		case namespaceGVK.String():
 			{
 				var pvc entities.PersistentVolumeClaim

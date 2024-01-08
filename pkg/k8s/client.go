@@ -23,6 +23,8 @@ type Client interface {
 	// client go like
 	Get(ctx context.Context, nn types.NamespacedName, obj client.Object) error
 	Create(ctx context.Context, obj client.Object) error
+	Update(ctx context.Context, obj client.Object) error
+	Delete(ctx context.Context, obj client.Object) error
 
 	// custom ones
 	ValidateObject(ctx context.Context, obj client.Object) error
@@ -35,6 +37,16 @@ type clientHandler struct {
 	kclient    client.Client
 	kclientset *clientset.Clientset
 	yamlclient kubectl.YAMLClient
+}
+
+// Delete implements Client.
+func (ch *clientHandler) Delete(ctx context.Context, obj client.Object) error {
+	return ch.kclient.Delete(ctx, obj)
+}
+
+// Update implements Client.
+func (ch *clientHandler) Update(ctx context.Context, obj client.Object) error {
+	return ch.kclient.Update(ctx, obj)
 }
 
 // CreateOrUpdate implements Client.
