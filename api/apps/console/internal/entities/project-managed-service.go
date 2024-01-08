@@ -14,12 +14,12 @@ type ProjectManagedService struct {
 	common.ResourceMetadata `json:",inline"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
-	ProjectName string `json:"clusterName" graphql:"noinput"`
+	ProjectName string `json:"projectName" graphql:"noinput"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-var ClusterManagedServiceIndices = []repos.IndexField{
+var ProjectManagedServiceIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
