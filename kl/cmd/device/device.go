@@ -26,7 +26,7 @@ Examples:
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "dev")
 
-	Cmd.AddCommand(exposeCmd)
+	// Cmd.AddCommand(exposeCmd)
 	Cmd.AddCommand(interceptCmd)
-	Cmd.AddCommand(setNamespaceCmd)
+	// Cmd.AddCommand(setNamespaceCmd)
 }

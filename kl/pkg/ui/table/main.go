@@ -49,7 +49,7 @@ func TotalResults(length int, printIt bool) string {
 
 func KVOutput(k string, v interface{}, printIt bool) string {
 	result := fmt.Sprint(
-		text.Colored(k, headerColor), " ",
+		text.Bold(k), " ",
 		text.Colored(fmt.Sprintf("%v", v), 2),
 	)
 

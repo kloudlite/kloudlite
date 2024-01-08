@@ -1,8 +1,10 @@
 package vpn
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -30,6 +32,17 @@ Example:
 			functions.PrintError(err)
 			return
 		}
+
+		s, err := client.CurrentDeviceName()
+		if err != nil {
+			functions.PrintError(err)
+			return
+		}
+
+		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+			text.Red(s),
+		)
+
 	},
 }
 
