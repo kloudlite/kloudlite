@@ -1,7 +1,5 @@
 ---
 global:
-  projectName: "sample"
-  envName: "sample2"
   name: sample-app
 ---
 
@@ -88,8 +86,7 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      name: "{{.name}}"
-      # namespace: "{{.namespace}}"
+      name: "{{.name}}3"
     spec:
       containers:
         - name: main
@@ -99,8 +96,8 @@ variables:
 
 label: Update App
 query: |+
-  mutation Core_updateApp($app: AppIn!) {
-    core_updateApp(app: $app) {
+  mutation Core_updateApp($projectName: String!, $envName: String!, $app: AppIn!) {
+    core_updateApp(projectName: $projectName, envName: $envName, app: $app) {
       metadata {
         name
         generation
@@ -113,11 +110,12 @@ query: |+
     }
   }
 variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName2}}"
   app:
     displayName: "sample app"
     metadata:
-      name: '{{.name}}x'
-      namespace: '{{.namespace}}'
+      name: '{{.name}}'
     spec:
       services:
         - type: tcp
@@ -125,8 +123,8 @@ variables:
           targetPort: 80
       containers:
         - name: main
-          # image: nginx
-          image: kong/httpbin
+          image: nginx
+          # image: kong/httpbin
           # envFrom:
           #   - type: config
           #     refName: s1
@@ -135,10 +133,11 @@ variables:
 
 label: Delete App
 query: |+
-  mutation Core_deleteApp($namespace: String!, $name: String!) {
-    core_deleteApp(namespace: $namespace, name: $name)
+  mutation Core_deleteApp($projectName: String!, $envName: String!, $appName: String!) {
+    core_deleteApp(projectName: $projectName, envName: $envName, appName: $appName)
   }
 variables:
-  namespace: '{{.namespace}}'
-  name: "{{.name}}x"
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  appName: "{{.name}}"
 ---

@@ -46,12 +46,12 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	namespace, err := d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
 	if err != nil {
-		return nil, errors.NewE(err)
+		return nil, err
 	}
 
-	router.Namespace = env.Spec.TargetNamespace
+	router.Namespace = namespace
 
 	router.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
@@ -97,13 +97,14 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	router.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
+	xRouter, err := d.findRouter(ctx, router.Name)
+	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	xRouter, err := d.findRouter(ctx, router.Name)
-	if err != nil {
+	router.EnsureGVK()
+	router.Namespace = xRouter.Namespace
+	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
 		return nil, errors.NewE(err)
 	}
 

@@ -4,6 +4,7 @@ import (
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -12,7 +13,6 @@ import (
 )
 
 func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName string, namespace string) error {
-
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, devName); err != nil {
 		return errors.NewE(err)
 	}
@@ -43,11 +43,9 @@ func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName
 		return errors.NewE(err)
 	}
 	return nil
-
 }
 
 func (d *domain) ListVPNDevices(ctx InfraContext, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateVPNDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -67,7 +65,6 @@ func (d *domain) GetVPNDevice(ctx InfraContext, clusterName string, deviceName s
 }
 
 func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
-
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateVPNDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -89,6 +86,15 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 	device.ClusterName = clusterName
 	device.SyncStatus = t.GenSyncStatus(t.SyncActionApply, device.RecordVersion)
 
+	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
+		UserId:       string(ctx.UserId),
+		ResourceType: string(iamT.ResourceVPNDevice),
+		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceVPNDevice, device.Name),
+		Role:         string(iamT.RoleResourceOwner),
+	}); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	nDevice, err := d.vpnDeviceRepo.Create(ctx, &device)
 	if err != nil {
 		if d.vpnDeviceRepo.ErrAlreadyExists(err) {
@@ -106,7 +112,6 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 }
 
 func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
-
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, device.Name); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -149,7 +154,6 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device en
 }
 
 func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devName string, ports []*wgv1.Port) error {
-
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, devName); err != nil {
 		return errors.NewE(err)
 	}
@@ -172,7 +176,6 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 		for _, p := range ports {
 			if p != nil {
 				prt = append(prt, *p)
-
 			}
 		}
 		return prt
@@ -190,11 +193,9 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 		return errors.NewE(err)
 	}
 	return nil
-
 }
 
 func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string) (*entities.VPNDevice, error) {
-
 	device, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
 		"accountName":   ctx.AccountName,
 		"clusterName":   clusterName,
@@ -217,7 +218,6 @@ func (d *domain) GetWgConfigForDevice(ctx InfraContext, clusterName string, devi
 }
 
 func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error {
-
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, name); err != nil {
 		return errors.NewE(err)
 	}

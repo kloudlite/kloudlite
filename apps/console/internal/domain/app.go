@@ -125,38 +125,40 @@ func (d *domain) UpdateApp(ctx ResourceContext, app entities.App) (*entities.App
 		return nil, errors.NewE(err)
 	}
 
+	xapp, err := d.findApp(ctx, app.Name)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	app.Namespace = xapp.Namespace
+
 	app.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &app.App); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	exApp, err := d.findApp(ctx, app.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	xapp.IncrementRecordVersion()
 
-	exApp.IncrementRecordVersion()
-
-	exApp.LastUpdatedBy = common.CreatedOrUpdatedBy{
+	xapp.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
 
-	exApp.DisplayName = app.DisplayName
+	xapp.DisplayName = app.DisplayName
 
-	exApp.Labels = app.Labels
-	exApp.Annotations = app.Annotations
-	exApp.Spec = app.Spec
-	exApp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exApp.RecordVersion)
+	xapp.Labels = app.Labels
+	xapp.Annotations = app.Annotations
+	xapp.Spec = app.Spec
+	xapp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xapp.RecordVersion)
 
-	upApp, err := d.appRepo.UpdateById(ctx, exApp.Id, exApp)
+	upApp, err := d.appRepo.UpdateById(ctx, xapp.Id, xapp)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishAppEvent(upApp, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, ctx.AccountName, &upApp.App, upApp.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upApp.ProjectName, &upApp.App, upApp.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"google.golang.org/grpc"
@@ -22,7 +23,6 @@ import (
 	"github.com/kloudlite/api/apps/tenant-agent/internal/env"
 	proto_rpc "github.com/kloudlite/api/apps/tenant-agent/internal/proto-rpc"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
-	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	libGrpc "github.com/kloudlite/operator/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/kubectl"
