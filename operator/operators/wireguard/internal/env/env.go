@@ -19,6 +19,8 @@ type Env struct {
 
 	ClusterInternalDns  string `env:"CLUSTER_INTERNAL_DNS"`
 	DeviceInfoNamespace string `env:"DEVICE_INFO_NAMESPACE" default:"device-info"`
+
+	EnvironmentIngressName string `env:"ENVIRONMENT_INGRESS_NAME" default:"env-ingress"`
 }
 
 func GetEnvOrDie() *Env {
