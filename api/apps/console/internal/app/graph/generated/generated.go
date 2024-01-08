@@ -518,6 +518,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		CoreCloneEnvironment            func(childComplexity int, projectName string, sourceEnvName string, envName string) int
 		CoreCreateApp                   func(childComplexity int, projectName string, envName string, app entities.App) int
 		CoreCreateConfig                func(childComplexity int, projectName string, envName string, config entities.Config) int
 		CoreCreateEnvironment           func(childComplexity int, projectName string, env entities.Environment) int
@@ -797,6 +798,7 @@ type MutationResolver interface {
 	CoreCreateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
 	CoreUpdateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
 	CoreDeleteEnvironment(ctx context.Context, projectName string, envName string) (bool, error)
+	CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, envName string) (*entities.Environment, error)
 	CoreCreateImagePullSecret(ctx context.Context, projectName string, envName string, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreDeleteImagePullSecret(ctx context.Context, projectName string, envName string, secretName string) (bool, error)
 	CoreCreateApp(ctx context.Context, projectName string, envName string, app entities.App) (*entities.App, error)
@@ -2868,6 +2870,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Metadata.Namespace(childComplexity), true
 
+	case "Mutation.core_cloneEnvironment":
+		if e.complexity.Mutation.CoreCloneEnvironment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_cloneEnvironment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["projectName"].(string), args["sourceEnvName"].(string), args["envName"].(string)), true
+
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
 			break
@@ -4516,6 +4530,7 @@ type Mutation {
     core_createEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_updateEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_deleteEnvironment(projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_cloneEnvironment(projectName: String!, sourceEnvName: String!, envName: String!): Environment @isLoggedInAndVerified @hasAccount
 
     # image pull secrets
     core_createImagePullSecret(projectName: String!, envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
@@ -5508,6 +5523,39 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_core_cloneEnvironment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["projectName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["sourceEnvName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sourceEnvName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sourceEnvName"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["envName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["envName"] = arg2
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_core_createApp_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -20366,6 +20414,118 @@ func (ec *executionContext) fieldContext_Mutation_core_deleteEnvironment(ctx con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_deleteEnvironment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_cloneEnvironment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_cloneEnvironment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["envName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*entities.Environment); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/kloudlite/api/apps/console/internal/entities.Environment`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*entities.Environment)
+	fc.Result = res
+	return ec.marshalOEnvironment2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋentitiesᚐEnvironment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_cloneEnvironment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_Environment_accountName(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_Environment_apiVersion(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Environment_createdBy(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Environment_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_Environment_displayName(ctx, field)
+			case "id":
+				return ec.fieldContext_Environment_id(ctx, field)
+			case "kind":
+				return ec.fieldContext_Environment_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Environment_lastUpdatedBy(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Environment_markedForDeletion(ctx, field)
+			case "metadata":
+				return ec.fieldContext_Environment_metadata(ctx, field)
+			case "projectName":
+				return ec.fieldContext_Environment_projectName(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Environment_recordVersion(ctx, field)
+			case "spec":
+				return ec.fieldContext_Environment_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_Environment_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_Environment_syncStatus(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Environment_updateTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Environment", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_cloneEnvironment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -37712,6 +37872,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "core_cloneEnvironment":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_cloneEnvironment(ctx, field)
+			})
+
 		case "core_createImagePullSecret":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {

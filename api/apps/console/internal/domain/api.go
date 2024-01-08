@@ -26,8 +26,8 @@ func (c ConsoleContext) GetAccountName() string {
 
 type ResourceContext struct {
 	ConsoleContext
-	ProjectName                string
-	EnvironmentName            string
+	ProjectName     string
+	EnvironmentName string
 }
 
 func (r ResourceContext) DBFilters() repos.Filter {
@@ -84,6 +84,7 @@ type Domain interface {
 	GetEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error)
 
 	CreateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error)
+	CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, envName string) (*entities.Environment, error)
 	UpdateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error)
 	DeleteEnvironment(ctx ConsoleContext, projectName string, name string) error
 
@@ -172,7 +173,6 @@ type Domain interface {
 
 	GetResourceMapping(ctx ConsoleContext, resType entities.ResourceType, namespace string, name string) (*entities.ResourceMapping, error)
 
-
 	ListProjectManagedServices(ctx ConsoleContext, projectName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ProjectManagedService], error)
 	GetProjectManagedService(ctx ConsoleContext, projectName string, serviceName string) (*entities.ProjectManagedService, error)
 	CreateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
@@ -182,7 +182,6 @@ type Domain interface {
 	OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) error
 	OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error
-
 }
 
 type PublishMsg string
