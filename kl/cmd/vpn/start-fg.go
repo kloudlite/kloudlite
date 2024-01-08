@@ -10,8 +10,9 @@ import (
 )
 
 var startFgCmd = &cobra.Command{
-	Use:   "start-fg",
-	Short: "start vpn foreground",
+	Use:    "start-fg",
+	Short:  "start vpn foreground",
+	Hidden: true,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
 			fn.Log(

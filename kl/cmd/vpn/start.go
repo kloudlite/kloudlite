@@ -15,7 +15,7 @@ import (
 
 // not required in linux
 func startServiceInBg() {
-	command := exec.Command("kl", "wg", "start-fg")
+	command := exec.Command("kl", "vpn", "start-fg")
 	err := command.Start()
 	if err != nil {
 		fmt.Println(err)
@@ -105,8 +105,22 @@ Example:
 
 		fn.Log("[#] connected")
 
-		wgc.Show(nil)
+		_, err = wgc.Show(nil)
 
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		s, err := client.CurrentDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+			text.Red(s),
+		)
 	},
 }
 

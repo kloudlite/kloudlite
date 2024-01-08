@@ -1,6 +1,8 @@
 package vpn
 
 import (
+	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 	"os"
 	"strings"
 	"time"
@@ -59,7 +61,20 @@ Example:
 		fn.Log("[#] connected")
 		fn.Log("[#] reconnection done")
 
-		wgc.Show(nil)
+		if _, err = wgc.Show(nil); err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		s, err := client.CurrentDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+			text.Red(s),
+		)
 	},
 }
 
