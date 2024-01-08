@@ -279,6 +279,14 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
 	ResourceTemplate *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
+	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
 	APIVersion string                                            `json:"apiVersion"`
 	Kind       string                                            `json:"kind"`
@@ -323,6 +331,16 @@ type GithubComKloudliteOperatorApisCrdsV1ProbeIn struct {
 	Shell            *GithubComKloudliteOperatorApisCrdsV1ShellProbeIn   `json:"shell,omitempty"`
 	TCP              *GithubComKloudliteOperatorApisCrdsV1TCPProbeIn     `json:"tcp,omitempty"`
 	Type             string                                              `json:"type"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ProjectManagedServiceSpec struct {
+	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
+	TargetNamespace string                                                  `json:"targetNamespace"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ProjectManagedServiceSpecIn struct {
+	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
+	TargetNamespace string                                                    `json:"targetNamespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ProjectSpec struct {
@@ -393,6 +411,18 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
 	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RateLimitIn `json:"rateLimit,omitempty"`
 	Region          *string                                          `json:"region,omitempty"`
 	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouteIn   `json:"routes,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ServiceTemplate struct {
+	APIVersion string                 `json:"apiVersion"`
+	Kind       string                 `json:"kind"`
+	Spec       map[string]interface{} `json:"spec"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
+	APIVersion string                 `json:"apiVersion"`
+	Kind       string                 `json:"kind"`
+	Spec       map[string]interface{} `json:"spec"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ShellProbe struct {
@@ -478,6 +508,17 @@ type ProjectEdge struct {
 	Node   *entities.Project `json:"node"`
 }
 
+type ProjectManagedServiceEdge struct {
+	Cursor string                          `json:"cursor"`
+	Node   *entities.ProjectManagedService `json:"node"`
+}
+
+type ProjectManagedServicePaginatedRecords struct {
+	Edges      []*ProjectManagedServiceEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount int                          `json:"totalCount"`
+}
+
 type ProjectPaginatedRecords struct {
 	Edges      []*ProjectEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -521,6 +562,13 @@ type SearchImagePullSecrets struct {
 }
 
 type SearchManagedResources struct {
+	Text               *repos.MatchFilter `json:"text,omitempty"`
+	ManagedServiceName *repos.MatchFilter `json:"managedServiceName,omitempty"`
+	IsReady            *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion  *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
+type SearchProjectManagedService struct {
 	Text               *repos.MatchFilter `json:"text,omitempty"`
 	ManagedServiceName *repos.MatchFilter `json:"managedServiceName,omitempty"`
 	IsReady            *repos.MatchFilter `json:"isReady,omitempty"`

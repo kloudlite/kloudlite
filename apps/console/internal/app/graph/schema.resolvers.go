@@ -249,6 +249,37 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, projec
 	return true, nil
 }
 
+// CoreCreateProjectManagedService is the resolver for the core_createProjectManagedService field.
+func (r *mutationResolver) CoreCreateProjectManagedService(ctx context.Context, projectName string, pmsvc entities.ProjectManagedService) (*entities.ProjectManagedService, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.CreateProjectManagedService(ictx, projectName, pmsvc)
+}
+
+// CoreUpdateProjectManagedService is the resolver for the core_updateProjectManagedService field.
+func (r *mutationResolver) CoreUpdateProjectManagedService(ctx context.Context, projectName string, pmsvc entities.ProjectManagedService) (*entities.ProjectManagedService, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.UpdateProjectManagedService(ictx, projectName, pmsvc)
+}
+
+// CoreDeleteProjectManagedService is the resolver for the core_deleteProjectManagedService field.
+func (r *mutationResolver) CoreDeleteProjectManagedService(ctx context.Context, projectName string, pmsvcName string) (bool, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	err = r.Domain.DeleteProjectManagedService(ictx, projectName, pmsvcName)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
 func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType entities.ResourceType, namespace *string, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	cc, err := toConsoleContext(ctx)
@@ -830,6 +861,80 @@ func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, projectNa
 	if err := r.Domain.ResyncManagedResource(newResourceContext(cc, projectName, envName), name); err != nil {
 		return false, errors.NewE(err)
 	}
+	return true, nil
+}
+
+// CoreListProjectManagedServices is the resolver for the core_listProjectManagedServices field.
+func (r *queryResolver) CoreListProjectManagedServices(ctx context.Context, projectName string, search *model.SearchProjectManagedService, pq *repos.CursorPagination) (*model.ProjectManagedServicePaginatedRecords, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if pq == nil {
+		pq = &repos.DefaultCursorPagination
+	}
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search != nil {
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pClusters, err := r.Domain.ListProjectManagedServices(ictx, projectName, filter, *pq)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ce := make([]*model.ProjectManagedServiceEdge, len(pClusters.Edges))
+	for i := range pClusters.Edges {
+		ce[i] = &model.ProjectManagedServiceEdge{
+			Node:   pClusters.Edges[i].Node,
+			Cursor: pClusters.Edges[i].Cursor,
+		}
+	}
+
+	m := model.ProjectManagedServicePaginatedRecords{
+		Edges: ce,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pClusters.PageInfo.EndCursor,
+			HasNextPage:     pClusters.PageInfo.HasNextPage,
+			HasPreviousPage: pClusters.PageInfo.HasPrevPage,
+			StartCursor:     &pClusters.PageInfo.StartCursor,
+		},
+		TotalCount: int(pClusters.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// CoreGetProjectManagedService is the resolver for the core_getProjectManagedService field.
+func (r *queryResolver) CoreGetProjectManagedService(ctx context.Context, projectName string, name string) (*entities.ProjectManagedService, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetProjectManagedService(ictx, projectName, name)
+}
+
+// CoreResyncProjectManagedService is the resolver for the core_resyncProjectManagedService field.
+func (r *queryResolver) CoreResyncProjectManagedService(ctx context.Context, projectName string, name string) (bool, error) {
+	ictx, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.ResyncProjectManagedService(ictx, projectName, name); err != nil {
+		return false, errors.NewE(err)
+	}
+
 	return true, nil
 }
 

@@ -12,7 +12,7 @@ import (
 
 type ConsoleContext struct {
 	context.Context
-	// ClusterName string
+	// ProjectName string
 	AccountName string
 
 	UserId    repos.ID
@@ -171,6 +171,18 @@ type Domain interface {
 	ResyncImagePullSecret(ctx ResourceContext, name string) error
 
 	GetResourceMapping(ctx ConsoleContext, resType entities.ResourceType, namespace string, name string) (*entities.ResourceMapping, error)
+
+
+	ListProjectManagedServices(ctx ConsoleContext, projectName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ProjectManagedService], error)
+	GetProjectManagedService(ctx ConsoleContext, projectName string, serviceName string) (*entities.ProjectManagedService, error)
+	CreateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
+	UpdateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
+	DeleteProjectManagedService(ctx ConsoleContext, projectName string, name string) error
+	OnProjectManagedServiceApplyError(ctx ConsoleContext, projectName, name, errMsg string, opts UpdateAndDeleteOpts) error
+	OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) error
+	OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error
+
 }
 
 type PublishMsg string
@@ -185,6 +197,7 @@ type ResourceEventPublisher interface {
 	PublishAppEvent(app *entities.App, msg PublishMsg)
 	PublishMresEvent(mres *entities.ManagedResource, msg PublishMsg)
 	PublishProjectEvent(project *entities.Project, msg PublishMsg)
+	PublishProjectManagedServiceEvent(project *entities.ProjectManagedService, msg PublishMsg)
 	PublishRouterEvent(router *entities.Router, msg PublishMsg)
 	PublishWorkspaceEvent(workspace *entities.Environment, msg PublishMsg)
 }

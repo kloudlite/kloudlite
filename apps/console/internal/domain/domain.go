@@ -59,6 +59,7 @@ type domain struct {
 	resourceEventPublisher ResourceEventPublisher
 	consoleCacheStore      kv.BinaryDataRepo
 	resourceMappingRepo    repos.DbRepo[*entities.ResourceMapping]
+	pmsRepo                repos.DbRepo[*entities.ProjectManagedService]
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
@@ -337,6 +338,7 @@ var Module = fx.Module("domain",
 		routerRepo repos.DbRepo[*entities.Router],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
+		pmsRepo repos.DbRepo[*entities.ProjectManagedService],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
 
 		logger logging.Logger,
@@ -369,6 +371,7 @@ var Module = fx.Module("domain",
 
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
+			pmsRepo: pmsRepo,
 		}
 	}),
 )
