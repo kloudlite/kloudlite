@@ -98,6 +98,7 @@ var (
 	errNilImagePullSecret = errors.Newf("imagePullSecret obj is nil")
 	errNilManagedResource = errors.Newf("managed resource obj is nil")
 	errNilProject         = errors.Newf("project obj is nil")
+	errNilProjectManagedService         = errors.Newf("project manged svc obj is nil")
 	errNilRouter          = errors.Newf("router obj is nil")
 )
 

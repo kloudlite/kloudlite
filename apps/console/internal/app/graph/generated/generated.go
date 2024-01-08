@@ -580,7 +580,6 @@ type ComplexityRoot struct {
 	ProjectManagedService struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
-		ClusterName       func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
@@ -589,6 +588,7 @@ type ComplexityRoot struct {
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
+		ProjectName       func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
@@ -828,8 +828,6 @@ type ProjectResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.Project) (string, error)
 }
 type ProjectManagedServiceResolver interface {
-	ClusterName(ctx context.Context, obj *entities.ProjectManagedService) (string, error)
-
 	CreationTime(ctx context.Context, obj *entities.ProjectManagedService) (string, error)
 
 	ID(ctx context.Context, obj *entities.ProjectManagedService) (string, error)
@@ -3350,13 +3348,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProjectManagedService.AccountName(childComplexity), true
 
-	case "ProjectManagedService.clusterName":
-		if e.complexity.ProjectManagedService.ClusterName == nil {
-			break
-		}
-
-		return e.complexity.ProjectManagedService.ClusterName(childComplexity), true
-
 	case "ProjectManagedService.createdBy":
 		if e.complexity.ProjectManagedService.CreatedBy == nil {
 			break
@@ -3412,6 +3403,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ProjectManagedService.ObjectMeta(childComplexity), true
+
+	case "ProjectManagedService.projectName":
+		if e.complexity.ProjectManagedService.ProjectName == nil {
+			break
+		}
+
+		return e.complexity.ProjectManagedService.ProjectName(childComplexity), true
 
 	case "ProjectManagedService.recordVersion":
 		if e.complexity.ProjectManagedService.RecordVersion == nil {
@@ -5358,7 +5356,6 @@ input ProjectIn {
 	{Name: "../struct-to-graphql/projectmanagedservice.graphqls", Input: `type ProjectManagedService @shareable {
   accountName: String!
   apiVersion: String!
-  clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -5367,6 +5364,7 @@ input ProjectIn {
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
+  projectName: String!
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
@@ -22206,8 +22204,6 @@ func (ec *executionContext) fieldContext_Mutation_core_createProjectManagedServi
 				return ec.fieldContext_ProjectManagedService_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ProjectManagedService_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ProjectManagedService_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ProjectManagedService_createdBy(ctx, field)
 			case "creationTime":
@@ -22224,6 +22220,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createProjectManagedServi
 				return ec.fieldContext_ProjectManagedService_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ProjectManagedService_metadata(ctx, field)
+			case "projectName":
+				return ec.fieldContext_ProjectManagedService_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ProjectManagedService_recordVersion(ctx, field)
 			case "spec":
@@ -22318,8 +22316,6 @@ func (ec *executionContext) fieldContext_Mutation_core_updateProjectManagedServi
 				return ec.fieldContext_ProjectManagedService_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ProjectManagedService_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ProjectManagedService_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ProjectManagedService_createdBy(ctx, field)
 			case "creationTime":
@@ -22336,6 +22332,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateProjectManagedServi
 				return ec.fieldContext_ProjectManagedService_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ProjectManagedService_metadata(ctx, field)
+			case "projectName":
+				return ec.fieldContext_ProjectManagedService_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ProjectManagedService_recordVersion(ctx, field)
 			case "spec":
@@ -23583,50 +23581,6 @@ func (ec *executionContext) fieldContext_ProjectManagedService_apiVersion(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _ProjectManagedService_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.ProjectManagedService) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ProjectManagedService_clusterName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ProjectManagedService().ClusterName(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ProjectManagedService_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProjectManagedService",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ProjectManagedService_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.ProjectManagedService) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProjectManagedService_createdBy(ctx, field)
 	if err != nil {
@@ -24005,6 +23959,50 @@ func (ec *executionContext) fieldContext_ProjectManagedService_metadata(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _ProjectManagedService_projectName(ctx context.Context, field graphql.CollectedField, obj *entities.ProjectManagedService) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProjectManagedService_projectName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProjectName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProjectManagedService_projectName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProjectManagedService",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProjectManagedService_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.ProjectManagedService) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProjectManagedService_recordVersion(ctx, field)
 	if err != nil {
@@ -24340,8 +24338,6 @@ func (ec *executionContext) fieldContext_ProjectManagedServiceEdge_node(ctx cont
 				return ec.fieldContext_ProjectManagedService_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ProjectManagedService_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ProjectManagedService_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ProjectManagedService_createdBy(ctx, field)
 			case "creationTime":
@@ -24358,6 +24354,8 @@ func (ec *executionContext) fieldContext_ProjectManagedServiceEdge_node(ctx cont
 				return ec.fieldContext_ProjectManagedService_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ProjectManagedService_metadata(ctx, field)
+			case "projectName":
+				return ec.fieldContext_ProjectManagedService_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ProjectManagedService_recordVersion(ctx, field)
 			case "spec":
@@ -27288,8 +27286,6 @@ func (ec *executionContext) fieldContext_Query_core_getProjectManagedService(ctx
 				return ec.fieldContext_ProjectManagedService_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ProjectManagedService_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_ProjectManagedService_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ProjectManagedService_createdBy(ctx, field)
 			case "creationTime":
@@ -27306,6 +27302,8 @@ func (ec *executionContext) fieldContext_Query_core_getProjectManagedService(ctx
 				return ec.fieldContext_ProjectManagedService_markedForDeletion(ctx, field)
 			case "metadata":
 				return ec.fieldContext_ProjectManagedService_metadata(ctx, field)
+			case "projectName":
+				return ec.fieldContext_ProjectManagedService_projectName(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_ProjectManagedService_recordVersion(ctx, field)
 			case "spec":
@@ -38135,26 +38133,6 @@ func (ec *executionContext) _ProjectManagedService(ctx context.Context, sel ast.
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "clusterName":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProjectManagedService_clusterName(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "createdBy":
 
 			out.Values[i] = ec._ProjectManagedService_createdBy(ctx, field, obj)
@@ -38231,6 +38209,13 @@ func (ec *executionContext) _ProjectManagedService(ctx context.Context, sel ast.
 
 			out.Values[i] = ec._ProjectManagedService_metadata(ctx, field, obj)
 
+		case "projectName":
+
+			out.Values[i] = ec._ProjectManagedService_projectName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "recordVersion":
 
 			out.Values[i] = ec._ProjectManagedService_recordVersion(ctx, field, obj)

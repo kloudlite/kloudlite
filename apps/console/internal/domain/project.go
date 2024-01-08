@@ -164,7 +164,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.Spec.AccountName = ctx.AccountName
 	if project.Spec.TargetNamespace == "" {
-		project.Spec.TargetNamespace = fmt.Sprintf("prj-%s", project.Name)
+		project.Spec.TargetNamespace = d.getProjectNamespace(project.Name)
 	}
 
 	prj, err := d.projectRepo.Create(ctx, &project)
@@ -198,6 +198,10 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	return prj, nil
+}
+
+func (d *domain) getProjectNamespace(projectName string) string {
+	return fmt.Sprintf("prj-%s", projectName)
 }
 
 func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {

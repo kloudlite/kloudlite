@@ -256,8 +256,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName,pmsvc, resStatus, opts)
 			}
 		}
-
-
 		return nil
 	}
 
