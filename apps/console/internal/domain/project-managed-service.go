@@ -90,6 +90,7 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 	service.AccountName = ctx.AccountName
 	service.ProjectName = projectName
 	service.SyncStatus = t.GenSyncStatus(t.SyncActionApply, service.RecordVersion)
+	service.Namespace = d.getProjectNamespace(projectName)
 
 	service.EnsureGVK()
 
