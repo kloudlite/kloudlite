@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"time"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -110,8 +110,7 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 		ObjectMeta: metav1.ObjectMeta{
 			Name: hr.Namespace,
 		},
-	}, hr.RecordVersion)
-		err != nil {
+	}, hr.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -193,14 +192,14 @@ func (d *domain) DeleteHelmRelease(ctx InfraContext, clusterName string, name st
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.HelmChart)
 }
 
-func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string) error {
+func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
 	svc, err := d.findHelmRelease(ctx, clusterName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	svc.SyncStatus.State = t.SyncStateErroredAtAgent
-	svc.SyncStatus.LastSyncedAt = time.Now()
+	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
 	svc.SyncStatus.Error = &errMsg
 
 	_, err = d.helmReleaseRepo.UpdateById(ctx, svc.Id, svc)
@@ -224,26 +223,31 @@ func (d *domain) OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string
 	return err
 }
 
-func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, hr entities.HelmRelease) error {
-	svc, err := d.findHelmRelease(ctx, clusterName, hr.Name)
+func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, hr entities.HelmRelease, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xhr, err := d.findHelmRelease(ctx, clusterName, hr.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(hr.Annotations, svc.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, svc.SyncStatus.Action, clusterName, svc, svc.RecordVersion)
+	if err := d.matchRecordVersion(hr.Annotations, xhr.RecordVersion); err != nil {
+		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, clusterName, xhr, xhr.RecordVersion)
 	}
 
-	svc.Status = hr.Status
+	xhr.Status = hr.Status
 
-	svc.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	svc.SyncStatus.LastSyncedAt = time.Now()
-	svc.SyncStatus.Error = nil
-	svc.SyncStatus.RecordVersion = svc.RecordVersion
+	xhr.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+	xhr.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+	xhr.SyncStatus.Error = nil
+	xhr.SyncStatus.RecordVersion = xhr.RecordVersion
 
-	if _, err := d.helmReleaseRepo.UpdateById(ctx, svc.Id, svc); err != nil {
+	if _, err := d.helmReleaseRepo.UpdateById(ctx, xhr.Id, xhr); err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishHelmReleaseEvent(svc, PublishUpdate)
+	d.resourceEventPublisher.PublishHelmReleaseEvent(xhr, PublishUpdate)
 	return nil
 }
