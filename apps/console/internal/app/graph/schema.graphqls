@@ -68,6 +68,13 @@ input SearchManagedResources {
     markedForDeletion: MatchFilterIn
 }
 
+input SearchProjectManagedService {
+    text: MatchFilterIn
+    managedServiceName: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
+}
+
 # enum EnvOrWorkspaceOrProjectIdType {
 #     workspaceName
 #     workspaceTargetNamespace
@@ -147,6 +154,10 @@ type Query {
     core_listManagedResources(projectName: String!, envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getManagedResource(projectName: String!, envName: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccount
     core_resyncManagedResource(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    core_resyncProjectManagedService(projectName: String!,  name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -181,5 +192,9 @@ type Mutation {
     core_createManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
     core_updateManagedResource(projectName: String!, envName: String!, mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccount
     core_deleteManagedResource(projectName: String!, envName: String!, mresName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    core_createProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
+    core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 

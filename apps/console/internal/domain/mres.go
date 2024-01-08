@@ -233,3 +233,6 @@ func (d *domain) ResyncManagedResource(ctx ResourceContext, name string) error {
 	}
 	return d.resyncK8sResource(ctx, mres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 }
+
+
+

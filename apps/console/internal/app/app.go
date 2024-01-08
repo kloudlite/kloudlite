@@ -63,6 +63,7 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
+	repos.NewFxMongoRepo[*entities.ProjectManagedService]("project_managed_service", "pms", entities.ProjectIndexes),
 	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
@@ -120,7 +121,7 @@ var Module = fx.Module("app",
 
 				args := ObservabilityArgs{
 					AccountName: cc.AccountName,
-					//ClusterName: cc.ClusterName,
+					//ProjectName: cc.ProjectName,
 
 					ResourceName:      c.Query("resource_name"),
 					ResourceNamespace: c.Query("resource_namespace"),
@@ -167,7 +168,7 @@ var Module = fx.Module("app",
 						//loki_client.StreamSelector{
 						//	Key:       "kl_cluster_name",
 						//	Operation: "=",
-						//	Value:     cc.ClusterName,
+						//	Value:     cc.ProjectName,
 						//},
 					)
 
@@ -211,12 +212,12 @@ var Module = fx.Module("app",
 							//	UserName:    cc.UserName,
 							//	UserEmail:   cc.UserEmail,
 							//	AccountName: cc.AccountName,
-							//	//ClusterName: cc.ClusterName,
+							//	//ProjectName: cc.ProjectName,
 							//})
 							//if err != nil {
 							//	return errors.NewE(err)
 							//}
-							//logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName)
+							//logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ProjectName)
 							//streamSelectors = nil
 							//streamSelectors = append(streamSelectors,
 							//	loki_client.StreamSelector{
@@ -239,13 +240,13 @@ var Module = fx.Module("app",
 							//	UserName:     cc.UserName,
 							//	UserEmail:    cc.UserEmail,
 							//	AccountName:  cc.AccountName,
-							//	ClusterName:  cc.ClusterName,
+							//	ProjectName:  cc.ProjectName,
 							//	NodepoolName: args.ResourceName,
 							//})
 							//if err != nil {
 							//	return errors.NewE(err)
 							//}
-							//logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName, args.ResourceName)
+							//logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ProjectName, args.ResourceName)
 							//streamSelectors = append(streamSelectors,
 							//	loki_client.StreamSelector{
 							//		Key:       "kl_job_name",

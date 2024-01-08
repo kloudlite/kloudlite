@@ -28,6 +28,7 @@ func newResourceContext(ctx domain.ConsoleContext, projectName string, environme
 	}
 }
 
+
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
@@ -38,6 +39,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 	secretGVK := fn.GVK("v1", "Secret")
 	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
 	managedResourceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
+	projectManagedServiceGVK := fn.GVK("crds.kloudlite.io/v1", "ProjectManagedService")
 
 	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, obj unstructured.Unstructured) (domain.ResourceContext, error) {
 		mapping, err := d.GetResourceMapping(ctx, rt, obj.GetNamespace(), obj.GetName())
@@ -50,6 +52,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
 	}
+
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
 		logger := logger.WithKV("subject", msg.Subject)
@@ -235,7 +238,25 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnManagedResourceUpdateMessage(rctx, mres, resStatus, opts)
 			}
+
+		case projectManagedServiceGVK.String():
+			{
+				var pmsvc entities.ProjectManagedService
+				if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
+					return errors.NewE(err)
+				}
+
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnProjectManagedServiceDeleteMessage(dctx, pmsvc.ProjectName,pmsvc)
+				}
+				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName,pmsvc, resStatus, opts)
+			}
 		}
+
 
 		return nil
 	}

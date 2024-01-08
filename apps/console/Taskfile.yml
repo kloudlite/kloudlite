@@ -41,12 +41,13 @@ tasks:
           --struct github.com/kloudlite/api/apps/console/internal/entities.Router
           --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
           --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
+          --struct github.com/kloudlite/api/apps/console/internal/entities.ProjectManagedService
           --struct github.com/kloudlite/api/pkg/repos.MatchFilter
           --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,App,Secret,Config,Router,ManagedResource,ImagePullSecret
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,App,Secret,Config,Router,ManagedResource,ProjectManagedService,ImagePullSecret
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

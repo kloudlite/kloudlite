@@ -96,17 +96,18 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 		return nil, errors.NewE(err)
 	}
 
+	cms, err := d.clusterManagedServiceRepo.Create(ctx, &service)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &service.ClusterManagedService, 1); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if cms, err := d.clusterManagedServiceRepo.Create(ctx, &service); err != nil {
-		return nil, errors.NewE(err)
-	} else {
-		d.resourceEventPublisher.PublishCMSEvent(&service, PublishAdd)
+	d.resourceEventPublisher.PublishCMSEvent(&service, PublishAdd)
 
-		return cms, nil
-	}
+	return cms, nil
 }
 
 func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error) {

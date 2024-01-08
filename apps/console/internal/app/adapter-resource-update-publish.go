@@ -14,6 +14,13 @@ type ResourceEventPublisherImpl struct {
 	logger logging.Logger
 }
 
+func (r *ResourceEventPublisherImpl) PublishProjectManagedServiceEvent(projectManagedService *entities.ProjectManagedService, msg domain.PublishMsg) {
+	subject := projectManagedServiceUpdateSubject(projectManagedService)
+	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
+		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
+	}
+}
+
 func (r *ResourceEventPublisherImpl) PublishAppEvent(app *entities.App, msg domain.PublishMsg) {
 	subject := appUpdateSubject(app)
 	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
@@ -58,6 +65,10 @@ func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.R
 
 func appUpdateSubject(app *entities.App) string {
 	return fmt.Sprintf("res-updates.account.%s.project.%s.app.%s", app.AccountName, app.ProjectName, app.Name)
+}
+
+func projectManagedServiceUpdateSubject(projectManagedService *entities.ProjectManagedService) string {
+	return fmt.Sprintf("res-updates.account.%s.project.%s.app.%s", projectManagedService.AccountName, projectManagedService.ProjectName, projectManagedService.Name)
 }
 
 func mresUpdateSubject(mres *entities.ManagedResource) string {
