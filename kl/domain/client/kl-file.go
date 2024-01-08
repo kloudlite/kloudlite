@@ -1,11 +1,20 @@
 package client
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/kloudlite/kl/constants"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"sigs.k8s.io/yaml"
+)
+
+type CSType string
+
+const (
+	ConfigType CSType = "config"
+	SecretType CSType = "secret"
 )
 
 type ResEnvType struct {
@@ -26,8 +35,9 @@ type ResType struct {
 
 type FileEntry struct {
 	Path string `json:"path"`
-	Type string `json:"type"`
+	Type CSType `json:"type"`
 	Name string `json:"Name"`
+	Key  string `json:"key"`
 }
 
 type MountType struct {
@@ -64,7 +74,9 @@ func WriteKLFile(fileObj KLFileType) error {
 		return nil
 	}
 
-	err = os.WriteFile(GetConfigPath(), file, 0644)
+	writeContent := fmt.Sprint("# To generate this config file please visit ", constants.ServerURL, "\n\n", string(file))
+
+	err = os.WriteFile(GetConfigPath(), []byte(writeContent), 0644)
 	if err != nil {
 		fn.PrintError(err)
 	}

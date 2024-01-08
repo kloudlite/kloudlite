@@ -9,6 +9,7 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
@@ -22,13 +23,13 @@ This command will provide the list of all the projects in selected account.
 
 Note: selected project will be highlighted with green color.
   `,
-	Run: func(_ *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		accountName := ""
 		if len(args) >= 1 {
 			accountName = args[0]
 		}
 
-		err := listProjects(accountName)
+		err := listProjects(cmd, accountName)
 		if err != nil {
 			functions.PrintError(err)
 			return
@@ -36,7 +37,7 @@ Note: selected project will be highlighted with green color.
 	},
 }
 
-func listProjects(accountName string) error {
+func listProjects(cmd *cobra.Command, accountName string) error {
 	var projects []server.Project
 	var err error
 
@@ -81,17 +82,20 @@ func listProjects(accountName string) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fmt.Println(table.Table(&header, rows, cmd))
 
-	if accountName == "" {
-		accountName, _ = client.CurrentAccountName()
+	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
+
+		if accountName == "" {
+			accountName, _ = client.CurrentAccountName()
+		}
+
+		if accountName == "" {
+			table.KVOutput("projects of", accountName, true)
+		}
+
+		table.TotalResults(len(projects), true)
 	}
-
-	if accountName == "" {
-		table.KVOutput("projects of", accountName, true)
-	}
-
-	table.TotalResults(len(projects), true)
 
 	return nil
 }
@@ -99,4 +103,5 @@ func listProjects(accountName string) error {
 func init() {
 	projectsCmd.Aliases = append(projectsCmd.Aliases, "project")
 	projectsCmd.Aliases = append(projectsCmd.Aliases, "proj")
+	fn.WithOutputVariant(projectsCmd)
 }

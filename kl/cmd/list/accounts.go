@@ -26,8 +26,8 @@ Examples:
 Note: selected project will be highlighted with green color.
 
 `,
-	Run: func(_ *cobra.Command, _ []string) {
-		err := listAccounts()
+	Run: func(cmd *cobra.Command, _ []string) {
+		err := listAccounts(cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -35,7 +35,7 @@ Note: selected project will be highlighted with green color.
 	},
 }
 
-func listAccounts() error {
+func listAccounts(cmd *cobra.Command) error {
 	accounts, err := server.ListAccounts()
 
 	if err != nil {
@@ -69,13 +69,13 @@ func listAccounts() error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(accounts), true)
-
+	fmt.Println(table.Table(&header, rows, cmd))
 	return nil
 }
 
 func init() {
 	accountsCmd.Aliases = append(accountsCmd.Aliases, "account")
 	accountsCmd.Aliases = append(accountsCmd.Aliases, "acc")
+
+	fn.WithOutputVariant(accountsCmd)
 }

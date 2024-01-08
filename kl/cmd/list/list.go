@@ -15,8 +15,10 @@ func init() {
 	Cmd.AddCommand(accountsCmd)
 	Cmd.AddCommand(clustersCmd)
 	Cmd.AddCommand(projectsCmd)
-	Cmd.AddCommand(envsCmd)
 	Cmd.AddCommand(configsCmd)
 	Cmd.AddCommand(secretsCmd)
 	Cmd.AddCommand(appsCmd)
+
+	Cmd.Aliases = append(Cmd.Aliases, "ls")
+
 }

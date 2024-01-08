@@ -1,6 +1,9 @@
 package text
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 func Color(code int) string {
 	return fmt.Sprintf("\033[38;05;%dm", code)
@@ -48,4 +51,13 @@ func Green(text interface{}) string {
 
 func Blue(text interface{}) string {
 	return Colored(text, 4)
+}
+
+func RemoveColors(text string) string {
+	return fmt.Sprintf("\033[0m%v\033[0m", text)
+}
+
+func Plain(text interface{}) string {
+	re := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	return re.ReplaceAllString(fmt.Sprintf("%s", text), "")
 }

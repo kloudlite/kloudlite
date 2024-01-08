@@ -1,4 +1,4 @@
-package list
+package env
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 )
 
 var envsCmd = &cobra.Command{
-	Use:   "envs",
+	Use:   "list",
 	Short: "list all the environments accessible to you",
 	Long: `List Environments
 
@@ -21,13 +21,12 @@ This command will provide the list of all the environments that's accessible to 
 
 Examples:
   # list environments accessible to you
-  kl list envs
+  kl env list
 
 Note: selected project will be highlighted with green color.
-
 `,
-	Run: func(_ *cobra.Command, args []string) {
-		err := listEnvironments(args)
+	Run: func(cmd *cobra.Command, args []string) {
+		err := listEnvironments(cmd, args)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -35,7 +34,7 @@ Note: selected project will be highlighted with green color.
 	},
 }
 
-func listEnvironments(args []string) error {
+func listEnvironments(cmd *cobra.Command, args []string) error {
 
 	pName := ""
 	if len(args) >= 1 {
@@ -69,13 +68,15 @@ func listEnvironments(args []string) error {
 	}
 
 	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(envs), true)
+
+	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
+		table.TotalResults(len(envs), true)
+	}
 
 	return nil
 }
 
 func init() {
-	envsCmd.Aliases = append(clustersCmd.Aliases, "enviroments")
-	envsCmd.Aliases = append(clustersCmd.Aliases, "env")
-	envsCmd.Aliases = append(clustersCmd.Aliases, "envs")
+	envsCmd.Aliases = append(envsCmd.Aliases, "ls")
+	fn.WithOutputVariant(envsCmd)
 }

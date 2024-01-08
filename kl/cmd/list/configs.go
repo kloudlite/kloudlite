@@ -24,7 +24,7 @@ This command will provide the list of all the configs for the selected project.
 This command will provide the list of all the configs for the provided project name.
   kl list configs <projectName>
 `,
-	Run: func(_ *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		pName := ""
 		if len(args) > 1 {
 			pName = args[0]
@@ -36,14 +36,14 @@ This command will provide the list of all the configs for the provided project n
 			return
 		}
 
-		if err := printConfigs(config); err != nil {
+		if err := printConfigs(cmd, config); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printConfigs(configs []server.Config) error {
+func printConfigs(cmd *cobra.Command, configs []server.Config) error {
 	if len(configs) == 0 {
 		return errors.New("no configs found")
 	}
@@ -60,15 +60,15 @@ func printConfigs(configs []server.Config) error {
 		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name, fmt.Sprintf("%d", len(a.Data))})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fmt.Println(table.Table(&header, rows, cmd))
 
-	pName, _ := client.CurrentProjectName()
-
-	if pName != "" {
-		table.KVOutput("configs of", pName, true)
+	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
+		pName, _ := client.CurrentProjectName()
+		if pName != "" {
+			table.KVOutput("configs of", pName, true)
+		}
+		table.TotalResults(len(configs), true)
 	}
-
-	table.TotalResults(len(configs), true)
 
 	return nil
 }
@@ -76,4 +76,5 @@ func printConfigs(configs []server.Config) error {
 func init() {
 	configsCmd.Aliases = append(configsCmd.Aliases, "config")
 	configsCmd.Aliases = append(configsCmd.Aliases, "conf")
+	fn.WithOutputVariant(configsCmd)
 }

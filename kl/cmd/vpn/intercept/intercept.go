@@ -22,28 +22,24 @@ Examples:
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
-		ns := ""
+		app := fn.ParseStringFlag(cmd, "app")
+		device := fn.ParseStringFlag(cmd, "device")
+		env := fn.ParseStringFlag(cmd, "env")
+		project := fn.ParseStringFlag(cmd, "project")
 
-		if cmd.Flags().Changed("name") {
-			ns, _ = cmd.Flags().GetString("name")
-		}
+		err := server.InterceptApp(true, []fn.Option{
+			fn.MakeOption("appName", app),
+			fn.MakeOption("deviceName", device),
+			fn.MakeOption("envName", env),
+			fn.MakeOption("projectName", project),
+		}...)
 
-		if ns == "" {
-			e, err := server.EnsureEnv(nil)
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			ns = e.TargetNs
-		}
-
-		if err := server.UpdateDeviceNS(ns); err != nil {
+		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		fn.Log("namespace updated successfully")
+		fn.Log("intercept app started successfully")
 	},
 }
 
@@ -51,4 +47,9 @@ func init() {
 	Cmd.AddCommand(startCmd)
 	Cmd.AddCommand(stopCmd)
 	Cmd.Aliases = append(startCmd.Aliases, "inc")
+
+	Cmd.Flags().StringP("app", "a", "", "app name")
+	Cmd.Flags().StringP("device", "d", "", "device name")
+	Cmd.Flags().StringP("env", "e", "", "environment name")
+	Cmd.Flags().StringP("project", "p", "", "project name")
 }

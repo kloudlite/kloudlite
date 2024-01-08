@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/spf13/cobra"
 )
 
 type Option struct {
@@ -121,4 +122,17 @@ func JsonConversion(from any, to any) error {
 		return err
 	}
 	return nil
+}
+
+func ParseStringFlag(cmd *cobra.Command, flag string) string {
+	if cmd.Flags().Changed(flag) {
+		v, _ := cmd.Flags().GetString(flag)
+		return v
+	}
+
+	return ""
+}
+
+func WithOutputVariant(cmd *cobra.Command) {
+	cmd.Flags().StringP("output", "o", "table", "output format [table | json | yaml]")
 }

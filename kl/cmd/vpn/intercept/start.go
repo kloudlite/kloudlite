@@ -21,32 +21,30 @@ Examples:
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
-		ns := ""
+		app := fn.ParseStringFlag(cmd, "app")
+		device := fn.ParseStringFlag(cmd, "device")
+		env := fn.ParseStringFlag(cmd, "env")
+		project := fn.ParseStringFlag(cmd, "project")
 
-		if cmd.Flags().Changed("name") {
-			ns, _ = cmd.Flags().GetString("name")
-		}
+		err := server.InterceptApp(true, []fn.Option{
+			fn.MakeOption("app", app),
+			fn.MakeOption("device", device),
+			fn.MakeOption("env", env),
+			fn.MakeOption("project", project),
+		}...)
 
-		if ns == "" {
-			e, err := server.EnsureEnv(nil)
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			ns = e.TargetNs
-		}
-
-		if err := server.UpdateDeviceNS(ns); err != nil {
+		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		fn.Log("namespace updated successfully")
+		fn.Log("intercept app started successfully")
 	},
 }
 
 func init() {
 	startCmd.Flags().StringP("app", "a", "", "app name")
 	startCmd.Flags().StringP("device", "d", "", "device name")
+	startCmd.Flags().StringP("env", "e", "", "environment name")
+	startCmd.Flags().StringP("project", "p", "", "project name")
 }

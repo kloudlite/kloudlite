@@ -27,8 +27,8 @@ Examples:
 Note: selected project will be highlighted with green color.
 
 `,
-	Run: func(_ *cobra.Command, _ []string) {
-		err := listClusters()
+	Run: func(cmd *cobra.Command, _ []string) {
+		err := listClusters(cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -36,9 +36,8 @@ Note: selected project will be highlighted with green color.
 	},
 }
 
-func listClusters() error {
+func listClusters(cmd *cobra.Command) error {
 	clusters, err := server.ListClusters()
-
 	if err != nil {
 		return err
 	}
@@ -76,8 +75,11 @@ func listClusters() error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(clusters), true)
+	fmt.Println(table.Table(&header, rows, cmd))
+
+	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
+		table.TotalResults(len(clusters), true)
+	}
 
 	return nil
 }
@@ -85,4 +87,5 @@ func listClusters() error {
 func init() {
 	clustersCmd.Aliases = append(clustersCmd.Aliases, "cluster")
 	clustersCmd.Aliases = append(clustersCmd.Aliases, "clus")
+	fn.WithOutputVariant(clustersCmd)
 }

@@ -86,7 +86,6 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 		}
 
 		return nil, fmt.Errorf(strings.Join(errorMessages, "\n"))
-
 	}
 
 	return body, nil

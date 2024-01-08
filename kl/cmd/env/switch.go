@@ -20,7 +20,6 @@ Examples:
 
   # switch to a different environment with environment name
   kl env switch --name <env_name>
-
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {

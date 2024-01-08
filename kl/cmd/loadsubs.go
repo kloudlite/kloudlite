@@ -4,22 +4,26 @@ import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/cluster"
 	"github.com/kloudlite/kl/cmd/vpn"
+	"github.com/spf13/cobra"
 
-	// "github.com/kloudlite/kl/cmd/create"
 	"github.com/kloudlite/kl/cmd/context"
-	"github.com/kloudlite/kl/cmd/device"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/runner"
 	"github.com/kloudlite/kl/cmd/runner/add"
 
-	// "github.com/kloudlite/kl/cmd/runner/del"
 	"github.com/kloudlite/kl/cmd/env"
 	"github.com/kloudlite/kl/cmd/runner/gen"
 )
 
 func init() {
-	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+	// hide help command
+
+	rootCmd.SetHelpCommand(&cobra.Command{
+		Use:    "no-help",
+		Hidden: true,
+	})
 
 	rootCmd.AddCommand(DocsCmd)
 
@@ -37,10 +41,8 @@ func init() {
 	rootCmd.AddCommand(cluster.Command)
 
 	rootCmd.AddCommand(runner.InitCommand)
-	rootCmd.AddCommand(runner.LoadCommand)
 
 	// rootCmd.AddCommand(intercept.Cmd)
-	rootCmd.AddCommand(device.Cmd)
 
 	rootCmd.AddCommand(add.Command)
 	// rootCmd.AddCommand(del.DeleteCommand)
