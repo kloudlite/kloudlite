@@ -26,9 +26,9 @@ func init() {
 	rootCmd.AddCommand(switch_cmd.Cmd)
 	rootCmd.AddCommand(get.Cmd)
 
-	rootCmd.AddCommand(auth.LoginCmd)
-	rootCmd.AddCommand(auth.LogoutCmd)
-	rootCmd.AddCommand(auth.WhoAmICmd)
+	rootCmd.AddCommand(auth.Cmd)
+	//rootCmd.AddCommand(auth.logoutCmd)
+	//rootCmd.AddCommand(auth.WhoAmICmd)
 
 	rootCmd.AddCommand(cluster.Command)
 

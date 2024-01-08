@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var WhoAmICmd = &cobra.Command{
-	Use:   "whoami",
+var authStatusCmd = &cobra.Command{
+	Use:   "status",
 	Short: "user logged in to kloudlite",
 	Long: `This command provides details of the user logged in to kloudlite.
 Example:
   # Login to kloudlite
-  kl whoami 
+  kl auth status 
 
   when you execute the above command it will print the user name associated with the current effective user ID.
 	`,
