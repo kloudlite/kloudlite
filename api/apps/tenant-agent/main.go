@@ -26,6 +26,9 @@ import (
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	libGrpc "github.com/kloudlite/operator/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/kubectl"
+
+	// "github.com/kloudlite/operator/pkg/kubectl"
+
 	"github.com/kloudlite/operator/pkg/logging"
 )
 
@@ -35,6 +38,7 @@ type grpcHandler struct {
 	logger         logging.Logger
 	ev             *env.Env
 	msgDispatchCli messages.MessageDispatchServiceClient
+	isDev          bool
 }
 
 func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.AgentMessage) error {
@@ -62,7 +66,12 @@ func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.A
 
 func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	g.inMemCounter++
-	ctx, cf := context.WithTimeout(context.TODO(), 3*time.Second)
+	ctx, cf := func() (context.Context, context.CancelFunc) {
+		if g.isDev {
+			return context.WithCancel(context.TODO())
+		}
+		return context.WithTimeout(context.TODO(), 3*time.Second)
+	}()
 	defer cf()
 
 	if msg.Object == nil {
@@ -88,8 +97,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			}
 
 			if msg.Action == "apply" {
-				_, err := g.yamlClient.ApplyYAML(ctx, b)
-				if err != nil {
+				if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
 					mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
 					mLogger.Infof("[%d] failed to process message", g.inMemCounter)
 					return g.handleErrorOnApply(ctx, err, msg)
@@ -250,6 +258,7 @@ func main() {
 		yamlClient:   yamlClient,
 		logger:       logger,
 		ev:           ev,
+		isDev:        isDev,
 	}
 
 	vps := &vectorGrpcProxyServer{
@@ -276,13 +285,13 @@ func main() {
 	for {
 		logger.Infof("trying to connect to message office grpc (%s)", ev.GrpcAddr)
 		cc, err := func() (*grpc.ClientConn, error) {
-			if isDev {
-				logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
-				return libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
-					SecureConnect: false,
-					Timeout:       20 * time.Second,
-				})
-			}
+			// if isDev {
+			// 	logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
+			// 	return libGrpc.Connect(ev.GrpcAddr, libGrpc.ConnectOpts{
+			// 		SecureConnect: false,
+			// 		Timeout:       20 * time.Second,
+			// 	})
+			// }
 			logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()

@@ -14,6 +14,7 @@ import (
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -32,9 +33,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 	projectGVK := fn.GVK("crds.kloudlite.io/v1", "Project")
 	appsGVK := fn.GVK("crds.kloudlite.io/v1", "App")
-	// workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Environment") //FIXME
-	workspaceGVK := fn.GVK("crds.kloudlite.io/v1", "Workspace")
-	imagePullSecretGVK := fn.GVK("crds.kloudlite.io/v1", "ImagePullSecret")
+	environmentGVK := fn.GVK("crds.kloudlite.io/v1", "Environment")
 	configGVK := fn.GVK("v1", "ConfigMap")
 	secretGVK := fn.GVK("v1", "Secret")
 	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
@@ -128,7 +127,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
 			}
 
-		case workspaceGVK.String():
+		case environmentGVK.String():
 			{
 				var ws entities.Environment
 				if err := fn.JsonConversion(ru.Object, &ws); err != nil {
@@ -186,27 +185,21 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
+				if secret.Type == corev1.SecretTypeDockerConfigJson {
+					// secret is an image pull secret
+					ips := entities.ImagePullSecret{
+						ObjectMeta: secret.ObjectMeta,
+					}
+					if resStatus == types.ResourceStatusDeleted {
+						return d.OnImagePullSecretDeleteMessage(rctx, ips)
+					}
+					return d.OnImagePullSecretUpdateMessage(rctx, ips, resStatus, opts)
+				}
+
 				if resStatus == types.ResourceStatusDeleted {
 					return d.OnSecretDeleteMessage(rctx, secret)
 				}
 				return d.OnSecretUpdateMessage(rctx, secret, resStatus, opts)
-			}
-		case imagePullSecretGVK.String():
-			{
-				var ips entities.ImagePullSecret
-				if err := fn.JsonConversion(ru.Object, &ips); err != nil {
-					return errors.NewE(err)
-				}
-
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeImagePullSecret, obj)
-				if err != nil {
-					return errors.NewE(err)
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnImagePullSecretDeleteMessage(rctx, ips)
-				}
-				return d.OnImagePullSecretUpdateMessage(rctx, ips, resStatus, opts)
 			}
 		case routerGVK.String():
 			{
