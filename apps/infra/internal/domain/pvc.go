@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -33,25 +34,44 @@ func (d *domain) GetPVC(ctx InfraContext, clusterName string, buildRunName strin
 }
 
 func (d *domain) OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	pvc.SyncStatus = t.SyncStatus{
-		LastSyncedAt: opts.MessageTimestamp,
-		State: func() t.SyncState {
-			if status == types.ResourceStatusDeleting {
-				return t.SyncStateDeletingAtAgent
-			}
-			return t.SyncStateUpdatedAtAgent
-		}(),
+	xpvc, err := d.pvcRepo.FindOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"clusterName":   clusterName,
+		"metadata.name": pvc.Name,
+	})
+	if err != nil {
+		return err
 	}
 
-	if _, err := d.pvcRepo.Upsert(ctx, repos.Filter{
-		"metadata.name":      pvc.Name,
-		"metadata.namespace": pvc.Namespace,
-		"accountName":        ctx.AccountName,
-		"clusterName":        clusterName,
-	}, &pvc); err != nil {
+	if xpvc == nil {
+		pvc.AccountName = ctx.AccountName
+		pvc.ClusterName = clusterName
+
+		pvc.CreatedBy = common.CreatedOrUpdatedBy{
+			UserId:    repos.ID(common.CreatedByResourceSyncUserId),
+			UserName:  common.CreatedByResourceSyncUsername,
+			UserEmail: common.CreatedByResourceSyncUserEmail,
+		}
+		pvc.LastUpdatedBy = pvc.CreatedBy
+		xpvc, err = d.pvcRepo.Create(ctx, &pvc)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	xpvc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+	xpvc.SyncStatus.State = func() t.SyncState {
+		if status == types.ResourceStatusDeleting {
+			return t.SyncStateDeletingAtAgent
+		}
+		return t.SyncStateUpdatedAtAgent
+	}()
+
+	upvc, err := d.pvcRepo.UpdateById(ctx, xpvc.Id, xpvc)
+	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishPvcResEvent(&pvc, PublishUpdate)
+	d.resourceEventPublisher.PublishPvcResEvent(upvc, PublishUpdate)
 	return nil
 }
 
