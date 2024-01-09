@@ -52,3 +52,10 @@ var SecretWatchingAnnotation = map[string]string{
 var ConfigWatchingAnnotation = map[string]string{
 	"kloudlite.io/watch-configmap": "true",
 }
+
+const (
+	KeyClusterManagedSvcSecret = "resource-watcher-cmsvc-secret"
+	KeyProjectManagedSvcSecret = "resource-watcher-pmsvc-secret"
+	KeyManagedResSecret        = "resource-watcher-mres-secret"
+	KeyVPNDeviceConfig         = "resource-watcher-wireguard-config"
+)
