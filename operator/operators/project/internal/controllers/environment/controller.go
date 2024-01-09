@@ -88,6 +88,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.updateRouterIngressClasses(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
 }
@@ -111,9 +115,13 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 
 	hasUpdated := false
 
-	if obj.Spec.IngressClassName == "" {
+	if obj.Spec.Routing == nil {
 		hasUpdated = true
-		obj.Spec.IngressClassName = fmt.Sprintf("env-%s", obj.Name)
+		obj.Spec.Routing = &crdsv1.EnvironmentRouting{
+			Mode:                crdsv1.EnvironmentRoutingModePrivate,
+			PublicIngressClass:  r.Env.DefaultIngressClass,
+			PrivateIngressClass: fmt.Sprintf("env-%s", obj.Name),
+		}
 	}
 
 	if hasUpdated {
@@ -258,7 +266,7 @@ func (r *Reconciler) ensureEnvIngressController(req *rApi.Request[*crdsv1.Enviro
 			constants.EnvironmentNameKey: obj.Name,
 		},
 
-		"ingress-class-name": obj.Spec.IngressClassName,
+		"ingress-class-name": obj.GetIngressClassName(),
 	})
 	if err != nil {
 		return fail(err).Err(nil)
@@ -282,66 +290,41 @@ func (r *Reconciler) ensureEnvIngressController(req *rApi.Request[*crdsv1.Enviro
 	return req.Next()
 }
 
-// func (r *Reconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
-// 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-// 	check := rApi.Check{Generation: obj.Generation}
-//
-// 	var routers crdsv1.RouterList
-// 	if err := r.List(ctx, &routers, &client.ListOptions{
-// 		Namespace: obj.Namespace,
-// 	}); err != nil {
-// 		return req.CheckFailed(RoutersCreated, check, err.Error()).Err(nil)
-// 	}
-//
-// 	for i := range routers.Items {
-// 		router := routers.Items[i]
-//
-// 		localRouter := crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: router.Name, Namespace: obj.Spec.TargetNamespace}}
-//
-// 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &localRouter, func() error {
-// 			// localRouter.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-//
-// 			if localRouter.Labels == nil {
-// 				localRouter.Labels = make(map[string]string, len(router.Labels))
-// 			}
-// 			for k, v := range router.Labels {
-// 				localRouter.Labels[k] = v
-// 			}
-//
-// 			if localRouter.Annotations == nil {
-// 				localRouter.Annotations = make(map[string]string, len(router.Annotations))
-// 			}
-//
-// 			for k, v := range router.Annotations {
-// 				localRouter.Annotations[k] = v
-// 			}
-//
-// 			localRouter.Spec = router.Spec
-// 			localRouter.Spec.Https.Enabled = false
-// 			for j := range router.Spec.Domains {
-// 				localRouter.Spec.Domains[j] = fmt.Sprintf("env.%s.%s", obj.Name, router.Spec.Domains[j])
-// 			}
-// 			return nil
-// 		}); err != nil {
-// 			return req.CheckFailed(RoutersCreated, check, err.Error()).Err(nil)
-// 		}
-//
-// 		req.AddToOwnedResources(rApi.ResourceRef{
-// 			TypeMeta:  router.TypeMeta,
-// 			Namespace: localRouter.Namespace,
-// 			Name:      localRouter.Name,
-// 		})
-// 	}
-//
-// 	check.Status = true
-// 	if check != checks[RoutersCreated] {
-// 		checks[RoutersCreated] = check
-// 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-// 			return sr
-// 		}
-// 	}
-// 	return req.Next()
-// }
+func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "router-ingress-updates"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	var routers crdsv1.RouterList
+	if err := r.List(ctx, &routers, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
+		return fail(err)
+	}
+
+	for i := range routers.Items {
+		routers.Items[i].Spec.IngressClass = obj.GetIngressClassName()
+		if err := r.Update(ctx, &routers.Items[i]); err != nil {
+			return fail(err)
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()

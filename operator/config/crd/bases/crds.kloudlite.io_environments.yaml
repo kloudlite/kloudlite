@@ -25,6 +25,9 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/environment\.routing
+      name: Routing
+      type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
       type: string
@@ -51,10 +54,17 @@ spec:
           spec:
             description: EnvironmentSpec defines the desired state of Environment
             properties:
-              ingressClassName:
-                type: string
               projectName:
                 type: string
+              routing:
+                properties:
+                  mode:
+                    type: string
+                  privateIngressClass:
+                    type: string
+                  publicIngressClass:
+                    type: string
+                type: object
               targetNamespace:
                 type: string
             required:

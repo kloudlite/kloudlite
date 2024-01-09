@@ -47,7 +47,6 @@ type Cors struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Region          string  `json:"region,omitempty"`
 	IngressClass    string  `json:"ingressClass,omitempty"`
 	BackendProtocol *string `json:"backendProtocol,omitempty"`
 	Https           *Https  `json:"https,omitempty"`
@@ -64,8 +63,9 @@ type RouterSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.ingress-class",name=Class,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.domains",name=domains,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Router is the Schema for the routers API
@@ -97,8 +97,8 @@ func (r *Router) GetEnsuredLabels() map[string]string {
 
 func (m *Router) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Router").String(),
-		"kloudlite.io/router.domains":             strings.Join(m.Spec.Domains, ","),
+		"kloudlite.io/router.domains":       strings.Join(m.Spec.Domains, ","),
+		"kloudlite.io/router.ingress-class": m.Spec.IngressClass,
 	}
 }
 
