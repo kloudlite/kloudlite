@@ -4212,6 +4212,25 @@ export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
 
+export type AuthCli_GetEnvironmentQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetEnvironmentQuery = {
+  core_getEnvironment?: { spec?: { targetNamespace?: string } };
+};
+
+export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  namespace: Scalars['String']['input'];
+}>;
+
+export type AuthCli_UpdateDeviceNsMutation = {
+  infra_updateVPNDeviceNs: boolean;
+};
+
 export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
   clusterName: Scalars['String']['input'];
   deviceName: Scalars['String']['input'];
@@ -4396,7 +4415,6 @@ export type AuthCli_ListConfigsQuery = {
 export type AuthCli_ListSecretsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
-  search?: InputMaybe<SearchSecrets>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
@@ -4477,7 +4495,6 @@ export type AuthCli_GetDeviceQuery = {
 
 export type AuthCli_ListEnvironmentsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
-  search?: InputMaybe<SearchEnvironments>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
 

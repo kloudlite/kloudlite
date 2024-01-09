@@ -2884,6 +2884,22 @@ mutation consoleDeleteHelmChart($clusterName: String!, $releaseName: String!) {
   infra_deleteHelmRelease(clusterName: $clusterName, releaseName: $releaseName)
 }
 
+query authCli_getEnvironment($projectName: String!, $name: String!) {
+  core_getEnvironment(projectName: $projectName, name: $name) {
+    spec {
+      targetNamespace
+    }
+  }
+}
+
+mutation authCli_updateDeviceNs($clusterName: String!, $deviceName: String!, $namespace: String!) {
+  infra_updateVPNDeviceNs(
+    clusterName: $clusterName
+    deviceName: $deviceName
+    namespace: $namespace
+  )
+}
+
 mutation authCli_updateDevicePort($clusterName: String!, $deviceName: String!, $ports: [PortIn!]!) {
   infra_updateVPNDevicePorts(
     clusterName: $clusterName
@@ -3080,13 +3096,8 @@ query authCli_listConfigs($projectName: String!, $envName: String!) {
   }
 }
 
-query authCli_listSecrets($projectName: String!, $envName: String!, $search: SearchSecrets, $pq: CursorPaginationIn) {
-  core_listSecrets(
-    projectName: $projectName
-    envName: $envName
-    search: $search
-    pq: $pq
-  ) {
+query authCli_listSecrets($projectName: String!, $envName: String!, $pq: CursorPaginationIn) {
+  core_listSecrets(projectName: $projectName, envName: $envName, pq: $pq) {
     edges {
       cursor
       node {
@@ -3192,8 +3203,8 @@ query authCli_getDevice($clusterName: String!, $name: String!) {
   }
 }
 
-query authCli_listEnvironments($projectName: String!, $search: SearchEnvironments, $pq: CursorPaginationIn) {
-  core_listEnvironments(projectName: $projectName, search: $search, pq: $pq) {
+query authCli_listEnvironments($projectName: String!, $pq: CursorPaginationIn) {
+  core_listEnvironments(projectName: $projectName, pq: $pq) {
     edges {
       cursor
       node {
