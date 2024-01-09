@@ -57,14 +57,86 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-  r.logger.Infof("r.MsgSender is pointed to %p", r.MsgSender)
+	r.logger.Infof("r.MsgSender is pointed to %p", r.MsgSender)
 
 	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
 	switch gvk.String() {
-	case ProjectGVK.String(), AppGVK.String(), ManagedResourceGVK.String(), WorkspaceGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
+	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
 		{
 			// dispatch to console
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case ManagedResourceGVK.String():
+		{
+			// dispatch to console
+			mresConfig := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("mres-%s-creds", obj.GetName())), mresConfig); err != nil {
+				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
+				mresConfig = nil
+			}
+
+			if mresConfig != nil {
+				obj.Object["resource-watcher-mres-config"] = map[string]any{
+					"value":    base64.StdEncoding.EncodeToString(mresConfig.Data["config"]),
+					"encoding": "base64",
+				}
+			}
+
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case ProjectManageServiceGVK.String():
+		{
+			// dispatch to console
+			pmsvcConfig := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), pmsvcConfig); err != nil {
+				r.logger.Infof("pmsvc secret for service (%s), not found", obj.GetName())
+				pmsvcConfig = nil
+			}
+
+			if pmsvcConfig != nil {
+				obj.Object["resource-watcher-pmsvc-config"] = map[string]any{
+					"value":    base64.StdEncoding.EncodeToString(pmsvcConfig.Data["config"]),
+					"encoding": "base64",
+				}
+			}
+
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case ClusterManagedServiceGVK.String():
+		{
+			// dispatch to console
+			cmsvcConfig := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcConfig); err != nil {
+				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
+				cmsvcConfig = nil
+			}
+
+			if cmsvcConfig != nil {
+				obj.Object["resource-watcher-cmsvc-config"] = map[string]any{
+					"value":    base64.StdEncoding.EncodeToString(cmsvcConfig.Data["config"]),
+					"encoding": "base64",
+				}
+			}
+
 			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
@@ -108,7 +180,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			return ctrl.Result{}, err
 		}
 
-	case ClusterManagedServiceGVK.String(), NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
+	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
 		{
 			// dispatch to infra
 			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
@@ -227,13 +299,14 @@ var (
 
 	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
 	ManagedResourceGVK       = newGVK("crds.kloudlite.io/v1", "ManagedResource")
-	WorkspaceGVK             = newGVK("crds.kloudlite.io/v1", "Workspace")
+	EnvironmentGVK           = newGVK("crds.kloudlite.io/v1", "Environment")
 	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
 	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
 	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
 	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
 	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
 	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
+	ProjectManageServiceGVK  = newGVK("crds.kloudlite.io/v1", "ProjectManagedService")
 
 	// native resources
 	PersistentVolumeClaimGVK = newGVK("v1", "PersistentVolumeClaim")
@@ -257,7 +330,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		ProjectGVK,
 		AppGVK,
 		ManagedResourceGVK,
-		WorkspaceGVK,
+		EnvironmentGVK,
 		RouterGVK,
 
 		BuildRunGVK,
@@ -265,6 +338,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		DeviceGVK,
 
 		ClusterManagedServiceGVK,
+		ProjectManageServiceGVK,
 		NodePoolGVK,
 		HelmChartGVK,
 
