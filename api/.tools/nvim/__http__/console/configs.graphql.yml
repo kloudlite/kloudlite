@@ -4,7 +4,7 @@ global:
 ---
 
 label: List Configs
-query: |+
+query: |+ #graphql
   query Core_listConfigs($projectName: String!, $envName: String!) {
     core_listConfigs(projectName: $projectName, envName: $envName) {
         edges {
@@ -44,7 +44,7 @@ variables:
 ---
 
 label: Create Config
-query: |+
+query: |+ #graphql
   mutation Core_createConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
     core_createConfig(projectName: $projectName, envName: $envName, config: $config) {
       metadata {
@@ -75,7 +75,7 @@ variables:
 ---
 
 label: Get Config
-query: |+
+query: |+ #graphql
   query Core_getConfig($namespace: String!, $name: String!) {
     core_getConfig(namespace: $namespace, name: $name) {
       metadata {
@@ -103,7 +103,7 @@ variables:
 ---
 
 label: Update Config
-query: |+
+query: |+ #graphql
   mutation Core_updateConfig($projectName: String!, $envName: String!, $config: ConfigIn!) {
     core_updateConfig(projectName: $projectName, envName: $envName, config: $config) {
         metadata {

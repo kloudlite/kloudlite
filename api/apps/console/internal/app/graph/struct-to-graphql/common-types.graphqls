@@ -92,8 +92,15 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvFrom @shareable {
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting @shareable {
+  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+  privateIngressClass: String
+  publicIngressClass: String
+}
+
 type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @shareable {
   projectName: String!
+  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting
   targetNamespace: String
 }
 
@@ -112,6 +119,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbe @sharea
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__Https @shareable {
+  clusterIssuer: String
   enabled: Boolean!
   forceRedirect: Boolean
 }
@@ -338,8 +346,13 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvFromIn {
   type: Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret!
 }
 
+input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn {
+  mode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode
+}
+
 input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
   projectName: String!
+  routing: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingIn
   targetNamespace: String
 }
 
@@ -358,6 +371,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__HttpGetProbeIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HttpsIn {
+  clusterIssuer: String
   enabled: Boolean!
   forceRedirect: Boolean
 }
@@ -489,6 +503,11 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
 enum Github__com___kloudlite___operator___apis___crds___v1__ConfigOrSecret {
   config
   secret
+}
+
+enum Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode {
+  private
+  public
 }
 
 enum K8s__io___api___core___v1__SecretType {

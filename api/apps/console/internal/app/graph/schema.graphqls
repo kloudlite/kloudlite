@@ -75,48 +75,6 @@ input SearchProjectManagedService {
     markedForDeletion: MatchFilterIn
 }
 
-# enum EnvOrWorkspaceOrProjectIdType {
-#     workspaceName
-#     workspaceTargetNamespace
-#
-#     environmentName
-#     environmentTargetNamespace
-#
-#     projectName
-#     projectTargetNamespace
-# }
-#
-# input EnvOrWorkspaceOrProjectId {
-#     type: EnvOrWorkspaceOrProjectIdType!
-#     name: String!
-# }
-
-input ConfigValuesIn {
-    configmapName: String!
-    key: String!
-}
-
-type ConfigValuesOut {
-    configmapName: String!
-    key: String!
-    value: String!
-}
-
-input SecretValuesIn {
-    secretName: String!
-    key: String!
-}
-
-type SecretValuesOut {
-    secretName: String!
-    key: String!
-    value: String!
-}
-
-#// [ ] - APP Intercept
-#// [ ] - VPN Device Port Update
-#// [ ] - grab config and secret values
-
 type Query {
     core_checkNameAvailability(resType: ConsoleResType!, namespace: String, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
@@ -137,12 +95,12 @@ type Query {
     core_getApp(projectName: String!, envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
     core_resyncApp(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getConfigValues(queries: [ConfigValuesIn!]): [ConfigValuesOut!]
+    core_getConfigValues(projectName: String!, envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
     core_listConfigs(projectName: String!, envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getConfig(projectName: String!, envName: String!, name: String!): Config @isLoggedInAndVerified @hasAccount
     core_resyncConfig(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_getSecretValues(queries: [SecretValuesIn!]): [SecretValuesOut!]
+    core_getSecretValues(projectName: String!, envName: String!, queries: [SecretKeyRefIn!]): [SecretKeyValueRef!] @isLoggedInAndVerified @hasAccount
     core_listSecrets(projectName: String!, envName: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getSecret(projectName: String!, envName: String!, name: String!): Secret @isLoggedInAndVerified @hasAccount
     core_resyncSecret(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -177,6 +135,7 @@ type Mutation {
     core_createApp(projectName: String!, envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
     core_updateApp(projectName: String!, envName: String!, app: AppIn!): App @isLoggedInAndVerified @hasAccount
     core_deleteApp(projectName: String!, envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_interceptApp(projectName: String!, envName: String!, appname: String!, deviceName: String!, intercept: Boolean!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_createConfig(projectName: String!, envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
     core_updateConfig(projectName: String!, envName: String!, config: ConfigIn!): Config @isLoggedInAndVerified @hasAccount
