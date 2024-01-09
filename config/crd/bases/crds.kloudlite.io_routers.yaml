@@ -19,11 +19,14 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
-      name: Ready
+    - jsonPath: .metadata.annotations.kloudlite\.io\/router\.ingress-class
+      name: Class
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/router\.domains
       name: domains
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -107,8 +110,6 @@ spec:
                   rps:
                     type: integer
                 type: object
-              region:
-                type: string
               routes:
                 items:
                   properties:

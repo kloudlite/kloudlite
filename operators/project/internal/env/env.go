@@ -11,6 +11,8 @@ type Env struct {
 
 	WorkspaceRouteSwitcherName  string `env:"WORKSPACE_ROUTE_SWITCHER_NAME" required:"false"`
 	WorkspaceRouteSwitcherImage string `env:"WORKSPACE_ROUTE_SWITCHER_IMAGE" required:"false"`
+
+	DefaultIngressClass string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
