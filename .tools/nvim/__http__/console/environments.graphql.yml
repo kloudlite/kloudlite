@@ -77,7 +77,7 @@ variables:
   env:
     displayName: Display Name of a sample environment
     metadata:
-      name: "{{.envName}}2"
+      name: "{{.envName2}}"
     spec:
       projectName: "{{.projectName}}"
 ---

@@ -12,7 +12,6 @@ import (
 
 type ConsoleContext struct {
 	context.Context
-	// ProjectName string
 	AccountName string
 
 	UserId    repos.ID
@@ -58,6 +57,28 @@ type CheckNameAvailabilityOutput struct {
 	SuggestedNames []string `json:"suggestedNames,omitempty"`
 }
 
+type ConfigKeyRef struct {
+	ConfigName string `json:"configName"`
+	Key        string `json:"key"`
+}
+
+type ConfigKeyValueRef struct {
+	ConfigName string `json:"configName"`
+	Key        string `json:"key"`
+	Value      string `json:"value"`
+}
+
+type SecretKeyRef struct {
+	SecretName string `json:"seceretName"`
+	Key        string `json:"key"`
+}
+
+type SecretKeyValueRef struct {
+	SecretName string `json:"seceretName"`
+	Key        string `json:"key"`
+	Value      string `json:"value"`
+}
+
 type ResType string
 
 type UpdateAndDeleteOpts struct {
@@ -101,6 +122,8 @@ type Domain interface {
 	UpdateApp(ctx ResourceContext, app entities.App) (*entities.App, error)
 	DeleteApp(ctx ResourceContext, name string) error
 
+	InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool) (bool, error)
+
 	OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnAppDeleteMessage(ctx ResourceContext, app entities.App) error
 	OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
@@ -109,6 +132,7 @@ type Domain interface {
 
 	ListConfigs(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error)
 	GetConfig(ctx ResourceContext, name string) (*entities.Config, error)
+	GetConfigEntries(ctx ResourceContext, keyrefs []ConfigKeyRef) ([]*ConfigKeyValueRef, error)
 
 	CreateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error)
 	UpdateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error)
@@ -122,6 +146,7 @@ type Domain interface {
 
 	ListSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error)
 	GetSecret(ctx ResourceContext, name string) (*entities.Secret, error)
+	GetSecretEntries(ctx ResourceContext, keyrefs []SecretKeyRef) ([]*SecretKeyValueRef, error)
 
 	CreateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error)
 	UpdateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error)

@@ -83,10 +83,22 @@ models:
   Secret: &secret-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Secret
   SecretIn: *secret-model
+#
+  SecretKeyRefIn:
+    model: github.com/kloudlite/api/apps/console/internal/domain.SecretKeyRef
+
+  SecretKeyValueRef:
+    model: github.com/kloudlite/api/apps/console/internal/domain.SecretKeyValueRef
 
   Config: &config-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Config
   ConfigIn: *config-model
+
+  ConfigKeyRefIn:
+    model: github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
+
+  ConfigKeyValueRef:
+    model: github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
 
   App: &app-model
     model: github.com/kloudlite/api/apps/console/internal/entities.App

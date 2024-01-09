@@ -39,6 +39,46 @@ func (d *domain) GetConfig(ctx ResourceContext, name string) (*entities.Config, 
 	return d.findConfig(ctx, name)
 }
 
+// GetConfigEntries implements Domain.
+func (d *domain) GetConfigEntries(ctx ResourceContext, keyrefs []ConfigKeyRef) ([]*ConfigKeyValueRef, error) {
+	filters := ctx.DBFilters()
+
+	names := make([]any, 0, len(keyrefs))
+	for i := range keyrefs {
+		names = append(names, keyrefs[i].ConfigName)
+	}
+
+	filters = d.configRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+		"metadata.name": {
+			MatchType: repos.MatchTypeArray,
+			Array:     names,
+		},
+	})
+
+	configs, err := d.configRepo.Find(ctx, repos.Query{Filter: filters})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	results := make([]*ConfigKeyValueRef, 0, len(configs))
+
+	data := make(map[string]map[string]string)
+
+	for i := range configs {
+		data[configs[i].Name] = configs[i].Data
+	}
+
+	for i := range keyrefs {
+		results[i] = &ConfigKeyValueRef{
+			ConfigName: keyrefs[i].ConfigName,
+			Key:        keyrefs[i].Key,
+			Value:      data[keyrefs[i].ConfigName][keyrefs[i].Key],
+		}
+	}
+
+	return results, nil
+}
+
 func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)

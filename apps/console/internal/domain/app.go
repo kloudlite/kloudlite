@@ -165,6 +165,29 @@ func (d *domain) UpdateApp(ctx ResourceContext, app entities.App) (*entities.App
 	return upApp, nil
 }
 
+// InterceptApp implements Domain.
+func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool) (bool, error) {
+	app, err := d.findApp(ctx, appName)
+	if err != nil {
+		return false, err
+	}
+
+	intercepted := app.Spec.Intercept.Enabled
+
+	if intercepted && app.Spec.Intercept.ToDevice != deviceName {
+		return false, errors.Newf("device (%s) is already intercepting app (%s)", app.Spec.Intercept.ToDevice, appName)
+	}
+
+	app.Spec.Intercept.Enabled = intercept
+	app.Spec.Intercept.ToDevice = deviceName
+
+	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
+}
+
 func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xApp, err := d.findApp(ctx, app.Name)
 	if err != nil {

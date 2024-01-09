@@ -4,7 +4,7 @@ global:
 ---
 
 label: List Apps
-query: |+
+query: |+ # graphql
   query Core_listApps($projectName: String!, $envName: String!) {
     core_listApps(projectName: $projectName, envName: $envName) {
       edges {
@@ -86,8 +86,12 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      name: "{{.name}}3"
+      name: "{{.name}}"
     spec:
+      services:
+        - type: tcp
+          port: 80
+          targetPort: 80
       containers:
         - name: main
           # image: kong/httpbin
@@ -111,7 +115,7 @@ query: |+
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName2}}"
+  envName: "{{.envName}}"
   app:
     displayName: "sample app"
     metadata:
@@ -123,8 +127,8 @@ variables:
           targetPort: 80
       containers:
         - name: main
-          image: nginx
-          # image: kong/httpbin
+          # image: nginx
+          image: kong/httpbin
           # envFrom:
           #   - type: config
           #     refName: s1
