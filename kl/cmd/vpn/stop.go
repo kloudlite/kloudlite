@@ -1,6 +1,8 @@
 package vpn
 
 import (
+	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 	"os"
 	"strings"
 
@@ -51,6 +53,15 @@ Example:
 
 		fn.Log("[#] disconnected")
 
+		s, err := client.CurrentDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+			text.Red(s),
+		)
 	},
 }
 

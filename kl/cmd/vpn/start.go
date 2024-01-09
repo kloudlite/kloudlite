@@ -105,8 +105,22 @@ Example:
 
 		fn.Log("[#] connected")
 
-		wgc.Show(nil)
+		_, err = wgc.Show(nil)
 
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		s, err := client.CurrentDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+			text.Red(s),
+		)
 	},
 }
 

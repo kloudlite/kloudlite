@@ -45,7 +45,7 @@ func connect(verbose bool) error {
 	return nil
 }
 func disconnect(verbose bool) error {
-	return nil
+	return stopService(verbose)
 }
 
 func ipRouteAdd(ip string, interfaceIp string, deviceName string, verbose bool) error {
@@ -230,7 +230,7 @@ func startService(verbose bool) error {
 }
 
 func stopService(verbose bool) error {
-	output, err := exec.Command("pgrep", "-f", "kl wg connect --foreground").Output()
+	output, err := exec.Command("pgrep", "-f", "kl vpn start-fg").Output()
 	if err != nil {
 		return err
 	}
