@@ -97,6 +97,7 @@ func startApi() error {
 		}
 		return nil
 	})
+
 	err := app.Listen(":2998")
 	if err != nil {
 		return err

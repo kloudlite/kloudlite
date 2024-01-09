@@ -1,0 +1,22 @@
+version: 3
+
+vars:
+  ImageRegistry: "ghcr.io/kloudlite/operator/components/coredns"
+
+tasks:
+  build:
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -ldflags="-s -w" -o ./bin/kl-coredns .
+
+  container:build:
+    cmds:
+      - task: build
+      - podman build -t {{.ImageRegistry}}:v1.0.5-nightly .
+      - podman push {{.ImageRegistry}}:v1.0.5-nightly
+
+  dev:
+    cmds:
+      - podman build -t sample:latest .
+      - podman run -p 5959:53/udp -p 22220:22222 --rm -it sample:latest

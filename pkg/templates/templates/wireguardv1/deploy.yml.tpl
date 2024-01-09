@@ -34,9 +34,9 @@ spec:
       tolerations: {{$tolerations | toJson}}
       containers:
       - name: wireguard
-        # image: ghcr.io/linuxserver/wireguard
         imagePullPolicy: IfNotPresent
-        image: ghcr.io/kloudlite/platform/apis/wg-restart:v1.0.5-nightly
+        {{- /* image: ghcr.io/kloudlite/platform/apis/wg-restart:v1.0.5-nightly */}}
+        image: ghcr.io/linuxserver/wireguard
         securityContext:
           capabilities:
             add:
@@ -64,11 +64,21 @@ spec:
             # cpu: "200m"
 
       # this is for coredns
+        {{- /* - args */}}
+        {{- /* - -conf */}}
+        {{- /* - /etc/coredns/Corefile */}}
+        {{- /* image: rancher/mirrored-coredns-coredns:1.9.1 */}}
+        {{- /* imagePullPolicy: IfNotPresent */}}
       - args:
-        - -conf
+        - --addr
+        {{- /* - 127.0.0.1:17171 */}}
+        {{- /* - 10.13.0.1:17171 */}}
+        - 0.0.0.0:17171
+        - --corefile
         - /etc/coredns/Corefile
-        image: rancher/mirrored-coredns-coredns:1.9.1
-        imagePullPolicy: IfNotPresent
+        - --debug
+        image: ghcr.io/kloudlite/operator/components/coredns:v1.0.5-nightly
+        imagePullPolicy: Always
         name: coredns
         resources:
           limits:
@@ -82,9 +92,9 @@ spec:
           capabilities:
             add:
             - NET_BIND_SERVICE
-            drop:
-            - all
-          readOnlyRootFilesystem: true
+            {{- /* drop: */}}
+            {{- /* - all */}}
+          {{- /* readOnlyRootFilesystem: true */}}
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:

@@ -1,8 +1,10 @@
 package device
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -131,9 +133,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *Reconciler) rollout(req *rApi.Request[*wgv1.Device]) error {
+func (r *Reconciler) rolloutWireguard(req *rApi.Request[*wgv1.Device]) error {
 	ctx, obj := req.Context(), req.Object
-
 	depName := fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)
 	deployment, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, depName), &appsv1.Deployment{})
 	if err != nil {
@@ -150,6 +151,26 @@ func (r *Reconciler) rollout(req *rApi.Request[*wgv1.Device]) error {
 
 	if err := r.Update(ctx, deployment); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *Reconciler) rolloutCoreDNS(req *rApi.Request[*wgv1.Device], corefileConfig string) error {
+	ctx, obj := req.Context(), req.Object
+
+	hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("http://%s.%s.svc.cluster.local:17171/resync", obj.Name, r.Env.DeviceInfoNamespace), bytes.NewBuffer([]byte(corefileConfig)))
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(hreq)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status code, received: %d, corefile not synced", resp.StatusCode)
 	}
 
 	return nil
@@ -212,31 +233,21 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 	dnsConfigName := fmt.Sprint(DNS_NAME_PREFIX, obj.Name)
 
 	getDnsConfig := func() ([]byte, *string, error) {
-		rewriteRules := ""
+		corefile := ""
 
 		for _, cn := range obj.Spec.CNameRecords {
-			rewriteRules += fmt.Sprintf("\n\trewrite name %s %s", cn.Host, cn.Target)
+			corefile += fmt.Sprintf("\n\trewrite name %s %s", cn.Host, cn.Target)
 		}
 
-		rewriteRules += fmt.Sprintf("\n\trewrite name regex ^([a-zA-Z0-9-]+)\\.local$ {1}.%s.svc.%s answer auto",
+		corefile += fmt.Sprintf("\n\trewrite name regex (^[a-zA-Z0-9-_]+)[.]local {1}.%s.svc.%s answer auto",
 			r.Env.DeviceInfoNamespace,
-			func() string {
-				if r.Env.ClusterInternalDns == "" {
-					return "cluster.local"
-				}
-				return r.Env.ClusterInternalDns
-			}(),
+			r.Env.ClusterInternalDns,
 		)
 
 		if obj.Spec.DeviceNamespace != nil {
-			rewriteRules += fmt.Sprintf("\n\trewrite name regex ^([a-zA-Z0-9-]+)\\.?[^.]*$ {1}.%s.svc.%s answer auto",
+			corefile += fmt.Sprintf("\n\trewrite name regex ^([a-zA-Z0-9-]+)\\.?[^.]*$ {1}.%s.svc.%s answer auto",
 				*obj.Spec.DeviceNamespace,
-				func() string {
-					if r.Env.ClusterInternalDns == "" {
-						return "cluster.local"
-					}
-					return r.Env.ClusterInternalDns
-				}(),
+				r.Env.ClusterInternalDns,
 			)
 
 			// device namespace => ingress domains => rewrite rule: rewrite name s1.sample-cluster.kloudlite-dev.tenants.devc.kloudlite.io env-ingress.env-nxtcoder172.svc.cluster.local
@@ -253,11 +264,11 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 			}
 
 			for k := range domains {
-				rewriteRules += fmt.Sprintf("\n\trewrite name %s %s.%s.svc.cluster.local", k, r.Env.EnvironmentIngressName, *obj.Spec.DeviceNamespace)
+				corefile += fmt.Sprintf("\n\trewrite name %s %s.%s.svc.%s", k, r.Env.EnvironmentIngressName, *obj.Spec.DeviceNamespace, r.Env.ClusterInternalDns)
 			}
 		}
 
-		rewriteRules = fmt.Sprintf(
+		corefile = fmt.Sprintf(
 			`
 .:53 {
     errors
@@ -273,11 +284,11 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
     loadbalance
 }
 `,
-			rewriteRules, kubeDns.Spec.ClusterIP)
+			corefile, kubeDns.Spec.ClusterIP)
 
 		b, err := templates.Parse(templates.Wireguard.DnsConfig, map[string]any{
 			"namespace":     r.Env.DeviceInfoNamespace,
-			"rewrite-rules": rewriteRules,
+			"rewrite-rules": corefile,
 			"name":          obj.Name,
 			"labels":        map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
 			"ownerRefs":     []metav1.OwnerReference{fn.AsOwner(obj, true)},
@@ -286,15 +297,15 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 			return nil, nil, err
 		}
 
-		return b, &rewriteRules, nil
+		return b, &corefile, nil
 	}
 
-	applyDnsCoinfig := func(configYaml []byte) error {
+	applyDnsConfig := func(configYaml []byte, corefileConfig string) error {
 		if _, err := r.yamlClient.ApplyYAML(ctx, configYaml); err != nil {
 			return err
 		}
 
-		return r.rollout(req)
+		return r.rolloutCoreDNS(req, corefileConfig)
 	}
 
 	if err := func() error {
@@ -303,16 +314,20 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 			return err
 		}
 
+		if conf == nil {
+			return fmt.Errorf("corefile config is nil, aborting")
+		}
+
 		dConf, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, dnsConfigName), &corev1.ConfigMap{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 
-			return applyDnsCoinfig(b)
+			return applyDnsConfig(b, *conf)
 		} else {
 			if strings.TrimSpace(string(dConf.Data["Corefile"])) != strings.TrimSpace(string(*conf)) {
-				return applyDnsCoinfig(b)
+				return applyDnsConfig(b, *conf)
 			}
 		}
 
@@ -371,7 +386,8 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: r.Env.DeviceInfoNamespace, Name: name,
+						Name:            name,
+						Namespace:       r.Env.DeviceInfoNamespace,
 						Labels:          map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
 						OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					},
@@ -435,15 +451,10 @@ func (r *Reconciler) generateDeviceConfig(req *rApi.Request[*wgv1.Device]) (devC
 			DeviceIp:        string(ip),
 			DevicePvtKey:    string(priv),
 			ServerPublicKey: string(serverPublicKey),
-			ServerEndpoint: fmt.Sprintf("%s:%d", func() string {
-				if r.Env.DnsHostedZone != "" {
-					return r.Env.DnsHostedZone
-				}
-				return "dev.kloudlite.io"
-			}(), wgService.Spec.Ports[0].NodePort),
-			DNS:     "10.13.0.3",
-			PodCidr: r.Env.WGPodCidr,
-			SvcCidr: r.Env.WGServiceCidr,
+			ServerEndpoint:  fmt.Sprintf("%s:%d", r.Env.DnsHostedZone, wgService.Spec.Ports[0].NodePort),
+			DNS:             "10.13.0.3",
+			PodCidr:         r.Env.ClusterPodCidr,
+			SvcCidr:         r.Env.ClusterServiceCidr,
 		})
 		if err != nil {
 			return err
@@ -499,7 +510,7 @@ net.ipv4.ip_forward=1
 		return err
 	}
 
-	if err := r.rollout(req); err != nil {
+	if err := r.rolloutWireguard(req); err != nil {
 		return err
 	}
 
@@ -629,17 +640,15 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: r.Env.DeviceInfoNamespace, Name: obj.Name,
+				Name:            obj.Name,
+				Namespace:       r.Env.DeviceInfoNamespace,
 				Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
 				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 			Spec: corev1.ServiceSpec{
 				Ports: func() []corev1.ServicePort {
-					if len(sPorts) != 0 {
-						return sPorts
-					}
-
-					return []corev1.ServicePort{{Name: "port-default", Port: 80, TargetPort: intstr.IntOrString{Type: 0, IntVal: 0}}}
+					port := corev1.ServicePort{Name: "kl-coredns", Port: 17171}
+					return append(sPorts, port)
 				}(),
 				Selector: map[string]string{
 					"kloudlite.io/pod-type": "wireguard-server",
@@ -710,12 +719,7 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 						Labels:    map[string]string{constants.WGDeviceNameKey: obj.Name, "kloudlite.io/wg-svc-type": "external"},
 					},
 					Spec: corev1.ServiceSpec{
-						ExternalName: fmt.Sprintf("%s.%s.svc.%s", obj.Name, r.Env.DeviceInfoNamespace, func() string {
-							if r.Env.ClusterInternalDns == "" {
-								return "cluster.local"
-							}
-							return r.Env.ClusterInternalDns
-						}()),
+						ExternalName:    fmt.Sprintf("%s.%s.svc.%s", obj.Name, r.Env.DeviceInfoNamespace, r.Env.ClusterInternalDns),
 						SessionAffinity: corev1.ServiceAffinityNone,
 						Type:            corev1.ServiceTypeExternalName,
 					},
@@ -739,12 +743,7 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				},
 				Spec: corev1.ServiceSpec{
-					ExternalName: fmt.Sprintf("%s.%s.svc.%s", obj.Name, r.Env.DeviceInfoNamespace, func() string {
-						if r.Env.ClusterInternalDns == "" {
-							return "cluster.local"
-						}
-						return r.Env.ClusterInternalDns
-					}()),
+					ExternalName:    fmt.Sprintf("%s.%s.svc.%s", obj.Name, r.Env.DeviceInfoNamespace, r.Env.ClusterInternalDns),
 					SessionAffinity: corev1.ServiceAffinityNone,
 					Type:            corev1.ServiceTypeExternalName,
 				},
@@ -854,7 +853,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		builder.Watches(
 			object,
 			handler.EnqueueRequestsFromMapFunc(
-				func(ctx context.Context, obj client.Object) []reconcile.Request {
+				func(_ context.Context, obj client.Object) []reconcile.Request {
 					if dev, ok := obj.GetLabels()[constants.WGDeviceNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), dev)}}
 					}

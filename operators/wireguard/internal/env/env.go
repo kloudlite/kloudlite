@@ -10,14 +10,12 @@ type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
 
-	// default 10.42.0.0/16
-	WGPodCidr string `env:"WG_POD_CIDR"`
-	// default 10.43.0.0/16
-	WGServiceCidr string `env:"WG_SVC_CIDR"`
-	// default dns.khost.dev
-	DnsHostedZone string `env:"DNS_HOSTED_ZONE"`
+	ClusterPodCidr     string `env:"CLUSTER_POD_CIDR" required:"true"` // default 10.42.0.0/16
+	ClusterServiceCidr string `env:"CLUSTER_SVC_CIDR" required:"true"` // default 10.43.0.0/16
 
-	ClusterInternalDns  string `env:"CLUSTER_INTERNAL_DNS"`
+	DnsHostedZone string `env:"DNS_HOSTED_ZONE" required:"true"`
+
+	ClusterInternalDns  string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
 	DeviceInfoNamespace string `env:"DEVICE_INFO_NAMESPACE" default:"device-info"`
 
 	EnvironmentIngressName string `env:"ENVIRONMENT_INGRESS_NAME" default:"env-ingress"`
