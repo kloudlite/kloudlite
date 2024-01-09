@@ -1,0 +1,14 @@
+.:53 {
+  errors
+  health    
+  ready
+  rewrite name regex (^[a-zA-Z0-9-_]+)[.]local  {1}..device-info.svc.cluster.local answer auto
+  # rewrite name regex ^([a-zA-Z0-9-_]+)\.?[^.]*$ {1}..env-nxtcoder17.svc.cluster.local answer auto
+  rewrite name s1.sample-cluster.kloudlite-dev.tenants.devc.kloudlite.io env-ingress.env-nxtcoder17.svc.cluster.local
+  # rewrite ttl env-ingress.env-nxtcoder17.svc.cluster.local. 7-11
+  forward . 10.43.0.10
+  cache   20
+  loop
+  reload
+  loadbalance
+}
