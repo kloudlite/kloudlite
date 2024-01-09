@@ -14,6 +14,7 @@ import (
 	project "github.com/kloudlite/operator/operators/project/controller"
 	resourceWatcher "github.com/kloudlite/operator/operators/resource-watcher/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
+	wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
 )
 
 func main() {
@@ -37,6 +38,8 @@ func main() {
 	resourceWatcher.RegisterInto(mgr)
 
 	distribution.RegisterInto(mgr)
+
+	wireguard.RegisterInto(mgr)
 
 	mgr.Start()
 }
