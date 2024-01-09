@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -44,6 +45,15 @@ func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
+func unmarshalUnstructured(obj *unstructured.Unstructured, resource client.Object) error {
+	b, err := json.Marshal(obj.Object)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(b, resource)
+}
+
 func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) (ctrl.Result, error) {
 	mctx, cf := func() (context.Context, context.CancelFunc) {
 		if r.Env.IsDev {
@@ -64,7 +74,6 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	switch gvk.String() {
 	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
 		{
-			// dispatch to console
 			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
@@ -75,18 +84,14 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	case ManagedResourceGVK.String():
 		{
-			// dispatch to console
-			mresConfig := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("mres-%s-creds", obj.GetName())), mresConfig); err != nil {
+			mresSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("mres-%s-creds", obj.GetName())), mresSecret); err != nil {
 				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
-				mresConfig = nil
+				mresSecret = nil
 			}
 
-			if mresConfig != nil {
-				obj.Object["resource-watcher-mres-config"] = map[string]any{
-					"value":    base64.StdEncoding.EncodeToString(mresConfig.Data["config"]),
-					"encoding": "base64",
-				}
+			if mresSecret != nil {
+				obj.Object[t.KeyManagedResSecret] = mresSecret
 			}
 
 			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
@@ -99,18 +104,19 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	case ProjectManageServiceGVK.String():
 		{
-			// dispatch to console
-			pmsvcConfig := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), pmsvcConfig); err != nil {
-				r.logger.Infof("pmsvc secret for service (%s), not found", obj.GetName())
-				pmsvcConfig = nil
+			var pmsvc crdsv1.ProjectManagedService
+			if err := unmarshalUnstructured(obj, &pmsvc); err != nil {
+				return ctrl.Result{}, err
 			}
 
-			if pmsvcConfig != nil {
-				obj.Object["resource-watcher-pmsvc-config"] = map[string]any{
-					"value":    base64.StdEncoding.EncodeToString(pmsvcConfig.Data["config"]),
-					"encoding": "base64",
-				}
+			pmsvcSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(pmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), pmsvcSecret); err != nil {
+				r.logger.Infof("pmsvc secret for service (%s), not found", obj.GetName())
+				pmsvcSecret = nil
+			}
+
+			if pmsvcSecret != nil {
+				obj.Object[t.KeyProjectManagedSvcSecret] = pmsvcSecret
 			}
 
 			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
@@ -123,21 +129,22 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	case ClusterManagedServiceGVK.String():
 		{
-			// dispatch to console
-			cmsvcConfig := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcConfig); err != nil {
+			var cmsvc crdsv1.ClusterManagedService
+			if err := unmarshalUnstructured(obj, &cmsvc); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			cmsvcSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcSecret); err != nil {
 				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
-				cmsvcConfig = nil
+				cmsvcSecret = nil
 			}
 
-			if cmsvcConfig != nil {
-				obj.Object["resource-watcher-cmsvc-config"] = map[string]any{
-					"value":    base64.StdEncoding.EncodeToString(cmsvcConfig.Data["config"]),
-					"encoding": "base64",
-				}
+			if cmsvcSecret != nil {
+				obj.Object[t.KeyClusterManagedSvcSecret] = cmsvcSecret
 			}
 
-			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -147,7 +154,6 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	case BuildRunGVK.String():
 		{
-			// dispatch to container registry
 			err := r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
@@ -166,7 +172,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			if deviceConfig != nil {
-				obj.Object["resource-watcher-wireguard-config"] = map[string]any{
+				obj.Object[t.KeyVPNDeviceConfig] = map[string]any{
 					"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
 					"encoding": "base64",
 				}
