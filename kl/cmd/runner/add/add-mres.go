@@ -1,7 +1,11 @@
 package add
 
 import (
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	"fmt"
+
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/spf13/cobra"
 )
@@ -20,190 +24,82 @@ Examples:
   kl add mres --resource=<resourceId> --service=<serviceId>
 `,
 	Run: func(cmd *cobra.Command, _ []string) {
-		err := selectAndAddMres(cmd)
+
+		mresName := fn.ParseStringFlag(cmd, "resource")
+
+		mres, err := server.SelectMres([]fn.Option{
+			fn.MakeOption("mresName", mresName),
+		}...)
+
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
-	},
-}
 
-func selectAndAddMres(cmd *cobra.Command) error {
-	return nil
-	// resource := cmd.Flag("resource").Value.String()
-	// service := cmd.Flag("service").Value.String()
-	//
-	// klFile, err := client.GetKlFile(nil)
-	//
-	// if err != nil {
-	// 	common_util.PrintError(err)
-	// 	es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
-	// 	return fmt.Errorf(es)
-	// }
-	//
-	// mreses, market, err := server2.GetMreses()
-	//
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// if len(mreses) == 0 {
-	// 	return fmt.Errorf("no managed services created yet on server")
-	// }
-	//
-	// selectedMsvc := &server2.Mres{}
-	//
-	// if service != "" {
-	// 	for _, m := range mreses {
-	// 		if m.Name == service {
-	// 			selectedMsvc = m
-	// 			break
-	// 		}
-	// 	}
-	// 	return fmt.Errorf("no managed service found with the provided name")
-	// } else {
-	//
-	// 	selecetedMres, e := fzf.FindOne(
-	// 		mreses,
-	// 		func(item *server2.Mres) string {
-	// 			return item.Name
-	// 		},
-	// 		fzf.WithPrompt("Select managed service >"),
-	// 	)
-	//
-	// 	if e != nil {
-	// 		return e
-	// 	}
-	// 	selectedMsvc = *selecetedMres
-	// }
-	//
-	// if len(selectedMsvc.Resources) == 0 {
-	// 	return fmt.Errorf("no resources found in %s managed service", selectedMsvc.Name)
-	// }
-	//
-	// selectedMres := server2.ResourceType{}
-	// if resource != "" {
-	//
-	// 	for _, rt := range selectedMsvc.Resources {
-	// 		if rt.Name == resource {
-	// 			selectedMres = rt
-	// 			break
-	// 		}
-	// 	}
-	//
-	// 	return fmt.Errorf("no managed resource found with provided resource name")
-	//
-	// } else {
-	//
-	// 	selectedResource, e := fzf.FindOne(
-	// 		selectedMsvc.Resources,
-	// 		func(item server2.ResourceType) string {
-	// 			return item.Name
-	// 		},
-	// 		fzf.WithPrompt(fmt.Sprintf("Select resource of %s >", selectedMsvc.Name)),
-	// 	)
-	//
-	// 	if e != nil {
-	// 		return e
-	// 	}
-	//
-	// 	selectedMres = *selectedResource
-	//
-	// }
-	//
-	// var outputs server2.Outputs
-	//
-	// for _, mc := range market {
-	// 	for _, mmi := range mc.List {
-	// 		if !mmi.Active {
-	// 			continue
-	// 		}
-	// 		if mmi.Name == selectedMsvc.Source {
-	// 			for _, v := range mmi.Resources {
-	// 				if v.Name == selectedMres.ResourceType {
-	// 					outputs = v.Outputs
-	// 				}
-	// 			}
-	// 			break
-	// 		}
-	// 	}
-	// }
-	//
-	// if outputs == nil {
-	// 	return fmt.Errorf("can't find the environment in selected resource")
-	// }
-	//
-	// matchedMres := -1
-	//
-	// for i, rt := range klFile.Mres {
-	// 	if fmt.Sprintf("%s/%s", selectedMsvc.Name, rt.Name) == fmt.Sprintf("%s/%s", selectedMsvc.Name, selectedMres.Name) {
-	// 		matchedMres = i
-	// 		break
-	// 	}
-	// }
-	//
-	// if len(outputs) == 0 {
-	// 	return fmt.Errorf("no environment variables found in the selected managed resource")
-	// }
-	//
-	// if matchedMres != -1 {
-	// 	klFile.Mres[matchedMres].Env = func() []client.ResEnvType {
-	// 		env := make([]client.ResEnvType, 0)
-	//
-	// 		for _, op := range outputs {
-	// 			env = append(env, client.ResEnvType{
-	// 				Key: func() string {
-	// 					for _, ret := range klFile.Mres[matchedMres].Env {
-	// 						if ret.RefKey == op.Name {
-	// 							return ret.Key
-	// 						}
-	// 					}
-	// 					return op.Name
-	// 				}(),
-	// 				Name: func() *string {
-	// 					for _, ret := range klFile.Mres[matchedMres].Env {
-	// 						if ret.RefKey == op.Name {
-	// 							return ret.Name
-	// 						}
-	// 					}
-	// 					return &op.Label
-	// 				}(),
-	// 				RefKey: op.Name,
-	// 			})
-	// 		}
-	//
-	// 		return env
-	// 	}()
-	// } else {
-	//
-	// 	klFile.Mres = append(klFile.Mres, client.ResType{
-	// 		Name: fmt.Sprintf("%s/%s", selectedMsvc.Name, selectedMres.Name),
-	// 		Env: func() []client.ResEnvType {
-	// 			env := make([]client.ResEnvType, 0)
-	// 			for _, op := range outputs {
-	// 				env = append(env, client.ResEnvType{
-	// 					Key:    op.Name,
-	// 					RefKey: op.Name,
-	// 					Name:   &op.Label,
-	// 				})
-	// 			}
-	//
-	// 			return env
-	// 		}(),
-	// 	})
-	//
-	// 	err = client.WriteKLFile(*klFile)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	//
-	// fmt.Printf("added mres %s/%s to your %s-file\n", selectedMsvc.Name, selectedMres.Name, constants.CmdName)
-	// return nil
-	//
+		mresKey, err := server.SelectMresKey([]fn.Option{
+			fn.MakeOption("mresName", mres.Metadata.Name),
+		}...)
+
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		kt, err := client.GetKlFile(nil)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		if kt.Mres == nil {
+			kt.Mres = []client.ResType{
+				{
+					Name: mres.Metadata.Name,
+					Env: []client.ResEnvType{
+						{
+							Key:    fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey),
+							RefKey: *mresKey,
+						},
+					},
+				},
+			}
+		}
+
+		if kt.Mres != nil {
+			matchedMres := false
+			for i, rt := range kt.Mres {
+				if rt.Name == mres.Metadata.Name {
+					kt.Mres[i].Env = append(kt.Mres[i].Env, client.ResEnvType{
+						Key:    fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey),
+						RefKey: *mresKey,
+					})
+					matchedMres = true
+					break
+				}
+			}
+
+			if !matchedMres {
+				kt.Mres = append(kt.Mres, client.ResType{
+					Name: mres.Metadata.Name,
+					Env: []client.ResEnvType{
+						{
+							Key:    fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey),
+							RefKey: *mresKey,
+						},
+					},
+				})
+			}
+		}
+
+		if err := client.WriteKLFile(*kt); err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		fn.Log(fmt.Sprintf("added mres %s/%s to your kl-file", mres.Metadata.Name, *mresKey))
+	},
 }
 
 func init() {
 	addMresCommand.Flags().StringP("resource", "", "", "managed resource name")
-	addMresCommand.Flags().StringP("service", "", "", "managed service name")
 }

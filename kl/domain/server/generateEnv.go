@@ -3,7 +3,6 @@ package server
 import (
 	// "encoding/json"
 	"encoding/json"
-	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 )
@@ -188,7 +187,6 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			result[ent.Key] = v.Value
 		}
 
-		fmt.Println("here", v.ConfigName, v.Key, v.Value)
 		cmap[v.ConfigName][v.Key].Value = v.Value
 	}
 
@@ -198,7 +196,6 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			result[ent.Key] = v.Value
 		}
 
-		fmt.Println("here", v.SecretName, v.Key, v.Value)
 		smap[v.SecretName][v.Key].Value = v.Value
 	}
 

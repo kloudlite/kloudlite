@@ -27,10 +27,10 @@ Examples:
 		project := fn.ParseStringFlag(cmd, "project")
 
 		err := server.InterceptApp(true, []fn.Option{
-			fn.MakeOption("app", app),
-			fn.MakeOption("device", device),
-			fn.MakeOption("env", env),
-			fn.MakeOption("project", project),
+			fn.MakeOption("appName", app),
+			fn.MakeOption("deviceName", device),
+			fn.MakeOption("envName", env),
+			fn.MakeOption("projectName", project),
 		}...)
 
 		if err != nil {

@@ -9,6 +9,12 @@ import (
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
+var PaginationDefault = map[string]any{
+	"orderBy":       "name",
+	"sortDirection": "ASC",
+	"first":         99999999,
+}
+
 type App struct {
 	DisplayName string   `json:"displayName"`
 	Metadata    Metadata `json:"metadata"`
@@ -33,11 +39,7 @@ func ListApps(options ...fn.Option) ([]App, error) {
 	}
 
 	respData, err := klFetch("cli_listApps", map[string]any{
-		"pq": map[string]any{
-			"orderBy":       "name",
-			"sortDirection": "ASC",
-			"first":         99999999,
-		},
+		"pq":          PaginationDefault,
 		"projectName": strings.TrimSpace(projectName),
 		"envName":     env.Name,
 	}, &cookie)
@@ -103,10 +105,10 @@ func EnsureApp(options ...fn.Option) (*string, error) {
 
 func InterceptApp(status bool, options ...fn.Option) error {
 
-	appName := fn.GetOption(options, "app")
-	devName := fn.GetOption(options, "device")
-	envName := fn.GetOption(options, "env")
-	projectName := fn.GetOption(options, "project")
+	appName := fn.GetOption(options, "appName")
+	devName := fn.GetOption(options, "deviceName")
+	envName := fn.GetOption(options, "envName")
+	projectName := fn.GetOption(options, "projectName")
 
 	var err error
 
@@ -151,17 +153,13 @@ func InterceptApp(status bool, options ...fn.Option) error {
 		return err
 	}
 
-	inp := map[string]any{
+	respData, err := klFetch("cli_interceptApp", map[string]any{
 		"appname":     appName,
 		"projectName": projectName,
 		"envName":     envName,
 		"deviceName":  devName,
 		"intercept":   status,
-	}
-
-	fmt.Printf("inp: %+v\n", inp)
-
-	respData, err := klFetch("cli_interceptApp", inp, &cookie)
+	}, &cookie)
 
 	if err != nil {
 		return err

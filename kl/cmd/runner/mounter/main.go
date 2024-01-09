@@ -36,7 +36,6 @@ func mountFile(_file, data, mountPath string) error {
 func Mount(mountFiles map[string]string, mountBasePath string) error {
 
 	for k, v := range mountFiles {
-		fmt.Println(k, v)
 		err := mountFile(k, v, mountBasePath)
 		if err != nil {
 			return err

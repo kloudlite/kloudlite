@@ -49,7 +49,6 @@ Find more information at https://kloudlite.io/docs/cli
 		}
 
 		mountfiles := map[string]string{}
-		fmt.Println(cmap, smap)
 
 		for _, fe := range klfile.FileMount.Mounts {
 			pth := fe.Path
@@ -59,13 +58,10 @@ Find more information at https://kloudlite.io/docs/cli
 
 			if fe.Type == client.ConfigType {
 				mountfiles[pth] = cmap[fe.Name][fe.Key].Value
-				fmt.Println("mountfiles: ", mountfiles)
 			} else {
 				mountfiles[pth] = smap[fe.Name][fe.Key].Value
 			}
 		}
-
-		fmt.Printf("mountfiles: %v\n", mountfiles)
 
 		if err = mounter.Mount(mountfiles, klfile.FileMount.MountBasePath); err != nil {
 			fn.PrintError(err)
