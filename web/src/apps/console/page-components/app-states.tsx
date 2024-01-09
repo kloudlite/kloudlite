@@ -208,7 +208,7 @@ export const useAppState = () => {
     setState,
     getContainer,
     setContainer,
-    activeContIndex,
+    activeContIndex: activeContIndex || 0,
     services: app.spec.services || [],
     setServices,
   };

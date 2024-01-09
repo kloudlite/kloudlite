@@ -14,12 +14,12 @@ import HandleBackendService from './handle-backend-service';
 import BackendServicesResources from './backend-services-resources';
 
 export const loader = (ctx: IRemixCtx) => {
-  const { cluster } = ctx.params;
+  const { project } = ctx.params;
   const promise = pWrapper(async () => {
     const { data: mData, errors: mErrors } = await GQLServerHandler(
       ctx.request
-    ).listClusterMSvs({
-      clusterName: cluster,
+    ).listProjectMSvs({
+      projectName: project,
     });
 
     const { data: msvTemplates, errors: msvError } = await GQLServerHandler(

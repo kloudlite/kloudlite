@@ -17,7 +17,9 @@ import axios from 'axios';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Select from '~/components/atoms/select';
-import { CircleWavyCheck, CircleWavyCheckFill } from '@jengaicons/react';
+import { CircleWavyCheckFill } from '@jengaicons/react';
+import { cn } from '~/components/utils';
+import Pulsable from 'react-pulsable';
 
 const LOGO_URL = 'https://artifacthub.io/image/';
 
@@ -161,12 +163,18 @@ const Root = (props: IDialog) => {
               value: hc.package_id,
               repoUrl: hc.repository.url,
               render: () => (
-                <div className="flex flex-row gap-xl">
-                  <img
-                    className="w-4xl aspect-square object-contain"
-                    src={`${LOGO_URL}${hc.logo_image_id}`}
-                    alt={hc.name}
-                  />
+                <div className="flex flex-row gap-xl items-center">
+                  <Pulsable isLoading={!hc.logo_image_id} noPadding>
+                    <span className=" pulsable pulsable-img">
+                      <img
+                        className={cn({
+                          'w-4xl aspect-square object-contain': true,
+                        })}
+                        src={`${LOGO_URL}${hc.logo_image_id}`}
+                        alt={hc.name}
+                      />
+                    </span>
+                  </Pulsable>
                   <div className="flex flex-col flex-1">
                     <div className="flex flex-row gap-lg items-center">
                       <div className="flex-1">{hc.name}</div>

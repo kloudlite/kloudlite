@@ -2,6 +2,7 @@ import { defer } from '@remix-run/node';
 import {
   Outlet,
   useLoaderData,
+  useLocation,
   useOutletContext,
   useParams,
 } from '@remix-run/react';
@@ -31,6 +32,7 @@ import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { UnsavedChangesProvider } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IEnvironmentContext } from '../../_layout';
 
 const ProjectTabs = () => {
@@ -76,97 +78,8 @@ export interface IAppContext extends IEnvironmentContext {
 
 const AppOutlet = ({ app: oApp }: { app: IApp }) => {
   const rootContext = useOutletContext<IEnvironmentContext>();
-  const { data: subNavData, setData: setSubNavAction } = useSubNavData();
-  const { app, setApp, resetState } = useAppState();
-  const [isOpen, setIsOpen] = useState(false);
 
-  const { account, project, environment, app: appId } = useParams();
-  const { activePath } = useActivePath({
-    parent: `/${account}/${project}//${environment}/app/${appId}/settings`,
-  });
-
-  useEffect(() => {
-    resetState(oApp);
-  }, [activePath]);
-
-  const api = useConsoleApi();
-
-  const { isLoading, submit } = useForm({
-    initialValues: {},
-    validationSchema: Yup.object({}),
-    onSubmit: async () => {
-      if (!project || !environment) {
-        throw new Error('Project and Environment is required!.');
-      }
-      try {
-        const { errors } = await api.updateApp({
-          app: getAppIn(app),
-          envName: environment,
-          projectName: project,
-        });
-        if (errors) {
-          throw errors[0];
-        }
-        toast.success('app updated');
-        // @ts-ignore
-        window.reload();
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
-
-  // useEffect(() => {
-  //   if (JSON.stringify(app) !== JSON.stringify(oApp)) {
-  //     setSubNavAction({
-  //       ...(subNavData || {}),
-  //       show: true,
-  //       content: 'View Changes',
-  //       action() {
-  //         setIsOpen(true);
-  //       },
-  //       subAction() {
-  //         setApp(oApp);
-  //       },
-  //     });
-  //   } else {
-  //     setSubNavAction({
-  //       ...(subNavData || {}),
-  //       show: false,
-  //     });
-  //   }
-  // }, [app, oApp]);
-  return (
-    <>
-      <Popup.Root
-        className="w-[90vw] max-w-[1440px] min-w-[1000px]"
-        show={isOpen}
-        onOpenChange={(v) => setIsOpen(v)}
-      >
-        <Popup.Header>Review Changes</Popup.Header>
-        <Popup.Content>
-          <DiffViewer
-            oldValue={yamlDump(getAppIn(oApp)).toString()}
-            newValue={yamlDump(getAppIn(app)).toString()}
-            leftTitle="Previous State"
-            rightTitle="New State"
-            splitView
-          />
-        </Popup.Content>
-        <Popup.Footer>
-          <Popup.Button
-            loading={isLoading}
-            onClick={() => {
-              submit();
-            }}
-            content="Commit Changes"
-          />
-        </Popup.Footer>
-      </Popup.Root>
-
-      <Outlet context={{ ...rootContext, app: oApp }} />
-    </>
-  );
+  return <Outlet context={{ ...rootContext, app: oApp }} />;
 };
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -202,13 +115,7 @@ const App = () => {
   return (
     <LoadingComp data={promise}>
       {({ app }) => {
-        return (
-          <AppContextProvider initialAppState={app}>
-            <SubNavDataProvider>
-              <AppOutlet app={app} />
-            </SubNavDataProvider>
-          </AppContextProvider>
-        );
+        return <AppOutlet app={app} />;
       }}
     </LoadingComp>
   );

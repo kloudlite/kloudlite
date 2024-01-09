@@ -21,7 +21,6 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IProjectContext } from '../../_layout';
 
-
 export const updateProject = async ({
   api,
   data,
@@ -126,6 +125,7 @@ const ProjectSettingGeneral = () => {
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
+                    aria-label="copy"
                     onClick={() =>
                       copy(
                         `${consoleBaseUrl}/${parseName(account)}/${parseName(
@@ -150,6 +150,7 @@ const ProjectSettingGeneral = () => {
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
+                    aria-label="copy"
                     onClick={() => copy(parseName(project))}
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}

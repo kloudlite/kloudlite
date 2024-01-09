@@ -1,6 +1,7 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
+import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
@@ -111,6 +112,8 @@ const ListView = ({ items }: { items: BaseType[] }) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
+        const status = lR.statusRender({ className: 'mr-2xl' });
         return (
           <List.Row
             key={id}
@@ -128,6 +131,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
+              status,
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',

@@ -1,16 +1,15 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { IconButton } from '~/components/atoms/button';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
-  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
 import {
   ExtractNodeType,
@@ -33,6 +32,23 @@ const parseItem = (item: BaseType) => {
   };
 };
 
+const ExtraButton = ({ item }: { item: BaseType }) => {
+  const { account, project } = useParams();
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Settings',
+          icon: <GearSix size={16} />,
+          type: 'item',
+          to: `/${account}/${project}/${parseName(item)}/settings/general`,
+          key: 'settings',
+        },
+      ]}
+    />
+  );
+};
+
 const GridView = ({ items = [] }: { items: BaseType[] }) => {
   const { account, project } = useParams();
   return (
@@ -51,13 +67,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <IconButton
-                        icon={<DotsThreeVerticalFill />}
-                        variant="plain"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    }
+                    action={<ExtraButton item={item} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
@@ -116,13 +126,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <IconButton
-                    icon={<DotsThreeVerticalFill />}
-                    variant="plain"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ),
+                render: () => <ExtraButton item={item} />,
               },
             ]}
           />

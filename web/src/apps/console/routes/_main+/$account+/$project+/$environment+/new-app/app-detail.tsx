@@ -2,14 +2,12 @@ import { ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { IdSelector } from '~/console/components/id-selector';
-import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
-import ProgressWrapper from '~/console/components/progress-wrapper';
 
 const AppDetail = () => {
   const { app, setApp, setPage, markPageAsCompleted } = useAppState();
@@ -32,6 +30,10 @@ const AppDetail = () => {
           ...a,
           metadata: {
             ...a.metadata,
+            annotations: {
+              ...(a.metadata?.annotations || {}),
+              [keyconstants.description]: val.description || '',
+            },
             name: val.name,
           },
           displayName: val.displayName,

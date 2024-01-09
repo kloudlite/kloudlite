@@ -77,7 +77,8 @@ const SidebarLayout = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-col flex-1 overflow-x-hidden md:pl-6xl">
+        {/* If overflow problem occurs in error page look here */}
+        <div className="flex flex-col flex-1 md:pl-6xl">
           <div className="flex-1 flex flex-col gap-6xl">{children}</div>
         </div>
       </div>

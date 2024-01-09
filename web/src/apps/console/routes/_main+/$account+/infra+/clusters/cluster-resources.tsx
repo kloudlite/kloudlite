@@ -150,7 +150,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
         const lR = listRender({ keyPrefix, resource: item });
 
         const statusRender = lR.statusRender({
-          className: 'w-[180px] mr-[50px]',
+          className: 'min-w-[80px] mx-[25px] basis-full text-center',
         });
 
         return (
@@ -173,7 +173,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'w-full',
+                className: 'max-w-[180px]',
                 render: () => (
                   <ListTitle
                     title={name}

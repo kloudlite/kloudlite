@@ -23,6 +23,7 @@ import { tagsQueries } from './queries/tags-queries';
 import { vpnQueries } from './queries/vpn-queries';
 import { pvcQueries } from './queries/pvc-queries';
 import { clusterManagedServicesQueries } from './queries/cluster-managed-services-queries';
+import { projectManagedServicesQueries } from './queries/project-managed-services-queries';
 import { managedTemplateQueries } from './queries/managed-templates-queries';
 import { helmChartQueries } from './queries/helm-chart-queries';
 
@@ -52,6 +53,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...pvcQueries(executor),
     ...buildRunQueries(executor),
     ...clusterManagedServicesQueries(executor),
+    ...projectManagedServicesQueries(executor),
     ...managedTemplateQueries(executor),
     ...helmChartQueries(executor),
   };

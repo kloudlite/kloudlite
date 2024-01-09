@@ -10,6 +10,8 @@ import {
   ConsoleListEnvironmentsQueryVariables,
   ConsoleUpdateEnvironmentMutation,
   ConsoleUpdateEnvironmentMutationVariables,
+  ConsoleDeleteEnvironmentMutation,
+  ConsoleDeleteEnvironmentMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IEnvironment = NN<
@@ -112,7 +114,22 @@ export const environmentQueries = (executor: IExecutor) => ({
       vars(_: ConsoleUpdateEnvironmentMutationVariables) { },
     }
   ),
-
+  deleteEnvironment: executor(
+    gql`
+      mutation Core_deleteEnvironment(
+        $projectName: String!
+        $envName: String!
+      ) {
+        core_deleteEnvironment(projectName: $projectName, envName: $envName)
+      }
+    `,
+    {
+      transformer(data: ConsoleDeleteEnvironmentMutation) {
+        return data.core_deleteEnvironment;
+      },
+      vars(_: ConsoleDeleteEnvironmentMutationVariables) { },
+    }
+  ),
   listEnvironments: executor(
     gql`
       query Core_listEnvironments(

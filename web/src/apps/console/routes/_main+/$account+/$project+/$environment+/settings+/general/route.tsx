@@ -1,6 +1,6 @@
 import { CopySimple } from '@jengaicons/react';
-import { useOutletContext } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useNavigate, useOutletContext } from '@remix-run/react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
@@ -19,6 +19,8 @@ import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import { IEnvironmentContext } from '../../_layout';
 
 export const updateEnvironment = async ({
@@ -51,8 +53,11 @@ const EnvironmentSettingsGeneral = () => {
     useOutletContext<IEnvironmentContext>();
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
+  const [deleteEnvironment, setDeleteEnvironment] = useState(false);
 
   const api = useConsoleApi();
+  const reload = useReload();
+  const navigate = useNavigate();
 
   const { copy } = useClipboard({
     onSuccess() {
@@ -166,11 +171,42 @@ const EnvironmentSettingsGeneral = () => {
         </div>
       </Box>
 
-      <DeleteContainer title="Delete Environment" action={() => {}}>
-        Permanently remove your Environment and all of its contents from the
-        Kloudlite platform. This action is not reversible — please continue with
-        caution.
+      <DeleteContainer
+        title="Delete Application"
+        action={async () => {
+          setDeleteEnvironment(true);
+        }}
+      >
+        Permanently remove your environment and all of its contents from the “
+        {environment.displayName}” environment. This action is not reversible,
+        so please continue with caution.
       </DeleteContainer>
+      <DeleteDialog
+        resourceName={parseName(environment)}
+        resourceType="environment"
+        show={deleteEnvironment}
+        setShow={setDeleteEnvironment}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteEnvironment({
+              envName: parseName(environment),
+              projectName: parseName(project),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reload();
+            toast.success(`Environment deleted successfully`);
+            setDeleteEnvironment(false);
+            navigate(
+              `/${parseName(account)}/${parseName(project)}/environments/`
+            );
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
     </>
   );
 };

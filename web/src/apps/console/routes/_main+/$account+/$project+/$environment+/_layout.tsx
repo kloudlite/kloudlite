@@ -1,15 +1,9 @@
-import {
-  ChevronDown,
-  Plus,
-  Search,
-  VirtualMachine,
-  Database,
-} from '@jengaicons/react';
+import { ChevronDown, Plus, Search } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
+  Link,
   Outlet,
   useLoaderData,
-  useNavigate,
   useOutletContext,
   useParams,
 } from '@remix-run/react';
@@ -35,9 +29,9 @@ import {
   BreadcrumButtonContent,
   BreadcrumSlash,
 } from '~/console/utils/commons';
-import MenuSelect from '~/console/components/menu-select';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
-import { toast } from '~/components/molecule/toast';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import { cn } from '~/components/utils';
 import { IProjectContext } from '../_layout';
 
 export interface IEnvironmentContext extends IProjectContext {
@@ -55,82 +49,41 @@ const Environment = () => {
   );
 };
 
+const tabs = [
+  {
+    label: 'Apps',
+    to: '/apps',
+    value: '/apps',
+  },
+  {
+    label: 'Routers',
+    to: '/routers',
+    value: '/routers',
+  },
+  {
+    label: 'Config & Secrets',
+    to: '/cs/configs',
+    value: '/cs',
+  },
+  {
+    label: 'Jobs & Crons',
+    to: '/jc/task',
+    value: '/jc',
+  },
+  {
+    label: 'Settings',
+    to: '/settings/general',
+    value: '/settings',
+  },
+];
+
 const EnvironmentTabs = () => {
   const { account, project, environment } = useParams();
   return (
-    <CommonTabs
-      baseurl={`/${account}/${project}/${environment}`}
-      tabs={[
-        {
-          label: 'Apps',
-          to: '/apps',
-          value: '/apps',
-        },
-        {
-          label: 'Routers',
-          to: '/routers',
-          value: '/routers',
-        },
-        {
-          label: 'Config & Secrets',
-          to: '/cs/configs',
-          value: '/cs',
-        },
-        {
-          label: 'Jobs & Crons',
-          to: '/jc/task',
-          value: '/jc',
-        },
-        {
-          label: 'Settings',
-          to: '/settings/general',
-          value: '/settings',
-        },
-      ]}
-    />
+    <CommonTabs baseurl={`/${account}/${project}/${environment}`} tabs={tabs} />
   );
 };
 
-const EnvironmentDropdown = () => {
-  const navigate = useNavigate();
-  const { account, project, cluster } = useParams();
-  const iconSize = 14;
-
-  const menuItems = [
-    {
-      label: (
-        <span className="flex flex-row items-center gap-lg">
-          <VirtualMachine size={iconSize} />
-          Environments
-        </span>
-      ),
-      value: `/${account}/${cluster}/${project}/environments`,
-    },
-    {
-      label: (
-        <span className="flex flex-row items-center gap-lg">
-          <Database size={iconSize} />
-          Managed Services
-        </span>
-      ),
-      value: `/${account}/${cluster}/${project}/managed-services`,
-    },
-  ];
-  return (
-    <MenuSelect
-      items={menuItems}
-      value={`/${account}/${cluster}/${project}/environments`}
-      onChange={(value) => navigate(value)}
-      trigger={
-        <Breadcrum.Button
-          content={<BreadcrumButtonContent content="Environments" />}
-        />
-      }
-    />
-  );
-};
-
-// @ts-ignore
 const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
   const params = useParams();
 
@@ -140,7 +93,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
   const api = useConsoleApi();
   const [search, setSearch] = useState('');
 
-  const { project } = params;
+  const { project, account } = params;
 
   useDebounce(
     async () => {
@@ -156,8 +109,6 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
         if (errors) {
           throw errors[0];
         }
-        // console.log(data);
-
         setEnvironments(parseNodes(data));
       } catch (err) {
         handleError(err);
@@ -167,13 +118,13 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
     [search]
   );
 
-  // const navigate = useNavigate();
+  const { activePath } = useActivePath({
+    parent: `/${account}/${project}/${parseName(environment)}`,
+  });
 
   return (
     <>
       <BreadcrumSlash />
-      {/* <EnvironmentDropdown /> */}
-      {/* <BreadcrumChevronRight /> */}
       <span className="mx-sm" />
       <OptionList.Root>
         <OptionList.Trigger>
@@ -183,7 +134,11 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
             content={
               <div className="flex flex-row items-center gap-md">
                 <BreadcrumButtonContent
-                  className="bodyMd-semibold"
+                  className={cn(
+                    tabs.find((tab) => tab.to === activePath)
+                      ? 'bodyMd-semibold'
+                      : ''
+                  )}
                   content={environment.displayName}
                 />
                 <ChevronDown size={12} />
@@ -197,6 +152,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               prefixIcon={<Search />}
+              focusRing={false}
               placeholder="Search"
               compact
               className="border-0 rounded-none"
@@ -206,12 +162,13 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
 
           {environments.map((item) => {
             return (
-              <OptionList.Item
-                onClick={() => toast.info('todo')}
+              <OptionList.Link
                 key={parseName(item)}
+                LinkComponent={Link}
+                to={`/${account}/${project}/${parseName(item)}`}
               >
                 {item.displayName}
-              </OptionList.Item>
+              </OptionList.Link>
             );
           })}
 
