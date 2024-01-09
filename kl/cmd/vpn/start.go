@@ -15,7 +15,7 @@ import (
 
 // not required in linux
 func startServiceInBg() {
-	command := exec.Command("kl", "wg", "start-fg")
+	command := exec.Command("kl", "vpn", "start-fg")
 	err := command.Start()
 	if err != nil {
 		fmt.Println(err)

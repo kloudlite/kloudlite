@@ -41,6 +41,7 @@ func init() {
 	Cmd.AddCommand(switchCmd)
 	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(startCmd)
+	Cmd.AddCommand(startFgCmd)
 	Cmd.AddCommand(stopCmd)
 	Cmd.AddCommand(statusCmd)
 	Cmd.AddCommand(activateCmd)
