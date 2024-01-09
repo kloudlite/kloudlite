@@ -38,6 +38,10 @@ tasks:
           --struct github.com/kloudlite/api/apps/console/internal/entities.App
           --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
           --struct github.com/kloudlite/api/apps/console/internal/entities.Config
+          --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
+          --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
+          --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyRef
+          --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyValueRef
           --struct github.com/kloudlite/api/apps/console/internal/entities.Router
           --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
           --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret

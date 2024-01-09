@@ -62,6 +62,11 @@ type domain struct {
 	pmsRepo                repos.DbRepo[*entities.ProjectManagedService]
 }
 
+// GetSecretEntries implements Domain.
+func (*domain) GetSecretEntries(ctx ResourceContext, keyrefs []SecretKeyRef) ([]*SecretKeyValueRef, error) {
+	panic("unimplemented")
+}
+
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
 	return errors.Newf(
 		"%s (namespace=%s, name=%s) already marked for deletion",

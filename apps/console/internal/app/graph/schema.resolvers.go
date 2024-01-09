@@ -6,13 +6,11 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
-
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -136,6 +134,15 @@ func (r *mutationResolver) CoreDeleteApp(ctx context.Context, projectName string
 		return false, errors.NewE(err)
 	}
 	return true, nil
+}
+
+// CoreInterceptApp is the resolver for the core_interceptApp field.
+func (r *mutationResolver) CoreInterceptApp(ctx context.Context, projectName string, envName string, appname string, deviceName string, intercept bool) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	return r.Domain.InterceptApp(newResourceContext(cc, projectName, envName), appname, deviceName, intercept)
 }
 
 // CoreCreateConfig is the resolver for the core_createConfig field.
@@ -592,8 +599,18 @@ func (r *queryResolver) CoreResyncApp(ctx context.Context, projectName string, e
 }
 
 // CoreGetConfigValues is the resolver for the core_getConfigValues field.
-func (r *queryResolver) CoreGetConfigValues(ctx context.Context, queries []*model.ConfigValuesIn) ([]*model.ConfigValuesOut, error) {
-	panic(fmt.Errorf("not implemented: CoreGetConfigValues - core_getConfigValues"))
+func (r *queryResolver) CoreGetConfigValues(ctx context.Context, projectName string, envName string, queries []*domain.ConfigKeyRef) ([]*domain.ConfigKeyValueRef, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	m := make([]domain.ConfigKeyRef, len(queries))
+	for i := range queries {
+		m[i] = *queries[i]
+	}
+
+	return r.Domain.GetConfigEntries(newResourceContext(cc, projectName, envName), m)
 }
 
 // CoreListConfigs is the resolver for the core_listConfigs field.
@@ -648,6 +665,7 @@ func (r *queryResolver) CoreGetConfig(ctx context.Context, projectName string, e
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	return r.Domain.GetConfig(newResourceContext(cc, projectName, envName), name)
 }
 
@@ -664,8 +682,18 @@ func (r *queryResolver) CoreResyncConfig(ctx context.Context, projectName string
 }
 
 // CoreGetSecretValues is the resolver for the core_getSecretValues field.
-func (r *queryResolver) CoreGetSecretValues(ctx context.Context, queries []*model.SecretValuesIn) ([]*model.SecretValuesOut, error) {
-	panic(fmt.Errorf("not implemented: CoreGetSecretValues - core_getSecretValues"))
+func (r *queryResolver) CoreGetSecretValues(ctx context.Context, projectName string, envName string, queries []*domain.SecretKeyRef) ([]*domain.SecretKeyValueRef, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	m := make([]domain.SecretKeyRef, len(queries))
+	for i := range queries {
+		m[i] = *queries[i]
+	}
+
+	return r.Domain.GetSecretEntries(newResourceContext(cc, projectName, envName), m)
 }
 
 // CoreListSecrets is the resolver for the core_listSecrets field.
