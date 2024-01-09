@@ -63,7 +63,7 @@ func RegisterInto(mgr operator.Operator) {
 			logger.Infof("ping failed, client is disconnected")
 			return err
 		}
-		logger.Infof("ping is successfull, client is connected: %v, client conn: %p", out.Ok, cc)
+		logger.Debugf("ping is successfull, client is connected: %v", out.Ok)
 		return nil
 	}
 
@@ -103,7 +103,6 @@ func RegisterInto(mgr operator.Operator) {
 			return err
 		}
 
-		logger.Infof("msg sender address: %p", msgSender)
 		watchAndUpdateReconciler.MsgSender = msgSender
 
 		defer func() {

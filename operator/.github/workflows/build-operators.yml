@@ -24,7 +24,7 @@ jobs:
       matrix:
         name:
           - platform
-          - resource-watcher
+          # - resource-watcher
           - agent
           # - account
           # - app
@@ -44,7 +44,7 @@ jobs:
           # - project
           # - resource-watcher
           # - routers
-          - wireguard
+          # - wireguard
         include:
           - name: platform
             buildDir: cmd/platform-operator
