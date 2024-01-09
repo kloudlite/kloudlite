@@ -319,6 +319,19 @@ func (d *domain) canReadResourcesInEnvironment(ctx ResourceContext) error {
 	return d.checkEnvironmentAccess(ctx, iamT.ReadResourcesInEnvironment)
 }
 
+func cloneResource[T repos.Entity](ctx ResourceContext, d *domain, repoName repos.DbRepo[T], resource T, obj client.Object) error {
+	_, err := repoName.Create(ctx, resource)
+	if err != nil {
+		if !repoName.ErrAlreadyExists(err) {
+			return errors.NewE(err)
+		}
+	}
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, obj, 0); err != nil {
+		return errors.NewE(err)
+	}
+	return nil
+}
+
 type ConsoleCacheStore kv.BinaryDataRepo
 
 var Module = fx.Module("domain",
@@ -371,7 +384,7 @@ var Module = fx.Module("domain",
 
 			resourceEventPublisher: resourceEventPublisher,
 			consoleCacheStore:      consoleCacheStore,
-			pmsRepo: pmsRepo,
+			pmsRepo:                pmsRepo,
 		}
 	}),
 )
