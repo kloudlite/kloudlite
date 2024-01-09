@@ -49,7 +49,7 @@ jobs:
           - name: platform
             buildDir: cmd/platform-operator
           - name: resource-watcher
-            buildDir: cmd/resource-watcher
+            buildDir: operators/resource-watcher
           - name: agent
             buildDir: cmd/agent-operator
           - name: account
