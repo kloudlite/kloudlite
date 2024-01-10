@@ -776,23 +776,37 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 
 	// check deployment
 	if err := func() error {
-		if _, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &appsv1.Deployment{}); err != nil {
+		dep, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &appsv1.Deployment{})
+
+		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 
 			// created or update wg deployment
-			if b, err := templates.Parse(templates.Wireguard.Deploy, map[string]any{
+			b, err := templates.Parse(templates.Wireguard.Deploy, map[string]any{
 				"name":          obj.Name,
 				"namespace":     r.Env.DeviceInfoNamespace,
 				"ownerRefs":     []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"tolerations":   []corev1.Toleration{{Operator: "Exists"}},
 				"node-selector": obj.Spec.NodeSelector,
-			}); err != nil {
-				return err
-			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			})
+
+			if err != nil {
 				return err
 			}
+
+			if obj.Spec.Disabled {
+				return nil
+			}
+
+			if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+				return err
+			}
+		}
+
+		if dep != nil && obj.Spec.Disabled {
+			return r.Delete(ctx, dep)
 		}
 
 		return nil
