@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"google.golang.org/grpc"
@@ -91,6 +92,14 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	switch msg.Action {
 	case "apply", "delete":
 		{
+			ann := obj.GetAnnotations()
+			if ann == nil {
+				ann = make(map[string]string, 2)
+			}
+
+			ann[constants.ObservabilityAccountNameKey] = msg.AccountName
+			ann[constants.ObservabilityClusterNameKey] = msg.ClusterName
+
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
 				return g.handleErrorOnApply(ctx, err, msg)
