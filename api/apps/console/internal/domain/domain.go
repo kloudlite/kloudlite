@@ -46,6 +46,7 @@ type domain struct {
 
 	projectRepo     repos.DbRepo[*entities.Project]
 	environmentRepo repos.DbRepo[*entities.Environment]
+	vpnDeviceRepo   repos.DbRepo[*entities.VPNDevice]
 
 	appRepo         repos.DbRepo[*entities.App]
 	configRepo      repos.DbRepo[*entities.Config]
@@ -324,6 +325,40 @@ func (d *domain) canReadResourcesInEnvironment(ctx ResourceContext) error {
 	return d.checkEnvironmentAccess(ctx, iamT.ReadResourcesInEnvironment)
 }
 
+func (d *domain) canPerformActionInAccount(ctx ConsoleContext, action iamT.Action) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(action),
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+	if !co.Status {
+		return errors.Newf("unauthorized to perform action %q in account %q", action, ctx.AccountName)
+	}
+	return nil
+}
+
+func (d *domain) canPerformActionInDevice(ctx ConsoleContext, action iamT.Action, devName string) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceVPNDevice, devName),
+		},
+		Action: string(action),
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+	if !co.Status {
+		return errors.Newf("unauthorized to perform action %q in device %q", action, devName)
+	}
+	return nil
+}
+
 func cloneResource[T repos.Entity](ctx ResourceContext, d *domain, repoName repos.DbRepo[T], resource T, obj client.Object) error {
 	_, err := repoName.Create(ctx, resource)
 	if err != nil {
@@ -358,6 +393,7 @@ var Module = fx.Module("domain",
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		pmsRepo repos.DbRepo[*entities.ProjectManagedService],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
+		vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,
@@ -384,6 +420,7 @@ var Module = fx.Module("domain",
 			mresRepo:            mresRepo,
 			pullSecretsRepo:     ipsRepo,
 			resourceMappingRepo: resourceMappingRepo,
+			vpnDeviceRepo:       vpnDeviceRepo,
 
 			envVars: ev,
 

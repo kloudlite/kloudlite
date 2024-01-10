@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
+	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 type ConsoleContext struct {
@@ -207,6 +208,15 @@ type Domain interface {
 	OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) error
 	OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error
+
+	ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
+	GetVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDevice, error)
+	CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
+	UpdateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
+	DeleteVPNDevice(ctx ConsoleContext, name string) error
+
+	UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports []*wgv1.Port) error
+	UpdateVpnDeviceNs(ctx ConsoleContext, devName string, namespace string) error
 }
 
 type PublishMsg string
@@ -224,4 +234,5 @@ type ResourceEventPublisher interface {
 	PublishProjectManagedServiceEvent(project *entities.ProjectManagedService, msg PublishMsg)
 	PublishRouterEvent(router *entities.Router, msg PublishMsg)
 	PublishWorkspaceEvent(workspace *entities.Environment, msg PublishMsg)
+	PublishVpnDeviceEvent(device *entities.VPNDevice, msg PublishMsg)
 }
