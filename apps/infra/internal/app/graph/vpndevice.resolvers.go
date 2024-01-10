@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -30,6 +31,11 @@ func (r *vPNDeviceResolver) ID(ctx context.Context, obj *entities.VPNDevice) (st
 		return "", errors.Newf("obj is nil")
 	}
 	return string(obj.Id), nil
+}
+
+// ManagingByDev is the resolver for the managingByDev field.
+func (r *vPNDeviceResolver) ManagingByDev(ctx context.Context, obj *entities.VPNDevice) (*string, error) {
+	panic(fmt.Errorf("not implemented: ManagingByDev - managingByDev"))
 }
 
 // Spec is the resolver for the spec field.

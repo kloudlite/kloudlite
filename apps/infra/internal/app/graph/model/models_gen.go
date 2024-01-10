@@ -333,13 +333,13 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec struct {
-	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
-	Namespace string                                                  `json:"namespace"`
+	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec `json:"msvcSpec"`
+	TargetNamespace string                                                  `json:"targetNamespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpecIn struct {
-	MsvcSpec  *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
-	Namespace string                                                    `json:"namespace"`
+	MsvcSpec        *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn `json:"msvcSpec"`
+	TargetNamespace string                                                    `json:"targetNamespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartSpec struct {
@@ -424,6 +424,7 @@ type GithubComKloudliteOperatorApisWireguardV1CNameRecordIn struct {
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
 	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecord `json:"cnameRecords,omitempty"`
 	DeviceNamespace *string                                                 `json:"deviceNamespace,omitempty"`
+	Disabled        *bool                                                   `json:"disabled,omitempty"`
 	NodeSelector    map[string]interface{}                                  `json:"nodeSelector,omitempty"`
 	Ports           []*GithubComKloudliteOperatorApisWireguardV1Port        `json:"ports,omitempty"`
 }
@@ -431,6 +432,7 @@ type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
 	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecordIn `json:"cnameRecords,omitempty"`
 	DeviceNamespace *string                                                   `json:"deviceNamespace,omitempty"`
+	Disabled        *bool                                                     `json:"disabled,omitempty"`
 	NodeSelector    map[string]interface{}                                    `json:"nodeSelector,omitempty"`
 	Ports           []*GithubComKloudliteOperatorApisWireguardV1PortIn        `json:"ports,omitempty"`
 }
