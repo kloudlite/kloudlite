@@ -1,4 +1,4 @@
-{{- $chartOpts := index .Values.helmCharts "vector" }} 
+{{- $chartOpts := .Values.helmCharts.vector }} 
 {{- if $chartOpts.enabled }}
 
 {{- $vectorSvcAccount := "vector-svc-account" }} 
@@ -57,11 +57,8 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: vector
-    url: https://helm.vector.dev
-
-  chartName: vector/vector
+  chartRepoURL: https://helm.vector.dev
+  chartName: vector
   chartVersion: 0.23.0
   
   jobVars:

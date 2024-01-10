@@ -9,7 +9,7 @@ metadata:
 spec:
   chartRepoURL: https://grafana.github.io/helm-charts
   chartName: loki-stack
-  chartVersion: 2.9.10
+  chartVersion: 2.9.12
 
   values:
     loki:

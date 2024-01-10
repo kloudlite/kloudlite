@@ -1,6 +1,6 @@
-{{- $chartOpts := index .Values.helmCharts "ingress-nginx" }} 
+{{- $chartOpts := .Values.helmCharts.ingressNginx }} 
 {{- if $chartOpts.enabled }}
-{{- $ingressClassName := $chartOpts.ingressClassName }} 
+{{- $ingressClassName := $chartOpts.configuration.ingressClassName }} 
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
@@ -8,14 +8,11 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: ingress-nginx
-    url: https://kubernetes.github.io/ingress-nginx
-
-  chartName: ingress-nginx/ingress-nginx
+  chartRepoURL: https://kubernetes.github.io/ingress-nginx
+  chartName: ingress-nginx
   chartVersion: 4.8.0
 
-  {{ $isDaemonSet := eq $chartOpts.controllerKind "DaemonSet"}}
+  {{ $isDaemonSet := eq $chartOpts.configuration.controllerKind "DaemonSet"}}
   jobVars:
     backOffLimit: 1
 

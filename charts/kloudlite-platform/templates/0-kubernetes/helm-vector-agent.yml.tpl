@@ -59,9 +59,8 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://helm.vector.dev
-
-  chartName: vector/vector
-  chartVersion: 0.23.0
+  chartName: vector
+  chartVersion: 0.30.0
 
   values:
     role: Agent
@@ -144,7 +143,7 @@ spec:
           inputs:
             - kubernetes_logs
             - kubelet_metrics_exporter
-          address: {{.Values.vector.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:6000
+          address: {{.Values.vector.name}}.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:6000
 
 {{- end }}
 

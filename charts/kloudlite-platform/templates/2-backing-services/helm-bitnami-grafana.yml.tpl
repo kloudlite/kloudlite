@@ -8,7 +8,6 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://charts.bitnami.com/bitnami
-
   chartName: grafana
   chartVersion: 9.6.2
 

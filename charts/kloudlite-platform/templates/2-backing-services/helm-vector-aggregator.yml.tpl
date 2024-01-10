@@ -9,10 +9,9 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://helm.vector.dev
-
   chartName: vector
   chartVersion: 0.23.0
-
+  
   values:
     global:
       storageClass: {{.Values.persistence.storageClasses.ext4}}
@@ -36,15 +35,23 @@ spec:
           version: "2"
       sinks:
         nats:
-            type: nats
-            inputs: [vector]
-            address: nats://{{.Values.envVars.nats.url}}:4222
-            encoding:
-                codec: json
-                only_fields:
-                - message
-                - timestamp
-                timestamp_format: rfc3339
+          type: nats
+          inputs: [vector]
+          {{- /* subject: {{ range .Files.Get "files/nats-logs-sink-subject.txt" | nindent 13 | trim | splitList "\n" }} */}}
+          {{- /*   {{- . | trim -}} */}}
+          {{- /*   {{ end}} */}}
+          subject: |+
+            {{ range .Files.Lines "files/nats-logs-sink-subject.txt" }} 
+            {{- . | trim -}}
+            {{ end }}
+          url: {{.Values.envVars.nats.url}}
+          encoding:
+              codec: json
+              only_fields:
+              - message
+              - timestamp
+              timestamp_format: rfc3339
+
         prom_exporter:
           type: prometheus_exporter
           inputs: 
@@ -73,4 +80,4 @@ spec:
           encoding:
             codec: json
 
-{{- end }}
+  {{- end }}

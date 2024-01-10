@@ -1,4 +1,4 @@
-{{- $chartOpts := index .Values.helmCharts "cert-manager" }} 
+{{- $chartOpts :=  .Values.helmCharts.certManager}} 
 {{- if $chartOpts.enabled }}
 
 apiVersion: crds.kloudlite.io/v1
@@ -7,17 +7,18 @@ metadata:
   name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  chartRepo:
-    name: jetstack
-    url: https://charts.jetstack.io
-
-  chartName: jetstack/cert-manager
-  chartVersion: v1.11.0
+  chartRepoURL: https://charts.jetstack.io
+  chartName: cert-manager
+  chartVersion: v1.13.3
 
   jobVars:
     backOffLimit: 1
     nodeSelector: {{ $chartOpts.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
     tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+
+  preInstall: |+
+    # install cert-manager CRDs
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.crds.yaml
 
   values:
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
@@ -55,6 +56,8 @@ spec:
     webhook:
       podLabels: {{ include "pod-labels" . | nindent 8 }}
 
+      tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+
       affinity:
         nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}
 
@@ -74,6 +77,8 @@ spec:
 
     cainjector:
       podLabels: {{ include "pod-labels" . | nindent 8 }}
+
+      tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
 
       affinity:
         nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}

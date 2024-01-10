@@ -68,7 +68,7 @@ spec:
           value: "nats://nats:4222"
 
         - key: VECTOR_GRPC_ADDR
-          value: {{printf "%s:6000" (include "vector.name" .) | quote}}
+          value: "{{.Values.vector.name}}:6000" 
 
         - key: TOKEN_HASHING_SECRET
           value: {{.Values.apps.messageOfficeApi.configuration.tokenHashingSecret | squote}}
