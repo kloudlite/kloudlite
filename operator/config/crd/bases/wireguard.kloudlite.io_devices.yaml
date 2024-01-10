@@ -61,6 +61,8 @@ spec:
                 type: array
               deviceNamespace:
                 type: string
+              disabled:
+                type: boolean
               nodeSelector:
                 additionalProperties:
                   type: string
