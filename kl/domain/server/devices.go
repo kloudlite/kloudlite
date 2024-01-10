@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -30,6 +31,15 @@ type Device struct {
 		Value    string `json:"value"`
 	} `json:"wireguardConfig,omitempty"`
 }
+
+type CheckName struct {
+	Result         bool     `json:"result"`
+	SuggestedNames []string `json:"suggestedNames"`
+}
+
+const (
+	VPNDeviceType = "vpn_device"
+)
 
 func ListDevices(options ...fn.Option) ([]Device, error) {
 
@@ -137,6 +147,81 @@ func SelectDevice(devName string) (*Device, error) {
 	}
 
 	return device, nil
+}
+
+func GetDeviceName(devName string) (*CheckName, error) {
+	clusterName, err := EnsureCluster()
+	if err != nil {
+		return nil, err
+	}
+
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := klFetch("cli_infraCheckNameAvailability", map[string]any{
+		"resType":     VPNDeviceType,
+		"clusterName": clusterName,
+		"name":        devName,
+	}, &cookie)
+	if err != nil {
+		fmt.Println(respData, err)
+		return nil, err
+	}
+
+	if fromResp, err := GetFromResp[CheckName](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
+	}
+}
+
+func SelectDeviceName(suggestedNames []string) (string, error) {
+	deviceName, err := fzf.FindOne(
+		suggestedNames,
+		func(deviceName string) string {
+			return deviceName
+		},
+		fzf.WithPrompt("Select Device Name > "),
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return *deviceName, nil
+}
+
+func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
+	clusterName, err := EnsureCluster()
+	if err != nil {
+		return nil, err
+	}
+
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := klFetch("cli_createDevice", map[string]any{
+		"clusterName": clusterName,
+		"vpnDevice": map[string]any{
+			"displayName": devName,
+			"metadata": map[string]any{
+				"name": selectedDeviceName,
+			},
+		},
+	}, &cookie)
+	if err != nil {
+		return nil, err
+	}
+
+	if fromResp, err := GetFromResp[Device](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
+	}
 }
 
 func UpdateDevice(ports []DevicePort) error {
