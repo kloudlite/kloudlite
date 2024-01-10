@@ -37,6 +37,7 @@ func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "dev")
 
 	Cmd.AddCommand(newCmd)
+	Cmd.AddCommand(exposeCmd)
 	Cmd.AddCommand(listCmd)
 	Cmd.AddCommand(switchCmd)
 	Cmd.AddCommand(restartCmd)
