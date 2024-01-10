@@ -72,14 +72,15 @@ type Domain interface {
 
 	ListVPNDevices(ctx InfraContext, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
 	GetVPNDevice(ctx InfraContext, clusterName string, deviceName string) (*entities.VPNDevice, error)
-	GetWgConfigForDevice(ctx InfraContext, clusterName string, deviceName string) (*string, error)
 
 	CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
 	UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
+	UpsertManagedVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice, managedDeviceId repos.ID) (*entities.VPNDevice, error)
 	UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devName string, ports []*wgv1.Port) error
 	UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName string, namespace string) error
 
 	DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error
+	DeleteManagedVPNDevice(ctx InfraContext, managedDeviceId string) error
 
 	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error

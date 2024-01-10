@@ -90,6 +90,13 @@ models:
   SecretKeyValueRef:
     model: github.com/kloudlite/api/apps/console/internal/domain.SecretKeyValueRef
 
+  PortIn:
+    model: github.com/kloudlite/operator/apis/wireguard/v1.Port
+
+  VPNDevice: &vpn-device-model
+    model: github.com/kloudlite/api/apps/console/internal/entities.VPNDevice
+  VPNDeviceIn: *vpn-device-model
+
   Config: &config-model
     model: github.com/kloudlite/api/apps/console/internal/entities.Config
   ConfigIn: *config-model

@@ -91,15 +91,16 @@ func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
 // }
 
 var (
-	errNilApp             = errors.Newf("app obj is nil")
-	errNilConfig          = errors.Newf("config obj is nil")
-	errNilSecret          = errors.Newf("secret obj is nil")
-	errNilEnvironment     = errors.Newf("environment obj is nil")
-	errNilImagePullSecret = errors.Newf("imagePullSecret obj is nil")
-	errNilManagedResource = errors.Newf("managed resource obj is nil")
-	errNilProject         = errors.Newf("project obj is nil")
-	errNilProjectManagedService         = errors.Newf("project manged svc obj is nil")
-	errNilRouter          = errors.Newf("router obj is nil")
+	errNilApp                   = errors.Newf("app obj is nil")
+	errNilConfig                = errors.Newf("config obj is nil")
+	errNilSecret                = errors.Newf("secret obj is nil")
+	errNilEnvironment           = errors.Newf("environment obj is nil")
+	errNilVPNDevice             = errors.Newf("vpn device obj is nil")
+	errNilImagePullSecret       = errors.Newf("imagePullSecret obj is nil")
+	errNilManagedResource       = errors.Newf("managed resource obj is nil")
+	errNilProject               = errors.Newf("project obj is nil")
+	errNilProjectManagedService = errors.Newf("project manged svc obj is nil")
+	errNilRouter                = errors.Newf("router obj is nil")
 )
 
 func newResourceContext(ctx domain.ConsoleContext, projectName string, environmentName string) domain.ResourceContext {
