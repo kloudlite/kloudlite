@@ -115,6 +115,9 @@ const (
 	GVKKey string = "kloudlite.io/group-version-kind"
 
 	ClusterSetupType string = "kloudlite.io/cluster.setup-type"
+
+	ObservabilityAccountNameKey string = "kloudlite.io/observability.account.name"
+	ObservabilityClusterNameKey string = "kloudlite.io/observability.cluster.name"
 )
 
 // distribution constants

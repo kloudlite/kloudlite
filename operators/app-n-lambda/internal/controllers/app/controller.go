@@ -12,6 +12,7 @@ import (
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
+	"github.com/kloudlite/operator/operators/app-n-lambda/internal/templates"
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -19,7 +20,6 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -40,6 +40,8 @@ type Reconciler struct {
 	Env        *env.Env
 	YamlClient kubectl.YAMLClient
 	recorder   record.EventRecorder
+
+	appDeploymentTemplate []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -153,58 +155,6 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	return req.Next()
 }
 
-func (r *Reconciler) findProjectAndWorkspaceForNs(ctx context.Context, ns string) (*crdsv1.Environment, *crdsv1.Project, error) {
-	namespace, err := rApi.Get(ctx, r.Client, fn.NN("", ns), &corev1.Namespace{})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var ws crdsv1.Environment
-	var proj crdsv1.Project
-
-	if _, ok := namespace.Labels[constants.EnvironmentNameKey]; ok {
-		var wsList crdsv1.EnvironmentList
-		if err := r.List(ctx, &wsList, &client.ListOptions{
-			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-				constants.TargetNamespaceKey: namespace.Name,
-			}),
-		}); err != nil {
-			return nil, nil, err
-		}
-
-		if len(wsList.Items) != 1 {
-			return nil, nil, fmt.Errorf("expected 1 workspace, found %d", len(wsList.Items))
-		}
-
-		ws = wsList.Items[0]
-
-		if err := r.Get(ctx, fn.NN("", ws.Spec.ProjectName), &proj); err != nil {
-			return nil, nil, err
-		}
-
-		return &ws, &proj, nil
-	}
-
-	if _, ok := namespace.Labels[constants.ProjectNameKey]; ok {
-		var projList crdsv1.ProjectList
-		if err := r.List(ctx, &projList, &client.ListOptions{
-			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-				constants.TargetNamespaceKey: namespace.Name,
-			}),
-		}); err != nil {
-			return nil, nil, err
-		}
-
-		if len(projList.Items) != 1 {
-			return nil, nil, fmt.Errorf("expected 1 workspace, found %d", len(projList.Items))
-		}
-
-		proj = projList.Items[0]
-	}
-
-	return &ws, &proj, nil
-}
-
 func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
@@ -214,13 +164,8 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-	ws, proj, err := r.findProjectAndWorkspaceForNs(ctx, obj.Namespace)
-	if err != nil {
-		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error())
-	}
-
-	b, err := templates.Parse(
-		templates.CrdsV1.App, map[string]any{
+	b, err := templates.ParseBytes(
+		r.appDeploymentTemplate, map[string]any{
 			"object": obj,
 
 			"volumes":       volumes,
@@ -228,13 +173,9 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
 
-			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
+			"pod-annotations": fn.FilterObservabilityAnnotations(obj),
 
-			// for observability
-			"workspace-name":      ws.Name,
-			"workspace-target-ns": ws.Spec.TargetNamespace,
-			"project-name":        proj.Name,
-			"project-target-ns":   proj.Spec.TargetNamespace,
+			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
 		},
 	)
 	if err != nil {
@@ -250,7 +191,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {
-		obj.Status.Checks[DeploymentSvcAndHpaCreated] = check
+		fn.MapSet(&obj.Status.Checks, DeploymentSvcAndHpaCreated, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -321,6 +262,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Logger = logger.WithName(r.Name)
 	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
+
+	var err error
+	r.appDeploymentTemplate, err = templates.Read(templates.AppDeployment)
+	if err != nil {
+		return err
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
 	builder.Owns(&appsv1.Deployment{})

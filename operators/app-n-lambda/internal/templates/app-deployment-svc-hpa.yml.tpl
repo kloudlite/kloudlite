@@ -2,9 +2,8 @@
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volume-mounts"}}
 {{- $ownerRefs := get . "owner-refs" | default list  }}
-{{- $accountName := get . "account-name"}} 
 
-{{- $podAnnotations := get . "pod-annotations" }}
+{{- $podAnnotations := get . "pod-annotations" | default dict }}
 
 {{/* for observability */}}
 {{- $workspaceName := get . "workspace-name" }} 
@@ -41,19 +40,9 @@ spec:
         {{- if .Spec.Region}}
         kloudlite.io/region: {{.Spec.Region}}
         {{- end}}
-      {{- $props := dict 
-            "resource-type" "App"
-            "resource-name" .Name 
-            "resource-component" "Deployment" 
-            "workspace-name" $workspaceName 
-            "workspace-target-ns" $workspaceTargetNs 
-            "project-name" $projectName 
-            "project-target-ns" $projectTargetNs 
-      }}
-
-      annotations: {{ include "observability-annotations" $props | nindent 8}}
+      annotations: {{$podAnnotations | toYAML | nindent 8 }}
     spec:
-      serviceAccount: {{.Spec.ServiceAccount}}
+      serviceAccountName: {{.Spec.ServiceAccount}}
       nodeSelector: {{if .Spec.NodeSelector}}{{ .Spec.NodeSelector | toYAML | nindent 8 }}{{end}}
         {{- if .Spec.Region}}
         kloudlite.io/region: {{.Spec.Region | squote}}
@@ -157,3 +146,4 @@ spec:
           averageUtilization: {{.Spec.Hpa.ThresholdMemory}}
 {{- end }}
 {{- end }}
+
