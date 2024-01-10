@@ -124,8 +124,8 @@ type Query {
     core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
     core_resyncProjectManagedService(projectName: String!,  name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
+    core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -167,8 +167,8 @@ type Mutation {
     core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
     core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-    core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    core_createVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
+    core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 
     core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
     core_updateVPNDeviceNs(deviceName: String!, namespace: String!): Boolean! @isLoggedInAndVerified @hasAccount

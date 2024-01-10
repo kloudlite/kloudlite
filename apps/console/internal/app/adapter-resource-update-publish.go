@@ -57,7 +57,7 @@ func (r *ResourceEventPublisherImpl) PublishWorkspaceEvent(env *entities.Environ
 	r.publish(subject, msg)
 }
 
-func (r *ResourceEventPublisherImpl) PublishVpnDeviceEvent(device *entities.VPNDevice, msg domain.PublishMsg) {
+func (r *ResourceEventPublisherImpl) PublishVpnDeviceEvent(device *entities.ConsoleVPNDevice, msg domain.PublishMsg) {
 	subject := fmt.Sprintf("res-updates.account.%s.vpn-device.%s", device.AccountName, device.Name)
 
 	r.publish(subject, msg)

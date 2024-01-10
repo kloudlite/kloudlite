@@ -209,10 +209,10 @@ type Domain interface {
 	OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error
 
-	ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
-	GetVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDevice, error)
-	CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
-	UpdateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
+	ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ConsoleVPNDevice], error)
+	GetVPNDevice(ctx ConsoleContext, name string) (*entities.ConsoleVPNDevice, error)
+	CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
+	UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	DeleteVPNDevice(ctx ConsoleContext, name string) error
 
 	UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports []*wgv1.Port) error
@@ -234,5 +234,5 @@ type ResourceEventPublisher interface {
 	PublishProjectManagedServiceEvent(project *entities.ProjectManagedService, msg PublishMsg)
 	PublishRouterEvent(router *entities.Router, msg PublishMsg)
 	PublishWorkspaceEvent(workspace *entities.Environment, msg PublishMsg)
-	PublishVpnDeviceEvent(device *entities.VPNDevice, msg PublishMsg)
+	PublishVpnDeviceEvent(device *entities.ConsoleVPNDevice, msg PublishMsg)
 }

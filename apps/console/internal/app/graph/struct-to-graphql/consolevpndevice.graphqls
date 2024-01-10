@@ -1,4 +1,4 @@
-type VPNDevice @shareable {
+type ConsoleVPNDevice @shareable {
   accountName: String!
   apiVersion: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
@@ -18,18 +18,18 @@ type VPNDevice @shareable {
   wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
 }
 
-type VPNDeviceEdge @shareable {
+type ConsoleVPNDeviceEdge @shareable {
   cursor: String!
-  node: VPNDevice!
+  node: ConsoleVPNDevice!
 }
 
-type VPNDevicePaginatedRecords @shareable {
-  edges: [VPNDeviceEdge!]!
+type ConsoleVPNDevicePaginatedRecords @shareable {
+  edges: [ConsoleVPNDeviceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input VPNDeviceIn {
+input ConsoleVPNDeviceIn {
   displayName: String!
   environmentName: String
   metadata: MetadataIn

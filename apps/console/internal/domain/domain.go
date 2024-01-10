@@ -46,7 +46,7 @@ type domain struct {
 
 	projectRepo     repos.DbRepo[*entities.Project]
 	environmentRepo repos.DbRepo[*entities.Environment]
-	vpnDeviceRepo   repos.DbRepo[*entities.VPNDevice]
+	vpnDeviceRepo   repos.DbRepo[*entities.ConsoleVPNDevice]
 
 	appRepo         repos.DbRepo[*entities.App]
 	configRepo      repos.DbRepo[*entities.Config]
@@ -393,7 +393,7 @@ var Module = fx.Module("domain",
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
 		pmsRepo repos.DbRepo[*entities.ProjectManagedService],
 		resourceMappingRepo repos.DbRepo[*entities.ResourceMapping],
-		vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
+		vpnDeviceRepo repos.DbRepo[*entities.ConsoleVPNDevice],
 
 		logger logging.Logger,
 		resourceEventPublisher ResourceEventPublisher,

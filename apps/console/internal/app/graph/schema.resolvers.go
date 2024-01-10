@@ -300,7 +300,7 @@ func (r *mutationResolver) CoreDeleteProjectManagedService(ctx context.Context, 
 }
 
 // CoreCreateVPNDevice is the resolver for the core_createVPNDevice field.
-func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
+func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -310,7 +310,7 @@ func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, vpnDevice en
 }
 
 // CoreUpdateVPNDevice is the resolver for the core_updateVPNDevice field.
-func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
+func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -1025,7 +1025,7 @@ func (r *queryResolver) CoreResyncProjectManagedService(ctx context.Context, pro
 }
 
 // CoreListVPNDevices is the resolver for the core_listVPNDevices field.
-func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error) {
+func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) (*model.ConsoleVPNDevicePaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -1051,15 +1051,15 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.Co
 		return nil, errors.NewE(err)
 	}
 
-	pe := make([]*model.VPNDeviceEdge, len(p.Edges))
+	pe := make([]*model.ConsoleVPNDeviceEdge, len(p.Edges))
 	for i := range p.Edges {
-		pe[i] = &model.VPNDeviceEdge{
+		pe[i] = &model.ConsoleVPNDeviceEdge{
 			Node:   p.Edges[i].Node,
 			Cursor: p.Edges[i].Cursor,
 		}
 	}
 
-	m := model.VPNDevicePaginatedRecords{
+	m := model.ConsoleVPNDevicePaginatedRecords{
 		Edges: pe,
 		PageInfo: &model.PageInfo{
 			EndCursor:       &p.PageInfo.EndCursor,
@@ -1074,7 +1074,7 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.Co
 }
 
 // CoreGetVPNDevice is the resolver for the core_getVPNDevice field.
-func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, name string) (*entities.VPNDevice, error) {
+func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, name string) (*entities.ConsoleVPNDevice, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
