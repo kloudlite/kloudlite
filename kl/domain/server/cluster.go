@@ -28,9 +28,11 @@ type Cluster struct {
 func ListClusters() ([]Cluster, error) {
 	s, _ := client.CurrentAccountName()
 	if s == "" {
-		if _, err := SelectAccount(s); err != nil {
+		_, err := client.GetContextFile()
+		if err != nil {
 			return nil, err
 		}
+		return nil, errors.New("Please select a context first")
 	}
 
 	cookie, err := getCookie()
