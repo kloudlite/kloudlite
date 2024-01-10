@@ -432,8 +432,8 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec struct {
-		MsvcSpec  func(childComplexity int) int
-		Namespace func(childComplexity int) int
+		MsvcSpec        func(childComplexity int) int
+		TargetNamespace func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec struct {
@@ -484,6 +484,7 @@ type ComplexityRoot struct {
 	Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec struct {
 		CnameRecords    func(childComplexity int) int
 		DeviceNamespace func(childComplexity int) int
+		Disabled        func(childComplexity int) int
 		NodeSelector    func(childComplexity int) int
 		Ports           func(childComplexity int) int
 	}
@@ -1125,9 +1126,12 @@ type ComplexityRoot struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
 		ClusterName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
+		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
@@ -1204,6 +1208,7 @@ type ComplexityRoot struct {
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
+		ManagingByDev     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
@@ -1397,6 +1402,7 @@ type PersistentVolumeResolver interface {
 }
 type PersistentVolumeClaimResolver interface {
 	CreationTime(ctx context.Context, obj *entities.PersistentVolumeClaim) (string, error)
+
 	ID(ctx context.Context, obj *entities.PersistentVolumeClaim) (string, error)
 
 	Spec(ctx context.Context, obj *entities.PersistentVolumeClaim) (*model.K8sIoAPICoreV1PersistentVolumeClaimSpec, error)
@@ -1436,6 +1442,8 @@ type VPNDeviceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
 
 	ID(ctx context.Context, obj *entities.VPNDevice) (string, error)
+
+	ManagingByDev(ctx context.Context, obj *entities.VPNDevice) (*string, error)
 
 	Spec(ctx context.Context, obj *entities.VPNDevice) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec, error)
 
@@ -3075,12 +3083,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.MsvcSpec(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.namespace":
-		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.Namespace == nil {
+	case "Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.targetNamespace":
+		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.TargetNamespace == nil {
 			break
 		}
 
-		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.Namespace(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec.TargetNamespace(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.chartName":
 		if e.complexity.Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec.ChartName == nil {
@@ -3284,6 +3292,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.DeviceNamespace(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.disabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Disabled == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Disabled(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.nodeSelector":
 		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.NodeSelector == nil {
@@ -6207,12 +6222,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PersistentVolumeClaim.ClusterName(childComplexity), true
 
+	case "PersistentVolumeClaim.createdBy":
+		if e.complexity.PersistentVolumeClaim.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumeClaim.CreatedBy(childComplexity), true
+
 	case "PersistentVolumeClaim.creationTime":
 		if e.complexity.PersistentVolumeClaim.CreationTime == nil {
 			break
 		}
 
 		return e.complexity.PersistentVolumeClaim.CreationTime(childComplexity), true
+
+	case "PersistentVolumeClaim.displayName":
+		if e.complexity.PersistentVolumeClaim.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumeClaim.DisplayName(childComplexity), true
 
 	case "PersistentVolumeClaim.id":
 		if e.complexity.PersistentVolumeClaim.ID == nil {
@@ -6227,6 +6256,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PersistentVolumeClaim.Kind(childComplexity), true
+
+	case "PersistentVolumeClaim.lastUpdatedBy":
+		if e.complexity.PersistentVolumeClaim.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.PersistentVolumeClaim.LastUpdatedBy(childComplexity), true
 
 	case "PersistentVolumeClaim.markedForDeletion":
 		if e.complexity.PersistentVolumeClaim.MarkedForDeletion == nil {
@@ -6737,6 +6773,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.VPNDevice.LastUpdatedBy(childComplexity), true
+
+	case "VPNDevice.managingByDev":
+		if e.complexity.VPNDevice.ManagingByDev == nil {
+			break
+		}
+
+		return e.complexity.VPNDevice.ManagingByDev(childComplexity), true
 
 	case "VPNDevice.markedForDeletion":
 		if e.complexity.VPNDevice.MarkedForDeletion == nil {
@@ -7649,7 +7692,7 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef @sha
 
 type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec @shareable {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
-  namespace: String!
+  targetNamespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
@@ -7700,6 +7743,7 @@ type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @sh
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
   deviceNamespace: String
+  disabled: Boolean
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
@@ -8244,7 +8288,7 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-  namespace: String!
+  targetNamespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
@@ -8284,6 +8328,7 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
   deviceNamespace: String
+  disabled: Boolean
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
@@ -9097,9 +9142,12 @@ input PersistentVolumeIn {
   accountName: String!
   apiVersion: String!
   clusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   id: String!
   kind: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
@@ -9184,6 +9232,7 @@ input VolumeAttachmentIn {
   id: String!
   kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  managingByDev: String
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
@@ -9210,6 +9259,7 @@ input VPNDeviceIn {
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
+
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	scalar _Any
@@ -12945,8 +12995,8 @@ func (ec *executionContext) fieldContext_ClusterManagedService_spec(ctx context.
 			switch field.Name {
 			case "msvcSpec":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_msvcSpec(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_namespace(ctx, field)
+			case "targetNamespace":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec", field.Name)
 		},
@@ -20706,8 +20756,8 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_namespace(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1ClusterManagedServiceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20720,7 +20770,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Namespace, nil
+		return obj.TargetNamespace, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20737,7 +20787,7 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec",
 		Field:      field,
@@ -22025,6 +22075,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_disabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_disabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Disabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_disabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -36450,6 +36541,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createVPNDevice(ctx cont
 				return ec.fieldContext_VPNDevice_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_VPNDevice_lastUpdatedBy(ctx, field)
+			case "managingByDev":
+				return ec.fieldContext_VPNDevice_managingByDev(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_VPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
@@ -36564,6 +36657,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateVPNDevice(ctx cont
 				return ec.fieldContext_VPNDevice_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_VPNDevice_lastUpdatedBy(ctx, field)
+			case "managingByDev":
+				return ec.fieldContext_VPNDevice_managingByDev(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_VPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
@@ -41493,6 +41588,58 @@ func (ec *executionContext) fieldContext_PersistentVolumeClaim_clusterName(ctx c
 	return fc, nil
 }
 
+func (ec *executionContext) _PersistentVolumeClaim_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolumeClaim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumeClaim_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumeClaim_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumeClaim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PersistentVolumeClaim_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolumeClaim) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PersistentVolumeClaim_creationTime(ctx, field)
 	if err != nil {
@@ -41532,6 +41679,50 @@ func (ec *executionContext) fieldContext_PersistentVolumeClaim_creationTime(ctx 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumeClaim_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolumeClaim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumeClaim_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumeClaim_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumeClaim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -41620,6 +41811,58 @@ func (ec *executionContext) fieldContext_PersistentVolumeClaim_kind(ctx context.
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersistentVolumeClaim_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.PersistentVolumeClaim) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersistentVolumeClaim_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___common__CreatedOrUpdatedBy2githubᚗcomᚋkloudliteᚋapiᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersistentVolumeClaim_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersistentVolumeClaim",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Github__com___kloudlite___api___common__CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -42072,12 +42315,18 @@ func (ec *executionContext) fieldContext_PersistentVolumeClaimEdge_node(ctx cont
 				return ec.fieldContext_PersistentVolumeClaim_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_PersistentVolumeClaim_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_PersistentVolumeClaim_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_PersistentVolumeClaim_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_PersistentVolumeClaim_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_PersistentVolumeClaim_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_PersistentVolumeClaim_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_PersistentVolumeClaim_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_PersistentVolumeClaim_markedForDeletion(ctx, field)
 			case "metadata":
@@ -43713,6 +43962,8 @@ func (ec *executionContext) fieldContext_Query_infra_getVPNDevice(ctx context.Co
 				return ec.fieldContext_VPNDevice_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_VPNDevice_lastUpdatedBy(ctx, field)
+			case "managingByDev":
+				return ec.fieldContext_VPNDevice_managingByDev(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_VPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
@@ -44420,12 +44671,18 @@ func (ec *executionContext) fieldContext_Query_infra_getPVC(ctx context.Context,
 				return ec.fieldContext_PersistentVolumeClaim_apiVersion(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_PersistentVolumeClaim_clusterName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_PersistentVolumeClaim_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_PersistentVolumeClaim_creationTime(ctx, field)
+			case "displayName":
+				return ec.fieldContext_PersistentVolumeClaim_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_PersistentVolumeClaim_id(ctx, field)
 			case "kind":
 				return ec.fieldContext_PersistentVolumeClaim_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_PersistentVolumeClaim_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_PersistentVolumeClaim_markedForDeletion(ctx, field)
 			case "metadata":
@@ -45641,6 +45898,47 @@ func (ec *executionContext) fieldContext_VPNDevice_lastUpdatedBy(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _VPNDevice_managingByDev(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VPNDevice_managingByDev(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VPNDevice().ManagingByDev(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VPNDevice_managingByDev(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VPNDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VPNDevice_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_markedForDeletion(ctx, field)
 	if err != nil {
@@ -45823,6 +46121,8 @@ func (ec *executionContext) fieldContext_VPNDevice_spec(ctx context.Context, fie
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field)
 			case "deviceNamespace":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field)
+			case "disabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_disabled(ctx, field)
 			case "nodeSelector":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_nodeSelector(ctx, field)
 			case "ports":
@@ -46139,6 +46439,8 @@ func (ec *executionContext) fieldContext_VPNDeviceEdge_node(ctx context.Context,
 				return ec.fieldContext_VPNDevice_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_VPNDevice_lastUpdatedBy(ctx, field)
+			case "managingByDev":
+				return ec.fieldContext_VPNDevice_managingByDev(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_VPNDevice_markedForDeletion(ctx, field)
 			case "metadata":
@@ -50024,7 +50326,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"msvcSpec", "namespace"}
+	fieldsInOrder := [...]string{"msvcSpec", "targetNamespace"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -50039,11 +50341,11 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			if err != nil {
 				return it, err
 			}
-		case "namespace":
+		case "targetNamespace":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetNamespace"))
+			it.TargetNamespace, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -50312,7 +50614,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"cnameRecords", "deviceNamespace", "nodeSelector", "ports"}
+	fieldsInOrder := [...]string{"cnameRecords", "deviceNamespace", "disabled", "nodeSelector", "ports"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -50332,6 +50634,14 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceNamespace"))
 			it.DeviceNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "disabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disabled"))
+			it.Disabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -56879,9 +57189,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "namespace":
+		case "targetNamespace":
 
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_namespace(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec_targetNamespace(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -57181,6 +57491,10 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___wiregua
 		case "deviceNamespace":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field, obj)
+
+		case "disabled":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_disabled(ctx, field, obj)
 
 		case "nodeSelector":
 
@@ -61388,6 +61702,13 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+
+			out.Values[i] = ec._PersistentVolumeClaim_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "creationTime":
 			field := field
 
@@ -61408,6 +61729,13 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 				return innerFunc(ctx)
 
 			})
+		case "displayName":
+
+			out.Values[i] = ec._PersistentVolumeClaim_displayName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "id":
 			field := field
 
@@ -61431,6 +61759,13 @@ func (ec *executionContext) _PersistentVolumeClaim(ctx context.Context, sel ast.
 		case "kind":
 
 			out.Values[i] = ec._PersistentVolumeClaim_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "lastUpdatedBy":
+
+			out.Values[i] = ec._PersistentVolumeClaim_lastUpdatedBy(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -62395,6 +62730,23 @@ func (ec *executionContext) _VPNDevice(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "managingByDev":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VPNDevice_managingByDev(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "markedForDeletion":
 
 			out.Values[i] = ec._VPNDevice_markedForDeletion(ctx, field, obj)

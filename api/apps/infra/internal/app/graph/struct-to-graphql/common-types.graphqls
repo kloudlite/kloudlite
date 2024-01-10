@@ -213,7 +213,7 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef @sha
 
 type Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpec @shareable {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec!
-  namespace: String!
+  targetNamespace: String!
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @shareable {
@@ -264,6 +264,7 @@ type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @sh
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
   deviceNamespace: String
+  disabled: Boolean
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
@@ -808,7 +809,7 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn {
   msvcSpec: Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn!
-  namespace: String!
+  targetNamespace: String!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
@@ -848,6 +849,7 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
   deviceNamespace: String
+  disabled: Boolean
   nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
