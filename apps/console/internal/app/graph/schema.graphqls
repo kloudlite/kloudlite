@@ -11,6 +11,7 @@ enum ConsoleResType {
     managed_service
     managed_resource
     environment
+    vpn_device
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
@@ -75,6 +76,12 @@ input SearchProjectManagedService {
     markedForDeletion: MatchFilterIn
 }
 
+input CoreSearchVPNDevices {
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
+}
+
 type Query {
     core_checkNameAvailability(resType: ConsoleResType!, namespace: String, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
@@ -116,6 +123,9 @@ type Query {
     core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
     core_resyncProjectManagedService(projectName: String!,  name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -156,5 +166,13 @@ type Mutation {
     core_createProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
     core_updateProjectManagedService(projectName: String!, pmsvc: ProjectManagedServiceIn!): ProjectManagedService @isLoggedInAndVerified @hasAccount
     core_deleteProjectManagedService(projectName: String!, pmsvcName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+
+    core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_updateVPNDeviceNs(deviceName: String!, namespace: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 

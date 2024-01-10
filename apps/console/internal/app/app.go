@@ -72,6 +72,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
+	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "devs", entities.VPNDeviceIndexes),
 
 	// streaming logs
 	fx.Invoke(

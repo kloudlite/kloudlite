@@ -38,6 +38,8 @@ tasks:
           --struct github.com/kloudlite/api/apps/console/internal/entities.App
           --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
           --struct github.com/kloudlite/api/apps/console/internal/entities.Config
+          --struct github.com/kloudlite/api/apps/console/internal/entities.VPNDevice
+          --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
           --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
           --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
           --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyRef
@@ -51,7 +53,7 @@ tasks:
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,App,Secret,Config,Router,ManagedResource,ProjectManagedService,ImagePullSecret
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,App,Secret,Config,Router,ManagedResource,ProjectManagedService,ImagePullSecret,VPNDevice
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

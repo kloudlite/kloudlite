@@ -4,6 +4,11 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
   userName: String!
 }
 
+type Github__com___kloudlite___api___pkg___types__EncodedString @shareable {
+  encoding: String!
+  value: String!
+}
+
 type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
   action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
@@ -198,7 +203,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__RouterSpec @shareabl
   ingressClass: String
   maxBodySizeInMB: Int
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimit
-  region: String
   routes: [Github__com___kloudlite___operator___apis___crds___v1__Route!]
 }
 
@@ -214,6 +218,24 @@ type Github__com___kloudlite___operator___apis___crds___v1__ShellProbe @shareabl
 
 type Github__com___kloudlite___operator___apis___crds___v1__TcpProbe @shareable {
   port: Int!
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @shareable {
+  host: String
+  target: String
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
+  deviceNamespace: String
+  disabled: Boolean
+  nodeSelector: Map
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
+}
+
+type Github__com___kloudlite___operator___apis___wireguard___v1__Port @shareable {
+  port: Int
+  targetPort: Int
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -446,7 +468,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn {
   ingressClass: String
   maxBodySizeInMB: Int
   rateLimit: Github__com___kloudlite___operator___apis___crds___v1__RateLimitIn
-  region: String
   routes: [Github__com___kloudlite___operator___apis___crds___v1__RouteIn!]
 }
 
@@ -462,6 +483,24 @@ input Github__com___kloudlite___operator___apis___crds___v1__ShellProbeIn {
 
 input Github__com___kloudlite___operator___apis___crds___v1__TcpProbeIn {
   port: Int!
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn {
+  host: String
+  target: String
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
+  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
+  deviceNamespace: String
+  disabled: Boolean
+  nodeSelector: Map
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
+  port: Int
+  targetPort: Int
 }
 
 input K8s__io___api___core___v1__TolerationIn {
