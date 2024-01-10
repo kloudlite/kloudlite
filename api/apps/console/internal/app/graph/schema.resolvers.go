@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -84,7 +83,7 @@ func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, projectName
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CloneEnvironment(cc, projectName, sourceEnvName, envName)
+	return r.Domain.CloneEnvironment(cc, projectName, sourceEnvName, envName, "", "")
 }
 
 // CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.
@@ -881,12 +880,26 @@ func (r *queryResolver) CoreResyncRouter(ctx context.Context, projectName string
 
 // CoreGetManagedResouceOutputKeys is the resolver for the core_getManagedResouceOutputKeys field.
 func (r *queryResolver) CoreGetManagedResouceOutputKeys(ctx context.Context, projectName string, envName string, name string) ([]string, error) {
-	panic(fmt.Errorf("not implemented: CoreGetManagedResouceOutputKeys - core_getManagedResouceOutputKeys"))
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GetManagedResourceOutputKeys(newResourceContext(cc, projectName, envName), name)
 }
 
 // CoreGetManagedResouceOutputKeyValues is the resolver for the core_getManagedResouceOutputKeyValues field.
 func (r *queryResolver) CoreGetManagedResouceOutputKeyValues(ctx context.Context, projectName string, envName string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error) {
-	panic(fmt.Errorf("not implemented: CoreGetManagedResouceOutputKeyValues - core_getManagedResouceOutputKeyValues"))
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	m := make([]domain.ManagedResourceKeyRef, len(keyrefs))
+	for i := range keyrefs {
+		m[i] = *keyrefs[i]
+	}
+
+	return r.Domain.GetManagedResourceOutputKVs(newResourceContext(cc, projectName, envName), m)
 }
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.

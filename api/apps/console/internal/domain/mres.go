@@ -43,13 +43,72 @@ func (d *domain) GetManagedResource(ctx ResourceContext, name string) (*entities
 }
 
 // GetManagedResourceOutputKVs implements Domain.
-func (*domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error) {
-	panic("unimplemented")
+func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error) {
+	filters := ctx.DBFilters()
+
+	names := make([]any, 0, len(keyrefs))
+	for i := range keyrefs {
+		names = append(names, keyrefs[i].MresName)
+	}
+
+	filters = d.mresRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+		"metadata.name": {
+			MatchType: repos.MatchTypeArray,
+			Array:     names,
+		},
+	})
+
+	mresSecrets, err := d.mresRepo.Find(ctx, repos.Query{Filter: filters})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	results := make([]*ManagedResourceKeyValueRef, 0, len(mresSecrets))
+
+	data := make(map[string]map[string]string)
+
+	for i := range mresSecrets {
+		m := make(map[string]string, len(mresSecrets[i].SyncedOutputSecretRef.Data))
+		for k, v := range mresSecrets[i].SyncedOutputSecretRef.Data {
+			m[k] = string(v)
+		}
+
+		for k, v := range mresSecrets[i].SyncedOutputSecretRef.StringData {
+			m[k] = v
+		}
+
+		data[mresSecrets[i].Name] = m
+	}
+
+	for i := range keyrefs {
+		results = append(results, &ManagedResourceKeyValueRef{
+			MresName: keyrefs[i].MresName,
+			Key:      keyrefs[i].Key,
+			Value:    data[keyrefs[i].MresName][keyrefs[i].Key],
+		})
+	}
+
+	return results, nil
 }
 
 // GetManagedResourceOutputKeys implements Domain.
-func (*domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
-	panic("unimplemented")
+func (d *domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
+
+	filters := ctx.DBFilters()
+	filters.Add("metadata.name", name)
+	mresSecrets, err := d.mresRepo.FindOne(ctx, filters)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	results := make([]string, 0, len(mresSecrets.SyncedOutputSecretRef.Data))
+
+	for _, data := range mresSecrets.SyncedOutputSecretRef.Data {
+		results = append(results, string(data))
+	}
+
+	return results, nil
+
 }
 
 // mutations
