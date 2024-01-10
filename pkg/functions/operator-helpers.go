@@ -3,11 +3,13 @@ package functions
 import (
 	"context"
 	"encoding/json"
+	"strings"
+	"time"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 func ContainsFinalizers(obj client.Object, finalizers ...string) bool {
@@ -130,4 +132,14 @@ func RolloutRestart(c client.Client, kind Restartable, namespace string, labels 
 	}
 
 	return nil
+}
+
+func FilterObservabilityAnnotations(obj client.Object) map[string]string {
+	m := make(map[string]string, len(obj.GetAnnotations()))
+	for k, v := range obj.GetAnnotations() {
+		if strings.HasPrefix(k, "kloudlite.io/observability") {
+			m[k] = v
+		}
+	}
+	return m
 }
