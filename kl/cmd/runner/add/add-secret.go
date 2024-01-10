@@ -10,14 +10,12 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
 var addSecretCommand = &cobra.Command{
 	Use:   "secret",
-	Short: "add secret to your " + constants.CmdName + "-config file by selection from the all the secrets available in selected project",
+	Short: "add secret to your kl-config file by selection from the all the secrets available in selected project",
 	Long: `Add env from secret
 
 Using this command you are able to add a environment from the secret present on your project
@@ -52,7 +50,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		fn.PrintError(err)
-		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
+		es := "please run 'kl init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -77,18 +75,18 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		return errors.New("can't find secrets with provided name")
 
 	} else {
-		selectedGroupIndex, err := fuzzyfinder.Find(
+		selectedGroup, err := fzf.FindOne(
 			secrets,
-			func(i int) string {
-				return secrets[i].Metadata.Name
+			func(item server.Secret) string {
+				return item.Metadata.Name
 			},
-			fuzzyfinder.WithPromptString("Select Secret Group >"),
+			fzf.WithPrompt("Select Secret Group >"),
 		)
 		if err != nil {
 			return err
 		}
 
-		selectedSecretGroup = secrets[selectedGroupIndex]
+		selectedSecretGroup = *selectedGroup
 	}
 
 	if len(selectedSecretGroup.StringData) == 0 {
@@ -198,7 +196,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		fn.PrintError(err)
 	}
 
-	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key, constants.CmdName)
+	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key, "kl")
 	return nil
 }
 

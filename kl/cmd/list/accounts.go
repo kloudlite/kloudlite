@@ -17,14 +17,17 @@ var accountsCmd = &cobra.Command{
 	Short: "list all the accounts accessible to you",
 	Long: `List Accounts
 
-This command will help you to see list of all the accounts that's accessible to you. 
+This command will provide the list of all the accounts that's accessible to you. 
 
 Examples:
   # list accounts accessible to you
   kl list accounts
+
+Note: selected project will be highlighted with green color.
+
 `,
-	Run: func(_ *cobra.Command, _ []string) {
-		err := listAccounts()
+	Run: func(cmd *cobra.Command, _ []string) {
+		err := listAccounts(cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -32,7 +35,7 @@ Examples:
 	},
 }
 
-func listAccounts() error {
+func listAccounts(cmd *cobra.Command) error {
 	accounts, err := server.ListAccounts()
 
 	if err != nil {
@@ -66,13 +69,13 @@ func listAccounts() error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(accounts), true)
-
+	fmt.Println(table.Table(&header, rows, cmd))
 	return nil
 }
 
 func init() {
 	accountsCmd.Aliases = append(accountsCmd.Aliases, "account")
 	accountsCmd.Aliases = append(accountsCmd.Aliases, "acc")
+
+	fn.WithOutputVariant(accountsCmd)
 }

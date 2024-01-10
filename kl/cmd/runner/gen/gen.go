@@ -2,18 +2,18 @@ package gen
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
 var MountCommand = &cobra.Command{
 	Use:   "gen",
-	Short: "add mount to your " + constants.CmdName + "-config file by selection from the all the [ config | secret ] available selected project",
+	Short: "add mount to your kl-config file by selection from the all the [ config | secret ] available selected project",
 	Long: `Add mount
 This command help you to add generated config so you can get your config or secret downloaded and dumped in a file.
 
@@ -28,7 +28,7 @@ Examples:
 		klFile, err := client.GetKlFile(nil)
 		if err != nil {
 			fn.PrintError(err)
-			es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
+			es := "please run 'kl init' if you are not initialized the file already"
 			fn.PrintError(fmt.Errorf(es))
 			return
 		}
@@ -51,34 +51,38 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	c := cmd.Flag("config").Value.String()
 	s := cmd.Flag("secret").Value.String()
 
-	cOrs := ""
+	var cOrs client.CSType
+	cOrs = ""
 
 	if c != "" || s != "" {
 
 		if c != "" {
-			cOrs = "config"
+			cOrs = client.ConfigType
 		} else {
-			cOrs = "secret"
+			cOrs = client.SecretType
 		}
 
 	} else {
-		csName := []string{"config", "secret"}
-		cOrsIndex, err := fuzzyfinder.Find(
+		csName := []client.CSType{client.ConfigType, client.SecretType}
+		cOrsValue, err := fzf.FindOne(
 			csName,
-			func(i int) string {
-				return csName[i]
+			//func(i int) string {
+			//	return csName[i]
+			//},
+			func(item client.CSType) string {
+				return string(item)
 			},
-			fuzzyfinder.WithPromptString("Mount from Config/Secret >"),
+			fzf.WithPrompt("Mount from Config/Secret >"),
 		)
 		if err != nil {
 			return err
 		}
 
-		cOrs = csName[cOrsIndex]
+		cOrs = client.CSType(*cOrsValue)
 	}
 
 	items := make([]server.ConfigORSecret, 0)
-	if cOrs == "config" {
+	if cOrs == client.ConfigType {
 		configs, e := server.ListConfigs()
 
 		if e != nil {
@@ -130,19 +134,19 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 
 		return fmt.Errorf("provided %s name not found", cOrs)
 	} else {
-		selectedItemIndex, err := fuzzyfinder.Find(
+		selectedItemVal, err := fzf.FindOne(
 			items,
-			func(i int) string {
-				return items[i].Name
+			func(item server.ConfigORSecret) string {
+				return item.Name
 			},
-			fuzzyfinder.WithPromptString(fmt.Sprintf("Select %s >", cOrs)),
+			fzf.WithPrompt(fmt.Sprintf("Select %s >", cOrs)),
 		)
 
 		if err != nil {
 			fn.PrintError(err)
 		}
 
-		selectedItem = items[selectedItemIndex]
+		selectedItem = *selectedItemVal
 	}
 
 	matchedIndex := -1
@@ -152,23 +156,37 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		}
 	}
 
+	key, err := fzf.FindOne(func() []string {
+		res := make([]string, 0)
+		for k := range selectedItem.Entries {
+			res = append(res, k)
+		}
+		return res
+	}(), func(item string) string {
+		return item
+	}, fzf.WithPrompt("Select Config/Secret >"))
+
+	if err != nil {
+		return err
+	}
+
 	if matchedIndex == -1 {
 		klFile.FileMount.Mounts = append(klFile.FileMount.Mounts, client.FileEntry{
 			Type: cOrs,
 			Path: path,
 			Name: selectedItem.Name,
+			Key:  *key,
 		})
 	} else {
 		klFile.FileMount.Mounts[matchedIndex] = client.FileEntry{
 			Type: cOrs,
 			Path: path,
 			Name: selectedItem.Name,
+			Key:  *key,
 		}
 	}
 
-	err := client.WriteKLFile(klFile)
-
-	if err != nil {
+	if err := client.WriteKLFile(klFile); err != nil {
 		return err
 	}
 

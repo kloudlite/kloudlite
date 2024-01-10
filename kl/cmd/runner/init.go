@@ -7,13 +7,12 @@ import (
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 )
 
 var InitCommand = &cobra.Command{
 	Use:   "init",
-	Short: "Initialize your " + constants.CmdName + "-config file with some sample values",
+	Short: "Initialize your kl-config file with some sample values",
 	Long: `kl init
 
 This command initialize a kl-config.

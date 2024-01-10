@@ -6,9 +6,10 @@ import (
 
 func GetCurrentUser() (*User, error) {
 	cookie, err := getCookie()
-	if err != nil {
+	if err != nil && cookie == "" {
 		return nil, err
 	}
+
 	respData, err := klFetch("cli_getCurrentUser", map[string]any{}, &cookie)
 
 	if err != nil {

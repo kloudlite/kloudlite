@@ -18,14 +18,17 @@ var clustersCmd = &cobra.Command{
 	Short: "list all the clusters accessible to you",
 	Long: `List Clusters
 
-This command will help you to see list of all the clusters that's accessible to you. 
+This command will provide the list of all the clusters that's accessible to you. 
 
 Examples:
   # list clusters accessible to you
   kl list clusters
+
+Note: selected project will be highlighted with green color.
+
 `,
-	Run: func(_ *cobra.Command, _ []string) {
-		err := listClusters()
+	Run: func(cmd *cobra.Command, _ []string) {
+		err := listClusters(cmd)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -33,9 +36,8 @@ Examples:
 	},
 }
 
-func listClusters() error {
+func listClusters(cmd *cobra.Command) error {
 	clusters, err := server.ListClusters()
-
 	if err != nil {
 		return err
 	}
@@ -73,8 +75,11 @@ func listClusters() error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows))
-	table.TotalResults(len(clusters), true)
+	fmt.Println(table.Table(&header, rows, cmd))
+
+	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
+		table.TotalResults(len(clusters), true)
+	}
 
 	return nil
 }
@@ -82,4 +87,5 @@ func listClusters() error {
 func init() {
 	clustersCmd.Aliases = append(clustersCmd.Aliases, "cluster")
 	clustersCmd.Aliases = append(clustersCmd.Aliases, "clus")
+	fn.WithOutputVariant(clustersCmd)
 }

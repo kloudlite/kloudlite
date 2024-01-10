@@ -15,7 +15,7 @@ import (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "get config entries",
-	Long: `get config entries
+	Long: `get config entries for the selected project
 Examples:
   # get config entries in table
   kl get config <configname>

@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var LogoutCmd = &cobra.Command{
+var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "logout from kloudlite",
 	Long: `This command will logout your session from the cli
 Example:
   # Logout from kloudlite
-  kl auth logout
+  kl logout
 
   using above command you can expire your session from the current device shell.
 

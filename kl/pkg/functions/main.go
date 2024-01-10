@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/spf13/cobra"
 )
 
 type Option struct {
@@ -43,6 +44,33 @@ type resType struct {
 	Metadata struct {
 		Name string
 	}
+}
+
+func GetPrintRow2(printValue interface{}, active bool, prefix ...bool) string {
+	if active {
+		return text.Green(fmt.Sprintf("%s%s",
+			func() string {
+				if len(prefix) > 0 && prefix[0] {
+					return "*"
+				}
+
+				return ""
+			}(),
+
+			func() string {
+				s := strings.Split(fmt.Sprint(printValue), "\n")
+				if len(s) > 1 {
+					for i, v := range s {
+						s[i] = text.Green(v)
+					}
+				}
+
+				return strings.Join(s, "\n")
+			}(),
+		))
+	}
+
+	return fmt.Sprint(printValue)
 }
 
 func GetPrintRow(res any, activeName string, printValue interface{}, prefix ...bool) string {
@@ -94,4 +122,17 @@ func JsonConversion(from any, to any) error {
 		return err
 	}
 	return nil
+}
+
+func ParseStringFlag(cmd *cobra.Command, flag string) string {
+	if cmd.Flags().Changed(flag) {
+		v, _ := cmd.Flags().GetString(flag)
+		return v
+	}
+
+	return ""
+}
+
+func WithOutputVariant(cmd *cobra.Command) {
+	cmd.Flags().StringP("output", "o", "table", "output format [table | json | yaml]")
 }

@@ -1,8 +1,12 @@
 package table
 
 import (
+	"encoding/json"
 	"fmt"
+
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/spf13/cobra"
+	"sigs.k8s.io/yaml"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 )
@@ -49,7 +53,7 @@ func TotalResults(length int, printIt bool) string {
 
 func KVOutput(k string, v interface{}, printIt bool) string {
 	result := fmt.Sprint(
-		text.Colored(k, headerColor), " ",
+		text.Bold(k), " ",
 		text.Colored(fmt.Sprintf("%v", v), 2),
 	)
 
@@ -60,19 +64,67 @@ func KVOutput(k string, v interface{}, printIt bool) string {
 	return result
 }
 
-func Table(header *Row, rows []Row) string {
-
+func Table(header *Row, rows []Row, cmds ...*cobra.Command) string {
 	t := table.Table{}
 
-	t.Style().Box = GetTableStyles()
-	if header != nil {
-		t.AppendHeader(getRow(*header))
+	output := "table"
+	if len(cmds) > 0 && header != nil {
+		cmd := cmds[0]
+		if cmd.Flags().Changed("output") {
+			output, _ = cmd.Flags().GetString("output")
+		}
 	}
-	t.AppendRows(getRows(rows))
 
-	return t.Render()
+	switch output {
+	case "json":
+		jsonVal := []map[string]interface{}{}
 
-	// fmt.Println(t.Render())
+		// row is array of interface
+		for _, row := range rows {
+			// r is interface
+			r := map[string]interface{}{}
+			for i, v := range row {
+				r[text.Plain((*header)[i].(string))] = text.Plain(v.(string))
+			}
+			jsonVal = append(jsonVal, r)
+		}
+
+		b, err := json.Marshal(jsonVal)
+		if err != nil {
+			return fmt.Sprint(err)
+		}
+
+		return string(b)
+
+	case "yaml", "yml":
+		jsonVal := []map[string]interface{}{}
+
+		// row is array of interface
+		for _, row := range rows {
+			// r is interface
+			r := map[string]interface{}{}
+			for i, v := range row {
+				r[text.Plain((*header)[i].(string))] = text.Plain(v.(string))
+			}
+			jsonVal = append(jsonVal, r)
+		}
+
+		b, err := yaml.Marshal(jsonVal)
+		if err != nil {
+			return fmt.Sprint(err)
+		}
+
+		return string(b)
+
+	default:
+		t.Style().Box = GetTableStyles()
+		if header != nil {
+			t.AppendHeader(getRow(*header))
+		}
+		t.AppendRows(getRows(rows))
+
+		return t.Render()
+	}
 }
 
 type Row []interface {

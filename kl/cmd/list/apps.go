@@ -15,22 +15,22 @@ var appsCmd = &cobra.Command{
 	Use:   "apps",
 	Short: "list all the apps available in selected project",
 	Long: `List all the apps available in project.
+
+This command will provide the list of all the apps that's accessible for the selected environment or workspace.
+
 Examples:
-	# list all the apps with selected project
   kl list apps
 
-	# list all the apps with projectId
-  kl list apps <projectId>
 	`,
-	Run: func(_ *cobra.Command, args []string) {
-		if err := listapps(args); err != nil {
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := listapps(cmd, args); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func listapps(args []string) error {
+func listapps(cmd *cobra.Command, args []string) error {
 	var apps []server.App
 	var err error
 
@@ -45,12 +45,6 @@ func listapps(args []string) error {
 	} else {
 		apps, err = server.ListApps(fn.MakeOption("projectId", args[0]))
 	}
-
-	//for _, l := range a {
-	//	if !l.IsLambda {
-	//		apps = append(apps, l)
-	//	}
-	//}
 
 	if err != nil {
 		return err
@@ -71,21 +65,26 @@ func listapps(args []string) error {
 		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name})
 	}
 
-	fmt.Println(table.Table(&header, rows))
+	fmt.Println(table.Table(&header, rows, cmd))
 
-	if projectId == "" {
-		projectId, err = client.CurrentProjectName()
-		if err != nil {
-			return err
+	s := fn.ParseStringFlag(cmd, "output")
+	if s == "table" {
+
+		if projectId == "" {
+			projectId, err = client.CurrentProjectName()
+			if err != nil {
+				return err
+			}
 		}
-	}
 
-	table.KVOutput("apps of", projectId, true)
-	table.TotalResults(len(apps), true)
+		table.KVOutput("apps of", projectId, true)
+		table.TotalResults(len(apps), true)
+	}
 
 	return nil
 }
 
 func init() {
 	appsCmd.Aliases = append(appsCmd.Aliases, "app")
+	fn.WithOutputVariant(appsCmd)
 }

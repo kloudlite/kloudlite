@@ -15,12 +15,44 @@ type Env struct {
 	Metadata    Metadata `json:"metadata"`
 	Status      Status   `json:"status"`
 	Spec        struct {
-		IsEnvironment bool `json:"isEnvironment"`
+		TargetNamespace string `json:"targetNamespace"`
 	} `json:"spec"`
 }
 
 type EnvList struct {
 	Edges Edges[Env] `json:"edges"`
+}
+
+func GetEnvironment(envName string) (*Env, error) {
+	var err error
+	projectName, err := EnsureProject()
+	if err != nil {
+		return nil, err
+	}
+
+	cookie, err := getCookie()
+	if err != nil {
+		return nil, err
+	}
+
+	respData, err := klFetch("cli_getEnvironment", map[string]any{
+		"projectName": strings.TrimSpace(projectName),
+		"pq": map[string]any{
+			"orderBy":       "name",
+			"sortDirection": "ASC",
+			"first":         99999999,
+		},
+	}, &cookie)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if fromResp, err := GetFromResp[Env](respData); err != nil {
+		return nil, err
+	} else {
+		return fromResp, nil
+	}
 }
 
 func ListEnvs(options ...fn.Option) ([]Env, error) {
@@ -36,14 +68,11 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	}
 
 	respData, err := klFetch("cli_listEnvironments", map[string]any{
+		"projectName": strings.TrimSpace(projectName),
 		"pq": map[string]any{
 			"orderBy":       "name",
 			"sortDirection": "ASC",
 			"first":         99999999,
-		},
-		"project": map[string]any{
-			"type":  "name",
-			"value": strings.TrimSpace(projectName),
 		},
 	}, &cookie)
 
@@ -77,8 +106,8 @@ func SelectEnv(envName string) (*Env, error) {
 		for _, a := range envs {
 			if a.Metadata.Name == envName {
 				if err := persistSelectedEnv(client.Env{
-					Name:          a.Metadata.Name,
-					IsEnvironment: a.Spec.IsEnvironment,
+					Name:     a.Metadata.Name,
+					TargetNs: a.Spec.TargetNamespace,
 				}); err != nil {
 					return nil, err
 				}
@@ -101,8 +130,8 @@ func SelectEnv(envName string) (*Env, error) {
 	}
 
 	if err := persistSelectedEnv(client.Env{
-		Name:          env.Metadata.Name,
-		IsEnvironment: env.Spec.IsEnvironment,
+		Name:     env.Metadata.Name,
+		TargetNs: env.Spec.TargetNamespace,
 	}); err != nil {
 		return nil, err
 	}
@@ -136,7 +165,7 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 	}
 
 	return &client.Env{
-		Name:          mEnv.Metadata.Name,
-		IsEnvironment: mEnv.Spec.IsEnvironment,
+		Name:     mEnv.Metadata.Name,
+		TargetNs: mEnv.Spec.TargetNamespace,
 	}, nil
 }

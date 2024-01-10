@@ -10,6 +10,10 @@ func SelectAccount(accountName string) error {
 
 	file.AccountName = accountName
 
+	if file.Name == "" {
+		return nil
+	}
+
 	err = WriteContextFile(*file)
 	return err
 }

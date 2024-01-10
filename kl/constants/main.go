@@ -3,7 +3,6 @@ package constants
 import "os"
 
 var (
-	CmdName  = "kl"
 	LoginUrl = func() string {
 		if os.Getenv("BASE_URL") == "" {
 			return "https://auth.kloudlite.io/cli-login"

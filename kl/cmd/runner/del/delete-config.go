@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -42,24 +42,22 @@ func removeConfig() error {
 		return fmt.Errorf(es)
 	}
 
-	selectedConfigIndex, err := fuzzyfinder.Find(
+	selectedConfig, err := fzf.FindOne(
 		klFile.Configs,
-		func(i int) string {
-			return klFile.Configs[i].Name
+		func(item client.ResType) string {
+			return item.Name
 		},
-		fuzzyfinder.WithPromptString("Select Config Group >"),
+		fzf.WithPrompt("Select Config Group >"),
 	)
 
 	if err != nil {
 		return err
 	}
 
-	selectedConfig := klFile.Configs[selectedConfigIndex]
-
 	if len(selectedConfig.Env) == 1 {
 		newConfigs := make([]client.ResType, 0)
-		for i, rt := range klFile.Configs {
-			if i == selectedConfigIndex {
+		for _, rt := range klFile.Configs {
+			if rt.Name == selectedConfig.Name {
 				continue
 			}
 			newConfigs = append(newConfigs, rt)
@@ -71,12 +69,12 @@ func removeConfig() error {
 
 	} else {
 
-		selectedKeyIndex, e := fuzzyfinder.Find(
+		selectedKeyValues, e := fzf.FindOne(
 			selectedConfig.Env,
-			func(i int) string {
-				return fmt.Sprintf("%s, %s", selectedConfig.Env[i].Key, selectedConfig.Env[i].RefKey)
+			func(item client.ResEnvType) string {
+				return fmt.Sprintf("%s, %s", item.Key, item.RefKey)
 			},
-			fuzzyfinder.WithPromptString("Select Config Key >"),
+			fzf.WithPrompt("Select Config Key >"),
 		)
 
 		if e != nil {
@@ -84,14 +82,14 @@ func removeConfig() error {
 		}
 
 		newEnvs := make([]client.ResEnvType, 0)
-		for i, ret := range selectedConfig.Env {
-			if i == selectedKeyIndex {
+		for _, ret := range selectedConfig.Env {
+			if ret.Name == selectedKeyValues.Name {
 				continue
 			}
 			newEnvs = append(newEnvs, ret)
 		}
 
-		klFile.Configs[selectedConfigIndex].Env = newEnvs
+		selectedConfig.Env = newEnvs
 
 		fmt.Printf("removed key %s/%s form your %s-file\n", selectedConfig.Name, selectedConfig.Name, constants.CmdName)
 	}

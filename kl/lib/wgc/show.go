@@ -87,7 +87,7 @@ func showDevice(dev wgtypes.Device, opts *WgShowOptions) error {
 	if opts.Option == "" {
 		showKeys := opts.ShowKeys
 		fmt.Println()
-		fmt.Println(text.Colored("Interface:", 2), text.Colored(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String()), 209))
+		fmt.Println(text.Bold(text.Green("Interface:")), text.Red(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String())))
 		table.KVOutput("  public key:", text.Colored(dev.PublicKey.String(), 4), true)
 		table.KVOutput("  private key:", formatKey(dev.PrivateKey, showKeys), true)
 		table.KVOutput("  listening port:", text.Colored(dev.ListenPort, 2), true)
@@ -174,15 +174,15 @@ func showPeers(peer wgtypes.Peer, showKeys bool) error {
   {{- end}} 
   %s {{ .LastHandshakeTime }}
   %s %s
-`, text.Colored("peers: ", 3), text.Colored("{{ .PublicKey }}", 4),
-		text.Colored("endpoint = ", 5),
-		text.Colored("allowed ips =", 5),
-		text.Colored("preshared key =", 5),
-		text.Colored("last handshake =", 5),
-		text.Colored("transfer:", 5),
+`, text.Bold(text.Red("peers: ")), text.Blue("{{ .PublicKey }}"),
+		text.Bold("endpoint = "),
+		text.Bold("allowed ips ="),
+		text.Bold("preshared key ="),
+		text.Bold("last handshake ="),
+		text.Bold("transfer:"),
 		fmt.Sprintf("%s received, %s sent",
-			text.Colored("{{ .ReceiveBytes }}", 2),
-			text.Colored("{{ .TransmitBytes }}", 2)),
+			text.Green("{{ .ReceiveBytes }}"),
+			text.Green("{{ .TransmitBytes }}")),
 	)
 	type tmplContent struct {
 		PublicKey         string
@@ -280,9 +280,14 @@ func fromNow(t2 time.Time) string {
 	ms, sf := math.Modf(ms)
 	ss := sf * 60
 
+	if hs > 500000 {
+		hs = 0
+		ms = 0
+		ss = 0
+	}
 	return fmt.Sprintf("%s hours %s minutes %s seconds ago",
-		text.Colored(int(hs), 2),
-		text.Colored(int(ms), 2),
-		text.Colored(int(ss), 2),
+		text.Bold(text.Red(int(hs))),
+		text.Bold(text.Red(int(ms))),
+		text.Bold(text.Red(int(ss))),
 	)
 }

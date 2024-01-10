@@ -20,10 +20,8 @@ Examples:
 	# list all the secrets with selected project
   kl list secrets
 
-	# list all the secrets with projectId
-  kl list secrets <projectId>
 `,
-	Run: func(_ *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 
 		pName := ""
 		if len(args) > 1 {
@@ -36,14 +34,14 @@ Examples:
 			return
 		}
 
-		if err := printSecrets(sec); err != nil {
+		if err := printSecrets(cmd, sec); err != nil {
 			fn.PrintError(err)
 			return
 		}
 	},
 }
 
-func printSecrets(secrets []server.Secret) error {
+func printSecrets(cmd *cobra.Command, secrets []server.Secret) error {
 	if len(secrets) == 0 {
 		return errors.New("no secrets found")
 	}
@@ -68,7 +66,9 @@ func printSecrets(secrets []server.Secret) error {
 		table.KVOutput("secrets of", pName, true)
 	}
 
-	table.TotalResults(len(secrets), true)
+	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
+		table.TotalResults(len(secrets), true)
+	}
 
 	return nil
 }
@@ -76,4 +76,5 @@ func printSecrets(secrets []server.Secret) error {
 func init() {
 	secretsCmd.Aliases = append(secretsCmd.Aliases, "secret")
 	secretsCmd.Aliases = append(secretsCmd.Aliases, "sec")
+	fn.WithOutputVariant(secretsCmd)
 }

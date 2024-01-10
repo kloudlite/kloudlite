@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	common_util "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
@@ -43,24 +43,22 @@ func removeSecret() error {
 		return fmt.Errorf(es)
 	}
 
-	selectedSecretIndex, err := fuzzyfinder.Find(
+	selectedSecret, err := fzf.FindOne(
 		klFile.Secrets,
-		func(i int) string {
-			return klFile.Secrets[i].Name
+		func(item client.ResType) string {
+			return item.Name
 		},
-		fuzzyfinder.WithPromptString("Select Secret Group >"),
+		fzf.WithPrompt("Select Secret Group >"),
 	)
 
 	if err != nil {
 		return err
 	}
 
-	selectedSecret := klFile.Secrets[selectedSecretIndex]
-
 	if len(selectedSecret.Env) == 1 {
 		newSecrets := make([]client.ResType, 0)
-		for i, rt := range klFile.Secrets {
-			if i == selectedSecretIndex {
+		for _, rt := range klFile.Secrets {
+			if rt.Name == selectedSecret.Name {
 				continue
 			}
 			newSecrets = append(newSecrets, rt)
@@ -72,12 +70,12 @@ func removeSecret() error {
 
 	} else {
 
-		selectedKeyIndex, e := fuzzyfinder.Find(
+		selectedKeyVal, e := fzf.FindOne(
 			selectedSecret.Env,
-			func(i int) string {
-				return fmt.Sprintf("%s, %s", selectedSecret.Env[i].Key, selectedSecret.Env[i].RefKey)
+			func(item client.ResEnvType) string {
+				return fmt.Sprintf("%s, %s", item.Key, item.RefKey)
 			},
-			fuzzyfinder.WithPromptString("Select Secret Key >"),
+			fzf.WithPrompt("Select Secret Key >"),
 		)
 
 		if e != nil {
@@ -85,14 +83,14 @@ func removeSecret() error {
 		}
 
 		newEnvs := make([]client.ResEnvType, 0)
-		for i, ret := range selectedSecret.Env {
-			if i == selectedKeyIndex {
+		for _, ret := range selectedSecret.Env {
+			if ret.Name == selectedKeyVal.Name {
 				continue
 			}
 			newEnvs = append(newEnvs, ret)
 		}
 
-		klFile.Secrets[selectedSecretIndex].Env = newEnvs
+		selectedSecret.Env = newEnvs
 
 		fmt.Printf("removed key %s/%s form your %s-file\n", selectedSecret.Name, selectedSecret.Name, constants.CmdName)
 	}

@@ -10,14 +10,12 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/ktr0731/go-fuzzyfinder"
 	"github.com/spf13/cobra"
 )
 
 var addConfigCommand = &cobra.Command{
 	Use:   "config",
-	Short: "add config to your " + constants.CmdName + "-config file by selection from the all the config available in selected project",
+	Short: "add config to your kl-config file by selection from the all the config available in selected project",
 	Long: `Add env from managed resource
 
 Using this command you are able to add a environment from the config present on your project
@@ -52,7 +50,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		fn.PrintError(err)
-		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
+		es := "please run 'kl init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -77,18 +75,18 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return errors.New("can't find configs with provided name")
 	} else {
 
-		selectedGroupIndex, e := fuzzyfinder.Find(
+		selectedGroup, e := fzf.FindOne(
 			configs,
-			func(i int) string {
-				return configs[i].Metadata.Name
+			func(item server.Config) string {
+				return item.Metadata.Name
 			},
-			fuzzyfinder.WithPromptString("Select Config Group >"),
+			fzf.WithPrompt("Select Config Group >"),
 		)
 		if e != nil {
 			return e
 		}
 
-		selectedConfigGroup = configs[selectedGroupIndex]
+		selectedConfigGroup = *selectedGroup
 	}
 
 	if len(selectedConfigGroup.Data) == 0 {
@@ -197,7 +195,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("added config %s/%s to your %s-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key, constants.CmdName)
+	fmt.Printf("added config %s/%s to your %s-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key, "kl")
 
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var LoginCmd = &cobra.Command{
+var loginCmd = &cobra.Command{
 	Use:   "login",
 	Short: "login to kloudlite",
 	Long: `This command let you login to the kloudlite.
