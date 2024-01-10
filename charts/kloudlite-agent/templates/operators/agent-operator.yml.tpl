@@ -9,6 +9,7 @@ metadata:
   labels: &labels
     app: {{$name}}
     control-plane: {{$name}}
+    vector.dev/exclude: "true" # to exclude pods from being monitored by vector
   annotations:
     checksum/cluster-identity-secret: {{ include (print $.Template.BasePath "/secrets/cluster-identity-secret.yml.tpl") . | sha256sum }}
 spec:
@@ -77,14 +78,20 @@ spec:
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
 
-            - name: GRPC_ADDR
-              value: {{.Values.messageOfficeGRPCAddr}}
+            - name: CLUSTER_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: CLUSTER_NAME
+                  name: {{.Values.clusterIdentitySecretName}}
 
             - name: ACCOUNT_NAME
-              value: {{.Values.accountName }}
+              valueFrom:
+                secretKeyRef:
+                  key: ACCOUNT_NAME
+                  name: {{.Values.clusterIdentitySecretName}}
 
-            - name: CLUSTER_NAME
-              value: {{.Values.clusterName }}
+            - name: GRPC_ADDR
+              value: {{.Values.messageOfficeGRPCAddr}}
 
             - name: CLUSTER_IDENTITY_SECRET_NAME
               value: {{.Values.clusterIdentitySecretName}}

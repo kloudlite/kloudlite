@@ -86,15 +86,21 @@ spec:
           {{/* - --enrich-from-labels */}}
           - --enrich-from-annotations
           - --enrich-tag
-          - "kl_account_name={{.AccountName}}"
+          {{- /* FIXME: this value should be used from "cluster identity file" */}}
+          - "kl_account_name={{.Values.accountName}}"
           - --enrich-tag
-          - "kl_cluster_name={{.ClusterName}}"
-          - --enrich-tag
-          - "kl_resource_namespace={{ "{{" }}.Namespace{{ "}}" }}"
+          {{- /* FIXME: this value should be used from "cluster identity file" */}}
+          - "kl_cluster_name={{.Values.clusterName}}"
+          {{- /* - --enrich-tag */}}
+          {{- /* - "kl_resource_namespace={{ "{{" }}.Namespace{{ "}}" }}" */}}
           - --filter-prefix
-          - "kloudlite.io/"
+          - "kloudlite.io/observability"
           - --replace-prefix
-          - "kloudlite.io/=kl_"
+          - "kloudlite.io/observability.account.name=kl_account_name"
+          - --replace-prefix
+          - "kloudlite.io/observability.cluster.name=kl_cluster_name"
+          - --replace-prefix
+          - "kloudlite.io/observability.tracking.id=kl_tracking_id"
         env:
           - name: NODE_NAME
             valueFrom:
@@ -132,7 +138,8 @@ spec:
         console:
           type: console
           inputs:
-            - "*"
+            {{- /* - "*" */}}
+            - kubelet_metrics_exporter
           encoding:
             codec: json
         {{- end }}
