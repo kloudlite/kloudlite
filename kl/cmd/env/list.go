@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var envsCmd = &cobra.Command{
+var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list all the environments accessible to you",
 	Long: `List Environments
@@ -77,6 +77,6 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	envsCmd.Aliases = append(envsCmd.Aliases, "ls")
-	fn.WithOutputVariant(envsCmd)
+	listCmd.Aliases = append(listCmd.Aliases, "ls")
+	fn.WithOutputVariant(listCmd)
 }

@@ -12,13 +12,13 @@ var Cmd = &cobra.Command{
 	Long: `intercept app to tunnel trafic to your device
 Examples:
 	# intercept app with selected vpn device
-  kl vpn intercept --app <app_name>
+  kl vpn intercept start --app <app_name>
 
 	# stop intercept app with selected vpn device
-	kl vpn intercept stop -app <app_name>
+	kl vpn intercept stop --app <app_name>
 
   # intercept app with specified vpn device
-  kl vpn intercept --app <app_name> --device <device_name>
+  kl vpn intercept start --app <app_name> --device <device_name>
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
