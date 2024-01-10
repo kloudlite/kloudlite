@@ -3,34 +3,37 @@ package server
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
 	"log"
 	"os"
 	"path"
+
+	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
-func SyncKubeConfig(accName, clustName *string) (*string, error) {
-	name := ""
-	var err error
+func SyncKubeConfig(options ...fn.Option) (*string, error) {
 
-	if accName == nil {
-		name, err = client.CurrentClusterName()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		name = *accName
+	accountName := fn.GetOption(options, "accountName")
+	clusterName := fn.GetOption(options, "clusterName")
+
+	accountName, err := EnsureAccount(accountName)
+	if err != nil {
+		return nil, err
+	}
+
+	clusterName, err = EnsureCluster(options...)
+	if err != nil {
+		return nil, err
 	}
 
 	tmpDir := os.TempDir()
-	tmpFile := path.Join(tmpDir, name)
+	tmpFile := path.Join(tmpDir, clusterName)
 
 	_, err = os.Stat(tmpFile)
 	if err == nil {
 		return &tmpFile, nil
 	}
 
-	config, err := getKubeConfig(accName, clustName)
+	config, err := getKubeConfig(options...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,32 +45,28 @@ func SyncKubeConfig(accName, clustName *string) (*string, error) {
 	return &tmpFile, nil
 }
 
-func getKubeConfig(accName, clusterName *string) (*string, error) {
+func getKubeConfig(options ...fn.Option) (*string, error) {
+
+	accountName := fn.GetOption(options, "accountName")
+	clusterName := fn.GetOption(options, "clusterName")
+
+	_, err := EnsureAccount(accountName)
+	if err != nil {
+		return nil, err
+	}
+
+	clusterName, err = EnsureCluster(options...)
+	if err != nil {
+		return nil, err
+	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}
 
-	if accName == nil {
-		_, err = client.CurrentAccountName()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	var currentCluster string
-
-	if clusterName == nil {
-		currentCluster, err = client.CurrentClusterName()
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		currentCluster = *clusterName
-	}
-
 	respData, err := klFetch("cli_getKubeConfig", map[string]any{
-		"name": currentCluster,
+		"name": clusterName,
 	}, &cookie)
 	if err != nil {
 		return nil, err
@@ -87,7 +86,7 @@ func getKubeConfig(accName, clusterName *string) (*string, error) {
 	} else {
 
 		if !(*fromResp).Status.IsReady {
-			return nil, fmt.Errorf("cluster %s is not ready", currentCluster)
+			return nil, fmt.Errorf("cluster %s is not ready", clusterName)
 		}
 
 		value := (*fromResp).AdminKubeConfig.Value

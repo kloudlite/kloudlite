@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -53,24 +52,12 @@ Example:
 				text.Blue(fmt.Sprintf("%s", clusterName)),
 			)
 
-			accountName, err = client.CurrentAccountName()
-			if err != nil {
-				return err
-			}
+			configPath, err := server.SyncKubeConfig([]functions.Option{
+				functions.MakeOption("accountName", accountName),
+				functions.MakeOption("clusterName", clusterName),
+			}...)
 
-			configPath, err := server.SyncKubeConfig(func() *string {
-				if accountName == "" {
-					return nil
-				}
-				return &accountName
-			}(), func() *string {
-				if clusterName == "" {
-					return nil
-				}
-				return &clusterName
-			}())
 			if err != nil {
-
 				return err
 			}
 			if err := run(map[string]string{
