@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"time"
 
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -117,7 +118,7 @@ type Domain interface {
 	GetEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error)
 
 	CreateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error)
-	CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, envName string) (*entities.Environment, error)
+	CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error)
 	UpdateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error)
 	DeleteEnvironment(ctx ConsoleContext, projectName string, name string) error
 
@@ -186,8 +187,8 @@ type Domain interface {
 	ListManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	GetManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
 
-  GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error)
-  GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
+	GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error)
+	GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
 
 	CreateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	UpdateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
