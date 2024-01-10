@@ -152,20 +152,29 @@ spec:
                     enableExamples: false
 
               helmCharts:
-                ingress-nginx:
+                ingressNginx:
                   enabled: true
                   name: "ingress-nginx"
-                  controllerKind: DaemonSet
-                  ingressClassName: nginx
                   tolerations: []
                   nodeSelector: {}
+                  configuration:
+                    controllerKind: DaemonSet
+                    ingressClassName: nginx
 
-                cert-manager:
+                certManager:
                   enabled: true
                   name: "cert-manager"
                   nodeSelector: {}
                   tolerations: []
                   affinity: {}
+                  configuration:
+                    defaultClusterIssuer: letsencrypt-prod
+                    clusterIssuers:
+                      - name: letsencrypt-prod
+                        default: true
+                        acme:
+                          email: "support@kloudlite.io"
+                          server: https://acme-v02.api.letsencrypt.org/directory
 
                 vector:
                   enabled: true
@@ -173,6 +182,7 @@ spec:
                   debugOnStdout: false
                   nodeSelector: {}
                   tolerations: []
+
               EOF
               
               helm repo add kloudlite https://kloudlite.github.io/helm-charts

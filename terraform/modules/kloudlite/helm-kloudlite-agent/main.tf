@@ -20,21 +20,6 @@ resource "ssh_resource" "apply_kloudlite_crds" {
     always_run = timestamp()
   }
 
-  #  file {
-  #    content = templatefile("${path.module}/templates/helm-charts-agent.yml.tpl", {
-  #      release_name                       = var.release_name
-  #      release_namespace                  = var.release_namespace
-  #      kloudlite_release                  = var.kloudlite_release
-  #      kloudlite_account_name             = var.kloudlite_account_name
-  #      kloudlite_cluster_name             = var.kloudlite_cluster_name
-  #      kloudlite_cluster_token            = var.kloudlite_cluster_token
-  #      kloudlite_message_office_grpc_addr = var.kloudlite_message_office_grpc_addr
-  #      kloudlite_dns_host                 = var.kloudlite_dns_host
-  #      helm_job_tolerations               = module.constants.master_node_tolerations
-  #    })
-  #    destination = "manifests/helm-charts-kloudlite-agent.yml"
-  #  }
-
   file {
     content = templatefile("${path.module}/templates/helm-install-agent-with-job.yml.tpl", {
       svc_account_name      = "install-agent-sa"
