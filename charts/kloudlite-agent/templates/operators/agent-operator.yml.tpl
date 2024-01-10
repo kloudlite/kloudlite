@@ -69,6 +69,10 @@ spec:
             - name: SVC_ACCOUNT_NAME
               value: "kloudlite-svc-account"
 
+            {{- /* for: environment controller */}}
+            - name: DEFAULT_INGRESS_CLASS
+              value: "{{.Values.helmCharts.ingressNginx.configuration.ingressClassName}}"
+
             {{- /* for: resource watcher */}}
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
@@ -98,6 +102,7 @@ spec:
             {{- /* for: nodepool operator */}}
             - name: KLOUDLITE_ACCOUNT_NAME
               value: {{.Values.accountName}}
+
             - name: KLOUDLITE_CLUSTER_NAME
               value: {{.Values.clusterName}}
 
@@ -109,6 +114,7 @@ spec:
 
             - name: CLOUD_PROVIDER_NAME
               value: {{.Values.operators.agentOperator.configuration.cloudProvider.name}}
+
             - name: CLOUD_PROVIDER_REGION
               value: {{.Values.operators.agentOperator.configuration.cloudProvider.region}}
 
@@ -119,10 +125,22 @@ spec:
               value: "env-route-switcher"
             - name: WORKSPACE_ROUTE_SWITCHER_PORT
               value: "80"
+            - name: DEFAULT_CLUSTER_ISSUER
+              value: {{ .Values.helmCharts.certManager.configuration.defaultClusterIssuer | quote }}
 
             {{- /* for buildrun */}}
             - name: BUILD_NAMESPACE
               value: {{.Release.Namespace}}
+
+            {{- /* for wireguard controller */}}
+            - name: CLUSTER_POD_CIDR
+              value: {{.Values.operators.wgOperator.configuration.podCIDR}}
+
+            - name: CLUSTER_SVC_CIDR
+              value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
+
+            - name: DNS_HOSTED_ZONE
+              value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
 
           image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
           imagePullPolicy: {{.Values.operators.agentOperator.image.pullPolicy | default .Values.imagePullPolicy}}

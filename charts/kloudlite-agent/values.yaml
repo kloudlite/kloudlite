@@ -1,13 +1,13 @@
 # -- container image pull policy
 imagePullPolicy: Always
 
-# -- (string ⚠️  **Required**) kloudlite account name
+# -- (string REQUIRED) kloudlite account name
 accountName: ''
 
-# -- (string ⚠️  **Required**) kloudlite cluster name
+# -- (string REQUIRED) kloudlite cluster name
 clusterName: ''
 
-# -- (string ⚠️  **Required**) kloudlite issued cluster token
+# -- (string REQUIRED) kloudlite issued cluster token
 clusterToken: ''
 
 # -- (string) kloudlite issued access token (if already have)
@@ -106,20 +106,29 @@ operators:
       enableExamples: false
 
 helmCharts:
-  ingress-nginx:
+  ingressNginx:
     enabled: true
     name: "ingress-nginx"
-    controllerKind: DaemonSet
-    ingressClassName: nginx
     tolerations: []
     nodeSelector: {}
+    configuration:
+      controllerKind: DaemonSet
+      ingressClassName: nginx
 
-  cert-manager:
+  certManager:
     enabled: true
     name: "cert-manager"
     nodeSelector: {}
     tolerations: []
     affinity: {}
+    configuration:
+      defaultClusterIssuer: letsencrypt-prod
+      clusterIssuers:
+        - name: letsencrypt-prod
+          default: true
+          acme:
+            email: "support@kloudlite.io"
+            server: https://acme-v02.api.letsencrypt.org/directory
 
   vector:
     enabled: true
