@@ -8,6 +8,8 @@ metadata:
   name: {{.Values.clusterIdentitySecretName}}
   namespace: {{.Release.Namespace}}
 stringData:
+  ACCOUNT_NAME: {{.Values.accountName}}
+  CLUSTER_NAME: {{.Values.clusterName}}
   CLUSTER_TOKEN: {{ .Values.clusterToken | default "" | squote }}
   {{- if (
     or 
