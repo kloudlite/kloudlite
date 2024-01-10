@@ -1020,121 +1020,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: anchors.crds.kloudlite.io
-spec:
-  group: crds.kloudlite.io
-  names:
-    kind: Anchor
-    listKind: AnchorList
-    plural: anchors
-    singular: anchor
-  scope: Namespaced
-  versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: Anchor is the Schema for the anchors API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties:
-              parentGVK:
-                description: GroupVersionKind unambiguously identifies a kind.  It
-                  doesn't anonymously include GroupVersion to avoid automatic coercion.  It
-                  doesn't use a GroupVersion to avoid custom marshalling
-                properties:
-                  group:
-                    type: string
-                  kind:
-                    type: string
-                  version:
-                    type: string
-                required:
-                - group
-                - kind
-                - version
-                type: object
-              type:
-                type: string
-            required:
-            - parentGVK
-            - type
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
   name: apps.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
@@ -1594,32 +1479,26 @@ spec:
                   serviceTemplate:
                     properties:
                       apiVersion:
-                        description: 'APIVersion defines the versioned schema of this
-                          representation of an object. Servers should convert recognized
-                          schemas to the latest internal value, and may reject unrecognized
-                          values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                         type: string
                       kind:
-                        description: 'Kind is a string value representing the REST
-                          resource this object represents. Servers may infer this
-                          from the endpoint the client submits requests to. Cannot
-                          be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                         type: string
                       spec:
                         additionalProperties:
                           x-kubernetes-preserve-unknown-fields: true
                         type: object
                     required:
+                    - apiVersion
+                    - kind
                     - spec
                     type: object
                 required:
                 - serviceTemplate
                 type: object
-              namespace:
+              targetNamespace:
                 type: string
             required:
             - msvcSpec
-            - namespace
+            - targetNamespace
             type: object
           status:
             properties:
@@ -1685,46 +1564,70 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: configs.crds.kloudlite.io
+  name: environments.crds.kloudlite.io
 spec:
   group: crds.kloudlite.io
   names:
-    kind: Config
-    listKind: ConfigList
-    plural: configs
-    singular: config
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .spec.projectName
+      name: Project
+      type: string
+    - jsonPath: .spec.targetNamespace
+      name: target-namespace
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/environment\.routing
+      name: Routing
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
     name: v1
     schema:
       openAPIV3Schema:
-        description: Config is the Schema for the configs API
+        description: Environment is the Schema for the environments API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
               of an object. Servers should convert recognized schemas to the latest
               internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
-          data:
-            additionalProperties:
-              type: string
-            type: object
-          enabled:
-            default: true
-            type: boolean
           kind:
             description: 'Kind is a string value representing the REST resource this
               object represents. Servers may infer this from the endpoint the client
               submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
+            type: object
+          spec:
+            description: EnvironmentSpec defines the desired state of Environment
+            properties:
+              projectName:
+                type: string
+              routing:
+                properties:
+                  mode:
+                    type: string
+                  privateIngressClass:
+                    type: string
+                  publicIngressClass:
+                    type: string
+                type: object
+              targetNamespace:
+                type: string
+            required:
+            - projectName
             type: object
           status:
             properties:
@@ -1840,18 +1743,9 @@ spec:
             description: HelmChartSpec defines the desired state of HelmChart
             properties:
               chartName:
-                description: chartName is of the format .spec.chartRepo.name/<chartName>
                 type: string
-              chartRepo:
-                properties:
-                  name:
-                    type: string
-                  url:
-                    type: string
-                required:
-                - name
-                - url
-                type: object
+              chartRepoURL:
+                type: string
               chartVersion:
                 description: find chartVersion by running command `helm search repo
                   <chartName> --versions` 2nd column is the chartVersion
@@ -2789,7 +2683,7 @@ spec:
                 type: object
             required:
             - chartName
-            - chartRepo
+            - chartRepoURL
             - chartVersion
             - values
             type: object
@@ -2853,111 +2747,6 @@ spec:
             - releaseNotes
             - releaseStatus
             type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: imagepullsecrets.crds.kloudlite.io
-spec:
-  group: crds.kloudlite.io
-  names:
-    kind: ImagePullSecret
-    listKind: ImagePullSecretList
-    plural: imagepullsecrets
-    singular: imagepullsecret
-  scope: Namespaced
-  versions:
-  - name: v1
-    schema:
-      openAPIV3Schema:
-        description: ImagePullSecret is the Schema for the imagepullsecrets API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: ImagePullSecretSpec defines the desired state of ImagePullSecret
-            properties:
-              dockerConfigJson:
-                type: string
-              dockerPassword:
-                type: string
-              dockerRegistryEndpoint:
-                type: string
-              dockerUsername:
-                type: string
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true
@@ -3172,22 +2961,16 @@ spec:
               serviceTemplate:
                 properties:
                   apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
                     type: string
                   kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
                     type: string
                   spec:
                     additionalProperties:
                       x-kubernetes-preserve-unknown-fields: true
                     type: object
                 required:
+                - apiVersion
+                - kind
                 - spec
                 type: object
             required:
@@ -3247,6 +3030,141 @@ spec:
             type: object
         required:
         - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: projectmanagedservices.crds.kloudlite.io
+spec:
+  group: crds.kloudlite.io
+  names:
+    kind: ProjectManagedService
+    listKind: ProjectManagedServiceList
+    plural: projectmanagedservices
+    singular: projectmanagedservice
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.annotations.kloudlite\.io\/service-gvk
+      name: Service GVK
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: ProjectManagedService is the Schema for the projectmanagedservices
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ProjectManagedServiceSpec defines the desired state of ProjectManagedService
+            properties:
+              msvcSpec:
+                description: ManagedServiceSpec defines the desired state of ManagedService
+                properties:
+                  serviceTemplate:
+                    properties:
+                      apiVersion:
+                        type: string
+                      kind:
+                        type: string
+                      spec:
+                        additionalProperties:
+                          x-kubernetes-preserve-unknown-fields: true
+                        type: object
+                    required:
+                    - apiVersion
+                    - kind
+                    - spec
+                    type: object
+                required:
+                - serviceTemplate
+                type: object
+              targetNamespace:
+                type: string
+            required:
+            - msvcSpec
+            - targetNamespace
+            type: object
+          status:
+            properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
         type: object
     served: true
     storage: true
@@ -3400,11 +3318,14 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
-    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
-      name: Ready
+    - jsonPath: .metadata.annotations.kloudlite\.io\/router\.ingress-class
+      name: Class
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/router\.domains
       name: domains
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -3463,6 +3384,8 @@ spec:
                 type: array
               https:
                 properties:
+                  clusterIssuer:
+                    type: string
                   enabled:
                     default: true
                     type: boolean
@@ -3486,8 +3409,6 @@ spec:
                   rps:
                     type: integer
                 type: object
-              region:
-                type: string
               routes:
                 items:
                   properties:
@@ -3564,237 +3485,6 @@ spec:
             type: object
         required:
         - spec
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: secrets.crds.kloudlite.io
-spec:
-  group: crds.kloudlite.io
-  names:
-    kind: Secret
-    listKind: SecretList
-    plural: secrets
-    singular: secret
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    - jsonPath: .type
-      name: Type
-      type: string
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: Secret is the Schema for the secrets API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          data:
-            additionalProperties:
-              format: byte
-              type: string
-            type: object
-          enabled:
-            default: true
-            type: boolean
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
-          stringData:
-            additionalProperties:
-              type: string
-            type: object
-          type:
-            type: string
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    controller-gen.kubebuilder.io/version: v0.11.1
-  creationTimestamp: null
-  name: workspaces.crds.kloudlite.io
-spec:
-  group: crds.kloudlite.io
-  names:
-    kind: Workspace
-    listKind: WorkspaceList
-    plural: workspaces
-    singular: workspace
-  scope: Namespaced
-  versions:
-  - additionalPrinterColumns:
-    - jsonPath: .spec.projectName
-      name: Project
-      type: string
-    - jsonPath: .spec.targetNamespace
-      name: target-namespace
-      type: string
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
-      type: date
-    name: v1
-    schema:
-      openAPIV3Schema:
-        description: Workspace is the Schema for the envs API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            properties:
-              isEnvironment:
-                type: boolean
-              projectName:
-                type: string
-              targetNamespace:
-                type: string
-            required:
-            - projectName
-            - targetNamespace
-            type: object
-          status:
-            properties:
-              checks:
-                additionalProperties:
-                  properties:
-                    generation:
-                      format: int64
-                      type: integer
-                    message:
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                  - status
-                  type: object
-                type: object
-              isReady:
-                type: boolean
-              lastReadyGeneration:
-                format: int64
-                type: integer
-              lastReconcileTime:
-                format: date-time
-                type: string
-              message:
-                type: object
-                x-kubernetes-preserve-unknown-fields: true
-              resources:
-                items:
-                  properties:
-                    apiVersion:
-                      description: 'APIVersion defines the versioned schema of this
-                        representation of an object. Servers should convert recognized
-                        schemas to the latest internal value, and may reject unrecognized
-                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-                      type: string
-                    kind:
-                      description: 'Kind is a string value representing the REST resource
-                        this object represents. Servers may infer this from the endpoint
-                        the client submits requests to. Cannot be updated. In CamelCase.
-                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-                      type: string
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                  - name
-                  - namespace
-                  type: object
-                type: array
-            type: object
         type: object
     served: true
     storage: true
@@ -4214,8 +3904,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -4372,8 +4071,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -4971,8 +4679,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -5179,8 +4896,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -5712,8 +5438,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -5897,8 +5632,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -6220,8 +5964,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -6406,8 +6159,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -6990,8 +6752,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -7434,8 +7205,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
@@ -8633,8 +8413,17 @@ spec:
                     - min
                     type: object
                   memory:
-                    pattern: '[\d]+Mi$'
-                    type: string
+                    properties:
+                      max:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                      min:
+                        pattern: '[\d]+Mi$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
                   storage:
                     properties:
                       size:
