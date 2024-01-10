@@ -30,6 +30,7 @@ type DeviceSpec struct {
 	DeviceNamespace *string           `json:"deviceNamespace,omitempty"`
 	NodeSelector    map[string]string `json:"nodeSelector,omitempty"`
 	CNameRecords    []CNameRecord     `json:"cnameRecords,omitempty"`
+	Disabled        bool              `json:"disabled,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -73,6 +74,12 @@ func (d *Device) GetEnsuredAnnotations() map[string]string {
 				return ""
 			}
 			return *d.Spec.DeviceNamespace
+		}(),
+		"kloudlite.io/enabled": func() string {
+			if d.Spec.Disabled {
+				return "false"
+			}
+			return "false"
 		}(),
 	}
 }
