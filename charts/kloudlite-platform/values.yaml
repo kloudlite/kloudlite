@@ -131,6 +131,13 @@ prometheus:
     alertmanager:
       volumeSize: 2Gi
 
+victoriaMetrics:
+  enabled: true
+  name: victoria-metrics
+  configuration:
+    volumeSize: 2Gi
+    nodeSelector: {}
+
 nats:
   runAsCluster: false
   replicas: 1
