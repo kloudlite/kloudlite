@@ -1,64 +1,102 @@
 {{- if .Values.agent.enabled }}
-apiVersion: crds.kloudlite.io/v1
-kind: App
+
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: {{.Values.agent.name}}
   namespace: {{.Release.Namespace}}
   annotations:
     checksum/cluster-identity-secret: {{ include (print $.Template.BasePath "/secrets/cluster-identity-secret.yml.tpl") . | sha256sum }}
+    vector.dev/exclude: "true" # to exclude pods from being monitored by vector
 spec:
   replicas: 1
-  serviceAccount: {{include "serviceAccountName" . | quote}}
-  services:
-    - port: 6000
-      targetPort: 6000
-      name: grpc
-  nodeSelector: {{.Values.agent.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-  tolerations: {{.Values.agent.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
-  containers:
-    - name: main
-      image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
-      imagePullPolicy: {{.Values.agent.image.pullPolicy | default .Values.imagePullPolicy }}
-      env:
-        - key: GRPC_ADDR
-          value: {{.Values.messageOfficeGRPCAddr}}
+  selector:
+    matchLabels:
+      app: {{.Values.agent.name}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.agent.name}}
+        vector.dev/exclude: "true" # to exclude pods from being monitored by vector
+    spec:
+      nodeSelector: {{.Values.agent.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+      tolerations: {{.Values.agent.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
 
-        - key: CLUSTER_TOKEN
-          type: secret
-          refName: {{.Values.clusterIdentitySecretName}}
-          refKey: CLUSTER_TOKEN
+      serviceAccountName: {{include "serviceAccountName" . | quote}}
+      priorityClassName: kloudlite-critical
 
-        - key: ACCESS_TOKEN
-          type: secret
-          refName: {{.Values.clusterIdentitySecretName}}
-          refKey: ACCESS_TOKEN
-          optional: true
+      containers:
+      - name: main
+        image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
+        imagePullPolicy: {{.Values.agent.image.pullPolicy | default .Values.imagePullPolicy }}
+        env:
+          - name: GRPC_ADDR
+            value: {{.Values.messageOfficeGRPCAddr}}
 
-        - key: ACCESS_TOKEN_SECRET_NAME
-          value: {{.Values.clusterIdentitySecretName}}
+          - name: CLUSTER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: CLUSTER_TOKEN
+                name: {{.Values.clusterIdentitySecretName}}
+                optional: false
 
-        - key: ACCESS_TOKEN_SECRET_NAMESPACE
-          value: {{.Release.Namespace}}
+          - name: ACCESS_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: ACCESS_TOKEN
+                name: {{.Values.clusterIdentitySecretName}}
+                optional: true
 
-        - key: CLUSTER_NAME
-          value: {{.Values.clusterName}}
+          - name: ACCESS_TOKEN_SECRET_NAME
+            value: {{.Values.clusterIdentitySecretName}}
 
-        - key: ACCOUNT_NAME
-          value: {{.Values.accountName}}
-      
-        - key: VECTOR_PROXY_GRPC_SERVER_ADDR
-          value: 0.0.0.0:6000
+          - name: ACCESS_TOKEN_SECRET_NAMESPACE
+            value: {{.Release.Namespace}}
 
-        - key: RESOURCE_WATCHER_NAME
-          value: {{.Values.operators.agentOperator.name}}
+          - name: CLUSTER_NAME
+            valueFrom:
+              secretKeyRef:
+                key: CLUSTER_NAME
+                name: {{.Values.clusterIdentitySecretName}}
 
-        - key: RESOURCE_WATCHER_NAMESPACE
-          value: {{.Release.Namespace}}
+          - name: ACCOUNT_NAME
+            valueFrom:
+              secretKeyRef:
+                key: ACCOUNT_NAME
+                name: {{.Values.clusterIdentitySecretName}}
 
-      resourceCpu:
-        min: 30m
-        max: 50m
-      resourceMemory:
-        min: 50Mi
-        max: 80Mi
-{{- end }}
+          - name: VECTOR_PROXY_GRPC_SERVER_ADDR
+            value: 0.0.0.0:6000
+
+          - name: RESOURCE_WATCHER_NAME
+            value: {{.Values.operators.agentOperator.name}}
+
+          - name: RESOURCE_WATCHER_NAMESPACE
+            value: {{.Release.Namespace}}
+
+        resources:
+          limits:
+            cpu: 50m
+            memory: 80Mi
+          requests:
+            cpu: 30m
+            memory: 50Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{.Values.agent.name}}
+  namespace: {{.Release.Namespace}}
+spec:
+  ports:
+  - name: "vector-grpc-proxy"
+    port: 6000
+    protocol: TCP
+    targetPort: 6000
+  selector:
+    app: "{{.Values.agent.name}}"
+---
+
+{{- end  }}
