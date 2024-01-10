@@ -17,7 +17,7 @@ import (
 )
 
 // CreationTime is the resolver for the creationTime field.
-func (r *vPNDeviceResolver) CreationTime(ctx context.Context, obj *entities.VPNDevice) (string, error) {
+func (r *consoleVPNDeviceResolver) CreationTime(ctx context.Context, obj *entities.ConsoleVPNDevice) (string, error) {
 	if obj == nil {
 		return "", errNilVPNDevice
 	}
@@ -25,7 +25,7 @@ func (r *vPNDeviceResolver) CreationTime(ctx context.Context, obj *entities.VPND
 }
 
 // ID is the resolver for the id field.
-func (r *vPNDeviceResolver) ID(ctx context.Context, obj *entities.VPNDevice) (string, error) {
+func (r *consoleVPNDeviceResolver) ID(ctx context.Context, obj *entities.ConsoleVPNDevice) (string, error) {
 	if obj == nil {
 		return "", errNilVPNDevice
 	}
@@ -33,7 +33,7 @@ func (r *vPNDeviceResolver) ID(ctx context.Context, obj *entities.VPNDevice) (st
 }
 
 // Spec is the resolver for the spec field.
-func (r *vPNDeviceResolver) Spec(ctx context.Context, obj *entities.VPNDevice) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec, error) {
+func (r *consoleVPNDeviceResolver) Spec(ctx context.Context, obj *entities.ConsoleVPNDevice) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec, error) {
 	if obj == nil {
 		return nil, errNilVPNDevice
 	}
@@ -48,7 +48,7 @@ func (r *vPNDeviceResolver) Spec(ctx context.Context, obj *entities.VPNDevice) (
 }
 
 // UpdateTime is the resolver for the updateTime field.
-func (r *vPNDeviceResolver) UpdateTime(ctx context.Context, obj *entities.VPNDevice) (string, error) {
+func (r *consoleVPNDeviceResolver) UpdateTime(ctx context.Context, obj *entities.ConsoleVPNDevice) (string, error) {
 	if obj == nil {
 		return "", errNilVPNDevice
 	}
@@ -57,7 +57,7 @@ func (r *vPNDeviceResolver) UpdateTime(ctx context.Context, obj *entities.VPNDev
 }
 
 // WireguardConfig is the resolver for the wireguardConfig field.
-func (r *vPNDeviceResolver) WireguardConfig(ctx context.Context, obj *entities.VPNDevice) (*model.GithubComKloudliteAPIPkgTypesEncodedString, error) {
+func (r *consoleVPNDeviceResolver) WireguardConfig(ctx context.Context, obj *entities.ConsoleVPNDevice) (*model.GithubComKloudliteAPIPkgTypesEncodedString, error) {
 	if obj == nil {
 		return nil, errNilVPNDevice
 	}
@@ -72,7 +72,7 @@ func (r *vPNDeviceResolver) WireguardConfig(ctx context.Context, obj *entities.V
 }
 
 // Metadata is the resolver for the metadata field.
-func (r *vPNDeviceInResolver) Metadata(ctx context.Context, obj *entities.VPNDevice, data *v1.ObjectMeta) error {
+func (r *consoleVPNDeviceInResolver) Metadata(ctx context.Context, obj *entities.ConsoleVPNDevice, data *v1.ObjectMeta) error {
 	if obj == nil {
 		return errNilVPNDevice
 	}
@@ -85,7 +85,7 @@ func (r *vPNDeviceInResolver) Metadata(ctx context.Context, obj *entities.VPNDev
 }
 
 // Spec is the resolver for the spec field.
-func (r *vPNDeviceInResolver) Spec(ctx context.Context, obj *entities.VPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error {
+func (r *consoleVPNDeviceInResolver) Spec(ctx context.Context, obj *entities.ConsoleVPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error {
 	if obj == nil {
 		return errNilVPNDevice
 	}
@@ -93,11 +93,15 @@ func (r *vPNDeviceInResolver) Spec(ctx context.Context, obj *entities.VPNDevice,
 	return fn.JsonConversion(data, &obj.Spec)
 }
 
-// VPNDevice returns generated.VPNDeviceResolver implementation.
-func (r *Resolver) VPNDevice() generated.VPNDeviceResolver { return &vPNDeviceResolver{r} }
+// ConsoleVPNDevice returns generated.ConsoleVPNDeviceResolver implementation.
+func (r *Resolver) ConsoleVPNDevice() generated.ConsoleVPNDeviceResolver {
+	return &consoleVPNDeviceResolver{r}
+}
 
-// VPNDeviceIn returns generated.VPNDeviceInResolver implementation.
-func (r *Resolver) VPNDeviceIn() generated.VPNDeviceInResolver { return &vPNDeviceInResolver{r} }
+// ConsoleVPNDeviceIn returns generated.ConsoleVPNDeviceInResolver implementation.
+func (r *Resolver) ConsoleVPNDeviceIn() generated.ConsoleVPNDeviceInResolver {
+	return &consoleVPNDeviceInResolver{r}
+}
 
-type vPNDeviceResolver struct{ *Resolver }
-type vPNDeviceInResolver struct{ *Resolver }
+type consoleVPNDeviceResolver struct{ *Resolver }
+type consoleVPNDeviceInResolver struct{ *Resolver }

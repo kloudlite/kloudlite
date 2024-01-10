@@ -8,7 +8,7 @@ import (
 	wireguardV1 "github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
-type VPNDevice struct {
+type ConsoleVPNDevice struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
 	wireguardV1.Device `json:",inline" graphql:"uri=k8s://devices.wireguard.kloudlite.io"`
@@ -38,7 +38,7 @@ var VPNDeviceIndexes = []repos.IndexField{
 	},
 }
 
-func ValidateVPNDevice(d *VPNDevice) error {
+func ValidateVPNDevice(d *ConsoleVPNDevice) error {
 	errMsgs := []string{}
 
 	if d.DisplayName == "" {

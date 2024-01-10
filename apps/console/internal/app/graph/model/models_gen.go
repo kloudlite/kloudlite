@@ -44,6 +44,17 @@ type ConfigPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
+type ConsoleVPNDeviceEdge struct {
+	Cursor string                     `json:"cursor"`
+	Node   *entities.ConsoleVPNDevice `json:"node"`
+}
+
+type ConsoleVPNDevicePaginatedRecords struct {
+	Edges      []*ConsoleVPNDeviceEdge `json:"edges"`
+	PageInfo   *PageInfo               `json:"pageInfo"`
+	TotalCount int                     `json:"totalCount"`
+}
+
 type CoreSearchVPNDevices struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -677,17 +688,6 @@ type SecretPaginatedRecords struct {
 	Edges      []*SecretEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
-}
-
-type VPNDeviceEdge struct {
-	Cursor string              `json:"cursor"`
-	Node   *entities.VPNDevice `json:"node"`
-}
-
-type VPNDevicePaginatedRecords struct {
-	Edges      []*VPNDeviceEdge `json:"edges"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount int              `json:"totalCount"`
 }
 
 type GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat string

@@ -13,7 +13,7 @@ import (
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
-func (d *domain) findVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDevice, error) {
+func (d *domain) findVPNDevice(ctx ConsoleContext, name string) (*entities.ConsoleVPNDevice, error) {
 	device, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
 		"accountName":   ctx.AccountName,
 		"metadata.name": name,
@@ -29,7 +29,7 @@ func (d *domain) findVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDe
 	return device, nil
 }
 
-func (d *domain) ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error) {
+func (d *domain) ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ConsoleVPNDevice], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateVPNDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -38,7 +38,7 @@ func (d *domain) ListVPNDevices(ctx ConsoleContext, search map[string]repos.Matc
 	return d.vpnDeviceRepo.FindPaginated(ctx, d.vpnDeviceRepo.MergeMatchFilters(filter, search), pagination)
 }
 
-func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDevice, error) {
+func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.ConsoleVPNDevice, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.GetVPNDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -78,7 +78,7 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDev
 	return device, nil
 }
 
-func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error) {
+func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error) {
 
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateVPNDevice); err != nil {
 		return nil, errors.NewE(err)
@@ -145,7 +145,7 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) 
 	return nDevice, nil
 }
 
-func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error) {
+func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error) {
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, device.Name); err != nil {
 		return nil, errors.NewE(err)
 	}
