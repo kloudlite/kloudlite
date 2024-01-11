@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/cluster"
+	"github.com/kloudlite/kl/cmd/infra"
 	"github.com/kloudlite/kl/cmd/vpn"
 	"github.com/spf13/cobra"
 
@@ -34,6 +35,7 @@ func init() {
 	rootCmd.AddCommand(auth.Cmd)
 
 	rootCmd.AddCommand(context.Cmd)
+	rootCmd.AddCommand(infra.Cmd)
 	rootCmd.AddCommand(vpn.Cmd)
 	//rootCmd.AddCommand(auth.logoutCmd)
 	//rootCmd.AddCommand(auth.WhoAmICmd)

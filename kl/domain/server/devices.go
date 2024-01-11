@@ -43,13 +43,6 @@ const (
 
 func ListDevices(options ...fn.Option) ([]Device, error) {
 
-	clusterName := fn.GetOption(options, "clusterName")
-
-	var err error
-	if clusterName, err = EnsureCluster(options...); err != nil {
-		return nil, err
-	}
-
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -61,7 +54,6 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"clusterName": clusterName,
 	}, &cookie)
 	if err != nil {
 		return nil, err
@@ -340,11 +332,6 @@ func DeleteDevicePort(ports []DevicePort) error {
 
 func EnsureDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
-
-	_, err := EnsureCluster(options...)
-	if err != nil {
-		return "", err
-	}
 
 	if devName != "" {
 		return devName, nil

@@ -26,16 +26,16 @@ type Cluster struct {
 }
 
 func ListClusters() ([]Cluster, error) {
-	s, _ := client.CurrentAccountName()
+	s, _ := client.CurrentInfraAccountName()
 	if s == "" {
-		_, err := client.GetContextFile()
+		_, err := client.GetInfraContextFile()
 		if err != nil {
 			return nil, err
 		}
-		return nil, errors.New("Please select a context first")
+		return nil, errors.New("Please select a infra context first")
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return nil, err
 	}

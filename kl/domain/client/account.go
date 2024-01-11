@@ -32,3 +32,18 @@ func CurrentAccountName() (string, error) {
 	}
 	return file.AccountName, nil
 }
+
+func CurrentInfraAccountName() (string, error) {
+	file, err := GetInfraContextFile()
+	if err != nil {
+		return "", err
+	}
+	if file.AccountName == "" {
+		return "", errors.New("noSelectedCluster")
+	}
+	if file.AccountName == "" {
+		return "",
+			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
+	}
+	return file.AccountName, nil
+}
