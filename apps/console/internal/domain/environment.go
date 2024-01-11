@@ -175,6 +175,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 	env.PrimitiveId = ""
 	env.DisplayName = displayName
 
+	if env.Spec.Routing == nil {
+		env.Spec.Routing = &crdsv1.EnvironmentRouting{}
+	}
 	env.Spec.Routing.Mode = environmentRoutingMode
 
 	env.EnsureGVK()

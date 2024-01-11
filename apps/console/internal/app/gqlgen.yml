@@ -184,3 +184,6 @@ models:
     model: github.com/kloudlite/api/pkg/types.SyncStatus
   Github__com___kloudlite___api___pkg___types__SyncStatusIn: *sync-status-model
 
+  Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode:
+    model: github.com/kloudlite/operator/apis/crds/v1.EnvironmentRoutingMode
+
