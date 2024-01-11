@@ -42,7 +42,7 @@ require (
 
 require (
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v0.0.0-20240110082659-9533986de923
+	//github.com/kloudlite/operator v0.0.0-20240111100146-7ae3169be4b1
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
@@ -58,6 +58,7 @@ require (
 	github.com/google/pprof v0.0.0-20230509042627-b1315fad0c5a // indirect
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/kloudlite/operator v0.0.0-20240111104606-97933f90de7b // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

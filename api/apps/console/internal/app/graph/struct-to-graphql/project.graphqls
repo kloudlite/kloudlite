@@ -1,7 +1,6 @@
 type Project @shareable {
   accountName: String!
   apiVersion: String!
-  clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!

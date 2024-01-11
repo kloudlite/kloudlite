@@ -164,6 +164,10 @@ github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30
 github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
 github.com/kloudlite/operator v0.0.0-20240110082659-9533986de923 h1:aBI3xM0EkUb2cejY2P1MjcNWBwGWbpz15dyaHzHqF/Y=
 github.com/kloudlite/operator v0.0.0-20240110082659-9533986de923/go.mod h1:eD8xKzwOVtajAglELcEHn2XL4H22ERBLT2uaisA6SzQ=
+github.com/kloudlite/operator v0.0.0-20240111100146-7ae3169be4b1 h1:8K1QcTu1r/ESEuku4xgwyf6i6od1P3twdMVZIjDvvNA=
+github.com/kloudlite/operator v0.0.0-20240111100146-7ae3169be4b1/go.mod h1:eD8xKzwOVtajAglELcEHn2XL4H22ERBLT2uaisA6SzQ=
+github.com/kloudlite/operator v0.0.0-20240111104606-97933f90de7b h1:0Dg8VKotQvJUN/0zEf+wymxZOOl8DX/vs6aqfB3bcXM=
+github.com/kloudlite/operator v0.0.0-20240111104606-97933f90de7b/go.mod h1:eD8xKzwOVtajAglELcEHn2XL4H22ERBLT2uaisA6SzQ=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
