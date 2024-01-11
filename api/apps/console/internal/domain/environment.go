@@ -119,6 +119,12 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		env.Spec.TargetNamespace = fmt.Sprintf("env-%s", env.Name)
 	}
 
+	if env.Spec.Routing == nil {
+		env.Spec.Routing = &crdsv1.EnvironmentRouting{
+			Mode: crdsv1.EnvironmentRoutingModePrivate,
+		}
+	}
+
 	env.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -324,6 +330,13 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errors.NewE(err)
 	}
 
+	prj, err := d.findProject(ctx, projectName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	env.Namespace = prj.Spec.TargetNamespace
+
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
 		return nil, errors.NewE(err)
@@ -343,6 +356,10 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
+	}
+
+	if env.Spec.Routing != nil && env.Spec.Routing.Mode != "" {
+		xenv.Spec.Routing.Mode = env.Spec.Routing.Mode
 	}
 
 	xenv.DisplayName = env.DisplayName
@@ -466,14 +483,14 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 	}
 
 	// FIXME (nxtcoder17): Should this be performed ?
-	if err := d.deleteK8sResource(ctx, env.ProjectName, &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: env.Spec.TargetNamespace,
-		},
-	}); err != nil {
-		return errors.NewE(err)
-	}
+	// if err := d.deleteK8sResource(ctx, env.ProjectName, &corev1.Namespace{
+	// 	TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+	// 	ObjectMeta: metav1.ObjectMeta{
+	// 		Name: env.Spec.TargetNamespace,
+	// 	},
+	// }); err != nil {
+	// 	return errors.NewE(err)
+	// }
 
 	return nil
 }
@@ -491,32 +508,33 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 	return errors.NewE(err)
 }
 
-func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, ws entities.Environment) error {
-	exWs, err := d.findEnvironment(ctx, ws.Namespace, ws.Name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.MatchRecordVersion(ws.Annotations, exWs.RecordVersion); err != nil {
-		return errors.NewE(err)
-	}
-
-	err = d.environmentRepo.DeleteById(ctx, exWs.Id)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishWorkspaceEvent(exWs, PublishDelete)
-	return nil
-}
-
-func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Environment, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	xenv, err := d.findEnvironment(ctx, env.Namespace, env.Name)
+func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Environment) error {
+	xenv, err := d.findEnvironment(ctx, env.Spec.ProjectName, env.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	if err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion); err != nil {
 		return errors.NewE(err)
+	}
+
+	err = d.environmentRepo.DeleteById(ctx, xenv.Id)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishWorkspaceEvent(xenv, PublishDelete)
+	return nil
+}
+
+func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Environment, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xenv, err := d.findEnvironment(ctx, env.Spec.ProjectName, env.Name)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion); err != nil {
+	  return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
 	xenv.CreationTimestamp = env.CreationTimestamp
@@ -535,6 +553,10 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 	xenv.SyncStatus.RecordVersion = xenv.RecordVersion
 	xenv.SyncStatus.Error = nil
 	xenv.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+
+	if xenv.Spec.Routing == nil {
+		xenv.Spec.Routing = env.Spec.Routing
+	}
 
 	xenv, err = d.environmentRepo.UpdateById(ctx, xenv.Id, xenv)
 	if err != nil {

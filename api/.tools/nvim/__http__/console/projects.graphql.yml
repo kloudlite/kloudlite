@@ -2,18 +2,20 @@
 global:
   targetNamespace: sample
   name: sample
+  projectName2: "sample2"
 ---
 
 label: List Projects
 query: |+
-  query Core_listProjects($clusterName: String, $pq: CursorPaginationIn) {
-    core_listProjects(clusterName: $clusterName, pq: $pq) {
+  query Core_listProjects {
+    core_listProjects {
       edges {
         cursor
         node {
           updateTime
           creationTime
           accountName
+          clusterName
           apiVersion
           kind
           metadata {
@@ -22,7 +24,6 @@ query: |+
             creationTimestamp
           }
           spec {
-            accountName
             targetNamespace
           }
           syncStatus {
@@ -47,8 +48,8 @@ query: |+
     }
   }
 variables:
-  pq:
-    first: 10
+  # pq:
+  #   first: 10
   #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
   #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
   #   # after: NjQ2ZGU4MWRkMTM2NGYwZjBlYmE4MmVh
@@ -94,9 +95,9 @@ variables:
   project:
     displayName: "Sample Project"
     metadata:
-      name: "{{.name}}"
+      name: "{{.projectName2}}"
     spec:
-      targetNamespace: "{{.targetNamespace}}"
+      targetNamespace: "{{.targetNamespace}}2"
 ---
 
 label: Update Project
@@ -106,20 +107,17 @@ query: |+
       metadata {
         name
       }
-      spec {
-        displayName
-      }
     }
   }
 variables:
   project:
     displayName: "This is a sample project"
     metadata:
-      name: "{{.name}}"
+      name: "{{.projectName2}}"
       labels:
         kloudlite.io/sample: "true"
     spec:
-      targetNamespace: "{{.targetNamespace}}"
+      targetNamespace: "{{.targetNamespace}}2"
 ---
 
 label: Delete Project
