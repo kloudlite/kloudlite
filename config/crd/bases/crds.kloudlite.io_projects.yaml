@@ -51,19 +51,11 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              accountName:
-                type: string
-              clusterName:
-                type: string
               displayName:
-                type: string
-              logo:
                 type: string
               targetNamespace:
                 type: string
             required:
-            - accountName
-            - clusterName
             - targetNamespace
             type: object
           status:

@@ -9,11 +9,8 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountName     string  `json:"accountName" graphql:"noinput"`
-	ClusterName     *string `json:"clusterName"`
-	DisplayName     string  `json:"displayName,omitempty"`
-	TargetNamespace string  `json:"targetNamespace"`
-	Logo            string  `json:"logo,omitempty"`
+	DisplayName     string `json:"displayName,omitempty"`
+	TargetNamespace string `json:"targetNamespace"`
 }
 
 // +kubebuilder:object:root=true
@@ -47,7 +44,6 @@ func (p *Project) GetStatus() *rApi.Status {
 func (p *Project) GetEnsuredLabels() map[string]string {
 	labels := map[string]string{
 		constants.ProjectNameKey:     p.Name,
-		constants.AccountNameKey:     p.Spec.AccountName,
 		constants.TargetNamespaceKey: p.Spec.TargetNamespace,
 	}
 	if p.Spec.ClusterName != nil {
