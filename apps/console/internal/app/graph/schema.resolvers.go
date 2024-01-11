@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -345,14 +346,12 @@ func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, deviceName s
 }
 
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
-func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType entities.ResourceType, namespace *string, name string) (*domain.CheckNameAvailabilityOutput, error) {
+func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, projectName string, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
-		if cc.AccountName == "" {
-			return nil, errors.NewE(err)
-		}
+		return nil, err
 	}
-	return r.Domain.CheckNameAvailability(ctx, resType, cc.AccountName, namespace, name)
+	return r.Domain.CheckNameAvailability(ctx, cc.AccountName, projectName, envName, resType, name)
 }
 
 // CoreListProjects is the resolver for the core_listProjects field.

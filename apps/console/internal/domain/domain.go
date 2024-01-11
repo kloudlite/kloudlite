@@ -17,7 +17,8 @@ import (
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/api/pkg/types"
-	"github.com/kloudlite/operator/pkg/constants"
+	// "github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/api/constants"
 
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"go.uber.org/fx"
@@ -74,6 +75,15 @@ func errAlreadyMarkedForDeletion(label, namespace, name string) error {
 
 var ErrNoClusterAttached = errors.New("cluster not attached")
 
+func addTrackingId(obj client.Object, id repos.ID) {
+	ann := obj.GetAnnotations()
+	if ann == nil {
+		ann = make(map[string]string, 1)
+	}
+	ann[constants.ResourceTrackingKey] = string(id)
+	obj.SetAnnotations(ann)
+}
+
 type K8sContext interface {
 	context.Context
 	GetAccountName() string
@@ -99,7 +109,6 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 		ann = make(map[string]string, 1)
 	}
 	ann[constants.RecordVersionKey] = fmt.Sprintf("%d", recordVersion)
-	obj.SetAnnotations(ann)
 
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {

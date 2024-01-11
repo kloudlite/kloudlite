@@ -93,7 +93,6 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []Mana
 
 // GetManagedResourceOutputKeys implements Domain.
 func (d *domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
-
 	filters := ctx.DBFilters()
 	filters.Add("metadata.name", name)
 	mresSecrets, err := d.mresRepo.FindOne(ctx, filters)
@@ -108,7 +107,6 @@ func (d *domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) 
 	}
 
 	return results, nil
-
 }
 
 // mutations

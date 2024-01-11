@@ -42,6 +42,11 @@ func (d *domain) GetApp(ctx ResourceContext, name string) (*entities.App, error)
 	return d.findApp(ctx, name)
 }
 
+func (d *domain) applyApp(ctx ResourceContext, app *entities.App) error {
+	addTrackingId(&app.App, app.Id)
+	return d.applyK8sResource(ctx, app.ProjectName, &app.App, app.RecordVersion)
+}
+
 func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
@@ -77,7 +82,7 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 		return nil, errors.NewE(err)
 	}
 
-	nApp, err := d.appRepo.Create(ctx, &app)
+	napp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
 		if d.appRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -88,11 +93,11 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 
 	d.resourceEventPublisher.PublishAppEvent(&app, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, app.ProjectName, &nApp.App, nApp.RecordVersion); err != nil {
+	if err := d.applyApp(ctx, &app); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return nApp, nil
+	return napp, nil
 }
 
 func (d *domain) DeleteApp(ctx ResourceContext, name string) error {
@@ -159,7 +164,7 @@ func (d *domain) UpdateApp(ctx ResourceContext, app entities.App) (*entities.App
 	}
 	d.resourceEventPublisher.PublishAppEvent(upApp, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, upApp.ProjectName, &upApp.App, upApp.RecordVersion); err != nil {
+	if err := d.applyApp(ctx, upApp); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -189,7 +194,7 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 		return false, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, ctx.ProjectName, app, app.RecordVersion); err != nil {
+	if err := d.applyApp(ctx, app); err != nil {
 		return false, errors.NewE(err)
 	}
 
