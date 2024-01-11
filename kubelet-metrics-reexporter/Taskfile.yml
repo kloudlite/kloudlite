@@ -6,7 +6,13 @@ tasks:
       - sh: '[ ! -z "{{.NodeName}}" ]'
         msg: 'var NodeName must be defined'
     cmds:
-      - fwatcher --exec 'go run main.go --node-name {{.NodeName}} --dev --enrich-from-labels --filter-prefix "group.io/" --replace-prefix "group.io/=grp_"' --ext '.go'
+      - fwatcher --ext '.go' --exec '
+          go run main.go --dev 
+                --node-name {{.NodeName}} 
+                --enrich-from-annotations 
+                --filter-prefix "kloudlite.io/observability"
+                --replace-prefix "kloudlite.io/observability.tracking.id/=kl_tracking_id"
+          ' 
 
   test:
     cmds:
