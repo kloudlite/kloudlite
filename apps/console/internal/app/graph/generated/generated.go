@@ -649,7 +649,6 @@ type ComplexityRoot struct {
 	Project struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
-		ClusterName       func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
@@ -728,7 +727,7 @@ type ComplexityRoot struct {
 		CoreListImagePullSecrets             func(childComplexity int, projectName string, envName string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) int
 		CoreListManagedResources             func(childComplexity int, projectName string, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) int
 		CoreListProjectManagedServices       func(childComplexity int, projectName string, search *model.SearchProjectManagedService, pq *repos.CursorPagination) int
-		CoreListProjects                     func(childComplexity int, clusterName *string, search *model.SearchProjects, pq *repos.CursorPagination) int
+		CoreListProjects                     func(childComplexity int, search *model.SearchProjects, pq *repos.CursorPagination) int
 		CoreListRouters                      func(childComplexity int, projectName string, envName string, search *model.SearchRouters, pq *repos.CursorPagination) int
 		CoreListSecrets                      func(childComplexity int, projectName string, envName string, search *model.SearchSecrets, pq *repos.CursorPagination) int
 		CoreListVPNDevices                   func(childComplexity int, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) int
@@ -957,7 +956,7 @@ type ProjectManagedServiceResolver interface {
 }
 type QueryResolver interface {
 	CoreCheckNameAvailability(ctx context.Context, projectName string, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
-	CoreListProjects(ctx context.Context, clusterName *string, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error)
+	CoreListProjects(ctx context.Context, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error)
 	CoreGetProject(ctx context.Context, name string) (*entities.Project, error)
 	CoreResyncProject(ctx context.Context, name string) (bool, error)
 	CoreListEnvironments(ctx context.Context, projectName string, search *model.SearchEnvironments, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error)
@@ -3756,13 +3755,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.AccountName(childComplexity), true
 
-	case "Project.clusterName":
-		if e.complexity.Project.ClusterName == nil {
-			break
-		}
-
-		return e.complexity.Project.ClusterName(childComplexity), true
-
 	case "Project.createdBy":
 		if e.complexity.Project.CreatedBy == nil {
 			break
@@ -4298,7 +4290,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreListProjects(childComplexity, args["clusterName"].(*string), args["search"].(*model.SearchProjects), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.CoreListProjects(childComplexity, args["search"].(*model.SearchProjects), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query.core_listRouters":
 		if e.complexity.Query.CoreListRouters == nil {
@@ -5041,7 +5033,7 @@ input CoreSearchVPNDevices {
 type Query {
     core_checkNameAvailability(projectName: String!, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-    core_listProjects(clusterName: String, search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
     core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
@@ -5351,7 +5343,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServic
 
 type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec @shareable {
   accountName: String!
-  clusterName: String!
+  clusterName: String
   displayName: String
   logo: String
   targetNamespace: String!
@@ -5617,6 +5609,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServi
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn {
+  clusterName: String
   displayName: String
   logo: String
   targetNamespace: String!
@@ -6065,7 +6058,6 @@ input PortIn {
 	{Name: "../struct-to-graphql/project.graphqls", Input: `type Project @shareable {
   accountName: String!
   apiVersion: String!
-  clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -7926,33 +7918,24 @@ func (ec *executionContext) field_Query_core_listProjectManagedServices_args(ctx
 func (ec *executionContext) field_Query_core_listProjects_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 *model.SearchProjects
+	var arg0 *model.SearchProjects
 	if tmp, ok := rawArgs["search"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchProjects2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchProjects(ctx, tmp)
+		arg0, err = ec.unmarshalOSearchProjects2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐSearchProjects(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["search"] = arg1
-	var arg2 *repos.CursorPagination
+	args["search"] = arg0
+	var arg1 *repos.CursorPagination
 	if tmp, ok := rawArgs["pq"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		arg1, err = ec.unmarshalOCursorPaginationIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pq"] = arg2
+	args["pq"] = arg1
 	return args, nil
 }
 
@@ -17644,14 +17627,11 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22959,8 +22939,6 @@ func (ec *executionContext) fieldContext_Mutation_core_createProject(ctx context
 				return ec.fieldContext_Project_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Project_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_Project_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Project_createdBy(ctx, field)
 			case "creationTime":
@@ -23071,8 +23049,6 @@ func (ec *executionContext) fieldContext_Mutation_core_updateProject(ctx context
 				return ec.fieldContext_Project_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Project_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_Project_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Project_createdBy(ctx, field)
 			case "creationTime":
@@ -26572,47 +26548,6 @@ func (ec *executionContext) fieldContext_Project_apiVersion(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Project_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.Project) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Project_clusterName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Project_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Project",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Project_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Project) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Project_createdBy(ctx, field)
 	if err != nil {
@@ -27335,8 +27270,6 @@ func (ec *executionContext) fieldContext_ProjectEdge_node(ctx context.Context, f
 				return ec.fieldContext_Project_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Project_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_Project_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Project_createdBy(ctx, field)
 			case "creationTime":
@@ -28648,7 +28581,7 @@ func (ec *executionContext) _Query_core_listProjects(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListProjects(rctx, fc.Args["clusterName"].(*string), fc.Args["search"].(*model.SearchProjects), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().CoreListProjects(rctx, fc.Args["search"].(*model.SearchProjects), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -28785,8 +28718,6 @@ func (ec *executionContext) fieldContext_Query_core_getProject(ctx context.Conte
 				return ec.fieldContext_Project_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_Project_apiVersion(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_Project_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Project_createdBy(ctx, field)
 			case "creationTime":
@@ -37750,13 +37681,21 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"displayName", "logo", "targetNamespace"}
+	fieldsInOrder := [...]string{"clusterName", "displayName", "logo", "targetNamespace"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "clusterName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+			it.ClusterName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "displayName":
 			var err error
 
@@ -41692,9 +41631,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec_clusterName(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "displayName":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec_displayName(ctx, field, obj)
@@ -43419,10 +43355,6 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "clusterName":
-
-			out.Values[i] = ec._Project_clusterName(ctx, field, obj)
-
 		case "createdBy":
 
 			out.Values[i] = ec._Project_createdBy(ctx, field, obj)

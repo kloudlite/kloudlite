@@ -173,7 +173,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServic
 
 type Github__com___kloudlite___operator___apis___crds___v1__ProjectSpec @shareable {
   accountName: String!
-  clusterName: String!
+  clusterName: String
   displayName: String
   logo: String
   targetNamespace: String!
@@ -439,6 +439,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServi
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn {
+  clusterName: String
   displayName: String
   logo: String
   targetNamespace: String!

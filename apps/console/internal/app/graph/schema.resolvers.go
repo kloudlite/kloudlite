@@ -356,7 +356,7 @@ func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, projectNa
 }
 
 // CoreListProjects is the resolver for the core_listProjects field.
-func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error) {
+func (r *queryResolver) CoreListProjects(ctx context.Context, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -377,7 +377,7 @@ func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *strin
 		}
 	}
 
-	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
