@@ -24,7 +24,6 @@ func newRouter() crdsv1.Router {
 			Namespace: testNamespace,
 		},
 		Spec: crdsv1.RouterSpec{
-			Region: "master",
 			Https: &crdsv1.Https{
 				Enabled: false,
 			},

@@ -4,7 +4,6 @@ import (
 	_ "fmt"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
@@ -24,9 +23,6 @@ var _ = Describe("project controller [CREATE] says", func() {
 			Name: "sample",
 		},
 		Spec: crdsv1.ProjectSpec{
-			AccountName:     "sample",
-			ClusterName:     "sample",
-			DisplayName:     "Sample Website",
 			TargetNamespace: "sample",
 		},
 	}
@@ -50,8 +46,6 @@ var _ = Describe("project controller [CREATE] says", func() {
 			var ns corev1.Namespace
 			err := Suite.K8sClient.Get(ctx, fn.NN("", proj.Name), &ns)
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(ns.Labels[constants.AccountNameKey]).To(Equal(proj.Spec.AccountName))
-			g.Expect(ns.Labels[constants.ClusterNameKey]).To(Equal(proj.Spec.ClusterName))
 		}, "2s")
 	})
 
