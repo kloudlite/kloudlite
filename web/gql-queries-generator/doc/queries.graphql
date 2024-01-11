@@ -2882,6 +2882,18 @@ mutation consoleDeleteHelmChart($clusterName: String!, $releaseName: String!) {
   infra_deleteHelmRelease(clusterName: $clusterName, releaseName: $releaseName)
 }
 
+query authCli_getMresConfigs($keyrefs: [ManagedResourceKeyRefIn], $envName: String!, $projectName: String!) {
+  core_getManagedResouceOutputKeyValues(
+    keyrefs: $keyrefs
+    envName: $envName
+    projectName: $projectName
+  ) {
+    key
+    mresName
+    value
+  }
+}
+
 query authCli_infraCheckNameAvailability($resType: ResType!, $name: String!, $clusterName: String) {
   infra_checkNameAvailability(
     resType: $resType

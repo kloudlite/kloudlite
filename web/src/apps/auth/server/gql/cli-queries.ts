@@ -17,6 +17,80 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export const cliQueries = (executor: IExecutor) => ({
+  cli_getMresKeys: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $projectName: String!
+        $envName: String!
+        $name: String!
+      ) {
+        core_getManagedResouceOutputKeys(
+          projectName: $projectName
+          envName: $envName
+          name: $name
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getManagedResouceOutputKeys,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_listMreses: executor(
+    gql`
+      query Core_listManagedResources(
+        $projectName: String!
+        $envName: String!
+        $pq: CursorPaginationIn
+      ) {
+        core_listManagedResources(
+          projectName: $projectName
+          envName: $envName
+          pq: $pq
+        ) {
+          edges {
+            node {
+              displayName
+              metadata {
+                name
+                namespace
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listManagedResources,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getMresConfigsValues: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $keyrefs: [ManagedResourceKeyRefIn]
+        $envName: String!
+        $projectName: String!
+      ) {
+        core_getManagedResouceOutputKeyValues(
+          keyrefs: $keyrefs
+          envName: $envName
+          projectName: $projectName
+        ) {
+          key
+          mresName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_infraCheckNameAvailability: executor(
     gql`
       query Infra_checkNameAvailability(

@@ -4220,6 +4220,23 @@ export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
 
+export type AuthCli_GetMresConfigsQueryVariables = Exact<{
+  keyrefs?: InputMaybe<
+    | Array<InputMaybe<ManagedResourceKeyRefIn>>
+    | InputMaybe<ManagedResourceKeyRefIn>
+  >;
+  envName: Scalars['String']['input'];
+  projectName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetMresConfigsQuery = {
+  core_getManagedResouceOutputKeyValues: Array<{
+    key: string;
+    mresName: string;
+    value: string;
+  }>;
+};
+
 export type AuthCli_InfraCheckNameAvailabilityQueryVariables = Exact<{
   resType: ResType;
   name: Scalars['String']['input'];

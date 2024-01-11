@@ -119,7 +119,16 @@ export const ExecuteQueryWithContext = (
 
         console.trace('ErrorIn:', apiName, (err as Error).message);
 
-        throw err;
+        return {
+          data: null,
+          errors: [
+            {
+              message: (err as Error).message,
+              name: (err as Error).name,
+              stack: (err as Error).stack,
+            },
+          ],
+        };
       } finally {
         console.timeEnd(apiName);
       }
