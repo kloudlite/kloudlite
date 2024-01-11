@@ -560,6 +560,17 @@ type ManagedResourceEdge struct {
 	Node   *entities.ManagedResource `json:"node"`
 }
 
+type ManagedResourceKeyRef struct {
+	Key      string `json:"key"`
+	MresName string `json:"mresName"`
+}
+
+type ManagedResourceKeyValueRefIn struct {
+	Key      string `json:"key"`
+	MresName string `json:"mresName"`
+	Value    string `json:"value"`
+}
+
 type ManagedResourcePaginatedRecords struct {
 	Edges      []*ManagedResourceEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -674,14 +685,14 @@ type SecretEdge struct {
 }
 
 type SecretKeyRef struct {
-	Key         string `json:"key"`
-	SeceretName string `json:"seceretName"`
+	Key        string `json:"key"`
+	SecretName string `json:"secretName"`
 }
 
 type SecretKeyValueRefIn struct {
-	Key         string `json:"key"`
-	SeceretName string `json:"seceretName"`
-	Value       string `json:"value"`
+	Key        string `json:"key"`
+	SecretName string `json:"secretName"`
+	Value      string `json:"value"`
 }
 
 type SecretPaginatedRecords struct {
