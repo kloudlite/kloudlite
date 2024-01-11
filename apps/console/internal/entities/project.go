@@ -14,8 +14,8 @@ type Project struct {
 
 	common.ResourceMetadata `json:",inline"`
 
-	AccountName string  `json:"accountName" graphql:"noinput"`
-	ClusterName *string `json:"clusterName" graphql:"noinput"`
+	AccountName string `json:"accountName" graphql:"noinput"`
+	ClusterName string `json:"clusterName"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }

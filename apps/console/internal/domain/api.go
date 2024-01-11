@@ -101,7 +101,7 @@ type UpdateAndDeleteOpts struct {
 type Domain interface {
 	CheckNameAvailability(ctx context.Context, accountName string, projectName string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error)
 
-	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error)
+	ListProjects(ctx context.Context, userId repos.ID, accountName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
 	CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)
