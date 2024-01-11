@@ -106,8 +106,6 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Project]) stepRes
 			ns.Labels = make(map[string]string, 3)
 		}
 
-		ns.Labels[constants.AccountNameKey] = obj.Spec.AccountName
-		ns.Labels[constants.ClusterNameKey] = obj.Spec.ClusterName
 		ns.Labels[constants.ProjectNameKey] = obj.Name
 
 		if ns.Annotations == nil {
