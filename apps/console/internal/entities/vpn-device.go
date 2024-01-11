@@ -9,17 +9,18 @@ import (
 )
 
 type ConsoleVPNDevice struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"` // db
 
-	wireguardV1.Device `json:",inline" graphql:"uri=k8s://devices.wireguard.kloudlite.io"`
+	wireguardV1.Device `json:",inline" graphql:"uri=k8s://devices.wireguard.kloudlite.io"` // db
 
-	common.ResourceMetadata `json:",inline"`
+	common.ResourceMetadata `json:",inline"` // db
+
+	AccountName     string  `json:"accountName" graphql:"noinput"` // db
+	ProjectName     *string `json:"projectName,omitempty"` // db
+	EnvironmentName *string `json:"environmentName,omitempty"` // db
 
 	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput"`
-
-	AccountName     string  `json:"accountName" graphql:"noinput"`
-	ProjectName     *string `json:"projectName,omitempty"`
-	EnvironmentName *string `json:"environmentName,omitempty"`
+	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var VPNDeviceIndexes = []repos.IndexField{
@@ -32,7 +33,7 @@ var VPNDeviceIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
+			{Key: "accountName", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

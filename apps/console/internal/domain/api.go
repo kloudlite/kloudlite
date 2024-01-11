@@ -2,14 +2,15 @@ package domain
 
 import (
 	"context"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"time"
+
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
-	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 type ConsoleContext struct {
@@ -225,13 +226,13 @@ type Domain interface {
 	ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error
 
 	ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ConsoleVPNDevice], error)
+	ListVPNDevicesOfUser(ctx ConsoleContext, userId string) ([]*entities.ConsoleVPNDevice, error)
 	GetVPNDevice(ctx ConsoleContext, name string) (*entities.ConsoleVPNDevice, error)
 	CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	DeleteVPNDevice(ctx ConsoleContext, name string) error
-
 	UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports []*wgv1.Port) error
-	UpdateVpnDeviceNs(ctx ConsoleContext, devName string, namespace string) error
+	UpdateVpnDeviceContext(ctx ConsoleContext, devName string, projectName string, envName string) error
 }
 
 type PublishMsg string

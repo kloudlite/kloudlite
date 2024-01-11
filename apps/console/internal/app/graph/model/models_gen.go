@@ -381,18 +381,11 @@ type GithubComKloudliteOperatorApisCrdsV1ProjectManagedServiceSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ProjectSpec struct {
-	AccountName     string  `json:"accountName"`
-	ClusterName     *string `json:"clusterName,omitempty"`
-	DisplayName     *string `json:"displayName,omitempty"`
-	Logo            *string `json:"logo,omitempty"`
-	TargetNamespace string  `json:"targetNamespace"`
+	TargetNamespace string `json:"targetNamespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn struct {
-	ClusterName     *string `json:"clusterName,omitempty"`
-	DisplayName     *string `json:"displayName,omitempty"`
-	Logo            *string `json:"logo,omitempty"`
-	TargetNamespace string  `json:"targetNamespace"`
+	TargetNamespace string `json:"targetNamespace"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RateLimit struct {
