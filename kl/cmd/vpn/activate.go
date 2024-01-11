@@ -15,23 +15,14 @@ Example:
   kl vpn activate
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		ns := ""
 
-		if cmd.Flags().Changed("name") {
-			ns, _ = cmd.Flags().GetString("name")
-		}
+		envName := fn.ParseStringFlag(cmd, "envname")
+		projectName := fn.ParseStringFlag(cmd, "projectname")
 
-		if ns == "" {
-			e, err := server.EnsureEnv(nil)
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			ns = e.TargetNs
-		}
-
-		if err := server.UpdateDeviceNS(ns); err != nil {
+		if err := server.UpdateDeviceEnv([]fn.Option{
+			fn.MakeOption("envName", envName),
+			fn.MakeOption("projectName", projectName),
+		}...); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -42,5 +33,6 @@ Example:
 
 func init() {
 	activateCmd.Aliases = append(listCmd.Aliases, "active", "act", "a")
-	activateCmd.Flags().StringP("name", "n", "", "environment name")
+	activateCmd.Flags().StringP("envname", "n", "", "environment name")
+	activateCmd.Flags().StringP("projectname", "p", "", "project name")
 }

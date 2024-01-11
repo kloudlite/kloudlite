@@ -21,7 +21,9 @@ type ProjectList struct {
 func ListProjects(options ...fn.Option) ([]Project, error) {
 	accountName := fn.GetOption(options, "accountName")
 
-	if _, err := EnsureAccount(accountName); err != nil {
+	if _, err := EnsureAccount(
+		fn.MakeOption("accountName", accountName),
+	); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +85,9 @@ func EnsureProject(options ...fn.Option) (string, error) {
 	accountName := fn.GetOption(options, "accountName")
 	projectName := fn.GetOption(options, "projectName")
 
-	if _, err := EnsureAccount(accountName); err != nil {
+	if _, err := EnsureAccount(
+		fn.MakeOption("accountName", accountName),
+	); err != nil {
 		return "", err
 	}
 

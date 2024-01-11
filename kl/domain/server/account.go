@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
@@ -76,14 +77,24 @@ func SelectAccount(accountName string) (*Account, error) {
 	return account, nil
 }
 
-func EnsureAccount(accountName string) (string, error) {
+func EnsureAccount(options ...fn.Option) (string, error) {
+	accountName := fn.GetOption(options, "accountName")
+	isInfra := fn.IsInfraFlagAvailable(options...)
+
 	if accountName != "" {
 		return accountName, nil
 	}
 
-	s, _ := client.CurrentAccountName()
-	if s != "" {
-		return s, nil
+	if isInfra {
+		s, _ := client.CurrentInfraAccountName()
+		if s != "" {
+			return s, nil
+		}
+	} else {
+		s, _ := client.CurrentAccountName()
+		if s != "" {
+			return s, nil
+		}
 	}
 
 	account, err := SelectAccount(accountName)

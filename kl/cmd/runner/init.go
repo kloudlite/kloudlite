@@ -31,7 +31,9 @@ Examples:
 
 		if err != nil {
 
-			acc, err := server.EnsureAccount(aName)
+			acc, err := server.EnsureAccount(
+				fn.MakeOption("accountName", aName),
+			)
 			if err != nil {
 				fn.PrintError(err)
 				return

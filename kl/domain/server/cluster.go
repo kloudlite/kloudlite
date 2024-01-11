@@ -107,7 +107,9 @@ func SelectCluster(clusterName string) (*Cluster, error) {
 func EnsureCluster(options ...fn.Option) (string, error) {
 	accountName := fn.GetOption(options, "accountName")
 
-	_, err := EnsureAccount(accountName)
+	_, err := EnsureAccount(
+		fn.MakeOption("accountName", accountName),
+	)
 	if err != nil {
 		return "", err
 	}

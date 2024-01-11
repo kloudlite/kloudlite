@@ -84,7 +84,7 @@ Example:
 			return
 		}
 
-		d, err := server.EnsureDevice([]fn.Option{
+		d, err := server.EnsureInfraDevice([]fn.Option{
 			fn.MakeOption("accountName", a.Metadata.Name),
 			fn.MakeOption("deviceName", deviceName),
 		}...)
