@@ -67,7 +67,7 @@ variables:
 ---
 
 label: Create App
-query: |+
+query: |+ #graphql
   mutation Core_createApp($projectName: String!, $envName: String!, $app: AppIn!) {
     core_createApp(projectName: $projectName, envName: $envName, app: $app) {
       metadata {
@@ -106,7 +106,7 @@ variables:
 ---
 
 label: Update App
-query: |+
+query: |+ #graphql
   mutation Core_updateApp($projectName: String!, $envName: String!, $app: AppIn!) {
     core_updateApp(projectName: $projectName, envName: $envName, app: $app) {
       metadata {
