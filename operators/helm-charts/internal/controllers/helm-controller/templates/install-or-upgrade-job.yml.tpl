@@ -55,8 +55,10 @@ spec:
         command:
           - bash
           - -c
-          - |+
+          - |+ #bash
+            set -o nounset
             set -o pipefail
+            set -o errexit
 
             helm repo add {{$repoName}} {{$repoUrl}}
             helm repo update {{$repoName}}

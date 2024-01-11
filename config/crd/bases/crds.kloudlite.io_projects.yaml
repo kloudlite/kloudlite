@@ -51,8 +51,6 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              displayName:
-                type: string
               targetNamespace:
                 type: string
             required:
