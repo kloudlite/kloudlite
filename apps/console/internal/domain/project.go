@@ -22,7 +22,7 @@ import (
 
 func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string) (*string, error) {
 	cacheKey := fmt.Sprintf("account_name_%s-project_name_%s", ctx.GetAccountName(), projectName)
-	clusterName, err := d.consoleCacheStore.Get(ctx, projectName)
+	clusterName, err := d.consoleCacheStore.Get(ctx, cacheKey)
 	if err != nil {
 		if !errors.Is(err, kv.ErrKeyNotFound) {
 			return nil, err
