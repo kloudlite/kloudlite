@@ -80,12 +80,12 @@ func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, projectNam
 }
 
 // CoreCloneEnvironment is the resolver for the core_cloneEnvironment field.
-func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, envName string, displayName string, environmentRoutingMode v11.EnvironmentRoutingMode) (*entities.Environment, error) {
+func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v11.EnvironmentRoutingMode) (*entities.Environment, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CloneEnvironment(cc, projectName, sourceEnvName, envName, displayName, environmentRoutingMode)
+	return r.Domain.CloneEnvironment(cc, projectName, sourceEnvName, destinationEnvName, displayName, environmentRoutingMode)
 }
 
 // CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.

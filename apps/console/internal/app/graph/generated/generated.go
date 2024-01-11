@@ -599,7 +599,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreCloneEnvironment            func(childComplexity int, projectName string, sourceEnvName string, envName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) int
+		CoreCloneEnvironment            func(childComplexity int, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) int
 		CoreCreateApp                   func(childComplexity int, projectName string, envName string, app entities.App) int
 		CoreCreateConfig                func(childComplexity int, projectName string, envName string, config entities.Config) int
 		CoreCreateEnvironment           func(childComplexity int, projectName string, env entities.Environment) int
@@ -909,7 +909,7 @@ type MutationResolver interface {
 	CoreCreateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
 	CoreUpdateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
 	CoreDeleteEnvironment(ctx context.Context, projectName string, envName string) (bool, error)
-	CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, envName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
+	CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
 	CoreCreateImagePullSecret(ctx context.Context, projectName string, envName string, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreDeleteImagePullSecret(ctx context.Context, projectName string, envName string, secretName string) (bool, error)
 	CoreCreateApp(ctx context.Context, projectName string, envName string, app entities.App) (*entities.App, error)
@@ -3314,7 +3314,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["projectName"].(string), args["sourceEnvName"].(string), args["envName"].(string), args["displayName"].(string), args["environmentRoutingMode"].(v1.EnvironmentRoutingMode)), true
+		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["projectName"].(string), args["sourceEnvName"].(string), args["destinationEnvName"].(string), args["displayName"].(string), args["environmentRoutingMode"].(v1.EnvironmentRoutingMode)), true
 
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
@@ -5095,7 +5095,7 @@ type Mutation {
     core_createEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_updateEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_deleteEnvironment(projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_cloneEnvironment(projectName: String!, sourceEnvName: String!, envName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
+    core_cloneEnvironment(projectName: String!, sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
     # image pull secrets
     core_createImagePullSecret(projectName: String!, envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
@@ -6301,14 +6301,14 @@ func (ec *executionContext) field_Mutation_core_cloneEnvironment_args(ctx contex
 	}
 	args["sourceEnvName"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["destinationEnvName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationEnvName"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg2
+	args["destinationEnvName"] = arg2
 	var arg3 string
 	if tmp, ok := rawArgs["displayName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
@@ -23518,7 +23518,7 @@ func (ec *executionContext) _Mutation_core_cloneEnvironment(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["envName"].(string), fc.Args["displayName"].(string), fc.Args["environmentRoutingMode"].(v1.EnvironmentRoutingMode))
+			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["destinationEnvName"].(string), fc.Args["displayName"].(string), fc.Args["environmentRoutingMode"].(v1.EnvironmentRoutingMode))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -47386,7 +47386,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47394,7 +47394,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
