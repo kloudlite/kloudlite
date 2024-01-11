@@ -9,7 +9,6 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	DisplayName     string `json:"displayName,omitempty"`
 	TargetNamespace string `json:"targetNamespace"`
 }
 
@@ -45,9 +44,6 @@ func (p *Project) GetEnsuredLabels() map[string]string {
 	labels := map[string]string{
 		constants.ProjectNameKey:     p.Name,
 		constants.TargetNamespaceKey: p.Spec.TargetNamespace,
-	}
-	if p.Spec.ClusterName != nil {
-		labels[constants.ClusterNameKey] = *p.Spec.ClusterName
 	}
 	return labels
 }
