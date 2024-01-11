@@ -14,6 +14,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -164,7 +165,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 		if ns.Labels == nil {
 			ns.Labels = make(map[string]string, 4)
 		}
-		
+
 		ns.Labels[constants.EnvironmentNameKey] = obj.Name
 		ns.Labels[constants.ProjectNameKey] = obj.Spec.ProjectName
 
@@ -255,16 +256,19 @@ func (r *Reconciler) ensureEnvIngressController(req *rApi.Request[*crdsv1.Enviro
 		return req.CheckFailed(checkName, check, err.Error())
 	}
 
+	releaseName := fmt.Sprintf("env-ingress-%s", obj.Name)
+	releaseNamespace := obj.Spec.TargetNamespace
+
 	b, err := templates.ParseBytes(r.templateHelmIngressNginx, map[string]any{
-		"release-name":      fmt.Sprintf("env-ingress-%s", obj.Name),
-		"release-namespace": obj.Spec.TargetNamespace,
+		"release-name":      releaseName,
+		"release-namespace": releaseNamespace,
 
 		"labels": map[string]string{
 			constants.ProjectNameKey:     obj.Spec.ProjectName,
 			constants.EnvironmentNameKey: obj.Name,
 		},
 
-		"ingress-class-name": obj.GetIngressClassName(),
+		"ingress-class-name": obj.Spec.Routing.PrivateIngressClass,
 	})
 	if err != nil {
 		return fail(err).Err(nil)
@@ -276,6 +280,19 @@ func (r *Reconciler) ensureEnvIngressController(req *rApi.Request[*crdsv1.Enviro
 	}
 
 	req.AddToOwnedResources(rr...)
+
+	// wait for helm chart to be ready
+	hc, err := rApi.Get(ctx, r.Client, fn.NN(releaseNamespace, releaseName), &crdsv1.HelmChart{})
+	if err != nil {
+		return fail(err)
+	}
+
+	if !hc.Status.IsReady {
+		if hc.Status.Message != nil {
+			check.Message = hc.Status.Message.ToString()
+		}
+		return fail(fmt.Errorf("waiting for helm chart to be ready"))
+	}
 
 	check.Status = true
 	if check != obj.Status.Checks[checkName] {
@@ -309,6 +326,18 @@ func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Enviro
 	for i := range routers.Items {
 		routers.Items[i].Spec.IngressClass = obj.GetIngressClassName()
 		if err := r.Update(ctx, &routers.Items[i]); err != nil {
+			return fail(err)
+		}
+	}
+
+	var ingressList networkingv1.IngressList
+	if err := r.List(ctx, &ingressList, client.InNamespace(obj.Spec.TargetNamespace)); err != nil {
+		return fail(err)
+	}
+
+	for i := range ingressList.Items {
+		ingressList.Items[i].Spec.IngressClassName = fn.New(obj.GetIngressClassName())
+		if err := r.Update(ctx, &ingressList.Items[i]); err != nil {
 			return fail(err)
 		}
 	}
@@ -349,26 +378,55 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return nil
 	}))
 
-	builder.Watches(&crdsv1.HelmChart{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
-		if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
-			var envList crdsv1.EnvironmentList
-			if err := r.List(context.TODO(), &envList, &client.ListOptions{
-				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-					constants.EnvironmentNameKey: v,
+	watchList := []client.Object{
+		&crdsv1.HelmChart{},
+		&crdsv1.Router{},
+		&networkingv1.Ingress{},
+	}
+
+	for i := range watchList {
+		builder.Watches(watchList[i],
+			handler.EnqueueRequestsFromMapFunc(
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
+					var envList crdsv1.EnvironmentList
+					if err := r.List(ctx, &envList, &client.ListOptions{
+						LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+							constants.TargetNamespaceKey: obj.GetNamespace(),
+						}),
+					}); err != nil {
+						return nil
+					}
+
+					rr := make([]reconcile.Request, 0, len(envList.Items))
+					for i := range envList.Items {
+						rr = append(rr, reconcile.Request{NamespacedName: fn.NN(envList.Items[i].GetNamespace(), envList.Items[i].GetName())})
+					}
+
+					return rr
 				}),
-			}); err != nil {
-				return nil
-			}
+		)
+	}
 
-			reqs := make([]reconcile.Request, len(envList.Items))
-			for i := range envList.Items {
-				reqs[i] = reconcile.Request{NamespacedName: fn.NN(envList.Items[i].GetNamespace(), envList.Items[i].GetName())}
-			}
-
-			return reqs
-		}
-		return nil
-	}))
+	// builder.Watches(&crdsv1.HelmChart{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
+	// 	if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
+	// 		var envList crdsv1.EnvironmentList
+	// 		if err := r.List(context.TODO(), &envList, &client.ListOptions{
+	// 			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+	// 				constants.EnvironmentNameKey: v,
+	// 			}),
+	// 		}); err != nil {
+	// 			return nil
+	// 		}
+	//
+	// 		reqs := make([]reconcile.Request, len(envList.Items))
+	// 		for i := range envList.Items {
+	// 			reqs[i] = reconcile.Request{NamespacedName: fn.NN(envList.Items[i].GetNamespace(), envList.Items[i].GetName())}
+	// 		}
+	//
+	// 		return reqs
+	// 	}
+	// 	return nil
+	// }))
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())

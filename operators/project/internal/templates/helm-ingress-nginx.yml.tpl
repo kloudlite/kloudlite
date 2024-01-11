@@ -12,7 +12,7 @@ kind: HelmChart
 metadata:
   name: {{$releaseName}}
   namespace: {{$releaseNamespace}}
-  labels: {{$labels}}
+  labels: {{$labels | toYAML | nindent 4}}
 spec:
   chartRepoURL: https://kubernetes.github.io/ingress-nginx
   chartName: ingress-nginx
@@ -51,8 +51,6 @@ spec:
       type: ClusterIP
     EOF
 
-    {{- /* kubectl delete svc/{{$releaseName}} -n {{$releaseNamespace}} */}}
-
   values:
     nameOverride: {{$envIngress}}
 
@@ -61,7 +59,6 @@ spec:
 
     serviceAccount:
       create: true
-      {{- /* name: "{{$envIngress}}-sa" */}}
 
     controller:
       kind: Deployment

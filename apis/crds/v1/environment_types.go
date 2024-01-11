@@ -77,17 +77,17 @@ func (e *Environment) GetEnsuredLabels() map[string]string {
 }
 
 func (e *Environment) GetEnsuredAnnotations() map[string]string {
-	if e.Spec.Routing == nil {
-		return map[string]string{}
-	}
-	return map[string]string{
-		"kloudlite.io/environment.routing": fmt.Sprintf("%s (%s)", e.Spec.Routing.Mode, func() string {
+	m := map[string]string{}
+	if e.Spec.Routing != nil {
+		m["kloudlite.io/environment.routing"] = fmt.Sprintf("%s (%s)", e.Spec.Routing.Mode, func() string {
 			if e.Spec.Routing.Mode == EnvironmentRoutingModePublic {
 				return e.Spec.Routing.PublicIngressClass
 			}
 			return e.Spec.Routing.PrivateIngressClass
-		}()),
+		}())
 	}
+
+	return m
 }
 
 //+kubebuilder:object:root=true
