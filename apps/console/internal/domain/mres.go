@@ -157,7 +157,7 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 	}
 	d.resourceEventPublisher.PublishMresEvent(&mres, PublishAdd)
 
-	if err := d.applyK8sResource(nil, "", &m.ManagedResource, 0); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, &m.ManagedResource, mres.RecordVersion); err != nil {
 		return m, errors.NewE(err)
 	}
 
@@ -200,7 +200,7 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 
 	d.resourceEventPublisher.PublishMresEvent(upMres, PublishUpdate)
 
-	if err := d.applyK8sResource(nil, "", &upMres.ManagedResource, upMres.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
 		return upMres, errors.NewE(err)
 	}
 

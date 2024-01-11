@@ -4,7 +4,7 @@ global:
 ---
 
 label: List Apps
-query: |+ # graphql
+query: |+ #graphql
   query Core_listApps($projectName: String!, $envName: String!) {
     core_listApps(projectName: $projectName, envName: $envName) {
       edges {
@@ -38,7 +38,7 @@ variables:
 ---
 
 label: Get App
-query: |+
+query: |+ #graphql
   query Core_getApp($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
     core_getApp(project: $project, scope: $scope, name: $name) {
       metadata {
@@ -93,7 +93,8 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      name: "{{.name}}"
+      # name: "{{.name}}"
+      name: "SAMPLE2"
     spec:
       services:
         - type: tcp
@@ -134,16 +135,13 @@ variables:
           targetPort: 80
       containers:
         - name: main
-          # image: nginx
-          image: kong/httpbin
-          # envFrom:
-          #   - type: config
-          #     refName: s1
+          # image: kong/httpbin
+          image: nginx
 
 ---
 
 label: Delete App
-query: |+
+query: |+ #graphql
   mutation Core_deleteApp($projectName: String!, $envName: String!, $appName: String!) {
     core_deleteApp(projectName: $projectName, envName: $envName, appName: $appName)
   }
