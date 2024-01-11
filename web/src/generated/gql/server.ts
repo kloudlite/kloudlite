@@ -4355,7 +4355,104 @@ export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
 
-export type AuthCli_GetMresConfigsQueryVariables = Exact<{
+export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  resType: ConsoleResType;
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_CoreCheckNameAvailabilityQuery = {
+  core_checkNameAvailability: {
+    result: boolean;
+    suggestedNames?: Array<string>;
+  };
+};
+
+export type AuthCli_ListCoreDevicesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListCoreDevicesQuery = {
+  core_listVPNDevices?: {
+    edges: Array<{
+      cursor: string;
+      node: {
+        displayName: string;
+        environmentName?: string;
+        projectName?: string;
+        metadata?: { name: string };
+        spec?: {
+          disabled?: boolean;
+          ports?: Array<{ port?: number; targetPort?: number }>;
+        };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_GetCoreDeviceQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetCoreDeviceQuery = {
+  core_getVPNDevice?: {
+    displayName: string;
+    projectName?: string;
+    metadata?: { name: string };
+    spec?: {
+      deviceNamespace?: string;
+      disabled?: boolean;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+    wireguardConfig?: { encoding: string; value: string };
+  };
+};
+
+export type AuthCli_CreateCoreDeviceMutationVariables = Exact<{
+  vpnDevice: ConsoleVpnDeviceIn;
+}>;
+
+export type AuthCli_CreateCoreDeviceMutation = {
+  core_createVPNDevice?: { id: string };
+};
+
+export type AuthCli_UpdateCoreDevicePortsMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+  ports: Array<PortIn> | PortIn;
+}>;
+
+export type AuthCli_UpdateCoreDevicePortsMutation = {
+  core_updateVPNDevicePorts: boolean;
+};
+
+export type AuthCli_GetMresKeysQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetMresKeysQuery = {
+  core_getManagedResouceOutputKeys: Array<string>;
+};
+
+export type AuthCli_ListMresesQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListMresesQuery = {
+  core_listManagedResources?: {
+    edges: Array<{
+      node: {
+        displayName: string;
+        metadata?: { name: string; namespace?: string };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_GetMresConfigsValuesQueryVariables = Exact<{
   keyrefs?: InputMaybe<
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
@@ -4364,7 +4461,7 @@ export type AuthCli_GetMresConfigsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
 }>;
 
-export type AuthCli_GetMresConfigsQuery = {
+export type AuthCli_GetMresConfigsValuesQuery = {
   core_getManagedResouceOutputKeyValues: Array<{
     key: string;
     mresName: string;
