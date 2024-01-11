@@ -126,6 +126,7 @@ const (
 
 	ListVPNDevices  Action = "list-vpn-devices"
 	GetVPNDevice    Action = "get-vpn-device"
+	ReadVPNDevice Action = "read-vpn-device"
 	CreateVPNDevice Action = "create-vpn-device"
 	UpdateVPNDevice Action = "update-vpn-device"
 	DeleteVPNDevice Action = "delete-vpn-device"
