@@ -5,12 +5,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
-
-	"log"
 
 	flag "github.com/spf13/pflag"
 
@@ -126,7 +125,7 @@ func main() {
 		}(),
 
 		ShouldValidateMetricLabel: shouldValidateMetricLabel,
-		ValidLabelRegexExpr:        metricLabelValidationRegex,
+		ValidLabelRegexExpr:       metricLabelValidationRegex,
 	}
 
 	http.HandleFunc("/metrics/resource", func(w http.ResponseWriter, r *http.Request) {
