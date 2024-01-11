@@ -175,7 +175,7 @@ type Mutation {
     core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 
     core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_updateVPNDeviceNs(deviceName: String!, namespace: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_updateVPNDeviceEnv(deviceName: String!,projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }

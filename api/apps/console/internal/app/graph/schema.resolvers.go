@@ -322,14 +322,34 @@ func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, vpnDevice en
 
 // CoreUpdateVPNDevicePorts is the resolver for the core_updateVPNDevicePorts field.
 func (r *mutationResolver) CoreUpdateVPNDevicePorts(ctx context.Context, deviceName string, ports []*v1.Port) (bool, error) {
-	// TODO
-	panic(fmt.Errorf("not implemented: CoreUpdateVPNDevicePorts - core_updateVPNDevicePorts"))
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.UpdateVpnDevicePorts(cc, deviceName, ports); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
 }
 
-// CoreUpdateVPNDeviceNs is the resolver for the core_updateVPNDeviceNs field.
-func (r *mutationResolver) CoreUpdateVPNDeviceNs(ctx context.Context, deviceName string, namespace string) (bool, error) {
-	// TODO
-	panic(fmt.Errorf("not implemented: CoreUpdateVPNDeviceNs - core_updateVPNDeviceNs"))
+// CoreUpdateVPNDeviceEnv is the resolver for the core_updateVPNDeviceEnv field.
+func (r *mutationResolver) CoreUpdateVPNDeviceEnv(ctx context.Context, deviceName string, projectName string, envName string) (bool, error) {
+	if projectName == "" && envName == "" {
+		return false, fmt.Errorf("projectName and envName cannot be empty")
+	}
+
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.UpdateVpnDeviceContext(cc, deviceName, projectName, envName); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
 }
 
 // CoreDeleteVPNDevice is the resolver for the core_deleteVPNDevice field.
