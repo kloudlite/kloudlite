@@ -5,14 +5,15 @@ import "github.com/kloudlite/api/pkg/repos"
 type ResourceType string
 
 const (
-	ResourceTypeProject         ResourceType = "project"
-	ResourceTypeEnvironment     ResourceType = "environment"
-	ResourceTypeApp             ResourceType = "app"
-	ResourceTypeConfig          ResourceType = "config"
-	ResourceTypeSecret          ResourceType = "secret"
-	ResourceTypeImagePullSecret ResourceType = "image_pull_secret"
-	ResourceTypeRouter          ResourceType = "router"
-	ResourceTypeManagedResource ResourceType = "managed_resource"
+	ResourceTypeProject               ResourceType = "project"
+	ResourceTypeEnvironment           ResourceType = "environment"
+	ResourceTypeApp                   ResourceType = "app"
+	ResourceTypeConfig                ResourceType = "config"
+	ResourceTypeSecret                ResourceType = "secret"
+	ResourceTypeImagePullSecret       ResourceType = "image_pull_secret"
+	ResourceTypeRouter                ResourceType = "router"
+	ResourceTypeManagedResource       ResourceType = "managed_resource"
+	ResourceTypeProjectManagedService ResourceType = "project_managed_service"
 )
 
 type ResourceMapping struct {

@@ -1,7 +1,6 @@
 package domain
 
 import (
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 
 	"github.com/kloudlite/api/common"
@@ -59,6 +58,11 @@ func (d *domain) GetProjectManagedService(ctx ConsoleContext, projectName string
 	return c, nil
 }
 
+func (d *domain) applyProjectManagedService(ctx ConsoleContext, pmsvc *entities.ProjectManagedService) error {
+	addTrackingId(&pmsvc.ProjectManagedService, pmsvc.Id)
+	return d.applyK8sResource(ctx, pmsvc.ProjectName, &pmsvc.ProjectManagedService, pmsvc.RecordVersion)
+}
+
 func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error) {
 	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
 		return nil, errors.NewE(err)
@@ -98,12 +102,12 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, service.ProjectName, &service.ProjectManagedService, 1); err != nil {
+	pms, err := d.pmsRepo.Create(ctx, &service)
+	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	pms, err := d.pmsRepo.Create(ctx, &service)
-	if err != nil {
+	if err := d.applyProjectManagedService(ctx, pms); err != nil {
 		return nil, errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishProjectManagedServiceEvent(&service, PublishAdd)
@@ -120,40 +124,39 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
-	cms, err := d.findProjectManagedService(ctx, projectName, service.Name)
+	pmsvc, err := d.findProjectManagedService(ctx, projectName, service.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if cms.IsMarkedForDeletion() {
+	if pmsvc.IsMarkedForDeletion() {
 		return nil, errors.Newf("cluster managed service %q (projectName=%q) is marked for deletion", service.Name, projectName)
 	}
 
-	cms.IncrementRecordVersion()
-	cms.LastUpdatedBy = common.CreatedOrUpdatedBy{
+	pmsvc.IncrementRecordVersion()
+	pmsvc.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
 
-	cms.Labels = service.Labels
-	cms.Annotations = service.Annotations
+	pmsvc.Labels = service.Labels
+	pmsvc.Annotations = service.Annotations
 
-	cms.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cms.RecordVersion)
+	pmsvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, pmsvc.RecordVersion)
 
-	unp, err := d.pmsRepo.UpdateById(ctx, cms.Id, cms)
+	upmsvc, err := d.pmsRepo.UpdateById(ctx, pmsvc.Id, pmsvc)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-
-	if err := d.applyK8sResource(ctx, projectName, &unp.ProjectManagedService, unp.RecordVersion); err != nil {
+	if err := d.applyProjectManagedService(ctx, upmsvc); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishProjectManagedServiceEvent(unp, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectManagedServiceEvent(upmsvc, PublishUpdate)
 
-	return unp, nil
+	return upmsvc, nil
 }
 
 func (d *domain) DeleteProjectManagedService(ctx ConsoleContext, projectName string, name string) error {
@@ -161,18 +164,18 @@ func (d *domain) DeleteProjectManagedService(ctx ConsoleContext, projectName str
 		return errors.NewE(err)
 	}
 
-	svc, err := d.findProjectManagedService(ctx, projectName, name)
+	pmsvc, err := d.findProjectManagedService(ctx, projectName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if svc.IsMarkedForDeletion() {
+	if pmsvc.IsMarkedForDeletion() {
 		return errors.Newf("project managed service %q (projectName=%q) is already marked for deletion", name, projectName)
 	}
 
-	svc.MarkedForDeletion = fn.New(true)
-	svc.SyncStatus = t.GetSyncStatusForDeletion(svc.Generation)
-	upC, err := d.pmsRepo.UpdateById(ctx, svc.Id, svc)
+	pmsvc.MarkedForDeletion = fn.New(true)
+	pmsvc.SyncStatus = t.GetSyncStatusForDeletion(pmsvc.Generation)
+	upC, err := d.pmsRepo.UpdateById(ctx, pmsvc.Id, pmsvc)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -207,7 +210,6 @@ func (d *domain) OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projec
 		// does not exist, (maybe already deleted)
 		return nil
 	}
-
 
 	if err := d.MatchRecordVersion(service.Annotations, svc.RecordVersion); err != nil {
 		return d.ResyncProjectManagedService(ctx, service.ProjectName, service.Name)
@@ -249,16 +251,16 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 	return nil
 }
 
-
 func (d *domain) ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error {
 	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
 		return errors.NewE(err)
 	}
 
-	a, err := d.findProjectManagedService(ctx, projectName,name)
+	a, err := d.findProjectManagedService(ctx, projectName, name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	return d.resyncK8sResource(ctx, a.ProjectName, a.SyncStatus.Action, &a.ProjectManagedService, a.RecordVersion)
 }
+

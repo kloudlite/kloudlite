@@ -2,180 +2,84 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
-func (d *domain) CheckNameAvailability(ctx context.Context, resType entities.ResourceType, accountName string, namespace *string, name string) (*CheckNameAvailabilityOutput, error) {
-	errNamespaceRequired := func() error {
-		return errors.Newf("namespace is required for resource type %q", resType)
+func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter, repo repos.DbRepo[T]) (*CheckNameAvailabilityOutput, error) {
+	res, err := repo.FindOne(ctx, filters)
+	if err != nil {
+		return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
+	}
+
+	if fn.IsNil(res) {
+		return &CheckNameAvailabilityOutput{Result: true}, nil
+	}
+
+	return &CheckNameAvailabilityOutput{
+		Result:         false,
+		SuggestedNames: fn.GenValidK8sResourceNames(filters["metadata.name"].(string), 3),
+	}, nil
+}
+
+func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, projectName string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
+	errEnvironmentRequired := func() error {
+		return errors.Newf("param environmentName is required for resource type %q", resType)
+	}
+
+	if !fn.IsValidK8sResourceName(name) {
+		return &CheckNameAvailabilityOutput{
+			Result:         false,
+			SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+		}, nil
 	}
 
 	switch resType {
 	case entities.ResourceTypeProject:
 		{
-			if fn.IsValidK8sResourceName(name) {
-				p, err := d.projectRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if p == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
+			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "metadata.name": name}, d.projectRepo)
+		}
+
+	case entities.ResourceTypeProjectManagedService:
+		{
+			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "projectName": projectName, "metadata.name": name}, d.pmsRepo)
 		}
 	case entities.ResourceTypeEnvironment:
 		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				p, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if p == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
-	case entities.ResourceTypeApp:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				a, err := d.appRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if a == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
-			}, nil
-		}
-	case entities.ResourceTypeConfig:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				c, err := d.configRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if c == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
-
-	case entities.ResourceTypeSecret:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				s, err := d.secretRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if s == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
-
-	case entities.ResourceTypeRouter:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				r, err := d.routerRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if r == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
-	case entities.ResourceTypeManagedResource:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				r, err := d.mresRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-				}
-				if r == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
+			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "projectName": projectName, "metadata.name": name}, d.environmentRepo)
 		}
 	default:
-		{
-			return nil, errors.Newf("resource type %q is not acknowledged", resType)
+		if environmentName == nil {
+			return nil, errEnvironmentRequired()
+		}
+
+		filter := repos.Filter{
+			"accountName":     accountName,
+			"projectName":     projectName,
+			"environmentName": environmentName,
+			"metadata.name":   name,
+		}
+
+		switch resType {
+		case entities.ResourceTypeApp:
+			return checkResourceName(ctx, filter, d.appRepo)
+		case entities.ResourceTypeConfig:
+			return checkResourceName(ctx, filter, d.configRepo)
+		case entities.ResourceTypeSecret:
+			return checkResourceName(ctx, filter, d.secretRepo)
+		case entities.ResourceTypeRouter:
+			return checkResourceName(ctx, filter, d.routerRepo)
+		case entities.ResourceTypeManagedResource:
+			return checkResourceName(ctx, filter, d.mresRepo)
+		case entities.ResourceTypeImagePullSecret:
+			return checkResourceName(ctx, filter, d.pullSecretsRepo)
+		default:
+			{
+				return nil, errors.Newf("resource type %q is not acknowledged", resType)
+			}
 		}
 	}
 }

@@ -9,6 +9,7 @@ enum ConsoleResType {
     secret
     router
     managed_service
+    project_managed_service
     managed_resource
     environment
     vpn_device
@@ -83,7 +84,7 @@ input CoreSearchVPNDevices {
 }
 
 type Query {
-    core_checkNameAvailability(resType: ConsoleResType!, namespace: String, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    core_checkNameAvailability(projectName: String!, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
     core_listProjects(clusterName: String, search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
