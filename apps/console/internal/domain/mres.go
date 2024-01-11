@@ -42,6 +42,16 @@ func (d *domain) GetManagedResource(ctx ResourceContext, name string) (*entities
 	return d.findMRes(ctx, name)
 }
 
+// GetManagedResourceOutputKVs implements Domain.
+func (*domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error) {
+	panic("unimplemented")
+}
+
+// GetManagedResourceOutputKeys implements Domain.
+func (*domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
+	panic("unimplemented")
+}
+
 // mutations
 
 func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
@@ -233,6 +243,3 @@ func (d *domain) ResyncManagedResource(ctx ResourceContext, name string) error {
 	}
 	return d.resyncK8sResource(ctx, mres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 }
-
-
-

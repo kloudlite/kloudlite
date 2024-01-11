@@ -40,6 +40,55 @@ func (d *domain) GetSecret(ctx ResourceContext, name string) (*entities.Secret, 
 	return d.findSecret(ctx, name)
 }
 
+// GetSecretEntries implements Domain.
+func (d *domain) GetSecretEntries(ctx ResourceContext, keyrefs []SecretKeyRef) ([]*SecretKeyValueRef, error) {
+	filters := ctx.DBFilters()
+
+	names := make([]any, 0, len(keyrefs))
+	for i := range keyrefs {
+		names = append(names, keyrefs[i].SecretName)
+	}
+
+	filters = d.secretRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+		"metadata.name": {
+			MatchType: repos.MatchTypeArray,
+			Array:     names,
+		},
+	})
+
+	secrets, err := d.secretRepo.Find(ctx, repos.Query{Filter: filters})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	results := make([]*SecretKeyValueRef, 0, len(secrets))
+
+	data := make(map[string]map[string]string)
+
+	for i := range secrets {
+		m := make(map[string]string, len(secrets[i].Data))
+		for k, v := range secrets[i].Data {
+			m[k] = string(v)
+		}
+
+		for k, v := range secrets[i].StringData {
+			m[k] = string(v)
+		}
+
+		data[secrets[i].Name] = m
+	}
+
+	for i := range keyrefs {
+		results = append(results, &SecretKeyValueRef{
+			SecretName: keyrefs[i].SecretName,
+			Key:        keyrefs[i].Key,
+			Value:      data[keyrefs[i].SecretName][keyrefs[i].Key],
+		})
+	}
+
+	return results, nil
+}
+
 func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)

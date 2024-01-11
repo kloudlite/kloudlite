@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
@@ -172,16 +173,23 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 		return false, err
 	}
 
-	intercepted := app.Spec.Intercept.Enabled
+	intercepted := app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
 
 	if intercepted && app.Spec.Intercept.ToDevice != deviceName {
 		return false, errors.Newf("device (%s) is already intercepting app (%s)", app.Spec.Intercept.ToDevice, appName)
 	}
 
+	if app.Spec.Intercept == nil {
+		app.Spec.Intercept = &crdsv1.Intercept{}
+	}
 	app.Spec.Intercept.Enabled = intercept
 	app.Spec.Intercept.ToDevice = deviceName
 
 	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, app, app.RecordVersion); err != nil {
 		return false, errors.NewE(err)
 	}
 

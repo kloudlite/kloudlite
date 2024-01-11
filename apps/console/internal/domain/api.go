@@ -70,14 +70,25 @@ type ConfigKeyValueRef struct {
 }
 
 type SecretKeyRef struct {
-	SecretName string `json:"seceretName"`
+	SecretName string `json:"secretName"`
 	Key        string `json:"key"`
 }
 
 type SecretKeyValueRef struct {
-	SecretName string `json:"seceretName"`
+	SecretName string `json:"secretName"`
 	Key        string `json:"key"`
 	Value      string `json:"value"`
+}
+
+type ManagedResourceKeyRef struct {
+	MresName string `json:"mresName"`
+	Key      string `json:"key"`
+}
+
+type ManagedResourceKeyValueRef struct {
+	MresName string `json:"mresName"`
+	Key      string `json:"key"`
+	Value    string `json:"value"`
 }
 
 type ResType string
@@ -174,6 +185,9 @@ type Domain interface {
 
 	ListManagedResources(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
 	GetManagedResource(ctx ResourceContext, name string) (*entities.ManagedResource, error)
+
+  GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error)
+  GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []ManagedResourceKeyRef) ([]*ManagedResourceKeyValueRef, error)
 
 	CreateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	UpdateManagedResource(ctx ResourceContext, mres entities.ManagedResource) (*entities.ManagedResource, error)

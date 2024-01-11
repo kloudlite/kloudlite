@@ -28,7 +28,6 @@ func newResourceContext(ctx domain.ConsoleContext, projectName string, environme
 	}
 }
 
-
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
@@ -52,7 +51,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
 	}
-
 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
 		logger := logger.WithKV("subject", msg.Subject)
@@ -233,6 +231,12 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
+				if v, ok := ru.Object[types.KeyManagedResSecret]; ok {
+					if v2, ok := v.(*corev1.Secret); ok {
+						mres.SyncedOutputSecretRef = v2
+					}
+				}
+
 				if resStatus == types.ResourceStatusDeleted {
 					return d.OnManagedResourceDeleteMessage(rctx, mres)
 				}
@@ -246,14 +250,16 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				if err != nil {
-					return errors.NewE(err)
+				if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
+					if v2, ok := v.(*corev1.Secret); ok {
+						pmsvc.SyncedOutputSecretRef = v2
+					}
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnProjectManagedServiceDeleteMessage(dctx, pmsvc.ProjectName,pmsvc)
+					return d.OnProjectManagedServiceDeleteMessage(dctx, pmsvc.ProjectName, pmsvc)
 				}
-				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName,pmsvc, resStatus, opts)
+				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName, pmsvc, resStatus, opts)
 			}
 		}
 		return nil

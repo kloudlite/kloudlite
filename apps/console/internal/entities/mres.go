@@ -5,6 +5,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type ManagedResource struct {
@@ -14,6 +15,8 @@ type ManagedResource struct {
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	ProjectName     string `json:"projectName" graphql:"noinput"`
 	EnvironmentName string `json:"environmentName" graphql:"noinput"`
+
+	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"ignore"`
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`

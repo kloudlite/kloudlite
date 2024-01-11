@@ -19,6 +19,7 @@ import (
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	t "github.com/kloudlite/api/pkg/types"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -124,7 +125,7 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return errors.NewE(err)
 				}
 
-				if v, ok := su.Object["resource-watcher-wireguard-config"]; ok {
+				if v, ok := su.Object[types.KeyVPNDeviceConfig]; ok {
 					b, err := json.Marshal(v)
 					if err != nil {
 						return errors.NewE(err)
@@ -209,15 +210,21 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 
 		case clusterMsvcGVK.String():
 			{
-				var svc entities.ClusterManagedService
-				if err := fn.JsonConversion(su.Object, &svc); err != nil {
+				var cmsvc entities.ClusterManagedService
+				if err := fn.JsonConversion(su.Object, &cmsvc); err != nil {
 					return errors.NewE(err)
 				}
 
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnClusterManagedServiceDeleteMessage(dctx, su.ClusterName, svc)
+				if v, ok := su.Object[types.KeyClusterManagedSvcSecret]; ok {
+					if v2, ok := v.(*corev1.Secret); ok {
+						cmsvc.SyncedOutputSecretRef = v2
+					}
 				}
-				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, svc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnClusterManagedServiceDeleteMessage(dctx, su.ClusterName, cmsvc)
+				}
+				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		default:
 			{

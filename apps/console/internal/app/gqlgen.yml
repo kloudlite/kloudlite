@@ -134,6 +134,12 @@ models:
     model: github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
 
+  ManagedResourceKeyRefIn:
+    model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
+
+  ManagedResourceKeyValueRef:
+    model: github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
+
   ImagePullSecret: &image-pull-secret-model
     model: github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
   ImagePullSecretIn: *image-pull-secret-model

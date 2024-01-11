@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -210,22 +211,39 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		Filter: filters,
 		Sort:   nil,
 	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	secrets, err := d.secretRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 	configs, err := d.configRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 	routers, err := d.routerRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
 		Filter: filters,
 		Sort:   nil,
 	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	for _, app := range apps {
 		app.Namespace = env.Spec.TargetNamespace
 		app.EnvironmentName = envName
@@ -364,22 +382,41 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		Filter: resContext.DBFilters(),
 		Sort:   nil,
 	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
 	secrets, err := d.secretRepo.Find(ctx, repos.Query{
 		Filter: resContext.DBFilters(),
 		Sort:   nil,
 	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
 	configs, err := d.configRepo.Find(ctx, repos.Query{
 		Filter: resContext.DBFilters(),
 		Sort:   nil,
 	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
 	routers, err := d.routerRepo.Find(ctx, repos.Query{
 		Filter: resContext.DBFilters(),
 		Sort:   nil,
 	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
 	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
 		Filter: resContext.DBFilters(),
 		Sort:   nil,
 	})
+	if err != nil {
+		return errors.NewE(err)
+	}
 
 	for _, app := range apps {
 		err := d.DeleteApp(resContext, app.Name)

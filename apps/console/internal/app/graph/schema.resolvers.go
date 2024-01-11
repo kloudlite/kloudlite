@@ -879,6 +879,16 @@ func (r *queryResolver) CoreResyncRouter(ctx context.Context, projectName string
 	return true, nil
 }
 
+// CoreGetManagedResouceOutputKeys is the resolver for the core_getManagedResouceOutputKeys field.
+func (r *queryResolver) CoreGetManagedResouceOutputKeys(ctx context.Context, projectName string, envName string, name string) ([]string, error) {
+	panic(fmt.Errorf("not implemented: CoreGetManagedResouceOutputKeys - core_getManagedResouceOutputKeys"))
+}
+
+// CoreGetManagedResouceOutputKeyValues is the resolver for the core_getManagedResouceOutputKeyValues field.
+func (r *queryResolver) CoreGetManagedResouceOutputKeyValues(ctx context.Context, projectName string, envName string, keyrefs []*domain.ManagedResourceKeyRef) ([]*domain.ManagedResourceKeyValueRef, error) {
+	panic(fmt.Errorf("not implemented: CoreGetManagedResouceOutputKeyValues - core_getManagedResouceOutputKeyValues"))
+}
+
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
 func (r *queryResolver) CoreListManagedResources(ctx context.Context, projectName string, envName string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)

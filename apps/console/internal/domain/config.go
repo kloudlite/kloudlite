@@ -69,11 +69,11 @@ func (d *domain) GetConfigEntries(ctx ResourceContext, keyrefs []ConfigKeyRef) (
 	}
 
 	for i := range keyrefs {
-		results[i] = &ConfigKeyValueRef{
+		results = append(results, &ConfigKeyValueRef{
 			ConfigName: keyrefs[i].ConfigName,
 			Key:        keyrefs[i].Key,
 			Value:      data[keyrefs[i].ConfigName][keyrefs[i].Key],
-		}
+		})
 	}
 
 	return results, nil
