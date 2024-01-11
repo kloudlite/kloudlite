@@ -261,13 +261,24 @@ func (g *grpcServer) processError(ctx context.Context, accountName string, clust
 	}()
 
 	msgTopic := common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.InfraReceiver, common.EventErrorOnApply)
-	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{
-		Subject: msgTopic,
-		Payload: msg,
-	}); err != nil {
+	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{Subject: msgTopic, Payload: msg}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("while producing to topic (%s)", msgTopic))
 	}
-	logger.Infof("[%v] dispatched error-on-apply message", g.errorMessagesCounter)
+
+	logger.Infof("[%v] dispatched error-on-apply message to %s receiver", g.errorMessagesCounter, common.InfraReceiver)
+
+	msgTopic = common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ConsoleReceiver, common.EventErrorOnApply)
+	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{Subject: msgTopic, Payload: msg}); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("while producing to topic (%s)", msgTopic))
+	}
+	logger.Infof("[%v] dispatched error-on-apply message to %s receiver", g.errorMessagesCounter, common.ConsoleReceiver)
+
+	msgTopic = common.GetPlatformClusterMessagingTopic(accountName, clusterName, common.ContainerRegistryReceiver, common.EventErrorOnApply)
+	if err := g.updatesProducer.Produce(ctx, types.ProduceMsg{Subject: msgTopic, Payload: msg}); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("while producing to topic (%s)", msgTopic))
+	}
+	logger.Infof("[%v] dispatched error-on-apply message to %s receiver", g.errorMessagesCounter, common.ContainerRegistryReceiver)
+
 	return nil
 }
 
