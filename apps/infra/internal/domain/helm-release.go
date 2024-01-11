@@ -61,6 +61,11 @@ func (d *domain) GetHelmRelease(ctx InfraContext, clusterName string, hrName str
 	return c, nil
 }
 
+func (d *domain) applyHelmRelease(ctx InfraContext, hr *entities.HelmRelease) error {
+	addTrackingId(&hr.HelmChart, hr.Id)
+	return d.resDispatcher.ApplyToTargetCluster(ctx, hr.ClusterName, &hr.HelmChart, hr.RecordVersion)
+}
+
 func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr entities.HelmRelease) (*entities.HelmRelease, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateHelmRelease); err != nil {
 		return nil, errors.NewE(err)
@@ -114,7 +119,7 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &hr.HelmChart, hr.RecordVersion); err != nil {
+	if err := d.applyHelmRelease(ctx, &hr); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -159,7 +164,7 @@ func (d *domain) UpdateHelmRelease(ctx InfraContext, clusterName string, hr enti
 
 	d.resourceEventPublisher.PublishHelmReleaseEvent(unp, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.HelmChart, unp.RecordVersion); err != nil {
+	if err := d.applyHelmRelease(ctx, unp); err != nil {
 		return nil, errors.NewE(err)
 	}
 

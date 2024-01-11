@@ -80,7 +80,7 @@ func addTrackingId(obj client.Object, id repos.ID) {
 	if ann == nil {
 		ann = make(map[string]string, 1)
 	}
-	ann[constants.ResourceTrackingKey] = string(id)
+	ann[constants.ObservabilityTrackingKey] = string(id)
 	obj.SetAnnotations(ann)
 }
 

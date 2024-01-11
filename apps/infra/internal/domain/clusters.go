@@ -84,6 +84,11 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 	return fn.New(string(kubeconfig)), nil
 }
 
+func (d *domain) applyCluster(ctx InfraContext, cluster *entities.Cluster) error {
+	addTrackingId(&cluster.Cluster, cluster.Id)
+	return d.applyK8sResource(ctx, &cluster.Cluster, cluster.RecordVersion)
+}
+
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
 		return nil, errors.NewE(err)
@@ -239,7 +244,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &nCluster.Cluster, nCluster.RecordVersion); err != nil {
+	if err := d.applyCluster(ctx, nCluster); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -328,7 +333,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, &uCluster.Cluster, uCluster.RecordVersion); err != nil {
+	if err := d.applyCluster(ctx, uCluster); err != nil {
 		return nil, errors.NewE(err)
 	}
 
