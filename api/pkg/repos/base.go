@@ -42,7 +42,7 @@ func (c *BaseEntity) SetUpdateTime(ut time.Time) {
 }
 
 func (c *BaseEntity) IsZero() bool {
-	return c.Id == ""
+	return c == nil || c.Id == ""
 }
 
 func (c *BaseEntity) IncrementRecordVersion() {

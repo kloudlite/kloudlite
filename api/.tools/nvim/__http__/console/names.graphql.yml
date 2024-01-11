@@ -6,20 +6,22 @@ global:
 
 ---
 label: Check Name Availability
-query: |+
-  query Core_checkNameAvailability($resType: ConsoleResType!, $name: String!) {
-    core_checkNameAvailability(resType: $resType, name: $name) {
+query: |+  #graphql
+  query Core_checkNameAvailability($projectName: String!, $resType: ConsoleResType!, $name: String!) {
+    core_checkNameAvailability(projectName: $projectName, resType: $resType, name: $name) {
       result
       suggestedNames
     }
   }
 variables:
-  resType: project
-  name: sample123
+  # projectName: "{{.projectName}}"
+  projectName: "world-bikash"
+  resType: project_managed_service
+  name: "hello-world"
 ---
 
 label: Check Name Availability With Namespace
-query: |+
+query: |+ #graphql
   query Core_checkNameAvailability($resType: ConsoleResType!, $name: String!, $namespace: String) {
     core_checkNameAvailability(resType: $resType, name: $name, namespace: $namespace) {
       result
@@ -30,4 +32,4 @@ variables:
   resType: app
   name: s1x
   namespace: "sample-nxtcoder17"
----
+--

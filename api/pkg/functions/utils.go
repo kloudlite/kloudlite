@@ -39,6 +39,15 @@ func New[T any](v T) *T {
 	return &v
 }
 
+// IsNil is useful when checking for a typed pointer
+// for primitive types, use v == nil
+func IsNil[T any](v T) bool {
+	var x T
+	return func(a, b any) bool {
+		return a == b
+	}(v, x)
+}
+
 // RegularPlural is copied from https://github.com/kubernetes-sigs/kubebuilder/blob/afce6a0e8c2a6d5682be07bbe502e728dd619714/pkg/model/resource/utils.go#L71
 func RegularPlural(singular string) string {
 	return flect.Pluralize(strings.ToLower(singular))
