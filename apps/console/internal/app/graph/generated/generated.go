@@ -20,11 +20,12 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
-	"github.com/kloudlite/operator/apis/wireguard/v1"
+	"github.com/kloudlite/operator/apis/crds/v1"
+	v11 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -598,7 +599,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreCloneEnvironment            func(childComplexity int, projectName string, sourceEnvName string, envName string) int
+		CoreCloneEnvironment            func(childComplexity int, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) int
 		CoreCreateApp                   func(childComplexity int, projectName string, envName string, app entities.App) int
 		CoreCreateConfig                func(childComplexity int, projectName string, envName string, config entities.Config) int
 		CoreCreateEnvironment           func(childComplexity int, projectName string, env entities.Environment) int
@@ -630,7 +631,7 @@ type ComplexityRoot struct {
 		CoreUpdateSecret                func(childComplexity int, projectName string, envName string, secret entities.Secret) int
 		CoreUpdateVPNDevice             func(childComplexity int, vpnDevice entities.ConsoleVPNDevice) int
 		CoreUpdateVPNDeviceNs           func(childComplexity int, deviceName string, namespace string) int
-		CoreUpdateVPNDevicePorts        func(childComplexity int, deviceName string, ports []*v1.Port) int
+		CoreUpdateVPNDevicePorts        func(childComplexity int, deviceName string, ports []*v11.Port) int
 	}
 
 	PageInfo struct {
@@ -895,11 +896,11 @@ type ManagedResourceResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.ManagedResource) (string, error)
 }
 type MetadataResolver interface {
-	Annotations(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
-	CreationTimestamp(ctx context.Context, obj *v11.ObjectMeta) (string, error)
-	DeletionTimestamp(ctx context.Context, obj *v11.ObjectMeta) (*string, error)
+	Annotations(ctx context.Context, obj *v12.ObjectMeta) (map[string]interface{}, error)
+	CreationTimestamp(ctx context.Context, obj *v12.ObjectMeta) (string, error)
+	DeletionTimestamp(ctx context.Context, obj *v12.ObjectMeta) (*string, error)
 
-	Labels(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
+	Labels(ctx context.Context, obj *v12.ObjectMeta) (map[string]interface{}, error)
 }
 type MutationResolver interface {
 	CoreCreateProject(ctx context.Context, project entities.Project) (*entities.Project, error)
@@ -908,7 +909,7 @@ type MutationResolver interface {
 	CoreCreateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
 	CoreUpdateEnvironment(ctx context.Context, projectName string, env entities.Environment) (*entities.Environment, error)
 	CoreDeleteEnvironment(ctx context.Context, projectName string, envName string) (bool, error)
-	CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, envName string) (*entities.Environment, error)
+	CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v1.EnvironmentRoutingMode) (*entities.Environment, error)
 	CoreCreateImagePullSecret(ctx context.Context, projectName string, envName string, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error)
 	CoreDeleteImagePullSecret(ctx context.Context, projectName string, envName string, secretName string) (bool, error)
 	CoreCreateApp(ctx context.Context, projectName string, envName string, app entities.App) (*entities.App, error)
@@ -932,7 +933,7 @@ type MutationResolver interface {
 	CoreDeleteProjectManagedService(ctx context.Context, projectName string, pmsvcName string) (bool, error)
 	CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
-	CoreUpdateVPNDevicePorts(ctx context.Context, deviceName string, ports []*v1.Port) (bool, error)
+	CoreUpdateVPNDevicePorts(ctx context.Context, deviceName string, ports []*v11.Port) (bool, error)
 	CoreUpdateVPNDeviceNs(ctx context.Context, deviceName string, namespace string) (bool, error)
 	CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error)
 }
@@ -1012,52 +1013,52 @@ type SecretResolver interface {
 }
 
 type AppInResolver interface {
-	Metadata(ctx context.Context, obj *entities.App, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.App, data *v12.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.App, data *model.GithubComKloudliteOperatorApisCrdsV1AppSpecIn) error
 }
 type ConfigInResolver interface {
 	BinaryData(ctx context.Context, obj *entities.Config, data map[string]interface{}) error
 	Data(ctx context.Context, obj *entities.Config, data map[string]interface{}) error
 
-	Metadata(ctx context.Context, obj *entities.Config, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Config, data *v12.ObjectMeta) error
 }
 type ConsoleVPNDeviceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.ConsoleVPNDevice, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.ConsoleVPNDevice, data *v12.ObjectMeta) error
 
 	Spec(ctx context.Context, obj *entities.ConsoleVPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error
 }
 type EnvironmentInResolver interface {
-	Metadata(ctx context.Context, obj *entities.Environment, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Environment, data *v12.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.Environment, data *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn) error
 }
 type ImagePullSecretInResolver interface {
 	Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) error
-	Metadata(ctx context.Context, obj *entities.ImagePullSecret, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.ImagePullSecret, data *v12.ObjectMeta) error
 }
 type ManagedResourceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.ManagedResource, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.ManagedResource, data *v12.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.ManagedResource, data *model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn) error
 }
 type MetadataInResolver interface {
-	Annotations(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
-	Labels(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
+	Annotations(ctx context.Context, obj *v12.ObjectMeta, data map[string]interface{}) error
+	Labels(ctx context.Context, obj *v12.ObjectMeta, data map[string]interface{}) error
 }
 type ProjectInResolver interface {
-	Metadata(ctx context.Context, obj *entities.Project, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Project, data *v12.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.Project, data *model.GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn) error
 }
 type ProjectManagedServiceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.ProjectManagedService, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.ProjectManagedService, data *v12.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.ProjectManagedService, data *model.GithubComKloudliteOperatorApisCrdsV1ProjectManagedServiceSpecIn) error
 }
 type RouterInResolver interface {
-	Metadata(ctx context.Context, obj *entities.Router, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Router, data *v12.ObjectMeta) error
 	Spec(ctx context.Context, obj *entities.Router, data *model.GithubComKloudliteOperatorApisCrdsV1RouterSpecIn) error
 }
 type SecretInResolver interface {
 	Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error
 
-	Metadata(ctx context.Context, obj *entities.Secret, data *v11.ObjectMeta) error
+	Metadata(ctx context.Context, obj *entities.Secret, data *v12.ObjectMeta) error
 	StringData(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error
 	Type(ctx context.Context, obj *entities.Secret, data *model.K8sIoAPICoreV1SecretType) error
 }
@@ -3313,7 +3314,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["projectName"].(string), args["sourceEnvName"].(string), args["envName"].(string)), true
+		return e.complexity.Mutation.CoreCloneEnvironment(childComplexity, args["projectName"].(string), args["sourceEnvName"].(string), args["destinationEnvName"].(string), args["displayName"].(string), args["environmentRoutingMode"].(v1.EnvironmentRoutingMode)), true
 
 	case "Mutation.core_createApp":
 		if e.complexity.Mutation.CoreCreateApp == nil {
@@ -3697,7 +3698,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateVPNDevicePorts(childComplexity, args["deviceName"].(string), args["ports"].([]*v1.Port)), true
+		return e.complexity.Mutation.CoreUpdateVPNDevicePorts(childComplexity, args["deviceName"].(string), args["ports"].([]*v11.Port)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -5094,7 +5095,7 @@ type Mutation {
     core_createEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_updateEnvironment(projectName: String!, env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccount
     core_deleteEnvironment(projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-    core_cloneEnvironment(projectName: String!, sourceEnvName: String!, envName: String!): Environment @isLoggedInAndVerified @hasAccount
+    core_cloneEnvironment(projectName: String!, sourceEnvName: String!, destinationEnvName: String!, displayName: String!, environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!): Environment @isLoggedInAndVerified @hasAccount
 
     # image pull secrets
     core_createImagePullSecret(projectName: String!, envName: String!, imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccount
@@ -6300,14 +6301,32 @@ func (ec *executionContext) field_Mutation_core_cloneEnvironment_args(ctx contex
 	}
 	args["sourceEnvName"] = arg1
 	var arg2 string
-	if tmp, ok := rawArgs["envName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("envName"))
+	if tmp, ok := rawArgs["destinationEnvName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destinationEnvName"))
 		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["envName"] = arg2
+	args["destinationEnvName"] = arg2
+	var arg3 string
+	if tmp, ok := rawArgs["displayName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+		arg3, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["displayName"] = arg3
+	var arg4 v1.EnvironmentRoutingMode
+	if tmp, ok := rawArgs["environmentRoutingMode"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environmentRoutingMode"))
+		arg4, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["environmentRoutingMode"] = arg4
 	return args, nil
 }
 
@@ -7178,7 +7197,7 @@ func (ec *executionContext) field_Mutation_core_updateVPNDevicePorts_args(ctx co
 		}
 	}
 	args["deviceName"] = arg0
-	var arg1 []*v1.Port
+	var arg1 []*v11.Port
 	if tmp, ok := rawArgs["ports"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ports"))
 		arg1, err = ec.unmarshalNPortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPortᚄ(ctx, tmp)
@@ -8861,7 +8880,7 @@ func (ec *executionContext) _App_metadata(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -10081,7 +10100,7 @@ func (ec *executionContext) _Config_metadata(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -11357,7 +11376,7 @@ func (ec *executionContext) _ConsoleVPNDevice_metadata(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -12625,7 +12644,7 @@ func (ec *executionContext) _Environment_metadata(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -15912,9 +15931,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode)
+	res := resTmp.(*v1.EnvironmentRoutingMode)
 	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRouting_mode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -20247,7 +20266,7 @@ func (ec *executionContext) _ImagePullSecret_metadata(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -21590,7 +21609,7 @@ func (ec *executionContext) _ManagedResource_metadata(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -22578,7 +22597,7 @@ func (ec *executionContext) fieldContext_MatchFilter_regex(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_annotations(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_annotations(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_annotations(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22619,7 +22638,7 @@ func (ec *executionContext) fieldContext_Metadata_annotations(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_creationTimestamp(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22663,7 +22682,7 @@ func (ec *executionContext) fieldContext_Metadata_creationTimestamp(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22704,7 +22723,7 @@ func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_generation(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_generation(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_generation(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22748,7 +22767,7 @@ func (ec *executionContext) fieldContext_Metadata_generation(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_labels(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22789,7 +22808,7 @@ func (ec *executionContext) fieldContext_Metadata_labels(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -22833,7 +22852,7 @@ func (ec *executionContext) fieldContext_Metadata_name(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graphql.CollectedField, obj *v12.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_namespace(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -23499,7 +23518,7 @@ func (ec *executionContext) _Mutation_core_cloneEnvironment(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["envName"].(string))
+			return ec.resolvers.Mutation().CoreCloneEnvironment(rctx, fc.Args["projectName"].(string), fc.Args["sourceEnvName"].(string), fc.Args["destinationEnvName"].(string), fc.Args["displayName"].(string), fc.Args["environmentRoutingMode"].(v1.EnvironmentRoutingMode))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25991,7 +26010,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDevicePorts(ctx context.Cont
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateVPNDevicePorts(rctx, fc.Args["deviceName"].(string), fc.Args["ports"].([]*v1.Port))
+			return ec.resolvers.Mutation().CoreUpdateVPNDevicePorts(rctx, fc.Args["deviceName"].(string), fc.Args["ports"].([]*v11.Port))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -26938,7 +26957,7 @@ func (ec *executionContext) _Project_metadata(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -27783,7 +27802,7 @@ func (ec *executionContext) _ProjectManagedService_metadata(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -32387,7 +32406,7 @@ func (ec *executionContext) _Router_metadata(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -33562,7 +33581,7 @@ func (ec *executionContext) _Secret_metadata(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(v11.ObjectMeta)
+	res := resTmp.(v12.ObjectMeta)
 	fc.Result = res
 	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
@@ -37230,7 +37249,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			it.Mode, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode(ctx, v)
+			it.Mode, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -38536,8 +38555,8 @@ func (ec *executionContext) unmarshalInputMatchFilterIn(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj interface{}) (v11.ObjectMeta, error) {
-	var it v11.ObjectMeta
+func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj interface{}) (v12.ObjectMeta, error) {
+	var it v12.ObjectMeta
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -38594,8 +38613,8 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interface{}) (v1.Port, error) {
-	var it v1.Port
+func (ec *executionContext) unmarshalInputPortIn(ctx context.Context, obj interface{}) (v11.Port, error) {
+	var it v11.Port
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -42935,7 +42954,7 @@ func (ec *executionContext) _MatchFilter(ctx context.Context, sel ast.SelectionS
 
 var metadataImplementors = []string{"Metadata"}
 
-func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *v11.ObjectMeta) graphql.Marshaler {
+func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *v12.ObjectMeta) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, metadataImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -46234,6 +46253,22 @@ func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx context.Context, v interface{}) (v1.EnvironmentRoutingMode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := v1.EnvironmentRoutingMode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx context.Context, sel ast.SelectionSet, v v1.EnvironmentRoutingMode) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec) graphql.Marshaler {
 	return ec._Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec(ctx, sel, &v)
 }
@@ -46695,16 +46730,16 @@ func (ec *executionContext) marshalNMatchFilterMatchType2githubᚗcomᚋkloudlit
 	return res
 }
 
-func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v11.ObjectMeta) graphql.Marshaler {
+func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v12.ObjectMeta) graphql.Marshaler {
 	return ec._Metadata(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (v11.ObjectMeta, error) {
+func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (v12.ObjectMeta, error) {
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v11.ObjectMeta, error) {
+func (ec *executionContext) unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v12.ObjectMeta, error) {
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -46719,13 +46754,13 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋkloudliteᚋapi�
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPortᚄ(ctx context.Context, v interface{}) ([]*v1.Port, error) {
+func (ec *executionContext) unmarshalNPortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPortᚄ(ctx context.Context, v interface{}) ([]*v11.Port, error) {
 	var vSlice []interface{}
 	if v != nil {
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*v1.Port, len(vSlice))
+	res := make([]*v11.Port, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
 		res[i], err = ec.unmarshalNPortIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPort(ctx, vSlice[i])
@@ -46736,7 +46771,7 @@ func (ec *executionContext) unmarshalNPortIn2ᚕᚖgithubᚗcomᚋkloudliteᚋop
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalNPortIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPort(ctx context.Context, v interface{}) (*v1.Port, error) {
+func (ec *executionContext) unmarshalNPortIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋwireguardᚋv1ᚐPort(ctx context.Context, v interface{}) (*v11.Port, error) {
 	res, err := ec.unmarshalInputPortIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
@@ -47351,7 +47386,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47359,7 +47394,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -48023,20 +48058,21 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx context.Context, v interface{}) (*v1.EnvironmentRoutingMode, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(model.GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := v1.EnvironmentRoutingMode(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentRoutingMode) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐEnvironmentRoutingMode(ctx context.Context, sel ast.SelectionSet, v *v1.EnvironmentRoutingMode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1EnvironmentSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec) graphql.Marshaler {
@@ -48710,11 +48746,11 @@ func (ec *executionContext) unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudlite�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v11.ObjectMeta) graphql.Marshaler {
+func (ec *executionContext) marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v12.ObjectMeta) graphql.Marshaler {
 	return ec._Metadata(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v11.ObjectMeta, error) {
+func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v12.ObjectMeta, error) {
 	if v == nil {
 		return nil, nil
 	}
