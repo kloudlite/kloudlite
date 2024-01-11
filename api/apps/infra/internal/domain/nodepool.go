@@ -20,6 +20,11 @@ import (
 
 const tenantControllerNamespace = "kloudlite"
 
+func (d *domain) applyNodePool(ctx InfraContext, np *entities.NodePool) error {
+	addTrackingId(&np.NodePool, np.Id)
+	return d.resDispatcher.ApplyToTargetCluster(ctx, np.ClusterName, &np.NodePool, np.RecordVersion)
+}
+
 func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateNodepool); err != nil {
 		return nil, errors.NewE(err)
@@ -145,7 +150,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	}
 	d.resourceEventPublisher.PublishNodePoolEvent(&nodepool, PublishAdd)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &np.NodePool, np.RecordVersion); err != nil {
+	if err := d.applyNodePool(ctx, np); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -198,7 +203,7 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 	d.resourceEventPublisher.PublishNodePoolEvent(unp, PublishUpdate)
 	d.resourceEventPublisher.PublishNodePoolEvent(unp, PublishDelete)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.NodePool, unp.RecordVersion); err != nil {
+	if err := d.applyNodePool(ctx, unp); err != nil {
 		return nil, errors.NewE(err)
 	}
 

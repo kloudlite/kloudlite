@@ -58,6 +58,11 @@ func (d *domain) GetClusterManagedService(ctx InfraContext, clusterName string, 
 	return c, nil
 }
 
+func (d *domain) applyClusterManagedService(ctx InfraContext, cmsvc *entities.ClusterManagedService) error {
+	addTrackingId(&cmsvc.ClusterManagedService, cmsvc.Id)
+	return d.resDispatcher.ApplyToTargetCluster(ctx, cmsvc.ClusterName, &cmsvc.ClusterManagedService, cmsvc.RecordVersion)
+}
+
 func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
@@ -101,7 +106,7 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &service.ClusterManagedService, 1); err != nil {
+	if err := d.applyClusterManagedService(ctx, &service); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -148,7 +153,7 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName strin
 
 	d.resourceEventPublisher.PublishCMSEvent(unp, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &unp.ClusterManagedService, unp.RecordVersion); err != nil {
+	if err := d.applyClusterManagedService(ctx, unp); err != nil {
 		return nil, errors.NewE(err)
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 
 	"github.com/kloudlite/api/apps/infra/internal/env"
+	constant "github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -62,6 +63,15 @@ func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction
 		return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, obj)
 	}
 	return errors.Newf("unknonw action: %q", action)
+}
+
+func addTrackingId(obj client.Object, id repos.ID) {
+	ann := obj.GetAnnotations()
+	if ann == nil {
+		ann = make(map[string]string, 1)
+	}
+	ann[constant.ObservabilityTrackingKey] = string(id)
+	obj.SetAnnotations(ann)
 }
 
 func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVersion int) error {
