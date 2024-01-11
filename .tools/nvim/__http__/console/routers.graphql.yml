@@ -60,13 +60,13 @@ query: |+
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName2}}"
+  envName: "{{.envName}}"
   router:
     displayName: "this is a test router"
     metadata:
       name: '{{.name}}'
     spec:
-      ingressClass: "{{.ingressClass2}}"
+      # ingressClass: "{{.ingressClass}}"
       https:
         enabled: true
         # clusterIssuer: cluster-issuer

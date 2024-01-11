@@ -51,6 +51,8 @@ require (
 	golang.org/x/net v0.17.0
 )
 
+require github.com/kloudlite/operator v0.0.0-20240111104606-97933f90de7b
+
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
@@ -58,7 +60,6 @@ require (
 	github.com/google/pprof v0.0.0-20230509042627-b1315fad0c5a // indirect
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/kloudlite/operator v0.0.0-20240111104606-97933f90de7b // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect

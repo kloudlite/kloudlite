@@ -95,7 +95,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 		return errors.NewE(err)
 	}
 
-	if clusterName == nil {
+	if clusterName == nil || *clusterName == "" {
 		d.logger.Infof("skipping apply of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
 		return nil
 	}
@@ -109,6 +109,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 		ann = make(map[string]string, 1)
 	}
 	ann[constants.RecordVersionKey] = fmt.Sprintf("%d", recordVersion)
+	obj.SetAnnotations(ann)
 
 	m, err := fn.K8sObjToMap(obj)
 	if err != nil {
@@ -124,7 +125,7 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 		return errors.NewE(err)
 	}
 
-  subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
 
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
 		Subject: subject,
@@ -139,7 +140,7 @@ func (d *domain) deleteK8sResource(ctx K8sContext, projectName string, obj clien
 		return errors.NewE(err)
 	}
 
-	if clusterName == nil {
+	if clusterName == nil || *clusterName == "" {
 		d.logger.Infof("skipping delete of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
 		return ErrNoClusterAttached
 	}

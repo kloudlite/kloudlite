@@ -40,12 +40,12 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 		}
 
 		defer func() {
-			if err := d.consoleCacheStore.Set(ctx, cacheKey, []byte(fn.DefaultIfNil(&proj.ClusterName))); err != nil {
+			if err := d.consoleCacheStore.Set(ctx, cacheKey, []byte(fn.DefaultIfNil(proj.ClusterName))); err != nil {
 				d.logger.Infof("failed to set project cluster map: %v", err)
 			}
 		}()
 
-		return &proj.ClusterName, nil
+		return proj.ClusterName, nil
 	}
 
 	if clusterName == nil {
@@ -158,8 +158,10 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	project.LastUpdatedBy = project.CreatedBy
 
 	project.AccountName = ctx.AccountName
+	project.ClusterName = project.ClusterName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
 
+	project.AccountName = ctx.AccountName
 	if project.Spec.TargetNamespace == "" {
 		project.Spec.TargetNamespace = d.getProjectNamespace(project.Name)
 	}
