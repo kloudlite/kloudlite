@@ -124,8 +124,10 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 		return errors.NewE(err)
 	}
 
+  subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+
 	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
-		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName),
+		Subject: subject,
 		Payload: b,
 	})
 	return errors.NewE(err)

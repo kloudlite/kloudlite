@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/kv"
@@ -20,8 +21,8 @@ import (
 )
 
 func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string) (*string, error) {
+	cacheKey := fmt.Sprintf("account_name_%s-project_name_%s", ctx.GetAccountName(), projectName)
 	clusterName, err := d.consoleCacheStore.Get(ctx, projectName)
-
 	if err != nil {
 		if !errors.Is(err, kv.ErrKeyNotFound) {
 			return nil, err
@@ -39,7 +40,7 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 		}
 
 		defer func() {
-			if err := d.consoleCacheStore.Set(ctx, projectName, []byte(fn.DefaultIfNil(proj.ClusterName))); err != nil {
+			if err := d.consoleCacheStore.Set(ctx, cacheKey, []byte(fn.DefaultIfNil(proj.ClusterName))); err != nil {
 				d.logger.Infof("failed to set project cluster map: %v", err)
 			}
 		}()

@@ -47,7 +47,7 @@ var Module = fx.Module("app",
 	domain.Module,
 
 	fx.Provide(func(logger logging.Logger, jc *nats.JetstreamClient, producer UpdatesProducer, ev *env.Env, d domain.Domain) (messages.MessageDispatchServiceServer, error) {
-		return NewMessageOfficeServer(producer, jc, ev, d, logger.WithName("message-office-grpc-server"))
+		return NewMessageOfficeServer(producer, jc, ev, d, logger.WithName("message-office"))
 	}),
 
 	fx.Provide(func(conn RealVectorGrpcClient) proto_rpc.VectorClient {
@@ -57,7 +57,7 @@ var Module = fx.Module("app",
 	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger logging.Logger, d domain.Domain, ev *env.Env) proto_rpc.VectorServer {
 		return &vectorProxyServer{
 			realVectorClient:   vectorGrpcClient,
-			logger:             logger.WithKV("component", "vector-proxy-grpc-server"),
+			logger:             logger.WithName("vector-proxy"),
 			domain:             d,
 			tokenHashingSecret: ev.TokenHashingSecret,
 			pushEventsCounter:  0,
