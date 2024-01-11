@@ -164,9 +164,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 		if ns.Labels == nil {
 			ns.Labels = make(map[string]string, 4)
 		}
-
-		ns.Labels[constants.AccountNameKey] = project.Spec.AccountName
-		ns.Labels[constants.ClusterNameKey] = project.Spec.ClusterName
+		
 		ns.Labels[constants.EnvironmentNameKey] = obj.Name
 		ns.Labels[constants.ProjectNameKey] = obj.Spec.ProjectName
 

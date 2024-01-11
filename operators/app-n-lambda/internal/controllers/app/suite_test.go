@@ -35,7 +35,7 @@ var _ = BeforeSuite(
 				Dev:  true,
 			}),
 			Name:       "app",
-			YamlClient: *Suite.K8sYamlClient,
+			YamlClient: Suite.K8sYamlClient,
 		}
 	},
 )
