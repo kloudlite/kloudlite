@@ -31,10 +31,13 @@ import {
 } from '~/console/utils/commons';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { cn } from '~/components/utils';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { IClusterContext } from '../infra+/$cluster+/_layout';
+import { ManagedServiceStateProvider } from './new-managed-service/useManagedServiceState';
 
 export interface IProjectContext extends IClusterContext {
   project: IProject;
+  msvtemplates: IMSvTemplates;
 }
 const iconSize = tabIconSize;
 const tabs = [
@@ -73,10 +76,10 @@ const tabs = [
 
 const Project = () => {
   const rootContext = useOutletContext<IClusterContext>();
-  const { project } = useLoaderData();
+  const { project, msvtemplates } = useLoaderData();
   return (
     <SubNavDataProvider>
-      <Outlet context={{ ...rootContext, project }} />
+      <Outlet context={{ ...rootContext, project, msvtemplates }} />
     </SubNavDataProvider>
   );
 };
@@ -147,11 +150,22 @@ export const loader = async (ctx: IRemixCtx) => {
     const { data, errors } = await GQLServerHandler(ctx.request).getProject({
       name: project,
     });
+
+    const { data: msvTemplates, errors: msvError } = await GQLServerHandler(
+      ctx.request
+    ).listMSvTemplates({});
+
     if (errors) {
       throw errors[0];
     }
+
+    if (msvError) {
+      throw msvError[0];
+    }
+
     return {
       project: data || {},
+      msvtemplates: msvTemplates || {},
     };
   } catch (err) {
     logger.log(err);

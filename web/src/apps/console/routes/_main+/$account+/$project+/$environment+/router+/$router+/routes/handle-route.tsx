@@ -12,19 +12,20 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IDialogBase } from '~/console/components/types.d';
-import { IRouter, IRouters } from '~/console/server/gql/queries/router-queries';
+import { IRouters } from '~/console/server/gql/queries/router-queries';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useMapper } from '~/components/utils';
 import { NN } from '~/root/lib/types/common';
 import { TextInput } from '~/components/atoms/input';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IApp } from '~/console/server/gql/queries/app-queries';
+import { ModifiedRouter } from './_index';
 
 type IDialog = IDialogBase<
-  NN<ExtractNodeType<IRouters>['spec']['routes']>[number]
-> & { router?: IRouter };
+  NN<ExtractNodeType<IRouters>['spec']['routes']>[number] & { id: string }
+> & { router?: ModifiedRouter };
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
@@ -42,21 +43,28 @@ const Root = (props: IDialog) => {
     if (!projectName || !envName) {
       throw new Error('Project and Environment is required!.');
     }
-    return api.listApps({
-      projectName,
-      envName,
-    });
+    return api.listApps({ projectName, envName });
   });
 
   const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =
     useForm({
-      initialValues: {
-        path: '',
-        app: '',
-        port: '',
-      },
+      initialValues: isUpdate
+        ? {
+            path: props.data.path,
+            app: props.data.app || '',
+            port: `${props.data.port}`,
+          }
+        : {
+            path: '',
+            app: '',
+            port: '',
+          },
       validationSchema: Yup.object({
-        path: Yup.string().required(),
+        path: Yup.string()
+          .required()
+          .test('is-valid', 'Path should not contain spaces.', (value) => {
+            return !value.includes(' ');
+          }),
         app: Yup.string().required(),
         port: Yup.string().required(),
       }),
@@ -76,9 +84,13 @@ const Root = (props: IDialog) => {
                 spec: {
                   domains: router.spec.domains,
                   routes: [
-                    ...(router.spec.routes || []),
+                    ...(router.spec.routes?.map((r) => ({
+                      path: r.path,
+                      app: r.app,
+                      port: r.port,
+                    })) || []),
                     {
-                      path: val.path,
+                      path: `/${val.path}`,
                       app: val.app,
                       port: parseInt(val.port, 10),
                     },
@@ -94,7 +106,42 @@ const Root = (props: IDialog) => {
             }
             toast.success('Route created successfully');
           } else {
-            //
+            const { errors: e } = await api.updateRouter({
+              envName,
+              projectName,
+              router: {
+                displayName: router.displayName,
+                spec: {
+                  domains: router.spec.domains,
+                  routes: [
+                    ...(router.spec.routes
+
+                      ?.filter(
+                        (
+                          rou // @ts-ignore
+                        ) => rou.id !== props.data.id
+                      )
+                      .map((route) => ({
+                        app: route.app,
+                        path: route.path,
+                        port: route.port,
+                      })) || []),
+                    {
+                      path: val.path,
+                      app: val.app,
+                      port: parseInt(val.port, 10),
+                    },
+                  ],
+                },
+                metadata: {
+                  ...router.metadata,
+                },
+              },
+            });
+            if (e) {
+              throw e[0];
+            }
+            toast.success('Route updated successfully');
           }
           reloadPage();
           setVisible(false);
@@ -112,6 +159,24 @@ const Root = (props: IDialog) => {
     render: () => val.displayName,
   }));
 
+  useEffect(() => {
+    const d = parseNodes(data);
+    if (d.length > 0) {
+      if (isUpdate) {
+        setSelectedApp(d.find((app) => parseName(app) === props.data.app));
+      } else if (d.length === 1) {
+        handleChange('app')(dummyEvent(parseName(d[0])));
+        setSelectedApp(d[0]);
+      }
+    }
+  }, [isUpdate, data]);
+
+  useEffect(() => {
+    if (selectedApp?.spec.services?.length === 0) {
+      handleChange('port')(dummyEvent(selectedApp.spec.services[0].port));
+    }
+  }, [selectedApp]);
+
   return (
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content className="flex flex-col gap-3xl">
@@ -119,9 +184,12 @@ const Root = (props: IDialog) => {
           label="Path"
           size="lg"
           value={values.path}
-          onChange={handleChange('path')}
+          onChange={(e) => {
+            handleChange('path')(dummyEvent(e.target.value.toLowerCase()));
+          }}
           error={!!errors.path}
           message={errors.path}
+          prefix="/"
         />
         <Select
           size="lg"

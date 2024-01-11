@@ -1,6 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -74,9 +74,8 @@ const KlOperatorServices = () => {
                       variant="primary"
                       content="Create managed service"
                       prefix={<PlusFill />}
-                      onClick={() => {
-                        setVisible(true);
-                      }}
+                      to="../new-managed-service"
+                      LinkComponent={Link}
                     />
                   ),
                 }}
@@ -92,9 +91,8 @@ const KlOperatorServices = () => {
                   action: {
                     content: 'Create new managed service',
                     prefix: <Plus />,
-                    onClick: () => {
-                      setVisible(true);
-                    },
+                    to: '../new-managed-service',
+                    LinkComponent: Link,
                   },
                 }}
                 tools={<Tools />}

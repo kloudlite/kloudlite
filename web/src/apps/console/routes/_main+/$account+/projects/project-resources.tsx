@@ -27,7 +27,6 @@ const parseItem = (item: ExtractNodeType<IProjects>) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
@@ -46,9 +45,7 @@ const ExtraButton = ({ project }: { project: BaseType }) => {
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/${project.clusterName}/${parseName(
-            project
-          )}/settings`,
+          to: `/${account}/${parseName(project)}/settings`,
           key: 'settings',
         },
       ]}
@@ -61,7 +58,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, path, cluster, updateInfo } = parseItem(item);
+        const { name, id, path, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -77,15 +74,6 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                     action={<ExtraButton project={item} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
-                ),
-              },
-              {
-                key: generateKey(keyPrefix, path + cluster),
-                render: () => (
-                  <div className="flex flex-col gap-md">
-                    {/* <ListItem data={path} /> */}
-                    <ListBody data={cluster} />
-                  </div>
                 ),
               },
               {

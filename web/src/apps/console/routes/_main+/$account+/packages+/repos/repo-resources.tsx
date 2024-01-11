@@ -68,7 +68,7 @@ const RepoUrlView = ({ name }: { name: string }) => {
     <ListBody
       data={
         <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate"
+          className="cursor-pointer flex flex-row items-center gap-lg truncate w-fit"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

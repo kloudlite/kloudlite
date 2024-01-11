@@ -27,7 +27,6 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link } from '@remix-run/react';
 import { IStatus, listRender } from '~/console/components/commons';
-import AnimateHide from '~/components/atoms/animate-hide';
 import HandleNodePool from './handle-nodepool';
 import { findNodePlanWithCategory } from './nodepool-utils';
 

@@ -15,6 +15,7 @@ import {
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
 import { IEnvironmentContext } from '../routes/_main+/$account+/$project+/$environment+/_layout';
+import { parseName } from '../server/r-utils/common';
 
 interface IidSelector {
   name: string;
@@ -107,13 +108,9 @@ export const IdSelector = ({
             resType,
             name: `${name}`,
             // eslint-disable-next-line no-nested-ternary
-            ...(resType === 'environment'
+            ...(resType === 'environment' || resType === 'app'
               ? {
-                  namespace: project.spec?.targetNamespace,
-                }
-              : environment
-              ? {
-                  namespace: environment.spec?.targetNamespace,
+                  projectName: parseName(project),
                 }
               : {}),
             ...(resType === 'nodepool' || resType === 'vpn_device'

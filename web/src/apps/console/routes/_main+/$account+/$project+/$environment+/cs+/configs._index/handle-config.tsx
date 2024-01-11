@@ -3,6 +3,7 @@ import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -69,20 +70,18 @@ const HandleConfig = ({ show, setShow }: IDialog) => {
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
-          <div className="flex flex-col gap-2xl">
-            <TextInput
-              label="Name"
-              value={values.displayName}
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-            />
-            <IdSelector
-              resType="config"
-              onChange={(v) => handleChange('name')(dummyEvent(v))}
-              name={values.displayName}
-            />
-          </div>
+          <NameIdView
+            label="Name"
+            placeholder="Enter config name"
+            displayName={values.displayName}
+            name={values.name}
+            resType="config"
+            errors={errors.name}
+            onChange={({ name, id }) => {
+              handleChange('displayName')(dummyEvent(name));
+              handleChange('name')(dummyEvent(id));
+            }}
+          />
         </Popup.Content>
         <Popup.Footer>
           <Popup.Button closable content="Cancel" variant="basic" />

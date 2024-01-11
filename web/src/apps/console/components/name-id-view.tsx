@@ -1,8 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import { CircleNotch } from '@jengaicons/react';
-import { ReactNode, useState } from 'react';
+import { Dispatch, ReactNode, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
@@ -14,6 +13,7 @@ import {
 } from '../server/utils/auth-utils';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { IEnvironmentContext } from '../routes/_main+/$account+/$project+/$environment+/_layout';
+import { parseName } from '../server/r-utils/common';
 
 interface INameIdView {
   name: string;
@@ -28,6 +28,8 @@ interface INameIdView {
   prefix?: ReactNode;
   errors?: string;
   label?: ReactNode;
+  placeholder?: string;
+  onCheckError?: (error: boolean) => void;
 }
 
 export const NameIdView = ({
@@ -38,6 +40,8 @@ export const NameIdView = ({
   prefix,
   label,
   displayName,
+  placeholder,
+  onCheckError,
 }: INameIdView) => {
   const [nameValid, setNameValid] = useState(false);
   const [nameLoading, setNameLoading] = useState(false);
@@ -52,6 +56,7 @@ export const NameIdView = ({
       case 'config':
       case 'environment':
       case 'managed_service':
+      case 'project_managed_service':
       case 'managed_resource':
       case 'helm_release':
       case 'router':
@@ -86,9 +91,11 @@ export const NameIdView = ({
 
   const checkNameAvailable = () => {
     if (errors) {
+      // onCheckError?.(true);
       return errors;
     }
     if (!name) {
+      // onCheckError?.(true);
       return null;
     }
     if (nameLoading) {
@@ -102,13 +109,16 @@ export const NameIdView = ({
       );
     }
     if (nameValid) {
+      onCheckError?.(false);
       return (
         <span className="text-text-success bodySm-semibold">
           {name} is available.
         </span>
       );
     }
-    return 'This name is not available. Please try different.';
+    const error = 'This name is not available. Please try different.';
+    onCheckError?.(!!error);
+    return error;
   };
 
   const { environment, project } = useOutletContext<IEnvironmentContext>();
@@ -121,16 +131,20 @@ export const NameIdView = ({
           const { data, errors } = await checkApi()({
             resType,
             name: `${name}`,
-            ...(resType === 'environment'
+            ...([
+              'project',
+              'app',
+              'environment',
+              'config',
+              'secret',
+              'project_managed_service',
+            ].includes(resType)
               ? {
-                  namespace: project.spec?.targetNamespace,
-                }
-              : environment
-              ? {
-                  namespace: environment.spec?.targetNamespace,
+                  projectName: parseName(project),
+                  envName: parseName(environment),
                 }
               : {}),
-            ...(resType === 'nodepool' || resType === 'vpn_device'
+            ...(['nodepool', 'vpn_device'].includes(resType)
               ? {
                   clusterName: cluster,
                 }
@@ -171,16 +185,18 @@ export const NameIdView = ({
         const v = e.target.value;
         onChange?.({
           name: v,
-          id: v.toLowerCase().replace(' ', '-'),
+          id: v.trim().toLowerCase().replace(/ /g, '-'),
         });
+
         if (v) {
           setNameLoading(true);
         } else {
           setNameLoading(false);
         }
       }}
+      placeholder={placeholder}
       size="lg"
-      error={!nameValid && !!name && !nameLoading}
+      error={(!nameValid && !!name && !nameLoading) || !!errors}
       message={checkNameAvailable()}
       prefix={
         prefix && <span className="text-text-soft mr-sm">{prefix} /</span>

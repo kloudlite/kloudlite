@@ -1,5 +1,6 @@
-import { GearSix } from '@jengaicons/react';
+import { Copy, GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
+import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -17,6 +18,8 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { listRender } from '~/console/components/commons';
+import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'workspace';
 type BaseType = ExtractNodeType<IEnvironments>;
@@ -32,11 +35,25 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const ExtraButton = ({ item }: { item: BaseType }) => {
+type OnAction = ({ action, item }: { action: 'clone'; item: BaseType }) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+};
+
+const ExtraButton = ({ item, onAction }: IExtraButton) => {
   const { account, project } = useParams();
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Clone',
+          icon: <Copy size={16} />,
+          type: 'item',
+          key: 'clone',
+          onClick: () => onAction({ action: 'clone', item }),
+        },
         {
           label: 'Settings',
           icon: <GearSix size={16} />,
@@ -49,7 +66,12 @@ const ExtraButton = ({ item }: { item: BaseType }) => {
   );
 };
 
-const GridView = ({ items = [] }: { items: BaseType[] }) => {
+interface IResource {
+  items: BaseType[];
+  onAction: OnAction;
+}
+
+const GridView = ({ items = [], onAction }: IResource) => {
   const { account, project } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -67,7 +89,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton item={item} />}
+                    action={<ExtraButton item={item} onAction={onAction} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
@@ -89,7 +111,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-const ListView = ({ items }: { items: BaseType[] }) => {
+const ListView = ({ items, onAction }: IResource) => {
   const { account, project } = useParams();
 
   return (
@@ -97,6 +119,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
         return (
           <List.Row
             key={id}
@@ -114,6 +137,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
+              lR.statusRender({ className: 'mr-2xl' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
@@ -126,7 +150,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton item={item} />,
+                render: () => <ExtraButton item={item} onAction={onAction} />,
               },
             ]}
           />
@@ -137,11 +161,37 @@ const ListView = ({ items }: { items: BaseType[] }) => {
 };
 
 const Resources = ({ items = [] }: { items: BaseType[] }) => {
+  const [visible, setVisible] = useState<BaseType | null>(null);
+  const props: IResource = {
+    items,
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'clone':
+          setVisible(item);
+          break;
+        default:
+          break;
+      }
+    },
+  };
+
   return (
-    <ListGridView
-      listView={<ListView items={items} />}
-      gridView={<GridView items={items} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <CloneEnvironment
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => {
+            setVisible(null);
+          },
+          data: visible!,
+        }}
+      />
+    </>
   );
 };
 

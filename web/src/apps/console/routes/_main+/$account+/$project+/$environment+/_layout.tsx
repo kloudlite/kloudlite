@@ -66,6 +66,11 @@ const tabs = [
     value: '/cs',
   },
   {
+    label: 'Managed resources',
+    to: '/managed-resources',
+    value: '/managed-resources',
+  },
+  {
     label: 'Jobs & Crons',
     to: '/jc/task',
     value: '/jc',

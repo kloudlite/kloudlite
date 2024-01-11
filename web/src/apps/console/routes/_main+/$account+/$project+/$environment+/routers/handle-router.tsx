@@ -111,7 +111,7 @@ const Root = (props: IDialog) => {
 
   return (
     <Popup.Form onSubmit={handleSubmit}>
-      <Popup.Content className="flex flex-col gap-3xl">
+      <Popup.Content className="flex flex-col justify-start gap-3xl">
         <NameIdView
           resType="router"
           label="Name"

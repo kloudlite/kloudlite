@@ -26,11 +26,12 @@ query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clu
   }
 }
 
-query consoleCoreCheckNameAvailability($resType: ConsoleResType!, $name: String!, $namespace: String) {
+query consoleCoreCheckNameAvailability($projectName: String!, $resType: ConsoleResType!, $name: String!, $envName: String) {
   core_checkNameAvailability(
+    projectName: $projectName
     resType: $resType
     name: $name
-    namespace: $namespace
+    envName: $envName
   ) {
     result
     suggestedNames
@@ -100,118 +101,118 @@ mutation consoleUpdateProject($project: ProjectIn!) {
 
 query consoleGetProject($name: String!) {
   core_getProject(name: $name) {
-    id
-    displayName
-    creationTime
     clusterName
-    apiVersion
-    kind
+    displayName
     metadata {
-      namespace
       name
-      labels
-      deletionTimestamp
-      generation
-      creationTimestamp
-      annotations
+      namespace
     }
-    recordVersion
     spec {
       targetNamespace
-      logo
-      displayName
-      clusterName
-      accountName
     }
+    accountName
+    apiVersion
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    recordVersion
     status {
-      resources {
-        name
-        kind
-        apiVersion
-        namespace
-      }
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
       message {
         RawMessage
       }
-      lastReconcileTime
-      isReady
-      checks
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
     }
     syncStatus {
-      syncScheduledAt
-      state
-      recordVersion
-      lastSyncedAt
-      error
       action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
     }
     updateTime
-    accountName
   }
 }
 
-query consoleListProjects($clusterName: String, $pagination: CursorPaginationIn, $search: SearchProjects) {
-  core_listProjects(clusterName: $clusterName, pq: $pagination, search: $search) {
-    totalCount
+query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
+  core_listProjects(search: $search, pq: $pq) {
     edges {
+      cursor
       node {
-        id
-        displayName
-        creationTime
         clusterName
-        apiVersion
-        kind
         createdBy {
-          userName
           userEmail
           userId
+          userName
         }
+        creationTime
+        displayName
         lastUpdatedBy {
-          userName
-          userId
           userEmail
+          userId
+          userName
         }
+        markedForDeletion
         metadata {
-          namespace
           name
-          labels
-          deletionTimestamp
-          generation
-          creationTimestamp
-          annotations
+          namespace
         }
-        recordVersion
         spec {
           targetNamespace
-          logo
-          displayName
-          clusterName
-          accountName
         }
         status {
-          resources {
-            name
-            kind
-            apiVersion
-            namespace
-          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
           message {
             RawMessage
           }
-          lastReconcileTime
-          isReady
-          checks
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
         }
         updateTime
-        accountName
       }
     }
     pageInfo {
-      startCursor
-      hasNextPage
       endCursor
+      hasNextPage
       hasPreviousPage
+      startCursor
     }
+    totalCount
   }
 }
 
@@ -846,6 +847,18 @@ query consoleListEnvironments($projectName: String!, $search: SearchEnvironments
   }
 }
 
+mutation consoleCloneEnvironment($projectName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+  core_cloneEnvironment(
+    projectName: $projectName
+    sourceEnvName: $sourceEnvName
+    destinationEnvName: $destinationEnvName
+    displayName: $displayName
+    environmentRoutingMode: $environmentRoutingMode
+  ) {
+    id
+  }
+}
+
 mutation consoleCreateApp($projectName: String!, $envName: String!, $app: AppIn!) {
   core_createApp(projectName: $projectName, envName: $envName, app: $app) {
     id
@@ -1192,11 +1205,6 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
         }
         markedForDeletion
         metadata {
-          annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
           name
           namespace
         }
@@ -1215,6 +1223,7 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
           }
           domains
           https {
+            clusterIssuer
             enabled
             forceRedirect
           }
@@ -1298,6 +1307,7 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
       }
       domains
       https {
+        clusterIssuer
         enabled
         forceRedirect
       }
@@ -2423,20 +2433,8 @@ query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
 
 query consoleGetClusterMSv($clusterName: String!, $name: String!) {
   infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
-    displayName
-    creationTime
-    createdBy {
-      userEmail
-      userId
-      userName
-    }
     clusterName
-    lastUpdatedBy {
-      userEmail
-      userId
-      userName
-    }
-    markedForDeletion
+    displayName
     metadata {
       annotations
       creationTimestamp
@@ -2454,24 +2452,8 @@ query consoleGetClusterMSv($clusterName: String!, $name: String!) {
           spec
         }
       }
-      namespace
+      targetNamespace
     }
-    status {
-      checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
-    }
-    updateTime
   }
 }
 
@@ -2725,6 +2707,18 @@ query consoleGetMSvTemplate($category: String!, $name: String!) {
       displayName
       kind
       name
+      fields {
+        defaultValue
+        displayUnit
+        inputType
+        label
+        max
+        min
+        multiplier
+        name
+        required
+        unit
+      }
     }
   }
 }
@@ -2764,9 +2758,147 @@ query consoleListMSvTemplates {
         displayName
         kind
         name
+        fields {
+          defaultValue
+          displayUnit
+          inputType
+          label
+          max
+          min
+          multiplier
+          name
+          required
+          unit
+        }
       }
     }
   }
+}
+
+query consoleGetManagedResource($projectName: String!, $envName: String!, $name: String!) {
+  core_getManagedResource(
+    projectName: $projectName
+    envName: $envName
+    name: $name
+  ) {
+    displayName
+    enabled
+    environmentName
+    markedForDeletion
+    metadata {
+      name
+      namespace
+    }
+    projectName
+    spec {
+      resourceTemplate {
+        apiVersion
+        kind
+        msvcRef {
+          apiVersion
+          kind
+          name
+          namespace
+        }
+        spec
+      }
+    }
+    updateTime
+  }
+}
+
+mutation consoleCreateManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
+  core_createManagedResource(
+    projectName: $projectName
+    envName: $envName
+    mres: $mres
+  ) {
+    id
+  }
+}
+
+mutation consoleUpdateManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
+  core_updateManagedResource(
+    projectName: $projectName
+    envName: $envName
+    mres: $mres
+  ) {
+    id
+  }
+}
+
+query consoleListManagedResources($projectName: String!, $envName: String!) {
+  core_listManagedResources(projectName: $projectName, envName: $envName) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        enabled
+        environmentName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          name
+          namespace
+        }
+        projectName
+        spec {
+          resourceTemplate {
+            apiVersion
+            kind
+            msvcRef {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+            spec
+          }
+        }
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleDeleteManagedResource($projectName: String!, $envName: String!, $mresName: String!) {
+  core_deleteManagedResource(
+    projectName: $projectName
+    envName: $envName
+    mresName: $mresName
+  )
 }
 
 query consoleGetHelmChart($clusterName: String!, $name: String!) {
@@ -3296,8 +3428,8 @@ query authCli_listEnvironments($projectName: String!, $pq: CursorPaginationIn) {
   }
 }
 
-query authCli_listProjects($clusterName: String, $pq: CursorPaginationIn) {
-  core_listProjects(clusterName: $clusterName, pq: $pq) {
+query authCli_listProjects($pq: CursorPaginationIn) {
+  core_listProjects(pq: $pq) {
     edges {
       node {
         displayName

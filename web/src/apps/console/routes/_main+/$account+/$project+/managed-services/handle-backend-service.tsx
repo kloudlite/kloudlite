@@ -243,8 +243,6 @@ const RenderField = ({
   error: boolean;
   message?: string;
 }) => {
-  console.log('value', value);
-
   const [qos, setQos] = useState(false);
   if (field.inputType === 'Number') {
     return (

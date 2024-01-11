@@ -17,7 +17,7 @@ interface IReviewComponent {
   children: ReactNode;
   onEdit: () => void;
 }
-const ReviewComponent = ({
+export const ReviewComponent = ({
   title = '',
   children,
   onEdit,

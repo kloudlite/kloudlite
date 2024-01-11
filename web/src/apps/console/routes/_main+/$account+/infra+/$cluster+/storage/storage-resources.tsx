@@ -1,27 +1,19 @@
-import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey } from '~/components/utils';
 import {
   ListBody,
   ListTitle,
 } from '~/console/components/console-list-components';
-import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { handleError } from '~/root/lib/utils/common';
-import { useParams } from '@remix-run/react';
 import { IPvcs } from '~/console/server/gql/queries/pvc-queries';
 
-const RESOURCE_NAME = 'build run';
+const RESOURCE_NAME = 'storage';
 type BaseType = ExtractNodeType<IPvcs>;
 
 const parseItem = (item: BaseType) => {
@@ -34,34 +26,11 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-interface IExtraButton {
-  onDelete: () => void;
-}
-const ExtraButton = ({ onDelete }: IExtraButton) => {
-  return (
-    <ResourceExtraAction
-      options={
-        [
-          // {
-          //   label: 'Delete',
-          //   icon: <Trash size={16} />,
-          //   type: 'item',
-          //   onClick: onDelete,
-          //   key: 'delete',
-          //   className: '!text-text-critical',
-          // },
-        ]
-      }
-    />
-  );
-};
-
 interface IResource {
   items: BaseType[];
-  onDelete: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete }: IResource) => {
+const GridView = ({ items }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -73,19 +42,7 @@ const GridView = ({ items, onDelete }: IResource) => {
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
-                render: () => (
-                  <ListTitle
-                    title={name}
-                    subtitle={id}
-                    action={
-                      <ExtraButton
-                        onDelete={() => {
-                          onDelete(item);
-                        }}
-                      />
-                    }
-                  />
-                ),
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
               {
                 key: generateKey(keyPrefix, 'time'),
@@ -101,7 +58,7 @@ const GridView = ({ items, onDelete }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete }: IResource) => {
+const ListView = ({ items }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -123,16 +80,6 @@ const ListView = ({ items, onDelete }: IResource) => {
                   <ListBody data={`Last Updated ${updateInfo.time}`} />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
-                  />
-                ),
-              },
             ]}
           />
         );
@@ -142,51 +89,15 @@ const ListView = ({ items, onDelete }: IResource) => {
 };
 
 const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
-  );
-
-  const api = useConsoleApi();
-  const reloadPage = useReload();
-
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
   };
 
-  const params = useParams();
   return (
-    <>
-      <ListGridView
-        listView={<ListView {...props} />}
-        gridView={<GridView {...props} />}
-      />
-      <DeleteDialog
-        resourceName={parseName(showDeleteDialog)}
-        resourceType={RESOURCE_NAME}
-        show={showDeleteDialog}
-        setShow={setShowDeleteDialog}
-        onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteVpnDevice({
-              deviceName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
-            setShowDeleteDialog(null);
-          } catch (err) {
-            handleError(err);
-          }
-        }}
-      />
-    </>
+    <ListGridView
+      listView={<ListView {...props} />}
+      gridView={<GridView {...props} />}
+    />
   );
 };
 

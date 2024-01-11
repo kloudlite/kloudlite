@@ -12,6 +12,8 @@ import {
   ConsoleUpdateEnvironmentMutationVariables,
   ConsoleDeleteEnvironmentMutation,
   ConsoleDeleteEnvironmentMutationVariables,
+  ConsoleCloneEnvironmentMutation,
+  ConsoleCloneEnvironmentMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IEnvironment = NN<
@@ -204,6 +206,32 @@ export const environmentQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListEnvironmentsQuery) =>
         data.core_listEnvironments,
       vars(_: ConsoleListEnvironmentsQueryVariables) { },
+    }
+  ),
+  cloneEnvironment: executor(
+    gql`
+      mutation Core_cloneEnvironment(
+        $projectName: String!
+        $sourceEnvName: String!
+        $destinationEnvName: String!
+        $displayName: String!
+        $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!
+      ) {
+        core_cloneEnvironment(
+          projectName: $projectName
+          sourceEnvName: $sourceEnvName
+          destinationEnvName: $destinationEnvName
+          displayName: $displayName
+          environmentRoutingMode: $environmentRoutingMode
+        ) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCloneEnvironmentMutation) =>
+        data.core_cloneEnvironment,
+      vars(_: ConsoleCloneEnvironmentMutationVariables) { },
     }
   ),
 });

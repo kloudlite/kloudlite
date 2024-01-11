@@ -60,14 +60,9 @@ const NewProject = () => {
                 [keyconstants.nodeType]: val.nodeType,
               },
             },
+            clusterName: val.clusterName,
             displayName: val.displayName,
-            // spec: {
-            //   clusterName: val.clusterName,
-            //   accountName,
-            //   targetNamespace: val.name,
-            // },
             spec: {
-              displayName: val.displayName,
               targetNamespace: '',
             },
           },
@@ -84,97 +79,12 @@ const NewProject = () => {
     },
   });
 
-  // const [nameValid, setNameValid] = useState(false);
-  // const [nameLoading, setNameLoading] = useState(false);
-  // useDebounce(
-  //   async () => {
-  //     if (values.name) {
-  //       try {
-  //         ensureAccountClientSide(params);
-  //         ensureClusterClientSide(params);
-  //         const { data, errors } = await api.coreCheckNameAvailability({
-  //           resType: 'project',
-  //           name: `${values.name}`,
-  //         });
-
-  //         if (errors) {
-  //           throw errors[0];
-  //         }
-  //         if (data.result) {
-  //           setNameValid(true);
-  //         } else {
-  //           setNameValid(false);
-  //         }
-  //       } catch (err) {
-  //         handleError(err);
-  //       } finally {
-  //         setNameLoading(false);
-  //       }
-  //     }
-  //   },
-  //   500,
-  //   [values.name]
-  // );
-
-  // const checkNameAvailable = () => {
-  //   if (errors.name) {
-  //     return errors.name;
-  //   }
-  //   if (!values.name) {
-  //     return null;
-  //   }
-  //   if (nameLoading) {
-  //     return (
-  //       <div className="flex flex-row items-center gap-md">
-  //         <span className="animate-spin">
-  //           <CircleNotch size={10} />
-  //         </span>
-  //         <span>Checking availability</span>
-  //       </div>
-  //     );
-  //   }
-  //   if (nameValid) {
-  //     return (
-  //       <span className="text-text-success bodySm-semibold">
-  //         {values.name} is available.
-  //       </span>
-  //     );
-  //   }
-  //   return 'This name is not available. Please try different.';
-  // };
-
   const getView = () => {
     return (
       <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
         <div className="bodyMd text-text-soft">
           Create your project under production effortlessly.
         </div>
-        {/* <div className="flex flex-col">
-          <TextInput
-            label="Project name"
-            name="displayNmae"
-            value={values.displayName}
-            onChange={(e) => {
-              handleChange('displayName')(e);
-              handleChange('name')(
-                dummyEvent(e.target.value.toLowerCase().replace(' ', '-'))
-              );
-              if (e.target.value) {
-                setNameLoading(true);
-              } else {
-                setNameLoading(false);
-              }
-            }}
-            size="lg"
-            error={
-              ((!nameValid && !!values.name) || !!errors.name) && !nameLoading
-            }
-            message={checkNameAvailable()}
-            prefix={
-              <span className="text-text-soft mr-sm">{accountName} /</span>
-            }
-          />
-        </div> */}
 
         <NameIdView
           label="Project name"
@@ -251,8 +161,7 @@ const NewProject = () => {
   return (
     <ProgressWrapper
       title={isOnboarding ? 'Setup your account!' : 'Let’s create new project.'}
-      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
-  teams"
+      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
       progressItems={{
         items: getItems(),
       }}

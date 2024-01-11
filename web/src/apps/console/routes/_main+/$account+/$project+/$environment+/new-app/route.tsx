@@ -1,25 +1,19 @@
-import { Folders } from '@jengaicons/react';
-import { useNavigate, useOutletContext } from '@remix-run/react';
 import { useMapper } from '~/components/utils';
-import RawWrapper from '~/console/components/raw-wrapper';
 import {
   AppContextProvider,
   createAppTabs,
   useAppState,
 } from '~/console/page-components/app-states';
-import { parseName } from '~/console/server/r-utils/common';
 import ProgressWrapper from '~/console/components/progress-wrapper';
-import { useEffect } from 'react';
 import AppCompute from './app-compute';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
 import { FadeIn } from '../../../../../../page-components/util';
-import { IEnvironmentContext } from '../_layout';
 
 const AppComp = () => {
-  const { setPage, page, isPageComplete, resetState } = useAppState();
+  const { setPage, page, isPageComplete } = useAppState();
   const isActive = (t: createAppTabs) => t === page;
 
   const progressItems: {
@@ -72,10 +66,6 @@ const AppComp = () => {
     };
   });
 
-  const { environment } = useOutletContext<IEnvironmentContext>();
-
-  const navigate = useNavigate();
-
   return (
     <ProgressWrapper
       onClick={(p) => {
@@ -89,26 +79,6 @@ const AppComp = () => {
       progressItems={{
         items,
       }}
-    />
-  );
-  return (
-    <RawWrapper
-      title="Let’s create new application."
-      subtitle="Create your application under project effortlessly."
-      badge={{
-        title: environment.displayName,
-        subtitle: parseName(environment),
-        image: <Folders size={20} />,
-      }}
-      progressItems={items}
-      onProgressClick={(p) => {
-        if (isPageComplete(p)) setPage(p);
-      }}
-      onCancel={() => {
-        resetState();
-        navigate('../apps');
-      }}
-      rightChildren={tab()}
     />
   );
 };

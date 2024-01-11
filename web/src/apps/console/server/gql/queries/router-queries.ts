@@ -115,11 +115,6 @@ export const routerQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
                 name
                 namespace
               }
@@ -138,6 +133,7 @@ export const routerQueries = (executor: IExecutor) => ({
                 }
                 domains
                 https {
+                  clusterIssuer
                   enabled
                   forceRedirect
                 }
@@ -236,6 +232,7 @@ export const routerQueries = (executor: IExecutor) => ({
             }
             domains
             https {
+              clusterIssuer
               enabled
               forceRedirect
             }

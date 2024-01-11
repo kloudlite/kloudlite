@@ -48,53 +48,56 @@ export const projectQueries = (executor: IExecutor) => ({
     gql`
       query Core_getProject($name: String!) {
         core_getProject(name: $name) {
-          id
-          displayName
-          creationTime
           clusterName
-          apiVersion
-          kind
+          displayName
           metadata {
-            namespace
             name
-            labels
-            deletionTimestamp
-            generation
-            creationTimestamp
-            annotations
+            namespace
           }
-          recordVersion
           spec {
             targetNamespace
-            logo
-            displayName
-            clusterName
-            accountName
           }
+          accountName
+          apiVersion
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
+          id
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
+          recordVersion
           status {
-            resources {
-              name
-              kind
-              apiVersion
-              namespace
-            }
+            checks
+            isReady
+            lastReadyGeneration
+            lastReconcileTime
             message {
               RawMessage
             }
-            lastReconcileTime
-            isReady
-            checks
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
           }
           syncStatus {
-            syncScheduledAt
-            state
-            recordVersion
-            lastSyncedAt
-            error
             action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
           }
           updateTime
-          accountName
         }
       }
     `,
@@ -106,76 +109,67 @@ export const projectQueries = (executor: IExecutor) => ({
   listProjects: executor(
     gql`
       query Core_listProjects(
-        $clusterName: String
-        $pagination: CursorPaginationIn
         $search: SearchProjects
+        $pq: CursorPaginationIn
       ) {
-        core_listProjects(
-          clusterName: $clusterName
-          pq: $pagination
-          search: $search
-        ) {
-          totalCount
+        core_listProjects(search: $search, pq: $pq) {
           edges {
+            cursor
             node {
-              id
-              displayName
-              creationTime
               clusterName
-              apiVersion
-              kind
               createdBy {
-                userName
                 userEmail
                 userId
+                userName
               }
+              creationTime
+              displayName
               lastUpdatedBy {
-                userName
-                userId
                 userEmail
+                userId
+                userName
               }
+              markedForDeletion
               metadata {
-                namespace
                 name
-                labels
-                deletionTimestamp
-                generation
-                creationTimestamp
-                annotations
+                namespace
               }
-              recordVersion
               spec {
                 targetNamespace
-                logo
-                displayName
-                clusterName
-                accountName
               }
               status {
-                resources {
-                  name
-                  kind
-                  apiVersion
-                  namespace
-                }
+                checks
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
                 message {
                   RawMessage
                 }
-                lastReconcileTime
-                isReady
-                checks
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
               }
-
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               updateTime
-              accountName
             }
           }
           pageInfo {
-            startCursor
-            hasNextPage
             endCursor
+            hasNextPage
             hasPreviousPage
+            startCursor
           }
+          totalCount
         }
       }
     `,

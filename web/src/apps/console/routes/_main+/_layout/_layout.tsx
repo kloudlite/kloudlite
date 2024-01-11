@@ -116,7 +116,7 @@ const AccountTabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/infra/clusters`}>
+    <LogoWrapper to={`/${account}/projects`}>
       <BrandLogo />
     </LogoWrapper>
   );

@@ -8,6 +8,7 @@ import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { Switch } from '~/components/atoms/switch';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { DIALOG_TYPE } from '../utils/commons';
@@ -40,6 +41,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
     initialValues: {
       name: '',
       displayName: '',
+      environmentRoutingMode: false,
     },
     validationSchema,
 
@@ -60,6 +62,9 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
               spec: {
                 projectName: projectName || '',
                 targetNamespace: `${projectName}-${val.name}`,
+                routing: {
+                  mode: val.environmentRoutingMode ? 'public' : 'private',
+                },
               },
             },
           });
@@ -124,7 +129,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
           ? `Create new environment`
           : `Edit environment`}
       </Popup.Header>
-      <form onSubmit={handleSubmit}>
+      <Popup.Form onSubmit={handleSubmit}>
         <Popup.Content>
           <NameIdView
             resType="environment"
@@ -137,6 +142,13 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
               handleChange('name')(dummyEvent(id));
             }}
           />
+          <Switch
+            label="Public"
+            checked={values.environmentRoutingMode}
+            onChange={(val) => {
+              handleChange('environmentRoutingMode')(dummyEvent(val));
+            }}
+          />
         </Popup.Content>
         <Popup.Footer>
           <Popup.Button content="Cancel" variant="basic" closable />
@@ -147,7 +159,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
             variant="primary"
           />
         </Popup.Footer>
-      </form>
+      </Popup.Form>
     </Popup.Root>
   );
 };

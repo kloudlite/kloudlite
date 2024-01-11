@@ -79,7 +79,7 @@ const ExtraButton = ({
           label: 'Settings',
           icon: <GearSix size={16} />,
           type: 'item',
-          to: `/${account}/${cluster.metadata.name}/settings`,
+          to: `/${account}/infra/${cluster.metadata.name}/settings`,
           key: 'settings',
         },
       ]}

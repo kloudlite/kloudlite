@@ -1,4 +1,4 @@
-import { CaretDownFill, ChevronUpDown, Plus } from '@jengaicons/react';
+import { ChevronUpDown } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
   Outlet,
@@ -8,9 +8,7 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import OptionList from '~/components/atoms/option-list';
+import { useEffect } from 'react';
 import Popup from '~/components/molecule/popup';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
@@ -41,7 +39,7 @@ const AccountMenu = ({ account }: { account: IAccount }) => {
         value: parseName(acc),
       }))}
       onChange={(value) => {
-        navigate(`/${value}/infra/clusters`);
+        navigate(`/${value}/projects`);
       }}
       trigger={
         <span className="flex flex-row items-center gap-md bodyMd text-text-default px-md py-sm">

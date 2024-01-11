@@ -1,6 +1,6 @@
-import { Trash, PencilLine } from '@jengaicons/react';
-import { useState } from 'react';
-import { generateKey } from '~/components/utils';
+import { ArrowDown, ArrowUp, PencilLine, Trash } from '@jengaicons/react';
+import { useEffect, useState } from 'react';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListTitle,
@@ -9,17 +9,24 @@ import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
+import ResourceExtraAction, {
+  IResourceExtraItem,
+} from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IRouter, IRouters } from '~/console/server/gql/queries/router-queries';
 import { NN } from '~/root/lib/types/common';
+import { useParams } from '@remix-run/react';
+import { toast } from '~/components/molecule/toast';
 import HandleRoute from './handle-route';
+import { ModifiedRouter } from './_index';
 
 const RESOURCE_NAME = 'domain';
-type BaseType = NN<ExtractNodeType<IRouters>['spec']['routes']>[number];
+type BaseType = NN<ExtractNodeType<IRouters>['spec']['routes']>[number] & {
+  id: string;
+};
 
 const parseItem = (item: BaseType) => {
   return {
@@ -33,37 +40,60 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'edit' | 'delete' | 'detail';
+  action: 'edit' | 'move-down' | 'move-up' | 'delete';
   item: BaseType;
 }) => void;
 
 type IExtraButton = {
   onAction: OnAction;
   item: BaseType;
+  isFirst: boolean;
+  isLast: boolean;
 };
 
-const ExtraButton = ({ onAction, item }: IExtraButton) => {
-  return (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Edit',
-          icon: <PencilLine size={16} />,
-          type: 'item',
-          onClick: () => onAction({ action: 'edit', item }),
-          key: 'edit',
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: () => onAction({ action: 'delete', item }),
-          key: 'delete',
-          className: '!text-text-critical',
-        },
-      ]}
-    />
-  );
+const ExtraButton = ({ onAction, item, isFirst, isLast }: IExtraButton) => {
+  let options: IResourceExtraItem[] = [
+    {
+      label: 'Edit',
+      icon: <PencilLine size={16} />,
+      type: 'item',
+      onClick: () => onAction({ action: 'edit', item }),
+      key: 'edit',
+    },
+    {
+      label: 'Delete',
+      icon: <Trash size={16} />,
+      type: 'item',
+      onClick: () => onAction({ action: 'delete', item }),
+      key: 'delete',
+      className: '!text-text-critical',
+    },
+  ];
+  if (!isLast) {
+    options = [
+      {
+        label: 'Move down',
+        icon: <ArrowDown size={16} />,
+        type: 'item',
+        onClick: () => onAction({ action: 'move-down', item }),
+        key: 'move-down',
+      },
+      ...options,
+    ];
+  }
+  if (!isFirst) {
+    options = [
+      {
+        label: 'Move up',
+        icon: <ArrowUp size={16} />,
+        type: 'item',
+        onClick: () => onAction({ action: 'move-up', item }),
+        key: 'move-up',
+      },
+      ...options,
+    ];
+  }
+  return <ResourceExtraAction options={options} />;
 };
 
 interface IResource {
@@ -79,19 +109,26 @@ const GridView = ({ items, onAction }: IResource) => {
         const keyPrefix = `${RESOURCE_NAME}-${path}-${app}-${index}`;
         return (
           <Grid.Column
-            key={path + app + port}
+            key={path + app + port + item.id}
             rows={[
               {
                 key: generateKey(keyPrefix, path),
                 render: () => (
                   <ListTitle
                     title={path}
-                    action={<ExtraButton onAction={onAction} item={item} />}
+                    action={
+                      <ExtraButton
+                        onAction={onAction}
+                        item={item}
+                        isFirst={index === 0}
+                        isLast={index === items.length - 1}
+                      />
+                    }
                   />
                 ),
               },
               {
-                key: generateKey(keyPrefix, port),
+                key: generateKey(keyPrefix, `${app}`),
                 className: 'flex-1',
                 render: () => <ListBody data={app} />,
               },
@@ -116,7 +153,7 @@ const ListView = ({ items, onAction }: IResource) => {
         const keyPrefix = `${RESOURCE_NAME}-${path}-${app}-${index}`;
         return (
           <List.Row
-            key={path + app + port}
+            key={path + app + port + item.id}
             className="!p-3xl"
             columns={[
               {
@@ -125,7 +162,7 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ListTitle title={path} />,
               },
               {
-                key: generateKey(keyPrefix, port),
+                key: generateKey(keyPrefix, `${app}`),
                 className: 'flex-1',
                 render: () => <ListBody data={app} />,
               },
@@ -136,7 +173,14 @@ const ListView = ({ items, onAction }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+                render: () => (
+                  <ExtraButton
+                    onAction={onAction}
+                    item={item}
+                    isFirst={index === 0}
+                    isLast={index === items.length - 1}
+                  />
+                ),
               },
             ]}
           />
@@ -146,22 +190,99 @@ const ListView = ({ items, onAction }: IResource) => {
   );
 };
 
+const moveItemInArray = (
+  arr: BaseType[],
+  fromIndex: number,
+  toIndex: number
+) => {
+  const itemToMove = arr.splice(fromIndex, 1)[0]; // Remove the item from the original position
+  arr.splice(toIndex, 0, itemToMove); // Insert the item at the new position
+  return arr; // Return the modified array
+};
+
 const RouteResources = ({
   items = [],
   router,
 }: {
   items: BaseType[];
-  router: IRouter;
+  router?: ModifiedRouter;
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [modifiedItems, setModifiedItems] = useState<BaseType[]>([]);
   const [visible, setVisible] = useState<BaseType | null>(null);
+  const [moveDir, setMoveDir] = useState('');
   const api = useConsoleApi();
   const reloadPage = useReload();
+  const { environment, project } = useParams();
+  useEffect(() => {
+    setModifiedItems(items);
+  }, [items]);
+
+  const moveItem = (dir: 'move-down' | 'move-up', item: BaseType) => {
+    const currIndex = items.findIndex((i) => i.id === item.id);
+    switch (dir) {
+      case 'move-down':
+        if (currIndex < items.length - 1) {
+          setModifiedItems([
+            ...moveItemInArray(items, currIndex, currIndex + 1),
+          ]);
+        }
+        break;
+      case 'move-up':
+        if (currIndex > 0) {
+          setModifiedItems([
+            ...moveItemInArray(items, currIndex, currIndex - 1),
+          ]);
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (moveDir) {
+      setMoveDir('');
+      (async () => {
+        if (!project || !environment) {
+          throw new Error('Project and Environment is required!');
+        }
+        if (!router || !router.metadata || !router.spec) {
+          throw new Error('Router is required!');
+        }
+        try {
+          const { errors } = await api.updateRouter({
+            envName: environment,
+            projectName: project,
+            router: {
+              displayName: router?.displayName,
+              spec: {
+                ...router?.spec,
+                routes: modifiedItems.map((mi) => ({
+                  path: mi.path,
+                  port: mi.port,
+                  app: mi.app,
+                })),
+              },
+              metadata: {
+                ...router?.metadata,
+              },
+            },
+          });
+          if (errors) {
+            throw errors[0];
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      })();
+    }
+  }, [modifiedItems, moveDir]);
 
   const props: IResource = {
-    items,
+    items: modifiedItems,
     onAction: ({ action, item }) => {
       switch (action) {
         case 'edit':
@@ -170,6 +291,11 @@ const RouteResources = ({
         case 'delete':
           setShowDeleteDialog(item);
           break;
+        case 'move-down':
+        case 'move-up':
+          moveItem(action, item);
+          setMoveDir(action);
+          break;
         default:
       }
     },
@@ -177,7 +303,7 @@ const RouteResources = ({
   return (
     <>
       <ListGridView
-        listView={<ListView {...props} />}
+        listView={<ListView {...props} items={modifiedItems} />}
         gridView={<GridView {...props} />}
       />
       <DeleteDialog
@@ -187,15 +313,38 @@ const RouteResources = ({
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            // const { errors } = await api.deleteDomain({
-            //   domainName: showDeleteDialog!.domainName,
-            // });
+            if (!project || !environment) {
+              throw new Error('Project and Environment is required!');
+            }
+            if (!router || !router.metadata || !router.spec) {
+              throw new Error('Router is required!');
+            }
+            const { errors } = await api.updateRouter({
+              envName: environment,
+              projectName: project,
+              router: {
+                displayName: router?.displayName,
+                spec: {
+                  ...router?.spec,
+                  routes: modifiedItems
+                    .filter((mi) => mi.id !== showDeleteDialog?.id)
+                    .map((mi) => ({
+                      path: mi.path,
+                      port: mi.port,
+                      app: mi.app,
+                    })),
+                },
+                metadata: {
+                  ...router?.metadata,
+                },
+              },
+            });
 
-            // if (errors) {
-            //   throw errors[0];
-            // }
-            // reloadPage();
-            // toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
             setShowDeleteDialog(null);
           } catch (err) {
             handleError(err);
