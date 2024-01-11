@@ -15,6 +15,7 @@ import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
+	v11 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
@@ -79,12 +80,12 @@ func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, projectNam
 }
 
 // CoreCloneEnvironment is the resolver for the core_cloneEnvironment field.
-func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, envName string) (*entities.Environment, error) {
+func (r *mutationResolver) CoreCloneEnvironment(ctx context.Context, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode v11.EnvironmentRoutingMode) (*entities.Environment, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CloneEnvironment(cc, projectName, sourceEnvName, envName, "", "")
+	return r.Domain.CloneEnvironment(cc, projectName, sourceEnvName, destinationEnvName, displayName, environmentRoutingMode)
 }
 
 // CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.
