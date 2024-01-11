@@ -16,6 +16,13 @@ query: |+ # graphql
             userId
             userName
           }
+          syncStatus {
+            state
+            action
+            error
+            syncScheduledAt
+            recordVersion
+          }
           projectName
           recordVersion
           kind

@@ -4,7 +4,7 @@ global:
 ---
 
 label: List Environments
-query: |+
+query: |+ #graphql
   query Core_listEnvironments($projectName: String!) {
     core_listEnvironments(projectName: $projectName) {
       edges {
@@ -54,7 +54,7 @@ variables:
 ---
 
 label: Create Environment
-query: |+
+query: |+ #graphql
   mutation Core_createEnvironment($projectName: String!, $env: EnvironmentIn!) {
     core_createEnvironment(projectName: $projectName, env: $env) {
       apiVersion
