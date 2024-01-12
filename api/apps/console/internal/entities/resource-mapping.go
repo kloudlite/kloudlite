@@ -39,7 +39,15 @@ var ResourceMappingIndices = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "accountName", Value: repos.IndexAsc},
 			{Key: "projectName", Value: repos.IndexAsc},
+			{Key: "resourceType", Value: repos.IndexAsc},
 			{Key: "environmentName", Value: repos.IndexAsc},
+			{Key: "resourceName", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
 			{Key: "resourceType", Value: repos.IndexAsc},
 			{Key: "resourceName", Value: repos.IndexAsc},
 			{Key: "resourceNamespace", Value: repos.IndexAsc},

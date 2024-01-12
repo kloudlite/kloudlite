@@ -20,12 +20,11 @@ type ErrorOnApplyConsumer messaging.Consumer
 func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
-	getResourceContext := func(ctx domain.ConsoleContext, obj unstructured.Unstructured) (domain.ResourceContext, error) {
-		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, obj.GetNamespace(), obj.GetName())
+	getResourceContext := func(ctx domain.ConsoleContext, clusterName string,obj unstructured.Unstructured) (domain.ResourceContext, error) {
+		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, clusterName,obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
-
 		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
 	}
 
@@ -66,7 +65,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case "App":
 			{
-				rctx, err := getResourceContext(dctx, obj)
+				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -75,7 +74,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case "Config":
 			{
-				rctx, err := getResourceContext(dctx, obj)
+				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -84,7 +83,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case "Secret":
 			{
-				rctx, err := getResourceContext(dctx, obj)
+				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -93,7 +92,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case "Router":
 			{
-				rctx, err := getResourceContext(dctx, obj)
+				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -102,7 +101,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case "ManagedResource":
 			{
-				rctx, err := getResourceContext(dctx, obj)
+				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
 				if err != nil {
 					return errors.NewE(err)
 				}

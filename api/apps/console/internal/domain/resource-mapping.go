@@ -40,11 +40,12 @@ func (d *domain) upsertResourceMapping(ctx ResourceContext, res resource) (*enti
 	})
 }
 
-func (d *domain) GetResourceMapping(ctx ConsoleContext, resType entities.ResourceType, namespace string, name string) (*entities.ResourceMapping, error) {
+func (d *domain) GetResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
 		"accountName":       ctx.AccountName,
 		"resourceType":      resType,
 		"resourceName":      name,
+		"clusterName":       clusterName,
 		"resourceNamespace": namespace,
 	})
 }
