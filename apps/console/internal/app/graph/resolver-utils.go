@@ -26,11 +26,6 @@ func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
 		errMsgs = append(errMsgs, fmt.Sprintf(missingContextValue, "account-name"))
 	}
 
-	//clusterName, ok := ctx.Value("cluster-name").(string)
-	//if !ok {
-	//	errMsgs = append(errMsgs, fmt.Sprintf(missingContextValue, "cluster-name"))
-	//}
-
 	var err error
 	if len(errMsgs) != 0 {
 		err = errors.NewE(errors.Newf("%v", strings.Join(errMsgs, ",")))

@@ -129,6 +129,7 @@ type Query {
     core_resyncProjectManagedService(projectName: String!,  name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
     core_getVPNDevice(name: String!): ConsoleVPNDevice @isLoggedInAndVerified @hasAccount
 }
 

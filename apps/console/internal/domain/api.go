@@ -226,13 +226,13 @@ type Domain interface {
 	ResyncProjectManagedService(ctx ConsoleContext, projectName, name string) error
 
 	ListVPNDevices(ctx ConsoleContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ConsoleVPNDevice], error)
-	ListVPNDevicesOfUser(ctx ConsoleContext, userId string) ([]*entities.ConsoleVPNDevice, error)
+	ListVPNDevicesForUser(ctx ConsoleContext) ([]*entities.ConsoleVPNDevice, error)
 	GetVPNDevice(ctx ConsoleContext, name string) (*entities.ConsoleVPNDevice, error)
 	CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	DeleteVPNDevice(ctx ConsoleContext, name string) error
 	UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports []*wgv1.Port) error
-	UpdateVpnDeviceContext(ctx ConsoleContext, devName string, projectName string, envName string) error
+	UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, projectName string, envName string) error
 }
 
 type PublishMsg string
