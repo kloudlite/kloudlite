@@ -33,7 +33,6 @@ import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { cn } from '~/components/utils';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { IClusterContext } from '../infra+/$cluster+/_layout';
-import { ManagedServiceStateProvider } from './new-managed-service/useManagedServiceState';
 
 export interface IProjectContext extends IClusterContext {
   project: IProject;
