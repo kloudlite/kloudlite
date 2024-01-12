@@ -66,10 +66,8 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Account struct {
 		APIVersion        func(childComplexity int) int
-		ContactEmail      func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
-		Description       func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		IsActive          func(childComplexity int) int
@@ -311,13 +309,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Account.APIVersion(childComplexity), true
 
-	case "Account.contactEmail":
-		if e.complexity.Account.ContactEmail == nil {
-			break
-		}
-
-		return e.complexity.Account.ContactEmail(childComplexity), true
-
 	case "Account.createdBy":
 		if e.complexity.Account.CreatedBy == nil {
 			break
@@ -331,13 +322,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Account.CreationTime(childComplexity), true
-
-	case "Account.description":
-		if e.complexity.Account.Description == nil {
-			break
-		}
-
-		return e.complexity.Account.Description(childComplexity), true
 
 	case "Account.displayName":
 		if e.complexity.Account.DisplayName == nil {
@@ -1208,10 +1192,8 @@ extend type User @key(fields: "id") {
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/account.graphqls", Input: `type Account @shareable {
   apiVersion: String!
-  contactEmail: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  description: String
   displayName: String!
   id: String!
   isActive: Boolean
@@ -1227,8 +1209,6 @@ extend type User @key(fields: "id") {
 }
 
 input AccountIn {
-  contactEmail: String!
-  description: String
   displayName: String!
   isActive: Boolean
   logo: String
@@ -1932,50 +1912,6 @@ func (ec *executionContext) fieldContext_Account_apiVersion(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Account_contactEmail(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Account_contactEmail(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ContactEmail, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Account_contactEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Account",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Account_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Account_createdBy(ctx, field)
 	if err != nil {
@@ -2067,47 +2003,6 @@ func (ec *executionContext) fieldContext_Account_creationTime(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Account_description(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Account_description(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Account_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Account",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4693,14 +4588,10 @@ func (ec *executionContext) fieldContext_Mutation_accounts_createAccount(ctx con
 			switch field.Name {
 			case "apiVersion":
 				return ec.fieldContext_Account_apiVersion(ctx, field)
-			case "contactEmail":
-				return ec.fieldContext_Account_contactEmail(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
-			case "description":
-				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -4804,14 +4695,10 @@ func (ec *executionContext) fieldContext_Mutation_accounts_updateAccount(ctx con
 			switch field.Name {
 			case "apiVersion":
 				return ec.fieldContext_Account_apiVersion(ctx, field)
-			case "contactEmail":
-				return ec.fieldContext_Account_contactEmail(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
-			case "description":
-				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -5851,14 +5738,10 @@ func (ec *executionContext) fieldContext_Query_accounts_listAccounts(ctx context
 			switch field.Name {
 			case "apiVersion":
 				return ec.fieldContext_Account_apiVersion(ctx, field)
-			case "contactEmail":
-				return ec.fieldContext_Account_contactEmail(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
-			case "description":
-				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -5948,14 +5831,10 @@ func (ec *executionContext) fieldContext_Query_accounts_getAccount(ctx context.C
 			switch field.Name {
 			case "apiVersion":
 				return ec.fieldContext_Account_apiVersion(ctx, field)
-			case "contactEmail":
-				return ec.fieldContext_Account_contactEmail(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
-			case "description":
-				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -8917,29 +8796,13 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"contactEmail", "description", "displayName", "isActive", "logo", "metadata", "spec"}
+	fieldsInOrder := [...]string{"displayName", "isActive", "logo", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "contactEmail":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contactEmail"))
-			it.ContactEmail, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "description":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "displayName":
 			var err error
 
@@ -9207,13 +9070,6 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "contactEmail":
-
-			out.Values[i] = ec._Account_contactEmail(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "createdBy":
 
 			out.Values[i] = ec._Account_createdBy(ctx, field, obj)
@@ -9241,10 +9097,6 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
-		case "description":
-
-			out.Values[i] = ec._Account_description(ctx, field, obj)
-
 		case "displayName":
 
 			out.Values[i] = ec._Account_displayName(ctx, field, obj)
