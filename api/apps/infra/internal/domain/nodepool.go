@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -157,45 +158,47 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	return np, nil
 }
 
-func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error) {
+func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePoolIn entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateNodepool); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	nodePool.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &nodePool.NodePool); err != nil {
+	nodePoolIn.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &nodePoolIn.NodePool); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	np, err := d.findNodePool(ctx, clusterName, nodePool.Name)
+	np, err := d.findNodePool(ctx, clusterName, nodePoolIn.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if np.IsMarkedForDeletion() {
-		return nil, errors.Newf("nodepool %q (clusterName=%q) is marked for deletion, aborting update", nodePool.Name, clusterName)
+		return nil, errors.Newf("nodepool %q (clusterName=%q) is marked for deletion, aborting update", nodePoolIn.Name, clusterName)
 	}
 
-	np.IncrementRecordVersion()
-	np.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
-	}
-
-	np.Labels = nodePool.Labels
-	np.Annotations = nodePool.Annotations
-	np.Spec.MinCount = nodePool.Spec.MinCount
-	np.Spec.MaxCount = nodePool.Spec.MaxCount
-	np.Spec.TargetCount = nodePool.Spec.TargetCount
-
-	if np.Spec.TargetCount < np.Spec.MinCount {
-		np.Spec.TargetCount = np.Spec.MinCount
-	}
-
-	np.SyncStatus = t.GenSyncStatus(t.SyncActionApply, np.RecordVersion)
-
-	unp, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np)
+	unp, err := d.nodePoolRepo.PatchById(ctx, np.Id, repos.Document{
+		"metadata.labels":      nodePoolIn.Labels,
+		"metadata.annotations": nodePoolIn.Annotations,
+		"displayName":		  nodePoolIn.DisplayName,
+		"recordVersion":    np.RecordVersion+1,
+		"spec.minCount":			 nodePoolIn.Spec.MinCount,
+		"spec.maxCount":			 nodePoolIn.Spec.MaxCount,
+		"spec.targetCount": func() int{
+			if np.Spec.TargetCount < nodePoolIn.Spec.MinCount {
+				return nodePoolIn.Spec.MinCount
+			}
+			return nodePoolIn.Spec.TargetCount
+		}(),
+		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"syncStatus.lastSyncedAt": time.Now(),
+		"syncStatus.action":        t.SyncActionApply,
+		"syncStatus.state":         t.SyncStateInQueue,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -223,9 +226,17 @@ func (d *domain) DeleteNodePool(ctx InfraContext, clusterName string, poolName s
 		return errors.Newf("nodepool %q (clusterName=%q) is already marked for deletion", poolName, clusterName)
 	}
 
-	np.MarkedForDeletion = fn.New(true)
-	np.SyncStatus = t.GetSyncStatusForDeletion(np.Generation)
-	upC, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np)
+	upC, err := d.nodePoolRepo.PatchById(ctx, np.Id, repos.Document{
+		"markedForDeletion": fn.New(true),
+		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"syncStatus.lastSyncedAt": time.Now(),
+		"syncStatus.action":        t.SyncActionDelete,
+		"syncStatus.state":         t.SyncStateInQueue,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -307,29 +318,35 @@ func (d *domain) OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, n
 
 func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	np, err := d.findNodePool(ctx, clusterName, nodePool.Name)
+	recordVersion := np.RecordVersion
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(nodePool.Annotations, np.RecordVersion); err != nil {
+	if err := d.matchRecordVersion(nodePool.Annotations, recordVersion ); err != nil {
 		return d.resyncToTargetCluster(ctx, np.SyncStatus.Action, clusterName, &np.NodePool, np.RecordVersion)
 	}
+	_, err = d.nodePoolRepo.PatchById(ctx, np.Id, repos.Document{
+		"metadata.labels":      nodePool.Labels,
+		"metadata.annotations": nodePool.Annotations,
+		"metadata.generation":  nodePool.Generation,
+		"metadata.creationTimestamp":  nodePool.CreationTimestamp,
+		"spec.targetCount": nodePool.Spec.TargetCount,
+		"status":      nodePool.Status,
+		"syncStatus":  t.SyncStatus{
+			LastSyncedAt: opts.MessageTimestamp,
+			Error: 	  nil,
+			Action:       t.SyncActionApply,
+			RecordVersion: recordVersion,
+			State: func() t.SyncState {
+				if status == types.ResourceStatusDeleting {
+					return t.SyncStateDeletingAtAgent
+				}
+				return t.SyncStateUpdatedAtAgent
+			}(),
+		},
+	})
 
-	np.Status = nodePool.Status
-
-	np.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	np.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	np.SyncStatus.Error = nil
-	np.SyncStatus.RecordVersion = np.RecordVersion
-
-	if _, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np); err != nil {
-		return errors.NewE(err)
-	}
 	d.resourceEventPublisher.PublishNodePoolEvent(np, PublishUpdate)
 	return nil
 }
@@ -337,15 +354,21 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 // OnNodepoolApplyError implements Domain.
 func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
 	np, err := d.findNodePool(ctx, clusterName, name)
+	recordVersion := np.RecordVersion
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	np.SyncStatus.State = t.SyncStateErroredAtAgent
-	np.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	np.SyncStatus.Error = &errMsg
+	if err := d.matchRecordVersion(np.Annotations, recordVersion); err != nil {
+		return nil
+	}
 
-	_, err = d.nodePoolRepo.UpdateById(ctx, np.Id, np)
+
+	_, err = d.nodePoolRepo.PatchById(ctx, np.Id, repos.Document{
+		"syncStatus.state":         t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":         &errMsg,
+	})
 	d.resourceEventPublisher.PublishNodePoolEvent(np, PublishUpdate)
 	return errors.NewE(err)
 }
