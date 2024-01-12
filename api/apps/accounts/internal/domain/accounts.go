@@ -134,7 +134,6 @@ func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*en
 
 	uAcc, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
 		"labels":      accountIn.Labels,
-		"isActive":    accountIn.IsActive,
 		"displayName": accountIn.DisplayName,
 		"logo":        accountIn.Logo,
 		"contactEmail": accountIn.ContactEmail,
