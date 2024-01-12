@@ -177,7 +177,7 @@ var Module = fx.Module("app",
 					switch resourceType {
 					case "app":
 						{
-							mapping, err := d.GetResourceMapping(cc, entities.ResourceType(args.ResourceType), args.ResourceNamespace, args.ResourceName)
+							mapping, err := d.GetResourceMapping(cc, entities.ResourceType(args.ResourceType), args.ClusterName, args.ResourceNamespace, args.ResourceName)
 							if err != nil {
 								return errors.NewE(err)
 							}
