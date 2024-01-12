@@ -134,7 +134,7 @@ func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error
 	return nil
 }
 
-func (d *domain) getAccNamespace(ctx InfraContext, name string) (string, error) {
+func (d *domain) getAccNamespace(ctx InfraContext) (string, error) {
 	acc, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
 	if err != nil {
 		return "", errors.NewE(err)

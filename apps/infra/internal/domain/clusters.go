@@ -94,7 +94,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -258,7 +258,7 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 		return nil, errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -381,7 +381,7 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 }
 
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -427,7 +427,7 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 }
 
 func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cluster, error) {
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

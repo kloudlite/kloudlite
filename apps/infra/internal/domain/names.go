@@ -25,62 +25,54 @@ type CheckNameAvailabilityOutput struct {
 	SuggestedNames []string `json:"suggestedNames"`
 }
 
-func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter, repo repos.DbRepo[T]) (*CheckNameAvailabilityOutput, error) {
+	res, err := repo.FindOne(ctx, filters)
 	if err != nil {
-		return nil, errors.NewE(err)
+		return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
 	}
+
+	if fn.IsNil(res) {
+		return &CheckNameAvailabilityOutput{Result: true}, nil
+	}
+
+	return &CheckNameAvailabilityOutput{
+		Result:         false,
+		SuggestedNames: fn.GenValidK8sResourceNames(filters["metadata.name"].(string), 3),
+	}, nil
+}
+
+
+func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
 
 	if !fn.IsValidK8sResourceName(name) {
-		return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: fn.GenValidK8sResourceNames(name, 3)}, nil
-	}
-
-	fromFindOneResult := func(data any, err error) (*CheckNameAvailabilityOutput, error) {
-		if err != nil {
-			return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)
-		}
-
-		if data == nil {
-			return &CheckNameAvailabilityOutput{Result: true}, nil
-		}
-
 		return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: fn.GenValidK8sResourceNames(name, 3)}, nil
 	}
 
 	switch typeArg {
 	case ResTypeCluster:
 		{
-			cp, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-				"accountName":        ctx.AccountName,
-				"metadata.name":      name,
-				"metadata.namespace": accNs,
-			})
-
-			return fromFindOneResult(cp, errors.NewE(err))
+			return checkResourceName(ctx, repos.Filter{
+				"accountName": ctx.AccountName,
+				"metadata.name": name,
+			}, d.clusterRepo)
 		}
 	case ResTypeProviderSecret:
 		{
-			cp, err := d.secretRepo.FindOne(ctx, repos.Filter{
+			return checkResourceName(ctx, repos.Filter{
 				"accountName":        ctx.AccountName,
-				"metadata.name":      name,
-				"metadata.namespace": accNs,
-			})
-
-			return fromFindOneResult(cp, errors.NewE(err))
+				"metadata.name": name,
+			}, d.secretRepo)
 		}
 	case ResTypeNodePool:
 		{
 			if clusterName == nil || *clusterName == "" {
 				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
 			}
-
-			cp, err := d.nodePoolRepo.FindOne(ctx, repos.Filter{
+			return checkResourceName(ctx, repos.Filter{
 				"accountName":   ctx.AccountName,
 				"clusterName":   clusterName,
 				"metadata.name": name,
-			})
-
-			return fromFindOneResult(cp, errors.NewE(err))
+			}, d.nodePoolRepo)
 		}
 	case ResTypeVPNDevice:
 		{
@@ -88,13 +80,11 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeVPNDevice)
 			}
 
-			cp, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
+			return checkResourceName(ctx, repos.Filter{
 				"accountName":   ctx.AccountName,
 				"clusterName":   clusterName,
 				"metadata.name": name,
-			})
-
-			return fromFindOneResult(cp, errors.NewE(err))
+			}, d.nodePoolRepo)
 		}
 	default:
 		{

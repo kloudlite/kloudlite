@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	"strings"
+	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -135,6 +136,9 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Se
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ps.Name,
 			Namespace: ps.Namespace,
+			CreationTimestamp: metav1.Time{
+				Time: time.Now(),
+			},
 			Annotations: map[string]string{
 				constants.DescriptionKey: fmt.Sprintf("created by cloudprovider secret %s", ps.Name),
 			},
@@ -143,107 +147,112 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Se
 	}
 }
 
-func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
+func (d *domain) CreateProviderSecret(ctx InfraContext, psecretIn entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	psecret.AccountName = ctx.AccountName
-	psecret.Namespace = accNs
+	psecretIn.AccountName = ctx.AccountName
+	psecretIn.Namespace = accNs
 
-	if err := psecret.Validate(); err != nil {
+	if err := psecretIn.Validate(); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	psecret.IncrementRecordVersion()
-	psecret.CreatedBy = common.CreatedOrUpdatedBy{
+	psecretIn.IncrementRecordVersion()
+	psecretIn.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
 
-	psecret.LastUpdatedBy = psecret.CreatedBy
-	psecret.Id = d.secretRepo.NewId()
-	switch psecret.CloudProviderName {
+	psecretIn.LastUpdatedBy = psecretIn.CreatedBy
+	psecretIn.Id = d.secretRepo.NewId()
+	switch psecretIn.CloudProviderName {
 	case ct.CloudProviderAWS:
 		{
-			psecret.AWS = &entities.AWSSecretCredentials{
-				AWSAccountId: psecret.AWS.AWSAccountId,
-				AccessKey:    psecret.AWS.AccessKey,
-				SecretKey:    psecret.AWS.SecretKey,
+			psecretIn.AWS = &entities.AWSSecretCredentials{
+				AWSAccountId: psecretIn.AWS.AWSAccountId,
+				AccessKey:    psecretIn.AWS.AccessKey,
+				SecretKey:    psecretIn.AWS.SecretKey,
 
-				CfParamStackName:           fmt.Sprintf("%s-%s", d.env.AWSCfStackNamePrefix, psecret.Id),
-				CfParamRoleName:            fmt.Sprintf("%s-%s", d.env.AWSCfRoleNamePrefix, psecret.Id),
-				CfParamInstanceProfileName: fmt.Sprintf("%s-%s", d.env.AWSCfInstanceProfileNamePrefix, psecret.Id),
+				CfParamStackName:           fmt.Sprintf("%s-%s", d.env.AWSCfStackNamePrefix, psecretIn.Id),
+				CfParamRoleName:            fmt.Sprintf("%s-%s", d.env.AWSCfRoleNamePrefix, psecretIn.Id),
+				CfParamInstanceProfileName: fmt.Sprintf("%s-%s", d.env.AWSCfInstanceProfileNamePrefix, psecretIn.Id),
 				CfParamTrustedARN:          d.env.AWSCfParamTrustedARN,
 				CfParamExternalID:          fn.CleanerNanoidOrDie(40),
 			}
 
-			if err := psecret.AWS.Validate(); err != nil {
+			if err := psecretIn.AWS.Validate(); err != nil {
 				return nil, errors.NewE(err)
 			}
 		}
 	default:
 		return nil, errors.Newf("unknown cloud provider")
 	}
-	secret := corev1SecretFromProviderSecret(&psecret)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	if err := d.applyK8sResource(ctx, secret, psecret.RecordVersion); err != nil {
-		return nil, errors.NewE(err)
-	}
-	nSecret, err := d.secretRepo.Create(ctx, &psecret)
+
+	secret := corev1SecretFromProviderSecret(&psecretIn)
+	psecretIn.ObjectMeta = secret.ObjectMeta
+
+	nSecret, err := d.secretRepo.Create(ctx, &psecretIn)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	if err := d.applyK8sResource(ctx, secret, psecretIn.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
+	}
 	return nSecret, nil
 }
 
-func (d *domain) UpdateProviderSecret(ctx InfraContext, ups entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
+// Depricate AWS_SECRET_KEY and AWS_ACCESS_KEY input
+func (d *domain) UpdateProviderSecret(ctx InfraContext, providerSecretIn entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCloudProviderSecret); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := ups.Validate(); err != nil {
+	if err := providerSecretIn.Validate(); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	currScrt, err := d.findProviderSecret(ctx, ups.Name)
+	currScrt, err := d.findProviderSecret(ctx, providerSecretIn.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	currScrt.IncrementRecordVersion()
-	currScrt.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
-	}
+	//switch providerSecretIn.CloudProviderName {
+	//case ct.CloudProviderAWS:
+	//	{
+	//		currScrt.AWS.AccessKey = providerSecretIn.AWS.AccessKey
+	//		currScrt.AWS.SecretKey = providerSecretIn.AWS.SecretKey
+	//	}
+	//}
 
-	currScrt.Labels = ups.Labels
-	currScrt.Annotations = ups.Annotations
+	uScrt, err := d.secretRepo.PatchById(ctx, currScrt.Id, repos.Document{
+		"recordVersion": currScrt.RecordVersion+1,
+		"metadata.labels": providerSecretIn.Labels,
+		"metadata.annotations": providerSecretIn.Annotations,
+		"displayName": providerSecretIn.DisplayName,
+		"lastUpdatedBy"	: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	})
 
-	switch ups.CloudProviderName {
-	case ct.CloudProviderAWS:
-		{
-			currScrt.AWS.AccessKey = ups.AWS.AccessKey
-			currScrt.AWS.SecretKey = ups.AWS.SecretKey
-		}
-	}
-
-	uScrt, err := d.secretRepo.UpdateById(ctx, currScrt.Id, currScrt)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, corev1SecretFromProviderSecret(currScrt), uScrt.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, corev1SecretFromProviderSecret(uScrt), uScrt.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -284,14 +293,8 @@ func (d *domain) ListProviderSecrets(ctx InfraContext, matchFilters map[string]r
 		return nil, errors.NewE(err)
 	}
 
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
-		"metadata.namespace": accNs,
 	}
 	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
@@ -304,14 +307,8 @@ func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.Clo
 }
 
 func (d *domain) findProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
-		"metadata.namespace": accNs,
 		"metadata.name":      name,
 	})
 	if err != nil {
