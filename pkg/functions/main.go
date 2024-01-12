@@ -83,10 +83,6 @@ func JsonConvert[T any](from any) (*T, error) {
 		return nil, nil
 	}
 
-	if to == nil {
-		return nil, errors.Newf("receiver (to) is nil")
-	}
-
 	b, err := json.Marshal(from)
 	if err != nil {
 		return nil, err
