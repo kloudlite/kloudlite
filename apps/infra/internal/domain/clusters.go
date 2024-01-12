@@ -304,12 +304,12 @@ func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*e
 		return nil, errors.Newf("clusterIn %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
 	}
 
-	newRecordVersion:=clus.RecordVersion+1
+
 	uCluster, err := d.clusterRepo.PatchById(ctx, clus.Id, repos.Document{
 		"metadata.labels":      clusterIn.Labels,
 		"metadata.annotations": clusterIn.Annotations,
 		"displayName":		  clusterIn.DisplayName,
-		"recordVersion":    newRecordVersion,
+		"recordVersion":    clus.RecordVersion+1,
 		"lastUpdatedBy":common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
@@ -318,7 +318,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*e
 		"syncStatus.lastSyncedAt": time.Now(),
 		"syncStatus.action":        t.SyncActionApply,
 		"syncStatus.state":         t.SyncStateInQueue,
-		"syncStatus.recordVersion": newRecordVersion,
+
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
