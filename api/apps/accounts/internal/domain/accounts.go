@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"strings"
@@ -17,7 +16,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/yaml"
 )
 
 func (d *domain) findAccount(ctx context.Context, name string) (*entities.Account, error) {
@@ -33,23 +31,6 @@ func (d *domain) findAccount(ctx context.Context, name string) (*entities.Accoun
 	}
 
 	return result, nil
-}
-
-func (d *domain) applyAccountOnCluster(ctx context.Context, account *entities.Account) error {
-	b, err := json.Marshal(account.Account)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	y, err := yaml.JSONToYAML(b)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.k8sClient.ApplyYAML(ctx, y); err != nil {
-		return errors.NewE(err)
-	}
-
-	return nil
 }
 
 func (d *domain) ListAccounts(ctx UserContext) ([]*entities.Account, error) {
@@ -103,17 +84,12 @@ func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName stri
 	return nil
 }
 
+func (d *domain) deleteNamespaceForAccount(ctx context.Context, targetNamespace string) error {
+	panic("not implemented. Yet to decide if we want to delete namespace when account is deleted")
+}
+
 func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
-	account.EnsureGVK()
-
-	if account.Spec.TargetNamespace == nil {
-		account.Spec.TargetNamespace = fn.New(fmt.Sprintf("kl-account-%s", account.Name))
-	}
-
-	if err := d.k8sClient.ValidateObject(ctx, &account.Account); err != nil {
-		return nil, errors.NewE(err)
-	}
-
+	account.TargetNamespace = fmt.Sprintf("kl-account-%s", account.Name)
 	account.IsActive = fn.New(true)
 	account.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -131,23 +107,15 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.ensureNamespaceForAccount(ctx, account.Name, *account.Spec.TargetNamespace); err != nil {
+	if err := d.ensureNamespaceForAccount(ctx, account.Name, account.TargetNamespace); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyAccountOnCluster(ctx, acc); err != nil {
-		return nil, errors.NewE(err)
-	}
 	return acc, nil
 }
 
 func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*entities.Account, error) {
 	if err := d.checkAccountAccess(ctx, accountIn.Name, ctx.UserId, iamT.UpdateAccount); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	accountIn.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &accountIn.Account); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -176,8 +144,7 @@ func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*en
 			UserEmail: ctx.UserEmail,
 		},
 	})
-
-	if err := d.applyAccountOnCluster(ctx, uAcc); err != nil {
+	if err != nil {
 		return nil, errors.NewE(err)
 	}
 	return uAcc, nil
@@ -212,15 +179,9 @@ func (d *domain) ResyncAccount(ctx UserContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	if err := d.ensureNamespaceForAccount(ctx, acc.Name, *acc.Spec.TargetNamespace); err != nil {
+	if err := d.ensureNamespaceForAccount(ctx, acc.Name, acc.TargetNamespace); err != nil {
 		return errors.NewE(err)
 	}
-
-	if err := d.applyAccountOnCluster(ctx, acc); err != nil {
-		return errors.NewE(err)
-	}
-
 	return nil
 }
 

@@ -5,6 +5,8 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 )
 
+// Used for the following GraphQL schema:
+
 type AccountMembership struct {
 	AccountName string    `json:"accountName"`
 	UserId      repos.ID  `json:"userId"`
