@@ -9,7 +9,6 @@ import { mapper, useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { IdSelector } from '../components/id-selector';
 import { constDatas, awsRegions } from '../dummy/consts';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -26,6 +25,8 @@ import {
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 // import { IAccountContext } from '../routes/_main+/$account+/_layout';
 import ProgressWrapper from '../components/progress-wrapper';
+import { NameIdView } from '../components/name-id-view';
+import { ReviewComponent } from '../routes/_main+/$account+/$project+/$environment+/new-app/app-review';
 
 type props =
   | {
@@ -36,6 +37,8 @@ type props =
       providerSecrets?: IProviderSecrets;
       cloudProvider: IProviderSecret;
     };
+
+type steps = 'Configure cluster' | 'Review';
 
 export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
@@ -64,7 +67,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { a: accountName } = useParams();
 
   // const { account } = useOutletContext<IAccountContext>();
-
+  const [activeState, setActiveState] = useState<steps>('Configure cluster');
+  const isActive = (step: steps) => step === activeState;
   const navigate = useNavigate();
 
   const [selectedProvider, setSelectedProvider] = useState<
@@ -96,96 +100,108 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       credentialsRef: cp || parseName(selectedProvider?.provider) || '',
       availabilityMode: '',
       displayName: '',
+      isNameError: false,
     },
     validationSchema: Yup.object({
       vpc: Yup.string(),
-      region: Yup.string().trim().required('region is required'),
-      cloudProvider: Yup.string().trim().required('cloud provider is required'),
-      name: Yup.string().trim().required('id is required'),
-      displayName: Yup.string().trim().required('name is required'),
+      region: Yup.string().trim().required('Region is required'),
+      cloudProvider: Yup.string().trim().required('Cloud provider is required'),
+      name: Yup.string().trim().required('Name is required'),
+      displayName: Yup.string().trim().required('Name is required'),
       credentialsRef: Yup.string().required(),
       availabilityMode: Yup.string()
         .trim()
-        .required('availability is required')
-        .oneOf(['HA', 'dev']),
-    }),
+        .oneOf(['HA', 'dev'])
+        .required('Availability mode is required'),
+    }).required(),
     onSubmit: async (val) => {
-      // type Merge<T, M> = Omit<T, keyof M> & M;
-
-      // type nt = { availabilityMode: 'HA' | 'dev' | string };
-      // const k: Merge<typeof val, nt> = val;
-
-      // console.log(k);
-      // val.availabilityMode
-      if (!accountName || !val.availabilityMode) {
-        return;
-      }
-      try {
-        ensureAccountClientSide({ account: accountName });
-        const { errors: e } = await api.createCluster({
-          cluster: {
-            displayName: val.displayName,
-            spec: {
-              cloudProvider: validateClusterCloudProvider(val.cloudProvider),
-              aws: {
-                region: selectedRegion.Name,
-                k3sMasters: {
-                  nvidiaGpuEnabled: true,
-                  instanceType: 'c6a.xlarge',
-                },
-              },
-              credentialsRef: {
-                name: val.credentialsRef,
-              },
-              availabilityMode: validateAvailabilityMode(val.availabilityMode),
-            },
-            metadata: {
-              name: val.name,
-            },
-          },
-        });
-        if (e) {
-          throw e[0];
+      const submit = async () => {
+        if (!accountName || !val.availabilityMode) {
+          return;
         }
-        toast.success('cluster created successfully');
-        navigate(`/${accountName}/infra/clusters`);
-      } catch (err) {
-        handleError(err);
+        try {
+          ensureAccountClientSide({ account: accountName });
+          const { errors: e } = await api.createCluster({
+            cluster: {
+              displayName: val.displayName,
+              spec: {
+                cloudProvider: validateClusterCloudProvider(val.cloudProvider),
+                aws: {
+                  region: selectedRegion.Name,
+                  k3sMasters: {
+                    nvidiaGpuEnabled: true,
+                    instanceType: 'c6a.xlarge',
+                  },
+                },
+                credentialsRef: {
+                  name: val.credentialsRef,
+                },
+                availabilityMode: validateAvailabilityMode(
+                  val.availabilityMode
+                ),
+              },
+              metadata: {
+                name: val.name,
+              },
+            },
+          });
+          if (e) {
+            throw e[0];
+          }
+          toast.success('Cluster created successfully');
+          navigate(`/${accountName}/infra/clusters`);
+        } catch (err) {
+          handleError(err);
+        }
+      };
+
+      switch (activeState) {
+        case 'Configure cluster':
+          setActiveState('Review');
+          break;
+        case 'Review':
+          await submit();
+          break;
+        default:
+          break;
       }
     },
   });
 
   const getView = () => {
     return (
-      <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
+      <form
+        className="flex flex-col gap-3xl py-3xl"
+        onSubmit={(e) => {
+          if (!values.isNameError) {
+            handleSubmit(e);
+          } else {
+            e.preventDefault();
+          }
+        }}
+      >
         <div className="bodyMd text-text-soft">
           A cluster is a group of interconnected elements working together as a
           single unit.
         </div>
         <div className="flex flex-col">
           <div className="flex flex-col gap-3xl pb-xl">
-            {Object.keys(JSON.parse(JSON.stringify(errors || '{}')) || {})
-              .length > 0 && (
-              <pre className="text-xs text-surface-warning-default">
-                <code>{JSON.stringify(errors, null, 2)}</code>
-              </pre>
-            )}
-            <TextInput
+            <NameIdView
+              resType="cluster"
+              displayName={values.displayName}
+              name={values.name}
               label="Cluster name"
-              onChange={handleChange('displayName')}
-              value={values.displayName}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              size="lg"
+              placeholder="Enter cluster name"
+              errors={errors.name}
+              onChange={({ name, id }) => {
+                handleChange('displayName')(dummyEvent(name));
+                handleChange('name')(dummyEvent(id));
+              }}
+              onCheckError={(check) => {
+                handleChange('isNameError')(dummyEvent(check));
+              }}
             />
           </div>
-          <IdSelector
-            resType="cluster"
-            name={values.displayName}
-            onChange={(v) => {
-              handleChange('name')({ target: { value: v } });
-            }}
-          />
           <div className="flex flex-col gap-3xl pt-lg">
             {!isOnboarding && (
               <Select
@@ -236,6 +252,10 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               size="lg"
               placeholder="Select availability mode"
               value={selectedAvailabilityMode}
+              error={!!errors.availabilityMode}
+              message={
+                errors.availabilityMode ? 'Availability mode is required' : null
+              }
               options={async () => constDatas.availabilityModes}
               onChange={(availabilityMode) => {
                 handleChange('availabilityMode')(
@@ -259,7 +279,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           <div className="flex flex-row gap-xl justify-start">
             <Button
               variant="primary"
-              content="Next"
+              content="Continue"
               suffix={<ArrowRight />}
               type="submit"
             />
@@ -269,12 +289,67 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             <Button
               loading={isLoading}
               variant="primary"
-              content="Next"
+              content="Continue"
               suffix={<ArrowRight />}
               type="submit"
             />
           </div>
         )}
+      </form>
+    );
+  };
+
+  const getReviewView = () => {
+    return (
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3xl py-3xl">
+        <ReviewComponent
+          title="Cluster detail"
+          onEdit={() => {
+            setActiveState('Configure cluster');
+          }}
+        >
+          <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+            <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+              <div className="bodyMd-semibold text-text-default">
+                Cluster name
+              </div>
+              <div className="bodySm text-text-soft">{values.name}</div>
+            </div>
+            <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+              <div className="bodyMd-semibold text-text-default">
+                Cloud provider
+              </div>
+              <div className="bodySm text-text-soft">
+                {values.cloudProvider}
+              </div>
+            </div>
+            {values.cloudProvider === 'aws' && (
+              <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+                <div className="bodyMd-semibold text-text-default">Region</div>
+                <div className="bodySm text-text-soft">{values.region}</div>
+              </div>
+            )}
+            <div className="flex flex-col gap-md  pb-lg">
+              <div className="bodyMd-semibold text-text-default">
+                Availability Mode
+              </div>
+              <div className="bodySm text-text-soft">
+                {values.availabilityMode === 'HA'
+                  ? 'High Availability'
+                  : 'Development'}
+              </div>
+            </div>
+          </div>
+        </ReviewComponent>
+        <div className="flex flex-row justify-start">
+          <Button
+            loading={isLoading}
+            variant="primary"
+            content="Create"
+            suffix={<ArrowRight />}
+            type="submit"
+          />
+        </div>
       </form>
     );
   };
@@ -311,16 +386,15 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       : [
           {
             label: 'Configure cluster',
-            active: true,
-            id: 1,
+            active: isActive('Configure cluster'),
             completed: false,
-            children: getView(),
+            children: isActive('Configure cluster') ? getView() : null,
           },
           {
             label: 'Review',
-            active: false,
-            id: 2,
+            active: isActive('Review'),
             completed: false,
+            children: isActive('Review') ? getReviewView() : null,
           },
         ];
   };
@@ -333,53 +407,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       progressItems={{
         items: items(),
       }}
+      onClick={() => {
+        if (isActive('Review')) {
+          setActiveState('Configure cluster');
+        }
+      }}
     />
   );
-
-  // useLog(options);
-  // return (
-  //   <>
-  //     <RawWrapper
-  //       title={
-  //         isOnboarding
-  //           ? "Unleash Data's Full Potential!"
-  //           : 'Let’s create new cluster.'
-  //       }
-  //       subtitle={
-  //         isOnboarding
-  //           ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
-  //           : 'Create your cluster under to production effortlessly'
-  //       }
-  //       progressItems={items}
-  //       badge={{
-  //         title: parseName(account),
-  //         subtitle: accountName,
-  //         image: <UserCircle size={20} />,
-  //       }}
-  //       onCancel={() => setShowUnsavedChanges(true)}
-  //       rightChildren={
-  //         <FadeIn onSubmit={handleSubmit}>
-  //           <TitleBox
-  //             title="Cluster details"
-  //             subtitle="A cluster is a group of interconnected elements working together
-  //               as a single unit."
-  //           />
-  //         </FadeIn>
-  //       }
-  //     />
-  //     <AlertModal
-  //       title="Leave page with unsaved changes?"
-  //       message="Leaving this page will delete all unsaved changes."
-  //       okText="Leave"
-  //       cancelText="Stay"
-  //       variant="critical"
-  //       show={showUnsavedChanges}
-  //       setShow={setShowUnsavedChanges}
-  //       onSubmit={() => {
-  //         setShowUnsavedChanges(false);
-  //         navigate(`/${accountName}/infra/clusters`);
-  //       }}
-  //     />
-  //   </>
-  // );
 };

@@ -8,13 +8,7 @@ import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import {
-  Dispatch,
-  FormEventHandler,
-  SetStateAction,
-  useEffect,
-  useState,
-} from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import {
   IMSvTemplate,
   IMSvTemplates,
@@ -24,7 +18,6 @@ import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
 import { titleCase } from '~/components/utils';
 import { IProjectContext } from '../_layout';
-import { ManagedServiceStateProvider } from './useManagedServiceState';
 import { ReviewComponent } from '../$environment+/new-app/app-review';
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
@@ -39,6 +32,9 @@ const valueRender = ({ label, icon }: { label: string; icon: string }) => {
 };
 
 type steps = 'Select template' | 'Configure managed service' | 'Review';
+
+const hasTemplate = (res: any) =>
+  (!!res && res?.template?.fields.length > 0) || !res;
 
 const RenderField = ({
   field,
@@ -217,13 +213,11 @@ const TemplateView = ({
   isLoading: boolean;
   handleChange: (key: string) => (e: { target: { value: any } }) => void;
 }) => {
-  const [hasCheckNameError, setHasCheckNameError] = useState(false);
-
   return (
     <form
       className="flex flex-col gap-3xl py-3xl"
       onSubmit={(e) => {
-        if (!hasCheckNameError) {
+        if (!values.isNameCheckError) {
           handleSubmit(e);
         } else {
           e.preventDefault();
@@ -244,7 +238,7 @@ const TemplateView = ({
           handleChange('name')(dummyEvent(id));
           console.log('here');
         }}
-        onCheckError={setHasCheckNameError}
+        onCheckError={(v) => handleChange('isNameCheckError')(dummyEvent(v))}
       />
       <Select
         label="Template"
@@ -257,6 +251,8 @@ const TemplateView = ({
         }
         valueRender={valueRender}
         searchable
+        error={!!errors.selectedTemplate}
+        message={errors.selectedTemplate}
         onChange={({ item }) => {
           handleChange('selectedTemplate')(dummyEvent(item));
         }}
@@ -293,7 +289,7 @@ const TemplateView = ({
         <Button
           loading={isLoading}
           variant="primary"
-          content="Next"
+          content={hasTemplate(values.selectedTemplate) ? 'Next' : 'Create'}
           suffix={<ArrowRight />}
           type="submit"
         />
@@ -366,15 +362,17 @@ const ReviewView = ({
         <ReviewComponent title="Fields" onEdit={() => {}}>
           <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
             {fields?.map(([key, value]) => {
+              const k = key as string;
+              const v = value as string;
               return (
                 <div
-                  key={key}
+                  key={k}
                   className="flex flex-col gap-md  [&:not(:last-child)]:pb-lg   [&:not(:last-child)]:border-b border-border-default"
                 >
                   <div className="bodyMd-medium text-text-default">
-                    {titleCase(key)}
+                    {titleCase(k)}
                   </div>
-                  <div className="bodySm text-text-soft">{value}</div>
+                  <div className="bodySm text-text-soft">{v}</div>
                 </div>
               );
             })}
@@ -465,65 +463,76 @@ const ManagedServiceLayout = () => {
         displayName: '',
         res: {},
         selectedTemplate: null,
+        isNameCheckError: false,
       },
       validationSchema: Yup.object({
         name: Yup.string().required(),
         displayName: Yup.string().required(),
+        selectedTemplate: Yup.object({}).required('Template is required.'),
       }),
       onSubmit: async (val) => {
+        const selectedTemplate =
+          val.selectedTemplate as unknown as ISelectedTemplate;
+
+        const submit = async () => {
+          try {
+            if (!project) {
+              throw new Error('Project is required!.');
+            }
+            if (
+              !selectedTemplate?.template?.apiVersion ||
+              !selectedTemplate?.template?.kind
+            ) {
+              throw new Error('Service apiversion or kind error.');
+            }
+            const { errors: e } = await api.createProjectMSv({
+              projectName: project,
+              pmsvc: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+
+                spec: {
+                  msvcSpec: {
+                    serviceTemplate: {
+                      apiVersion: selectedTemplate.template.apiVersion,
+                      kind: selectedTemplate.template.kind,
+                      spec: {
+                        ...val.res,
+                      },
+                    },
+                  },
+                  targetNamespace: '',
+                },
+              },
+            });
+            if (e) {
+              throw e[0];
+            }
+            navigate(`/${account}/${project}/managed-services`);
+          } catch (err) {
+            handleError(err);
+          }
+        };
+
         switch (activeState) {
           case 'Select template':
+            if (!hasTemplate(val.selectedTemplate)) {
+              await submit();
+              break;
+            }
             setActiveState('Configure managed service');
             break;
           case 'Configure managed service':
+            if (!hasTemplate(val.selectedTemplate)) {
+              await submit();
+              break;
+            }
             setActiveState('Review');
             break;
           case 'Review':
-            const tempVal = { ...val };
-            // @ts-ignore
-            delete tempVal.name;
-            // @ts-ignore
-            delete tempVal.displayName;
-
-            try {
-              if (!project) {
-                throw new Error('Project is required!.');
-              }
-              if (
-                !val.selectedTemplate?.template?.apiVersion ||
-                !val.selectedTemplate?.template?.kind
-              ) {
-                throw new Error('Service apiversion or kind error.');
-              }
-              const { errors: e } = await api.createProjectMSv({
-                projectName: project,
-                pmsvc: {
-                  displayName: val.displayName,
-                  metadata: {
-                    name: val.name,
-                  },
-
-                  spec: {
-                    msvcSpec: {
-                      serviceTemplate: {
-                        apiVersion: val.selectedTemplate.template.apiVersion,
-                        kind: val.selectedTemplate.template.kind,
-                        spec: {
-                          ...tempVal,
-                        },
-                      },
-                    },
-                    targetNamespace: '',
-                  },
-                },
-              });
-              if (e) {
-                throw e[0];
-              }
-              navigate(`/${account}/${project}/managed-services`);
-            } catch (err) {
-              handleError(err);
-            }
+            submit();
             break;
           default:
             break;
@@ -532,12 +541,14 @@ const ManagedServiceLayout = () => {
     });
 
   useEffect(() => {
-    if (values.selectedTemplate?.template?.fields) {
+    const selectedTemplate =
+      values.selectedTemplate as unknown as ISelectedTemplate;
+    if (selectedTemplate?.template?.fields) {
       setValues({
         ...values,
         res: {
           ...flatM(
-            values.selectedTemplate?.template?.fields.reduce((acc, curr) => {
+            selectedTemplate?.template?.fields.reduce((acc, curr) => {
               return { ...acc, [curr.name]: curr.defaultValue };
             }, {})
           ),
@@ -565,28 +576,40 @@ const ManagedServiceLayout = () => {
           />
         ) : null,
       },
-      {
-        label: 'Configure managed service',
-        active: isActive('Configure managed service'),
-        completed: false,
-        children: isActive('Configure managed service') ? (
-          <FieldView
-            selectedTemplate={values.selectedTemplate}
-            values={values.res}
-            errors={errors}
-            handleChange={handleChange}
-            handleSubmit={handleSubmit}
-          />
-        ) : null,
-      },
-      {
-        label: 'Review',
-        active: isActive('Review'),
-        completed: false,
-        children: isActive('Review') ? (
-          <ReviewView values={values} handleSubmit={handleSubmit} isLoading />
-        ) : null,
-      },
+      ...(hasTemplate(values.selectedTemplate)
+        ? [
+            {
+              label: 'Configure managed service',
+              active: isActive('Configure managed service'),
+              completed: false,
+              children: isActive('Configure managed service') ? (
+                <FieldView
+                  selectedTemplate={values.selectedTemplate}
+                  values={values.res}
+                  errors={errors}
+                  handleChange={handleChange}
+                  handleSubmit={handleSubmit}
+                />
+              ) : null,
+            },
+          ]
+        : []),
+      ...(hasTemplate(values.selectedTemplate)
+        ? [
+            {
+              label: 'Review',
+              active: isActive('Review'),
+              completed: false,
+              children: isActive('Review') ? (
+                <ReviewView
+                  values={values}
+                  handleSubmit={handleSubmit}
+                  isLoading
+                />
+              ) : null,
+            },
+          ]
+        : []),
     ];
   };
 
@@ -603,11 +626,7 @@ const ManagedServiceLayout = () => {
 };
 
 const NewManagedService = () => {
-  return (
-    <ManagedServiceStateProvider>
-      <ManagedServiceLayout />
-    </ManagedServiceStateProvider>
-  );
+  return <ManagedServiceLayout />;
 };
 
 export const handle = {

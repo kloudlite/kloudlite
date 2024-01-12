@@ -10,7 +10,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/console/server/r-utils/common';
-import { FadeIn } from '../../../../../../page-components/util';
+import { FadeIn } from '~/console/page-components/util';
 
 interface IReviewComponent {
   title: string;
@@ -26,9 +26,9 @@ export const ReviewComponent = ({
     <div className="flex flex-col gap-2xl pb-3xl">
       <div className="flex flex-row items-center">
         <span className="text-text-soft bodyMd flex-1">{title}</span>
-        <span className="text-icon-soft" onClick={onEdit}>
+        <button aria-label="edit" className="text-icon-soft" onClick={onEdit}>
           <PencilLine size={16} />
-        </span>
+        </button>
       </div>
       {children}
     </div>

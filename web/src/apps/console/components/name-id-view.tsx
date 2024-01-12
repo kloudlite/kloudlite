@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { CircleNotch } from '@jengaicons/react';
-import { Dispatch, ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
@@ -30,6 +30,7 @@ interface INameIdView {
   label?: ReactNode;
   placeholder?: string;
   onCheckError?: (error: boolean) => void;
+  isUpdate?: boolean;
 }
 
 export const NameIdView = ({
@@ -42,14 +43,15 @@ export const NameIdView = ({
   displayName,
   placeholder,
   onCheckError,
+  isUpdate,
 }: INameIdView) => {
   const [nameValid, setNameValid] = useState(false);
-  const [nameLoading, setNameLoading] = useState(false);
+  const [nameLoading, setNameLoading] = useState(true);
 
   const api = useConsoleApi();
   const params = useParams();
 
-  const checkApi = () => {
+  const checkApi = (() => {
     switch (resType) {
       case 'app':
       case 'project':
@@ -87,7 +89,13 @@ export const NameIdView = ({
       default:
         return api.coreCheckNameAvailability;
     }
-  };
+  })();
+
+  useEffect(() => {
+    if (displayName && name) {
+      setNameLoading(true);
+    }
+  }, [displayName, name]);
 
   const checkNameAvailable = () => {
     if (errors) {
@@ -98,7 +106,13 @@ export const NameIdView = ({
       // onCheckError?.(true);
       return null;
     }
+
+    if (isUpdate) {
+      return null;
+    }
+
     if (nameLoading) {
+      onCheckError?.(true);
       return (
         <div className="flex flex-row items-center gap-md">
           <span className="animate-spin">
@@ -125,57 +139,71 @@ export const NameIdView = ({
   const { cluster } = params;
   useDebounce(
     async () => {
-      if (displayName) {
-        try {
-          // @ts-ignore
-          const { data, errors } = await checkApi()({
-            resType,
-            name: `${name}`,
-            ...([
-              'project',
-              'app',
-              'environment',
-              'config',
-              'secret',
-              'project_managed_service',
-            ].includes(resType)
-              ? {
-                  projectName: parseName(project),
-                  envName: parseName(environment),
-                }
-              : {}),
-            ...(['nodepool', 'vpn_device'].includes(resType)
-              ? {
-                  clusterName: cluster,
-                }
-              : {}),
-            ...(resType === 'managed_resource'
-              ? {
-                  namespace: '',
-                }
-              : {}),
-          });
+      if (!isUpdate)
+        if (displayName) {
+          setNameLoading(true);
+          try {
+            // @ts-ignore
+            const { data, errors } = await checkApi({
+              // @ts-ignore
+              resType,
+              name: `${name}`,
+              ...([
+                'project',
+                'app',
+                'environment',
+                'config',
+                'secret',
+                'project_managed_service',
+              ].includes(resType)
+                ? {
+                    projectName: parseName(project),
+                    envName: parseName(environment),
+                  }
+                : {}),
+              ...(['nodepool', 'vpn_device'].includes(resType)
+                ? {
+                    clusterName: cluster,
+                  }
+                : {}),
+              ...(resType === 'managed_resource'
+                ? {
+                    namespace: '',
+                  }
+                : {}),
+            });
 
-          if (errors) {
-            throw errors[0];
+            if (errors) {
+              throw errors[0];
+            }
+            if (data.result) {
+              setNameValid(true);
+            } else {
+              setNameValid(false);
+            }
+          } catch (err) {
+            handleError(err);
+          } finally {
+            setNameLoading(false);
           }
-          if (data.result) {
-            setNameValid(true);
-          } else {
-            setNameValid(false);
-          }
-        } catch (err) {
-          handleError(err);
-        } finally {
+        } else {
           setNameLoading(false);
         }
-      } else {
-        setNameLoading(false);
-      }
     },
     500,
-    [displayName, name]
+    [displayName, name, isUpdate]
   );
+
+  useEffect(() => {
+    console.log(
+      'error: ',
+      (!nameLoading || !isUpdate) &&
+        ((!nameValid && !!name && !nameLoading) || !!errors),
+      !nameLoading || !isUpdate,
+      !nameValid && !!name && !nameLoading,
+      !!errors
+    );
+  }, []);
 
   return (
     <TextInput
@@ -187,7 +215,6 @@ export const NameIdView = ({
           name: v,
           id: v.trim().toLowerCase().replace(/ /g, '-'),
         });
-
         if (v) {
           setNameLoading(true);
         } else {
@@ -196,7 +223,10 @@ export const NameIdView = ({
       }}
       placeholder={placeholder}
       size="lg"
-      error={(!nameValid && !!name && !nameLoading) || !!errors}
+      error={
+        (!nameLoading || !isUpdate) &&
+        ((!nameValid && !!name && !nameLoading) || !!errors)
+      }
       message={checkNameAvailable()}
       prefix={
         prefix && <span className="text-text-soft mr-sm">{prefix} /</span>

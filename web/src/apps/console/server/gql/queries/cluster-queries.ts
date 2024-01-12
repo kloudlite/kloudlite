@@ -83,6 +83,7 @@ export const clusterQueries = (executor: IExecutor) => ({
               metadata {
                 name
                 annotations
+                generation
               }
               creationTime
               lastUpdatedBy {
@@ -96,25 +97,28 @@ export const clusterQueries = (executor: IExecutor) => ({
                 userName
               }
               updateTime
-              syncStatus {
-                syncScheduledAt
-                lastSyncedAt
-                recordVersion
-                error
-              }
               status {
-                resources {
-                  namespace
-                  name
-                  kind
-                  apiVersion
-                }
+                checks
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
                 message {
                   RawMessage
                 }
-                lastReconcileTime
-                isReady
-                checks
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               recordVersion
               spec {

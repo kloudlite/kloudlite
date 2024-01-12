@@ -134,6 +134,7 @@ export const projectQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
+              recordVersion
               spec {
                 targetNamespace
               }

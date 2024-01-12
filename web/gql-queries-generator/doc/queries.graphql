@@ -81,10 +81,11 @@ query consoleGetAccount($accountName: String!) {
     updateTime
     contactEmail
     displayName
-    spec {
-      targetNamespace
-    }
   }
+}
+
+mutation consoleDeleteAccount($accountName: String!) {
+  accounts_deleteAccount(accountName: $accountName)
 }
 
 mutation consoleCreateProject($project: ProjectIn!) {
@@ -177,6 +178,7 @@ query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
           name
           namespace
         }
+        recordVersion
         spec {
           targetNamespace
         }
@@ -249,6 +251,7 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         metadata {
           name
           annotations
+          generation
         }
         creationTime
         lastUpdatedBy {
@@ -262,25 +265,28 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
           userName
         }
         updateTime
-        syncStatus {
-          syncScheduledAt
-          lastSyncedAt
-          recordVersion
-          error
-        }
         status {
-          resources {
-            namespace
-            name
-            kind
-            apiVersion
-          }
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
           message {
             RawMessage
           }
-          lastReconcileTime
-          isReady
-          checks
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
         }
         recordVersion
         spec {
@@ -3014,7 +3020,29 @@ mutation consoleDeleteHelmChart($clusterName: String!, $releaseName: String!) {
   infra_deleteHelmRelease(clusterName: $clusterName, releaseName: $releaseName)
 }
 
-query authCli_getMresConfigs($keyrefs: [ManagedResourceKeyRefIn], $envName: String!, $projectName: String!) {
+query authCli_getMresKeys($projectName: String!, $envName: String!, $name: String!) {
+  core_getManagedResouceOutputKeys(
+    projectName: $projectName
+    envName: $envName
+    name: $name
+  )
+}
+
+query authCli_listMreses($projectName: String!, $envName: String!, $pq: CursorPaginationIn) {
+  core_listManagedResources(projectName: $projectName, envName: $envName, pq: $pq) {
+    edges {
+      node {
+        displayName
+        metadata {
+          name
+          namespace
+        }
+      }
+    }
+  }
+}
+
+query authCli_getMresConfigsValues($keyrefs: [ManagedResourceKeyRefIn], $envName: String!, $projectName: String!) {
   core_getManagedResouceOutputKeyValues(
     keyrefs: $keyrefs
     envName: $envName

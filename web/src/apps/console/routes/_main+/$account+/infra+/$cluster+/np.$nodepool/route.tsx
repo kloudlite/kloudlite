@@ -23,7 +23,6 @@ import { DetailItem } from '~/console/components/commons';
 import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
 import { IAccountContext } from '../../../_layout';
 
-
 const ClusterTabs = () => {
   const { account, cluster } = useParams();
   return (
@@ -97,9 +96,10 @@ const Log = ({ nodepool }: { nodepool: string }) => {
   const params = useParams();
   ensureClusterClientSide(params);
   const getUrl = (f: number) => {
-    return `wss://observability.dev.kloudlite.io/observability/logs/nodepool-job?resource_name=${nodepool}&resource_namespace=${
-      account.spec.targetNamespace
-    }&start_time=${f}&end_time=${getTime()}`;
+    // return `wss://observability.dev.kloudlite.io/observability/logs/nodepool-job?resource_name=${nodepool}&resource_namespace=${
+    //   account.spec.targetNamespace
+    // }&start_time=${f}&end_time=${getTime()}`;
+    return '';
   };
 
   // const [url, setUrl] = useState(getUrl(from));

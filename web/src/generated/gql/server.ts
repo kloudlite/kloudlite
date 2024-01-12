@@ -27,9 +27,9 @@ export type Scalars = {
   Float: { input: number; output: number };
   Date: { input: any; output: any };
   Map: { input: any; output: any };
-  Any: { input: any; output: any };
   Json: { input: any; output: any };
   ProviderDetail: { input: any; output: any };
+  Any: { input: any; output: any };
   URL: { input: any; output: any };
 };
 
@@ -346,13 +346,11 @@ export type SearchVpnDevices = {
 };
 
 export type AccountIn = {
-  contactEmail: Scalars['String']['input'];
-  description?: InputMaybe<Scalars['String']['input']>;
+  contactEmail?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   logo?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
-  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__AccountSpecIn;
 };
 
 export type MetadataIn = {
@@ -361,11 +359,6 @@ export type MetadataIn = {
   name: Scalars['String']['input'];
   namespace?: InputMaybe<Scalars['String']['input']>;
 };
-
-export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AccountSpecIn =
-  {
-    targetNamespace?: InputMaybe<Scalars['String']['input']>;
-  };
 
 export type InvitationIn = {
   userEmail?: InputMaybe<Scalars['String']['input']>;
@@ -1555,12 +1548,17 @@ export type ConsoleGetAccountQueryVariables = Exact<{
 export type ConsoleGetAccountQuery = {
   accounts_getAccount?: {
     updateTime: any;
-    contactEmail: string;
+    contactEmail?: string;
     displayName: string;
     metadata?: { name: string; annotations?: any };
-    spec: { targetNamespace?: string };
   };
 };
+
+export type ConsoleDeleteAccountMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteAccountMutation = { accounts_deleteAccount: boolean };
 
 export type ConsoleCreateProjectMutationVariables = Exact<{
   project: ProjectIn;
@@ -1637,6 +1635,7 @@ export type ConsoleListProjectsQuery = {
         creationTime: any;
         displayName: string;
         markedForDeletion?: boolean;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -1718,26 +1717,29 @@ export type ConsoleListClustersQuery = {
         creationTime: any;
         updateTime: any;
         recordVersion: number;
-        metadata: { name: string; annotations?: any };
+        metadata: { name: string; annotations?: any; generation: number };
         lastUpdatedBy: { userId: string; userName: string; userEmail: string };
         createdBy: { userEmail: string; userId: string; userName: string };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
         syncStatus: {
-          syncScheduledAt?: any;
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          error?: string;
-        };
-        status?: {
-          lastReconcileTime?: any;
-          isReady: boolean;
-          checks?: any;
-          resources?: Array<{
-            namespace: string;
-            name: string;
-            kind: string;
-            apiVersion: string;
-          }>;
-          message?: { RawMessage?: any };
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
         spec: {
           messageQueueTopicName: string;
@@ -4355,7 +4357,34 @@ export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
 };
 
-export type AuthCli_GetMresConfigsQueryVariables = Exact<{
+export type AuthCli_GetMresKeysQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetMresKeysQuery = {
+  core_getManagedResouceOutputKeys: Array<string>;
+};
+
+export type AuthCli_ListMresesQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type AuthCli_ListMresesQuery = {
+  core_listManagedResources?: {
+    edges: Array<{
+      node: {
+        displayName: string;
+        metadata?: { name: string; namespace?: string };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_GetMresConfigsValuesQueryVariables = Exact<{
   keyrefs?: InputMaybe<
     | Array<InputMaybe<ManagedResourceKeyRefIn>>
     | InputMaybe<ManagedResourceKeyRefIn>
@@ -4364,7 +4393,7 @@ export type AuthCli_GetMresConfigsQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
 }>;
 
-export type AuthCli_GetMresConfigsQuery = {
+export type AuthCli_GetMresConfigsValuesQuery = {
   core_getManagedResouceOutputKeyValues: Array<{
     key: string;
     mresName: string;

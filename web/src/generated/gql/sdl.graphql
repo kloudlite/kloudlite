@@ -5,33 +5,27 @@ directive @specifiedBy(
 ) on SCALAR
 
 type Account {
-  apiVersion: String!
-  contactEmail: String!
+  contactEmail: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  description: String
   displayName: String!
   id: String!
   isActive: Boolean
-  kind: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
   metadata: Metadata
   recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpec!
-  status: Github__com___kloudlite___operator___pkg___operator__Status
+  targetNamespace: String
   updateTime: Date!
 }
 
 input AccountIn {
-  contactEmail: String!
-  description: String
+  contactEmail: String
   displayName: String!
   isActive: Boolean
   logo: String
   metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn!
 }
 
 type AccountMembership {
@@ -398,6 +392,7 @@ type ConsoleVPNDevice {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
   wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
 }
@@ -1028,14 +1023,6 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef {
 input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   name: String!
   namespace: String
-}
-
-type Github__com___kloudlite___operator___apis___crds___v1__AccountSpec {
-  targetNamespace: String
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn {
-  targetNamespace: String
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__AppContainer {
@@ -2884,7 +2871,7 @@ type Mutation {
   core_updateRouter(envName: String!, projectName: String!, router: RouterIn!): Router
   core_updateSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
   core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
-  core_updateVPNDeviceNs(deviceName: String!, namespace: String!): Boolean!
+  core_updateVPNDeviceEnv(deviceName: String!, envName: String!, projectName: String!): Boolean!
   core_updateVPNDevicePorts(deviceName: String!, ports: [PortIn!]!): Boolean!
   cr_addBuild(build: BuildIn!): Build
   cr_addBuildCacheKey(buildCacheKey: BuildCacheKeyIn!): BuildCacheKey
@@ -3243,6 +3230,7 @@ type Query {
   core_listRouters(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchRouters): RouterPaginatedRecords
   core_listSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchSecrets): SecretPaginatedRecords
   core_listVPNDevices(pq: CursorPaginationIn, search: CoreSearchVPNDevices): ConsoleVPNDevicePaginatedRecords
+  core_listVPNDevicesForUser: [ConsoleVPNDevice!]
   core_resyncApp(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncConfig(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncEnvironment(name: String!, projectName: String!): Boolean!

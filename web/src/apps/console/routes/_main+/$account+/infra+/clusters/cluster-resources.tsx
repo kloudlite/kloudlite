@@ -12,6 +12,7 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { listStatus } from '~/console/components/sync-status';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -153,6 +154,12 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
           className: 'min-w-[80px] mx-[25px] basis-full text-center',
         });
 
+        const tempStatus = listStatus({
+          key: keyPrefix,
+          item,
+          className: 'basis-full text-center',
+        });
+
         return (
           <List.Row
             key={id}
@@ -173,7 +180,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'max-w-[180px]',
+                className: 'max-w-[180px] min-w-[180px] w-[180px]',
                 render: () => (
                   <ListTitle
                     title={name}
@@ -182,7 +189,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                   />
                 ),
               },
-              statusRender,
+              tempStatus,
               {
                 key: generateKey(keyPrefix, `${provider}`),
                 className: 'min-w-[150px] text-start',

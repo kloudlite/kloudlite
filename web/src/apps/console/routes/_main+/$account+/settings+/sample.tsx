@@ -133,7 +133,6 @@ export const updateAccount = async ({
           name: parseName(data),
         },
         contactEmail: data.contactEmail,
-        spec: data.spec,
       },
     });
     if (e) {

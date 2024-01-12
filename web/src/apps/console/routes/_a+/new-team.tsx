@@ -224,7 +224,6 @@ const NewAccount = () => {
         const { errors: _errors } = await api.createAccount({
           account: {
             metadata: { name: v.name },
-            spec: {},
             displayName: v.displayName,
             contactEmail: user.email,
           },
@@ -268,7 +267,7 @@ const NewAccount = () => {
           <div className="flex flex-row gap-xl justify-start">
             <Button
               variant="primary"
-              content="Next"
+              content="Continue"
               suffix={<ArrowRight />}
               size="md"
               loading={isLoading}

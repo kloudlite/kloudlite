@@ -14,21 +14,12 @@ import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import {
-  Dispatch,
-  FormEventHandler,
-  SetStateAction,
-  useEffect,
-  useState,
-} from 'react';
-import {
-  IMSvTemplate,
-  IMSvTemplates,
-} from '~/console/server/gql/queries/managed-templates-queries';
+import { FormEventHandler, useEffect, useState } from 'react';
+import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
-import { titleCase, useMapper } from '~/components/utils';
+import { useMapper } from '~/components/utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -38,7 +29,6 @@ import {
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
-import DataSetter from '~/console/components/data-setter';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { ReviewComponent } from '../new-app/app-review';
@@ -61,18 +51,7 @@ export const loader = (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const valueRender = ({ label, icon }: { label: string; icon: string }) => {
-  return (
-    <div className="flex flex-row gap-lg items-center">
-      <span>
-        <img alt={label} src={icon} className="w-2xl h-w-2xl" />
-      </span>
-      <div>{label}</div>
-    </div>
-  );
-};
-
-type steps = 'Select template' | 'Configure managed service' | 'Review';
+type steps = 'Select service' | 'Configure resource' | 'Review';
 
 const hasResource = (res: any) =>
   (!!res && res?.resource?.fields.length > 0) || !res;
@@ -268,12 +247,11 @@ const TemplateView = ({
   resources,
   isLoading,
 }: ITemplateView) => {
-  const [hasCheckNameError, setHasCheckNameError] = useState(false);
   return (
     <form
       className="flex flex-col gap-3xl py-3xl"
       onSubmit={(e) => {
-        if (!hasCheckNameError) {
+        if (!values.isNameCheckError) {
           handleSubmit(e);
         } else {
           e.preventDefault();
@@ -293,7 +271,7 @@ const TemplateView = ({
           handleChange('displayName')(dummyEvent(name));
           handleChange('name')(dummyEvent(id));
         }}
-        onCheckError={setHasCheckNameError}
+        onCheckError={(v) => handleChange('isNameCheckError')(dummyEvent(v))}
       />
       <Select
         label="Service"
@@ -473,7 +451,7 @@ const ReviewView = ({
 
 const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
   const { msvtemplates } = useOutletContext<IProjectContext>();
-  const [activeState, setActiveState] = useState<steps>('Select template');
+  const [activeState, setActiveState] = useState<steps>('Select service');
   const navigate = useNavigate();
   const api = useConsoleApi();
 
@@ -487,6 +465,7 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
         selectedService: null,
         selectedResource: null,
         res: {},
+        isNameCheckError: false,
       },
       validationSchema: Yup.object({
         name: Yup.string().required(),
@@ -495,14 +474,16 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
         selectedResource: Yup.object({}).required(),
       }),
       onSubmit: async (val) => {
+        const selectedService =
+          val.selectedService as unknown as ISelectedService;
         const submit = async () => {
           try {
             if (!project || !environment) {
               throw new Error('Project and Environment is required!.');
             }
             if (
-              !val.selectedService ||
-              (val.selectedService && !val.selectedService.service)
+              !selectedService ||
+              (selectedService && !selectedService.service)
             ) {
               throw new Error('Service apiversion or kind error.');
             }
@@ -521,15 +502,15 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
                       ...val.res,
                     },
                     msvcRef: {
-                      name: parseName(val.selectedService?.service),
+                      name: parseName(selectedService?.service),
                       namespace:
-                        val.selectedService?.service?.metadata.namespace || '',
+                        selectedService?.service?.metadata?.namespace || '',
                       apiVersion:
-                        val.selectedService?.service?.spec?.msvcSpec
-                          .serviceTemplate.apiVersion || '',
+                        selectedService?.service?.spec?.msvcSpec.serviceTemplate
+                          .apiVersion || '',
                       kind:
-                        val.selectedService?.service?.spec?.msvcSpec
-                          .serviceTemplate.kind || '',
+                        selectedService?.service?.spec?.msvcSpec.serviceTemplate
+                          .kind || '',
                     },
                   },
                 },
@@ -544,14 +525,14 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
           }
         };
         switch (activeState) {
-          case 'Select template':
+          case 'Select service':
             if (!hasResource(val.selectedResource)) {
               await submit();
               break;
             }
-            setActiveState('Configure managed service');
+            setActiveState('Configure resource');
             break;
-          case 'Configure managed service':
+          case 'Configure resource':
             setActiveState('Review');
             break;
           case 'Review':
@@ -564,12 +545,14 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
     });
 
   useEffect(() => {
-    if (values.selectedResource?.resource.fields) {
+    const selectedResource =
+      values.selectedResource as unknown as ISelectedResource;
+    if (selectedResource.resource.fields) {
       setValues({
         ...values,
         res: {
           ...flatM(
-            values.selectedResource?.resource?.fields.reduce((acc, curr) => {
+            selectedResource?.resource?.fields.reduce((acc, curr) => {
               return { ...acc, [curr.name]: curr.defaultValue };
             }, {})
           ),
@@ -585,11 +568,11 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
       ...(getManagedTemplate({
         templates: msvtemplates || [],
         kind:
-          values.selectedService?.service?.spec?.msvcSpec.serviceTemplate
-            .kind || '',
+          (values.selectedService as unknown as ISelectedService)?.service?.spec
+            ?.msvcSpec.serviceTemplate.kind || '',
         apiVersion:
-          values.selectedService?.service?.spec?.msvcSpec.serviceTemplate
-            .apiVersion || '',
+          (values.selectedService as unknown as ISelectedService)?.service?.spec
+            ?.msvcSpec.serviceTemplate.apiVersion || '',
       })?.resources || []),
     ],
     (res) => ({
@@ -599,22 +582,13 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
     })
   );
 
-  useEffect(() => {
-    console.log(
-      'test',
-      (!!values.selectedResource &&
-        values.selectedResource.resource.fields.length > 0) ||
-        !values.selectedResource
-    );
-  }, [values]);
-
   const items = useMapper(
     [
       {
-        label: 'Select template',
-        active: isActive('Select template'),
+        label: 'Select service',
+        active: isActive('Select service'),
         completed: false,
-        children: isActive('Select template') ? (
+        children: isActive('Select service') ? (
           <TemplateView
             isLoading={isLoading}
             services={services}
@@ -629,10 +603,10 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
       ...(hasResource(values.selectedResource)
         ? [
             {
-              label: 'Configure managed service',
-              active: isActive('Configure managed service'),
+              label: 'Configure resource',
+              active: isActive('Configure resource'),
               completed: false,
-              children: isActive('Configure managed service') ? (
+              children: isActive('Configure resource') ? (
                 <FieldView
                   selectedResource={values.selectedResource}
                   values={values.res}
@@ -673,7 +647,7 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
       progressItems={{
         items,
       }}
-      onClick={({ label }) => {}}
+      // onClick={({ label }) => {}}
     />
   );
 };
