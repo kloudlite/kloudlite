@@ -64,7 +64,7 @@ func (r *mutationResolver) AccountsDeleteAccount(ctx context.Context, accountNam
 	if err != nil {
 		return false, errors.NewE(err)
 	}
-	return r.domain.DeactivateAccount(uc, accountName)
+	return r.domain.DeleteAccount(uc, accountName)
 }
 
 // AccountsInviteMember is the resolver for the accounts_inviteMember field.
