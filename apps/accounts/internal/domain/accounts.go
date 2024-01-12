@@ -141,45 +141,40 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 	return acc, nil
 }
 
-func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
-	if err := d.checkAccountAccess(ctx, account.Name, ctx.UserId, iamT.UpdateAccount); err != nil {
+func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*entities.Account, error) {
+	if err := d.checkAccountAccess(ctx, accountIn.Name, ctx.UserId, iamT.UpdateAccount); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	account.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &account.Account); err != nil {
+	accountIn.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &accountIn.Account); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	acc, err := d.findAccount(ctx, account.Name)
+	account, err := d.findAccount(ctx, accountIn.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if acc.IsActive != nil && !*acc.IsActive {
-		return nil, errors.Newf("account %q is not active, could not update", account.Name)
+	if account.IsActive != nil && !*account.IsActive {
+		return nil, errors.Newf("accountIn %q is not active, could not update", accountIn.Name)
 	}
 
-	if acc.IsMarkedForDeletion() {
-		return nil, errors.Newf("account %q is marked for deletion, could not update", account.Name)
+	if account.IsMarkedForDeletion() {
+		return nil, errors.Newf("accountIn %q is marked for deletion, could not update", accountIn.Name)
 	}
 
-	acc.Labels = account.Labels
-	acc.IsActive = account.IsActive
-	acc.DisplayName = account.DisplayName
-
-	acc.Logo = account.Logo
-
-	acc.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
-	}
-
-	uAcc, err := d.accountRepo.UpdateById(ctx, acc.Id, acc)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	uAcc, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
+		"labels":      accountIn.Labels,
+		"isActive":    accountIn.IsActive,
+		"displayName": accountIn.DisplayName,
+		"logo":        accountIn.Logo,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	})
 
 	if err := d.applyAccountOnCluster(ctx, uAcc); err != nil {
 		return nil, errors.NewE(err)
