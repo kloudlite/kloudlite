@@ -14,6 +14,7 @@ type Account struct {
 
 	Logo         *string `json:"logo"`
 	IsActive     *bool   `json:"isActive,omitempty"`
+	ContactEmail string `json:"contactEmail,omitempty"`
 }
 
 var AccountIndices = []repos.IndexField{

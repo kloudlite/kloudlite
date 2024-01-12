@@ -169,6 +169,7 @@ func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*en
 		"isActive":    accountIn.IsActive,
 		"displayName": accountIn.DisplayName,
 		"logo":        accountIn.Logo,
+		"contactEmail": accountIn.ContactEmail,
 		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
