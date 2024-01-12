@@ -1,11 +1,8 @@
 package app
 
 import (
-	"bufio"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -15,12 +12,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 
-	fWebsocket "github.com/gofiber/websocket/v2"
 	"github.com/kloudlite/api/apps/console/internal/app/graph"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/apps/console/internal/env"
+	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -30,7 +27,6 @@ import (
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
-	loki_client "github.com/kloudlite/api/pkg/loki-client"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/kloudlite/api/pkg/repos"
@@ -42,7 +38,7 @@ type (
 	LogsAndMetricsHttpServer httpServer.Server
 )
 
-func toConsoleContext(requestCtx context.Context, accountCookieName string, clusterCookieName string) (domain.ConsoleContext, error) {
+func toConsoleContext(requestCtx context.Context, accountCookieName string) (domain.ConsoleContext, error) {
 	sess := httpServer.GetSession[*common.AuthSession](requestCtx)
 	if sess == nil {
 		return domain.ConsoleContext{}, fiber.ErrUnauthorized
@@ -51,11 +47,6 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 	klAccount := m[accountCookieName]
 	if klAccount == "" {
 		return domain.ConsoleContext{}, errors.Newf("no cookie named '%s' present in request", accountCookieName)
-	}
-
-	klCluster := m[clusterCookieName]
-	if klCluster == "" {
-		return domain.ConsoleContext{}, errors.Newf("no cookie named '%s' present in request", clusterCookieName)
 	}
 
 	return domain.NewConsoleContext(requestCtx, sess.UserId, klAccount), nil
@@ -74,11 +65,15 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
 	repos.NewFxMongoRepo[*entities.ConsoleVPNDevice]("vpn_devices", "devs", entities.VPNDeviceIndexes),
 
+	fx.Provide(
+		func(conn IAMGrpcClient) iam.IAMClient {
+			return iam.NewIAMClient(conn)
+		},
+	),
+
 	// streaming logs
 	fx.Invoke(
-		func(logAndMetricsServer LogsAndMetricsHttpServer, client loki_client.LokiClient,
-			ev *env.Env, sessionRepo kv.Repo[*common.AuthSession], d domain.Domain, logger logging.Logger,
-			infraClient infra.InfraClient,
+		func(logAndMetricsServer LogsAndMetricsHttpServer, ev *env.Env, sessionRepo kv.Repo[*common.AuthSession], iamCli iam.IAMClient,
 		) {
 			a := logAndMetricsServer.Raw()
 
@@ -91,12 +86,38 @@ var Module = fx.Module("app",
 				),
 			)
 
-			a.Use("/observability", func(c *fiber.Ctx) error {
-				cc, err := toConsoleContext(c.Context(), ev.AccountCookieName, ev.ClusterCookieName)
-
+			a.Get("/observability/metrics/:metric_type", func(c *fiber.Ctx) error {
+				cc, err := toConsoleContext(c.Context(), ev.AccountCookieName)
 				if err != nil {
 					return errors.NewE(err)
 				}
+
+				clusterName := c.Query("cluster_name")
+				if clusterName == "" {
+					return errors.New("query param (cluster_name) must be provided")
+				}
+
+				trackingId := c.Query("tracking_id")
+				if trackingId == "" {
+					return errors.New("query param (tracking_id) must be provided")
+				}
+
+				can, err := iamCli.Can(c.Context(), &iam.CanIn{
+					UserId: string(cc.UserId),
+					ResourceRefs: []string{
+						iamT.NewResourceRef(cc.AccountName, iamT.ResourceAccount, cc.AccountName),
+					},
+					Action: string(iamT.ReadMetrics),
+				})
+				if err != nil {
+					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName).Error()}
+				}
+
+				if !can.Status {
+					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName).Error()}
+				}
+
+				metricType := c.Params("metric_type")
 
 				st := c.Query("start_time")
 				et := c.Query("end_time")
@@ -120,323 +141,11 @@ var Module = fx.Module("app",
 					endTime = fn.New(time.Unix(et, 0))
 				}
 
-				args := ObservabilityArgs{
-					AccountName: cc.AccountName,
-					//ProjectName: cc.ProjectName,
-
-					ResourceName:      c.Query("resource_name"),
-					ResourceNamespace: c.Query("resource_namespace"),
-					ResourceType:      c.Query("resource_type"),
-					WorkspaceName:     c.Query("workspace_name"),
-					ProjectName:       c.Query("project_name"),
-
-					JobName:      c.Query("job_name"),
-					JobNamespace: c.Query("job_namespace"),
-
-					StartTime: startTime,
-					EndTime:   endTime,
-				}
-
-				if b, err := args.Validate(); !b {
-					return errors.NewE(err)
-				}
-
-				c.Locals("observability-args", args)
-				c.Locals("console-context", cc)
-				return c.Next()
-			})
-
-			a.Get("/observability/logs/:resource_type",
-				func(c *fiber.Ctx) error {
-					args, ok := c.Locals("observability-args").(ObservabilityArgs)
-					if !ok {
-						return fiber.ErrInternalServerError
-					}
-
-					cc, ok := c.Locals("console-context").(domain.ConsoleContext)
-					if !ok {
-						return fiber.ErrInternalServerError
-					}
-
-					streamSelectors := make([]loki_client.StreamSelector, 0, 5)
-
-					streamSelectors = append(streamSelectors,
-						loki_client.StreamSelector{
-							Key:       "kl_account_name",
-							Operation: "=",
-							Value:     cc.AccountName,
-						},
-						//loki_client.StreamSelector{
-						//	Key:       "kl_cluster_name",
-						//	Operation: "=",
-						//	Value:     cc.ProjectName,
-						//},
-					)
-
-					resourceType := c.Params("resource_type")
-					switch resourceType {
-					case "app":
-						{
-							mapping, err := d.GetResourceMapping(cc, entities.ResourceType(args.ResourceType), args.ClusterName, args.ResourceNamespace, args.ResourceName)
-							if err != nil {
-								return errors.NewE(err)
-							}
-
-							app, err := d.GetApp(domain.ResourceContext{
-								ConsoleContext:  cc,
-								ProjectName:     mapping.ProjectName,
-								EnvironmentName: mapping.EnvironmentName,
-							}, args.ResourceName)
-							if err != nil {
-								return errors.NewE(err)
-							}
-							logger.Infof("userId: %s, has access to resource 'app': %s/%s, allowing user to consume logs", cc.UserId, app.Namespace, app.Name)
-
-							streamSelectors = append(streamSelectors,
-								loki_client.StreamSelector{
-									Key:       "kl_resource_name",
-									Operation: "=",
-									Value:     args.ResourceName,
-								},
-								loki_client.StreamSelector{
-									Key:       "kl_resource_namespace",
-									Operation: "=",
-									Value:     args.ResourceNamespace,
-								},
-							)
-						}
-					case "cluster-job":
-						{
-							return &fiber.Error{Code: fiber.ErrBadRequest.Code, Message: "observability for cluster job is work-in-progress"}
-							//out, err := infraClient.GetCluster(cc, &infra.GetClusterIn{
-							//	UserId:      string(cc.UserId),
-							//	UserName:    cc.UserName,
-							//	UserEmail:   cc.UserEmail,
-							//	AccountName: cc.AccountName,
-							//	//ProjectName: cc.ProjectName,
-							//})
-							//if err != nil {
-							//	return errors.NewE(err)
-							//}
-							//logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ProjectName)
-							//streamSelectors = nil
-							//streamSelectors = append(streamSelectors,
-							//	loki_client.StreamSelector{
-							//		Key:       "kl_job_name",
-							//		Operation: "=",
-							//		Value:     out.IACJobName,
-							//	},
-							//	loki_client.StreamSelector{
-							//		Key:       "kl_job_namespace",
-							//		Operation: "=",
-							//		Value:     out.IACJobNamespace,
-							//	},
-							//)
-						}
-					case "nodepool-job":
-						{
-							return &fiber.Error{Code: fiber.ErrBadRequest.Code, Message: "observability for nodepool job is work-in-progress"}
-							//out, err := infraClient.GetNodepool(cc, &infra.GetNodepoolIn{
-							//	UserId:       string(cc.UserId),
-							//	UserName:     cc.UserName,
-							//	UserEmail:    cc.UserEmail,
-							//	AccountName:  cc.AccountName,
-							//	ProjectName:  cc.ProjectName,
-							//	NodepoolName: args.ResourceName,
-							//})
-							//if err != nil {
-							//	return errors.NewE(err)
-							//}
-							//logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ProjectName, args.ResourceName)
-							//streamSelectors = append(streamSelectors,
-							//	loki_client.StreamSelector{
-							//		Key:       "kl_job_name",
-							//		Operation: "=",
-							//		Value:     out.IACJobName,
-							//	},
-							//	loki_client.StreamSelector{
-							//		Key:       "kl_job_namespace",
-							//		Operation: "=",
-							//		Value:     out.IACJobNamespace,
-							//	},
-							//)
-						}
-					default:
-						{
-							return &fiber.Error{Code: fiber.ErrBadRequest.Code, Message: fmt.Sprintf("unknown resource type (%s), must be on e of app,cluster-job,nodepool-job", resourceType)}
-						}
-					}
-
-					if args.WorkspaceName != "" {
-						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
-							Key:       "kl_workspace_name",
-							Operation: "=",
-							Value:     args.WorkspaceName,
-						})
-					}
-
-					if args.ProjectName != "" {
-						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
-							Key:       "kl_project_name",
-							Operation: "=",
-							Value:     args.ProjectName,
-						})
-					}
-
-					lokiQueryFilter := &loki_client.QueryArgs{
-						StreamSelectors: streamSelectors,
-						SearchKeyword:   nil,
-						StartTime:       args.StartTime,
-						EndTime:         args.EndTime,
-						LimitLength:     nil,
-
-						PreWriteFunc: func(lr *loki_client.LogResult) ([]byte, error) {
-							var logMessage struct {
-								Message string `json:"message"`
-							}
-
-							type LogFormat struct {
-								Timestamp string `json:"timestamp"`
-								Message   string `json:"message"`
-							}
-
-							type FinalResult struct {
-								PodName string      `json:"pod_name"`
-								Logs    []LogFormat `json:"logs"`
-							}
-
-							data := make([]FinalResult, len(lr.Data.Result))
-							for i := range lr.Data.Result {
-								data[i] = FinalResult{
-									PodName: lr.Data.Result[i].Stream["kl_pod_name"],
-									Logs:    make([]LogFormat, len(lr.Data.Result[i].Values)),
-								}
-
-								for j := range lr.Data.Result[i].Values {
-									ts, err := strconv.ParseInt(lr.Data.Result[i].Values[j][0], 10, 64)
-									if err != nil {
-										return nil, errors.NewE(err)
-									}
-									data[i].Logs[j].Timestamp = time.Unix(0, ts).Format(time.RFC3339)
-									if err := json.Unmarshal([]byte(lr.Data.Result[i].Values[j][1]), &logMessage); err != nil {
-										return nil, errors.NewE(err)
-									}
-									data[i].Logs[j].Message = logMessage.Message
-								}
-							}
-							return json.Marshal(data)
-						},
-					}
-
-					c.Locals("loki-query-filter", lokiQueryFilter)
-					return c.Next()
-				},
-
-				func(c *fiber.Ctx) error {
-					if fWebsocket.IsWebSocketUpgrade(c) {
-						c.Locals("allowed", true)
-						return c.Next()
-					}
-
-					lokiQueryFilter, ok := c.Locals("loki-query-filter").(*loki_client.QueryArgs)
-					if !ok {
-						return fiber.ErrInternalServerError
-					}
-
-					b, err := client.GetLogs(*lokiQueryFilter)
-					if err != nil {
-						return errors.NewE(err)
-					}
-
-					if _, err := c.Write(b); err != nil {
-						return errors.NewE(err)
-					}
-
-					return nil
-				},
-
-				fWebsocket.New(
-					func(conn *fWebsocket.Conn) {
-						defer func() {
-							err := conn.Close()
-							if err != nil {
-								logger.Errorf(err, "while closing websocket connection")
-							}
-						}()
-
-						pr, pw := io.Pipe()
-
-						go func() {
-							// now read from pr, and write it to websocket conn
-							defer func() {
-								if err := pr.Close(); err != nil {
-									logger.Errorf(err, "while closing websocket connection")
-								}
-								if err := conn.Close(); err != nil {
-									logger.Errorf(err, "while closing websocket connection")
-								}
-							}()
-
-							r := bufio.NewReader(pr)
-							msg := make([]byte, 0xffff)
-							for {
-								n, err := r.Read(msg)
-								if err != nil {
-									if err != io.EOF {
-										if err := conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error())); err != nil {
-											logger.Errorf(err, "while writing message to websocket connection")
-											return
-										}
-										return
-									}
-									if conn.Conn == nil {
-										break
-									}
-									if err := conn.WriteMessage(fWebsocket.TextMessage, msg[:n]); err != nil {
-										logger.Errorf(err, "while writing message to websocket connection")
-										return
-									}
-									return
-								}
-
-								if err := conn.WriteMessage(fWebsocket.TextMessage, msg[:n]); err != nil {
-									logger.Errorf(err, "while writing message to websocket connection")
-									return
-								}
-							}
-						}()
-
-						lokiQueryFilter, ok := conn.Locals("loki-query-filter").(*loki_client.QueryArgs)
-						if !ok {
-							if err := conn.WriteMessage(fWebsocket.CloseMessage, []byte(fiber.ErrInternalServerError.Error())); err != nil {
-								logger.Errorf(err, "while writing message to websocket connection")
-								return
-							}
-							return
-						}
-
-						if err := client.TailLogs(*lokiQueryFilter, pw); err != nil {
-							return
-						}
-					}),
-			)
-
-			a.Get("/observability/metrics/:metric_type", func(c *fiber.Ctx) error {
-				metricType := c.Params("metric_type")
-
-				args, ok := c.Locals("observability-args").(ObservabilityArgs)
-				if !ok {
-					return fiber.ErrInternalServerError
-				}
-
-				return queryProm(ev.PromHttpAddr, PromMetricsType(metricType), map[ObservabilityLabel]string{
-					ResourceName:      args.ResourceName,
-					ResourceNamespace: args.ResourceNamespace,
-					ResourceType:      args.ResourceType,
-
-					WorkspaceName: args.WorkspaceName,
-					ProjectName:   args.ProjectName,
-				}, args.StartTime, args.EndTime, c.Response().BodyWriter())
+				return queryProm(ev.PromHttpAddr, PromMetricsType(metricType), map[string]string{
+					"kl_account_name": cc.AccountName,
+					"kl_cluster_name": clusterName,
+					"kl_tracking_id":  trackingId,
+				}, startTime, endTime, c.Response().BodyWriter())
 			})
 		},
 	),
@@ -509,12 +218,6 @@ var Module = fx.Module("app",
 			},
 		})
 	}),
-
-	fx.Provide(
-		func(conn IAMGrpcClient) iam.IAMClient {
-			return iam.NewIAMClient(conn)
-		},
-	),
 
 	fx.Provide(
 		func(conn InfraClient) infra.InfraClient {
