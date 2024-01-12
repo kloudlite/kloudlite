@@ -5,6 +5,7 @@ import (
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -234,7 +235,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	cluster.Spec.AccountId = out.AccountId
 	cluster.Spec.AccountName = ctx.AccountName
-	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cluster.RecordVersion)
+	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
 
 	nCluster, err := d.clusterRepo.Create(ctx, &cluster)
 	if err != nil {
@@ -289,46 +290,36 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 	return c, nil
 }
 
-func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
+func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCluster); err != nil {
 		return nil, errors.NewE(err)
 	}
-	cluster.EnsureGVK()
-	clus, err := d.findCluster(ctx, cluster.Name)
+	clusterIn.EnsureGVK()
+	clus, err := d.findCluster(ctx, clusterIn.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if clus.IsMarkedForDeletion() {
-		return nil, errors.Newf("cluster %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
+		return nil, errors.Newf("clusterIn %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
 	}
 
-	cps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if cps.IsMarkedForDeletion() {
-		return nil, errors.Newf("cloud provider secret %q is marked for deletion, aborting cluster update", cps.Name)
-	}
-
-	cluster.Spec.CredentialsRef.Namespace = cps.Namespace
-
-	clus.IncrementRecordVersion()
-	clus.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
-	}
-
-	// FIXME: no update for cluster spec
-	// clus.Spec = cluster.Spec
-
-	clus.Labels = cluster.Labels
-	clus.Annotations = cluster.Annotations
-	clus.SyncStatus = t.GenSyncStatus(t.SyncActionApply, clus.RecordVersion)
-
-	uCluster, err := d.clusterRepo.UpdateById(ctx, clus.Id, clus)
+	newRecordVersion:=clus.RecordVersion+1
+	uCluster, err := d.clusterRepo.PatchById(ctx, clus.Id, repos.Document{
+		"metadata.labels":      clusterIn.Labels,
+		"metadata.annotations": clusterIn.Annotations,
+		"displayName":		  clusterIn.DisplayName,
+		"recordVersion":    newRecordVersion,
+		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"syncStatus.lastSyncedAt": time.Now(),
+		"syncStatus.action":        t.SyncActionApply,
+		"syncStatus.state":         t.SyncStateInQueue,
+		"syncStatus.recordVersion": newRecordVersion,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -337,7 +328,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishUpdate)
+	d.resourceEventPublisher.PublishClusterEvent(&clusterIn, PublishUpdate)
 	return uCluster, nil
 }
 
@@ -348,7 +339,6 @@ func (d *domain) readClusterK8sResource(ctx InfraContext, namespace string, name
 			return nil, false, nil
 		}
 	}
-
 	return &clus.Cluster, true, nil
 }
 
@@ -362,9 +352,18 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 	}
 
 	if c.MarkedForDeletion == nil || *c.MarkedForDeletion {
-		c.MarkedForDeletion = fn.New(true)
 		c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
-		upC, err := d.clusterRepo.UpdateById(ctx, c.Id, c)
+		upC, err := d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
+			"markedForDeletion": fn.New(true),
+			"lastUpdatedBy":common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			"syncStatus.lastSyncedAt": time.Now(),
+			"syncStatus.action":        t.SyncActionDelete,
+			"syncStatus.state":         t.SyncStateInQueue,
+		})
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -397,6 +396,7 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 
 func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	c, err := d.findCluster(ctx, cluster.Name)
+	recordVersion := c.RecordVersion
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -405,23 +405,25 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 		return nil
 	}
 
-	c.Labels = cluster.Labels
-	c.Annotations = cluster.Annotations
-	c.Spec = cluster.Spec
-
-	c.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	c.SyncStatus.Error = nil
-	c.SyncStatus.RecordVersion = c.RecordVersion
-	c.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-
-	c.Status = cluster.Status
-
-	_, err = d.clusterRepo.UpdateById(ctx, c.Id, c)
+	_, err = d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
+		"metadata.labels":      cluster.Labels,
+		"metadata.annotations": cluster.Annotations,
+		"metadata.generation":  cluster.Generation,
+		"metadata.creationTimestamp":  cluster.CreationTimestamp,
+		"status":      cluster.Status,
+		"syncStatus":  t.SyncStatus{
+			LastSyncedAt: opts.MessageTimestamp,
+			Error: 	  nil,
+			Action:       t.SyncActionApply,
+			RecordVersion: recordVersion,
+			State: func() t.SyncState {
+				if status == types.ResourceStatusDeleting {
+					return t.SyncStateDeletingAtAgent
+				}
+				return t.SyncStateUpdatedAtAgent
+			}(),
+		},
+	})
 	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishUpdate)
 	return errors.NewE(err)
 }
