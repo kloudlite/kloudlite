@@ -48,7 +48,8 @@ func (d *domain) ListAccounts(ctx UserContext) ([]*entities.Account, error) {
 	}
 
 	return d.accountRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"metadata.name": map[string]any{"$in": accountNames},
+		"metadata.name": repos.Filter{"$in": accountNames},
+		"markedForDeletion": repos.Filter{"$ne": true},
 	}})
 }
 
