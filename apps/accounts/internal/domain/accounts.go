@@ -193,8 +193,14 @@ func (d *domain) DeleteAccount(ctx UserContext, name string) (bool, error) {
 		return false, errors.NewE(err)
 	}
 
-	account.MarkedForDeletion = fn.New(true)
-	if _, err := d.accountRepo.UpdateById(ctx, account.Id, account); err != nil {
+	if _, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
+		"markedForDeletion": fn.New(true),
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	}); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -232,9 +238,14 @@ func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 		return false, errors.Newf("account %q is already active", name)
 	}
 
-	account.IsActive = fn.New(true)
-
-	if _, err := d.accountRepo.UpdateById(ctx, account.Id, account); err != nil {
+	if _, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
+		"isActive": fn.New(true),
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	}); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -255,9 +266,14 @@ func (d *domain) DeactivateAccount(ctx UserContext, name string) (bool, error) {
 		return false, errors.Newf("account %q is already deactive", name)
 	}
 
-	account.IsActive = fn.New(false)
-
-	if _, err := d.accountRepo.UpdateById(ctx, account.Id, account); err != nil {
+	if _, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
+		"isActive": fn.New(false),
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	}); err != nil {
 		return false, errors.NewE(err)
 	}
 
