@@ -1,5 +1,6 @@
 type Account @shareable {
   apiVersion: String!
+  contactEmail: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -17,6 +18,7 @@ type Account @shareable {
 }
 
 input AccountIn {
+  contactEmail: String
   displayName: String!
   isActive: Boolean
   logo: String
