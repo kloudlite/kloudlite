@@ -333,6 +333,26 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
+func(repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error){
+	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
+	}
+
+	patch["updateTime"] = time.Now()
+
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
+		ctx,
+		&Filter{"id": id},
+		bson.M{"$set": patch},
+		updateOpts,
+	)
+	return bsonToStruct[T](r)
+}
+
 func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error) {
 	after := options.After
 	updateOpts := &options.FindOneAndUpdateOptions{
@@ -355,6 +375,28 @@ func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData
 		ctx,
 		filter,
 		bson.M{"$set": m},
+		updateOpts,
+	)
+
+	return bsonToStruct[T](r)
+}
+
+func (repo *dbRepo[T])PatchOne(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error){
+	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
+	}
+
+	patch["updateTime"] = time.Now()
+
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
+		ctx,
+		filter,
+		bson.M{"$set": patch},
 		updateOpts,
 	)
 
@@ -495,63 +537,6 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 		}
 	}
 	return nil
-}
-
-func (repo *dbRepo[T]) SilentUpsert(ctx context.Context, filter Filter, data T) (T, error) {
-	id := func() ID {
-		if data.GetId() != "" {
-			return data.GetId()
-		}
-		if t, err := repo.findOne(ctx, filter); err == nil {
-			return t.GetId()
-		}
-		return repo.NewId()
-	}()
-	data.SetId(id)
-	if data.GetCreationTime().IsZero() {
-		repo.withCreationTime(data)
-	}
-	return repo.UpdateById(
-		ctx, id, data, UpdateOpts{
-			Upsert: true,
-		},
-	)
-}
-
-func (repo *dbRepo[T]) SilentUpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error {
-	_, err := repo.db.Collection(repo.collectionName).UpdateMany(
-		ctx,
-		filter,
-		bson.M{"$set": updatedData},
-	)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	return nil
-}
-
-func (repo *dbRepo[T]) SilentUpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error) {
-	after := options.After
-	updateOpts := &options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	}
-	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
-		updateOpts.Upsert = &opt.Upsert
-	}
-
-	m, err := toMap(updatedData)
-	if err != nil {
-		var x T
-		return x, errors.NewE(err)
-	}
-
-	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
-		ctx,
-		&Filter{"id": id},
-		bson.M{"$set": m},
-		updateOpts,
-	)
-	return bsonToStruct[T](r)
 }
 
 func (repo *dbRepo[T]) ErrAlreadyExists(err error) bool {
