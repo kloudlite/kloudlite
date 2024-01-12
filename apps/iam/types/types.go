@@ -139,6 +139,9 @@ const (
 
 	ListDomainEntries Action = "list-domain-entries"
 	GetDomainEntry    Action = "get-domain-entry"
+
+	ReadLogs    Action = "read-logs"
+	ReadMetrics Action = "read-metrics"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {
