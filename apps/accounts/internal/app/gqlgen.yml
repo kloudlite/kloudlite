@@ -81,8 +81,6 @@ models:
     fields:
       user:
         resolver: true
-    #   account:
-    #     resolver: true
 
   Invitation: &invitation-model
     model: github.com/kloudlite/api/apps/accounts/internal/entities.Invitation

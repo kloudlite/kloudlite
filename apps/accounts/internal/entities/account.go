@@ -3,12 +3,13 @@ package entities
 import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Account struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	crdsv1.Account   `json:",inline" graphql:"uri=k8s://accounts.crds.kloudlite.io"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	TargetNamespace  string `json:"targetNamespace,omitempty" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
 
@@ -27,6 +28,12 @@ var AccountIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "targetNamespace", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
