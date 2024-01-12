@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/functions"
+	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
 
@@ -75,6 +76,8 @@ type UpdateOpts struct {
 	Upsert bool
 }
 
+type Document bson.M
+
 type DbRepo[T Entity] interface {
 	NewId() ID
 	Find(ctx context.Context, query Query) ([]T, error)
@@ -90,10 +93,9 @@ type DbRepo[T Entity] interface {
 	Upsert(ctx context.Context, filter Filter, data T) (T, error)
 	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
 	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
+	PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error)
 	UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error)
-	SilentUpsert(ctx context.Context, filter Filter, data T) (T, error)
-	SilentUpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
-	SilentUpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
+	PatchOne(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error)
 	DeleteById(ctx context.Context, id ID) error
 	DeleteMany(ctx context.Context, filter Filter) error
 	IndexFields(ctx context.Context, indices []IndexField) error
