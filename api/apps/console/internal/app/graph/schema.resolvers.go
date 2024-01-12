@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
@@ -345,7 +346,7 @@ func (r *mutationResolver) CoreUpdateVPNDeviceEnv(ctx context.Context, deviceNam
 		return false, errors.NewE(err)
 	}
 
-	if err := r.Domain.UpdateVpnDeviceContext(cc, deviceName, projectName, envName); err != nil {
+	if err := r.Domain.UpdateVpnDeviceEnvironment(cc, deviceName, projectName, envName); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -392,9 +393,9 @@ func (r *queryResolver) CoreListProjects(ctx context.Context, search *model.Sear
 
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
-		if cc.UserId == "" || cc.AccountName == "" {
-			return nil, errors.NewE(err)
-		}
+		// if cc.UserId == "" || cc.AccountName == "" {
+		// }
+		return nil, errors.NewE(err)
 	}
 
 	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
@@ -402,26 +403,7 @@ func (r *queryResolver) CoreListProjects(ctx context.Context, search *model.Sear
 		return nil, errors.NewE(err)
 	}
 
-	pe := make([]*model.ProjectEdge, len(p.Edges))
-	for i := range p.Edges {
-		pe[i] = &model.ProjectEdge{
-			Node:   p.Edges[i].Node,
-			Cursor: p.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ProjectPaginatedRecords{
-		Edges: pe,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &p.PageInfo.EndCursor,
-			HasNextPage:     p.PageInfo.HasNextPage,
-			HasPreviousPage: p.PageInfo.HasPrevPage,
-			StartCursor:     &p.PageInfo.StartCursor,
-		},
-		TotalCount: int(p.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.ProjectPaginatedRecords](p)
 }
 
 // CoreGetProject is the resolver for the core_getProject field.
@@ -467,36 +449,12 @@ func (r *queryResolver) CoreListEnvironments(ctx context.Context, projectName st
 		}
 	}
 
-	pw, err := r.Domain.ListEnvironments(cc, projectName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	envs, err := r.Domain.ListEnvironments(cc, projectName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	var records model.EnvironmentPaginatedRecords
-	if err := fn.JsonConversion(pw, &records); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	//ee := make([]*model.WorkspaceEdge, len(pw.Edges))
-	//for i := range pw.Edges {
-	//	ee[i] = &model.WorkspaceEdge{
-	//		Node:   pw.Edges[i].Node,
-	//		Cursor: pw.Edges[i].Cursor,
-	//	}
-	//}
-	//
-	//m := model.WorkspacePaginatedRecords{
-	//	Edges: ee,
-	//	PageInfo: &model.PageInfo{
-	//		EndCursor:       &pw.PageInfo.EndCursor,
-	//		HasNextPage:     pw.PageInfo.HasNextPage,
-	//		HasPreviousPage: pw.PageInfo.HasPrevPage,
-	//		StartCursor:     &pw.PageInfo.StartCursor,
-	//	},
-	//	TotalCount: int(pw.TotalCount),
-	//}
-
-	return &records, nil
+	return fn.JsonConvert[model.EnvironmentPaginatedRecords](envs)
 }
 
 // CoreGetEnvironment is the resolver for the core_getEnvironment field.
@@ -540,41 +498,12 @@ func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, projectNam
 		}
 	}
 
-	// namespace, err := func() (string, error) {
-	// 	if scope == nil {
-	// 		return r.getNamespaceFromProjectID(ctx, project)
-	// 	}
-	// 	return r.getNamespaceFromProjectAndScope(ctx, project, *scope)
-	// }()
-	// if err != nil {
-	// 	return nil, errors.NewE(err)
-	// }
-
-	pr, err := r.Domain.ListImagePullSecrets(newResourceContext(cc, projectName, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pullSecrets, err := r.Domain.ListImagePullSecrets(newResourceContext(cc, projectName, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	ipsEdges := make([]*model.ImagePullSecretEdge, len(pr.Edges))
-	for i := range pr.Edges {
-		ipsEdges[i] = &model.ImagePullSecretEdge{
-			Node:   pr.Edges[i].Node,
-			Cursor: pr.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ImagePullSecretPaginatedRecords{
-		Edges: ipsEdges,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pr.PageInfo.EndCursor,
-			HasNextPage:     pr.PageInfo.HasNextPage,
-			HasPreviousPage: pr.PageInfo.HasPrevPage,
-			StartCursor:     &pr.PageInfo.StartCursor,
-		},
-		TotalCount: int(pr.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.ImagePullSecretPaginatedRecords](pullSecrets)
 }
 
 // InfraGetImagePullSecret is the resolver for the infra_getImagePullSecret field.
@@ -623,26 +552,7 @@ func (r *queryResolver) CoreListApps(ctx context.Context, projectName string, en
 		return nil, errors.NewE(err)
 	}
 
-	ae := make([]*model.AppEdge, len(pApps.Edges))
-	for i := range pApps.Edges {
-		ae[i] = &model.AppEdge{
-			Node:   pApps.Edges[i].Node,
-			Cursor: pApps.Edges[i].Cursor,
-		}
-	}
-
-	m := model.AppPaginatedRecords{
-		Edges: ae,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pApps.PageInfo.EndCursor,
-			HasNextPage:     pApps.PageInfo.HasNextPage,
-			HasPreviousPage: pApps.PageInfo.HasPrevPage,
-			StartCursor:     &pApps.PageInfo.StartCursor,
-		},
-		TotalCount: int(pApps.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.AppPaginatedRecords](pApps)
 }
 
 // CoreGetApp is the resolver for the core_getApp field.
@@ -705,26 +615,7 @@ func (r *queryResolver) CoreListConfigs(ctx context.Context, projectName string,
 		return nil, errors.NewE(err)
 	}
 
-	ce := make([]*model.ConfigEdge, len(pConfigs.Edges))
-	for i := range pConfigs.Edges {
-		ce[i] = &model.ConfigEdge{
-			Node:   pConfigs.Edges[i].Node,
-			Cursor: pConfigs.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ConfigPaginatedRecords{
-		Edges: ce,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pConfigs.PageInfo.EndCursor,
-			HasNextPage:     pConfigs.PageInfo.HasNextPage,
-			HasPreviousPage: pConfigs.PageInfo.HasPrevPage,
-			StartCursor:     &pConfigs.PageInfo.StartCursor,
-		},
-		TotalCount: int(pConfigs.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.ConfigPaginatedRecords](pConfigs)
 }
 
 // CoreGetConfig is the resolver for the core_getConfig field.
@@ -788,26 +679,7 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, projectName string,
 		return nil, errors.NewE(err)
 	}
 
-	ae := make([]*model.SecretEdge, len(pSecrets.Edges))
-	for i := range pSecrets.Edges {
-		ae[i] = &model.SecretEdge{
-			Node:   pSecrets.Edges[i].Node,
-			Cursor: pSecrets.Edges[i].Cursor,
-		}
-	}
-
-	m := model.SecretPaginatedRecords{
-		Edges: ae,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pSecrets.PageInfo.EndCursor,
-			HasNextPage:     pSecrets.PageInfo.HasNextPage,
-			HasPreviousPage: pSecrets.PageInfo.HasPrevPage,
-			StartCursor:     &pSecrets.PageInfo.StartCursor,
-		},
-		TotalCount: int(pSecrets.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.SecretPaginatedRecords](pSecrets)
 }
 
 // CoreGetSecret is the resolver for the core_getSecret field.
@@ -855,26 +727,7 @@ func (r *queryResolver) CoreListRouters(ctx context.Context, projectName string,
 		return nil, errors.NewE(err)
 	}
 
-	ae := make([]*model.RouterEdge, len(pRouters.Edges))
-	for i := range pRouters.Edges {
-		ae[i] = &model.RouterEdge{
-			Node:   pRouters.Edges[i].Node,
-			Cursor: pRouters.Edges[i].Cursor,
-		}
-	}
-
-	m := model.RouterPaginatedRecords{
-		Edges: ae,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pRouters.PageInfo.EndCursor,
-			HasNextPage:     pRouters.PageInfo.HasNextPage,
-			HasPreviousPage: pRouters.PageInfo.HasPrevPage,
-			StartCursor:     &pRouters.PageInfo.StartCursor,
-		},
-		TotalCount: int(pRouters.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.RouterPaginatedRecords](pRouters)
 }
 
 // CoreGetRouter is the resolver for the core_getRouter field.
@@ -945,31 +798,12 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, projectNam
 		}
 	}
 
-	pApps, err := r.Domain.ListManagedResources(newResourceContext(cc, projectName, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pmsvcs, err := r.Domain.ListManagedResources(newResourceContext(cc, projectName, envName), filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	ae := make([]*model.ManagedResourceEdge, len(pApps.Edges))
-	for i := range pApps.Edges {
-		ae[i] = &model.ManagedResourceEdge{
-			Node:   pApps.Edges[i].Node,
-			Cursor: pApps.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ManagedResourcePaginatedRecords{
-		Edges: ae,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pApps.PageInfo.EndCursor,
-			HasNextPage:     pApps.PageInfo.HasNextPage,
-			HasPreviousPage: pApps.PageInfo.HasPrevPage,
-			StartCursor:     &pApps.PageInfo.StartCursor,
-		},
-		TotalCount: int(pApps.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.ManagedResourcePaginatedRecords](pmsvcs)
 }
 
 // CoreGetManagedResource is the resolver for the core_getManagedResource field.
@@ -1016,31 +850,12 @@ func (r *queryResolver) CoreListProjectManagedServices(ctx context.Context, proj
 		}
 	}
 
-	pClusters, err := r.Domain.ListProjectManagedServices(ictx, projectName, filter, *pq)
+	pmsvcs, err := r.Domain.ListProjectManagedServices(ictx, projectName, filter, *pq)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	ce := make([]*model.ProjectManagedServiceEdge, len(pClusters.Edges))
-	for i := range pClusters.Edges {
-		ce[i] = &model.ProjectManagedServiceEdge{
-			Node:   pClusters.Edges[i].Node,
-			Cursor: pClusters.Edges[i].Cursor,
-		}
-	}
-
-	m := model.ProjectManagedServicePaginatedRecords{
-		Edges: ce,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &pClusters.PageInfo.EndCursor,
-			HasNextPage:     pClusters.PageInfo.HasNextPage,
-			HasPreviousPage: pClusters.PageInfo.HasPrevPage,
-			StartCursor:     &pClusters.PageInfo.StartCursor,
-		},
-		TotalCount: int(pClusters.TotalCount),
-	}
-
-	return &m, nil
+	return fn.JsonConvert[model.ProjectManagedServicePaginatedRecords](pmsvcs)
 }
 
 // CoreGetProjectManagedService is the resolver for the core_getProjectManagedService field.
@@ -1084,9 +899,7 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.Co
 
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
-		if cc.UserId == "" || cc.AccountName == "" {
-			return nil, errors.NewE(err)
-		}
+		return nil, errors.NewE(err)
 	}
 
 	p, err := r.Domain.ListVPNDevices(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
@@ -1094,26 +907,16 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.Co
 		return nil, errors.NewE(err)
 	}
 
-	pe := make([]*model.ConsoleVPNDeviceEdge, len(p.Edges))
-	for i := range p.Edges {
-		pe[i] = &model.ConsoleVPNDeviceEdge{
-			Node:   p.Edges[i].Node,
-			Cursor: p.Edges[i].Cursor,
-		}
-	}
+	return fn.JsonConvert[model.ConsoleVPNDevicePaginatedRecords](p)
+}
 
-	m := model.ConsoleVPNDevicePaginatedRecords{
-		Edges: pe,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &p.PageInfo.EndCursor,
-			HasNextPage:     p.PageInfo.HasNextPage,
-			HasPreviousPage: p.PageInfo.HasPrevPage,
-			StartCursor:     &p.PageInfo.StartCursor,
-		},
-		TotalCount: int(p.TotalCount),
+// CoreListVPNDevicesForUser is the resolver for the core_listVPNDevicesForUser field.
+func (r *queryResolver) CoreListVPNDevicesForUser(ctx context.Context) ([]*entities.ConsoleVPNDevice, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
 	}
-
-	return &m, nil
+	return r.Domain.ListVPNDevicesForUser(cc)
 }
 
 // CoreGetVPNDevice is the resolver for the core_getVPNDevice field.
@@ -1131,5 +934,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)
