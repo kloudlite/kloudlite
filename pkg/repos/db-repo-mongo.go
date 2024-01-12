@@ -344,10 +344,16 @@ func(repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts
 
 	patch["updateTime"] = time.Now()
 
+	m, err := toMap(patch)
+	if err != nil {
+		var x T
+		return x, errors.NewE(err)
+	}
+
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
 		ctx,
 		&Filter{"id": id},
-		bson.M{"$set": patch},
+		bson.M{"$set": m},
 		updateOpts,
 	)
 	return bsonToStruct[T](r)
