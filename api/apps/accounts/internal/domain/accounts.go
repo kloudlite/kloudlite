@@ -21,6 +21,7 @@ import (
 func (d *domain) findAccount(ctx context.Context, name string) (*entities.Account, error) {
 	result, err := d.accountRepo.FindOne(ctx, repos.Filter{
 		"metadata.name": name,
+		"markedForDeletion": repos.Filter{"$ne": true},
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
