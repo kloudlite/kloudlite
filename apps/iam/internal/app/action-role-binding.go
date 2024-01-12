@@ -18,6 +18,9 @@ var roleBindings RoleBindingMap = RoleBindingMap{
 	t.GetAccountInvitation:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
 	t.DeleteAccountInvitation: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
 
+	t.ReadLogs:    []t.Role{t.RoleAccountMember},
+	t.ReadMetrics: []t.Role{t.RoleAccountMember},
+
 	// for account advance actions
 	t.DeactivateAccount: []t.Role{t.RoleAccountOwner},
 	t.ActivateAccount:   []t.Role{t.RoleAccountOwner},
