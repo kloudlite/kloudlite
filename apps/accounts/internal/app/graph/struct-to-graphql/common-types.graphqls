@@ -4,36 +4,6 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
   userName: String!
 }
 
-type Github__com___kloudlite___operator___apis___crds___v1__AccountSpec @shareable {
-  targetNamespace: String
-}
-
-type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
-  generation: Int
-  message: String
-  status: Boolean!
-}
-
-type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
-  apiVersion: String!
-  kind: String!
-  name: String!
-  namespace: String!
-}
-
-type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
-  checks: Map
-  isReady: Boolean!
-  lastReadyGeneration: Int
-  lastReconcileTime: Date
-  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
-  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
-}
-
-type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
-  RawMessage: Any
-}
-
 type Metadata @shareable {
   annotations: Map
   creationTimestamp: Date!
@@ -49,10 +19,6 @@ type PageInfo @shareable {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
-}
-
-input Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn {
-  targetNamespace: String
 }
 
 input MetadataIn {

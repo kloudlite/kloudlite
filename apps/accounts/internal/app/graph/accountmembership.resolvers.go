@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
@@ -13,7 +14,7 @@ import (
 
 // UserID is the resolver for the userId field.
 func (r *accountMembershipResolver) UserID(ctx context.Context, obj *entities.AccountMembership) (string, error) {
-	return string(obj.UserId), nil
+	panic(fmt.Errorf("not implemented: UserID - userId"))
 }
 
 // AccountMembership returns generated.AccountMembershipResolver implementation.
