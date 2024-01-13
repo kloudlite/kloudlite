@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
-	ast_parser "github.com/kloudlite/api/cmd/struct-json-path/ast-parser"
 	"go/types"
+	"io"
+	"os"
 	"strings"
+
+	ast_parser "github.com/kloudlite/api/cmd/struct-json-path/ast-parser"
 
 	fn "github.com/kloudlite/api/pkg/functions"
 	flag "github.com/spf13/pflag"
@@ -110,9 +113,15 @@ func traverseStruct(s *types.Struct) map[string][]string {
 	return paths
 }
 
+func variableGenerator(out io.Writer, value string) {
+	out.Write([]byte(value + "\n"))
+}
+
 func main() {
 	var structPaths []string
+	var out string
 	flag.StringSliceVar(&structPaths, "struct", nil, "--struct")
+	flag.StringVar(&out, "out", "", "--out")
 	flag.Parse()
 
 	parser := ast_parser.NewASTParser()
@@ -125,16 +134,25 @@ func main() {
 
 		structName, pkgPath := fn.StringReverse(sp[0]), fn.StringReverse(sp[1])
 
-		fmt.Printf("structName: %s, pkgPath: %s\n", structName, pkgPath)
+		// fmt.Printf("structName: %s, pkgPath: %s\n", structName, pkgPath)
 
 		structObj, err := parser.FindStruct(pkgPath, structName)
 		if err != nil {
 			panic(err)
 		}
 
-		m := traverseStruct(structObj)
-		for _, v := range flattenChildKeys(m) {
-			fmt.Println(structName + "." + v)
+		file, err := os.Create(fmt.Sprintf("%s/%s-jsonpath.go", out, structName))
+		if err != nil {
+			panic(err)
 		}
+
+		m := traverseStruct(structObj)
+
+		for _, v := range flattenChildKeys(m) {
+			key := structName + "." + v
+			variableGenerator(file, key)
+		}
+
+		file.Close()
 	}
 }
