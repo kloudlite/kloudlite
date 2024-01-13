@@ -396,7 +396,6 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 
 func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	c, err := d.findCluster(ctx, cluster.Name)
-	recordVersion := c.RecordVersion
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -404,6 +403,7 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	if err := d.matchRecordVersion(cluster.Annotations, c.RecordVersion); err != nil {
 		return nil
 	}
+	annVersion, _ := d.parseRecordVersionFromAnnotations(cluster.Annotations)
 
 	_, err = d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
 		"metadata.labels":      cluster.Labels,
@@ -415,7 +415,7 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 			LastSyncedAt: opts.MessageTimestamp,
 			Error: 	  nil,
 			Action:       t.SyncActionApply,
-			RecordVersion: recordVersion,
+			RecordVersion: annVersion,
 			State: func() t.SyncState {
 				if status == types.ResourceStatusDeleting {
 					return t.SyncStateDeletingAtAgent
