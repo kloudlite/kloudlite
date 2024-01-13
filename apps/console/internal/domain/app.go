@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -78,7 +80,7 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 	app.EnvironmentName = ctx.EnvironmentName
 	app.SyncStatus = t.GenSyncStatus(t.SyncActionApply, app.RecordVersion)
 
-	if _, err := d.upsertResourceMapping(ctx, &app); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, &app); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -91,9 +93,9 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 		return nil, err
 	}
 
-	d.resourceEventPublisher.PublishAppEvent(&app, PublishAdd)
+	d.resourceEventPublisher.PublishAppEvent(napp, PublishAdd)
 
-	if err := d.applyApp(ctx, &app); err != nil {
+	if err := d.applyApp(ctx, napp); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -110,9 +112,13 @@ func (d *domain) DeleteApp(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	app.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, app.RecordVersion)
-
-	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
+	patch := repos.Document{
+		"markedForDeletion":          true,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionDelete,
+		"syncStatus.state":           t.SyncStateIdle,
+	}
+	if _, err := d.appRepo.PatchById(ctx, app.Id, patch); err != nil {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishAppEvent(app, PublishUpdate)
@@ -126,39 +132,42 @@ func (d *domain) DeleteApp(ctx ResourceContext, name string) error {
 	return nil
 }
 
-func (d *domain) UpdateApp(ctx ResourceContext, app entities.App) (*entities.App, error) {
+func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.App, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	xapp, err := d.findApp(ctx, app.Name)
+	xapp, err := d.findApp(ctx, appIn.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	app.Namespace = xapp.Namespace
-
-	app.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &app.App); err != nil {
+	appIn.Namespace = xapp.Namespace
+	appIn.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &appIn.App); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	xapp.IncrementRecordVersion()
+	patch := repos.Document{
+		"metadata.labels":      appIn.Labels,
+		"metadata.annotations": appIn.Annotations,
 
-	xapp.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+		"recordVersion": xapp.RecordVersion + 1,
+		"displayName":   appIn.DisplayName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+
+		"spec": appIn.Spec,
+
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.state":           t.SyncStateInQueue,
+		"syncStatus.action":          t.SyncActionApply,
 	}
 
-	xapp.DisplayName = app.DisplayName
-
-	xapp.Labels = app.Labels
-	xapp.Annotations = app.Annotations
-	xapp.Spec = app.Spec
-	xapp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xapp.RecordVersion)
-
-	upApp, err := d.appRepo.UpdateById(ctx, xapp.Id, xapp)
+	upApp, err := d.appRepo.PatchById(ctx, xapp.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -184,13 +193,14 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 		return false, errors.Newf("device (%s) is already intercepting app (%s)", app.Spec.Intercept.ToDevice, appName)
 	}
 
-	if app.Spec.Intercept == nil {
-		app.Spec.Intercept = &crdsv1.Intercept{}
+	patch := repos.Document{
+		"intercept": crdsv1.Intercept{
+			Enabled:  intercept,
+			ToDevice: deviceName,
+		},
 	}
-	app.Spec.Intercept.Enabled = intercept
-	app.Spec.Intercept.ToDevice = deviceName
 
-	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
+	if _, err := d.appRepo.PatchById(ctx, app.Id, patch); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -211,25 +221,26 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 		return errors.NewE(err)
 	}
 
-	xApp.CreationTimestamp = app.CreationTimestamp
-	xApp.Labels = app.Labels
-	xApp.Annotations = app.Annotations
-	xApp.Generation = app.Generation
+	patch := repos.Document{
+		"metadata.creationTimestamp": app.CreationTimestamp,
+		"metadata.labels":            app.Labels,
+		"metadata.annotations":       app.Annotations,
+		"metadata.generation":        app.Generation,
 
-	xApp.Status = app.Status
+		"status": app.Status,
 
-	xApp.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": xApp.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+	}
 
-	xApp.SyncStatus.RecordVersion = xApp.RecordVersion
-	xApp.SyncStatus.Error = nil
-	xApp.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-
-	_, err = d.appRepo.UpdateById(ctx, xApp.Id, xApp)
+	_, err = d.appRepo.PatchById(ctx, xApp.Id, patch)
 	d.resourceEventPublisher.PublishAppEvent(xApp, PublishUpdate)
 	return errors.NewE(err)
 }
@@ -237,10 +248,6 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 func (d *domain) OnAppDeleteMessage(ctx ResourceContext, app entities.App) error {
 	a, err := d.findApp(ctx, app.Name)
 	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if err := d.MatchRecordVersion(app.Annotations, a.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -259,12 +266,17 @@ func (d *domain) OnAppApplyError(ctx ResourceContext, errMsg string, name string
 		return errors.NewE(err)
 	}
 
-	app.SyncStatus.State = t.SyncStateErroredAtAgent
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
 
-	app.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	app.SyncStatus.Error = &errMsg
-
-	_, err = d.appRepo.UpdateById(ctx, app.Id, app)
+	uapp, err := d.appRepo.PatchById(ctx, app.Id, patch)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishAppEvent(uapp, PublishDelete)
 	return errors.NewE(err)
 }
 

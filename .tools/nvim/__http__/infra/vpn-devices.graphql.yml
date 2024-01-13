@@ -42,6 +42,17 @@ variables:
 
 ---
 
+query: |+
+  query Core_listVPNDevicesForUser {
+    core_listVPNDevicesForUser {
+      metadata {
+        name
+      }
+    }
+  }
+
+---
+
 label: Create VPN Device
 query: |+
   mutation Core_createVPNDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {

@@ -25,9 +25,13 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 	}, nil
 }
 
-func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, projectName string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
+func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, projectName *string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error) {
 	errEnvironmentRequired := func() error {
 		return errors.Newf("param environmentName is required for resource type %q", resType)
+	}
+
+	errProjectRequired := func() error {
+		return errors.Newf("param projectName is required for resource type %q", resType)
 	}
 
 	if !fn.IsValidK8sResourceName(name) {
@@ -38,6 +42,12 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 	}
 
 	switch resType {
+
+	case entities.ResourceTypeVPNDevice:
+		{
+			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "metadata.name": name}, d.vpnDeviceRepo)
+		}
+
 	case entities.ResourceTypeProject:
 		{
 			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "metadata.name": name}, d.projectRepo)
@@ -45,40 +55,53 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 
 	case entities.ResourceTypeProjectManagedService:
 		{
+			if projectName == nil {
+				return nil, errProjectRequired()
+			}
 			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "projectName": projectName, "metadata.name": name}, d.pmsRepo)
 		}
+
 	case entities.ResourceTypeEnvironment:
 		{
+			if projectName == nil {
+				return nil, errProjectRequired()
+			}
 			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "projectName": projectName, "metadata.name": name}, d.environmentRepo)
 		}
 	default:
-		if environmentName == nil {
-			return nil, errEnvironmentRequired()
-		}
+		{
+			if projectName == nil {
+				return nil, errProjectRequired()
+			}
 
-		filter := repos.Filter{
-			"accountName":     accountName,
-			"projectName":     projectName,
-			"environmentName": environmentName,
-			"metadata.name":   name,
-		}
+			if environmentName == nil {
+				return nil, errEnvironmentRequired()
+			}
 
-		switch resType {
-		case entities.ResourceTypeApp:
-			return checkResourceName(ctx, filter, d.appRepo)
-		case entities.ResourceTypeConfig:
-			return checkResourceName(ctx, filter, d.configRepo)
-		case entities.ResourceTypeSecret:
-			return checkResourceName(ctx, filter, d.secretRepo)
-		case entities.ResourceTypeRouter:
-			return checkResourceName(ctx, filter, d.routerRepo)
-		case entities.ResourceTypeManagedResource:
-			return checkResourceName(ctx, filter, d.mresRepo)
-		case entities.ResourceTypeImagePullSecret:
-			return checkResourceName(ctx, filter, d.pullSecretsRepo)
-		default:
-			{
-				return nil, errors.Newf("resource type %q is not acknowledged", resType)
+			filter := repos.Filter{
+				"accountName":     accountName,
+				"projectName":     projectName,
+				"environmentName": environmentName,
+				"metadata.name":   name,
+			}
+
+			switch resType {
+			case entities.ResourceTypeApp:
+				return checkResourceName(ctx, filter, d.appRepo)
+			case entities.ResourceTypeConfig:
+				return checkResourceName(ctx, filter, d.configRepo)
+			case entities.ResourceTypeSecret:
+				return checkResourceName(ctx, filter, d.secretRepo)
+			case entities.ResourceTypeRouter:
+				return checkResourceName(ctx, filter, d.routerRepo)
+			case entities.ResourceTypeManagedResource:
+				return checkResourceName(ctx, filter, d.mresRepo)
+			case entities.ResourceTypeImagePullSecret:
+				return checkResourceName(ctx, filter, d.pullSecretsRepo)
+			default:
+				{
+					return nil, errors.Newf("resource type %q is not acknowledged", resType)
+				}
 			}
 		}
 	}

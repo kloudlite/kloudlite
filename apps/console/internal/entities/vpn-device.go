@@ -9,18 +9,17 @@ import (
 )
 
 type ConsoleVPNDevice struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"` // db
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
-	wireguardV1.Device `json:",inline" graphql:"uri=k8s://devices.wireguard.kloudlite.io"` // db
+	wireguardV1.Device `json:",inline"`
 
-	common.ResourceMetadata `json:",inline"` // db
+	common.ResourceMetadata `json:",inline"`
 
-	AccountName     string  `json:"accountName" graphql:"noinput"` // db
-	ProjectName     *string `json:"projectName,omitempty"` // db
-	EnvironmentName *string `json:"environmentName,omitempty"` // db
+	AccountName     string  `json:"accountName" graphql:"noinput"`
+	ProjectName     *string `json:"projectName,omitempty"`
+	EnvironmentName *string `json:"environmentName,omitempty"`
 
 	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput"`
-	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var VPNDeviceIndexes = []repos.IndexField{

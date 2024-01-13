@@ -529,7 +529,6 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
   UPDATED_AT_AGENT
 }
 

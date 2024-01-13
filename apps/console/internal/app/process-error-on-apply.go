@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/pkg/errors"
@@ -21,10 +22,13 @@ type ErrorOnApplyConsumer messaging.Consumer
 func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
-	getResourceContext := func(ctx domain.ConsoleContext, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
-		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, clusterName, obj.GetNamespace(), obj.GetName())
+	getEnvironmentResourceContext := func(ctx domain.ConsoleContext, resType entities.ResourceType, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+		mapping, err := d.GetEnvironmentResourceMapping(ctx, resType, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
+		}
+		if mapping == nil {
+			return domain.ResourceContext{}, fmt.Errorf("resource mapping could not be found")
 		}
 		return newResourceContext(ctx, mapping.ProjectName, mapping.EnvironmentName), nil
 	}
@@ -83,9 +87,31 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 
 				return d.OnEnvironmentDeleteMessage(dctx, p)
 			}
+		case projectManagedServiceGVK.String():
+			{
+				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, errObj.ClusterName, obj.GetName())
+				if err != nil {
+					return err
+				}
+				if mapping == nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnProjectManagedServiceApplyError(dctx, mapping.ProjectName, obj.GetName(), errObj.Error, opts)
+				}
+
+				pmsvc, err := fn.JsonConvert[entities.ProjectManagedService](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
+			}
+
 		case appsGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeApp, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -103,7 +129,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case configGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeConfig, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -120,7 +146,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case secretGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeSecret, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -137,7 +163,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case routerGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeRouter, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -154,7 +180,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case managedResourceGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
+				rctx, err := getEnvironmentResourceContext(dctx, entities.ResourceTypeManagedResource, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -169,6 +195,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 				}
 				return d.OnManagedResourceDeleteMessage(rctx, mres)
 			}
+
 		default:
 			{
 				return errors.Newf("console apply error reader does not acknowledge resource with GVK (%s)", gvkStr)

@@ -100,7 +100,7 @@ type UpdateAndDeleteOpts struct {
 }
 
 type Domain interface {
-	CheckNameAvailability(ctx context.Context, accountName string, projectName string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error)
+	CheckNameAvailability(ctx context.Context, accountName string, projectName *string, environmentName *string, resType entities.ResourceType, name string) (*CheckNameAvailabilityOutput, error)
 
 	ListProjects(ctx context.Context, userId repos.ID, accountName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
@@ -213,7 +213,8 @@ type Domain interface {
 
 	ResyncImagePullSecret(ctx ResourceContext, name string) error
 
-	GetResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)
+	GetEnvironmentResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error)
+	GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, name string) (*entities.ResourceMapping, error)
 
 	ListProjectManagedServices(ctx ConsoleContext, projectName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ProjectManagedService], error)
 	GetProjectManagedService(ctx ConsoleContext, projectName string, serviceName string) (*entities.ProjectManagedService, error)
@@ -245,10 +246,13 @@ const (
 
 type ResourceEventPublisher interface {
 	PublishAppEvent(app *entities.App, msg PublishMsg)
+	PublishConfigEvent(config *entities.Config, msg PublishMsg)
+	PublishSecretEvent(secret *entities.Secret, msg PublishMsg)
+	PublishImagePullSecretEvent(ips *entities.ImagePullSecret, msg PublishMsg)
 	PublishMresEvent(mres *entities.ManagedResource, msg PublishMsg)
 	PublishProjectEvent(project *entities.Project, msg PublishMsg)
 	PublishProjectManagedServiceEvent(project *entities.ProjectManagedService, msg PublishMsg)
 	PublishRouterEvent(router *entities.Router, msg PublishMsg)
-	PublishWorkspaceEvent(workspace *entities.Environment, msg PublishMsg)
+	PublishEnvironmentEvent(environment *entities.Environment, msg PublishMsg)
 	PublishVpnDeviceEvent(device *entities.ConsoleVPNDevice, msg PublishMsg)
 }

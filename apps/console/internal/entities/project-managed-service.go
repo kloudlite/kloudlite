@@ -21,6 +21,11 @@ type ProjectManagedService struct {
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
+// GetResourceType implements domain.resource.
+func (*ProjectManagedService) GetResourceType() ResourceType {
+	return ResourceTypeProjectManagedService
+}
+
 var ProjectManagedServiceIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{

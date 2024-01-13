@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -29,10 +30,6 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 	}
 
 	if len(clusterName) == 0 {
-		// if !errors.Is(err, kv.ErrKeyNotFound) {
-		// 	return nil, err
-		// }
-
 		proj, err := d.projectRepo.FindOne(ctx, repos.Filter{
 			"accountName":   ctx.GetAccountName(),
 			"metadata.name": projectName,
@@ -163,7 +160,6 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	project.LastUpdatedBy = project.CreatedBy
 
 	project.AccountName = ctx.AccountName
-	project.ClusterName = project.ClusterName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
 
 	project.AccountName = ctx.AccountName
@@ -229,13 +225,20 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	prj.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, prj.RecordVersion+1)
-	if _, err := d.projectRepo.UpdateById(ctx, prj.Id, prj); err != nil {
+	patch := repos.Document{
+		"markedForDeletion":          true,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionDelete,
+		"syncStatus.state":           t.SyncStateInQueue,
+	}
+
+	uproj, err := d.projectRepo.PatchById(ctx, prj.Id, patch)
+	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishProjectEvent(prj, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectEvent(uproj, PublishUpdate)
 
-	return d.deleteK8sResource(ctx, prj.Name, &prj.Project)
+	return d.deleteK8sResource(ctx, uproj.Name, &uproj.Project)
 }
 
 func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
@@ -269,19 +272,26 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errAlreadyMarkedForDeletion("project", "", project.Name)
 	}
 
-	xProject.IncrementRecordVersion()
+	patch := repos.Document{
+		"metadata.labels":       project.Labels,
+		"metadata.annnotations": project.Annotations,
 
-	xProject.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+		"recordVersion": xProject.RecordVersion + 1,
+		"displayName":   project.DisplayName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+
+		"spec": project.Spec,
+
+		"syncStatus.state":           t.SyncStateInQueue,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionApply,
 	}
-	xProject.DisplayName = project.DisplayName
 
-	xProject.Spec = project.Spec
-	xProject.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xProject.RecordVersion)
-
-	upProject, err := d.projectRepo.UpdateById(ctx, xProject.Id, xProject)
+	upProject, err := d.projectRepo.PatchById(ctx, xProject.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -304,6 +314,7 @@ func (d *domain) OnProjectDeleteMessage(ctx ConsoleContext, project entities.Pro
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishProjectEvent(p, PublishDelete)
 	return nil
 }
@@ -318,28 +329,30 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 		return nil
 	}
 
-	proj.CreationTimestamp = project.CreationTimestamp
-	proj.Labels = project.Labels
-	proj.Annotations = project.Annotations
-	proj.Generation = project.Generation
+	patch := repos.Document{
+		"metadata.creationTimestamp": project.CreationTimestamp,
+		"metadata.labels":            project.Labels,
+		"metadata.annotations":       project.Annotations,
+		"metadata.generation":        project.Generation,
 
-	proj.Status = project.Status
+		"status": project.Status,
 
-	proj.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	proj.SyncStatus.RecordVersion = proj.RecordVersion
-	proj.SyncStatus.Error = nil
-	proj.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": proj.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+	}
 
-	_, err = d.projectRepo.UpdateById(ctx, proj.Id, proj)
+	uproj, err := d.projectRepo.PatchById(ctx, proj.Id, patch)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishProjectEvent(proj, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectEvent(uproj, PublishUpdate)
 	return nil
 }
 
@@ -349,10 +362,14 @@ func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name str
 		return err2
 	}
 
-	p.SyncStatus.State = t.SyncStateErroredAtAgent
-	p.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	p.SyncStatus.Error = &errMsg
-	_, err := d.projectRepo.UpdateById(ctx, p.Id, p)
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
+
+	uproject, err := d.projectRepo.PatchById(ctx, p.Id, patch)
+	d.resourceEventPublisher.PublishProjectEvent(uproject, PublishUpdate)
 	return errors.NewE(err)
 }
 

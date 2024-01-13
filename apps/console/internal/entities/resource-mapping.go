@@ -14,16 +14,28 @@ const (
 	ResourceTypeRouter                ResourceType = "router"
 	ResourceTypeManagedResource       ResourceType = "managed_resource"
 	ResourceTypeProjectManagedService ResourceType = "project_managed_service"
+	ResourceTypeVPNDevice             ResourceType = "vpn_device"
+)
+
+type ResourceHeirarchy string
+
+const (
+	ResourceHeirarchyProject     ResourceHeirarchy = "project"
+	ResourceHeirarchyEnvironment ResourceHeirarchy = "environment"
 )
 
 type ResourceMapping struct {
 	repos.BaseEntity `bson:",inline"`
 
+	ResourceHeirarchy ResourceHeirarchy `json:"resourceHeirarchy"`
+
 	ResourceType      ResourceType `json:"resourceType"`
 	ResourceName      string       `json:"resourceName"`
 	ResourceNamespace string       `json:"resourceNamespace"`
 
-	AccountName     string `json:"accountName"`
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
+
 	ProjectName     string `json:"projectName"`
 	EnvironmentName string `json:"environmentName"`
 }

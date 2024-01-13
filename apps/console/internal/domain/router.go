@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -71,7 +73,7 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 	router.EnvironmentName = ctx.EnvironmentName
 	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.RecordVersion)
 
-	if _, err := d.upsertResourceMapping(ctx, &router); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, &router); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -108,21 +110,25 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	xRouter.IncrementRecordVersion()
-	xRouter.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	patch := repos.Document{
+		"recordVersion": xRouter.RecordVersion + 1,
+		"displayName":   router.DisplayName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"metadata.labels":       router.Labels,
+		"metadata.annnotations": router.Annotations,
+
+		"spec": router.Spec,
+
+		"syncStatus.state":           t.SyncStateInQueue,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionApply,
 	}
-	xRouter.DisplayName = router.DisplayName
 
-	xRouter.Annotations = router.Annotations
-	xRouter.Labels = router.Labels
-
-	xRouter.Spec = router.Spec
-	xRouter.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xRouter.RecordVersion)
-
-	upRouter, err := d.routerRepo.UpdateById(ctx, xRouter.Id, xRouter)
+	upRouter, err := d.routerRepo.PatchById(ctx, xRouter.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -145,11 +151,18 @@ func (d *domain) DeleteRouter(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	r.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, r.RecordVersion)
-	if _, err := d.routerRepo.UpdateById(ctx, r.Id, r); err != nil {
+	patch := repos.Document{
+		"markedForDeletion":          true,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionDelete,
+		"syncStatus.state":           t.SyncStateInQueue,
+	}
+
+	urouter, err := d.routerRepo.PatchById(ctx, r.Id, patch)
+	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishRouterEvent(r, PublishUpdate)
+	d.resourceEventPublisher.PublishRouterEvent(urouter, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, r.ProjectName, &r.Router); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
@@ -165,10 +178,6 @@ func (d *domain) OnRouterDeleteMessage(ctx ResourceContext, router entities.Rout
 	xRouter, err := d.findRouter(ctx, router.Name)
 	if err != nil {
 		return errors.NewE(err)
-	}
-
-	if err := d.MatchRecordVersion(router.Annotations, xRouter.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, xRouter.ProjectName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
 	}
 
 	err = d.routerRepo.DeleteById(ctx, xRouter.Id)
@@ -189,26 +198,31 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 		return d.resyncK8sResource(ctx, xRouter.ProjectName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
 	}
 
-	xRouter.CreationTimestamp = router.CreationTimestamp
-	xRouter.Labels = router.Labels
-	xRouter.Annotations = router.Annotations
-	xRouter.Generation = router.Generation
+	patch := repos.Document{
+		"metadata.creationTimestamp": router.CreationTimestamp,
+		"metadata.labels":            router.Labels,
+		"metadata.annotations":       router.Annotations,
+		"metadata.generation":        router.Generation,
 
-	xRouter.Status = router.Status
+		"status": router.Status,
 
-	xRouter.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	xRouter.SyncStatus.RecordVersion = xRouter.RecordVersion
-	xRouter.SyncStatus.Error = nil
-	xRouter.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": xRouter.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+	}
 
-	_, err = d.routerRepo.UpdateById(ctx, xRouter.Id, xRouter)
-	d.resourceEventPublisher.PublishRouterEvent(xRouter, PublishUpdate)
-	return errors.NewE(err)
+	urouter, err := d.routerRepo.PatchById(ctx, xRouter.Id, patch)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishRouterEvent(urouter, PublishUpdate)
+	return nil
 }
 
 func (d *domain) OnRouterApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
@@ -217,12 +231,20 @@ func (d *domain) OnRouterApplyError(ctx ResourceContext, errMsg string, name str
 		return errors.NewE(err)
 	}
 
-	m.SyncStatus.State = t.SyncStateErroredAtAgent
-	m.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	m.SyncStatus.Error = &errMsg
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
 
-	_, err = d.routerRepo.UpdateById(ctx, m.Id, m)
-	return errors.NewE(err)
+	urouter, err := d.routerRepo.PatchById(ctx, m.Id, patch)
+	if err != nil {
+		return err
+	}
+
+	d.resourceEventPublisher.PublishRouterEvent(urouter, PublishUpdate)
+
+	return nil
 }
 
 func (d *domain) ResyncRouter(ctx ResourceContext, name string) error {
