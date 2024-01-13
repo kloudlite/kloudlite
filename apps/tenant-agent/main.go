@@ -28,9 +28,8 @@ import (
 	libGrpc "github.com/kloudlite/operator/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/kubectl"
 
-	// "github.com/kloudlite/operator/pkg/kubectl"
-
 	"github.com/kloudlite/operator/pkg/logging"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type grpcHandler struct {
@@ -118,8 +117,12 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			if msg.Action == "delete" {
 				err := g.yamlClient.DeleteYAML(ctx, b)
 				if err != nil {
-					mLogger.Infof("[%d] [error-on-delete]: %s", err.Error())
-					return g.handleErrorOnApply(ctx, err, msg)
+					mLogger.Infof("[%d] [error-on-delete]: %v", g.inMemCounter, err)
+					if apiErrors.IsNotFound(err) {
+						mLogger.Infof("[%d] process message", g.inMemCounter)
+						return g.handleErrorOnApply(ctx, err, msg)
+					}
+					mLogger.Infof("[%d] failed to process message", g.inMemCounter)
 				}
 				mLogger.Infof("[%d] processed message", g.inMemCounter)
 				return nil

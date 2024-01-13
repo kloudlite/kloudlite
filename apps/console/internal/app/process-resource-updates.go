@@ -28,20 +28,22 @@ func newResourceContext(ctx domain.ConsoleContext, projectName string, environme
 	}
 }
 
+var (
+	projectGVK               = fn.GVK("crds.kloudlite.io/v1", "Project")
+	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
+	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
+	configGVK                = fn.GVK("v1", "ConfigMap")
+	secretGVK                = fn.GVK("v1", "Secret")
+	routerGVK                = fn.GVK("crds.kloudlite.io/v1", "Router")
+	managedResourceGVK       = fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
+	projectManagedServiceGVK = fn.GVK("crds.kloudlite.io/v1", "ProjectManagedService")
+)
+
 func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
-	projectGVK := fn.GVK("crds.kloudlite.io/v1", "Project")
-	appsGVK := fn.GVK("crds.kloudlite.io/v1", "App")
-	environmentGVK := fn.GVK("crds.kloudlite.io/v1", "Environment")
-	configGVK := fn.GVK("v1", "ConfigMap")
-	secretGVK := fn.GVK("v1", "Secret")
-	routerGVK := fn.GVK("crds.kloudlite.io/v1", "Router")
-	managedResourceGVK := fn.GVK("crds.kloudlite.io/v1", "ManagedResource")
-	projectManagedServiceGVK := fn.GVK("crds.kloudlite.io/v1", "ProjectManagedService")
-
-	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string,obj unstructured.Unstructured) (domain.ResourceContext, error) {
-		mapping, err := d.GetResourceMapping(ctx, rt, clusterName,obj.GetNamespace(), obj.GetName())
+	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+		mapping, err := d.GetResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
@@ -147,7 +149,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp,ru.ClusterName, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeApp, ru.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -164,7 +166,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeConfig,ru.ClusterName, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeConfig, ru.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -181,7 +183,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeSecret,ru.ClusterName, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeSecret, ru.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -209,7 +211,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeRouter,ru.ClusterName, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeRouter, ru.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -226,7 +228,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				rctx, err := getResourceContext(dctx, entities.ResourceTypeManagedResource,ru.ClusterName, obj)
+				rctx, err := getResourceContext(dctx, entities.ResourceTypeManagedResource, ru.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}

@@ -22,11 +22,16 @@ import (
 
 func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string) (*string, error) {
 	cacheKey := fmt.Sprintf("account_name_%s-project_name_%s", ctx.GetAccountName(), projectName)
+
 	clusterName, err := d.consoleCacheStore.Get(ctx, cacheKey)
-	if err != nil {
-		if !errors.Is(err, kv.ErrKeyNotFound) {
-			return nil, err
-		}
+	if err != nil && !errors.Is(err, kv.ErrKeyNotFound) {
+		return nil, err
+	}
+
+	if len(clusterName) == 0 {
+		// if !errors.Is(err, kv.ErrKeyNotFound) {
+		// 	return nil, err
+		// }
 
 		proj, err := d.projectRepo.FindOne(ctx, repos.Filter{
 			"accountName":   ctx.GetAccountName(),
@@ -293,10 +298,6 @@ func (d *domain) OnProjectDeleteMessage(ctx ConsoleContext, project entities.Pro
 	p, err := d.findProject(ctx, project.Name)
 	if err != nil {
 		return errors.NewE(err)
-	}
-
-	if err := d.MatchRecordVersion(project.Annotations, p.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, p.Name, p.SyncStatus.Action, &p.Project, p.RecordVersion)
 	}
 
 	err = d.projectRepo.DeleteById(ctx, p.Id)

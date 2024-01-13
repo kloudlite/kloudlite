@@ -77,10 +77,10 @@ query: |+
     }
   }
 variables:
-  search: 
+  search:
     text:
       matchType: regex
-      regex: "ple.*"
+      regex: ""
   pagination:
     first: 10
 

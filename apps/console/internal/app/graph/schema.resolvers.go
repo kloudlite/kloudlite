@@ -403,7 +403,7 @@ func (r *queryResolver) CoreListProjects(ctx context.Context, search *model.Sear
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.ProjectPaginatedRecords](p)
+	return fn.JsonConvertP[model.ProjectPaginatedRecords](p)
 }
 
 // CoreGetProject is the resolver for the core_getProject field.
@@ -454,7 +454,7 @@ func (r *queryResolver) CoreListEnvironments(ctx context.Context, projectName st
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.EnvironmentPaginatedRecords](envs)
+	return fn.JsonConvertP[model.EnvironmentPaginatedRecords](envs)
 }
 
 // CoreGetEnvironment is the resolver for the core_getEnvironment field.
@@ -503,7 +503,7 @@ func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, projectNam
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.ImagePullSecretPaginatedRecords](pullSecrets)
+	return fn.JsonConvertP[model.ImagePullSecretPaginatedRecords](pullSecrets)
 }
 
 // InfraGetImagePullSecret is the resolver for the infra_getImagePullSecret field.
@@ -552,7 +552,7 @@ func (r *queryResolver) CoreListApps(ctx context.Context, projectName string, en
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.AppPaginatedRecords](pApps)
+	return fn.JsonConvertP[model.AppPaginatedRecords](pApps)
 }
 
 // CoreGetApp is the resolver for the core_getApp field.
@@ -615,7 +615,7 @@ func (r *queryResolver) CoreListConfigs(ctx context.Context, projectName string,
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.ConfigPaginatedRecords](pConfigs)
+	return fn.JsonConvertP[model.ConfigPaginatedRecords](pConfigs)
 }
 
 // CoreGetConfig is the resolver for the core_getConfig field.
@@ -679,7 +679,7 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, projectName string,
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.SecretPaginatedRecords](pSecrets)
+	return fn.JsonConvertP[model.SecretPaginatedRecords](pSecrets)
 }
 
 // CoreGetSecret is the resolver for the core_getSecret field.
@@ -727,7 +727,7 @@ func (r *queryResolver) CoreListRouters(ctx context.Context, projectName string,
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.RouterPaginatedRecords](pRouters)
+	return fn.JsonConvertP[model.RouterPaginatedRecords](pRouters)
 }
 
 // CoreGetRouter is the resolver for the core_getRouter field.
@@ -803,7 +803,7 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, projectNam
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.ManagedResourcePaginatedRecords](pmsvcs)
+	return fn.JsonConvertP[model.ManagedResourcePaginatedRecords](pmsvcs)
 }
 
 // CoreGetManagedResource is the resolver for the core_getManagedResource field.
@@ -855,7 +855,7 @@ func (r *queryResolver) CoreListProjectManagedServices(ctx context.Context, proj
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.ProjectManagedServicePaginatedRecords](pmsvcs)
+	return fn.JsonConvertP[model.ProjectManagedServicePaginatedRecords](pmsvcs)
 }
 
 // CoreGetProjectManagedService is the resolver for the core_getProjectManagedService field.
@@ -907,7 +907,7 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.Co
 		return nil, errors.NewE(err)
 	}
 
-	return fn.JsonConvert[model.ConsoleVPNDevicePaginatedRecords](p)
+	return fn.JsonConvertP[model.ConsoleVPNDevicePaginatedRecords](p)
 }
 
 // CoreListVPNDevicesForUser is the resolver for the core_listVPNDevicesForUser field.

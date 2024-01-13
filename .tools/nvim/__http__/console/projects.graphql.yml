@@ -2,7 +2,6 @@
 global:
   targetNamespace: sample
   name: sample
-  projectName2: "sample2"
 ---
 
 label: List Projects
@@ -95,9 +94,9 @@ variables:
   project:
     displayName: "Sample Project"
     metadata:
-      name: "{{.projectName2}}"
+      name: "{{.projectName}}"
     spec:
-      targetNamespace: "{{.targetNamespace}}2"
+      targetNamespace: "{{.projectTargetNamespace}}"
 ---
 
 label: Update Project
@@ -107,17 +106,19 @@ query: |+
       metadata {
         name
       }
+      clusterName
     }
   }
 variables:
   project:
     displayName: "This is a sample project"
     metadata:
-      name: "{{.projectName2}}"
+      name: "{{.projectName}}"
       labels:
         kloudlite.io/sample: "true"
     spec:
-      targetNamespace: "{{.targetNamespace}}2"
+      targetNamespace: "{{.targetNamespace}}"
+      clusterName: "{{.clusterName}}"
 ---
 
 label: Delete Project
@@ -126,7 +127,7 @@ query: |+
     core_deleteProject(name: $name)
   }
 variables:
-  name: "{{.name}}"
+  name: "{{.projectName}}"
 ---
 
 label: Resync Project
