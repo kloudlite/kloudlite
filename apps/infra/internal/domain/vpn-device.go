@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"time"
+	
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -13,6 +13,7 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"time"
 )
 
 func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName string, namespace string) error {
@@ -25,6 +26,7 @@ func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName
 		return errors.NewE(err)
 	}
 
+
 	if currDevice.ManagingByDev != nil {
 		return errors.Newf("device is not self managed, cannot update")
 	}
@@ -32,6 +34,7 @@ func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName
 	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
 
 	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, repos.Document{
+
 		"spec.deviceNamespace": namespace,
 		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
@@ -176,6 +179,7 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 		return errors.NewE(err)
 	}
 
+
 	if currDevice.ManagingByDev != nil {
 		return errors.Newf("device is not self managed, cannot update")
 	}
@@ -190,6 +194,7 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 			UserEmail: ctx.UserEmail,
 		},
 		"syncStatus.lastSyncedAt": time.Now(),
+
 		"syncStatus.action":       t.SyncActionApply,
 		"syncStatus.state":        t.SyncStateInQueue,
 	})
@@ -318,6 +323,7 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 
 	if err := d.matchRecordVersion(device.Annotations, currentDevice.RecordVersion); err != nil {
 		return d.resyncToTargetCluster(ctx, currentDevice.SyncStatus.Action, clusterName, &currentDevice.Device, currentDevice.RecordVersion)

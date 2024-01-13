@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -10,6 +9,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"time"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -239,9 +239,6 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 		return d.resyncToTargetCluster(ctx, xService.SyncStatus.Action, clusterName, xService, xService.RecordVersion)
 	}
 
-	// Ignore error if annotation don't have record version
-	annVersion, _ := d.parseRecordVersionFromAnnotations(service.Annotations)
-
 	if _, err := d.clusterManagedServiceRepo.PatchById(ctx, xService.Id, repos.Document{
 		"metadata.labels":            service.Labels,
 		"metadata.annotations":       service.Annotations,
@@ -252,7 +249,7 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 			LastSyncedAt:  opts.MessageTimestamp,
 			Error:         nil,
 			Action:        t.SyncActionApply,
-			RecordVersion: annVersion,
+			RecordVersion: xService.RecordVersion,
 			State: func() t.SyncState {
 				if status == types.ResourceStatusDeleting {
 					return t.SyncStateDeletingAtAgent
