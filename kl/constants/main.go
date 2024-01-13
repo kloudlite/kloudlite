@@ -17,4 +17,12 @@ var (
 
 		return os.Getenv("BASE_URL") + "/api/"
 	}()
+
+	UpdateURL = func() string {
+		if os.Getenv("Update_URL") == "" {
+			return "https://i.jpillora.com/kloudlite/kl"
+		}
+
+		return os.Getenv("Update_URL")
+	}()
 )
