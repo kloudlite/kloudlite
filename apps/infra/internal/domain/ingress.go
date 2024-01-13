@@ -11,7 +11,7 @@ import (
 func (d *domain) OnIngressUpdateMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	for i := range ingress.Spec.Rules {
 		domainName := ingress.Spec.Rules[i].Host
-		if _, err := d.domainEntryRepo.Upsert(ctx, repos.Filter{
+		de, err := d.domainEntryRepo.Upsert(ctx, repos.Filter{
 			"accountName": ctx.AccountName,
 			"clusterName": clusterName,
 			"domainName":  domainName,
@@ -24,9 +24,12 @@ func (d *domain) OnIngressUpdateMessage(ctx InfraContext, clusterName string, in
 			DomainName:  domainName,
 			AccountName: ctx.AccountName,
 			ClusterName: clusterName,
-		}); err != nil {
+		})
+		if err != nil {
 			return err
 		}
+
+		d.resourceEventPublisher.PublishDomainResEvent(de, PublishUpdate)
 	}
 
 	return nil
@@ -50,5 +53,17 @@ func (d *domain) OnIngressDeleteMessage(ctx InfraContext, clusterName string, in
 		},
 	})
 
-	return d.domainEntryRepo.DeleteMany(ctx, filters)
+	err := d.domainEntryRepo.DeleteMany(ctx, filters)
+	if err != nil {
+		return err
+	}
+
+	for i := range domainNames {
+		d.resourceEventPublisher.PublishDomainResEvent(&entities.DomainEntry{
+			DomainName:  domainNames[i].(string),
+			AccountName: ctx.AccountName,
+			ClusterName: clusterName,
+		}, PublishDelete)
+	}
+	return nil
 }
