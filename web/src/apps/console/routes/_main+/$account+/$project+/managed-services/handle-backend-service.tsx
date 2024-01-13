@@ -24,15 +24,11 @@ import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-qu
 import { Switch } from '~/components/atoms/switch';
 import { cn } from '~/components/utils';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
+import { getManagedTemplate } from '~/console/utils/commons';
 
 type IDialog = IDialogBase<ExtractNodeType<IProjectMSvs>> & {
   templates: IMSvTemplates;
 };
-
-type IActiveCategory = {
-  name: string;
-  displayName: string;
-} | null;
 
 type ISelectedService = {
   category: {
@@ -42,193 +38,6 @@ type ISelectedService = {
 
   service: NN<IMSvTemplates>[number]['items'][number];
 } | null;
-
-const ServicePicker = ({
-  activeCategory,
-  setActiveCategory,
-  templates,
-  selectedService,
-  setSelectedService,
-}: {
-  activeCategory: IActiveCategory;
-  setActiveCategory: React.Dispatch<IActiveCategory>;
-  templates: IMSvTemplates;
-  selectedService: ISelectedService;
-  setSelectedService: React.Dispatch<ISelectedService>;
-}) => {
-  const [searchProps, searchResults] = useInputSearch(
-    {
-      data:
-        templates?.find((t) => t.category === activeCategory?.name)?.items ||
-        [],
-      keys: ['name'],
-      reverse: false,
-      threshold: 0.4,
-    },
-    [activeCategory]
-  );
-  return (
-    <div className="flex min-h-[30vh]">
-      <div className="pr-3xl min-w-[180px]">
-        <ActionList.Root
-          value={activeCategory?.name || ''}
-          onChange={(v) => {
-            setActiveCategory({
-              name: v,
-              displayName:
-                templates?.find((t) => t.category === v)?.displayName || '',
-            });
-          }}
-        >
-          {templates?.map((t, index) => {
-            if (!activeCategory && index === 0) {
-              setActiveCategory({
-                name: t.category,
-                displayName: t.displayName,
-              });
-            }
-            return (
-              <ActionList.Item key={t.category} value={t.category}>
-                {t.displayName}
-              </ActionList.Item>
-            );
-          })}
-        </ActionList.Root>
-      </div>
-      <div className="flex-1 pl-3xl flex flex-col gap-4xl">
-        <TextInput
-          {...searchProps}
-          prefixIcon={<Search />}
-          placeholder="Search"
-        />
-        {templates?.find((t) => t.category === activeCategory?.name)?.items
-          .length === 0 ? (
-          <NoResultsFound
-            shadow={false}
-            border={false}
-            title={<div className="pt-2xl" />}
-            subtitle="No Services Available now"
-          />
-        ) : (
-          <List.Root>
-            {searchResults.map((item) => {
-              return (
-                <List.Row
-                  className={cn('group/team')}
-                  pressed={selectedService?.service.name === item.name}
-                  key={`${item.name}row`}
-                  onClick={() => {
-                    if (!item.apiVersion) {
-                      toast.error('not available now');
-                      return;
-                    }
-                    if (activeCategory) {
-                      setSelectedService({
-                        category: activeCategory,
-                        service: item,
-                      });
-                    }
-                  }}
-                  columns={[
-                    {
-                      key: item.name,
-                      className: 'flex-grow',
-                      render: () => (
-                        <ListTitle
-                          avatar={
-                            <img
-                              width={25}
-                              src={item.logoUrl}
-                              alt={item.displayName}
-                            />
-                          }
-                          title={
-                            <div className="bodySm">{item.displayName}</div>
-                          }
-                        />
-                      ),
-                    },
-                    {
-                      key: `${item.name}-arrow`,
-                      render: () =>
-                        selectedService?.service.name === item.name ? (
-                          <Check size={16} />
-                        ) : (
-                          <div className="invisible transition-all delay-100 duration-10 group-hover/team:visible group-hover/team:translate-x-sm">
-                            <ArrowRight size={24} />
-                          </div>
-                        ),
-                    },
-                  ]}
-                />
-              );
-            })}
-          </List.Root>
-        )}
-
-        {/* <Grid.Root className="!gap-4xl">
-          {searchResults.map((item) => {
-            return (
-              <Grid.Column
-                onClick={() => {
-                  if (!item.apiVersion) {
-                    toast.error('not available now');
-                    return;
-                  }
-                  if (activeCategory) {
-                    setSelectedService({
-                      category: activeCategory,
-                      service: item,
-                    });
-                  }
-                }}
-                key={item.name}
-                className={cn({
-                  '!bg-surface-basic-active':
-                    item.name === selectedService?.service.name,
-                  'opacity-50 cursor-not-allowed': !item.apiVersion,
-                })}
-                rows={[
-                  {
-                    key: `${item.name}first`,
-                    render() {
-                      return (
-                        <div className="flex flex-col gap-xl p-md overflow-hidden">
-                          <img
-                            className="w-5xl h-5xl aspect-square self-center"
-                            src={item.logoUrl}
-                            alt={item.displayName}
-                          />
-
-                          <div>
-                            <div
-                              key={item.name}
-                              className={cn(
-                                'bodySm-semibold text-text-default line-clamp-2 text-center',
-                                {
-                                  'text-text-primary bodyMd-medium':
-                                    item.name === selectedService?.service.name,
-                                  'text-text-default':
-                                    item.name !== selectedService?.service.name,
-                                }
-                              )}
-                            >
-                              {item.displayName}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    },
-                  },
-                ]}
-              />
-            );
-          })}
-        </Grid.Root> */}
-      </div>
-    </div>
-  );
-};
 
 const RenderField = ({
   field,
@@ -370,8 +179,6 @@ const Fill = ({
     [key: string]: string | undefined;
   };
 }) => {
-  console.log('values: ', values);
-
   return (
     <div className="flex flex-col gap-3xl min-h-[30vh]">
       <TextInput
@@ -437,7 +244,6 @@ const flatM = (obj: Record<string, any>) => {
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible, templates } = props;
-  const [activeCategory, setActiveCategory] = useState<IActiveCategory>(null);
   const [selectedService, setSelectedService] =
     useState<ISelectedService>(null);
 
@@ -456,10 +262,19 @@ const Root = (props: IDialog) => {
     isLoading,
     setValues,
   } = useForm({
-    initialValues: {
-      name: '',
-      displayName: '',
-    },
+    initialValues: isUpdate
+      ? {
+          name: '',
+          displayName: '',
+          res: {
+            ...props.data.spec?.msvcSpec.serviceTemplate.spec,
+          },
+        }
+      : {
+          name: '',
+          displayName: '',
+          res: {},
+        },
     validationSchema: Yup.object({}),
     onSubmit: async (val) => {
       const tempVal = { ...val };
@@ -511,46 +326,19 @@ const Root = (props: IDialog) => {
     },
   });
 
-  useEffect(() => {
-    if (selectedService?.service.fields) {
-      setValues({
-        name: '',
-        displayName: '',
-        ...flatM(
-          selectedService?.service.fields.reduce((acc, curr) => {
-            return { ...acc, [curr.name]: curr.defaultValue };
-          }, {})
-        ),
+  const getService = () => {
+    if (isUpdate)
+      return getManagedTemplate({
+        templates,
+        apiVersion: props.data.spec?.msvcSpec.serviceTemplate.apiVersion || '',
+        kind: props.data.spec?.msvcSpec.serviceTemplate.kind || '',
       });
-    }
-  }, [selectedService]);
-
+    return null;
+  };
+  if (!isUpdate && getService()) {
+    return null;
+  }
   return (
-    // <Popup.Header>
-    //   {step === 'choose' ? (
-    //     <div>Choose a service</div>
-    //   ) : (
-    //     <div className="flex flex-row items-center gap-2xl">
-    //       <div className="flex flex-row items-center gap-lg">
-    //         <IconButton
-    //           icon={<ArrowLeft />}
-    //           size="xs"
-    //           variant="plain"
-    //           onClick={() => {
-    //             resetValues({});
-    //             setStep('choose');
-    //           }}
-    //         />
-    //         <img
-    //           className="w-3xl h-3xl aspect-square"
-    //           alt={selectedService?.service.displayName}
-    //           src={selectedService?.service.logoUrl}
-    //         />
-    //       </div>
-    //       <div>{selectedService?.service.displayName}</div>
-    //     </div>
-    //   )}
-    // </Popup.Header>
     <Popup.Form
       onSubmit={(e) => {
         if (step === 'choose') {
@@ -560,27 +348,15 @@ const Root = (props: IDialog) => {
       }}
     >
       <Popup.Content className="!min-h-[500px] !max-h-[500px]">
-        {step === 'choose' ? (
-          <ServicePicker
-            {...{
-              activeCategory,
-              selectedService,
-              setActiveCategory,
-              setSelectedService,
-              templates,
-            }}
-          />
-        ) : (
-          <Fill
-            {...{
-              templates,
-              selectedService,
-              values,
-              errors,
-              handleChange,
-            }}
-          />
-        )}
+        <Fill
+          {...{
+            templates,
+            selectedService: getService(),
+            values,
+            errors,
+            handleChange,
+          }}
+        />
       </Popup.Content>
       <Popup.Footer>
         {step === 'fill' ? (

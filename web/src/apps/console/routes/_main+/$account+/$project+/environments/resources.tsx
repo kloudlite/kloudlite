@@ -6,6 +6,8 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListTitle,
+  listFlex,
+  listTitleClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -18,7 +20,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { listRender } from '~/console/components/commons';
+import { listStatus } from '~/console/components/sync-status';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'workspace';
@@ -119,7 +121,7 @@ const ListView = ({ items, onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const lR = listRender({ keyPrefix, resource: item });
+        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -128,7 +130,7 @@ const ListView = ({ items, onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: listTitleClass,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -137,7 +139,8 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-              lR.statusRender({ className: 'mr-2xl' }),
+              status,
+              listFlex({ key: `${keyPrefix}flex-1` }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',

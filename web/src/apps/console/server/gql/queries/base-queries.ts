@@ -71,19 +71,18 @@ export const baseQueries = (executor: IExecutor) => ({
   coreCheckNameAvailability: executor(
     gql`
       query Core_checkNameAvailability(
-        $projectName: String!
         $resType: ConsoleResType!
         $name: String!
+        $projectName: String
         $envName: String
       ) {
         core_checkNameAvailability(
-          projectName: $projectName
           resType: $resType
           name: $name
+          projectName: $projectName
           envName: $envName
         ) {
           result
-          suggestedNames
         }
       }
     `,

@@ -21,10 +21,12 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useParams } from '@remix-run/react';
 import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
-import HandleDevices, { ShowWireguardConfig } from './handle-console-devices';
+import HandleConsoleDevices, {
+  ShowWireguardConfig,
+} from '~/console/page-components/handle-console-devices';
 
 const RESOURCE_NAME = 'device';
-type BaseType = IConsoleDevices[number];
+type BaseType = ExtractNodeType<IConsoleDevices>;
 
 const parseItem = (item: BaseType) => {
   return {
@@ -209,7 +211,6 @@ const ConsoleDeviceResources = ({ items = [] }: { items: BaseType[] }) => {
     },
   };
 
-  const params = useParams();
   return (
     <>
       <ListGridView
@@ -223,9 +224,8 @@ const ConsoleDeviceResources = ({ items = [] }: { items: BaseType[] }) => {
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteVpnDevice({
+            const { errors } = await api.deleteConsoleVpnDevice({
               deviceName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
             });
 
             if (errors) {
@@ -247,7 +247,7 @@ const ConsoleDeviceResources = ({ items = [] }: { items: BaseType[] }) => {
           mode: showWireguardConfig?.mode || 'config',
         }}
       />
-      <HandleDevices
+      <HandleConsoleDevices
         {...{
           isUpdate: true,
           data: showHandleDevice!,

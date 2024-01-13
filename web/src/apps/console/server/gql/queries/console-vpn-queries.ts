@@ -17,6 +17,10 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export type IConsoleDevices = NN<
+  ConsoleListConsoleVpnDevicesQuery['core_listVPNDevices']
+>;
+
+export type IConsoleDevicesForUser = NN<
   ConsoleListConsoleVpnDevicesForUserQuery['core_listVPNDevicesForUser']
 >;
 
@@ -95,29 +99,6 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
                   targetPort
                 }
               }
-              status {
-                checks
-                isReady
-                lastReadyGeneration
-                lastReconcileTime
-                message {
-                  RawMessage
-                }
-                resources {
-                  apiVersion
-                  kind
-                  name
-                  namespace
-                }
-              }
-              syncStatus {
-                action
-                error
-                lastSyncedAt
-                recordVersion
-                state
-                syncScheduledAt
-              }
               updateTime
             }
           }
@@ -181,6 +162,8 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
     gql`
       query Core_listVPNDevicesForUser {
         core_listVPNDevicesForUser {
+          accountName
+          apiVersion
           createdBy {
             userEmail
             userId
@@ -189,6 +172,8 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
           creationTime
           displayName
           environmentName
+          id
+          kind
           lastUpdatedBy {
             userEmail
             userId
@@ -196,7 +181,11 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
           }
           markedForDeletion
           metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
             generation
+            labels
             name
             namespace
           }
@@ -215,30 +204,11 @@ export const consoleVpnQueries = (executor: IExecutor) => ({
               targetPort
             }
           }
-          status {
-            checks
-            isReady
-            lastReadyGeneration
-            lastReconcileTime
-            message {
-              RawMessage
-            }
-            resources {
-              apiVersion
-              kind
-              name
-              namespace
-            }
-          }
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            recordVersion
-            state
-            syncScheduledAt
-          }
           updateTime
+          wireguardConfig {
+            encoding
+            value
+          }
         }
       }
     `,

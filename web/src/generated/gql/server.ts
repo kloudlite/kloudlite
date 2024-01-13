@@ -1489,17 +1489,14 @@ export type ConsoleInfraCheckNameAvailabilityQuery = {
 };
 
 export type ConsoleCoreCheckNameAvailabilityQueryVariables = Exact<{
-  projectName: Scalars['String']['input'];
   resType: ConsoleResType;
   name: Scalars['String']['input'];
+  projectName?: InputMaybe<Scalars['String']['input']>;
   envName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type ConsoleCoreCheckNameAvailabilityQuery = {
-  core_checkNameAvailability: {
-    result: boolean;
-    suggestedNames?: Array<string>;
-  };
+  core_checkNameAvailability: { result: boolean };
 };
 
 export type ConsoleWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
@@ -2234,19 +2231,20 @@ export type ConsoleListEnvironmentsQuery = {
         displayName: string;
         markedForDeletion?: boolean;
         projectName: string;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: {
-          annotations?: any;
-          creationTimestamp: any;
-          deletionTimestamp?: any;
-          generation: number;
-          labels?: any;
-          name: string;
-          namespace?: string;
+        metadata?: { generation: number; name: string; namespace?: string };
+        spec?: {
+          projectName: string;
+          targetNamespace?: string;
+          routing?: {
+            mode?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode;
+            privateIngressClass?: string;
+            publicIngressClass?: string;
+          };
         };
-        spec?: { projectName: string; targetNamespace?: string };
         status?: {
           checks?: any;
           isReady: boolean;
@@ -2259,6 +2257,14 @@ export type ConsoleListEnvironmentsQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
       };
     }>;
@@ -4408,6 +4414,8 @@ export type ConsoleListProjectMSvsQuery = {
         creationTime: any;
         displayName: string;
         markedForDeletion?: boolean;
+        projectName: string;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -4438,6 +4446,14 @@ export type ConsoleListProjectMSvsQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
       };
     }>;

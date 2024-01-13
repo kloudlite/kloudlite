@@ -9,24 +9,27 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import HandleConsoleDevices from '~/console/page-components/handle-console-devices';
 import Tools from './tools';
 import ConsoleDeviceResources from './console-devices-resources';
-import HandleConsoleDevices from './handle-console-devices';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { data, errors } = await GQLServerHandler(
       ctx.request
-    ).listConsoleVpnDevicesForUser({});
+    ).listConsoleVpnDevices({
+      pq: getPagination(ctx),
+      search: getSearch(ctx),
+    });
     if (errors) {
       logger.error(errors[0]);
       throw errors[0];
     }
 
     return {
-      devicesData: data || [],
+      devicesData: data || {},
     };
   });
 
@@ -40,13 +43,18 @@ const ConsoleVPN = () => {
     <>
       <LoadingComp
         data={promise}
-        skeletonData={{
-          devicesData: fake.ConsoleListConsoleVpnDevicesForUserQuery
-            .core_listVPNDevicesForUser as any,
-        }}
+        // skeletonData={{
+        //   devicesData: fake.vp
+        //     .core_listVPNDevicesForUser as any,
+        // }}
       >
         {({ devicesData }) => {
-          const devices = devicesData;
+          const devices = devicesData?.edges?.map(({ node }) => node);
+          console.log('devices', devicesData);
+
+          if (!devices) {
+            return null;
+          }
           return (
             <Wrapper
               header={{
