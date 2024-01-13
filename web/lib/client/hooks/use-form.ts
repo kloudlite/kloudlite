@@ -154,7 +154,6 @@ function useForm<T>({
       }
     } catch (err) {
       console.log(parseError(err).message);
-      console.log(validationSchema, values);
       (err as Yup.ValidationError).inner.map((item) => {
         setErrors((d: any) => {
           d[item.path || ''] = item.message;

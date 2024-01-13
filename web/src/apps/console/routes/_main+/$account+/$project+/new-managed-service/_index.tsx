@@ -42,21 +42,23 @@ const RenderField = ({
   field,
   value,
   onChange,
-  error,
-  message,
+  errors,
+  fieldKey,
 }: {
   field: IMSvTemplate['fields'][number];
   onChange: (e: string) => (e: { target: { value: any } }) => void;
   value: any;
-  error: boolean;
-  message?: string;
+  errors: {
+    [key: string]: string;
+  };
+  fieldKey: string;
 }) => {
   const [qos, setQos] = useState(false);
   if (field.inputType === 'Number') {
     return (
       <NumberInput
-        error={error}
-        message={message}
+        error={!!errors[fieldKey]}
+        message={errors[fieldKey]}
         label={`${field.label}${field.required ? ' *' : ''}`}
         placeholder={field.label}
         value={parseFloat(value) / (field.multiplier || 1) || ''}
@@ -81,6 +83,8 @@ const RenderField = ({
         value={value || ''}
         onChange={onChange(`res.${field.name}`)}
         suffix={field.displayUnit}
+        error={!!errors[fieldKey]}
+        message={errors[fieldKey]}
       />
     );
   }
@@ -94,8 +98,8 @@ const RenderField = ({
           <div className="flex flex-row gap-xl items-end flex-1 ">
             <div className="flex-1">
               <NumberInput
-                error={error}
-                message={message}
+                error={!!errors[`${fieldKey}.min`]}
+                message={errors[`${fieldKey}.min`]}
                 placeholder={qos ? field.label : `${field.label} min`}
                 value={parseFloat(value.min) / (field.multiplier || 1)}
                 onChange={({ target }) => {
@@ -122,8 +126,8 @@ const RenderField = ({
             {!qos && (
               <div className="flex-1">
                 <NumberInput
-                  error={error}
-                  message={message}
+                  error={!!errors[`${fieldKey}.max`]}
+                  message={errors[`${fieldKey}.max`]}
                   placeholder={`${field.label} max`}
                   value={parseFloat(value.max) / (field.multiplier || 1)}
                   onChange={({ target }) => {
@@ -295,8 +299,8 @@ const FieldView = ({
             key={field.name}
             onChange={handleChange}
             value={x}
-            error={!!errors[k]}
-            message={errors[k]}
+            errors={errors}
+            fieldKey={k}
           />
         );
       })}
@@ -561,7 +565,7 @@ const ManagedServiceLayout = () => {
   }, [values.selectedTemplate]);
 
   useEffect(() => {
-    console.log(errors);
+    console.log(errors, 'errors');
   }, [errors]);
 
   const getItems = () => {
