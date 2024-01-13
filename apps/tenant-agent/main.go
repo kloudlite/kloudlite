@@ -96,8 +96,9 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 				ann = make(map[string]string, 2)
 			}
 
-			ann[constants.ObservabilityAccountNameKey] = msg.AccountName
-			ann[constants.ObservabilityClusterNameKey] = msg.ClusterName
+			ann[constants.ObservabilityAccountNameKey] = g.ev.AccountName
+			ann[constants.ObservabilityClusterNameKey] = g.ev.ClusterName
+			obj.SetAnnotations(ann)
 
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
