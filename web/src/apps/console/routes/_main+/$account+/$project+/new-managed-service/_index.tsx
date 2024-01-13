@@ -191,28 +191,49 @@ const flatM = (obj: Record<string, any>) => {
 };
 
 const flatMapValidations = (obj: Record<string, any>) => {
-  console.log('validations', obj);
-
   const flatJson = {};
   for (const key in obj) {
     const parts = key.split('.');
-
-    let temp: Record<string, any> = flatJson;
-
+    const temp: Record<string, any> = flatJson;
+    // console.log('validations', obj[key]);
     if (parts.length === 1) {
-      temp[key] = null;
-    } else {
-      parts.forEach((part, index) => {
-        if (index === parts.length - 1) {
-          temp[part] = {
-            min: null,
-            max: null,
-          };
-        } else {
-          temp[part] = temp[part] || {};
+      temp[key] = (() => {
+        let returnYup: any = Yup;
+        switch (obj[key].inputType) {
+          case 'Number':
+            returnYup = returnYup.number();
+            if (obj[key].min) returnYup = returnYup.min(obj[key].min);
+            if (obj[key].max) returnYup = returnYup.max(obj[key].max);
+            break;
+          case 'String':
+            returnYup = returnYup.string();
+            break;
+          default:
+            returnYup = returnYup.string();
         }
-        temp = temp[part];
-      });
+
+        if (obj[key].required) {
+          returnYup = returnYup.required();
+        }
+
+        return returnYup;
+      })();
+    } else {
+      temp[parts[0]] = (() => {
+        let resp = Yup.object({
+          [parts[1]]: flatMapValidations({
+            [parts.slice(1, parts.length).join('.')]: obj[key],
+          }),
+        });
+        if (temp[parts[0]]) {
+          resp = resp.concat(temp[parts[0]]);
+        }
+
+        return resp;
+      })();
+      // parts.forEach((part, index) => {
+      //   // temp = temp[part];
+      // });
     }
   }
 
@@ -484,6 +505,8 @@ const ManagedServiceLayout = () => {
 
   const { project, account } = useParams();
 
+  const [validationSchema, setValidationSchema] = useState();
+
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
       initialValues: {
@@ -497,6 +520,28 @@ const ManagedServiceLayout = () => {
         name: Yup.string().required(),
         displayName: Yup.string().required(),
         selectedTemplate: Yup.object({}).required('Template is required.'),
+        // ...validationSchema,
+        res: Yup.lazy((v) => {
+          if (
+            values.selectedTemplate &&
+            isActive('Configure managed service')
+          ) {
+            const k = Yup.object(
+              flatMapValidations(
+                values.selectedTemplate?.template?.fields.reduce(
+                  (acc, curr) => {
+                    return { ...acc, [curr.name]: curr };
+                  },
+                  {}
+                )
+              )
+            );
+
+            console.log('k', k);
+            return k;
+          }
+          return Yup.object({});
+        }),
       }),
       onSubmit: async (val) => {
         const selectedTemplate =
@@ -560,7 +605,7 @@ const ManagedServiceLayout = () => {
             setActiveState('Review');
             break;
           case 'Review':
-            submit();
+            await submit();
             break;
           default:
             break;
@@ -587,39 +632,18 @@ const ManagedServiceLayout = () => {
 
   useEffect(() => {
     console.log(
-      'validation: ',
       flatMapValidations(
         values.selectedTemplate?.template?.fields.reduce((acc, curr) => {
-          return {
-            ...acc,
-            [curr.name]: curr,
-          };
+          return { ...acc, [curr.name]: curr };
         }, {})
       )
     );
-  }, [values.res]);
+  }, [values.selectedTemplate]);
 
-  // (() => {
-  //   let returnYup: any = Yup;
-  //   switch (curr.inputType) {
-  //     case 'Number':
-  //       returnYup = returnYup.number();
-  //       if (curr.min) returnYup = returnYup.min(curr.min);
-  //       if (curr.max) returnYup = returnYup.max(curr.max);
-  //       break;
-  //     case 'String':
-  //       returnYup = returnYup.string();
-  //       break;
-  //     default:
-  //       returnYup = returnYup.string();
-  //   }
+  useEffect(() => {
+    console.log(errors);
+  }, [errors]);
 
-  //   if (curr.required) {
-  //     returnYup = returnYup.required();
-  //   }
-
-  //   return returnYup;
-  // })()
   const isActive = (step: steps) => step === activeState;
 
   const getItems = () => {
@@ -667,7 +691,7 @@ const ManagedServiceLayout = () => {
                 <ReviewView
                   values={values}
                   handleSubmit={handleSubmit}
-                  isLoading
+                  isLoading={isLoading}
                 />
               ) : null,
             },
