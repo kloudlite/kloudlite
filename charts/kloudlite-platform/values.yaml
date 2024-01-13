@@ -243,6 +243,9 @@ webhookSecrets:
 
 # Microservices
 apps:
+  websocketApi:
+    # -- image (with tag) for websocket-server api
+    image: ghcr.io/kloudlite/api/websocket-server:v1.0.5-nightly
   authApi:
     # -- image (with tag) for auth api
     image: ghcr.io/kloudlite/api/auth:v1.0.5-nightly
