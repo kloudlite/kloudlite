@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	networkingv1 "k8s.io/api/networking/v1"
 	"time"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
@@ -124,6 +125,9 @@ type Domain interface {
 	GetPV(ctx InfraContext, clusterName string, pvName string) (*entities.PersistentVolume, error)
 	OnPVUpdateMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnPVDeleteMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume) error
+
+	OnIngressUpdateMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnIngressDeleteMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress) error
 
 	ListVolumeAttachments(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VolumeAttachment], error)
 	GetVolumeAttachment(ctx InfraContext, clusterName string, volAttachmentName string) (*entities.VolumeAttachment, error)
