@@ -191,7 +191,15 @@ const Root = (props: IDialog) => {
     });
 
   return (
-    <Popup.Form onSubmit={handleSubmit}>
+    <Popup.Form
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
           <NameIdView
@@ -201,15 +209,8 @@ const Root = (props: IDialog) => {
             label="Nodepool name"
             placeholder="Enter nodepool name"
             errors={errors.name}
-            onChange={({ name, id }) => {
-              handleChange('displayName')(dummyEvent(name));
-              if (!isUpdate) {
-                handleChange('name')(dummyEvent(id));
-              }
-            }}
-            onCheckError={(check) => {
-              handleChange('isNameError')(dummyEvent(check));
-            }}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
             isUpdate={isUpdate}
           />
 

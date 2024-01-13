@@ -187,19 +187,14 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         <div className="flex flex-col">
           <div className="flex flex-col gap-3xl pb-xl">
             <NameIdView
+              nameErrorLabel="isNameError"
               resType="cluster"
               displayName={values.displayName}
               name={values.name}
               label="Cluster name"
               placeholder="Enter cluster name"
               errors={errors.name}
-              onChange={({ name, id }) => {
-                handleChange('displayName')(dummyEvent(name));
-                handleChange('name')(dummyEvent(id));
-              }}
-              onCheckError={(check) => {
-                handleChange('isNameError')(dummyEvent(check));
-              }}
+              handleChange={handleChange}
             />
           </div>
           <div className="flex flex-col gap-3xl pt-lg">
@@ -408,8 +403,10 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         items: items(),
       }}
       onClick={() => {
-        if (isActive('Review')) {
-          setActiveState('Configure cluster');
+        if (!isOnboarding) {
+          if (isActive('Review')) {
+            setActiveState('Configure cluster');
+          }
         }
       }}
     />

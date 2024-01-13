@@ -1,18 +1,13 @@
-import { useOutletContext, useParams } from '@remix-run/react';
-import { TextInput } from '~/components/atoms/input';
+import { useParams } from '@remix-run/react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { IdSelector } from '~/console/components/id-selector';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { parseTargetNs } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { NameIdView } from '~/console/components/name-id-view';
-import { IEnvironmentContext } from '../../_layout';
 
 const HandleSecret = ({ show, setShow }: IDialog) => {
   const api = useConsoleApi();
@@ -25,6 +20,7 @@ const HandleSecret = ({ show, setShow }: IDialog) => {
         displayName: '',
         name: '',
         nodeType: '',
+        isNameError: false,
       },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
@@ -73,7 +69,15 @@ const HandleSecret = ({ show, setShow }: IDialog) => {
       <Popup.Header>
         {show?.type === 'add' ? 'Add new secret' : 'Edit secret'}
       </Popup.Header>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          if (!values.isNameError) {
+            handleSubmit(e);
+          } else {
+            e.preventDefault();
+          }
+        }}
+      >
         <Popup.Content>
           <NameIdView
             label="Name"
@@ -82,10 +86,8 @@ const HandleSecret = ({ show, setShow }: IDialog) => {
             name={values.name}
             resType="secret"
             errors={errors.name}
-            onChange={({ name, id }) => {
-              handleChange('displayName')(dummyEvent(name));
-              handleChange('name')(dummyEvent(id));
-            }}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
           />
         </Popup.Content>
         <Popup.Footer>

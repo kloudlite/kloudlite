@@ -1560,6 +1560,12 @@ export type ConsoleDeleteAccountMutationVariables = Exact<{
 
 export type ConsoleDeleteAccountMutation = { accounts_deleteAccount: boolean };
 
+export type ConsoleDeleteProjectMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteProjectMutation = { core_deleteProject: boolean };
+
 export type ConsoleCreateProjectMutationVariables = Exact<{
   project: ProjectIn;
 }>;
@@ -1639,7 +1645,15 @@ export type ConsoleListProjectsQuery = {
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string; namespace?: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec: { targetNamespace: string };
         status?: {
           checks?: any;
@@ -3700,6 +3714,409 @@ export type ConsoleListPvcsQuery = {
   };
 };
 
+export type ConsoleGetPvQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetPvQuery = {
+  infra_getPV?: {
+    clusterName: string;
+    creationTime: any;
+    displayName: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec?: {
+      accessModes?: Array<string>;
+      capacity?: any;
+      mountOptions?: Array<string>;
+      persistentVolumeReclaimPolicy?: K8s__Io___Api___Core___V1__PersistentVolumeReclaimPolicy;
+      storageClassName?: string;
+      volumeMode?: string;
+      awsElasticBlockStore?: {
+        fsType?: string;
+        partition?: number;
+        readOnly?: boolean;
+        volumeID: string;
+      };
+      azureDisk?: {
+        cachingMode?: string;
+        diskName: string;
+        diskURI: string;
+        fsType?: string;
+        kind?: string;
+        readOnly?: boolean;
+      };
+      azureFile?: {
+        readOnly?: boolean;
+        secretName: string;
+        secretNamespace?: string;
+        shareName: string;
+      };
+      cephfs?: {
+        monitors: Array<string>;
+        path?: string;
+        readOnly?: boolean;
+        secretFile?: string;
+        user?: string;
+        secretRef?: { name?: string; namespace?: string };
+      };
+      cinder?: { fsType?: string; readOnly?: boolean; volumeID: string };
+      claimRef?: {
+        apiVersion?: string;
+        fieldPath?: string;
+        kind?: string;
+        name?: string;
+        namespace?: string;
+        resourceVersion?: string;
+        uid?: string;
+      };
+      csi?: {
+        driver: string;
+        fsType?: string;
+        readOnly?: boolean;
+        volumeAttributes?: any;
+        volumeHandle: string;
+        controllerExpandSecretRef?: { name?: string; namespace?: string };
+        controllerPublishSecretRef?: { name?: string; namespace?: string };
+        nodeExpandSecretRef?: { name?: string; namespace?: string };
+        nodePublishSecretRef?: { name?: string; namespace?: string };
+        nodeStageSecretRef?: { name?: string; namespace?: string };
+      };
+      fc?: {
+        fsType?: string;
+        lun?: number;
+        readOnly?: boolean;
+        targetWWNs?: Array<string>;
+        wwids?: Array<string>;
+      };
+      flexVolume?: {
+        driver: string;
+        fsType?: string;
+        options?: any;
+        readOnly?: boolean;
+      };
+      flocker?: { datasetName?: string; datasetUUID?: string };
+      gcePersistentDisk?: {
+        fsType?: string;
+        partition?: number;
+        pdName: string;
+        readOnly?: boolean;
+      };
+      glusterfs?: {
+        endpoints: string;
+        endpointsNamespace?: string;
+        path: string;
+        readOnly?: boolean;
+      };
+      hostPath?: { path: string; type?: string };
+      iscsi?: {
+        chapAuthDiscovery?: boolean;
+        chapAuthSession?: boolean;
+        fsType?: string;
+        initiatorName?: string;
+        iqn: string;
+        iscsiInterface?: string;
+        lun: number;
+        portals?: Array<string>;
+        readOnly?: boolean;
+        targetPortal: string;
+      };
+      local?: { fsType?: string; path: string };
+      nfs?: { path: string; readOnly?: boolean; server: string };
+      nodeAffinity?: {
+        required?: {
+          nodeSelectorTerms: Array<{
+            matchExpressions?: Array<{
+              key: string;
+              operator: K8s__Io___Api___Core___V1__NodeSelectorOperator;
+              values?: Array<string>;
+            }>;
+            matchFields?: Array<{
+              key: string;
+              operator: K8s__Io___Api___Core___V1__NodeSelectorOperator;
+              values?: Array<string>;
+            }>;
+          }>;
+        };
+      };
+      photonPersistentDisk?: { fsType?: string; pdID: string };
+      portworxVolume?: {
+        fsType?: string;
+        readOnly?: boolean;
+        volumeID: string;
+      };
+      quobyte?: {
+        group?: string;
+        readOnly?: boolean;
+        registry: string;
+        tenant?: string;
+        user?: string;
+        volume: string;
+      };
+      rbd?: {
+        fsType?: string;
+        image: string;
+        keyring?: string;
+        monitors: Array<string>;
+        pool?: string;
+        readOnly?: boolean;
+        user?: string;
+      };
+      scaleIO?: {
+        fsType?: string;
+        gateway: string;
+        protectionDomain?: string;
+        readOnly?: boolean;
+        sslEnabled?: boolean;
+        storageMode?: string;
+        storagePool?: string;
+        system: string;
+        volumeName?: string;
+      };
+      storageos?: {
+        fsType?: string;
+        readOnly?: boolean;
+        volumeName?: string;
+        volumeNamespace?: string;
+        secretRef?: {
+          apiVersion?: string;
+          fieldPath?: string;
+          kind?: string;
+          name?: string;
+          namespace?: string;
+          resourceVersion?: string;
+          uid?: string;
+        };
+      };
+      vsphereVolume?: {
+        fsType?: string;
+        storagePolicyID?: string;
+        storagePolicyName?: string;
+        volumePath: string;
+      };
+    };
+    status?: {
+      lastPhaseTransitionTime?: any;
+      message?: string;
+      phase?: K8s__Io___Api___Core___V1__PersistentVolumePhase;
+      reason?: string;
+    };
+  };
+};
+
+export type ConsoleListPvsQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  search?: InputMaybe<SearchPersistentVolumes>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListPvsQuery = {
+  infra_listPVs?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        clusterName: string;
+        creationTime: any;
+        displayName: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec?: {
+          accessModes?: Array<string>;
+          capacity?: any;
+          mountOptions?: Array<string>;
+          persistentVolumeReclaimPolicy?: K8s__Io___Api___Core___V1__PersistentVolumeReclaimPolicy;
+          storageClassName?: string;
+          volumeMode?: string;
+          awsElasticBlockStore?: {
+            fsType?: string;
+            partition?: number;
+            readOnly?: boolean;
+            volumeID: string;
+          };
+          azureDisk?: {
+            cachingMode?: string;
+            diskName: string;
+            diskURI: string;
+            fsType?: string;
+            kind?: string;
+            readOnly?: boolean;
+          };
+          azureFile?: {
+            readOnly?: boolean;
+            secretName: string;
+            secretNamespace?: string;
+            shareName: string;
+          };
+          cephfs?: {
+            monitors: Array<string>;
+            path?: string;
+            readOnly?: boolean;
+            secretFile?: string;
+            user?: string;
+            secretRef?: { name?: string; namespace?: string };
+          };
+          cinder?: { fsType?: string; readOnly?: boolean; volumeID: string };
+          claimRef?: {
+            apiVersion?: string;
+            fieldPath?: string;
+            kind?: string;
+            name?: string;
+            namespace?: string;
+            resourceVersion?: string;
+            uid?: string;
+          };
+          csi?: {
+            driver: string;
+            fsType?: string;
+            readOnly?: boolean;
+            volumeAttributes?: any;
+            volumeHandle: string;
+            controllerExpandSecretRef?: { name?: string; namespace?: string };
+            controllerPublishSecretRef?: { name?: string; namespace?: string };
+            nodeExpandSecretRef?: { name?: string; namespace?: string };
+            nodePublishSecretRef?: { name?: string; namespace?: string };
+            nodeStageSecretRef?: { name?: string; namespace?: string };
+          };
+          fc?: {
+            fsType?: string;
+            lun?: number;
+            readOnly?: boolean;
+            targetWWNs?: Array<string>;
+            wwids?: Array<string>;
+          };
+          flexVolume?: {
+            driver: string;
+            fsType?: string;
+            options?: any;
+            readOnly?: boolean;
+          };
+          flocker?: { datasetName?: string; datasetUUID?: string };
+          gcePersistentDisk?: {
+            fsType?: string;
+            partition?: number;
+            pdName: string;
+            readOnly?: boolean;
+          };
+          glusterfs?: {
+            endpoints: string;
+            endpointsNamespace?: string;
+            path: string;
+            readOnly?: boolean;
+          };
+          hostPath?: { path: string; type?: string };
+          iscsi?: {
+            chapAuthDiscovery?: boolean;
+            chapAuthSession?: boolean;
+            fsType?: string;
+            initiatorName?: string;
+            iqn: string;
+            iscsiInterface?: string;
+            lun: number;
+            portals?: Array<string>;
+            readOnly?: boolean;
+            targetPortal: string;
+          };
+          local?: { fsType?: string; path: string };
+          nfs?: { path: string; readOnly?: boolean; server: string };
+          photonPersistentDisk?: { fsType?: string; pdID: string };
+          portworxVolume?: {
+            fsType?: string;
+            readOnly?: boolean;
+            volumeID: string;
+          };
+          quobyte?: {
+            group?: string;
+            readOnly?: boolean;
+            registry: string;
+            tenant?: string;
+            user?: string;
+            volume: string;
+          };
+          rbd?: {
+            fsType?: string;
+            image: string;
+            keyring?: string;
+            monitors: Array<string>;
+            pool?: string;
+            readOnly?: boolean;
+            user?: string;
+          };
+          scaleIO?: {
+            fsType?: string;
+            gateway: string;
+            protectionDomain?: string;
+            readOnly?: boolean;
+            sslEnabled?: boolean;
+            storageMode?: string;
+            storagePool?: string;
+            system: string;
+            volumeName?: string;
+          };
+          storageos?: {
+            fsType?: string;
+            readOnly?: boolean;
+            volumeName?: string;
+            volumeNamespace?: string;
+            secretRef?: {
+              apiVersion?: string;
+              fieldPath?: string;
+              kind?: string;
+              name?: string;
+              namespace?: string;
+              resourceVersion?: string;
+              uid?: string;
+            };
+          };
+          vsphereVolume?: {
+            fsType?: string;
+            storagePolicyID?: string;
+            storagePolicyName?: string;
+            volumePath: string;
+          };
+        };
+        status?: {
+          lastPhaseTransitionTime?: any;
+          message?: string;
+          phase?: K8s__Io___Api___Core___V1__PersistentVolumePhase;
+          reason?: string;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
 export type ConsoleListBuildRunsQueryVariables = Exact<{
   repoName: Scalars['String']['input'];
   search?: InputMaybe<SearchBuildRuns>;
@@ -4385,6 +4802,67 @@ export type ConsoleDeleteHelmChartMutationVariables = Exact<{
 
 export type ConsoleDeleteHelmChartMutation = {
   infra_deleteHelmRelease: boolean;
+};
+
+export type ConsoleListNamespacesQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+}>;
+
+export type ConsoleListNamespacesQuery = {
+  infra_listNamespaces?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        apiVersion: string;
+        clusterName: string;
+        creationTime: any;
+        displayName: string;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec?: { finalizers?: Array<string> };
+        status?: {
+          phase?: K8s__Io___Api___Core___V1__NamespacePhase;
+          conditions?: Array<{
+            lastTransitionTime?: any;
+            message?: string;
+            reason?: string;
+            status: K8s__Io___Api___Core___V1__ConditionStatus;
+            type: K8s__Io___Api___Core___V1__NamespaceConditionType;
+          }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
 };
 
 export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{

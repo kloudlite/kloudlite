@@ -251,7 +251,7 @@ const TemplateView = ({
     <form
       className="flex flex-col gap-3xl py-3xl"
       onSubmit={(e) => {
-        if (!values.isNameCheckError) {
+        if (!values.isNameError) {
           handleSubmit(e);
         } else {
           e.preventDefault();
@@ -267,11 +267,8 @@ const TemplateView = ({
         name={values.name}
         displayName={values.displayName}
         errors={errors.name}
-        onChange={({ name, id }) => {
-          handleChange('displayName')(dummyEvent(name));
-          handleChange('name')(dummyEvent(id));
-        }}
-        onCheckError={(v) => handleChange('isNameCheckError')(dummyEvent(v))}
+        handleChange={handleChange}
+        nameErrorLabel="isNameError"
       />
       <Select
         label="Service"
@@ -465,7 +462,7 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
         selectedService: null,
         selectedResource: null,
         res: {},
-        isNameCheckError: false,
+        isNameError: false,
       },
       validationSchema: Yup.object({
         name: Yup.string().required(),

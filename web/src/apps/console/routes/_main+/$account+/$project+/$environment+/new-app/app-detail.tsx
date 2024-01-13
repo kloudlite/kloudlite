@@ -18,6 +18,7 @@ const AppDetail = () => {
       name: parseName(app),
       displayName: app.displayName,
       description: app.metadata?.annotations?.[keyconstants.description] || '',
+      isNameError: false,
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
@@ -46,7 +47,16 @@ const AppDetail = () => {
   });
 
   return (
-    <FadeIn onSubmit={handleSubmit} className="py-3xl">
+    <FadeIn
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+      className="py-3xl"
+    >
       <div className="bodyMd text-text-soft">
         The application streamlines project management through intuitive task
         tracking and collaboration tools.
@@ -59,10 +69,8 @@ const AppDetail = () => {
           errors={errors.name}
           label="Application name"
           placeholder="Enter application name"
-          onChange={({ id, name }) => {
-            handleChange('displayName')(dummyEvent(name));
-            handleChange('name')(dummyEvent(id));
-          }}
+          handleChange={handleChange}
+          nameErrorLabel="isNameError"
         />
         <TextInput
           error={!!errors.description}

@@ -92,10 +92,13 @@ const SyncStatus = ({ item }: { item: IStatusMeta }) => {
       <div className="pulsable text-text-critical">
         <Tooltip.Root
           content={
-            <div className="flex flex-col gap-lg">
+            <div className="flex flex-col gap-lg overflow-hidden">
               <span className="bodySm-semibold">Deleting</span>
               {getMessages()?.errors.map((error) => (
-                <span key={error} className="bodySm">
+                <span
+                  key={error}
+                  className="bodySm overflow-hidden break-words"
+                >
                   {titleCase(error)}
                 </span>
               ))}

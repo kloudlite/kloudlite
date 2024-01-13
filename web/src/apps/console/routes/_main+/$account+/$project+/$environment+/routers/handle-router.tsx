@@ -56,6 +56,7 @@ const Root = (props: IDialog) => {
     initialValues: {
       name: '',
       displayName: '',
+      isNameError: false,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
@@ -110,7 +111,15 @@ const Root = (props: IDialog) => {
   }));
 
   return (
-    <Popup.Form onSubmit={handleSubmit}>
+    <Popup.Form
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
       <Popup.Content className="flex flex-col justify-start gap-3xl">
         <NameIdView
           resType="router"
@@ -118,10 +127,9 @@ const Root = (props: IDialog) => {
           displayName={values.displayName}
           name={values.name}
           errors={errors.values}
-          onChange={({ name, id }) => {
-            handleChange('displayName')(dummyEvent(name));
-            handleChange('name')(dummyEvent(id));
-          }}
+          handleChange={handleChange}
+          nameErrorLabel="isNameError"
+          isUpdate={isUpdate}
         />
         <Select
           size="lg"

@@ -42,6 +42,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
       name: '',
       displayName: '',
       environmentRoutingMode: false,
+      isNameError: false,
     },
     validationSchema,
 
@@ -129,7 +130,15 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
           ? `Create new environment`
           : `Edit environment`}
       </Popup.Header>
-      <Popup.Form onSubmit={handleSubmit}>
+      <Popup.Form
+        onSubmit={(e) => {
+          if (!values.isNameError) {
+            handleSubmit(e);
+          } else {
+            e.preventDefault();
+          }
+        }}
+      >
         <Popup.Content>
           <NameIdView
             resType="environment"
@@ -137,10 +146,9 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
             displayName={values.displayName}
             name={values.name}
             errors={errors.values}
-            onChange={({ name, id }) => {
-              handleChange('displayName')(dummyEvent(name));
-              handleChange('name')(dummyEvent(id));
-            }}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
+            isUpdate={show?.type !== DIALOG_TYPE.ADD}
           />
           <Switch
             label="Public"

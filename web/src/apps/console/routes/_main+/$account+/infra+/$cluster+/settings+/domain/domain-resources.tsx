@@ -94,12 +94,7 @@ const GridView = ({ items, onAction }: IResource) => {
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
-                render: () => (
-                  <ListTitle
-                    title={name}
-                    action={<ExtraButton onAction={onAction} item={item} />}
-                  />
-                ),
+                render: () => <ListTitle title={name} />,
               },
               {
                 key: generateKey(keyPrefix, domainName),
@@ -136,8 +131,12 @@ const ListView = ({ items, onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
                 render: () => <ListTitle title={name} />,
+              },
+              {
+                key: generateKey(keyPrefix, 'flex-1'),
+                className: 'flex-grow',
+                render: () => <div />,
               },
               {
                 key: generateKey(keyPrefix, domainName),
@@ -153,10 +152,6 @@ const ListView = ({ items, onAction }: IResource) => {
                     subtitle={updateInfo.time}
                   />
                 ),
-              },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
               },
             ]}
           />

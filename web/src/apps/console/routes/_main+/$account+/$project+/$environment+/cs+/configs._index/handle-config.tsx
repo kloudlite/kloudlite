@@ -1,13 +1,11 @@
 import { useParams } from '@remix-run/react';
-import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { IdSelector } from '~/console/components/id-selector';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
@@ -20,6 +18,7 @@ const HandleConfig = ({ show, setShow }: IDialog) => {
       initialValues: {
         displayName: '',
         name: '',
+        isNameError: false,
       },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
@@ -68,7 +67,15 @@ const HandleConfig = ({ show, setShow }: IDialog) => {
       <Popup.Header>
         {show?.type === 'add' ? 'Add new config' : 'Edit config'}
       </Popup.Header>
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          if (!values.isNameError) {
+            handleSubmit(e);
+          } else {
+            e.preventDefault();
+          }
+        }}
+      >
         <Popup.Content>
           <NameIdView
             label="Name"
@@ -77,10 +84,8 @@ const HandleConfig = ({ show, setShow }: IDialog) => {
             name={values.name}
             resType="config"
             errors={errors.name}
-            onChange={({ name, id }) => {
-              handleChange('displayName')(dummyEvent(name));
-              handleChange('name')(dummyEvent(id));
-            }}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
           />
         </Popup.Content>
         <Popup.Footer>

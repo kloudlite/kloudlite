@@ -53,27 +53,9 @@ const Domain = () => {
             <Wrapper
               secondaryHeader={{
                 title: 'Domains',
-                action: domains.length > 0 && (
-                  <Button
-                    content="Add domain"
-                    prefix={<Plus />}
-                    variant="primary"
-                    onClick={() => {
-                      setVisible(true);
-                    }}
-                  />
-                ),
               }}
               empty={{
                 is: domains.length === 0,
-                action: {
-                  content: 'Add domain',
-                  prefix: <Plus />,
-                  variant: 'primary',
-                  onClick: () => {
-                    setVisible(true);
-                  },
-                },
                 title: 'This is where you’ll oversees and control your domain.',
                 content: (
                   <p>

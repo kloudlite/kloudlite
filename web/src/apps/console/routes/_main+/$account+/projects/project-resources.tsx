@@ -4,14 +4,15 @@ import { generateKey, titleCase } from '~/components/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
-  ListBody,
   ListItem,
   ListTitle,
+  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { listStatus } from '~/console/components/sync-status';
 import { IProjects } from '~/console/server/gql/queries/project-queries';
 import {
   ExtractNodeType,
@@ -58,7 +59,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, path, updateInfo } = parseItem(item);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -100,8 +101,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const lR = listRender({ keyPrefix, resource: item });
-        const status = lR.statusRender({ className: 'mr-2xl' });
+        const status = listStatus({ item, key: `${keyPrefix}status` });
         return (
           <List.Row
             key={id}
@@ -110,7 +110,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, 0),
-                className: 'flex-1',
+                className: 'w-[180px] min-w-[180px] mr-xl',
                 render: () => (
                   <ListTitle
                     title={name}
@@ -120,6 +120,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 ),
               },
               status,
+              listFlex({ key: `${keyPrefix}flex` }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',

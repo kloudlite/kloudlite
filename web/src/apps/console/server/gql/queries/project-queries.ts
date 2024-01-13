@@ -10,12 +10,26 @@ import {
   ConsoleListProjectsQueryVariables,
   ConsoleUpdateProjectMutation,
   ConsoleUpdateProjectMutationVariables,
+  ConsoleDeleteProjectMutation,
+  ConsoleDeleteProjectMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IProjects = NN<ConsoleListProjectsQuery['core_listProjects']>;
 export type IProject = NN<ConsoleGetProjectQuery['core_getProject']>;
 
 export const projectQueries = (executor: IExecutor) => ({
+  deleteProject: executor(
+    gql`
+      mutation Core_deleteProject($name: String!) {
+        core_deleteProject(name: $name)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteProjectMutation) =>
+        data.core_deleteProject,
+      vars(_: ConsoleDeleteProjectMutationVariables) { },
+    }
+  ),
   createProject: executor(
     gql`
       mutation Core_createProject($project: ProjectIn!) {
@@ -131,6 +145,11 @@ export const projectQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
                 name
                 namespace
               }

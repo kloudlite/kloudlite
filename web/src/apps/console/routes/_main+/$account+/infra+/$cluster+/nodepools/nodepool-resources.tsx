@@ -1,4 +1,4 @@
-import { PencilLine, Trash, Cpu } from '@jengaicons/react';
+import { PencilLine, Trash, Cpu, CircleFill } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -103,7 +103,7 @@ const ListDetail = (
 ) => {
   const { item, open, onDelete, onEdit } = props;
   const { name, id } = parseItem(item);
-  const { minCount, maxCount, cloudProvider, aws } = item.spec;
+  const { minCount, maxCount, cloudProvider, aws, targetCount } = item.spec;
   const keyPrefix = `${RESOURCE_NAME}-${id}`;
   const lR = listRender({ keyPrefix, resource: item });
 
@@ -170,7 +170,13 @@ const ListDetail = (
         <div className="w-[220px] min-w-[220px]  mr-xl flex flex-row items-center">
           <ListTitle
             title={name}
-            subtitle={id}
+            subtitle={
+              <div className="flex flex-row items-center gap-md">
+                {id}
+                <CircleFill size={7} />
+                <span>Running {targetCount} nodes</span>
+              </div>
+            }
             avatar={<NodePoolAvatar title={id} />}
           />
         </div>

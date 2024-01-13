@@ -7,6 +7,7 @@ import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
 import { useOutletContext, useParams } from '@remix-run/react';
+import { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
@@ -31,6 +32,12 @@ interface INameIdView {
   placeholder?: string;
   onCheckError?: (error: boolean) => void;
   isUpdate?: boolean;
+  handleChange?: (key: string) => (e: {
+    target: {
+      value: string;
+    };
+  }) => void;
+  nameErrorLabel: string;
 }
 
 export const NameIdView = ({
@@ -44,6 +51,8 @@ export const NameIdView = ({
   placeholder,
   onCheckError,
   isUpdate,
+  handleChange,
+  nameErrorLabel,
 }: INameIdView) => {
   const [nameValid, setNameValid] = useState(false);
   const [nameLoading, setNameLoading] = useState(true);
@@ -107,7 +116,8 @@ export const NameIdView = ({
     }
 
     if (nameLoading) {
-      onCheckError?.(true);
+      // handleChange?.(nameErrorLabel)(dummyEvent(true));
+      // setNameCheckError(true);
       return (
         <div className="flex flex-row items-center gap-md">
           <span className="animate-spin">
@@ -118,7 +128,8 @@ export const NameIdView = ({
       );
     }
     if (nameValid) {
-      onCheckError?.(false);
+      // handleChange?.(nameErrorLabel)(dummyEvent(false));
+      // setNameCheckError(false);
       return (
         <span className="text-text-success bodySm-semibold">
           {name} is available.
@@ -127,6 +138,8 @@ export const NameIdView = ({
     }
     const error = 'This name is not available. Please try different.';
     onCheckError?.(!!error);
+    // handleChange?.(nameErrorLabel)(dummyEvent(!!error));
+    // setNameCheckError(!!error);
     return error;
   };
 
@@ -137,6 +150,7 @@ export const NameIdView = ({
       if (!isUpdate)
         if (displayName) {
           setNameLoading(true);
+          handleChange?.(nameErrorLabel)(dummyEvent(true));
           try {
             // @ts-ignore
             const { data, errors } = await checkApi({
@@ -173,8 +187,10 @@ export const NameIdView = ({
             }
             if (data.result) {
               setNameValid(true);
+              handleChange?.(nameErrorLabel)(dummyEvent(false));
             } else {
               setNameValid(false);
+              handleChange?.(nameErrorLabel)(dummyEvent(true));
             }
           } catch (err) {
             handleError(err);
@@ -206,14 +222,22 @@ export const NameIdView = ({
       value={displayName}
       onChange={(e) => {
         const v = e.target.value;
+        const id = v.trim().toLowerCase().replace(/ /g, '-');
         onChange?.({
           name: v,
-          id: v.trim().toLowerCase().replace(/ /g, '-'),
+          id,
         });
+        handleChange?.('displayName')(dummyEvent(v));
+        if (!isUpdate) {
+          handleChange?.('name')(dummyEvent(id));
+        }
+
         if (v) {
           setNameLoading(true);
+          handleChange?.(nameErrorLabel)(dummyEvent(true));
         } else {
           setNameLoading(false);
+          handleChange?.(nameErrorLabel)(dummyEvent(false));
         }
       }}
       placeholder={placeholder}
