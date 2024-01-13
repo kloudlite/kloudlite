@@ -15,6 +15,8 @@ type Env struct {
 	NatsURL         string `env:"NATS_URL" required:"true"`
 	IsDev           bool
 
+	LogsStreamName string `env:"LOGS_STREAM_NAME" default:"logs"`
+
 	// HttpPort uint16 `env:"HTTP_PORT" required:"true"`
 	// HttpCors string `env:"CORS_ORIGINS" required:"false"`
 	// GrpcPort uint16 `env:"GRPC_PORT" required:"true"`

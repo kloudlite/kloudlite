@@ -50,20 +50,33 @@ var Module = fx.Module("app",
 				),
 			)
 
-			// Web socket route
-			a.Use("/ws", func(c *fiber.Ctx) error {
+			setUpgradable := func(c *fiber.Ctx) error {
 				if websocket.IsWebSocketUpgrade(c) {
 					return c.Next()
 				}
 				return fiber.ErrUpgradeRequired
+			}
+
+			// Web socket route
+			a.Use("/ws", setUpgradable)
+			a.Use("/logs", setUpgradable)
+
+			a.Use("/logs", func(c *fiber.Ctx) error {
+				ctx := c.Context()
+
+				return websocket.New(func(sockConn *websocket.Conn) {
+					if err := d.HandleWebSocketForLogs(ctx, sockConn); err != nil {
+						logr.Errorf(err, "while handling websocket for logs")
+					}
+				})(c)
 			})
 
 			a.Use("/ws", func(c *fiber.Ctx) error {
 				ctx := c.Context()
 
 				return websocket.New(func(sockConn *websocket.Conn) {
-					if err := d.HandleWebSocket(ctx, sockConn); err != nil {
-						logr.Errorf(err, "while handling websocket")
+					if err := d.HandleWebSocketForRUpdate(ctx, sockConn); err != nil {
+						logr.Errorf(err, "while handling websocket for resource update")
 					}
 				})(c)
 			})
