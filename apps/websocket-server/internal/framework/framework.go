@@ -65,8 +65,7 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
-		corsOrigins := "https://console.devc.kloudlite.io"
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &e.Origins, IsDev: e.IsDev})
 	}),
 
 	// have to create socket server here
