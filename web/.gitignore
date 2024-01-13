@@ -27,4 +27,6 @@ public/**
 !public/package.json
 .tmp
 
+storybook-dist
+
 tsconfig-compile.tsbuildinfo
