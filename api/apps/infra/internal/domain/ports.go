@@ -26,6 +26,7 @@ const (
 
 type ResourceEventPublisher interface {
 	PublishClusterEvent(cluster *entities.Cluster, msg PublishMsg)
+
 	PublishNodePoolEvent(np *entities.NodePool, msg PublishMsg)
 	PublishVpnDeviceEvent(dev *entities.VPNDevice, msg PublishMsg)
 	PublishDomainResEvent(domain *entities.DomainEntry, msg PublishMsg)
