@@ -3205,7 +3205,7 @@ type Query {
   auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin
   auth_listOAuthProviders: [OAuthProviderStatus!]
   auth_me: User
-  core_checkNameAvailability(envName: String, name: String!, projectName: String!, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
+  core_checkNameAvailability(envName: String, name: String!, projectName: String, resType: ConsoleResType!): ConsoleCheckNameAvailabilityOutput!
   core_getApp(envName: String!, name: String!, projectName: String!): App
   core_getConfig(envName: String!, name: String!, projectName: String!): Config
   core_getConfigValues(envName: String!, projectName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!]

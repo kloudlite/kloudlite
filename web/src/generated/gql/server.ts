@@ -2315,6 +2315,7 @@ export type ConsoleGetAppQueryVariables = Exact<{
 
 export type ConsoleGetAppQuery = {
   core_getApp?: {
+    id: string;
     creationTime: any;
     displayName: string;
     enabled?: boolean;
@@ -5415,27 +5416,22 @@ export type AuthCli_UpdateDeviceMutation = {
   };
 };
 
-export type AuthCli_ListDevicesQueryVariables = Exact<{
-  pq?: InputMaybe<CursorPaginationIn>;
-  clusterName?: InputMaybe<Scalars['String']['input']>;
-}>;
+export type AuthCli_ListDevicesQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AuthCli_ListDevicesQuery = {
-  infra_listVPNDevices?: {
-    edges: Array<{
-      node: {
-        displayName: string;
-        markedForDeletion?: boolean;
-        metadata?: { name: string; namespace?: string };
-        spec?: {
-          deviceNamespace?: string;
-          cnameRecords?: Array<{ host?: string; target?: string }>;
-          ports?: Array<{ port?: number; targetPort?: number }>;
-        };
-        status?: { isReady: boolean; message?: { RawMessage?: any } };
-      };
-    }>;
-  };
+  core_listVPNDevicesForUser?: Array<{
+    displayName: string;
+    environmentName?: string;
+    markedForDeletion?: boolean;
+    projectName?: string;
+    metadata?: { name: string; namespace?: string };
+    spec?: {
+      deviceNamespace?: string;
+      disabled?: boolean;
+      cnameRecords?: Array<{ host?: string; target?: string }>;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+  }>;
 };
 
 export type AuthCli_GetDeviceQueryVariables = Exact<{

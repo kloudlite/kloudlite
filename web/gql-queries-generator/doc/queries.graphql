@@ -905,6 +905,7 @@ mutation consoleDeleteApp($projectName: String!, $envName: String!, $appName: St
 
 query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
   core_getApp(projectName: $projectName, envName: $envName, name: $name) {
+    id
     createdBy {
       userEmail
       userId
@@ -4203,33 +4204,26 @@ mutation authCli_updateDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
   }
 }
 
-query authCli_listDevices($pq: CursorPaginationIn, $clusterName: String) {
-  infra_listVPNDevices(pq: $pq, clusterName: $clusterName) {
-    edges {
-      node {
-        displayName
-        markedForDeletion
-        metadata {
-          name
-          namespace
-        }
-        spec {
-          cnameRecords {
-            host
-            target
-          }
-          deviceNamespace
-          ports {
-            port
-            targetPort
-          }
-        }
-        status {
-          isReady
-          message {
-            RawMessage
-          }
-        }
+query authCli_listDevices {
+  core_listVPNDevicesForUser {
+    displayName
+    environmentName
+    markedForDeletion
+    metadata {
+      name
+      namespace
+    }
+    projectName
+    spec {
+      cnameRecords {
+        host
+        target
+      }
+      deviceNamespace
+      disabled
+      ports {
+        port
+        targetPort
       }
     }
   }
