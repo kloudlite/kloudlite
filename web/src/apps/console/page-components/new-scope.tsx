@@ -140,23 +140,25 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
         }}
       >
         <Popup.Content>
-          <NameIdView
-            resType="environment"
-            label="Name"
-            displayName={values.displayName}
-            name={values.name}
-            errors={errors.values}
-            handleChange={handleChange}
-            nameErrorLabel="isNameError"
-            isUpdate={show?.type !== DIALOG_TYPE.ADD}
-          />
-          <Switch
-            label="Public"
-            checked={values.environmentRoutingMode}
-            onChange={(val) => {
-              handleChange('environmentRoutingMode')(dummyEvent(val));
-            }}
-          />
+          <div className="flex flex-col gap-3xl">
+            <NameIdView
+              resType="environment"
+              label="Name"
+              displayName={values.displayName}
+              name={values.name}
+              errors={errors.values}
+              handleChange={handleChange}
+              nameErrorLabel="isNameError"
+              isUpdate={show?.type !== DIALOG_TYPE.ADD}
+            />
+            <Switch
+              label="Public"
+              checked={values.environmentRoutingMode}
+              onChange={(val) => {
+                handleChange('environmentRoutingMode')(dummyEvent(val));
+              }}
+            />
+          </div>
         </Popup.Content>
         <Popup.Footer>
           <Popup.Button content="Cancel" variant="basic" closable />

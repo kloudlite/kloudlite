@@ -38,6 +38,7 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
+  WireGuardlogo,
 } from '@jengaicons/react';
 import HandleProfile from './handle-profile';
 
@@ -97,6 +98,16 @@ const AccountTabs = () => {
           ),
           to: '/packages/repos',
           value: '/packages',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
+              <WireGuardlogo size={iconSize} />
+              VPN
+            </span>
+          ),
+          to: '/vpn',
+          value: '/vpn',
         },
         {
           label: (

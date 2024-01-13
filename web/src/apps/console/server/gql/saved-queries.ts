@@ -29,6 +29,7 @@ import { managedResourceQueries } from './queries/managed-resources-queries';
 import { managedTemplateQueries } from './queries/managed-templates-queries';
 import { helmChartQueries } from './queries/helm-chart-queries';
 import { namespaceQueries } from './queries/namespace-queries';
+import { consoleVpnQueries } from './queries/console-vpn-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -62,6 +63,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...managedResourceQueries(executor),
     ...helmChartQueries(executor),
     ...namespaceQueries(executor),
+    ...consoleVpnQueries(executor),
   };
 };
 

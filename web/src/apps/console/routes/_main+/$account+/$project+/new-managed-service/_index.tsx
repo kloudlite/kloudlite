@@ -8,7 +8,7 @@ import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useEffect, useRef, useState } from 'react';
 import {
   IMSvTemplate,
   IMSvTemplates,
@@ -164,7 +164,34 @@ const RenderField = ({
 };
 
 const flatM = (obj: Record<string, any>) => {
-  console.log('obj', obj);
+  const flatJson = {};
+  for (const key in obj) {
+    const parts = key.split('.');
+
+    let temp: Record<string, any> = flatJson;
+
+    if (parts.length === 1) {
+      temp[key] = null;
+    } else {
+      parts.forEach((part, index) => {
+        if (index === parts.length - 1) {
+          temp[part] = {
+            min: null,
+            max: null,
+          };
+        } else {
+          temp[part] = temp[part] || {};
+        }
+        temp = temp[part];
+      });
+    }
+  }
+
+  return flatJson;
+};
+
+const flatMapValidations = (obj: Record<string, any>) => {
+  console.log('validations', obj);
 
   const flatJson = {};
   for (const key in obj) {
@@ -213,6 +240,10 @@ const TemplateView = ({
   isLoading: boolean;
   handleChange: (key: string) => (e: { target: { value: any } }) => void;
 }) => {
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, [nameRef.current]);
   return (
     <form
       className="flex flex-col gap-3xl py-3xl"
@@ -227,6 +258,7 @@ const TemplateView = ({
       <div className="bodyMd text-text-soft">Create your managed services.</div>
 
       <NameIdView
+        ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"
         resType="project_managed_service"
@@ -553,6 +585,41 @@ const ManagedServiceLayout = () => {
     }
   }, [values.selectedTemplate]);
 
+  useEffect(() => {
+    console.log(
+      'validation: ',
+      flatMapValidations(
+        values.selectedTemplate?.template?.fields.reduce((acc, curr) => {
+          return {
+            ...acc,
+            [curr.name]: curr,
+          };
+        }, {})
+      )
+    );
+  }, [values.res]);
+
+  // (() => {
+  //   let returnYup: any = Yup;
+  //   switch (curr.inputType) {
+  //     case 'Number':
+  //       returnYup = returnYup.number();
+  //       if (curr.min) returnYup = returnYup.min(curr.min);
+  //       if (curr.max) returnYup = returnYup.max(curr.max);
+  //       break;
+  //     case 'String':
+  //       returnYup = returnYup.string();
+  //       break;
+  //     default:
+  //       returnYup = returnYup.string();
+  //   }
+
+  //   if (curr.required) {
+  //     returnYup = returnYup.required();
+  //   }
+
+  //   return returnYup;
+  // })()
   const isActive = (step: steps) => step === activeState;
 
   const getItems = () => {

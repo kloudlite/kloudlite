@@ -4865,6 +4865,159 @@ export type ConsoleListNamespacesQuery = {
   };
 };
 
+export type ConsoleCreateConsoleVpnDeviceMutationVariables = Exact<{
+  vpnDevice: ConsoleVpnDeviceIn;
+}>;
+
+export type ConsoleCreateConsoleVpnDeviceMutation = {
+  core_createVPNDevice?: { id: string };
+};
+
+export type ConsoleUpdateConsoleVpnDeviceMutationVariables = Exact<{
+  vpnDevice: ConsoleVpnDeviceIn;
+}>;
+
+export type ConsoleUpdateConsoleVpnDeviceMutation = {
+  core_updateVPNDevice?: { id: string };
+};
+
+export type ConsoleListConsoleVpnDevicesQueryVariables = Exact<{
+  search?: InputMaybe<CoreSearchVpnDevices>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListConsoleVpnDevicesQuery = {
+  core_listVPNDevices?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        environmentName?: string;
+        markedForDeletion?: boolean;
+        projectName?: string;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: { generation: number; name: string; namespace?: string };
+        spec?: {
+          deviceNamespace?: string;
+          disabled?: boolean;
+          nodeSelector?: any;
+          cnameRecords?: Array<{ host?: string; target?: string }>;
+          ports?: Array<{ port?: number; targetPort?: number }>;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleGetConsoleVpnDeviceQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetConsoleVpnDeviceQuery = {
+  core_getVPNDevice?: {
+    displayName: string;
+    environmentName?: string;
+    projectName?: string;
+    recordVersion: number;
+    metadata?: { name: string; namespace?: string };
+    spec?: {
+      deviceNamespace?: string;
+      disabled?: boolean;
+      nodeSelector?: any;
+      cnameRecords?: Array<{ host?: string; target?: string }>;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+    wireguardConfig?: { encoding: string; value: string };
+  };
+};
+
+export type ConsoleListConsoleVpnDevicesForUserQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type ConsoleListConsoleVpnDevicesForUserQuery = {
+  core_listVPNDevicesForUser?: Array<{
+    creationTime: any;
+    displayName: string;
+    environmentName?: string;
+    markedForDeletion?: boolean;
+    projectName?: string;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: { generation: number; name: string; namespace?: string };
+    spec?: {
+      deviceNamespace?: string;
+      disabled?: boolean;
+      nodeSelector?: any;
+      cnameRecords?: Array<{ host?: string; target?: string }>;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+      syncScheduledAt?: any;
+    };
+  }>;
+};
+
+export type ConsoleDeleteConsoleVpnDeviceMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteConsoleVpnDeviceMutation = {
+  core_deleteVPNDevice: boolean;
+};
+
 export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
   resType: ConsoleResType;

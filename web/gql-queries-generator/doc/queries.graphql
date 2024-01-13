@@ -3615,6 +3615,190 @@ query consoleListNamespaces($clusterName: String!) {
   }
 }
 
+mutation consoleCreateConsoleVpnDevice($vpnDevice: ConsoleVPNDeviceIn!) {
+  core_createVPNDevice(vpnDevice: $vpnDevice) {
+    id
+  }
+}
+
+mutation consoleUpdateConsoleVpnDevice($vpnDevice: ConsoleVPNDeviceIn!) {
+  core_updateVPNDevice(vpnDevice: $vpnDevice) {
+    id
+  }
+}
+
+query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPaginationIn) {
+  core_listVPNDevices(search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        environmentName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          generation
+          name
+          namespace
+        }
+        projectName
+        recordVersion
+        spec {
+          cnameRecords {
+            host
+            target
+          }
+          deviceNamespace
+          disabled
+          nodeSelector
+          ports {
+            port
+            targetPort
+          }
+        }
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query consoleGetConsoleVpnDevice($name: String!) {
+  core_getVPNDevice(name: $name) {
+    displayName
+    environmentName
+    metadata {
+      name
+      namespace
+    }
+    projectName
+    recordVersion
+    spec {
+      cnameRecords {
+        host
+        target
+      }
+      deviceNamespace
+      disabled
+      nodeSelector
+      ports {
+        port
+        targetPort
+      }
+    }
+    wireguardConfig {
+      encoding
+      value
+    }
+  }
+}
+
+query consoleListConsoleVpnDevicesForUser {
+  core_listVPNDevicesForUser {
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    environmentName
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      generation
+      name
+      namespace
+    }
+    projectName
+    recordVersion
+    spec {
+      cnameRecords {
+        host
+        target
+      }
+      deviceNamespace
+      disabled
+      nodeSelector
+      ports {
+        port
+        targetPort
+      }
+    }
+    status {
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
+mutation consoleDeleteConsoleVpnDevice($deviceName: String!) {
+  core_deleteVPNDevice(deviceName: $deviceName)
+}
+
 query authCli_CoreCheckNameAvailability($projectName: String!, $resType: ConsoleResType!, $name: String!) {
   core_checkNameAvailability(
     projectName: $projectName

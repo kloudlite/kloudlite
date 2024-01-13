@@ -182,7 +182,12 @@ const ProjectSettingGeneral = () => {
           </div>
         </Box>
 
-        <DeleteContainer title="Delete Project" action={() => {}}>
+        <DeleteContainer
+          title="Delete Project"
+          action={() => {
+            setDeleteProject(true);
+          }}
+        >
           Permanently remove your Project and all of its contents from the
           Kloudlite platform. This action is not reversible — please continue
           with caution.

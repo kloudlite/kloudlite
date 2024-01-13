@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import { CircleNotch } from '@jengaicons/react';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, forwardRef, useEffect, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
@@ -24,6 +24,7 @@ interface INameIdView {
     | ResType
     | 'account'
     | 'username'
+    | 'console_vpn_device'
     | NonNullableString;
   onChange?: ({ name, id }: { name: string; id: string }) => void;
   prefix?: ReactNode;
@@ -40,216 +41,231 @@ interface INameIdView {
   nameErrorLabel: string;
 }
 
-export const NameIdView = ({
-  name,
-  onChange = (_) => {},
-  resType,
-  errors,
-  prefix,
-  label,
-  displayName,
-  placeholder,
-  onCheckError,
-  isUpdate,
-  handleChange,
-  nameErrorLabel,
-}: INameIdView) => {
-  const [nameValid, setNameValid] = useState(false);
-  const [nameLoading, setNameLoading] = useState(true);
+export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
+  (
+    {
+      name,
+      onChange = (_) => {},
+      resType,
+      errors,
+      prefix,
+      label,
+      displayName,
+      placeholder,
+      onCheckError,
+      isUpdate,
+      handleChange,
+      nameErrorLabel,
+    },
+    ref
+  ) => {
+    const [nameValid, setNameValid] = useState(false);
+    const [nameLoading, setNameLoading] = useState(true);
 
-  const api = useConsoleApi();
-  const params = useParams();
+    const api = useConsoleApi();
+    const params = useParams();
 
-  const checkApi = (() => {
-    switch (resType) {
-      case 'app':
-      case 'project':
-      case 'config':
-      case 'environment':
-      case 'managed_service':
-      case 'project_managed_service':
-      case 'managed_resource':
-      case 'router':
-      case 'secret':
-        ensureAccountClientSide(params);
-        ensureClusterClientSide(params);
-        return api.coreCheckNameAvailability;
+    const checkApi = (() => {
+      switch (resType) {
+        case 'app':
+        case 'project':
+        case 'config':
+        case 'environment':
+        case 'managed_service':
+        case 'project_managed_service':
+        case 'managed_resource':
+        case 'router':
+        case 'console_vpn_device':
+        case 'secret':
+          ensureAccountClientSide(params);
+          ensureClusterClientSide(params);
+          return api.coreCheckNameAvailability;
 
-      case 'cluster':
-      case 'providersecret':
-        ensureAccountClientSide(params);
-        return api.infraCheckNameAvailability;
-      case 'helm_release':
-      case 'vpn_device':
-      case 'nodepool':
-        return api.infraCheckNameAvailability;
+        case 'cluster':
+        case 'providersecret':
+          ensureAccountClientSide(params);
+          return api.infraCheckNameAvailability;
+        case 'helm_release':
+        case 'vpn_device':
+        case 'nodepool':
+          return api.infraCheckNameAvailability;
 
-      case 'account':
-        return api.accountCheckNameAvailability;
+        case 'account':
+          return api.accountCheckNameAvailability;
 
-      case 'username':
-        return api.crCheckNameAvailability;
+        case 'username':
+          return api.crCheckNameAvailability;
 
-      default:
-        return api.coreCheckNameAvailability;
-    }
-  })();
+        default:
+          return api.coreCheckNameAvailability;
+      }
+    })();
 
-  useEffect(() => {
-    if (displayName && name) {
-      setNameLoading(true);
-    }
-  }, [displayName, name]);
+    useEffect(() => {
+      if (displayName && name) {
+        setNameLoading(true);
+      }
+    }, [displayName, name]);
 
-  const checkNameAvailable = () => {
-    if (errors) {
-      // onCheckError?.(true);
-      return errors;
-    }
-    if (!name) {
-      // onCheckError?.(true);
-      return null;
-    }
+    const checkNameAvailable = () => {
+      if (errors) {
+        // onCheckError?.(true);
+        return errors;
+      }
+      if (!name) {
+        // onCheckError?.(true);
+        return null;
+      }
 
-    if (isUpdate) {
-      return null;
-    }
+      if (isUpdate) {
+        return null;
+      }
 
-    if (nameLoading) {
-      // handleChange?.(nameErrorLabel)(dummyEvent(true));
-      // setNameCheckError(true);
-      return (
-        <div className="flex flex-row items-center gap-md">
-          <span className="animate-spin">
-            <CircleNotch size={10} />
+      if (nameLoading) {
+        // handleChange?.(nameErrorLabel)(dummyEvent(true));
+        // setNameCheckError(true);
+        return (
+          <div className="flex flex-row items-center gap-md">
+            <span className="animate-spin">
+              <CircleNotch size={10} />
+            </span>
+            <span>Checking availability</span>
+          </div>
+        );
+      }
+      if (nameValid) {
+        // handleChange?.(nameErrorLabel)(dummyEvent(false));
+        // setNameCheckError(false);
+        return (
+          <span className="text-text-success bodySm-semibold">
+            {name} is available.
           </span>
-          <span>Checking availability</span>
-        </div>
-      );
-    }
-    if (nameValid) {
-      // handleChange?.(nameErrorLabel)(dummyEvent(false));
-      // setNameCheckError(false);
-      return (
-        <span className="text-text-success bodySm-semibold">
-          {name} is available.
-        </span>
-      );
-    }
-    const error = 'This name is not available. Please try different.';
-    onCheckError?.(!!error);
-    // handleChange?.(nameErrorLabel)(dummyEvent(!!error));
-    // setNameCheckError(!!error);
-    return error;
-  };
+        );
+      }
+      const error = 'This name is not available. Please try different.';
+      onCheckError?.(!!error);
+      // handleChange?.(nameErrorLabel)(dummyEvent(!!error));
+      // setNameCheckError(!!error);
+      return error;
+    };
 
-  const { environment, project } = useOutletContext<IEnvironmentContext>();
-  const { cluster } = params;
-  useDebounce(
-    async () => {
-      if (!isUpdate)
-        if (displayName) {
-          setNameLoading(true);
-          handleChange?.(nameErrorLabel)(dummyEvent(true));
-          try {
-            // @ts-ignore
-            const { data, errors } = await checkApi({
+    const { environment, project } = useOutletContext<IEnvironmentContext>();
+    const { cluster } = params;
+    useDebounce(
+      async () => {
+        let tempResType = resType;
+        if (resType === 'console_vpn_device') {
+          tempResType = 'vpn_device';
+        }
+        if (!isUpdate)
+          if (displayName) {
+            setNameLoading(true);
+            handleChange?.(nameErrorLabel)(dummyEvent(true));
+            try {
               // @ts-ignore
-              resType,
-              name: `${name}`,
-              ...([
-                'project',
-                'app',
-                'environment',
-                'config',
-                'secret',
-                'project_managed_service',
-              ].includes(resType)
-                ? {
-                    projectName: parseName(project),
-                    envName: parseName(environment),
-                  }
-                : {}),
-              ...(['nodepool', 'vpn_device', 'helm_release'].includes(resType)
-                ? {
-                    clusterName: cluster,
-                  }
-                : {}),
-              ...(resType === 'managed_resource'
-                ? {
-                    namespace: '',
-                  }
-                : {}),
-            });
+              const { data, errors } = await checkApi({
+                // @ts-ignore
+                resType: tempResType,
+                name: `${name}`,
+                ...([
+                  'project',
+                  'app',
+                  'environment',
+                  'config',
+                  'secret',
+                  'project_managed_service',
+                  'console_vpn_device',
+                ].includes(tempResType)
+                  ? {
+                      projectName: parseName(project),
+                      envName: parseName(environment),
+                    }
+                  : {}),
+                ...(['nodepool', 'vpn_device', 'helm_release'].includes(
+                  tempResType
+                )
+                  ? {
+                      clusterName: cluster,
+                    }
+                  : {}),
+                ...(tempResType === 'managed_resource'
+                  ? {
+                      namespace: '',
+                    }
+                  : {}),
+              });
 
-            if (errors) {
-              throw errors[0];
+              if (errors) {
+                throw errors[0];
+              }
+              if (data.result) {
+                setNameValid(true);
+                handleChange?.(nameErrorLabel)(dummyEvent(false));
+              } else {
+                setNameValid(false);
+                handleChange?.(nameErrorLabel)(dummyEvent(true));
+              }
+            } catch (err) {
+              handleError(err);
+            } finally {
+              setNameLoading(false);
             }
-            if (data.result) {
-              setNameValid(true);
-              handleChange?.(nameErrorLabel)(dummyEvent(false));
-            } else {
-              setNameValid(false);
-              handleChange?.(nameErrorLabel)(dummyEvent(true));
-            }
-          } catch (err) {
-            handleError(err);
-          } finally {
+          } else {
             setNameLoading(false);
           }
-        } else {
-          setNameLoading(false);
-        }
-    },
-    500,
-    [displayName, name, isUpdate]
-  );
-
-  useEffect(() => {
-    console.log(
-      'error: ',
-      (!nameLoading || !isUpdate) &&
-        ((!nameValid && !!name && !nameLoading) || !!errors),
-      !nameLoading || !isUpdate,
-      !nameValid && !!name && !nameLoading,
-      !!errors
+      },
+      500,
+      [displayName, name, isUpdate]
     );
-  }, []);
 
-  return (
-    <TextInput
-      label={label}
-      value={displayName}
-      onChange={(e) => {
-        const v = e.target.value;
-        const id = v.trim().toLowerCase().replace(/ /g, '-');
-        onChange?.({
-          name: v,
-          id,
-        });
-        handleChange?.('displayName')(dummyEvent(v));
-        if (!isUpdate) {
-          handleChange?.('name')(dummyEvent(id));
-        }
-
-        if (v) {
-          setNameLoading(true);
-          handleChange?.(nameErrorLabel)(dummyEvent(true));
-        } else {
-          setNameLoading(false);
-          handleChange?.(nameErrorLabel)(dummyEvent(false));
-        }
-      }}
-      placeholder={placeholder}
-      size="lg"
-      error={
+    useEffect(() => {
+      console.log(
+        'error: ',
         (!nameLoading || !isUpdate) &&
-        ((!nameValid && !!name && !nameLoading) || !!errors)
-      }
-      message={checkNameAvailable()}
-      prefix={
-        prefix && <span className="text-text-soft mr-sm">{prefix} /</span>
-      }
-    />
-  );
-};
+          ((!nameValid && !!name && !nameLoading) || !!errors),
+        !nameLoading || !isUpdate,
+        !nameValid && !!name && !nameLoading,
+        !!errors
+      );
+    }, []);
+
+    return (
+      <TextInput
+        ref={ref}
+        label={label}
+        value={displayName}
+        onChange={(e) => {
+          const v = e.target.value;
+          const id = v.trim().toLowerCase().replace(/ /g, '-');
+          onChange?.({
+            name: v,
+            id,
+          });
+          handleChange?.('displayName')(dummyEvent(v));
+          if (!isUpdate) {
+            handleChange?.('name')(dummyEvent(id));
+          }
+
+          if (v) {
+            setNameLoading(true);
+            handleChange?.(nameErrorLabel)(dummyEvent(true));
+          } else {
+            setNameLoading(false);
+            handleChange?.(nameErrorLabel)(dummyEvent(false));
+          }
+        }}
+        placeholder={placeholder}
+        size="lg"
+        error={
+          (!nameLoading || !isUpdate) &&
+          ((!nameValid && !!name && !nameLoading) || !!errors)
+        }
+        message={checkNameAvailable()}
+        prefix={
+          prefix && <span className="text-text-soft mr-sm">{prefix} /</span>
+        }
+        focusRing
+      />
+    );
+  }
+);
