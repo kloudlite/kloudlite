@@ -35,8 +35,8 @@ type Domain interface {
 
 	GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error)
 
-	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
-	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnClusterDeleteMessage(ctx InfraContext, cluster entities.Cluster) error
+	OnClusterUpdateMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
 	UpdateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
@@ -61,8 +61,8 @@ type Domain interface {
 	ListNodePools(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.NodePool], error)
 	GetNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error)
 
-	OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
-	OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnNodePoolDeleteMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
+	OnNodePoolUpdateMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 
 	ListNodes(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error)
