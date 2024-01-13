@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 
@@ -135,7 +136,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	env.AccountName = ctx.AccountName
 	env.SyncStatus = t.GenSyncStatus(t.SyncActionApply, env.RecordVersion)
 
-	if _, err := d.upsertResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, &env); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, &env); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -147,7 +148,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishWorkspaceEvent(nenv, PublishAdd)
+	d.resourceEventPublisher.PublishEnvironmentEvent(nenv, PublishAdd)
 
 	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
@@ -198,7 +199,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 
 	env.SyncStatus = t.GenSyncStatus(t.SyncActionApply, env.RecordVersion)
 
-	if _, err := d.upsertResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, env); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, env); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -351,28 +352,32 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errAlreadyMarkedForDeletion("environment", env.Namespace, env.Name)
 	}
 
-	xenv.IncrementRecordVersion()
-	xenv.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	patch := repos.Document{
+		"recordVersion": xenv.RecordVersion + 1,
+		"displayName":   env.DisplayName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+
+		"metadata.labels":      env.Labels,
+		"metadata.annotations": env.Annotations,
+
+		"syncStatus.state":           t.SyncStateInQueue,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionApply,
 	}
 
 	if env.Spec.Routing != nil && env.Spec.Routing.Mode != "" {
-		xenv.Spec.Routing.Mode = env.Spec.Routing.Mode
+		patch["spec.routing.mode"] = env.Spec.Routing.Mode
 	}
 
-	xenv.DisplayName = env.DisplayName
-	xenv.Labels = env.Labels
-	xenv.Annotations = env.Annotations
-
-	xenv.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xenv.RecordVersion)
-
-	upEnv, err := d.environmentRepo.UpdateById(ctx, xenv.Id, xenv)
+	upEnv, err := d.environmentRepo.PatchById(ctx, xenv.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishWorkspaceEvent(upEnv, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentEvent(upEnv, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, xenv.ProjectName, &upEnv.Environment, upEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -396,7 +401,7 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 	if _, err := d.environmentRepo.UpdateById(ctx, env.Id, env); err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishWorkspaceEvent(env, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
 
 	resContext := ResourceContext{
 		ConsoleContext:  ctx,
@@ -496,15 +501,19 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 }
 
 func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, name string, opts UpdateAndDeleteOpts) error {
-	ws, err2 := d.findEnvironment(ctx, namespace, name)
+	env, err2 := d.findEnvironment(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	ws.SyncStatus.State = t.SyncStateErroredAtAgent
-	ws.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	ws.SyncStatus.Error = &errMsg
-	_, err := d.environmentRepo.UpdateById(ctx, ws.Id, ws)
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
+
+	_, err := d.environmentRepo.PatchById(ctx, env.Id, patch)
+	d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -514,16 +523,12 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion); err != nil {
-		return errors.NewE(err)
-	}
-
 	err = d.environmentRepo.DeleteById(ctx, xenv.Id)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishWorkspaceEvent(xenv, PublishDelete)
+	d.resourceEventPublisher.PublishEnvironmentEvent(xenv, PublishDelete)
 	return nil
 }
 
@@ -534,35 +539,35 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 	}
 
 	if err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion); err != nil {
-	  return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
+		return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
-	xenv.CreationTimestamp = env.CreationTimestamp
-	xenv.Labels = env.Labels
-	xenv.Annotations = env.Annotations
-	xenv.Generation = env.Generation
+	patch := repos.Document{
+		"metadata.creationTimestamp": env.CreationTimestamp,
+		"metadata.labels":            env.Labels,
+		"metadata.annotations":       env.Annotations,
+		"metadata.generation":        env.Generation,
 
-	xenv.Status = env.Status
+		"status": env.Status,
 
-	xenv.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	xenv.SyncStatus.RecordVersion = xenv.RecordVersion
-	xenv.SyncStatus.Error = nil
-	xenv.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": xenv.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
 
-	if xenv.Spec.Routing == nil {
-		xenv.Spec.Routing = env.Spec.Routing
+		"spec.routing": env.Spec.Routing,
 	}
 
-	xenv, err = d.environmentRepo.UpdateById(ctx, xenv.Id, xenv)
+	xenv, err = d.environmentRepo.PatchById(ctx, xenv.Id, patch)
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishWorkspaceEvent(xenv, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentEvent(xenv, PublishUpdate)
 	return nil
 }
 

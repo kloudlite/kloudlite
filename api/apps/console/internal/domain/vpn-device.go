@@ -43,38 +43,22 @@ func (d *domain) ListVPNDevicesForUser(ctx ConsoleContext) ([]*entities.ConsoleV
 		return nil, errors.NewE(err)
 	}
 
-	out, err := d.iamClient.ListMembershipsForUser(ctx, &iam.MembershipsForUserIn{
-		UserId:       string(ctx.UserId),
-		ResourceType: string(iamT.ResourceVPNDevice),
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	deviceIds := make([]repos.ID, 0, len(out.RoleBindings))
-	for _, m := range out.RoleBindings {
-		deviceIds = append(deviceIds, repos.ID(m.ResourceRef))
-	}
-	devices, err := d.vpnDeviceRepo.Find(ctx, repos.Query{
+	return d.vpnDeviceRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
-			"id": repos.Filter{
-				"$in": deviceIds,
-			},
+			"createdBy.userId": ctx.UserId,
 		},
 	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return devices, nil
 }
 
 func (d *domain) getClusterFromDevice(ctx ConsoleContext, device *entities.ConsoleVPNDevice) (string, error) {
 	if device == nil {
 		return "", errors.Newf("device is nil")
 	}
+
 	if device.ProjectName == nil {
 		return "", errors.NewE(errors.Newf("project name is nil"))
 	}
+
 	cluster, err := d.getClusterAttachedToProject(ctx, *device.ProjectName)
 	if err != nil {
 		return "", errors.NewE(err)
@@ -157,7 +141,7 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 
 	d.resourceEventPublisher.PublishVpnDeviceEvent(nDevice, PublishAdd)
 
-	return d.attachDeviceConfig(ctx, nDevice)
+	return nDevice, nil
 }
 
 func (d *domain) upsertInfraDevice(ctx ConsoleContext, device *entities.ConsoleVPNDevice) (*infra.UpsertVpnDeviceOut, error) {
@@ -200,23 +184,24 @@ func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
-	currDevice, err := d.findVPNDevice(ctx, device.Name)
+	_, err := d.findVPNDevice(ctx, device.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	currDevice.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	patch := repos.Document{
+		"displayName":     device.DisplayName,
+		"spec":            device.Spec,
+		"projectName":     device.ProjectName,
+		"environmentName": device.EnvironmentName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
 	}
 
-	currDevice.DisplayName = device.DisplayName
-	currDevice.Spec = device.Spec
-	currDevice.ProjectName = device.ProjectName
-	currDevice.EnvironmentName = device.EnvironmentName
-
-	nDevice, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, &device)
+	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, device.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -264,23 +249,23 @@ func (d *domain) UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports 
 		return errors.NewE(err)
 	}
 
-	currDevice.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	var prt []wgv1.Port
+	for _, p := range ports {
+		if p != nil {
+			prt = append(prt, *p)
+		}
 	}
 
-	currDevice.Spec.Ports = func() []wgv1.Port {
-		var prt []wgv1.Port
-		for _, p := range ports {
-			if p != nil {
-				prt = append(prt, *p)
-			}
-		}
-		return prt
-	}()
+	patch := repos.Document{
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"spec.ports": prt,
+	}
 
-	nDevice, err := d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
+	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, patch)
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -296,26 +281,27 @@ func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, 
 		return errors.NewE(err)
 	}
 
-	currDevice.ProjectName = &projectName
-	currDevice.EnvironmentName = &envName
-
 	environment, err := d.findEnvironment(ctx, projectName, envName)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	currDevice.Spec.DeviceNamespace = &environment.Spec.TargetNamespace
 
-	currDevice.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	patch := repos.Document{
+		"projectName":          projectName,
+		"envName":              envName,
+		"spec.deviceNamespace": environment.Spec.TargetNamespace,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
 	}
 
-	nDevice, err := d.vpnDeviceRepo.UpdateById(ctx, currDevice.Id, currDevice)
+	ndevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, patch)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVpnDeviceEvent(nDevice, PublishUpdate)
+	d.resourceEventPublisher.PublishVpnDeviceEvent(ndevice, PublishUpdate)
 
 	_, err = d.upsertInfraDevice(ctx, currDevice)
 	return errors.NewE(err)

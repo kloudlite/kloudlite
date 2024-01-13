@@ -178,7 +178,6 @@ type ComplexityRoot struct {
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
-		SyncStatus        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 		WireguardConfig   func(childComplexity int) int
 	}
@@ -704,7 +703,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CoreCheckNameAvailability            func(childComplexity int, projectName string, envName *string, resType entities.ResourceType, name string) int
+		CoreCheckNameAvailability            func(childComplexity int, projectName *string, envName *string, resType entities.ResourceType, name string) int
 		CoreGetApp                           func(childComplexity int, projectName string, envName string, name string) int
 		CoreGetConfig                        func(childComplexity int, projectName string, envName string, name string) int
 		CoreGetConfigValues                  func(childComplexity int, projectName string, envName string, queries []*domain.ConfigKeyRef) int
@@ -954,7 +953,7 @@ type ProjectManagedServiceResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.ProjectManagedService) (string, error)
 }
 type QueryResolver interface {
-	CoreCheckNameAvailability(ctx context.Context, projectName string, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
+	CoreCheckNameAvailability(ctx context.Context, projectName *string, envName *string, resType entities.ResourceType, name string) (*domain.CheckNameAvailabilityOutput, error)
 	CoreListProjects(ctx context.Context, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error)
 	CoreGetProject(ctx context.Context, name string) (*entities.Project, error)
 	CoreResyncProject(ctx context.Context, name string) (bool, error)
@@ -1552,13 +1551,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ConsoleVPNDevice.Status(childComplexity), true
-
-	case "ConsoleVPNDevice.syncStatus":
-		if e.complexity.ConsoleVPNDevice.SyncStatus == nil {
-			break
-		}
-
-		return e.complexity.ConsoleVPNDevice.SyncStatus(childComplexity), true
 
 	case "ConsoleVPNDevice.updateTime":
 		if e.complexity.ConsoleVPNDevice.UpdateTime == nil {
@@ -4024,7 +4016,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreCheckNameAvailability(childComplexity, args["projectName"].(string), args["envName"].(*string), args["resType"].(entities.ResourceType), args["name"].(string)), true
+		return e.complexity.Query.CoreCheckNameAvailability(childComplexity, args["projectName"].(*string), args["envName"].(*string), args["resType"].(entities.ResourceType), args["name"].(string)), true
 
 	case "Query.core_getApp":
 		if e.complexity.Query.CoreGetApp == nil {
@@ -5024,7 +5016,7 @@ input CoreSearchVPNDevices {
 }
 
 type Query {
-    core_checkNameAvailability(projectName: String!, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    core_checkNameAvailability(projectName: String, envName: String, resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
     core_listProjects(search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccount
@@ -5693,7 +5685,6 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
   UPDATED_AT_AGENT
 }
 
@@ -5811,7 +5802,6 @@ input ConfigKeyValueRefIn {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
   wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
 }
@@ -7233,10 +7223,10 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Query_core_checkNameAvailability_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 *string
 	if tmp, ok := rawArgs["projectName"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -11585,64 +11575,6 @@ func (ec *executionContext) fieldContext_ConsoleVPNDevice_status(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _ConsoleVPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SyncStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(types.SyncStatus)
-	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConsoleVPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConsoleVPNDevice",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "action":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
-			case "error":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
-			case "lastSyncedAt":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
-			case "recordVersion":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
-			case "state":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
-			case "syncScheduledAt":
-				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ConsoleVPNDevice_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 	if err != nil {
@@ -11847,8 +11779,6 @@ func (ec *executionContext) fieldContext_ConsoleVPNDeviceEdge_node(ctx context.C
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -25731,8 +25661,6 @@ func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -25847,8 +25775,6 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -28429,7 +28355,7 @@ func (ec *executionContext) _Query_core_checkNameAvailability(ctx context.Contex
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["projectName"].(string), fc.Args["envName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
+			return ec.resolvers.Query().CoreCheckNameAvailability(rctx, fc.Args["projectName"].(*string), fc.Args["envName"].(*string), fc.Args["resType"].(entities.ResourceType), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedIn == nil {
@@ -31558,8 +31484,6 @@ func (ec *executionContext) fieldContext_Query_core_listVPNDevicesForUser(ctx co
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -31663,8 +31587,6 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -40145,13 +40067,6 @@ func (ec *executionContext) _ConsoleVPNDevice(ctx context.Context, sel ast.Selec
 
 			out.Values[i] = ec._ConsoleVPNDevice_status(ctx, field, obj)
 
-		case "syncStatus":
-
-			out.Values[i] = ec._ConsoleVPNDevice_syncStatus(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "updateTime":
 			field := field
 

@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/base64"
 	"encoding/json"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
@@ -12,7 +13,7 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (d *domain) ListImagePullSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
@@ -127,7 +128,7 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	}
 	ips.GeneratedK8sSecret = pullSecret
 
-	if _, err := d.upsertResourceMapping(ctx, &ips); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, &ips); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -161,35 +162,38 @@ func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 		return nil, errors.NewE(err)
 	}
 
-	xips.IncrementRecordVersion()
-
-	xips.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
-	}
-	xips.DisplayName = ips.DisplayName
-
-	xips.Annotations = ips.Annotations
-	xips.Labels = ips.Labels
-
-	xips.SyncStatus = t.GenSyncStatus(t.SyncActionApply, xips.RecordVersion)
-
-	xips.Format = ips.Format
-	xips.DockerConfigJson = ips.DockerConfigJson
-
-	xips.RegistryURL = ips.RegistryURL
-	xips.RegistryUsername = ips.RegistryUsername
-	xips.RegistryPassword = ips.RegistryPassword
-
 	pullSecret, err := generateImagePullSecret(*xips)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	xips.GeneratedK8sSecret = pullSecret
+	patch := repos.Document{
+		"recordVersion": ips.RecordVersion + 1,
+		"displayName":   ips.DisplayName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
 
-	upIps, err := d.pullSecretsRepo.UpdateById(ctx, xips.Id, xips)
+		"format":           ips.Format,
+		"dockerConfigJson": ips.DockerConfigJson,
+
+		"registryURL":      ips.RegistryURL,
+		"registryUsername": ips.RegistryUsername,
+		"registryPassword": ips.RegistryPassword,
+
+		"metadata.labels":      ips.Labels,
+		"metadata.annotations": ips.Annotations,
+
+		"generatedK8sSecret": pullSecret,
+
+		"syncStatus.state":           t.SyncStateInQueue,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionApply,
+	}
+
+	upIps, err := d.pullSecretsRepo.PatchById(ctx, xips.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -197,6 +201,8 @@ func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	if err := d.applyK8sResource(ctx, xips.ProjectName, &pullSecret, xips.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
+
+	d.resourceEventPublisher.PublishImagePullSecretEvent(upIps, PublishUpdate)
 
 	return upIps, errors.NewE(err)
 }
@@ -211,9 +217,15 @@ func (d *domain) DeleteImagePullSecret(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	ips.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, ips.RecordVersion)
+	patch := repos.Document{
+		"markedForDeletion":          true,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionDelete,
+		"syncStatus.state":           t.SyncStateInQueue,
+	}
 
-	if _, err := d.pullSecretsRepo.UpdateById(ctx, ips.Id, ips); err != nil {
+	uips, err := d.pullSecretsRepo.PatchById(ctx, ips.Id, patch)
+	if err != nil {
 		return errors.NewE(err)
 	}
 
@@ -226,6 +238,8 @@ func (d *domain) DeleteImagePullSecret(ctx ResourceContext, name string) error {
 		}
 		return err
 	}
+
+	d.resourceEventPublisher.PublishImagePullSecretEvent(uips, PublishDelete)
 
 	return nil
 }
@@ -240,22 +254,29 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 		return d.resyncK8sResource(ctx, xips.ProjectName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 	}
 
-	xips.CreationTimestamp = ips.CreationTimestamp
-	xips.Labels = ips.Labels
-	xips.Annotations = ips.Annotations
-	xips.Generation = ips.Generation
+	patch := repos.Document{
+		"metadata.creationTimestamp": ips.CreationTimestamp,
+		"metadata.labels":            ips.Labels,
+		"metadata.annotations":       ips.Annotations,
+		"metadata.generation":        ips.Generation,
 
-	xips.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	xips.SyncStatus.RecordVersion = xips.RecordVersion
-	xips.SyncStatus.Error = nil
-	xips.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": xips.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+	}
 
-	_, err = d.pullSecretsRepo.UpdateById(ctx, xips.Id, xips)
+	uips, err := d.pullSecretsRepo.PatchById(ctx, xips.Id, patch)
+	if err != nil {
+		return err
+	}
+
+	d.resourceEventPublisher.PublishImagePullSecretEvent(uips, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -263,10 +284,6 @@ func (d *domain) OnImagePullSecretDeleteMessage(ctx ResourceContext, ips entitie
 	xips, err := d.findImagePullSecret(ctx, ips.Name)
 	if err != nil {
 		return errors.NewE(err)
-	}
-
-	if err := d.MatchRecordVersion(ips.Annotations, xips.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, xips.ProjectName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 	}
 
 	return d.pullSecretsRepo.DeleteById(ctx, xips.Id)
@@ -278,10 +295,13 @@ func (d *domain) OnImagePullSecretApplyError(ctx ResourceContext, errMsg string,
 		return err
 	}
 
-	ips.SyncStatus.State = t.SyncStateErroredAtAgent
-	ips.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	ips.SyncStatus.Error = &errMsg
-	_, err = d.pullSecretsRepo.UpdateById(ctx, ips.Id, ips)
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
+
+	_, err = d.pullSecretsRepo.PatchById(ctx, ips.Id, patch)
 	return errors.NewE(err)
 }
 

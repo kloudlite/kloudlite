@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -116,7 +118,7 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	secret.EnvironmentName = ctx.EnvironmentName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
 
-	if _, err := d.upsertResourceMapping(ctx, &secret); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, &secret); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -203,8 +205,14 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	secret.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, secret.RecordVersion)
-	if _, err := d.secretRepo.UpdateById(ctx, secret.Id, secret); err != nil {
+	patch := repos.Document{
+		"markedForDeletion":          true,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionDelete,
+		"syncStatus.state":           t.SyncStateInQueue,
+	}
+
+	if _, err := d.secretRepo.PatchById(ctx, secret.Id, patch); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -217,51 +225,59 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(secret.Annotations, exSecret.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, secret.ProjectName, secret.SyncStatus.Action, &secret.Secret, secret.RecordVersion)
-	}
-
 	return d.secretRepo.DeleteById(ctx, exSecret.Id)
 }
 
-func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secret entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	xSecret, err := d.findSecret(ctx, secret.Name)
+func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xSecret, err := d.findSecret(ctx, secretIn.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(secret.Annotations, xSecret.RecordVersion); err != nil {
+	if err := d.MatchRecordVersion(secretIn.Annotations, xSecret.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, xSecret.ProjectName, xSecret.SyncStatus.Action, &xSecret.Secret, xSecret.RecordVersion)
 	}
 
-	xSecret.CreationTimestamp = secret.CreationTimestamp
-	xSecret.Labels = secret.Labels
-	xSecret.Annotations = secret.Annotations
+	patch := repos.Document{
+		"metadata.creationTimestamp": secretIn.CreationTimestamp,
+		"metadata.labels":            secretIn.Labels,
+		"metadata.annotations":       secretIn.Annotations,
+		"metadata.generation":        secretIn.Generation,
 
-	xSecret.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletedAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	xSecret.SyncStatus.Error = nil
-	xSecret.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": xSecret.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+	}
 
-	_, err = d.secretRepo.UpdateById(ctx, xSecret.Id, xSecret)
+	_, err = d.secretRepo.PatchById(ctx, xSecret.Id, patch)
 	return errors.NewE(err)
 }
 
 func (d *domain) OnSecretApplyError(ctx ResourceContext, errMsg, name string, opts UpdateAndDeleteOpts) error {
-	exSecret, err2 := d.findSecret(ctx, name)
-	if err2 != nil {
-		return err2
+	xsecret, err := d.findSecret(ctx, name)
+	if err != nil {
+		return err
 	}
 
-	exSecret.SyncStatus.State = t.SyncStateErroredAtAgent
-	exSecret.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	exSecret.SyncStatus.Error = &errMsg
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
 
-	_, err := d.secretRepo.UpdateById(ctx, exSecret.Id, exSecret)
+	usecret, err := d.secretRepo.PatchById(ctx, xsecret.Id, patch)
+	if err != nil {
+		return err
+	}
+
+	d.resourceEventPublisher.PublishSecretEvent(usecret, PublishUpdate)
+
 	return errors.NewE(err)
 }
 

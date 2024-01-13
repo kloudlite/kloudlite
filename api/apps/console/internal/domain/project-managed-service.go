@@ -1,11 +1,12 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -107,6 +108,10 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
+	if _, err := d.upsertProjectResourceMapping(ctx, projectName, pms); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	if err := d.applyProjectManagedService(ctx, pms); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -133,19 +138,23 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.Newf("cluster managed service %q (projectName=%q) is marked for deletion", service.Name, projectName)
 	}
 
-	pmsvc.IncrementRecordVersion()
-	pmsvc.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	patch := repos.Document{
+		"recordVersion": pmsvc.RecordVersion + 1,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+
+		"metadata.labels":      service.Labels,
+		"metadata.annotations": service.Annotations,
+
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionApply,
+		"syncStatus.state":           t.SyncStateInQueue,
 	}
 
-	pmsvc.Labels = service.Labels
-	pmsvc.Annotations = service.Annotations
-
-	pmsvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, pmsvc.RecordVersion)
-
-	upmsvc, err := d.pmsRepo.UpdateById(ctx, pmsvc.Id, pmsvc)
+	upmsvc, err := d.pmsRepo.PatchById(ctx, pmsvc.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -169,20 +178,23 @@ func (d *domain) DeleteProjectManagedService(ctx ConsoleContext, projectName str
 		return errors.NewE(err)
 	}
 
-	if pmsvc.IsMarkedForDeletion() {
-		return errors.Newf("project managed service %q (projectName=%q) is already marked for deletion", name, projectName)
+	if !pmsvc.IsMarkedForDeletion() {
+		patch := repos.Document{
+			"markedForDeletion":          true,
+			"syncStatus.action":          t.SyncActionDelete,
+			"syncStatus.syncScheduledAt": time.Now(),
+			"syncStatus.state":           t.SyncStateInQueue,
+		}
+
+		upC, err := d.pmsRepo.PatchById(ctx, pmsvc.Id, patch)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		d.resourceEventPublisher.PublishProjectManagedServiceEvent(upC, PublishUpdate)
 	}
 
-	pmsvc.MarkedForDeletion = fn.New(true)
-	pmsvc.SyncStatus = t.GetSyncStatusForDeletion(pmsvc.Generation)
-	upC, err := d.pmsRepo.UpdateById(ctx, pmsvc.Id, pmsvc)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishProjectManagedServiceEvent(upC, PublishUpdate)
-
-	return d.deleteK8sResource(ctx, projectName, &upC.ProjectManagedService)
+	return d.deleteK8sResource(ctx, projectName, &pmsvc.ProjectManagedService)
 }
 
 func (d *domain) OnProjectManagedServiceApplyError(ctx ConsoleContext, projectName, name, errMsg string, opts UpdateAndDeleteOpts) error {
@@ -191,12 +203,17 @@ func (d *domain) OnProjectManagedServiceApplyError(ctx ConsoleContext, projectNa
 		return errors.NewE(err)
 	}
 
-	svc.SyncStatus.State = t.SyncStateErroredAtAgent
-	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	svc.SyncStatus.Error = &errMsg
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
 
-	_, err = d.pmsRepo.UpdateById(ctx, svc.Id, svc)
-	d.resourceEventPublisher.PublishProjectManagedServiceEvent(svc, PublishUpdate)
+	usvc, err := d.pmsRepo.PatchById(ctx, svc.Id, patch)
+	if err != nil {
+		return err
+	}
+	d.resourceEventPublisher.PublishProjectManagedServiceEvent(usvc, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -211,13 +228,10 @@ func (d *domain) OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projec
 		return nil
 	}
 
-	if err := d.MatchRecordVersion(service.Annotations, svc.RecordVersion); err != nil {
-		return d.ResyncProjectManagedService(ctx, service.ProjectName, service.Name)
-	}
-
 	if err := d.pmsRepo.DeleteById(ctx, svc.Id); err != nil {
 		return err
 	}
+
 	d.resourceEventPublisher.PublishProjectManagedServiceEvent(svc, PublishDelete)
 	return err
 }
@@ -232,19 +246,25 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 		return d.ResyncProjectManagedService(ctx, service.ProjectName, service.Name)
 	}
 
-	svc.Status = service.Status
+	patch := repos.Document{
+		"metadata.annotations":       service.Annotations,
+		"metadata.labels":            service.Annotations,
+		"metadata.generation":        service.Generation,
+		"metadata.creationTimestamp": service.CreationTimestamp,
 
-	svc.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	svc.SyncStatus.Error = nil
-	svc.SyncStatus.RecordVersion = svc.RecordVersion
+		"status": service.Status,
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+		"syncStatus.recordVersion": svc.RecordVersion,
+	}
 
-	if _, err := d.pmsRepo.UpdateById(ctx, svc.Id, svc); err != nil {
+	if _, err := d.pmsRepo.PatchById(ctx, svc.Id, patch); err != nil {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishProjectManagedServiceEvent(svc, PublishUpdate)
@@ -263,4 +283,3 @@ func (d *domain) ResyncProjectManagedService(ctx ConsoleContext, projectName, na
 
 	return d.resyncK8sResource(ctx, a.ProjectName, a.SyncStatus.Action, &a.ProjectManagedService, a.RecordVersion)
 }
-
