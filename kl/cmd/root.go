@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Version = "development"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "kl",
@@ -27,6 +29,7 @@ Find more information at https://kloudlite.io/docs/cli
 
 > NOTE: default kl-config file is kl.yml you can provide your own by providing KLCONFIG_PATH to the environment.`,
 	Run: func(cmd *cobra.Command, args []string) {
+
 		if len(args) == 0 {
 			if err := cmd.Help(); err != nil {
 				fmt.Println(err)
@@ -91,4 +94,5 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.Version = Version
 }
