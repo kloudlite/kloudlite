@@ -21,6 +21,8 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	networkingv1 "k8s.io/api/networking/v1"
 )
 
 type ReceiveResourceUpdatesConsumer messaging.Consumer
@@ -40,6 +42,7 @@ var (
 	volumeAttachmentGVK = fn.GVK("storage.k8s.io/v1", "VolumeAttachment")
 	namespaceGVK        = fn.GVK("v1", "Namespace")
 	clusterMsvcGVK      = fn.GVK("crds.kloudlite.io/v1", "ClusterManagedService")
+	ingressGVK          = fn.GVK("networking.k8s.io/v1", "Ingress")
 )
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
@@ -225,6 +228,19 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return d.OnClusterManagedServiceDeleteMessage(dctx, su.ClusterName, cmsvc)
 				}
 				return d.OnClusterManagedServiceUpdateMessage(dctx, su.ClusterName, cmsvc, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+			}
+
+		case ingressGVK.String():
+			{
+				var ingress networkingv1.Ingress
+				if err := fn.JsonConversion(su.Object, &ingress); err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnIngressDeleteMessage(dctx, su.ClusterName, ingress)
+				}
+				return d.OnIngressUpdateMessage(dctx, su.ClusterName, ingress, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		default:
 			{
