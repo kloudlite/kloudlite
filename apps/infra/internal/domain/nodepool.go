@@ -318,14 +318,15 @@ func (d *domain) OnDeleteNodePoolMessage(ctx InfraContext, clusterName string, n
 
 func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	np, err := d.findNodePool(ctx, clusterName, nodePool.Name)
-	recordVersion := np.RecordVersion
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(nodePool.Annotations, recordVersion ); err != nil {
+	if err := d.matchRecordVersion(nodePool.Annotations, np.RecordVersion ); err != nil {
 		return d.resyncToTargetCluster(ctx, np.SyncStatus.Action, clusterName, &np.NodePool, np.RecordVersion)
 	}
+
+	annVersion, _ := d.parseRecordVersionFromAnnotations(nodePool.Annotations)
 	_, err = d.nodePoolRepo.PatchById(ctx, np.Id, repos.Document{
 		"metadata.labels":      nodePool.Labels,
 		"metadata.annotations": nodePool.Annotations,
@@ -337,7 +338,7 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 			LastSyncedAt: opts.MessageTimestamp,
 			Error: 	  nil,
 			Action:       t.SyncActionApply,
-			RecordVersion: recordVersion,
+			RecordVersion: annVersion,
 			State: func() t.SyncState {
 				if status == types.ResourceStatusDeleting {
 					return t.SyncStateDeletingAtAgent
@@ -354,15 +355,9 @@ func (d *domain) OnUpdateNodePoolMessage(ctx InfraContext, clusterName string, n
 // OnNodepoolApplyError implements Domain.
 func (d *domain) OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
 	np, err := d.findNodePool(ctx, clusterName, name)
-	recordVersion := np.RecordVersion
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	if err := d.matchRecordVersion(np.Annotations, recordVersion); err != nil {
-		return nil
-	}
-
 
 	_, err = d.nodePoolRepo.PatchById(ctx, np.Id, repos.Document{
 		"syncStatus.state":         t.SyncStateErroredAtAgent,

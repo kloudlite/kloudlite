@@ -270,7 +270,7 @@ func (r *mutationResolver) InfraUpdateHelmRelease(ctx context.Context, clusterNa
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	return r.Domain.CreateHelmRelease(ictx, clusterName, release)
+	return r.Domain.UpdateHelmRelease(ictx, clusterName, release)
 }
 
 // InfraDeleteHelmRelease is the resolver for the infra_deleteHelmRelease field.

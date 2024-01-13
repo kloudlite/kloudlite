@@ -17,6 +17,7 @@ const (
 	ResTypeCluster        ResType = "cluster"
 	ResTypeProviderSecret ResType = "providersecret"
 	ResTypeNodePool       ResType = "nodepool"
+	ResTypeHelmRelease       ResType = "helm_release"
 	ResTypeVPNDevice      ResType = "vpn_device"
 )
 
@@ -66,13 +67,24 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 	case ResTypeNodePool:
 		{
 			if clusterName == nil || *clusterName == "" {
-				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
+				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeHelmRelease)
 			}
 			return checkResourceName(ctx, repos.Filter{
 				"accountName":   ctx.AccountName,
 				"clusterName":   clusterName,
 				"metadata.name": name,
 			}, d.nodePoolRepo)
+		}
+	case ResTypeHelmRelease:
+		{
+			if clusterName == nil || *clusterName == "" {
+				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
+			}
+			return checkResourceName(ctx, repos.Filter{
+				"accountName":   ctx.AccountName,
+				"clusterName":   clusterName,
+				"metadata.name": name,
+			}, d.helmReleaseRepo)
 		}
 	case ResTypeVPNDevice:
 		{
