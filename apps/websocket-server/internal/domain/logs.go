@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/websocket/v2"
 	"github.com/google/uuid"
+	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
@@ -208,12 +209,12 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 			continue
 		}
 
-		// if err := d.checkAccountAccess(ctx, msg.Data.AccountName, sess.UserId, iamT.GetAccount); err != nil {
-		// 	if err := writeError(c, err); err != nil {
-		// 		log.Warnf("websocket write: %w", err)
-		// 	}
-		// 	continue
-		// }
+		if err := d.checkAccountAccess(ctx, msg.Data.AccountName, sess.UserId, iamT.GetAccount); err != nil {
+			if err := writeError(c, err); err != nil {
+				log.Warnf("websocket write: %w", err)
+			}
+			continue
+		}
 
 		hash := getLogHash(msg.Data, sess.UserId)
 
