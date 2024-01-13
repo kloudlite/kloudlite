@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
@@ -143,7 +145,7 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, mres.RecordVersion)
 
-	if _, err := d.upsertResourceMapping(ctx, &mres); err != nil {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, &mres); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -174,26 +176,31 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.NewE(err)
 	}
 
-	m, err := d.findMRes(ctx, mres.Name)
+	xmres, err := d.findMRes(ctx, mres.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	m.IncrementRecordVersion()
-	m.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
+	patch := repos.Document{
+		"recordVersion": xmres.RecordVersion + 1,
+		"displayName":   mres.DisplayName,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+
+		"metadata.labels":      mres.Labels,
+		"metadata.annotations": mres.Annotations,
+
+		"spec": mres.Spec,
+
+		"syncStatus.state":           t.SyncStateInQueue,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionApply,
 	}
-	m.DisplayName = mres.DisplayName
 
-	m.Labels = mres.Labels
-	m.Annotations = mres.Annotations
-
-	m.Spec = mres.Spec
-	m.SyncStatus = t.GenSyncStatus(t.SyncActionApply, m.RecordVersion)
-
-	upMres, err := d.mresRepo.UpdateById(ctx, m.Id, m)
+	upMres, err := d.mresRepo.PatchById(ctx, xmres.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -217,11 +224,18 @@ func (d *domain) DeleteManagedResource(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	mres.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, mres.RecordVersion)
-	if _, err := d.mresRepo.UpdateById(ctx, mres.Id, mres); err != nil {
+	patch := repos.Document{
+		"markedForDeletion":          true,
+		"syncStatus.syncScheduledAt": time.Now(),
+		"syncStatus.action":          t.SyncActionDelete,
+		"syncStatus.state":           t.SyncStateInQueue,
+	}
+
+	umres, err := d.mresRepo.PatchById(ctx, mres.Id, patch)
+	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishMresEvent(mres, PublishUpdate)
+	d.resourceEventPublisher.PublishMresEvent(umres, PublishUpdate)
 
 	return d.deleteK8sResource(ctx, mres.ProjectName, &mres.ManagedResource)
 }
@@ -230,10 +244,6 @@ func (d *domain) OnManagedResourceDeleteMessage(ctx ResourceContext, mres entiti
 	xmres, err := d.findMRes(ctx, mres.Name)
 	if err != nil {
 		return errors.NewE(err)
-	}
-
-	if err := d.MatchRecordVersion(mres.Annotations, xmres.RecordVersion); err != nil {
-		return d.resyncK8sResource(ctx, xmres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
 	err = d.mresRepo.DeleteById(ctx, xmres.Id)
@@ -254,25 +264,30 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 		return d.resyncK8sResource(ctx, xmres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
-	xmres.CreationTimestamp = mres.CreationTimestamp
-	xmres.Labels = mres.Labels
-	xmres.Annotations = mres.Annotations
-	xmres.Generation = mres.Generation
+	patch := repos.Document{
+		"metadata.creationTimestamp": mres.CreationTimestamp,
+		"metadata.labels":            mres.Labels,
+		"metadata.annotations":       mres.Annotations,
+		"metadata.generation":        mres.Generation,
 
-	xmres.Status = mres.Status
+		"status": mres.Status,
 
-	xmres.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	xmres.SyncStatus.RecordVersion = xmres.RecordVersion
-	xmres.SyncStatus.Error = nil
-	xmres.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+		"syncStatus.state": func() t.SyncState {
+			if status == types.ResourceStatusDeleting {
+				return t.SyncStateDeletingAtAgent
+			}
+			return t.SyncStateUpdatedAtAgent
+		}(),
+		"syncStatus.recordVersion": xmres.RecordVersion,
+		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
+		"syncStatus.error":         nil,
+	}
 
-	_, err = d.mresRepo.UpdateById(ctx, xmres.Id, xmres)
-	d.resourceEventPublisher.PublishMresEvent(xmres, PublishUpdate)
+	umres, err := d.mresRepo.PatchById(ctx, xmres.Id, patch)
+	if err != nil {
+		return err
+	}
+	d.resourceEventPublisher.PublishMresEvent(umres, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -282,10 +297,17 @@ func (d *domain) OnManagedResourceApplyError(ctx ResourceContext, errMsg string,
 		return err2
 	}
 
-	m.SyncStatus.State = t.SyncStateErroredAtAgent
-	m.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	m.SyncStatus.Error = &errMsg
-	_, err := d.mresRepo.UpdateById(ctx, m.Id, m)
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
+
+	umres, err := d.mresRepo.PatchById(ctx, m.Id, patch)
+	if err != nil {
+		return err
+	}
+	d.resourceEventPublisher.PublishMresEvent(umres, PublishUpdate)
 	return errors.NewE(err)
 }
 

@@ -43,7 +43,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 	counter := 0
 
 	getResourceContext := func(ctx domain.ConsoleContext, rt entities.ResourceType, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
-		mapping, err := d.GetResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
+		mapping, err := d.GetEnvironmentResourceMapping(ctx, rt, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
@@ -128,6 +128,33 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return d.OnProjectDeleteMessage(dctx, p)
 				}
 				return d.OnProjectUpdateMessage(dctx, p, resStatus, opts)
+			}
+
+		case projectManagedServiceGVK.String():
+			{
+				var pmsvc entities.ProjectManagedService
+				if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
+					return errors.NewE(err)
+				}
+
+				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetName())
+				if err != nil {
+					return err
+				}
+				if mapping == nil {
+					return err
+				}
+
+				if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
+					if v2, ok := v.(*corev1.Secret); ok {
+						pmsvc.SyncedOutputSecretRef = v2
+					}
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
+				}
+				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName, pmsvc, resStatus, opts)
 			}
 
 		case environmentGVK.String():
@@ -245,24 +272,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				return d.OnManagedResourceUpdateMessage(rctx, mres, resStatus, opts)
 			}
 
-		case projectManagedServiceGVK.String():
-			{
-				var pmsvc entities.ProjectManagedService
-				if err := fn.JsonConversion(ru.Object, &pmsvc); err != nil {
-					return errors.NewE(err)
-				}
-
-				if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
-					if v2, ok := v.(*corev1.Secret); ok {
-						pmsvc.SyncedOutputSecretRef = v2
-					}
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnProjectManagedServiceDeleteMessage(dctx, pmsvc.ProjectName, pmsvc)
-				}
-				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName, pmsvc, resStatus, opts)
-			}
 		}
 		return nil
 	}
