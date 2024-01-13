@@ -21,14 +21,7 @@ import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import QRCode from '~/console/components/qr-code';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IDevices } from '~/console/server/gql/queries/vpn-queries';
-import {
-  ExtractNodeType,
-  ensureResource,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
-import { ensureClusterClientSide } from '~/console/server/utils/auth-utils';
+import { parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { ENV_NAMESPACE } from '~/root/lib/configs/env';
@@ -43,7 +36,6 @@ import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
-import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -406,7 +398,6 @@ const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const params = useParams();
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({

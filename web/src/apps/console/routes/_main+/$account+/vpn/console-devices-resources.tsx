@@ -13,7 +13,6 @@ import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
-  ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,

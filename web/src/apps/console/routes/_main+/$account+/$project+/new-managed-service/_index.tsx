@@ -1,3 +1,4 @@
+/* eslint-disable react/no-this-in-sfc */
 /* eslint-disable guard-for-in */
 import { ArrowRight } from '@jengaicons/react';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
@@ -221,9 +222,11 @@ const flatMapValidations = (obj: Record<string, any>) => {
     } else {
       temp[parts[0]] = (() => {
         let resp = Yup.object({
-          [parts[1]]: flatMapValidations({
-            [parts.slice(1, parts.length).join('.')]: obj[key],
-          }),
+          [parts[1]]: Yup.object(
+            flatMapValidations({
+              [parts.slice(1, parts.length).join('.')]: obj[key],
+            })
+          ),
         });
         if (temp[parts[0]]) {
           resp = resp.concat(temp[parts[0]]);
@@ -505,7 +508,7 @@ const ManagedServiceLayout = () => {
 
   const { project, account } = useParams();
 
-  const [validationSchema, setValidationSchema] = useState();
+  const isActive = (step: steps) => step === activeState;
 
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
@@ -516,31 +519,44 @@ const ManagedServiceLayout = () => {
         selectedTemplate: null,
         isNameError: false,
       },
-      validationSchema: Yup.object({
+      validationSchema: Yup.object().shape({
         name: Yup.string().required(),
         displayName: Yup.string().required(),
         selectedTemplate: Yup.object({}).required('Template is required.'),
-        // ...validationSchema,
-        res: Yup.lazy((v) => {
-          if (
-            values.selectedTemplate &&
-            isActive('Configure managed service')
-          ) {
-            const k = Yup.object(
-              flatMapValidations(
-                values.selectedTemplate?.template?.fields.reduce(
-                  (acc, curr) => {
-                    return { ...acc, [curr.name]: curr };
-                  },
-                  {}
-                )
-              )
-            );
+        // @ts-ignore
+        res: Yup.object({}).test({
+          name: 'res',
+          skipAbsent: true,
+          test(value, ctx) {
+            const selfValue = this.parent;
 
-            console.log('k', k);
-            return k;
-          }
-          return Yup.object({});
+            let vs = Yup.object({});
+
+            if (
+              selfValue.selectedTemplate &&
+              isActive('Configure managed service')
+            ) {
+              vs = Yup.object({
+                resources: Yup.object(
+                  flatMapValidations(
+                    selfValue.selectedTemplate?.template?.fields.reduce(
+                      (acc: any, curr: any) => {
+                        return { ...acc, [curr.name]: curr };
+                      },
+                      {}
+                    )
+                  )
+                ),
+              });
+            }
+
+            const res = vs.validateSync(value, {
+              abortEarly: false,
+              context: ctx,
+            });
+
+            return res;
+          },
         }),
       }),
       onSubmit: async (val) => {
@@ -631,20 +647,22 @@ const ManagedServiceLayout = () => {
   }, [values.selectedTemplate]);
 
   useEffect(() => {
-    console.log(
-      flatMapValidations(
-        values.selectedTemplate?.template?.fields.reduce((acc, curr) => {
-          return { ...acc, [curr.name]: curr };
-        }, {})
-      )
-    );
-  }, [values.selectedTemplate]);
+    console.log(errors);
+    // console.log(
+    //   flatMapValidations(
+    //     values.selectedTemplate?.template?.fields.reduce(
+    //       (acc: any, curr: any) => {
+    //         return { ...acc, [curr.name]: curr };
+    //       },
+    //       {}
+    //     )
+    //   )
+    // );
+  }, [errors]);
 
   useEffect(() => {
     console.log(errors);
   }, [errors]);
-
-  const isActive = (step: steps) => step === activeState;
 
   const getItems = () => {
     return [
