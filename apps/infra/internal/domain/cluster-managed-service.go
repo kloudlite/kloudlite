@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
@@ -8,7 +10,6 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"time"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -137,17 +138,17 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName strin
 	unp, err := d.clusterManagedServiceRepo.PatchById(ctx, cms.Id, repos.Document{
 		"metadata.labels":      serviceIn.Labels,
 		"metadata.annotations": serviceIn.Annotations,
-		"displayName":		  serviceIn.DisplayName,
-		"recordVersion":    cms.RecordVersion+1,
-		"spec": serviceIn.Spec,
-		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+		"displayName":          serviceIn.DisplayName,
+		"recordVersion":        cms.RecordVersion + 1,
+		"spec":                 serviceIn.Spec,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":        t.SyncActionApply,
-		"syncStatus.state":         t.SyncStateInQueue,
+		"syncStatus.action":       t.SyncActionApply,
+		"syncStatus.state":        t.SyncStateInQueue,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -178,14 +179,14 @@ func (d *domain) DeleteClusterManagedService(ctx InfraContext, clusterName strin
 
 	upC, err := d.clusterManagedServiceRepo.PatchById(ctx, svc.Id, repos.Document{
 		"markedForDeletion": true,
-		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":        t.SyncActionDelete,
-		"syncStatus.state":         t.SyncStateInQueue,
+		"syncStatus.action":       t.SyncActionDelete,
+		"syncStatus.state":        t.SyncStateInQueue,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -203,9 +204,9 @@ func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName
 	}
 
 	_, err = d.clusterManagedServiceRepo.PatchById(ctx, svc.Id, repos.Document{
-		"syncStatus.state":         t.SyncStateErroredAtAgent,
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
 		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":         &errMsg,
+		"syncStatus.error":        &errMsg,
 	})
 	d.resourceEventPublisher.PublishCMSEvent(svc, PublishUpdate)
 	return errors.NewE(err)
@@ -221,12 +222,8 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterN
 		return nil
 	}
 
-	if err := d.matchRecordVersion(service.Annotations, xService.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, xService.SyncStatus.Action, clusterName, xService, xService.RecordVersion)
-	}
-
-	if err = d.clusterManagedServiceRepo.DeleteById(ctx, xService.Id); err != nil {
-		return errors.NewE(err)
+	if err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id); err != nil {
+		return err
 	}
 	d.resourceEventPublisher.PublishCMSEvent(xService, PublishDelete)
 	return err
@@ -251,10 +248,10 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 		"metadata.generation":        service.Generation,
 		"metadata.creationTimestamp": service.CreationTimestamp,
 		"status":                     service.Status,
-		"syncStatus":  t.SyncStatus{
-			LastSyncedAt: opts.MessageTimestamp,
-			Error: 	  nil,
-			Action:       t.SyncActionApply,
+		"syncStatus": t.SyncStatus{
+			LastSyncedAt:  opts.MessageTimestamp,
+			Error:         nil,
+			Action:        t.SyncActionApply,
 			RecordVersion: annVersion,
 			State: func() t.SyncState {
 				if status == types.ResourceStatusDeleting {

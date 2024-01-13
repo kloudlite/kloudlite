@@ -105,9 +105,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnDeleteClusterMessage(dctx, clus)
+					return d.OnClusterDeleteMessage(dctx, clus)
 				}
-				return d.OnUpdateClusterMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnClusterUpdateMessage(dctx, clus, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case nodepoolGVK.String():
 			{
@@ -117,9 +117,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
-					return d.OnDeleteNodePoolMessage(dctx, su.ClusterName, np)
+					return d.OnNodePoolDeleteMessage(dctx, su.ClusterName, np)
 				}
-				return d.OnUpdateNodePoolMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				return d.OnNodePoolUpdateMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case deviceGVK.String():
 			{

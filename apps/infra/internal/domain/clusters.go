@@ -304,21 +304,19 @@ func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*e
 		return nil, errors.Newf("clusterIn %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
 	}
 
-
 	uCluster, err := d.clusterRepo.PatchById(ctx, clus.Id, repos.Document{
 		"metadata.labels":      clusterIn.Labels,
 		"metadata.annotations": clusterIn.Annotations,
-		"displayName":		  clusterIn.DisplayName,
-		"recordVersion":    clus.RecordVersion+1,
-		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+		"displayName":          clusterIn.DisplayName,
+		"recordVersion":        clus.RecordVersion + 1,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":        t.SyncActionApply,
-		"syncStatus.state":         t.SyncStateInQueue,
-
+		"syncStatus.action":       t.SyncActionApply,
+		"syncStatus.state":        t.SyncStateInQueue,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -355,14 +353,14 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
 		upC, err := d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
 			"markedForDeletion": fn.New(true),
-			"lastUpdatedBy":common.CreatedOrUpdatedBy{
+			"lastUpdatedBy": common.CreatedOrUpdatedBy{
 				UserId:    ctx.UserId,
 				UserName:  ctx.UserName,
 				UserEmail: ctx.UserEmail,
 			},
 			"syncStatus.lastSyncedAt": time.Now(),
-			"syncStatus.action":        t.SyncActionDelete,
-			"syncStatus.state":         t.SyncStateInQueue,
+			"syncStatus.action":       t.SyncActionDelete,
+			"syncStatus.state":        t.SyncStateInQueue,
 		})
 		if err != nil {
 			return errors.NewE(err)
@@ -379,7 +377,7 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 
 }
 
-func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
+func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Cluster) error {
 	accNs, err := d.getAccNamespace(ctx)
 	if err != nil {
 		return errors.NewE(err)
@@ -394,7 +392,7 @@ func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Clust
 	return onDeletedClusterMessage
 }
 
-func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	c, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -406,16 +404,16 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 	annVersion, _ := d.parseRecordVersionFromAnnotations(cluster.Annotations)
 
 	_, err = d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
-		"metadata.labels":      cluster.Labels,
-		"metadata.annotations": cluster.Annotations,
-		"metadata.generation":  cluster.Generation,
-		"metadata.creationTimestamp":  cluster.CreationTimestamp,
-		"status":      cluster.Status,
-		"spec.output": cluster.Spec.Output,
-		"syncStatus":  t.SyncStatus{
-			LastSyncedAt: opts.MessageTimestamp,
-			Error: 	  nil,
-			Action:       t.SyncActionApply,
+		"metadata.labels":            cluster.Labels,
+		"metadata.annotations":       cluster.Annotations,
+		"metadata.generation":        cluster.Generation,
+		"metadata.creationTimestamp": cluster.CreationTimestamp,
+		"status":                     cluster.Status,
+		"spec.output":                cluster.Spec.Output,
+		"syncStatus": t.SyncStatus{
+			LastSyncedAt:  opts.MessageTimestamp,
+			Error:         nil,
+			Action:        t.SyncActionApply,
 			RecordVersion: annVersion,
 			State: func() t.SyncState {
 				if status == types.ResourceStatusDeleting {

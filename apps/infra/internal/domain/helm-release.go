@@ -149,18 +149,18 @@ func (d *domain) UpdateHelmRelease(ctx InfraContext, clusterName string, hrIn en
 	unp, err := d.helmReleaseRepo.PatchById(ctx, cms.Id, repos.Document{
 		"metadata.labels":      hrIn.Labels,
 		"metadata.annotations": hrIn.Annotations,
-		"displayName":		  hrIn.DisplayName,
-		"recordVersion":    hrIn.RecordVersion+1,
-		"spec.chartVersion":			 hrIn.Spec.ChartVersion,
-		"spec.values":			 hrIn.Spec.Values,
-		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+		"displayName":          hrIn.DisplayName,
+		"recordVersion":        hrIn.RecordVersion + 1,
+		"spec.chartVersion":    hrIn.Spec.ChartVersion,
+		"spec.values":          hrIn.Spec.Values,
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":        t.SyncActionApply,
-		"syncStatus.state":         t.SyncStateInQueue,
+		"syncStatus.action":       t.SyncActionApply,
+		"syncStatus.state":        t.SyncStateInQueue,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -189,14 +189,14 @@ func (d *domain) DeleteHelmRelease(ctx InfraContext, clusterName string, name st
 
 	upC, err := d.helmReleaseRepo.PatchById(ctx, svc.Id, repos.Document{
 		"markedForDeletion": true,
-		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":        t.SyncActionDelete,
-		"syncStatus.state":         t.SyncStateInQueue,
+		"syncStatus.action":       t.SyncActionDelete,
+		"syncStatus.state":        t.SyncStateInQueue,
 	})
 	if err != nil {
 		return errors.NewE(err)
@@ -214,9 +214,9 @@ func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, n
 	}
 
 	_, err = d.helmReleaseRepo.PatchById(ctx, svc.Id, repos.Document{
-		"syncStatus.state":         t.SyncStateErroredAtAgent,
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
 		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":         &errMsg,
+		"syncStatus.error":        &errMsg,
 	})
 	d.resourceEventPublisher.PublishHelmReleaseEvent(svc, PublishUpdate)
 	return errors.NewE(err)
@@ -230,10 +230,6 @@ func (d *domain) OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string
 	if xhr == nil {
 		// does not exist, (maybe already deleted)
 		return nil
-	}
-
-	if err := d.matchRecordVersion(hr.Annotations, xhr.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, clusterName, xhr, xhr.RecordVersion)
 	}
 
 	if err = d.helmReleaseRepo.DeleteById(ctx, xhr.Id); err != nil {
@@ -257,15 +253,15 @@ func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string
 	annVersion, _ := d.parseRecordVersionFromAnnotations(hr.Annotations)
 
 	if _, err := d.helmReleaseRepo.PatchById(ctx, xhr.Id, repos.Document{
-		"metadata.labels":      hr.Labels,
-		"metadata.annotations": hr.Annotations,
-		"metadata.generation":  hr.Generation,
-		"metadata.creationTimestamp":  hr.CreationTimestamp,
-		"status":      hr.Status,
-		"syncStatus":  t.SyncStatus{
-			LastSyncedAt: opts.MessageTimestamp,
-			Error: 	  nil,
-			Action:       t.SyncActionApply,
+		"metadata.labels":            hr.Labels,
+		"metadata.annotations":       hr.Annotations,
+		"metadata.generation":        hr.Generation,
+		"metadata.creationTimestamp": hr.CreationTimestamp,
+		"status":                     hr.Status,
+		"syncStatus": t.SyncStatus{
+			LastSyncedAt:  opts.MessageTimestamp,
+			Error:         nil,
+			Action:        t.SyncActionApply,
 			RecordVersion: annVersion,
 			State: func() t.SyncState {
 				if status == types.ResourceStatusDeleting {

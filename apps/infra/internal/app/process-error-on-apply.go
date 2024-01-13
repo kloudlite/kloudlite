@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/kloudlite/api/apps/infra/internal/domain"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	"github.com/kloudlite/api/pkg/messaging/types"
@@ -20,17 +22,17 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 	processMsg := func(msg *types.ConsumeMsg) error {
 		counter += 1
 
-		var errMsg t.AgentErrMessage
-		if err := json.Unmarshal(msg.Payload, &errMsg); err != nil {
+		var errObj t.AgentErrMessage
+		if err := json.Unmarshal(msg.Payload, &errObj); err != nil {
 			return errors.NewE(err)
 		}
 
-		obj := unstructured.Unstructured{Object: errMsg.Object}
+		obj := unstructured.Unstructured{Object: errObj.Object}
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GroupVersionKind(),
-			"accountName", errMsg.AccountName,
-			"clusterName", errMsg.ClusterName,
+			"accountName", errObj.AccountName,
+			"clusterName", errObj.ClusterName,
 		)
 
 		mLogger.Infof("[%d] received message", counter)
@@ -38,35 +40,71 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 			mLogger.Infof("[%d] processed message", counter)
 		}()
 
-		kind := obj.GroupVersionKind().Kind
 		dctx := domain.InfraContext{
 			Context:     context.TODO(),
 			UserId:      "sys-user:error-on-apply-worker",
 			UserEmail:   "",
 			UserName:    "",
-			AccountName: errMsg.AccountName,
+			AccountName: errObj.AccountName,
 		}
 
-		switch obj.GroupVersionKind().String() {
+		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
+
+		gvkstr := obj.GroupVersionKind().String()
+		switch gvkstr {
 		case nodepoolGVK.String():
 			{
-				return d.OnNodepoolApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				nodepool, err := fn.JsonConvert[entities.NodePool](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnNodepoolApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnNodePoolDeleteMessage(dctx, errObj.ClusterName, nodepool)
 			}
 		case deviceGVK.String():
 			{
-				return d.OnVPNDeviceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				device, err := fn.JsonConvert[entities.VPNDevice](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnVPNDeviceApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnVPNDeviceDeleteMessage(dctx, errObj.ClusterName, device)
+
 			}
 		case clusterMsvcGVK.String():
 			{
-				return d.OnClusterManagedServiceApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				cmsvc, err := fn.JsonConvert[entities.ClusterManagedService](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnClusterManagedServiceApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnClusterManagedServiceDeleteMessage(dctx, errObj.ClusterName, cmsvc)
+
 			}
 		case helmreleaseGVK.String():
 			{
-				return d.OnHelmReleaseApplyError(dctx, errMsg.ClusterName, obj.GetName(), errMsg.Error, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
+				helmRelease, err := fn.JsonConvert[entities.HelmRelease](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnHelmReleaseApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
+				}
+				return d.OnHelmReleaseDeleteMessage(dctx, errObj.ClusterName, helmRelease)
 			}
 		default:
 			{
-				return errors.Newf("infra error-on-apply reader does not acknowledge resource with kind (%s)", kind)
+				return errors.Newf("infra error-on-apply reader does not acknowledge resource with gvk (%s)", gvkstr)
 			}
 		}
 	}
