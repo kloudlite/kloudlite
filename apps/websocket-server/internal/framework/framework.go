@@ -65,7 +65,7 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &e.Origins, IsDev: e.IsDev})
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger,  IsDev: e.IsDev})
 	}),
 
 	// have to create socket server here
