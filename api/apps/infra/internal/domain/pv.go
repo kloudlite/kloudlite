@@ -2,7 +2,6 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
-	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -50,43 +49,23 @@ func (d *domain) OnPVDeleteMessage(ctx InfraContext, clusterName string, pv enti
 
 // OnPVUpdateMessage implements Domain.
 func (d *domain) OnPVUpdateMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	pvol, err := d.pvRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": pv.Name,
-	})
-	if err != nil {
-		return err
-	}
-
-	if pvol == nil {
-		pv.AccountName = ctx.AccountName
-		pv.ClusterName = clusterName
-
-		pv.CreatedBy = common.CreatedOrUpdatedBy{
-			UserId:    repos.ID(common.CreatedByResourceSyncUserId),
-			UserName:  common.CreatedByResourceSyncUsername,
-			UserEmail: common.CreatedByResourceSyncUserEmail,
-		}
-		pv.LastUpdatedBy = pv.CreatedBy
-		pvol, err = d.pvRepo.Create(ctx, &pv)
-		if err != nil {
-			return errors.NewE(err)
-		}
-	}
-
-	pvol.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	pvol.SyncStatus.State = func() t.SyncState {
+	pv.SyncStatus.LastSyncedAt = opts.MessageTimestamp
+	pv.SyncStatus.State = func() t.SyncState {
 		if status == types.ResourceStatusDeleting {
 			return t.SyncStateDeletingAtAgent
 		}
 		return t.SyncStateUpdatedAtAgent
 	}()
-
-	pvol, err = d.pvRepo.UpdateById(ctx, pvol.Id, pvol)
+	pv.AccountName = ctx.AccountName
+	pv.ClusterName = clusterName
+	upsert, err := d.pvRepo.Upsert(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"clusterName":   clusterName,
+		"metadata.name": pv.Name,
+	}, &pv)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishPvResEvent(pvol, PublishUpdate)
+	d.resourceEventPublisher.PublishPvResEvent(upsert, PublishUpdate)
 	return nil
 }
