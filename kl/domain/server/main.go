@@ -91,6 +91,10 @@ func getCookie() (string, error) {
 	return client.GetCookieString()
 }
 
+func getInfraCookie() (string, error) {
+	return client.GetInfraCookieString()
+}
+
 type Response[T any] struct {
 	Data   T       `json:"data"`
 	Errors []error `json:"errors"`

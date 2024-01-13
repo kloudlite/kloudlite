@@ -1,4 +1,4 @@
-package intercept
+package vpn
 
 import (
 	"github.com/kloudlite/kl/domain/server"
@@ -6,15 +6,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stopCmd = &cobra.Command{
-	Use:   "stop",
-	Short: "stop intercept app to stop tunnel trafic to your device",
-	Long: `stop intercept app to stop tunnel trafic to your device
-Examples:
-	# close intercept app
-  kl vpn intercept stop --app <app_name>
+var activateCmd = &cobra.Command{
+	Use:   "activate",
+	Short: "activate vpn in any environment",
+	Long: `This command let you activate vpn in any environment.
+Example:
+  # activate vpn in any environment
+  kl vpn activate
 	`,
-
 	Run: func(cmd *cobra.Command, _ []string) {
 		ns := ""
 
@@ -42,7 +41,6 @@ Examples:
 }
 
 func init() {
-	stopCmd.Flags().StringP("app", "a", "", "app name")
-
-	stopCmd.Aliases = append(startCmd.Aliases, "close", "end", "leave", "quit", "terminate", "exit")
+	activateCmd.Aliases = append(listCmd.Aliases, "active", "act", "a")
+	activateCmd.Flags().StringP("name", "n", "", "environment name")
 }

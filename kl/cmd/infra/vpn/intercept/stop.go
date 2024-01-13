@@ -32,7 +32,7 @@ Examples:
 			ns = e.TargetNs
 		}
 
-		if err := server.UpdateInfraDeviceNS(ns); err != nil {
+		if err := server.UpdateDeviceNS(ns); err != nil {
 			fn.PrintError(err)
 			return
 		}

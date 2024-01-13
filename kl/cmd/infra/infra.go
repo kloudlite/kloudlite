@@ -1,36 +1,42 @@
-package cluster
+package infra
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 
+	"github.com/kloudlite/kl/cmd/infra/context"
+	"github.com/kloudlite/kl/cmd/infra/vpn"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
-
 	"github.com/spf13/cobra"
 )
 
-var Command = &cobra.Command{
-	Use:   "cluster",
-	Short: "get access of your cluster",
-	Long: `This command will let you perform different actions on your cluster.
-Example:
-  # get detail about selected account
-  kl cluster
+var Cmd = &cobra.Command{
+	Use:   "infra",
+	Short: "create new infra context and manage existing infra contexts",
+	Long: `Create new infra context and manage infra existing contexts
+Examples:
+  # creating new context
+  kl infra context new
 
+  # list all contexts
+  kl infra context list
 
-  # exec new shell with kubeconfig env
-  kl cluster -- bash
+  # switch to context
+  kl infra context switch <context_name>
 
-  # exec any kubernetes command
-  kl cluster -- k9s
-  kl cluster -- kubectl get pods
-  kl cluster -- kubectl apply -f deployment.yaml
-
+  # remove context
+  kl infra context remove <context_name>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if len(args) == 0 {
+			cmd.Help()
+			return
+		}
+
 		var fn func() error
 		fn = func() error {
 
@@ -71,6 +77,7 @@ Example:
 			functions.PrintError(err)
 			return
 		}
+
 	},
 }
 
@@ -107,6 +114,11 @@ func run(envs map[string]string, args []string) error {
 }
 
 func init() {
-	Command.Flags().StringP("cluster", "o", "", "cluster name")
-	Command.Flags().StringP("account", "a", "", "account name")
+	Cmd.Aliases = append(Cmd.Aliases, "infra")
+
+	Cmd.Flags().StringP("cluster", "o", "", "cluster name")
+	Cmd.Flags().StringP("account", "a", "", "account name")
+
+	Cmd.AddCommand(context.Cmd)
+	Cmd.AddCommand(vpn.Cmd)
 }

@@ -19,16 +19,16 @@ Example:
   # list all contexts
   kl context list
 	`,
-	Run: func(cmd *cobra.Command, _ []string) {
-		if err := listDevices(cmd); err != nil {
+	Run: func(_ *cobra.Command, _ []string) {
+		if err := listDevices(); err != nil {
 			fn.PrintError(err)
 		}
 	},
 }
 
-func listDevices(cmd *cobra.Command) error {
+func listDevices() error {
 
-	devices, err := server.ListDevices()
+	devices, err := server.ListInfraDevices()
 	if err != nil {
 		return err
 	}
@@ -40,8 +40,7 @@ func listDevices(cmd *cobra.Command) error {
 	header := table.Row{
 		table.HeaderText("Display Name"),
 		table.HeaderText("Name"),
-		table.HeaderText("Project_Name"),
-		table.HeaderText("EnvName"),
+		table.HeaderText("Active_Ns"),
 		table.HeaderText("Ports"),
 	}
 
@@ -52,8 +51,7 @@ func listDevices(cmd *cobra.Command) error {
 		rows = append(rows, table.Row{
 			fn.GetPrintRow(d, activeDevName, d.DisplayName, true),
 			fn.GetPrintRow(d, activeDevName, d.Metadata.Name),
-			fn.GetPrintRow(d, activeDevName, d.ProjectName),
-			fn.GetPrintRow(d, activeDevName, d.EnvName),
+			fn.GetPrintRow(d, activeDevName, d.Spec.DeviceNamespace),
 			fn.GetPrintRow(d, activeDevName, func() string {
 				if d.Spec.Ports == nil {
 					return ""
@@ -75,17 +73,12 @@ func listDevices(cmd *cobra.Command) error {
 		})
 	}
 
-	fmt.Println(table.Table(&header, rows, cmd))
-
-	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
-		table.TotalResults(len(devices), true)
-	}
+	fmt.Println(table.Table(&header, rows))
+	table.TotalResults(len(devices), true)
 
 	return nil
 }
 
 func init() {
 	listCmd.Aliases = append(listCmd.Aliases, "ls")
-
-	fn.WithOutputVariant(listCmd)
 }

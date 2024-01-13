@@ -18,6 +18,8 @@ type Device struct {
 	Metadata    Metadata `json:"metadata"`
 	DisplayName string   `json:"displayName"`
 	Status      Status   `json:"status"`
+	EnvName     string   `json:"enviromentName"`
+	ProjectName string   `json:"projectName"`
 	Spec        struct {
 		CnameRecords []struct {
 			Host   string `json:"host"`
@@ -41,15 +43,7 @@ const (
 	VPNDeviceType = "vpn_device"
 )
 
-func ListDevices(options ...fn.Option) ([]Device, error) {
-
-	clusterName := fn.GetOption(options, "clusterName")
-
-	var err error
-	if clusterName, err = EnsureCluster(options...); err != nil {
-		return nil, err
-	}
-
+func ListInfraDevices() ([]Device, error) {
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -61,7 +55,6 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
-		"clusterName": clusterName,
 	}, &cookie)
 	if err != nil {
 		return nil, err
@@ -74,7 +67,7 @@ func ListDevices(options ...fn.Option) ([]Device, error) {
 	}
 }
 
-func GetDevice(options ...fn.Option) (*Device, error) {
+func GetInfraDevice(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
 
 	clusterName, err := EnsureCluster(options...)
@@ -82,7 +75,7 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 		return nil, err
 	}
 
-	devName, err = EnsureDevice(options...)
+	devName, err = EnsureInfraDevice(options...)
 
 	cookie, err := getCookie()
 	if err != nil {
@@ -104,7 +97,7 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 	}
 }
 
-func SelectDevice(devName string) (*Device, error) {
+func SelectInfraDevice(devName string) (*Device, error) {
 	persistSelectedDevice := func(deviceName string) error {
 		err := client.SelectDevice(deviceName)
 		if err != nil {
@@ -113,7 +106,7 @@ func SelectDevice(devName string) (*Device, error) {
 		return nil
 	}
 
-	devices, err := ListDevices()
+	devices, err := ListInfraDevices()
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +142,7 @@ func SelectDevice(devName string) (*Device, error) {
 	return device, nil
 }
 
-func GetDeviceName(devName string) (*CheckName, error) {
+func GetInfraDeviceName(devName string) (*CheckName, error) {
 	clusterName, err := EnsureCluster()
 	if err != nil {
 		return nil, err
@@ -177,7 +170,7 @@ func GetDeviceName(devName string) (*CheckName, error) {
 	}
 }
 
-func SelectDeviceName(suggestedNames []string) (string, error) {
+func SelectInfraDeviceName(suggestedNames []string) (string, error) {
 	deviceName, err := fzf.FindOne(
 		suggestedNames,
 		func(deviceName string) string {
@@ -193,7 +186,7 @@ func SelectDeviceName(suggestedNames []string) (string, error) {
 	return *deviceName, nil
 }
 
-func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
+func CreateInfraDevice(selectedDeviceName string, devName string) (*Device, error) {
 	clusterName, err := EnsureCluster()
 	if err != nil {
 		return nil, err
@@ -224,9 +217,9 @@ func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
 	}
 }
 
-func UpdateDevice(ports []DevicePort) error {
+func UpdateInfraDevice(ports []DevicePort) error {
 
-	devName, err := EnsureDevice()
+	devName, err := EnsureInfraDevice()
 	if err != nil {
 		return err
 	}
@@ -236,7 +229,7 @@ func UpdateDevice(ports []DevicePort) error {
 		return err
 	}
 
-	device, err := GetDevice([]fn.Option{
+	device, err := GetInfraDevice([]fn.Option{
 		fn.MakeOption("deviceName", devName),
 		fn.MakeOption("clusterName", clusterName),
 	}...)
@@ -283,8 +276,8 @@ func UpdateDevice(ports []DevicePort) error {
 	return nil
 }
 
-func DeleteDevicePort(ports []DevicePort) error {
-	devName, err := EnsureDevice()
+func DeleteInfraDevicePort(ports []DevicePort) error {
+	devName, err := EnsureInfraDevice()
 	if err != nil {
 		return err
 	}
@@ -294,7 +287,7 @@ func DeleteDevicePort(ports []DevicePort) error {
 		return err
 	}
 
-	device, err := GetDevice([]fn.Option{
+	device, err := GetInfraDevice([]fn.Option{
 		fn.MakeOption("deviceName", devName),
 		fn.MakeOption("clusterName", clusterName),
 	}...)
@@ -338,13 +331,8 @@ func DeleteDevicePort(ports []DevicePort) error {
 	return nil
 }
 
-func EnsureDevice(options ...fn.Option) (string, error) {
+func EnsureInfraDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
-
-	_, err := EnsureCluster(options...)
-	if err != nil {
-		return "", err
-	}
 
 	if devName != "" {
 		return devName, nil
@@ -356,7 +344,7 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 		return devName, nil
 	}
 
-	dev, err := SelectDevice("")
+	dev, err := SelectInfraDevice("")
 
 	if err != nil {
 		return "", err
@@ -365,8 +353,8 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 	return dev.Metadata.Name, nil
 }
 
-func UpdateDeviceNS(namespace string) error {
-	devName, err := EnsureDevice()
+func UpdateInfraDeviceNS(namespace string) error {
+	devName, err := EnsureInfraDevice()
 	if err != nil {
 		return err
 	}

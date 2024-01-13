@@ -15,7 +15,10 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 	accountName := fn.GetOption(options, "accountName")
 	clusterName := fn.GetOption(options, "clusterName")
 
-	accountName, err := EnsureAccount(accountName)
+	accountName, err := EnsureAccount([]fn.Option{
+		fn.MakeOption("accountName", accountName),
+		fn.InfraMarkOption(),
+	}...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +53,10 @@ func getKubeConfig(options ...fn.Option) (*string, error) {
 	accountName := fn.GetOption(options, "accountName")
 	clusterName := fn.GetOption(options, "clusterName")
 
-	_, err := EnsureAccount(accountName)
+	_, err := EnsureAccount([]fn.Option{
+		fn.MakeOption("accountName", accountName),
+		fn.InfraMarkOption(),
+	}...)
 	if err != nil {
 		return nil, err
 	}

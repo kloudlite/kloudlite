@@ -98,6 +98,11 @@ Example:
 			return
 		}
 
+		// if err := startConfiguration(connectVerbose); err != nil {
+		// 	fn.PrintError(err)
+		// 	return
+		// }
+
 		fn.Log("[#] connected")
 
 		_, err = wgc.Show(nil)

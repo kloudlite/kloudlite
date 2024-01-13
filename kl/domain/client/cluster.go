@@ -3,7 +3,7 @@ package client
 import "errors"
 
 func CurrentClusterName() (string, error) {
-	file, err := GetContextFile()
+	file, err := GetInfraContextFile()
 	if err != nil {
 		return "", err
 	}
@@ -18,13 +18,13 @@ func CurrentClusterName() (string, error) {
 }
 
 func SelectCluster(clusterName string) error {
-	file, err := GetContextFile()
+	file, err := GetInfraContextFile()
 	if err != nil {
 		return err
 	}
 
 	file.ClusterName = clusterName
 
-	err = WriteContextFile(*file)
+	err = WriteInfraContextFile(*file)
 	return err
 }

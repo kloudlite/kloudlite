@@ -136,3 +136,15 @@ func ParseStringFlag(cmd *cobra.Command, flag string) string {
 func WithOutputVariant(cmd *cobra.Command) {
 	cmd.Flags().StringP("output", "o", "table", "output format [table | json | yaml]")
 }
+
+func InfraMarkOption() Option {
+	return MakeOption("isInfra", "yes")
+}
+
+func IsInfraFlagAvailable(options ...Option) bool {
+	s := GetOption(options, "isInfra")
+	if s == "yes" {
+		return true
+	}
+	return false
+}
