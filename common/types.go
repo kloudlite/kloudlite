@@ -37,3 +37,9 @@ const (
 	CreatedByResourceSyncUserEmail string = "created-by-resource-sync-user-email"
 	CreatedByResourceSyncUserId    string = "created-by-resource-sync-user-id"
 )
+
+var CreatedOrUpdatedByResourceSync = CreatedOrUpdatedBy{
+	UserId:    repos.ID(CreatedByResourceSyncUserId),
+	UserName:  CreatedByResourceSyncUsername,
+	UserEmail: CreatedByResourceSyncUserEmail,
+}
