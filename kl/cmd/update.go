@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -12,12 +13,18 @@ var UpdateCmd = &cobra.Command{
 	Use:    "update",
 	Short:  "Update the kl to latest version",
 	Long: `Update the kl to latest version
-  	Example:
-		# Update the kl to latest version
-		kl update
-	`,
-	Run: func(_ *cobra.Command, _ []string) {
-		err := ExecUpdateCmd()
+Example:
+# Update the kl to latest version
+kl update
+`,
+	Run: func(cmd *cobra.Command, _ []string) {
+		version := ""
+
+		if cmd.Flags().Changed("version") {
+			version, _ = cmd.Flags().GetString("version")
+			version = fmt.Sprintf("@%s", version)
+		}
+		err := ExecUpdateCmd(version)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -26,14 +33,14 @@ var UpdateCmd = &cobra.Command{
 	},
 }
 
-func ExecUpdateCmd() error {
+func ExecUpdateCmd(version string) error {
 	var cmd *exec.Cmd
 	curlAvailable := isCommandAvailable("curl")
 	wgetAvailable := isCommandAvailable("wget")
 	if curlAvailable {
-		cmd = exec.Command("bash", "-c", "curl https://i.jpillora.com/kloudlite/kl@v1.0.5-nightly! | bash")
+		cmd = exec.Command("bash", "-c", fmt.Sprintf("curl %s%s! | bash", constants.UpdateURL, version))
 	} else if wgetAvailable {
-		cmd = exec.Command("bash", "-c", "wget -O- https://i.jpillora.com/kloudlite/kl@v1.0.5-nightly! | bash")
+		cmd = exec.Command("bash", "-c", fmt.Sprintf("wget -qO - %s%s! | bash", constants.UpdateURL, version))
 	} else {
 		return fmt.Errorf("curl and wget not found")
 	}
@@ -51,4 +58,8 @@ func isCommandAvailable(command string) bool {
 	cmd := exec.Command("which", command)
 	err := cmd.Run()
 	return err == nil
+}
+
+func init() {
+	UpdateCmd.Flags().StringP("version", "v", "", "kl cli version")
 }
