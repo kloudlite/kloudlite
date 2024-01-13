@@ -135,4 +135,13 @@ const listFlex = ({ key }: { key: string }) => ({
   render: () => <div />,
 });
 
-export { ListBody, ListItem, ListTitle, ListSecondary, listFlex };
+const listTitleClass = 'w-[180px] min-w-[180px] max-w-[180px] mr-2xl';
+
+export {
+  ListBody,
+  ListItem,
+  ListTitle,
+  ListSecondary,
+  listFlex,
+  listTitleClass,
+};

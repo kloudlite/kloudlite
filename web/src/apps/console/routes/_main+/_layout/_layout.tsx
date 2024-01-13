@@ -210,7 +210,9 @@ const Console = () => {
 
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
-  const accountMenu = useHandleFromMatches('accountMenu', null);
+  const devicesMenu = useHandleFromMatches('devicesMenu', null);
+
+  console.log('devicemenu', devicesMenu);
 
   const headerExtra = useHandleFromMatches('headerExtra', null);
 
@@ -246,7 +248,7 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {/* {!!accountMenu && accountMenu} */}
+            {!!devicesMenu && devicesMenu()}
             {!!headerExtra && headerExtra()}
             <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
           </div>

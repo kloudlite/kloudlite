@@ -164,6 +164,8 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
+              projectName
+              recordVersion
               spec {
                 msvcSpec {
                   serviceTemplate {
@@ -188,6 +190,14 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }

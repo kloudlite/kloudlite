@@ -161,17 +161,19 @@ export const environmentQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
                 generation
-                labels
                 name
                 namespace
               }
               projectName
+              recordVersion
               spec {
                 projectName
+                routing {
+                  mode
+                  privateIngressClass
+                  publicIngressClass
+                }
                 targetNamespace
               }
               status {
@@ -188,6 +190,14 @@ export const environmentQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }

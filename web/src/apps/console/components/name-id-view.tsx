@@ -149,8 +149,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       return error;
     };
 
-    const { environment, project } = useOutletContext<IEnvironmentContext>();
-    const { cluster } = params;
+    const { cluster, environment, project } = params;
     useDebounce(
       async () => {
         let tempResType = resType;
@@ -177,8 +176,8 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'console_vpn_device',
                 ].includes(tempResType)
                   ? {
-                      projectName: parseName(project),
-                      envName: parseName(environment),
+                      projectName: project,
+                      envName: environment,
                     }
                   : {}),
                 ...(['nodepool', 'vpn_device', 'helm_release'].includes(
