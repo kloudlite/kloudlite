@@ -1,9 +1,9 @@
 import {
-  TrashFill,
   ArrowsClockwise,
-  WarningCircle,
   Trash,
   Info,
+  Warning,
+  WarningCircle,
 } from '@jengaicons/react';
 import Tooltip from '~/components/atoms/tooltip';
 import { titleCase } from '~/components/utils';
@@ -13,7 +13,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 interface IStatusMeta {
-  metadata: { generation: number };
+  metadata?: { generation: number };
   recordVersion: number;
   markedForDeletion?: boolean;
   status?: {
@@ -42,14 +42,14 @@ interface IStatusMeta {
 const SyncStatus = ({ item }: { item: IStatusMeta }) => {
   const statusIconSize = 16;
 
-  const getError = () => {
+  const getMessages = () => {
     let errors: Array<string> = [];
     if (item.status?.checks) {
       try {
         const err = Object.entries(item.status?.checks)
           .map(([_key, values]) => {
             const val = values as unknown as Record<string, any>;
-            if (val.generation === item.metadata.generation && !val.status) {
+            if (val.generation === item.metadata?.generation && !val.status) {
               return val.message;
             }
             return null;
@@ -59,9 +59,6 @@ const SyncStatus = ({ item }: { item: IStatusMeta }) => {
       } catch {
         //
       }
-    }
-    if (item.syncStatus.error) {
-      errors = [...errors, item.syncStatus.error];
     }
 
     if (errors.length > 0) {
@@ -93,9 +90,39 @@ const SyncStatus = ({ item }: { item: IStatusMeta }) => {
   if (item.markedForDeletion) {
     return (
       <div className="pulsable text-text-critical">
-        <Tooltip.Root content="Deleting">
+        <Tooltip.Root
+          content={
+            <div className="flex flex-col gap-lg">
+              <span className="bodySm-semibold">Deleting</span>
+              {getMessages()?.errors.map((error) => (
+                <span key={error} className="bodySm">
+                  {titleCase(error)}
+                </span>
+              ))}
+            </div>
+          }
+        >
           <span className="animate-pulse">
             <Trash size={statusIconSize} />
+          </span>
+        </Tooltip.Root>
+      </div>
+    );
+  }
+
+  if (item.syncStatus.error) {
+    return (
+      <div className="pulsable text-text-critical">
+        <Tooltip.Root
+          content={
+            <div className="flex flex-col gap-md">
+              <span className="bodySm-semibold">Error</span>
+              <span className="bodySm">{titleCase(item.syncStatus.error)}</span>
+            </div>
+          }
+        >
+          <span className="animate-pulse">
+            <WarningCircle size={statusIconSize} />
           </span>
         </Tooltip.Root>
       </div>
@@ -112,7 +139,7 @@ const SyncStatus = ({ item }: { item: IStatusMeta }) => {
           content={
             <div className="flex flex-col gap-lg">
               <span className="bodySm-semibold">Not ready</span>
-              {getError()?.errors.map((error) => (
+              {getMessages()?.errors.map((error) => (
                 <span key={error} className="bodySm">
                   {titleCase(error)}
                 </span>

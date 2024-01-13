@@ -19,6 +19,7 @@ import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
 import { IDialogBase } from '~/console/components/types.d';
 import { Switch } from '~/components/atoms/switch';
+import { NameIdView } from '~/console/components/name-id-view';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_layout';
 
@@ -53,6 +54,7 @@ const Root = (props: IDialog) => {
             labels: [],
             taints: [],
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
+            isNameError: false,
           }
         : {
             nvidiaGpuEnabled: false,
@@ -71,6 +73,7 @@ const Root = (props: IDialog) => {
 
             labels: [],
             taints: [],
+            isNameError: false,
           },
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
@@ -191,34 +194,24 @@ const Root = (props: IDialog) => {
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
-          <TextInput
-            label="Name"
-            value={values.displayName}
-            onChange={handleChange('displayName')}
-            error={!!errors.displayName}
-            message={errors.displayName}
+          <NameIdView
+            resType="nodepool"
+            displayName={values.displayName}
+            name={values.name}
+            label="Nodepool name"
+            placeholder="Enter nodepool name"
+            errors={errors.name}
+            onChange={({ name, id }) => {
+              handleChange('displayName')(dummyEvent(name));
+              if (!isUpdate) {
+                handleChange('name')(dummyEvent(id));
+              }
+            }}
+            onCheckError={(check) => {
+              handleChange('isNameError')(dummyEvent(check));
+            }}
+            isUpdate={isUpdate}
           />
-          {isUpdate && (
-            <Chips.Chip
-              {...{
-                item: { id: parseName(props.data) },
-                label: parseName(props.data),
-                prefix: 'Id:',
-                disabled: true,
-                type: 'BASIC',
-              }}
-            />
-          )}
-
-          {!isUpdate && (
-            <IdSelector
-              resType="nodepool"
-              onChange={(v) => {
-                handleChange('name')(dummyEvent(v));
-              }}
-              name={values.displayName}
-            />
-          )}
 
           {cloudProvider === 'aws' && (
             <>

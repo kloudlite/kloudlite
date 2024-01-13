@@ -60,7 +60,6 @@ export const NameIdView = ({
       case 'managed_service':
       case 'project_managed_service':
       case 'managed_resource':
-      case 'helm_release':
       case 'router':
       case 'secret':
         ensureAccountClientSide(params);
@@ -71,13 +70,9 @@ export const NameIdView = ({
       case 'providersecret':
         ensureAccountClientSide(params);
         return api.infraCheckNameAvailability;
+      case 'helm_release':
       case 'vpn_device':
-        ensureClusterClientSide(params);
-        ensureAccountClientSide(params);
-        return api.infraCheckNameAvailability;
       case 'nodepool':
-        ensureAccountClientSide(params);
-        ensureClusterClientSide(params);
         return api.infraCheckNameAvailability;
 
       case 'account':
@@ -161,7 +156,7 @@ export const NameIdView = ({
                     envName: parseName(environment),
                   }
                 : {}),
-              ...(['nodepool', 'vpn_device'].includes(resType)
+              ...(['nodepool', 'vpn_device', 'helm_release'].includes(resType)
                 ? {
                     clusterName: cluster,
                   }

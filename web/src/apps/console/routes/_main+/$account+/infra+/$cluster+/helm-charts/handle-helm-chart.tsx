@@ -20,6 +20,7 @@ import Select from '~/components/atoms/select';
 import { CircleWavyCheckFill } from '@jengaicons/react';
 import { cn } from '~/components/utils';
 import Pulsable from 'react-pulsable';
+import { NameIdView } from '~/console/components/name-id-view';
 
 const LOGO_URL = 'https://artifacthub.io/image/';
 
@@ -253,10 +254,12 @@ const Root = (props: IDialog) => {
             chartName: '',
             chartRepoURL: '',
             values: '',
+            isNameError: false,
           }
         : {
+            isNameError: false,
             displayName: props.data.displayName,
-            name: props.data.metadata?.name,
+            name: props.data.metadata?.name || '',
             values:
               Object.keys(props.data.spec?.values).length > 0
                 ? yaml.dump(props.data.spec?.values)
@@ -363,41 +366,31 @@ const Root = (props: IDialog) => {
       <Popup.Content className="!w-[900px]">
         <div className="flex flex-row gap-2xl ">
           <div className="flex flex-col gap-2xl basis-full border-border-default border-r pr-2xl">
-            <TextInput
-              ref={nameInputRef}
+            <NameIdView
+              resType="helm_release"
+              displayName={values.displayName}
+              name={values.name}
               label="Name"
-              placeholder="Name"
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              value={values.displayName}
-              name="helm-name"
+              placeholder="Enter helm chart name"
+              errors={errors.name}
+              onChange={({ name, id }) => {
+                handleChange('displayName')(dummyEvent(name));
+                if (!isUpdate) {
+                  handleChange('name')(dummyEvent(id));
+                }
+              }}
+              onCheckError={(check) => {
+                handleChange('isNameError')(dummyEvent(check));
+              }}
+              isUpdate={isUpdate}
             />
-            {isUpdate && (
-              <Chips.Chip
-                {...{
-                  item: { id: parseName(props.data) },
-                  label: parseName(props.data),
-                  prefix: 'Id:',
-                  disabled: true,
-                  type: 'BASIC',
-                }}
-              />
-            )}
-            {!isUpdate && (
-              <IdSelector
-                name={values.displayName}
-                resType="cluster"
-                onChange={(id) => {
-                  handleChange('name')({ target: { value: id } });
-                }}
-              />
-            )}
             <TextInput
               label="Namespace"
               placeholder="Namespace"
               onChange={({ target }) => {
-                handleChange('namespace')(dummyEvent(target.value));
+                handleChange('namespace')(
+                  dummyEvent(target.value.toLowerCase())
+                );
               }}
               error={!!errors.namespace}
               message={errors.namespace}
@@ -405,6 +398,7 @@ const Root = (props: IDialog) => {
               name="helm-chart-namespace"
               disabled={isUpdate}
             />
+
             {!isUpdate ? (
               <Select
                 // open
@@ -494,6 +488,7 @@ const Root = (props: IDialog) => {
           </div>
           <div className="basis-full">
             <TextArea
+              containerClassName="h-full"
               className="h-full"
               label="Helm values"
               placeholder="Helm values"

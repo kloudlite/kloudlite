@@ -48,10 +48,10 @@ const Nodepools = () => {
     <>
       <LoadingComp
         data={promise}
-        skeletonData={{
-          nodePoolData: fake.ConsoleListNodePoolsQuery
-            .infra_listNodePools as any,
-        }}
+        // skeletonData={{
+        //   nodePoolData: fake.ConsoleListNodePoolsQuery
+        //     .infra_listNodePools as any,
+        // }}
       >
         {({ nodePoolData }) => {
           const nodepools = nodePoolData?.edges?.map(({ node }) => node);

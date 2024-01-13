@@ -2065,11 +2065,6 @@ export type ConsoleListNodePoolsQueryVariables = Exact<{
 export type ConsoleListNodePoolsQuery = {
   infra_listNodePools?: {
     totalCount: number;
-    pageInfo: {
-      endCursor?: string;
-      hasNextPage?: boolean;
-      startCursor?: string;
-    };
     edges: Array<{
       cursor: string;
       node: {
@@ -2077,10 +2072,11 @@ export type ConsoleListNodePoolsQuery = {
         creationTime: any;
         displayName: string;
         markedForDeletion?: boolean;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string };
+        metadata?: { generation: number; name: string; namespace?: string };
         spec: {
           cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
           maxCount: number;
@@ -2093,6 +2089,7 @@ export type ConsoleListNodePoolsQuery = {
             ec2Pool?: { instanceType: string; nodes?: any };
             spotPool?: {
               nodes?: any;
+              spotFleetTaggingRoleName: string;
               cpuNode?: {
                 memoryPerVcpu?: { max: string; min: string };
                 vcpu: { max: string; min: string };
@@ -2114,8 +2111,22 @@ export type ConsoleListNodePoolsQuery = {
             namespace: string;
           }>;
         };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
       };
     }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 
@@ -4290,20 +4301,25 @@ export type ConsoleGetHelmChartQuery = {
 
 export type ConsoleListHelmChartQueryVariables = Exact<{
   clusterName: Scalars['String']['input'];
+  search?: InputMaybe<SearchHelmRelease>;
+  pagination?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListHelmChartQuery = {
   infra_listHelmReleases?: {
     totalCount: number;
     edges: Array<{
+      cursor: string;
       node: {
+        clusterName: string;
         creationTime: any;
         displayName: string;
         markedForDeletion?: boolean;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string; namespace?: string };
+        metadata?: { generation: number; name: string; namespace?: string };
         spec?: {
           chartName: string;
           chartRepoURL: string;
@@ -4325,8 +4341,22 @@ export type ConsoleListHelmChartQuery = {
             namespace: string;
           }>;
         };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
       };
     }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 

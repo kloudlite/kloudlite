@@ -647,12 +647,6 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
     search: $search
     pagination: $pagination
   ) {
-    totalCount
-    pageInfo {
-      endCursor
-      hasNextPage
-      startCursor
-    }
     edges {
       cursor
       node {
@@ -671,8 +665,11 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
         }
         markedForDeletion
         metadata {
+          generation
           name
+          namespace
         }
+        recordVersion
         spec {
           aws {
             availabilityZone
@@ -697,6 +694,7 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
                 instanceTypes
               }
               nodes
+              spotFleetTaggingRoleName
             }
           }
           cloudProvider
@@ -719,9 +717,24 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
             namespace
           }
         }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
         updateTime
       }
     }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 
@@ -2953,11 +2966,16 @@ query consoleGetHelmChart($clusterName: String!, $name: String!) {
   }
 }
 
-query consoleListHelmChart($clusterName: String!) {
-  infra_listHelmReleases(clusterName: $clusterName) {
-    totalCount
+query consoleListHelmChart($clusterName: String!, $search: SearchHelmRelease, $pagination: CursorPaginationIn) {
+  infra_listHelmReleases(
+    clusterName: $clusterName
+    search: $search
+    pagination: $pagination
+  ) {
     edges {
+      cursor
       node {
+        clusterName
         createdBy {
           userEmail
           userId
@@ -2972,9 +2990,11 @@ query consoleListHelmChart($clusterName: String!) {
         }
         markedForDeletion
         metadata {
+          generation
           name
           namespace
         }
+        recordVersion
         spec {
           chartName
           chartRepoURL
@@ -2998,9 +3018,24 @@ query consoleListHelmChart($clusterName: String!) {
             namespace
           }
         }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
         updateTime
       }
     }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 
