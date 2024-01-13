@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Box } from '~/console/components/common-console-components';
-import HighlightJsLog from '~/console/components/logger';
+import LogComp from '~/console/components/logger';
 
 const Log = () => {
   const getTime = () => {
@@ -42,7 +42,7 @@ const Log = () => {
   return (
     <Box title="Cluster Logs">
       <div className=" hljs rounded">
-        <HighlightJsLog
+        <LogComp
           // actionComponent={
           //   <Select
           //     size="md"

@@ -86,7 +86,7 @@ const baseUrls = () => {
     cookieDomain,
     baseUrl: bUrl,
     githubAppName: 'kloudlite-dev',
-    socketUrl: `wss://socket${postFix}.${bUrl}/ws`,
+    socketUrl: `wss://socket${postFix}.${bUrl}`,
   };
 };
 

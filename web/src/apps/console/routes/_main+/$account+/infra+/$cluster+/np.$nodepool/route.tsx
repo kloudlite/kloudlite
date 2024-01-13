@@ -16,7 +16,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import HighlightJsLog from '~/console/components/logger';
+import LogComp from '~/console/components/logger';
 import { renderCloudProvider } from '~/console/utils/commons';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { DetailItem } from '~/console/components/commons';
@@ -105,7 +105,7 @@ const Log = ({ nodepool }: { nodepool: string }) => {
   // const [url, setUrl] = useState(getUrl(from));
 
   return (
-    <HighlightJsLog
+    <LogComp
       // actionComponent={
       //   <Select
       //     size="md"
