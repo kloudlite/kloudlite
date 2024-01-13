@@ -43,7 +43,7 @@ export function parseValue<T>(v: any, def: T): T {
   try {
     switch (typeof def) {
       case 'number':
-        const res = parseInt(v, 10);
+        const res = parseFloat(v);
         if (Number.isNaN(res)) {
           return def;
         }

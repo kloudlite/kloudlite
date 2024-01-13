@@ -18,6 +18,7 @@ import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
 import { titleCase } from '~/components/utils';
+import { flatMapValidations, flatM } from '~/console/utils/commons';
 import { IProjectContext } from '../_layout';
 import { ReviewComponent } from '../$environment+/new-app/app-review';
 
@@ -57,8 +58,6 @@ const RenderField = ({
         error={error}
         message={message}
         label={`${field.label}${field.required ? ' *' : ''}`}
-        min={field.min}
-        max={field.max}
         placeholder={field.label}
         value={parseFloat(value) / (field.multiplier || 1) || ''}
         onChange={({ target }) => {
@@ -97,8 +96,6 @@ const RenderField = ({
               <NumberInput
                 error={error}
                 message={message}
-                min={field.min}
-                max={field.max}
                 placeholder={qos ? field.label : `${field.label} min`}
                 value={parseFloat(value.min) / (field.multiplier || 1)}
                 onChange={({ target }) => {
@@ -127,8 +124,6 @@ const RenderField = ({
                 <NumberInput
                   error={error}
                   message={message}
-                  min={field.min}
-                  max={field.max}
                   placeholder={`${field.label} max`}
                   value={parseFloat(value.max) / (field.multiplier || 1)}
                   onChange={({ target }) => {
@@ -162,85 +157,6 @@ const RenderField = ({
     );
   }
   return <div>unknown input type {field.inputType}</div>;
-};
-
-const flatM = (obj: Record<string, any>) => {
-  const flatJson = {};
-  for (const key in obj) {
-    const parts = key.split('.');
-
-    let temp: Record<string, any> = flatJson;
-
-    if (parts.length === 1) {
-      temp[key] = null;
-    } else {
-      parts.forEach((part, index) => {
-        if (index === parts.length - 1) {
-          temp[part] = {
-            min: null,
-            max: null,
-          };
-        } else {
-          temp[part] = temp[part] || {};
-        }
-        temp = temp[part];
-      });
-    }
-  }
-
-  return flatJson;
-};
-
-const flatMapValidations = (obj: Record<string, any>) => {
-  const flatJson = {};
-  for (const key in obj) {
-    const parts = key.split('.');
-    const temp: Record<string, any> = flatJson;
-    // console.log('validations', obj[key]);
-    if (parts.length === 1) {
-      temp[key] = (() => {
-        let returnYup: any = Yup;
-        switch (obj[key].inputType) {
-          case 'Number':
-            returnYup = returnYup.number();
-            if (obj[key].min) returnYup = returnYup.min(obj[key].min);
-            if (obj[key].max) returnYup = returnYup.max(obj[key].max);
-            break;
-          case 'String':
-            returnYup = returnYup.string();
-            break;
-          default:
-            returnYup = returnYup.string();
-        }
-
-        if (obj[key].required) {
-          returnYup = returnYup.required();
-        }
-
-        return returnYup;
-      })();
-    } else {
-      temp[parts[0]] = (() => {
-        let resp = Yup.object({
-          [parts[1]]: Yup.object(
-            flatMapValidations({
-              [parts.slice(1, parts.length).join('.')]: obj[key],
-            })
-          ),
-        });
-        if (temp[parts[0]]) {
-          resp = resp.concat(temp[parts[0]]);
-        }
-
-        return resp;
-      })();
-      // parts.forEach((part, index) => {
-      //   // temp = temp[part];
-      // });
-    }
-  }
-
-  return flatJson;
 };
 
 type ISelectedTemplate = {
@@ -536,18 +452,16 @@ const ManagedServiceLayout = () => {
               selfValue.selectedTemplate &&
               isActive('Configure managed service')
             ) {
-              vs = Yup.object({
-                resources: Yup.object(
-                  flatMapValidations(
-                    selfValue.selectedTemplate?.template?.fields.reduce(
-                      (acc: any, curr: any) => {
-                        return { ...acc, [curr.name]: curr };
-                      },
-                      {}
-                    )
+              vs = Yup.object(
+                flatMapValidations(
+                  selfValue.selectedTemplate?.template?.fields.reduce(
+                    (acc: any, curr: any) => {
+                      return { ...acc, [curr.name]: curr };
+                    },
+                    {}
                   )
-                ),
-              });
+                )
+              );
             }
 
             const res = vs.validateSync(value, {
@@ -633,32 +547,18 @@ const ManagedServiceLayout = () => {
     const selectedTemplate =
       values.selectedTemplate as unknown as ISelectedTemplate;
     if (selectedTemplate?.template?.fields) {
-      setValues({
-        ...values,
+      setValues((v) => ({
+        ...v,
         res: {
           ...flatM(
             selectedTemplate?.template?.fields.reduce((acc, curr) => {
-              return { ...acc, [curr.name]: curr.defaultValue };
+              return { ...acc, [curr.name]: curr };
             }, {})
           ),
         },
-      });
+      }));
     }
   }, [values.selectedTemplate]);
-
-  useEffect(() => {
-    console.log(errors);
-    // console.log(
-    //   flatMapValidations(
-    //     values.selectedTemplate?.template?.fields.reduce(
-    //       (acc: any, curr: any) => {
-    //         return { ...acc, [curr.name]: curr };
-    //       },
-    //       {}
-    //     )
-    //   )
-    // );
-  }, [errors]);
 
   useEffect(() => {
     console.log(errors);
