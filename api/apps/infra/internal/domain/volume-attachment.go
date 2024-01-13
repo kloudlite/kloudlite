@@ -37,9 +37,8 @@ func (d *domain) ListVolumeAttachments(ctx InfraContext, clusterName string, sea
 
 // OnVolumeAttachmentDeleteMessage implements Domain.
 func (d *domain) OnVolumeAttachmentDeleteMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment) error {
-	if err := d.pvcRepo.DeleteOne(ctx, repos.Filter{
+	if err := d.volumeAttachmentRepo.DeleteOne(ctx, repos.Filter{
 		"metadata.name":      volumeAttachment.Name,
-		"metadata.namespace": volumeAttachment.Namespace,
 		"accountName":        ctx.AccountName,
 		"clusterName":        clusterName,
 	}); err != nil {

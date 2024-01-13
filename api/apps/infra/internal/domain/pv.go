@@ -37,9 +37,8 @@ func (d *domain) ListPVs(ctx InfraContext, clusterName string, search map[string
 
 // OnPVDeleteMessage implements Domain.
 func (d *domain) OnPVDeleteMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume) error {
-	if err := d.pvcRepo.DeleteOne(ctx, repos.Filter{
+	if err := d.pvRepo.DeleteOne(ctx, repos.Filter{
 		"metadata.name":      pv.Name,
-		"metadata.namespace": pv.Namespace,
 		"accountName":        ctx.AccountName,
 		"clusterName":        clusterName,
 	}); err != nil {
