@@ -25,7 +25,7 @@ func (d *domain) findHelmRelease(ctx InfraContext, clusterName string, hrName st
 	}
 
 	if cluster == nil {
-		return nil, errors.Newf("cluster with name %q not found", clusterName)
+		return nil, errors.Newf("helm release with name %q not found", hrName)
 	}
 	return cluster, nil
 }
