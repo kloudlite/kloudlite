@@ -411,6 +411,7 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 		"metadata.generation":  cluster.Generation,
 		"metadata.creationTimestamp":  cluster.CreationTimestamp,
 		"status":      cluster.Status,
+		"spec.output": cluster.Spec.Output,
 		"syncStatus":  t.SyncStatus{
 			LastSyncedAt: opts.MessageTimestamp,
 			Error: 	  nil,

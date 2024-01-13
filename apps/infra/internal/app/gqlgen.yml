@@ -69,6 +69,9 @@ models:
 
   Cluster: &cluster-model
     model: github.com/kloudlite/api/apps/infra/internal/entities.Cluster
+    fields:
+      adminKubeconfig:
+        resolver: true
   ClusterIn: *cluster-model
 
   HelmRelease: &helmrelease-model
