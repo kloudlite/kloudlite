@@ -222,7 +222,7 @@ func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterN
 		return nil
 	}
 
-	if err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id); err != nil {
+	if err := d.clusterManagedServiceRepo.DeleteById(ctx, xService.Id); err != nil {
 		return err
 	}
 	d.resourceEventPublisher.PublishCMSEvent(xService, PublishDelete)
