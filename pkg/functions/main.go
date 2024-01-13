@@ -77,7 +77,7 @@ func JsonConversion(from any, to any) error {
 	return nil
 }
 
-func JsonConvert[T any](from any) (*T, error) {
+func JsonConvertP[T any](from any) (*T, error) {
 	var to T
 	if from == nil {
 		return nil, nil
@@ -92,4 +92,21 @@ func JsonConvert[T any](from any) (*T, error) {
 		return nil, errors.NewE(err)
 	}
 	return &to, nil
+}
+
+func JsonConvert[T any](from any) (T, error) {
+	var to T
+	if from == nil {
+		return to, nil
+	}
+
+	b, err := json.Marshal(from)
+	if err != nil {
+		return to, err
+	}
+
+	if err := json.Unmarshal(b, &to); err != nil {
+		return to, errors.NewE(err)
+	}
+	return to, nil
 }

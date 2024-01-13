@@ -10,6 +10,7 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/domain"
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
@@ -20,8 +21,8 @@ type ErrorOnApplyConsumer messaging.Consumer
 func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
 	counter := 0
 
-	getResourceContext := func(ctx domain.ConsoleContext, clusterName string,obj unstructured.Unstructured) (domain.ResourceContext, error) {
-		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, clusterName,obj.GetNamespace(), obj.GetName())
+	getResourceContext := func(ctx domain.ConsoleContext, clusterName string, obj unstructured.Unstructured) (domain.ResourceContext, error) {
+		mapping, err := d.GetResourceMapping(ctx, entities.ResourceTypeApp, clusterName, obj.GetNamespace(), obj.GetName())
 		if err != nil {
 			return domain.ResourceContext{}, err
 		}
@@ -31,17 +32,17 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 	msgReader := func(msg *msgTypes.ConsumeMsg) error {
 		counter += 1
 		logger.Debugf("received message [%d]", counter)
-		var errMsg t.AgentErrMessage
-		if err := json.Unmarshal(msg.Payload, &errMsg); err != nil {
+		var errObj t.AgentErrMessage
+		if err := json.Unmarshal(msg.Payload, &errObj); err != nil {
 			return errors.NewE(err)
 		}
 
-		obj := unstructured.Unstructured{Object: errMsg.Object}
+		obj := unstructured.Unstructured{Object: errObj.Object}
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GroupVersionKind(),
-			"accountName", errMsg.AccountName,
-			"clusterName", errMsg.ClusterName,
+			"accountName", errObj.AccountName,
+			"clusterName", errObj.ClusterName,
 		)
 
 		mLogger.Infof("received message")
@@ -49,68 +50,128 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			mLogger.Infof("processed message")
 		}()
 
-		kind := obj.GroupVersionKind().Kind
-		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", errMsg.AccountName)
+		dctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", errObj.AccountName)
 
 		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
 
-		switch kind {
-		case "Project":
+		gvkStr := obj.GroupVersionKind().String()
+
+		switch gvkStr {
+		case projectGVK.String():
 			{
-				return d.OnProjectApplyError(dctx, errMsg.Error, obj.GetName(), opts)
+				if errObj.Action == t.ActionApply {
+					return d.OnProjectApplyError(dctx, errObj.Error, obj.GetName(), opts)
+				}
+
+				p, err := fn.JsonConvert[entities.Project](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				return d.OnProjectDeleteMessage(dctx, p)
 			}
-		case "Environment":
+		case environmentGVK.String():
 			{
-				return d.OnEnvironmentApplyError(dctx, errMsg.Error, obj.GetNamespace(), obj.GetName(), opts)
+				if errObj.Action == t.ActionApply {
+					return d.OnEnvironmentApplyError(dctx, errObj.Error, obj.GetNamespace(), obj.GetName(), opts)
+				}
+
+				p, err := fn.JsonConvert[entities.Environment](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				return d.OnEnvironmentDeleteMessage(dctx, p)
 			}
-		case "App":
+		case appsGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
+				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
 
-				return d.OnAppApplyError(rctx, errMsg.Error, obj.GetName(), opts)
+				app, err := fn.JsonConvert[entities.App](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnAppApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+
+				return d.OnAppDeleteMessage(rctx, app)
 			}
-		case "Config":
+		case configGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
+				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
 
-				return d.OnConfigApplyError(rctx, errMsg.Error, obj.GetName(), opts)
+				config, err := fn.JsonConvert[entities.Config](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnConfigApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+				return d.OnConfigDeleteMessage(rctx, config)
 			}
-		case "Secret":
+		case secretGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
+				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
 
-				return d.OnSecretApplyError(rctx, errMsg.Error, obj.GetName(), opts)
+				secret, err := fn.JsonConvert[entities.Secret](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnSecretApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+				return d.OnSecretDeleteMessage(rctx, secret)
 			}
-		case "Router":
+		case routerGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
+				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
 
-				return d.OnRouterApplyError(rctx, errMsg.Error, obj.GetName(), opts)
+				router, err := fn.JsonConvert[entities.Router](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnRouterApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+				return d.OnRouterDeleteMessage(rctx, router)
 			}
-		case "ManagedResource":
+		case managedResourceGVK.String():
 			{
-				rctx, err := getResourceContext(dctx, errMsg.ClusterName,obj)
+				rctx, err := getResourceContext(dctx, errObj.ClusterName, obj)
 				if err != nil {
 					return errors.NewE(err)
 				}
 
-				return d.OnManagedResourceApplyError(rctx, errMsg.Error, obj.GetName(), opts)
+				mres, err := fn.JsonConvert[entities.ManagedResource](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				if errObj.Action == t.ActionApply {
+					return d.OnManagedResourceApplyError(rctx, errObj.Error, obj.GetName(), opts)
+				}
+				return d.OnManagedResourceDeleteMessage(rctx, mres)
 			}
 		default:
 			{
-				return errors.Newf("console apply error reader does not acknowledge resource with kind (%s)", kind)
+				return errors.Newf("console apply error reader does not acknowledge resource with GVK (%s)", gvkStr)
 			}
 		}
 	}
