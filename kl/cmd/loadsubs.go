@@ -26,6 +26,7 @@ func init() {
 	})
 
 	rootCmd.AddCommand(DocsCmd)
+	rootCmd.AddCommand(UpdateCmd)
 
 	rootCmd.AddCommand(list.Cmd)
 	rootCmd.AddCommand(env.Cmd)
