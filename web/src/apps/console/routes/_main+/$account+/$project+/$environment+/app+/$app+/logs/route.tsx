@@ -1,5 +1,6 @@
 import { useOutletContext } from '@remix-run/react';
 import LogComp from '~/console/components/logger';
+import { parseName } from '~/console/server/r-utils/common';
 import { IAppContext } from '../route';
 
 const Overview = () => {
@@ -13,8 +14,8 @@ const Overview = () => {
           height: 'calc(100vh - 12rem)',
           title: 'Logs',
           websocket: {
-            account: account.metadata?.name,
-            cluster: project.clusterName,
+            account: parseName(account),
+            cluster: project.clusterName || '',
             trackingId: app.id,
           },
         }}
