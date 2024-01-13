@@ -40,6 +40,9 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
+	if config == nil || *config == "" {
+		return nil, fmt.Errorf("empty kubeconfig")
+	}
 
 	if err := os.WriteFile(tmpFile, []byte(*config), 0644); err != nil {
 		log.Fatal(err)
