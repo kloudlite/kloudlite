@@ -1,5 +1,5 @@
 import { useOutletContext, useSearchParams } from '@remix-run/react';
-import HighlightJsLog from '~/console/components/logger';
+import LogComp from '~/console/components/logger';
 import { NumberInput } from '~/components/atoms/input';
 import { useState } from 'react';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -38,7 +38,7 @@ const ItemList = () => {
   return (
     <div className="p-lg flex flex-col gap-xl">
       <div>Logs Url: {url}</div>
-      <HighlightJsLog
+      <LogComp
         dark
         websocket
         height="60vh"
