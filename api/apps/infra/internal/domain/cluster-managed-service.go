@@ -5,10 +5,10 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"time"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -115,38 +115,40 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 	return cms, nil
 }
 
-func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
+func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName string, serviceIn entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	service.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &service); err != nil {
+	serviceIn.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &serviceIn); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	cms, err := d.findClusterManagedService(ctx, clusterName, service.Name)
+	cms, err := d.findClusterManagedService(ctx, clusterName, serviceIn.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if cms.IsMarkedForDeletion() {
-		return nil, errors.Newf("cluster managed service %q (clusterName=%q) is marked for deletion", service.Name, clusterName)
+		return nil, errors.Newf("cluster managed serviceIn %q (clusterName=%q) is marked for deletion", serviceIn.Name, clusterName)
 	}
 
-	cms.IncrementRecordVersion()
-	cms.LastUpdatedBy = common.CreatedOrUpdatedBy{
-		UserId:    ctx.UserId,
-		UserName:  ctx.UserName,
-		UserEmail: ctx.UserEmail,
-	}
-
-	cms.Labels = service.Labels
-	cms.Annotations = service.Annotations
-
-	cms.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cms.RecordVersion)
-
-	unp, err := d.clusterManagedServiceRepo.UpdateById(ctx, cms.Id, cms)
+	unp, err := d.clusterManagedServiceRepo.PatchById(ctx, cms.Id, repos.Document{
+		"metadata.labels":      serviceIn.Labels,
+		"metadata.annotations": serviceIn.Annotations,
+		"displayName":		  serviceIn.DisplayName,
+		"recordVersion":    cms.RecordVersion+1,
+		"spec": serviceIn.Spec,
+		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"syncStatus.lastSyncedAt": time.Now(),
+		"syncStatus.action":        t.SyncActionApply,
+		"syncStatus.state":         t.SyncStateInQueue,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -171,12 +173,20 @@ func (d *domain) DeleteClusterManagedService(ctx InfraContext, clusterName strin
 	}
 
 	if svc.IsMarkedForDeletion() {
-		return errors.Newf("cluster managed service %q (clusterName=%q) is already marked for deletion", name, clusterName)
+		return errors.Newf("cluster managed service with name %q is marked for deletion", name)
 	}
 
-	svc.MarkedForDeletion = fn.New(true)
-	svc.SyncStatus = t.GetSyncStatusForDeletion(svc.Generation)
-	upC, err := d.clusterManagedServiceRepo.UpdateById(ctx, svc.Id, svc)
+	upC, err := d.clusterManagedServiceRepo.PatchById(ctx, svc.Id, repos.Document{
+		"markedForDeletion": true,
+		"lastUpdatedBy":common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		"syncStatus.lastSyncedAt": time.Now(),
+		"syncStatus.action":        t.SyncActionDelete,
+		"syncStatus.state":         t.SyncStateInQueue,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -192,62 +202,70 @@ func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName
 		return errors.NewE(err)
 	}
 
-	svc.SyncStatus.State = t.SyncStateErroredAtAgent
-	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	svc.SyncStatus.Error = &errMsg
-
-	_, err = d.clusterManagedServiceRepo.UpdateById(ctx, svc.Id, svc)
+	_, err = d.clusterManagedServiceRepo.PatchById(ctx, svc.Id, repos.Document{
+		"syncStatus.state":         t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":         &errMsg,
+	})
 	d.resourceEventPublisher.PublishCMSEvent(svc, PublishUpdate)
 	return errors.NewE(err)
 }
 
 func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error {
-	svc, err := d.findClusterManagedService(ctx, clusterName, service.Name)
+	xService, err := d.findClusterManagedService(ctx, clusterName, service.Name)
 	if err != nil {
 		return err
 	}
-
-	if svc == nil {
+	if xService == nil {
 		// does not exist, (maybe already deleted)
 		return nil
 	}
 
-	if err := d.matchRecordVersion(service.Annotations, svc.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, svc.SyncStatus.Action, clusterName, svc, svc.RecordVersion)
+	if err := d.matchRecordVersion(service.Annotations, xService.RecordVersion); err != nil {
+		return d.resyncToTargetCluster(ctx, xService.SyncStatus.Action, clusterName, xService, xService.RecordVersion)
 	}
 
-	if err := d.clusterManagedServiceRepo.DeleteById(ctx, svc.Id); err != nil {
-		return err
+	if err = d.clusterManagedServiceRepo.DeleteById(ctx, xService.Id); err != nil {
+		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishCMSEvent(svc, PublishDelete)
+	d.resourceEventPublisher.PublishCMSEvent(xService, PublishDelete)
 	return err
 }
 
 func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	svc, err := d.findClusterManagedService(ctx, clusterName, service.Name)
+	xService, err := d.findClusterManagedService(ctx, clusterName, service.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(service.Annotations, svc.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, svc.SyncStatus.Action, clusterName, svc, svc.RecordVersion)
+	if err := d.matchRecordVersion(service.Annotations, xService.RecordVersion); err != nil {
+		return d.resyncToTargetCluster(ctx, xService.SyncStatus.Action, clusterName, xService, xService.RecordVersion)
 	}
 
-	svc.Status = service.Status
+	// Ignore error if annotation don't have record version
+	annVersion, _ := d.parseRecordVersionFromAnnotations(service.Annotations)
 
-	svc.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-	svc.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	svc.SyncStatus.Error = nil
-	svc.SyncStatus.RecordVersion = svc.RecordVersion
-
-	if _, err := d.clusterManagedServiceRepo.UpdateById(ctx, svc.Id, svc); err != nil {
+	if _, err := d.clusterManagedServiceRepo.PatchById(ctx, xService.Id, repos.Document{
+		"metadata.labels":            service.Labels,
+		"metadata.annotations":       service.Annotations,
+		"metadata.generation":        service.Generation,
+		"metadata.creationTimestamp": service.CreationTimestamp,
+		"status":                     service.Status,
+		"syncStatus":  t.SyncStatus{
+			LastSyncedAt: opts.MessageTimestamp,
+			Error: 	  nil,
+			Action:       t.SyncActionApply,
+			RecordVersion: annVersion,
+			State: func() t.SyncState {
+				if status == types.ResourceStatusDeleting {
+					return t.SyncStateDeletingAtAgent
+				}
+				return t.SyncStateUpdatedAtAgent
+			}(),
+		},
+	}); err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishCMSEvent(svc, PublishUpdate)
+	d.resourceEventPublisher.PublishCMSEvent(xService, PublishUpdate)
 	return nil
 }
