@@ -118,6 +118,10 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.NewE(err)
 	}
 
+	if mres.Spec.ResourceTemplate.TypeMeta.GroupVersionKind().GroupKind().Empty() {
+		return nil, errors.New(".spec.resourceTemplate.apiVersion, and .spec.resourceTemplate.kind must be set")
+	}
+
 	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
 	if err != nil {
 		return nil, errors.NewE(err)
