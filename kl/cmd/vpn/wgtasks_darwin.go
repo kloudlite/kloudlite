@@ -36,7 +36,7 @@ func connect(verbose bool) error {
 		}
 	}()
 
-	startServiceInBg()
+	startServiceInBg(ifName)
 	if err := startConfiguration(connectVerbose); err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func setDeviceIp(deviceIp net.IPNet, _ string, verbose bool) error {
 	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
 }
 
-func startService(verbose bool) error {
+func startService(_ string, verbose bool) error {
 
 	t, err := tun.CreateTUN(ifName, device.DefaultMTU)
 	if err != nil {

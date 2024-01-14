@@ -44,7 +44,7 @@ func setDeviceIp(ip net.IPNet, deviceName string, _ bool) error {
 	)
 }
 
-func startService(verbose bool) error {
+func startService(_ string, verbose bool) error {
 	return errors.New(
 		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
@@ -61,4 +61,3 @@ func stopService(verbose bool) error {
 		text.Colored("This command is not available for windows, will be available soon", 209),
 	)
 }
-
