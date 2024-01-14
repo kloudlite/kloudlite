@@ -21,31 +21,33 @@ export const infraQueries = (executor: IExecutor) => ({
   ),
   cli_listCoreDevices: executor(
     gql`
-      query Core_listVPNDevices($pq: CursorPaginationIn) {
-        core_listVPNDevices(pq: $pq) {
-          edges {
-            cursor
-            node {
-              displayName
-              environmentName
-              metadata {
-                name
-              }
-              projectName
-              spec {
-                disabled
-                ports {
-                  port
-                  targetPort
-                }
-              }
+      query Core_listVPNDevicesForUser {
+        core_listVPNDevicesForUser {
+          displayName
+          environmentName
+          markedForDeletion
+          metadata {
+            name
+            namespace
+          }
+          projectName
+          spec {
+            cnameRecords {
+              host
+              target
+            }
+            deviceNamespace
+            disabled
+            ports {
+              port
+              targetPort
             }
           }
         }
       }
     `,
     {
-      transformer: (data: any) => data.core_listVPNDevices,
+      transformer: (data: any) => data.core_listVPNDevicesForUser,
       vars: (_: any) => {},
     }
   ),
