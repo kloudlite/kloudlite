@@ -26,7 +26,12 @@ func connect(verbose bool) error {
 		}
 	}()
 
-	startService(verbose)
+	devName, err := client.CurrentDeviceName()
+	if err != nil {
+		return err
+	}
+
+	startService(devName, verbose)
 
 	if err := startConfiguration(verbose); err != nil {
 		return err
@@ -94,11 +99,7 @@ func resetDNS(verbose bool) error {
 	return os.Rename("/etc/resolv.conf.bak", "/etc/resolv.conf")
 }
 
-func startService(_ bool) error {
-	devName, err := client.CurrentDeviceName()
-	if err != nil {
-		return err
-	}
+func startService(devName string, _ bool) error {
 
 	// Add Wireguard device
 	wgLink := &netlink.GenericLink{

@@ -52,6 +52,13 @@ Example:
 		fn.Log("[#] connecting")
 		time.Sleep(time.Second * 1)
 
+		devName, err := client.CurrentInfraDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		startServiceInBg(devName)
+
 		// startServiceInBg()
 		if err := connect(reconnectVerbose); err != nil {
 			fn.PrintError(err)

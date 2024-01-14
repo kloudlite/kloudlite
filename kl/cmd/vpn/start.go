@@ -14,8 +14,8 @@ import (
 )
 
 // not required in linux
-func startServiceInBg() {
-	command := exec.Command("kl", "vpn", "start-fg")
+func startServiceInBg(devName string) {
+	command := exec.Command("kl", "vpn", "start-fg", "-d", devName)
 	err := command.Start()
 	if err != nil {
 		fmt.Println(err)
@@ -80,6 +80,13 @@ Example:
 				return
 			}
 
+			devName, err := client.CurrentDeviceName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+			startServiceInBg(devName)
+
 			if err := connect(connectVerbose); err != nil {
 				fn.PrintError(err)
 				return
@@ -91,7 +98,12 @@ Example:
 			return
 		}
 
-		startServiceInBg()
+		devName, err := client.CurrentDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		startServiceInBg(devName)
 
 		if err := connect(connectVerbose); err != nil {
 			fn.PrintError(err)

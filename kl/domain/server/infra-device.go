@@ -103,7 +103,7 @@ func GetInfraDevice(options ...fn.Option) (*Device, error) {
 
 func SelectInfraDevice(devName string) (*Device, error) {
 	persistSelectedDevice := func(deviceName string) error {
-		err := client.SelectDevice(deviceName)
+		err := client.SelectInfraDevice(deviceName)
 		if err != nil {
 			return err
 		}
