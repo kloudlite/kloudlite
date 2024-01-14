@@ -25,7 +25,9 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 		return accountname, nil
 	}
 
-	b, err := d.cacheClient.Get(ctx, username+"::"+accountname)
+	key := fmt.Sprintf("%s/%s", accountname, username)
+
+	b, err := d.cacheClient.Get(ctx, key)
 	if err == nil {
 		return string(b), nil
 	}
@@ -42,7 +44,7 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 		return "", errors.Newf("credential not found")
 	}
 
-	if err := d.cacheClient.SetWithExpiry(ctx, username+"::"+accountname, []byte(c.TokenKey), time.Minute*5); err != nil {
+	if err := d.cacheClient.SetWithExpiry(ctx, key, []byte(c.TokenKey), time.Minute*5); err != nil {
 		return "", errors.NewE(err)
 	}
 
