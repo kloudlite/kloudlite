@@ -4976,12 +4976,20 @@ export type ConsoleListConsoleVpnDevicesForUserQueryVariables = Exact<{
 export type ConsoleListConsoleVpnDevicesForUserQuery = {
   core_listVPNDevicesForUser?: Array<{
     accountName: string;
+<<<<<<< HEAD
     apiVersion?: string;
+=======
+    apiVersion: string;
+>>>>>>> 8de1ad26b8e04b8e252c65c4b81ddcc837464b6d
     creationTime: any;
     displayName: string;
     environmentName?: string;
     id: string;
+<<<<<<< HEAD
     kind?: string;
+=======
+    kind: string;
+>>>>>>> 8de1ad26b8e04b8e252c65c4b81ddcc837464b6d
     markedForDeletion?: boolean;
     projectName?: string;
     recordVersion: number;

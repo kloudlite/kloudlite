@@ -540,33 +540,40 @@ export const cliQueries = (executor: IExecutor) => ({
   ),
   cli_listDevices: executor(
     gql`
-      query Core_listVPNDevicesForUser {
-        core_listVPNDevicesForUser {
-          displayName
-          environmentName
-          markedForDeletion
-          metadata {
-            name
-            namespace
-          }
-          projectName
-          spec {
-            cnameRecords {
-              host
-              target
-            }
-            deviceNamespace
-            disabled
-            ports {
-              port
-              targetPort
+      query Infra_listVPNDevices($pq: CursorPaginationIn) {
+        infra_listVPNDevices(pq: $pq) {
+          edges {
+            node {
+              displayName
+              metadata {
+                name
+              }
+              spec {
+                deviceNamespace
+                disabled
+                nodeSelector
+                ports {
+                  port
+                  targetPort
+                }
+              }
+              status {
+                isReady
+                message {
+                  RawMessage
+                }
+              }
+              wireguardConfig {
+                encoding
+                value
+              }
             }
           }
         }
       }
     `,
     {
-      transformer: (data: any) => data.core_listVPNDevicesForUser,
+      transformer: (data: any) => data.infra_listVPNDevices,
       vars: (_: any) => {},
     }
   ),

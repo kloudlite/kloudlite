@@ -31,7 +31,10 @@ import {
 } from '~/console/server/gql/queries/account-queries';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 
-import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
+import {
+  ensureAccountClientSide,
+  ensureAccountSet,
+} from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import MenuSelect from '~/console/components/menu-select';
 import { BreadcrumButtonContent } from '~/console/utils/commons';
@@ -297,6 +300,7 @@ export const loader = async (ctx: IRemixCtx) => {
   let acccountData: IAccount;
 
   try {
+    ensureAccountSet(ctx);
     const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
       accountName: account,
     });

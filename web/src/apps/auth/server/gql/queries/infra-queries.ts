@@ -5,15 +5,10 @@ export const infraQueries = (executor: IExecutor) => ({
   cli_CoreCheckNameAvailability: executor(
     gql`
       query Core_checkNameAvailability(
-        $projectName: String!
         $resType: ConsoleResType!
         $name: String!
       ) {
-        core_checkNameAvailability(
-          projectName: $projectName
-          resType: $resType
-          name: $name
-        ) {
+        core_checkNameAvailability(resType: $resType, name: $name) {
           result
           suggestedNames
         }
@@ -26,31 +21,37 @@ export const infraQueries = (executor: IExecutor) => ({
   ),
   cli_listCoreDevices: executor(
     gql`
-      query Core_listVPNDevices($pq: CursorPaginationIn) {
-        core_listVPNDevices(pq: $pq) {
-          edges {
-            cursor
-            node {
-              displayName
-              environmentName
-              metadata {
-                name
-              }
-              projectName
-              spec {
-                disabled
-                ports {
-                  port
-                  targetPort
-                }
-              }
+      query Core_listVPNDevicesForUser {
+        core_listVPNDevicesForUser {
+          displayName
+          environmentName
+          metadata {
+            name
+          }
+          projectName
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
+          spec {
+            cnameRecords {
+              host
+              target
+            }
+            deviceNamespace
+            disabled
+            ports {
+              port
+              targetPort
             }
           }
         }
       }
     `,
     {
-      transformer: (data: any) => data.core_listVPNDevices,
+      transformer: (data: any) => data.core_listVPNDevicesForUser,
       vars: (_: any) => {},
     }
   ),
