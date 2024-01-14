@@ -39,7 +39,7 @@ const KlOperatorServices = () => {
         return (
           <Wrapper
             header={{
-              title: 'Managed services',
+              title: 'Managed resources',
               action: managedResources.length > 0 && (
                 <Button
                   variant="primary"

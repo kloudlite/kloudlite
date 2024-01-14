@@ -23,7 +23,11 @@ import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import HandleScope from '~/console/page-components/new-scope';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import {
   ensureAccountClientSide,
   ensureAccountSet,
@@ -40,7 +44,10 @@ import {
   BreadcrumSlash,
   tabIconSize,
 } from '~/console/utils/commons';
-import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
+import {
+  IEnvironment,
+  IEnvironments,
+} from '~/console/server/gql/queries/environment-queries';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { cn } from '~/components/utils';
 import { IProjectContext } from '../_layout';
@@ -129,7 +136,9 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
   const params = useParams();
 
   const [showPopup, setShowPopup] = useState<any>(null);
-  const [environments, setEnvironments] = useState<IEnvironment[]>([]);
+  const [environments, setEnvironments] = useState<
+    ExtractNodeType<IEnvironments>[]
+  >([]);
 
   const api = useConsoleApi();
   const [search, setSearch] = useState('');

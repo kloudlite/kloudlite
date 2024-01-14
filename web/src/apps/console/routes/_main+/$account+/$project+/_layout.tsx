@@ -74,7 +74,7 @@ const tabs = [
 ];
 
 const Project = () => {
-  const rootContext = useOutletContext<IClusterContext>();
+  const rootContext = useOutletContext<IAccountContext>();
   const { project, msvtemplates } = useLoaderData();
   return (
     <SubNavDataProvider>

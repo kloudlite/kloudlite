@@ -52,7 +52,7 @@ export const updateProject = async ({
 };
 
 const ProjectSettingGeneral = () => {
-  const { project, account, cluster } = useOutletContext<IProjectContext>();
+  const { project, account } = useOutletContext<IProjectContext>();
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
 

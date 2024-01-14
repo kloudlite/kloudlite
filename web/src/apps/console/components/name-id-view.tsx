@@ -108,8 +108,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
     }, [displayName, name]);
 
     const checkNameAvailable = () => {
-      console.log('inside ', errors);
-
       if (errors) {
         // onCheckError?.(true);
         return errors;

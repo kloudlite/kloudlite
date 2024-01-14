@@ -2613,7 +2613,16 @@ export type ConsoleListRoutersQuery = {
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
-        spec: { domains: Array<string> };
+        spec: {
+          domains: Array<string>;
+          routes?: Array<{
+            app?: string;
+            lambda?: string;
+            path: string;
+            port: number;
+            rewrite?: boolean;
+          }>;
+        };
         status?: {
           checks?: any;
           isReady: boolean;
@@ -4976,20 +4985,12 @@ export type ConsoleListConsoleVpnDevicesForUserQueryVariables = Exact<{
 export type ConsoleListConsoleVpnDevicesForUserQuery = {
   core_listVPNDevicesForUser?: Array<{
     accountName: string;
-<<<<<<< HEAD
     apiVersion?: string;
-=======
-    apiVersion: string;
->>>>>>> 8de1ad26b8e04b8e252c65c4b81ddcc837464b6d
     creationTime: any;
     displayName: string;
     environmentName?: string;
     id: string;
-<<<<<<< HEAD
     kind?: string;
-=======
-    kind: string;
->>>>>>> 8de1ad26b8e04b8e252c65c4b81ddcc837464b6d
     markedForDeletion?: boolean;
     projectName?: string;
     recordVersion: number;
@@ -5025,7 +5026,6 @@ export type ConsoleDeleteConsoleVpnDeviceMutation = {
 };
 
 export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
-  projectName: Scalars['String']['input'];
   resType: ConsoleResType;
   name: Scalars['String']['input'];
 }>;
@@ -5038,25 +5038,23 @@ export type AuthCli_CoreCheckNameAvailabilityQuery = {
 };
 
 export type AuthCli_ListCoreDevicesQueryVariables = Exact<{
-  pq?: InputMaybe<CursorPaginationIn>;
+  [key: string]: never;
 }>;
 
 export type AuthCli_ListCoreDevicesQuery = {
-  core_listVPNDevices?: {
-    edges: Array<{
-      cursor: string;
-      node: {
-        displayName: string;
-        environmentName?: string;
-        projectName?: string;
-        metadata?: { name: string };
-        spec?: {
-          disabled?: boolean;
-          ports?: Array<{ port?: number; targetPort?: number }>;
-        };
-      };
-    }>;
-  };
+  core_listVPNDevicesForUser?: Array<{
+    displayName: string;
+    environmentName?: string;
+    projectName?: string;
+    metadata?: { name: string };
+    status?: { isReady: boolean; message?: { RawMessage?: any } };
+    spec?: {
+      deviceNamespace?: string;
+      disabled?: boolean;
+      cnameRecords?: Array<{ host?: string; target?: string }>;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+  }>;
 };
 
 export type AuthCli_GetCoreDeviceQueryVariables = Exact<{
@@ -5421,22 +5419,27 @@ export type AuthCli_UpdateDeviceMutation = {
   };
 };
 
-export type AuthCli_ListDevicesQueryVariables = Exact<{ [key: string]: never }>;
+export type AuthCli_ListDevicesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
 
 export type AuthCli_ListDevicesQuery = {
-  core_listVPNDevicesForUser?: Array<{
-    displayName: string;
-    environmentName?: string;
-    markedForDeletion?: boolean;
-    projectName?: string;
-    metadata?: { name: string; namespace?: string };
-    spec?: {
-      deviceNamespace?: string;
-      disabled?: boolean;
-      cnameRecords?: Array<{ host?: string; target?: string }>;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-  }>;
+  infra_listVPNDevices?: {
+    edges: Array<{
+      node: {
+        displayName: string;
+        metadata?: { name: string };
+        spec?: {
+          deviceNamespace?: string;
+          disabled?: boolean;
+          nodeSelector?: any;
+          ports?: Array<{ port?: number; targetPort?: number }>;
+        };
+        status?: { isReady: boolean; message?: { RawMessage?: any } };
+        wireguardConfig?: { encoding: string; value: string };
+      };
+    }>;
+  };
 };
 
 export type AuthCli_GetDeviceQueryVariables = Exact<{

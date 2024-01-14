@@ -123,6 +123,13 @@ export const routerQueries = (executor: IExecutor) => ({
               recordVersion
               spec {
                 domains
+                routes {
+                  app
+                  lambda
+                  path
+                  port
+                  rewrite
+                }
               }
               status {
                 checks

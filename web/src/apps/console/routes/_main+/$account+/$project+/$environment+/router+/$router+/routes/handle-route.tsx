@@ -20,7 +20,7 @@ import { useMapper } from '~/components/utils';
 import { NN } from '~/root/lib/types/common';
 import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
-import { IApp } from '~/console/server/gql/queries/app-queries';
+import { IApps } from '~/console/server/gql/queries/app-queries';
 import { ModifiedRouter } from './_index';
 
 type IDialog = IDialogBase<
@@ -33,7 +33,7 @@ const Root = (props: IDialog) => {
   const reloadPage = useReload();
 
   const { project: projectName, environment: envName } = useParams();
-  const [selectedApp, setSelectedApp] = useState<IApp>();
+  const [selectedApp, setSelectedApp] = useState<ExtractNodeType<IApps>>();
 
   const {
     data,

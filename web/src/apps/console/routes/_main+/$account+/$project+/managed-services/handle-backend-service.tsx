@@ -47,7 +47,7 @@ const RenderField = ({
   errors,
   fieldKey,
 }: {
-  field: NN<ISelectedService>['service']['fields'][number];
+  field: NN<NN<ISelectedService>['service']>['fields'][number];
   onChange: (e: string) => (e: { target: { value: any } }) => void;
   value: any;
   errors: {

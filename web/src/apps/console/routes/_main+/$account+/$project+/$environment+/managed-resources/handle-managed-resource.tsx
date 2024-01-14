@@ -41,7 +41,7 @@ const RenderField = ({
   errors,
   fieldKey,
 }: {
-  field: NN<ISelectedService>['service']['fields'][number];
+  field: NN<NN<ISelectedService>['service']>['fields'][number];
   onChange: (e: string) => (e: { target: { value: any } }) => void;
   value: any;
   errors: Record<string, any>;
@@ -337,7 +337,7 @@ const HandleManagedResources = (props: IDialog) => {
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>
-        {isUpdate ? 'Edit managed service' : 'Add managed service'}
+        {isUpdate ? 'Edit managed resource' : 'Add managed resource'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
