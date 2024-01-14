@@ -172,6 +172,7 @@ func (d *domain) upsertInfraDevice(ctx ConsoleContext, device *entities.ConsoleV
 	}
 
 	return d.infraClient.UpsertVpnDevice(ctx, &infra.UpsertVpnDeviceIn{
+		Id:          string(device.Id),
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
 		VpnDevice:   deviceBytes,
