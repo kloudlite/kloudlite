@@ -252,6 +252,8 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 		"metadata.generation":        service.Generation,
 		"metadata.creationTimestamp": service.CreationTimestamp,
 
+		"syncedOutputSecretRef": service.SyncedOutputSecretRef,
+
 		"status": service.Status,
 		"syncStatus.state": func() t.SyncState {
 			if status == types.ResourceStatusDeleting {

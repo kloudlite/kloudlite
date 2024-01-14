@@ -146,15 +146,18 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if v, ok := ru.Object[types.KeyProjectManagedSvcSecret]; ok {
-					if v2, ok := v.(*corev1.Secret); ok {
-						pmsvc.SyncedOutputSecretRef = v2
+					s, err := fn.JsonConvertP[corev1.Secret](v)
+					s.SetManagedFields(nil)
+					if err != nil {
+						return err
 					}
+					pmsvc.SyncedOutputSecretRef = s
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
 					return d.OnProjectManagedServiceDeleteMessage(dctx, mapping.ProjectName, pmsvc)
 				}
-				return d.OnProjectManagedServiceUpdateMessage(dctx, pmsvc.ProjectName, pmsvc, resStatus, opts)
+				return d.OnProjectManagedServiceUpdateMessage(dctx, mapping.ProjectName, pmsvc, resStatus, opts)
 			}
 
 		case environmentGVK.String():
