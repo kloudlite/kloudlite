@@ -241,6 +241,9 @@ var Module = fx.Module("app",
 	),
 
 	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain, logger logging.Logger) {
+
+		authLogger := logger.WithKV("route", "/auth")
+
 		a := server.Raw()
 		a.Post("/events", func(c *fiber.Ctx) error {
 			ctx := c.Context()
@@ -273,6 +276,7 @@ var Module = fx.Module("app",
 			if method == "HEAD" {
 				return c.Next()
 			}
+			logger.Infof("path: %s, method: %s", path, method)
 
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
@@ -283,15 +287,18 @@ var Module = fx.Module("app",
 
 					userName, accountName, _, err := registryAuth.ParseToken(p)
 					if err != nil {
+						authLogger.Errorf(err, "could not parse token")
 						return false
 					}
 
 					s, err := d.GetTokenKey(context.TODO(), userName, accountName)
 					if err != nil {
+						authLogger.Errorf(err, "could not get token key")
 						return false
 					}
 
 					if err := registryAuth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
+						authLogger.Errorf(err, "could not authorize")
 						return false
 					}
 					return true
