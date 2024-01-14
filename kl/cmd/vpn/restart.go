@@ -20,7 +20,7 @@ var restartCmd = &cobra.Command{
 	Long: `This command let you restart vpn device.
 Example:
   # restart vpn device
-  kl vpn restart
+  sudo kl vpn restart
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 

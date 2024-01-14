@@ -33,7 +33,7 @@ func CurrentDeviceName() (string, error) {
 	}
 	if file.DeviceName == "" {
 		return "",
-			errors.New("no selected device. please select one using \"kl infra vpn switch\"")
+			errors.New("no selected device. please select one using \"kl vpn switch\"")
 	}
 	return file.DeviceName, nil
 }

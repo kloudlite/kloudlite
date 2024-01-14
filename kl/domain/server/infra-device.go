@@ -18,7 +18,7 @@ type Device struct {
 	Metadata    Metadata `json:"metadata"`
 	DisplayName string   `json:"displayName"`
 	Status      Status   `json:"status"`
-	EnvName     string   `json:"enviromentName"`
+	EnvName     string   `json:"environmentName"`
 	ProjectName string   `json:"projectName"`
 	Spec        struct {
 		CnameRecords []struct {

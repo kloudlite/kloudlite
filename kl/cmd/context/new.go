@@ -89,11 +89,14 @@ Example:
 			return
 		}
 
-		if err := client.WriteContextFile(client.Context{
-			AccountName: a.Metadata.Name,
-			Name:        name,
-			DeviceName:  d,
-		}); err != nil {
+		context, err := client.GetActiveContext()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		context.DeviceName = d
+
+		if err := client.WriteContextFile(*context); err != nil {
 			fn.PrintError(err)
 			return
 		}

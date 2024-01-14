@@ -60,14 +60,14 @@ Examples:
 		}
 
 		if !deleteFlag {
-			if err := server.UpdateInfraDevice(ports); err != nil {
+			if err := server.UpdateDevice(ports); err != nil {
 				fn.PrintError(err)
 				return
 			}
 
 			fmt.Println("ports exposed")
 		} else {
-			if err := server.DeleteInfraDevicePort(ports); err != nil {
+			if err := server.DeleteDevicePort(ports); err != nil {
 				fn.PrintError(err)
 				return
 			}

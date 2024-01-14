@@ -3,6 +3,7 @@ package vpn
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
 	"net"
 	"os"
 	"strings"
@@ -19,20 +20,24 @@ func configureDarwin(_ string, _ bool) error {
 }
 
 func connect(verbose bool) error {
+
 	success := false
 	defer func() {
 		if !success {
 			stopService(verbose)
 		}
 	}()
+	_, err := server.EnsureProject()
+	if err != nil {
+		return err
+	}
 
 	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
 
-	startService(devName, verbose)
-
+	_ = startService(devName, verbose)
 	if err := startConfiguration(verbose); err != nil {
 		return err
 	}

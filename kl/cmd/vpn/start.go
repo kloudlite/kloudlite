@@ -51,7 +51,7 @@ var startCmd = &cobra.Command{
 	Long: `This command let you start vpn device.
 Example:
   # start vpn device
-  kl vpn start
+  sudo kl vpn start
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {

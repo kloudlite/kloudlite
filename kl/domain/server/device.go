@@ -28,11 +28,10 @@ func ListDevices() ([]Device, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	if fromResp, err := GetFromRespForEdge[Device](respData); err != nil {
+	if fromResp, err := GetFromResp[[]Device](respData); err != nil {
 		return nil, err
 	} else {
-		return fromResp, nil
+		return *fromResp, nil
 	}
 }
 
@@ -95,15 +94,23 @@ func SelectDevice(devName string) (*Device, error) {
 		if err != nil {
 			return nil, err
 		}
-		//suggestedNames, err := GetDeviceName(deviceName)
-		//if err != nil {
-		//	return nil, err
-		//}
-		//selectedDeviceName, err := SelectDeviceName(suggestedNames.SuggestedNames)
-		//device, err := CreateDevice(selectedDeviceName, deviceName)
-		device, err := CreateDevice(deviceName, deviceName)
+		suggestedNames, err := GetDeviceName(deviceName)
 		if err != nil {
 			fn.PrintError(err)
+			return nil, err
+		}
+		selectedDeviceName := ""
+		if suggestedNames.Result == true {
+			selectedDeviceName = deviceName
+		} else {
+			selectedDeviceName, err = SelectDeviceName(suggestedNames.SuggestedNames)
+			if err != nil {
+				return nil, err
+			}
+		}
+		device, err := CreateDevice(selectedDeviceName, deviceName)
+		//device, err := CreateDevice(deviceName, deviceName)
+		if err != nil {
 			return nil, err
 		}
 		fmt.Println(deviceName, "has been created")
@@ -130,6 +137,11 @@ func SelectDevice(devName string) (*Device, error) {
 }
 
 func GetDeviceName(devName string) (*CheckName, error) {
+	_, err := EnsureAccount()
+	if err != nil {
+		return nil, err
+	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -168,6 +180,10 @@ func SelectDeviceName(suggestedNames []string) (string, error) {
 }
 
 func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
+	_, err := EnsureAccount()
+	if err != nil {
+		return nil, err
+	}
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -282,7 +298,7 @@ func DeleteDevicePort(ports []DevicePort) error {
 		return err
 	}
 
-	respData, err := klFetch("cli_updateDevicePort", map[string]any{
+	respData, err := klFetch("cli_CoreUpdateDevicePorts", map[string]any{
 		"clusterName": clusterName,
 		"deviceName":  devName,
 		"ports":       device.Spec.Ports,
@@ -317,7 +333,6 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return dev.Metadata.Name, nil
 }
 
@@ -348,8 +363,8 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 	if err != nil {
 		return err
 	}
-
-	respData, err := klFetch("cli_updateDeviceNs", map[string]any{
+	fmt.Println(projectName, env)
+	respData, err := klFetch("cli_CoreUpdateDeviceEnv", map[string]any{
 		"deviceName":  devName,
 		"envName":     env.Name,
 		"projectName": projectName,
