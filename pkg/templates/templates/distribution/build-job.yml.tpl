@@ -29,6 +29,7 @@ spec:
   template:
     metadata:
       name: build-{{ $name }}
+      annotations: {{ $annotations | toJson }}
     spec:
       containers:
       - name: build-and-push
