@@ -36,7 +36,7 @@ func connect(verbose bool) error {
 		}
 	}()
 
-	startServiceInBg()
+	startServiceInBg(ifName)
 	if err := startConfiguration(connectVerbose); err != nil {
 		return err
 	}
