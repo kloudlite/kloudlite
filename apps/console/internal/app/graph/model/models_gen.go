@@ -309,10 +309,12 @@ type GithubComKloudliteOperatorApisCrdsV1InterceptIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
+	ResourceName     *string                                                   `json:"resourceName,omitempty"`
 	ResourceTemplate *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate `json:"resourceTemplate"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
+	ResourceName     *string                                                     `json:"resourceName,omitempty"`
 	ResourceTemplate *GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn `json:"resourceTemplate"`
 }
 
@@ -332,8 +334,10 @@ type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplateIn struct {
-	MsvcRef *GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn `json:"msvcRef"`
-	Spec    map[string]interface{}                              `json:"spec"`
+	APIVersion string                                              `json:"apiVersion"`
+	Kind       string                                              `json:"kind"`
+	MsvcRef    *GithubComKloudliteOperatorApisCrdsV1MsvcNamedRefIn `json:"msvcRef"`
+	Spec       map[string]interface{}                              `json:"spec"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MsvcNamedRef struct {

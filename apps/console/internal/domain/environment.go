@@ -18,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 )
@@ -264,6 +263,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		app.EnvironmentName = destinationEnvName
 		app.Id = d.appRepo.NewId()
 		app.PrimitiveId = ""
+		app.Spec.Intercept = nil
 		err := cloneResource(resContext, d, d.appRepo, app, &app.App)
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -304,6 +304,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		managedResource.EnvironmentName = destinationEnvName
 		managedResource.Id = d.mresRepo.NewId()
 		managedResource.PrimitiveId = ""
+		managedResource.Spec.ResourceName = fmt.Sprintf("env-%s-%s", destinationEnvName, managedResource.Name)
 		err := cloneResource(resContext, d, d.mresRepo, managedResource, &managedResource.ManagedResource)
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -396,106 +397,23 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	env.MarkedForDeletion = fn.New(true)
-	env.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, env.RecordVersion)
-	if _, err := d.environmentRepo.UpdateById(ctx, env.Id, env); err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
+	if !env.IsMarkedForDeletion() {
+		patch := repos.Document{
+			"markedForDeletion":          true,
+			"syncStatus.syncScheduledAt": time.Now(),
+			"syncStatus.action":          t.SyncActionDelete,
+			"syncStatus.state":           t.SyncStateIdle,
+		}
 
-	resContext := ResourceContext{
-		ConsoleContext:  ctx,
-		ProjectName:     env.ProjectName,
-		EnvironmentName: name,
-	}
-	apps, err := d.appRepo.Find(ctx, repos.Query{
-		Filter: resContext.DBFilters(),
-		Sort:   nil,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	secrets, err := d.secretRepo.Find(ctx, repos.Query{
-		Filter: resContext.DBFilters(),
-		Sort:   nil,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	configs, err := d.configRepo.Find(ctx, repos.Query{
-		Filter: resContext.DBFilters(),
-		Sort:   nil,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	routers, err := d.routerRepo.Find(ctx, repos.Query{
-		Filter: resContext.DBFilters(),
-		Sort:   nil,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	managedResources, err := d.mresRepo.Find(ctx, repos.Query{
-		Filter: resContext.DBFilters(),
-		Sort:   nil,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	for _, app := range apps {
-		err := d.DeleteApp(resContext, app.Name)
-		if err != nil {
+		if _, err := d.environmentRepo.PatchById(ctx, env.Id, patch); err != nil {
 			return errors.NewE(err)
 		}
-	}
-
-	for _, secret := range secrets {
-		err := d.DeleteSecret(resContext, secret.Name)
-		if err != nil {
-			return errors.NewE(err)
-		}
-	}
-
-	for _, config := range configs {
-		err := d.DeleteConfig(resContext, config.Name)
-		if err != nil {
-			return errors.NewE(err)
-		}
-	}
-
-	for _, router := range routers {
-		err := d.DeleteRouter(resContext, router.Name)
-		if err != nil {
-			return errors.NewE(err)
-		}
-	}
-
-	for _, managedResource := range managedResources {
-		err := d.DeleteManagedResource(resContext, managedResource.Name)
-		if err != nil {
-			return errors.NewE(err)
-		}
+		d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
 	}
 
 	if err := d.deleteK8sResource(ctx, env.ProjectName, &env.Environment); err != nil {
 		return errors.NewE(err)
 	}
-
-	// FIXME (nxtcoder17): Should this be performed ?
-	// if err := d.deleteK8sResource(ctx, env.ProjectName, &corev1.Namespace{
-	// 	TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name: env.Spec.TargetNamespace,
-	// 	},
-	// }); err != nil {
-	// 	return errors.NewE(err)
-	// }
 
 	return nil
 }
