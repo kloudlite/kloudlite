@@ -20,14 +20,6 @@ import generateColor from './color-generator';
 import Pulsable from './pulsable';
 import { logsMockData } from '../dummy/data';
 
-const mockDataRef = Array.from({ length: 15 }).map(() => {
-  return {
-    pod_name: 'main',
-    message: logsMockData[Math.floor(Math.random() * 10)],
-    timestamp: dayjs().toISOString(),
-  };
-});
-
 const hoverClass = `hover:bg-[#ddd]`;
 const hoverClassDark = `hover:bg-[#333]`;
 
@@ -398,31 +390,6 @@ const LogBlock = ({
 }: ILogBlock) => {
   const [searchText, setSearchText] = useState('');
 
-  // const temp: { res: ILogWithPodName[]; id: number } = {
-  //   res: [],
-  //   id: 1,
-  // };
-
-  // const flatLogs = useCallback(
-  //   () =>
-  //     data.reduce((acc, curr, index) => {
-  //       const { id } = acc;
-  //       const tres = [
-  //         ...acc.res,
-  //         {
-  //           ...curr,
-  //           lineNumber: id,
-  //         },
-  //       ];
-  //
-  //       return {
-  //         id,
-  //         res: tres,
-  //       };
-  //     }, temp).res,
-  //   [data]
-  // )();
-
   const searchResult = useSearch(
     {
       data,
@@ -786,7 +753,7 @@ const LogComp = ({
         ) : (
           <LogBlock
             {...{
-              data: isLoading ? mockDataRef : logs,
+              data: isLoading ? logsMockData : logs,
               follow,
               dark,
               enableSearch,
