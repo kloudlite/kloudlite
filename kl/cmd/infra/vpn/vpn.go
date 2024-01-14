@@ -11,25 +11,25 @@ var Cmd = &cobra.Command{
 	Long: `work with vpn
 Examples:
 	# start vpn
-  kl vpn start
+  kl infra vpn start
 
 	# stop vpn
-	kl vpn stop
+	kl infra vpn stop
 
 	# restart vpn
-	kl vpn restart
+	kl infra vpn restart
 
 	# status vpn
-	kl vpn status
+	kl infra vpn status
 
 	# list all vpn
-	kl vpn list
+	kl infra vpn list
 
 	# switch to vpn
-	kl vpn switch <vpn_name>
+	kl infra vpn switch <vpn_name>
 
 	# remove vpn
-	kl vpn remove <vpn_name>
+	kl infra vpn remove <vpn_name>
 	`,
 }
 
@@ -42,7 +42,6 @@ func init() {
 	Cmd.AddCommand(switchCmd)
 	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(startCmd)
-	Cmd.AddCommand(startFgCmd)
 	Cmd.AddCommand(stopCmd)
 	Cmd.AddCommand(statusCmd)
 	Cmd.AddCommand(activateCmd)

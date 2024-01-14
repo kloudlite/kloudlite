@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/input"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -10,6 +11,11 @@ import (
 )
 
 func ListDevices() ([]Device, error) {
+
+	_, err := EnsureAccount()
+	if err != nil {
+		return nil, err
+	}
 
 	cookie, err := getCookie()
 	if err != nil {
@@ -79,6 +85,29 @@ func SelectDevice(devName string) (*Device, error) {
 			}
 		}
 		return nil, errors.New("you don't have access to this device")
+	}
+	if len(devices) == 0 {
+		deviceName, err := input.Prompt(input.Options{
+			Placeholder: "Enter device name",
+			CharLimit:   25,
+			Password:    false,
+		})
+		if err != nil {
+			return nil, err
+		}
+		//suggestedNames, err := GetDeviceName(deviceName)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//selectedDeviceName, err := SelectDeviceName(suggestedNames.SuggestedNames)
+		//device, err := CreateDevice(selectedDeviceName, deviceName)
+		device, err := CreateDevice(deviceName, deviceName)
+		if err != nil {
+			fn.PrintError(err)
+			return nil, err
+		}
+		fmt.Println(deviceName, "has been created")
+		return device, nil
 	}
 
 	device, err := fzf.FindOne(

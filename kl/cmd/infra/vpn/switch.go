@@ -2,6 +2,7 @@ package vpn
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -14,10 +15,10 @@ var switchCmd = &cobra.Command{
 	Long: `This command let switch between different vpn devices.
 Example:
   # switch to vpn device
-  kl vpn switch
+  kl infra vpn switch
 
 	# switch to vpn device with device name
-	kl vpn switch --name <device_name>
+	kl infra vpn switch --name <device_name>
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		name := ""
@@ -26,6 +27,19 @@ Example:
 		}
 
 		d, err := server.SelectInfraDevice(name)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		activeInfraContext, err := client.GetActiveInfraContext()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		activeInfraContext.DeviceName = d.Metadata.Name
+
+		err = client.WriteInfraContextFile(*activeInfraContext)
 		if err != nil {
 			fn.PrintError(err)
 			return

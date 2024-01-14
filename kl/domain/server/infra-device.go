@@ -44,7 +44,11 @@ const (
 )
 
 func ListInfraDevices() ([]Device, error) {
-	cookie, err := getCookie()
+	_, err := EnsureAccount(fn.MakeOption("isInfra", "yes"))
+	if err != nil {
+		return nil, err
+	}
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +81,7 @@ func GetInfraDevice(options ...fn.Option) (*Device, error) {
 
 	devName, err = EnsureInfraDevice(options...)
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +152,7 @@ func GetInfraDeviceName(devName string) (*CheckName, error) {
 		return nil, err
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +196,7 @@ func CreateInfraDevice(selectedDeviceName string, devName string) (*Device, erro
 		return nil, err
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +258,7 @@ func UpdateInfraDevice(ports []DevicePort) error {
 		return err
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return err
 	}
@@ -309,7 +313,7 @@ func DeleteInfraDevicePort(ports []DevicePort) error {
 
 	device.Spec.Ports = newPorts
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return err
 	}
@@ -338,7 +342,7 @@ func EnsureInfraDevice(options ...fn.Option) (string, error) {
 		return devName, nil
 	}
 
-	devName, _ = client.CurrentDeviceName()
+	devName, _ = client.CurrentInfraDeviceName()
 
 	if devName != "" {
 		return devName, nil
@@ -364,7 +368,7 @@ func UpdateInfraDeviceNS(namespace string) error {
 		return err
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getInfraCookie()
 	if err != nil {
 		return err
 	}

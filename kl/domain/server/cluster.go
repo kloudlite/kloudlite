@@ -28,7 +28,7 @@ type Cluster struct {
 func ListClusters() ([]Cluster, error) {
 	s, _ := client.CurrentInfraAccountName()
 	if s == "" {
-		_, err := client.GetInfraContextFile()
+		_, err := client.GetActiveInfraContext()
 		if err != nil {
 			return nil, err
 		}
@@ -109,6 +109,7 @@ func EnsureCluster(options ...fn.Option) (string, error) {
 
 	_, err := EnsureAccount(
 		fn.MakeOption("accountName", accountName),
+		fn.MakeOption("isInfra", "yes"),
 	)
 	if err != nil {
 		return "", err

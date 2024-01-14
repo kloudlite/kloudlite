@@ -20,7 +20,7 @@ import (
 
 func getDeviceSelect() (*server.Device, error) {
 
-	devName, err := client.CurrentDeviceName()
+	devName, err := client.CurrentInfraDeviceName()
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func getDeviceSelect() (*server.Device, error) {
 			return &d, err
 		}
 	}
-	return nil, errors.New("plese select a device first using \"kl use device\"")
+	return nil, errors.New("please select an infra context first using \"kl infra vpn switch\"")
 
 }
 
@@ -45,7 +45,7 @@ func startConfiguration(verbose bool) error {
 		return err
 	}
 	if len(devices) == 0 {
-		return errors.New("no Devices found")
+		return errors.New("no infra Devices found")
 	}
 	device, err := getDeviceSelect()
 	if err != nil {

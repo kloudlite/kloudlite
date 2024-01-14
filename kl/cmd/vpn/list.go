@@ -17,7 +17,7 @@ var listCmd = &cobra.Command{
 	Long: `This command let you list all contexts.
 Example:
   # list all contexts
-  kl context list
+  kl vpn list
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		if err := listDevices(cmd); err != nil {

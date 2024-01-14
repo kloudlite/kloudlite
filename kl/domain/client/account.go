@@ -3,7 +3,7 @@ package client
 import "errors"
 
 func SelectAccount(accountName string) error {
-	file, err := GetContextFile()
+	file, err := GetActiveContext()
 	if err != nil {
 		return err
 	}
@@ -19,31 +19,31 @@ func SelectAccount(accountName string) error {
 }
 
 func CurrentAccountName() (string, error) {
-	file, err := GetContextFile()
+	file, err := GetActiveContext()
 	if err != nil {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "", errors.New("noSelectedCluster")
+		return "", errors.New("noSelectedContext")
 	}
 	if file.AccountName == "" {
 		return "",
-			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
+			errors.New("no context is selected yet. please select one using \"kl context switch\"")
 	}
 	return file.AccountName, nil
 }
 
 func CurrentInfraAccountName() (string, error) {
-	file, err := GetInfraContextFile()
+	file, err := GetActiveInfraContext()
 	if err != nil {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "", errors.New("noSelectedCluster")
+		return "", errors.New("noSelectedInfraContext")
 	}
 	if file.AccountName == "" {
 		return "",
-			errors.New("no accounts is selected yet. please select one using \"kl use account\"")
+			errors.New("no infra context is selected yet. please select one using \"kl infra context switch\"")
 	}
 	return file.AccountName, nil
 }

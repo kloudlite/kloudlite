@@ -69,7 +69,7 @@ func SelectSecret(options ...fn.Option) (*Secret, error) {
 	}
 
 	if len(secrets) == 0 {
-		return nil, errors.New("no configs found")
+		return nil, errors.New("no secret found")
 	}
 
 	secret, err := fzf.FindOne(

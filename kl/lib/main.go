@@ -6,7 +6,7 @@ import (
 
 func SelectProject(projectId string) error {
 
-	file, err := client.GetContextFile()
+	file, err := client.GetActiveContext()
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func SelectProject(projectId string) error {
 
 func SelectDevice(deviceId string) error {
 
-	file, err := client.GetContextFile()
+	file, err := client.GetActiveContext()
 	if err != nil {
 		return err
 	}
