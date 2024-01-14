@@ -19,10 +19,10 @@ var exposeCmd = &cobra.Command{
 	Long: `expose port
 Examples:
   # expose port of selected device
-	kl vpn expose port -p <port>:<your_local_port>
+	kl infra vpn expose port -p <port>:<your_local_port>
 
   # delete exposed port of selected device
-	kl vpn expose port -d -p <port>:<your_local_port> 
+	kl infra vpn expose port -d -p <port>:<your_local_port> 
 `,
 	Run: func(_ *cobra.Command, _ []string) {
 		if len(maps) == 0 {

@@ -14,10 +14,10 @@ var newCmd = &cobra.Command{
 	Long: `This command let create new context.
 Example:
   # create new context
-  kl context new
+  kl infra vpn new
 
 	# creating new context with name
-	kl context new --name <context_name>
+	kl infra vpn   --name <context_name>
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		deviceName := ""
@@ -45,13 +45,22 @@ Example:
 			fn.PrintError(err)
 			return
 		}
-		selectedDeviceName, err := server.SelectInfraDeviceName(suggestedNames.SuggestedNames)
+		selectedDeviceName := ""
+		if suggestedNames.Result == true {
+			selectedDeviceName = deviceName
+		} else {
+			selectedDeviceName, err = server.SelectInfraDeviceName(suggestedNames.SuggestedNames)
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+		}
 		device, err := server.CreateInfraDevice(selectedDeviceName, deviceName)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-		fn.Log(fmt.Sprintf("device %s has been created\n", device))
+		fn.Log(fmt.Sprintf("device %s has been created\n", device.Metadata.Name))
 	},
 }
 

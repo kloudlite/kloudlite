@@ -25,15 +25,10 @@ Example:
 		name := ""
 		accountName := ""
 		deviceName := ""
-		if cmd.Flags().Changed("name") {
-			name, _ = cmd.Flags().GetString("name")
-		}
-		if cmd.Flags().Changed("account") {
-			accountName, _ = cmd.Flags().GetString("account")
-		}
-		if cmd.Flags().Changed("device") {
-			deviceName, _ = cmd.Flags().GetString("device")
-		}
+
+		name = fn.ParseStringFlag(cmd, "name")
+		accountName = fn.ParseStringFlag(cmd, "account")
+		deviceName = fn.ParseStringFlag(cmd, "device")
 
 		if name == "" {
 			var err error
@@ -84,7 +79,7 @@ Example:
 			return
 		}
 
-		d, err := server.EnsureInfraDevice([]fn.Option{
+		d, err := server.EnsureDevice([]fn.Option{
 			fn.MakeOption("accountName", a.Metadata.Name),
 			fn.MakeOption("deviceName", deviceName),
 		}...)
@@ -94,11 +89,14 @@ Example:
 			return
 		}
 
-		if err := client.WriteContextFile(client.Context{
-			AccountName: a.Metadata.Name,
-			Name:        name,
-			DeviceName:  d,
-		}); err != nil {
+		context, err := client.GetActiveContext()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		context.DeviceName = d
+
+		if err := client.WriteContextFile(*context); err != nil {
 			fn.PrintError(err)
 			return
 		}

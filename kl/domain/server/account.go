@@ -85,23 +85,35 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return accountName, nil
 	}
 
+	//if isInfra {
+	//	s, _ := client.CurrentInfraAccountName()
+	//	if s != "" {
+	//		return s, nil
+	//	}
+	//} else {
+	//	s, _ := client.CurrentAccountName()
+	//	if s != "" {
+	//		return s, nil
+	//	}
+	//}
+	//
+	//account, err := SelectAccount(accountName)
+	//
+	//if err != nil {
+	//	return "", err
+	//}
+	var s string
 	if isInfra {
-		s, _ := client.CurrentInfraAccountName()
-		if s != "" {
-			return s, nil
+		s, err := client.CurrentInfraAccountName()
+		if err != nil {
+			return s, err
 		}
 	} else {
-		s, _ := client.CurrentAccountName()
-		if s != "" {
-			return s, nil
+		s, err := client.CurrentAccountName()
+		if err != nil {
+			return s, err
 		}
 	}
 
-	account, err := SelectAccount(accountName)
-
-	if err != nil {
-		return "", err
-	}
-
-	return account.Metadata.Name, nil
+	return s, nil
 }

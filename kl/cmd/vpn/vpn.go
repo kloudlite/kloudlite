@@ -11,25 +11,22 @@ var Cmd = &cobra.Command{
 	Long: `work with vpn
 Examples:
 	# start vpn
-  kl vpn start
+  sudo kl vpn start
 
 	# stop vpn
-	kl vpn stop
+	sudo kl vpn stop
 
 	# restart vpn
-	kl vpn restart
+	sudo kl vpn restart
 
 	# status vpn
-	kl vpn status
+	sudo kl vpn status
 
 	# list all vpn
 	kl vpn list
 
 	# switch to vpn
 	kl vpn switch <vpn_name>
-
-	# remove vpn
-	kl vpn remove <vpn_name>
 	`,
 }
 

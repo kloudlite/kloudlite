@@ -61,6 +61,9 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	if err != nil {
 		return nil, err
 	}
+	if projectName == "" {
+		return nil, fmt.Errorf("Please select a project using 'kl init'")
+	}
 
 	cookie, err := getCookie()
 	if err != nil {
@@ -144,7 +147,7 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 		return nil, err
 	}
 
-	if env != nil {
+	if env != nil && env.Name != "" {
 		return env, nil
 	}
 

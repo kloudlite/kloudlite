@@ -20,7 +20,7 @@ var stopCmd = &cobra.Command{
 	Long: `This command let you stop running vpn device.
 Example:
   # stop vpn device
-  sudo kl vpn stop
+  sudo kl infra vpn stop
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 
@@ -53,7 +53,7 @@ Example:
 
 		fn.Log("[#] disconnected")
 
-		s, err := client.CurrentDeviceName()
+		s, err := client.CurrentInfraDeviceName()
 		if err != nil {
 			fn.PrintError(err)
 			return

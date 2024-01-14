@@ -20,7 +20,7 @@ var restartCmd = &cobra.Command{
 	Long: `This command let you restart vpn device.
 Example:
   # restart vpn device
-  kl vpn restart
+  sudo kl infra vpn restart
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 
@@ -52,6 +52,13 @@ Example:
 		fn.Log("[#] connecting")
 		time.Sleep(time.Second * 1)
 
+		devName, err := client.CurrentInfraDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		startServiceInBg(devName)
+
 		// startServiceInBg()
 		if err := connect(reconnectVerbose); err != nil {
 			fn.PrintError(err)
@@ -66,7 +73,7 @@ Example:
 			return
 		}
 
-		s, err := client.CurrentDeviceName()
+		s, err := client.CurrentInfraDeviceName()
 		if err != nil {
 			fn.PrintError(err)
 			return

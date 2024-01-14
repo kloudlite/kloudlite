@@ -39,6 +39,7 @@ type InfraContext struct {
 	Name        string `json:"name"`
 	AccountName string `json:"accountName"`
 	ClusterName string `json:"ClusterName"`
+	DeviceName  string `json:"deviceName"`
 }
 
 type Contexts struct {
@@ -108,7 +109,7 @@ func GetConfigFolder() (configFolder string, err error) {
 	return configPath, nil
 }
 
-func GetContextFile() (*Context, error) {
+func GetActiveContext() (*Context, error) {
 	c, err := GetContexts()
 	if err != nil {
 		return nil, err
@@ -130,7 +131,7 @@ func GetContextFile() (*Context, error) {
 	return ctx, nil
 }
 
-func GetInfraContextFile() (*InfraContext, error) {
+func GetActiveInfraContext() (*InfraContext, error) {
 	c, err := GetInfraContexts()
 	if err != nil {
 		return nil, err

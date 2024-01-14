@@ -17,7 +17,7 @@ var statusCmd = &cobra.Command{
 	Long: `This command let you show vpn status.
 Example:
   # show vpn status
-  sudo kl vpn status
+  sudo kl infra vpn status
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
@@ -33,7 +33,7 @@ Example:
 			return
 		}
 
-		s, err := client.CurrentDeviceName()
+		s, err := client.CurrentInfraDeviceName()
 		if err != nil {
 			functions.PrintError(err)
 			return

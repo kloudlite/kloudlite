@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/pkg/ui/input"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -10,6 +11,11 @@ import (
 )
 
 func ListDevices() ([]Device, error) {
+
+	_, err := EnsureAccount()
+	if err != nil {
+		return nil, err
+	}
 
 	cookie, err := getCookie()
 	if err != nil {
@@ -22,11 +28,10 @@ func ListDevices() ([]Device, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	if fromResp, err := GetFromRespForEdge[Device](respData); err != nil {
+	if fromResp, err := GetFromResp[[]Device](respData); err != nil {
 		return nil, err
 	} else {
-		return fromResp, nil
+		return *fromResp, nil
 	}
 }
 
@@ -80,6 +85,37 @@ func SelectDevice(devName string) (*Device, error) {
 		}
 		return nil, errors.New("you don't have access to this device")
 	}
+	if len(devices) == 0 {
+		deviceName, err := input.Prompt(input.Options{
+			Placeholder: "Enter device name",
+			CharLimit:   25,
+			Password:    false,
+		})
+		if err != nil {
+			return nil, err
+		}
+		suggestedNames, err := GetDeviceName(deviceName)
+		if err != nil {
+			fn.PrintError(err)
+			return nil, err
+		}
+		selectedDeviceName := ""
+		if suggestedNames.Result == true {
+			selectedDeviceName = deviceName
+		} else {
+			selectedDeviceName, err = SelectDeviceName(suggestedNames.SuggestedNames)
+			if err != nil {
+				return nil, err
+			}
+		}
+		device, err := CreateDevice(selectedDeviceName, deviceName)
+		//device, err := CreateDevice(deviceName, deviceName)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(deviceName, "has been created")
+		return device, nil
+	}
 
 	device, err := fzf.FindOne(
 		devices,
@@ -101,6 +137,11 @@ func SelectDevice(devName string) (*Device, error) {
 }
 
 func GetDeviceName(devName string) (*CheckName, error) {
+	_, err := EnsureAccount()
+	if err != nil {
+		return nil, err
+	}
+
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -139,6 +180,10 @@ func SelectDeviceName(suggestedNames []string) (string, error) {
 }
 
 func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
+	_, err := EnsureAccount()
+	if err != nil {
+		return nil, err
+	}
 	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
@@ -253,7 +298,7 @@ func DeleteDevicePort(ports []DevicePort) error {
 		return err
 	}
 
-	respData, err := klFetch("cli_updateDevicePort", map[string]any{
+	respData, err := klFetch("cli_CoreUpdateDevicePorts", map[string]any{
 		"clusterName": clusterName,
 		"deviceName":  devName,
 		"ports":       device.Spec.Ports,
@@ -288,7 +333,6 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return dev.Metadata.Name, nil
 }
 
@@ -319,8 +363,8 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 	if err != nil {
 		return err
 	}
-
-	respData, err := klFetch("cli_updateDeviceNs", map[string]any{
+	fmt.Println(projectName, env)
+	respData, err := klFetch("cli_CoreUpdateDeviceEnv", map[string]any{
 		"deviceName":  devName,
 		"envName":     env.Name,
 		"projectName": projectName,

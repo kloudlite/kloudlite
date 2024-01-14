@@ -3,6 +3,7 @@ package vpn
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/domain/server"
 	"net"
 	"os"
 	"strings"
@@ -19,15 +20,24 @@ func configureDarwin(_ string, _ bool) error {
 }
 
 func connect(verbose bool) error {
+
 	success := false
 	defer func() {
 		if !success {
 			stopService(verbose)
 		}
 	}()
+	_, err := server.EnsureProject()
+	if err != nil {
+		return err
+	}
 
-	startService(verbose)
+	devName, err := client.CurrentDeviceName()
+	if err != nil {
+		return err
+	}
 
+	_ = startService(devName, verbose)
 	if err := startConfiguration(verbose); err != nil {
 		return err
 	}
@@ -94,11 +104,7 @@ func resetDNS(verbose bool) error {
 	return os.Rename("/etc/resolv.conf.bak", "/etc/resolv.conf")
 }
 
-func startService(_ bool) error {
-	devName, err := client.CurrentDeviceName()
-	if err != nil {
-		return err
-	}
+func startService(devName string, _ bool) error {
 
 	// Add Wireguard device
 	wgLink := &netlink.GenericLink{

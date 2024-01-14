@@ -12,23 +12,13 @@ var activateCmd = &cobra.Command{
 	Long: `This command let you activate vpn in any environment.
 Example:
   # activate vpn in any environment
-  kl vpn activate
+  kl infra vpn activate -n <namespace>
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		ns := ""
 
 		if cmd.Flags().Changed("name") {
 			ns, _ = cmd.Flags().GetString("name")
-		}
-
-		if ns == "" {
-			e, err := server.EnsureEnv(nil)
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-
-			ns = e.TargetNs
 		}
 
 		if err := server.UpdateInfraDeviceNS(ns); err != nil {
@@ -42,5 +32,5 @@ Example:
 
 func init() {
 	activateCmd.Aliases = append(listCmd.Aliases, "active", "act", "a")
-	activateCmd.Flags().StringP("name", "n", "", "environment name")
+	activateCmd.Flags().StringP("name", "n", "", "namespace")
 }

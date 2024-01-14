@@ -127,7 +127,7 @@ func InterceptApp(status bool, options ...fn.Option) error {
 	}
 
 	if devName == "" {
-		ctx, err := client.GetContextFile()
+		ctx, err := client.GetActiveContext()
 		if err != nil {
 			return err
 		}

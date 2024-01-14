@@ -18,7 +18,7 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
-func getDeviceSelect() (*server.Device, error) {
+func getSelectedDevice() (*server.Device, error) {
 
 	devName, err := client.CurrentDeviceName()
 	if err != nil {
@@ -35,25 +35,22 @@ func getDeviceSelect() (*server.Device, error) {
 			return &d, err
 		}
 	}
-	return nil, errors.New("plese select a device first using \"kl use device\"")
+	return nil, errors.New("please select a device first using \"kl vpn switch\"")
 
 }
 
 func startConfiguration(verbose bool) error {
-	devices, err := server.ListDevices()
-	if err != nil {
-		return err
-	}
-	if len(devices) == 0 {
-		return errors.New("no Devices found")
-	}
-	device, err := getDeviceSelect()
+
+	device, err := getSelectedDevice()
 	if err != nil {
 		return err
 	}
 
 	if runtime.GOOS == "darwin" {
 		return configureDarwin(device.Metadata.Name, verbose)
+	}
+	if device.ProjectName == "" || device.EnvName == "" {
+		return fmt.Errorf("env not activated to current device. Please activate using 'kl vpn activate'")
 	}
 
 	return configure(device.Metadata.Name, device.Metadata.Name, verbose)

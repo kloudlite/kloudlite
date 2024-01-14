@@ -17,7 +17,7 @@ var listCmd = &cobra.Command{
 	Long: `This command let you list all contexts.
 Example:
   # list all contexts
-  kl context list
+  kl infra vpn list
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if err := listDevices(); err != nil {
@@ -34,7 +34,7 @@ func listDevices() error {
 	}
 
 	if len(devices) == 0 {
-		return fmt.Errorf("no vpn devices found")
+		return fmt.Errorf("no infra vpn devices found")
 	}
 
 	header := table.Row{
@@ -45,7 +45,7 @@ func listDevices() error {
 	}
 
 	rows := make([]table.Row, 0)
-	activeDevName, _ := client.CurrentDeviceName()
+	activeDevName, _ := client.CurrentInfraDeviceName()
 
 	for _, d := range devices {
 		rows = append(rows, table.Row{

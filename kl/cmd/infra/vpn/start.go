@@ -14,8 +14,8 @@ import (
 )
 
 // not required in linux
-func startServiceInBg() {
-	command := exec.Command("kl", "vpn", "start-fg")
+func startServiceInBg(devName string) {
+	command := exec.Command("kl", "vpn", "start-fg", "-d", devName)
 	err := command.Start()
 	if err != nil {
 		fmt.Println(err)
@@ -51,7 +51,7 @@ var startCmd = &cobra.Command{
 	Long: `This command let you start vpn device.
 Example:
   # start vpn device
-  kl vpn start
+  sudo kl infra vpn start
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
@@ -80,6 +80,14 @@ Example:
 				return
 			}
 
+			devName, err := client.CurrentInfraDeviceName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+
+			startServiceInBg(devName)
+
 			if err := connect(connectVerbose); err != nil {
 				fn.PrintError(err)
 				return
@@ -91,7 +99,13 @@ Example:
 			return
 		}
 
-		startServiceInBg()
+		devName, err := client.CurrentInfraDeviceName()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+
+		startServiceInBg(devName)
 
 		if err := connect(connectVerbose); err != nil {
 			fn.PrintError(err)
@@ -112,7 +126,7 @@ Example:
 			return
 		}
 
-		s, err := client.CurrentDeviceName()
+		s, err := client.CurrentInfraDeviceName()
 		if err != nil {
 			fn.PrintError(err)
 			return
