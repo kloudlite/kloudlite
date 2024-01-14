@@ -53,6 +53,8 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       nodeSelector: 
         node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - operator: Exists
       affinity:
         nodeAffinity: {{ include "required-node-affinity-to-masters" . | nindent 10 }}
       {{- end }}

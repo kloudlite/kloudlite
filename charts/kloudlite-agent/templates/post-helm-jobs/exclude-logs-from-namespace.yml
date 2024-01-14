@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nats-setup-job
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ include "serviceAccountName" . }}
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:latest
+        command: ["sh"]
+        args:
+         - -c
+         - |+ #bash
+           kubectl label ns {{.Release.Namespace}} "vector.dev/exclude"="true"
+      restartPolicy: Never
+  backoffLimit: 0

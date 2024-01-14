@@ -382,6 +382,10 @@ envVars:
         name: resource-sync
         subjects: "resource-sync.>"
         maxMsgBytes: 2MB
+      logs:
+        name: logs
+        subjects: "logs.>"
+        maxMsgBytes: 2MB
     buckets:
       sessionKVBucket:
         name: auth-session
