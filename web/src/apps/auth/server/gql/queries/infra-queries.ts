@@ -25,12 +25,16 @@ export const infraQueries = (executor: IExecutor) => ({
         core_listVPNDevicesForUser {
           displayName
           environmentName
-          markedForDeletion
           metadata {
             name
-            namespace
           }
           projectName
+          status {
+            isReady
+            message {
+              RawMessage
+            }
+          }
           spec {
             cnameRecords {
               host
