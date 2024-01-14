@@ -13,7 +13,6 @@ const Tools = () => {
         type: 'text',
         search: false,
         dataFetcher: async () => {
-          toast.info(`todo status`);
           return [
             { content: 'Active', value: 'active' },
             { content: 'Freezed', value: 'freezed' },

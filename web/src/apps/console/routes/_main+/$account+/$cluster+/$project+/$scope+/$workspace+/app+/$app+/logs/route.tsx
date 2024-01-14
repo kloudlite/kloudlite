@@ -40,7 +40,11 @@ const ItemList = () => {
       <div>Logs Url: {url}</div>
       <LogComp
         dark
-        websocket
+        websocket={{
+          account: '',
+          cluster: '',
+          trackingId: '',
+        }}
         height="60vh"
         width="100%"
         url={url}

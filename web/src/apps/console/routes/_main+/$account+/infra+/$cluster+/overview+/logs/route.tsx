@@ -59,7 +59,11 @@ const Log = () => {
           //   </div>
           // }
           dark
-          websocket
+          websocket={{
+            account: '',
+            trackingId: '',
+            cluster: '',
+          }}
           height="60vh"
           width="100%"
           url={getUrl(selectOptions[3].from())}

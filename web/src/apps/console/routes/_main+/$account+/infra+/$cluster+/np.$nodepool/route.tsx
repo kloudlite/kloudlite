@@ -117,7 +117,11 @@ const Log = ({ nodepool }: { nodepool: string }) => {
       //   />
       // }
       dark
-      websocket
+      websocket={{
+        account: '',
+        cluster: '',
+        trackingId: '',
+      }}
       height="60vh"
       width="100%"
       url={getUrl(selectOptions[3].from())}

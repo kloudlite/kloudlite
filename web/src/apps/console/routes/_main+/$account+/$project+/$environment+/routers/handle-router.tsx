@@ -21,6 +21,7 @@ import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { useMapper } from '~/components/utils';
+import { da } from '@faker-js/faker';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
 
@@ -136,11 +137,13 @@ const Root = (props: IDialog) => {
 
   useEffect(() => {
     if (isUpdate) {
-      setSelectedDomains(
-        domains.filter((d) => props.data.spec.domains.includes(d.value))
+      const d = domains.filter((d) =>
+        props.data.spec.domains.includes(d.value)
       );
+      setSelectedDomains(d);
+      handleChange('domains')(dummyEvent([...d.map((v) => v.value)]));
     }
-  }, [isUpdate]);
+  }, [data]);
 
   const nameIDRef = useRef<HTMLInputElement>(null);
 
@@ -148,9 +151,6 @@ const Root = (props: IDialog) => {
     nameIDRef.current?.focus();
   }, [nameIDRef]);
 
-  useEffect(() => {
-    console.log(errors);
-  }, [errors]);
   return (
     <Popup.Form
       onSubmit={(e) => {
