@@ -26,7 +26,7 @@ type Env struct {
 	// NATS:start
 	NatsURL            string `env:"NATS_URL" required:"true"`
 	ResourceNatsStream string `env:"RESOURCE_NATS_STREAM" required:"true"`
-	EventsNatsStream string `env:"EVENTS_NATS_STREAM" required:"true"`
+	EventsNatsStream   string `env:"EVENTS_NATS_STREAM" required:"true"`
 	// NATS:end
 
 	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
@@ -36,11 +36,6 @@ type Env struct {
 	GitlabCallbackUrl  string `env:"GITLAB_CALLBACK_URL" required:"true"`
 	GitlabScopes       string `env:"GITLAB_SCOPES" required:"true"`
 	GitlabWebhookUrl   string `env:"GITLAB_WEBHOOK_URL" required:"true"`
-
-	// RegistryTopic string `env:"REGISTRY_TOPIC" required:"true"`
-
-	BuildClusterAccountName string `env:"BUILD_CLUSTER_ACCOUNT_NAME" required:"true"`
-	BuildClusterName        string `env:"BUILD_CLUSTER_NAME" required:"true"`
 
 	RegistryHost           string `env:"REGISTRY_HOST" required:"true"`
 	RegistrySecretKey      string `env:"REGISTRY_SECRET_KEY" required:"true"`
