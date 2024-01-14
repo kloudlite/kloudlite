@@ -1,33 +1,27 @@
 /* eslint-disable guard-for-in */
 /* eslint-disable react/destructuring-assignment */
-import { ArrowRight, Search, Check } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
-import ActionList from '~/components/atoms/action-list';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { ListTitle } from '~/console/components/console-list-components';
-import { IdSelector } from '~/console/components/id-selector';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useInputSearch } from '~/root/lib/client/helpers/search-filter';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NN } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
-import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import {
+  IMSvTemplate,
+  IMSvTemplates,
+} from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
-import { cn } from '~/components/utils';
-import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { NameIdView } from '~/console/components/name-id-view';
+import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 
-type IDialog = IDialogBase<ExtractNodeType<IProjectMSvs>> & {
+type IDialog = IDialogBase<ExtractNodeType<IManagedResources>> & {
   templates: IMSvTemplates;
 };
 
@@ -50,9 +44,7 @@ const RenderField = ({
   field: NN<ISelectedService>['service']['fields'][number];
   onChange: (e: string) => (e: { target: { value: any } }) => void;
   value: any;
-  errors: {
-    [key: string]: string | undefined;
-  };
+  errors: Record<string, any>;
   fieldKey: string;
 }) => {
   const [qos, setQos] = useState(false);
@@ -172,28 +164,26 @@ const RenderField = ({
   return <div>unknown input type {field.inputType}</div>;
 };
 
+type ISelectedResource = IMSvTemplate['resources'][number];
+
 const Fill = ({
-  selectedService,
+  selectedResource,
   values,
   handleChange,
   errors,
 }: {
-  selectedService: ISelectedService;
+  selectedResource: ISelectedResource | null | undefined;
   values: { [key: string]: any };
   handleChange: (key: string) => (e: { target: { value: any } }) => void;
-  errors: {
-    [key: string]: string | undefined;
-  };
+  errors: Record<string, any>;
 }) => {
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     nameRef.current?.focus();
   }, [nameRef.current]);
   return (
-    <div className="flex flex-col gap-3xl min-h-[30vh]">
+    <div className="flex flex-col gap-3xl">
       <NameIdView
-        isUpdate
-        ref={nameRef}
         placeholder="Enter managed service name"
         label="Name"
         resType="project_managed_service"
@@ -202,21 +192,16 @@ const Fill = ({
         errors={errors.name}
         handleChange={handleChange}
         nameErrorLabel="isNameError"
+        isUpdate
       />
-
-      {selectedService?.service?.fields.map((field) => {
+      {selectedResource?.fields?.map((field) => {
         const k = field.name;
         const x = k.split('.').reduce((acc, curr) => {
-          console.log(acc, curr, values);
-
           if (!acc) {
-            return values.res[curr];
+            return values.res?.[curr];
           }
-
           return acc[curr];
         }, null);
-
-        console.log('x', x);
 
         return (
           <RenderField
@@ -235,14 +220,11 @@ const Fill = ({
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible, templates } = props;
-  const [selectedService, setSelectedService] =
-    useState<ISelectedService>(null);
 
   const api = useConsoleApi();
   const reload = useReload();
 
-  const { project } = useParams();
-  const [step, setStep] = useState<'choose' | 'fill'>('choose');
+  const { project, environment } = useParams();
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -252,7 +234,7 @@ const Root = (props: IDialog) => {
             displayName: props.data.displayName,
             isNameError: false,
             res: {
-              ...props.data.spec?.msvcSpec.serviceTemplate.spec,
+              ...props.data.spec?.resourceTemplate.spec,
             },
           }
         : {
@@ -265,31 +247,25 @@ const Root = (props: IDialog) => {
       onSubmit: async (val) => {
         if (isUpdate) {
           try {
-            if (!project) {
-              throw new Error('Project is required!.');
+            if (!project || !environment) {
+              throw new Error('Project and environment is required!.');
             }
-            const { errors: e } = await api.updateProjectMSv({
+            const { errors: e } = await api.updateManagedResource({
               projectName: project,
-              pmsvc: {
+              envName: environment,
+              mres: {
                 displayName: val.displayName,
                 metadata: {
                   name: val.name,
                 },
 
                 spec: {
-                  msvcSpec: {
-                    serviceTemplate: {
-                      apiVersion:
-                        props.data.spec?.msvcSpec.serviceTemplate.apiVersion ||
-                        '',
-                      kind:
-                        props.data.spec?.msvcSpec.serviceTemplate.kind || '',
-                      spec: {
-                        ...val.res,
-                      },
+                  resourceTemplate: {
+                    ...props.data.spec.resourceTemplate,
+                    spec: {
+                      ...val.res,
                     },
                   },
-                  targetNamespace: '',
                 },
               },
             });
@@ -305,13 +281,17 @@ const Root = (props: IDialog) => {
       },
     });
 
-  const getService = () => {
+  const getResources = () => {
     if (isUpdate)
       return getManagedTemplate({
         templates,
-        apiVersion: props.data.spec?.msvcSpec.serviceTemplate.apiVersion || '',
-        kind: props.data.spec?.msvcSpec.serviceTemplate.kind || '',
-      });
+        apiVersion: props.data.spec?.resourceTemplate.msvcRef.apiVersion || '',
+        kind: props.data.spec?.resourceTemplate.msvcRef.kind || '',
+      })?.resources.find(
+        (rs) =>
+          rs.apiVersion === props.data.spec.resourceTemplate.apiVersion &&
+          rs.kind === props.data.spec.resourceTemplate.kind
+      );
     return undefined;
   };
 
@@ -321,24 +301,18 @@ const Root = (props: IDialog) => {
   return (
     <Popup.Form
       onSubmit={(e) => {
-        console.log('name error..', values.isNameError);
-
-        handleSubmit(e);
-        // if (!values.isNameError) {
-        //   handleSubmit(e);
-        // } else {
-        //   e.preventDefault();
-        // }
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
       }}
     >
-      <Popup.Content className="!min-h-[500px] !max-h-[500px]">
+      <Popup.Content>
         <Fill
           {...{
             templates,
-            selectedService: {
-              category: { displayName: '', name: '' },
-              service: getService(),
-            },
+            selectedResource: getResources(),
             values,
             errors,
             handleChange,
@@ -358,7 +332,7 @@ const Root = (props: IDialog) => {
   );
 };
 
-const HandleBackendService = (props: IDialog) => {
+const HandleManagedResources = (props: IDialog) => {
   const { isUpdate, setVisible, visible } = props;
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
@@ -370,4 +344,4 @@ const HandleBackendService = (props: IDialog) => {
   );
 };
 
-export default HandleBackendService;
+export default HandleManagedResources;

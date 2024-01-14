@@ -1,15 +1,14 @@
+/* eslint-disable react/destructuring-assignment */
 import { useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import {
   ExtractNodeType,
   parseName,
   parseNodes,
-  parseTargetNs,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -34,7 +33,6 @@ const Root = (props: IDialog) => {
   const [selectedDomains, setSelectedDomains] = useState<
     { label: string; value: string; domain: ExtractNodeType<IDomains> }[]
   >([]);
-  const [domainError, setDomainError] = useState<string | null>(null);
 
   const {
     data,
@@ -44,64 +42,90 @@ const Root = (props: IDialog) => {
     return api.listDomains({});
   });
 
-  const {
-    values,
-    errors,
-    handleSubmit,
-    handleChange,
-    isLoading,
-    resetValues,
-    setValues,
-  } = useForm({
-    initialValues: {
-      name: '',
-      displayName: '',
-      isNameError: false,
-    },
-    validationSchema: Yup.object({
-      displayName: Yup.string().required(),
-      name: Yup.string().required(),
-    }),
-
-    onSubmit: async (val) => {
-      if (selectedDomains.length === 0) {
-        setDomainError('Atleast one domain is required!.');
-      } else {
-        setDomainError(null);
-      }
-      if (!projectName || !envName || selectedDomains?.length === 0) {
-        throw new Error('Project, Environment and Domain is required!.');
-      }
-      try {
-        if (!isUpdate) {
-          const { errors: e } = await api.createRouter({
-            envName,
-            projectName,
-            router: {
-              displayName: val.displayName,
-              metadata: {
-                name: val.name,
-              },
-              spec: {
-                domains: selectedDomains.map((sd) => sd.value),
-              },
-            },
-          });
-          if (e) {
-            throw e[0];
+  const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =
+    useForm({
+      initialValues: isUpdate
+        ? {
+            name: parseName(props.data),
+            displayName: props.data.displayName,
+            domains: [],
+            isNameError: false,
           }
-          toast.success('Router created successfully');
-        } else {
-          //
+        : {
+            name: '',
+            displayName: '',
+            domains: [],
+            isNameError: false,
+          },
+      validationSchema: Yup.object({
+        displayName: Yup.string().required(),
+        name: Yup.string().required(),
+        domains: Yup.array().test('required', 'domain is required', (val) => {
+          return val && val?.length > 0;
+        }),
+        // .test('is-valid', 'invalid domain names', (val) => {
+        //   console.log('vals', val);
+
+        //   return val?.every((v) => v.endsWith('.com'));
+        // }),
+      }),
+
+      onSubmit: async (val) => {
+        if (!projectName || !envName || selectedDomains?.length === 0) {
+          throw new Error('Project, Environment and Domain is required!.');
         }
-        reloadPage();
-        setVisible(false);
-        resetValues();
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
+        try {
+          if (!isUpdate) {
+            const { errors: e } = await api.createRouter({
+              envName,
+              projectName,
+              router: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                spec: {
+                  domains: selectedDomains.map((sd) => sd.value),
+                  https: {
+                    enabled: true,
+                  },
+                },
+              },
+            });
+            if (e) {
+              throw e[0];
+            }
+            toast.success('Router created successfully');
+          } else {
+            const { errors: e } = await api.updateRouter({
+              envName,
+              projectName,
+              router: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                spec: {
+                  domains: selectedDomains.map((sd) => sd.value),
+                  https: {
+                    enabled: true,
+                  },
+                },
+              },
+            });
+            if (e) {
+              throw e[0];
+            }
+            toast.success('Router updated successfully');
+          }
+          reloadPage();
+          setVisible(false);
+          resetValues();
+        } catch (err) {
+          handleError(err);
+        }
+      },
+    });
 
   const domains = useMapper(parseNodes(data), (val) => ({
     label: val.displayName,
@@ -110,6 +134,23 @@ const Root = (props: IDialog) => {
     render: () => val.displayName,
   }));
 
+  useEffect(() => {
+    if (isUpdate) {
+      setSelectedDomains(
+        domains.filter((d) => props.data.spec.domains.includes(d.value))
+      );
+    }
+  }, [isUpdate]);
+
+  const nameIDRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    nameIDRef.current?.focus();
+  }, [nameIDRef]);
+
+  useEffect(() => {
+    console.log(errors);
+  }, [errors]);
   return (
     <Popup.Form
       onSubmit={(e) => {
@@ -122,16 +163,18 @@ const Root = (props: IDialog) => {
     >
       <Popup.Content className="flex flex-col justify-start gap-3xl">
         <NameIdView
+          ref={nameIDRef}
           resType="router"
           label="Name"
           displayName={values.displayName}
           name={values.name}
-          errors={errors.values}
+          errors={errors.name}
           handleChange={handleChange}
           nameErrorLabel="isNameError"
           isUpdate={isUpdate}
         />
         <Select
+          creatable
           size="lg"
           label="Domains"
           multiple
@@ -139,10 +182,15 @@ const Root = (props: IDialog) => {
           options={async () => [...domains]}
           onChange={(val) => {
             setSelectedDomains(val);
+            handleChange('domains')(dummyEvent([...val.map((v) => v.value)]));
           }}
-          error={!!domainError || !!domainLoadingError}
-          message={domainLoadingError ? 'Error fetching domains.' : domainError}
+          error={!!errors.domains || !!domainLoadingError}
+          message={
+            errors.domains ||
+            (domainLoadingError ? 'Error fetching domains.' : '')
+          }
           loading={domainLoading}
+          disableWhileLoading
         />
       </Popup.Content>
       <Popup.Footer>
@@ -162,8 +210,8 @@ const HandleRouter = (props: IDialog) => {
   return (
     <CommonPopupHandle
       {...props}
-      createTitle="Create build"
-      updateTitle="Update build"
+      createTitle="Create router"
+      updateTitle="Update router"
       root={Root}
     />
   );

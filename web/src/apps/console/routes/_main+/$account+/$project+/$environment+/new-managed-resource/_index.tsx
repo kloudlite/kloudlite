@@ -14,12 +14,18 @@ import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { FormEventHandler, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  FormEventHandler,
+  SetStateAction,
+  useEffect,
+  useState,
+} from 'react';
 import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
-import { useMapper } from '~/components/utils';
+import { titleCase, useMapper } from '~/components/utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -184,8 +190,6 @@ const RenderField = ({
 };
 
 const flatM = (obj: Record<string, any>) => {
-  console.log('obj', obj);
-
   const flatJson = {};
   for (const key in obj) {
     const parts = key.split('.');
@@ -248,28 +252,9 @@ const TemplateView = ({
   isLoading,
 }: ITemplateView) => {
   return (
-    <form
-      className="flex flex-col gap-3xl py-3xl"
-      onSubmit={(e) => {
-        if (!values.isNameError) {
-          handleSubmit(e);
-        } else {
-          e.preventDefault();
-        }
-      }}
-    >
+    <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
       <div className="bodyMd text-text-soft">Create your managed services.</div>
 
-      <NameIdView
-        placeholder="Enter managed service name"
-        label="Name"
-        resType="project_managed_service"
-        name={values.name}
-        displayName={values.displayName}
-        errors={errors.name}
-        handleChange={handleChange}
-        nameErrorLabel="isNameError"
-      />
       <Select
         label="Service"
         size="lg"
@@ -279,7 +264,6 @@ const TemplateView = ({
         onChange={(val) => {
           handleChange('selectedService')(dummyEvent(val));
           handleChange('selectedResource')(dummyEvent(undefined));
-          console.log(values);
         }}
         options={async () => [
           ...services.map((mt) => ({
@@ -314,7 +298,7 @@ const TemplateView = ({
         <Button
           loading={isLoading}
           variant="primary"
-          content={hasResource(values.selectedResource) ? 'Next' : 'Create'}
+          content="Next"
           suffix={<ArrowRight />}
           type="submit"
         />
@@ -337,12 +321,31 @@ const FieldView = ({
   selectedResource: ISelectedResource | null;
 }) => {
   return (
-    <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
+    <form
+      className="flex flex-col gap-3xl py-3xl"
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
+      <NameIdView
+        placeholder="Enter managed service name"
+        label="Name"
+        resType="project_managed_service"
+        name={values.name}
+        displayName={values.displayName}
+        errors={errors.name}
+        handleChange={handleChange}
+        nameErrorLabel="isNameError"
+      />
       {selectedResource?.resource?.fields?.map((field) => {
         const k = field.name;
         const x = k.split('.').reduce((acc, curr) => {
           if (!acc) {
-            return values[curr];
+            return values.res?.[curr];
           }
           return acc[curr];
         }, null);
@@ -376,17 +379,59 @@ const ReviewView = ({
   selectedResource,
   selectedService,
   isLoading,
+  setStep,
 }: {
   values: Record<string, any>;
   handleSubmit: FormEventHandler<HTMLFormElement>;
   selectedResource: ISelectedResource | null;
   selectedService: ISelectedService | null;
   isLoading?: boolean;
+  setStep: Dispatch<SetStateAction<steps>>;
 }) => {
+  const renderFieldView = () => {
+    const fields = Object.entries(values.res).filter(
+      ([k, _v]) => !['resources'].includes(k)
+    );
+    if (fields.length > 0) {
+      return (
+        <ReviewComponent
+          title="Fields"
+          onEdit={() => {
+            setStep('Configure resource');
+          }}
+        >
+          <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+            {fields?.map(([key, value]) => {
+              const k = key as string;
+              const v = value as string;
+              return (
+                <div
+                  key={k}
+                  className="flex flex-col gap-md  [&:not(:last-child)]:pb-lg   [&:not(:last-child)]:border-b border-border-default"
+                >
+                  <div className="bodyMd-medium text-text-default">
+                    {titleCase(k)}
+                  </div>
+                  <div className="bodySm text-text-soft">{v}</div>
+                </div>
+              );
+            })}
+          </div>
+        </ReviewComponent>
+      );
+    }
+    return null;
+  };
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3xl py-3xl">
       <div className="flex flex-col gap-xl">
-        <ReviewComponent title="Basic detail" onEdit={() => {}}>
+        <ReviewComponent
+          title="Basic detail"
+          onEdit={() => {
+            setStep('Configure resource');
+          }}
+        >
           <div className="flex flex-col p-xl gap-lg rounded border border-border-default">
             <div className="flex flex-col gap-md">
               <div className="bodyMd-semibold text-text-default">
@@ -396,41 +441,32 @@ const ReviewView = ({
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Service detail" onEdit={() => {}}>
-          <div className="flex flex-col p-xl gap-md rounded border border-border-default">
-            <div className="bodyMd-semibold text-text-default">
-              {selectedResource?.resource?.displayName}
-            </div>
-            <div className="bodySm text-text-soft">
-              {selectedResource?.resource?.name}
-            </div>
-          </div>
-        </ReviewComponent>
-        {/* <ReviewComponent title="Fields" onEdit={() => {}}>
-          <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
-            {Object.entries(values?.resources).map(([key, value]) => {
-              return (
-                <div
-                  key={key}
-                  className="flex flex-col gap-md  [&:not(:last-child)]:pb-lg   [&:not(:last-child)]:border-b border-border-default"
-                >
-                  <div className="bodyMd-medium text-text-default">
-                    {titleCase(key)}
-                  </div>
-                  <div className="bodySm text-text-soft">
-                    {Object.entries(value || {}).map(([pKey, pValue]) => (
-                      <div key={pKey}>
-                        {pKey}
-                        {' : '}
-                        {pValue}
-                      </div>
-                    ))}
-                  </div>
+        {selectedResource && (
+          <ReviewComponent
+            title="Service detail"
+            onEdit={() => {
+              setStep('Select service');
+            }}
+          >
+            <div className="flex flex-col p-xl gap-lg rounded border border-border-default">
+              <div className="flex flex-col gap-md pb-lg border-b border-border-default">
+                <div className="bodyMd-semibold text-text-default">Service</div>
+                <div className="bodySm text-text-soft">
+                  {selectedService?.service?.metadata?.name}
                 </div>
-              );
-            })}
-          </div>
-        </ReviewComponent> */}
+              </div>
+              <div className="flex flex-col gap-md">
+                <div className="bodyMd-semibold text-text-default">
+                  Resource type
+                </div>
+                <div className="bodySm text-text-soft">
+                  {selectedResource?.resource?.name}
+                </div>
+              </div>
+            </div>
+          </ReviewComponent>
+        )}
+        {renderFieldView()}
       </div>
 
       <div className="flex flex-row justify-start">
@@ -451,6 +487,7 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
   const [activeState, setActiveState] = useState<steps>('Select service');
   const navigate = useNavigate();
   const api = useConsoleApi();
+  const isActive = (step: steps) => step === activeState;
 
   const { project, account, environment } = useParams();
 
@@ -465,14 +502,20 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
         isNameError: false,
       },
       validationSchema: Yup.object({
-        name: Yup.string().required(),
-        displayName: Yup.string().required(),
-        selectedService: Yup.object().required(),
-        selectedResource: Yup.object({}).required(),
+        name: Yup.string().test('required', 'Name is required', (v) => {
+          return !(isActive('Configure resource') && !v);
+        }),
+        displayName: Yup.string().test('required', 'Name is required', (v) => {
+          return !(isActive('Configure resource') && !v);
+        }),
+        selectedService: Yup.object().required('Service is required'),
+        selectedResource: Yup.object({}).required('Resource type is required'),
       }),
       onSubmit: async (val) => {
         const selectedService =
           val.selectedService as unknown as ISelectedService;
+        const selectedResource =
+          val.selectedResource as unknown as ISelectedResource;
         const submit = async () => {
           try {
             if (!project || !environment) {
@@ -495,6 +538,8 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
 
                 spec: {
                   resourceTemplate: {
+                    apiVersion: selectedResource.resource.apiVersion || '',
+                    kind: selectedResource.resource.kind || '',
                     spec: {
                       ...val.res,
                     },
@@ -523,10 +568,6 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
         };
         switch (activeState) {
           case 'Select service':
-            if (!hasResource(val.selectedResource)) {
-              await submit();
-              break;
-            }
             setActiveState('Configure resource');
             break;
           case 'Configure resource':
@@ -543,8 +584,8 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
 
   useEffect(() => {
     const selectedResource =
-      values.selectedResource as unknown as ISelectedResource;
-    if (selectedResource.resource.fields) {
+      values?.selectedResource as unknown as ISelectedResource;
+    if (selectedResource?.resource?.fields) {
       setValues({
         ...values,
         res: {
@@ -557,8 +598,6 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
       });
     }
   }, [values.selectedResource]);
-
-  const isActive = (step: steps) => step === activeState;
 
   const resources = useMapper(
     [
@@ -597,46 +636,39 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
           />
         ) : null,
       },
-      ...(hasResource(values.selectedResource)
-        ? [
-            {
-              label: 'Configure resource',
-              active: isActive('Configure resource'),
-              completed: false,
-              children: isActive('Configure resource') ? (
-                <FieldView
-                  selectedResource={values.selectedResource}
-                  values={values.res}
-                  errors={errors}
-                  handleChange={handleChange}
-                  handleSubmit={handleSubmit}
-                />
-              ) : null,
-            },
-          ]
-        : []),
-      ...[
-        ...(hasResource(values.selectedResource)
-          ? [
-              {
-                label: 'Review',
-                active: isActive('Review'),
-                completed: false,
-                children: isActive('Review') ? (
-                  <ReviewView
-                    values={values}
-                    handleSubmit={handleSubmit}
-                    selectedService={values.selectedService}
-                    selectedResource={values.selectedResource}
-                  />
-                ) : null,
-              },
-            ]
-          : []),
-      ],
+      {
+        label: 'Configure resource',
+        active: isActive('Configure resource'),
+        completed: false,
+        children: isActive('Configure resource') ? (
+          <FieldView
+            selectedResource={values.selectedResource}
+            values={values}
+            errors={errors}
+            handleChange={handleChange}
+            handleSubmit={handleSubmit}
+          />
+        ) : null,
+      },
+      {
+        label: 'Review',
+        active: isActive('Review'),
+        completed: false,
+        children: isActive('Review') ? (
+          <ReviewView
+            setStep={setActiveState}
+            values={values}
+            handleSubmit={handleSubmit}
+            selectedService={values.selectedService}
+            selectedResource={values.selectedResource}
+            isLoading={isLoading}
+          />
+        ) : null,
+      },
     ],
     (val) => val
   );
+
   return (
     <ProgressWrapper
       title="Let’s create new managed resource."
@@ -644,7 +676,12 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
       progressItems={{
         items,
       }}
-      // onClick={({ label }) => {}}
+      onClick={({ label }) => {
+        if (label !== 'Review')
+          if (values.selectedResource) {
+            setActiveState(label as steps);
+          }
+      }}
     />
   );
 };

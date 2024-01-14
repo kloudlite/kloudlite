@@ -12,6 +12,8 @@ import {
   ConsoleGetAppQueryVariables,
   ConsoleUpdateAppMutation,
   ConsoleUpdateAppMutationVariables,
+  ConsoleInterceptAppMutation,
+  ConsoleInterceptAppMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IApp = NN<ConsoleGetAppQuery['core_getApp']>;
@@ -36,7 +38,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleCreateAppMutation) => data.core_createApp,
-      vars(_: ConsoleCreateAppMutationVariables) {},
+      vars(_: ConsoleCreateAppMutationVariables) { },
     }
   ),
 
@@ -60,7 +62,31 @@ export const appQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleUpdateAppMutation) => {
         return data.core_updateApp;
       },
-      vars(_: ConsoleUpdateAppMutationVariables) {},
+      vars(_: ConsoleUpdateAppMutationVariables) { },
+    }
+  ),
+  interceptApp: executor(
+    gql`
+      mutation Core_interceptApp(
+        $projectName: String!
+        $envName: String!
+        $appname: String!
+        $deviceName: String!
+        $intercept: Boolean!
+      ) {
+        core_interceptApp(
+          projectName: $projectName
+          envName: $envName
+          appname: $appname
+          deviceName: $deviceName
+          intercept: $intercept
+        )
+      }
+    `,
+    {
+      transformer: (data: ConsoleInterceptAppMutation) =>
+        data.core_interceptApp,
+      vars(_: ConsoleInterceptAppMutationVariables) { },
     }
   ),
   deleteApp: executor(
@@ -79,7 +105,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleDeleteAppMutation) => data.core_deleteApp,
-      vars(_: ConsoleDeleteAppMutationVariables) {},
+      vars(_: ConsoleDeleteAppMutationVariables) { },
     }
   ),
   getApp: executor(
@@ -226,7 +252,7 @@ export const appQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetAppQuery) {
         return data.core_getApp;
       },
-      vars(_: ConsoleGetAppQueryVariables) {},
+      vars(_: ConsoleGetAppQueryVariables) { },
     }
   ),
   listApps: executor(
@@ -255,7 +281,6 @@ export const appQueries = (executor: IExecutor) => ({
               displayName
               enabled
               environmentName
-              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -263,11 +288,12 @@ export const appQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
+                generation
                 name
                 namespace
               }
               projectName
+              recordVersion
               spec {
                 containers {
                   args
@@ -286,23 +312,6 @@ export const appQueries = (executor: IExecutor) => ({
                   }
                   image
                   imagePullPolicy
-                  livenessProbe {
-                    failureThreshold
-                    httpGet {
-                      httpHeaders
-                      path
-                      port
-                    }
-                    initialDelay
-                    interval
-                    shell {
-                      command
-                    }
-                    tcp {
-                      port
-                    }
-                    type
-                  }
                   name
                   readinessProbe {
                     failureThreshold
@@ -317,15 +326,6 @@ export const appQueries = (executor: IExecutor) => ({
                   resourceMemory {
                     max
                     min
-                  }
-                  volumes {
-                    items {
-                      fileName
-                      key
-                    }
-                    mountPath
-                    refName
-                    type
                   }
                 }
                 displayName
@@ -374,6 +374,14 @@ export const appQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               updateTime
             }
           }
@@ -389,7 +397,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListAppsQuery) => data.core_listApps,
-      vars(_: ConsoleListAppsQueryVariables) {},
+      vars(_: ConsoleListAppsQueryVariables) { },
     }
   ),
 });

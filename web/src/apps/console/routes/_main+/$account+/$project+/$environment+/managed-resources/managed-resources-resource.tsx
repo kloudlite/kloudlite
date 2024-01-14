@@ -1,8 +1,10 @@
-import { Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
+  listFlex,
+  listTitleClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -23,6 +25,8 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
+import { listStatus } from '~/console/components/sync-status';
+import HandleManagedResources from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
@@ -47,7 +51,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'delete';
+  action: 'delete' | 'edit';
   item: BaseType;
 }) => void;
 
@@ -60,6 +64,13 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'edit', item }),
+          key: 'edit',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -122,7 +133,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-
+        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -130,9 +141,11 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name),
-                className: 'flex-1 min-w-[200px]',
+                className: listTitleClass,
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
+              status,
+              listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, 'author'),
                 className: 'w-[180px]',
@@ -165,6 +178,7 @@ const ManagedResourceResources = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
@@ -176,6 +190,9 @@ const ManagedResourceResources = ({
       switch (action) {
         case 'delete':
           setShowDeleteDialog(item);
+          break;
+        case 'edit':
+          setVisible(item);
           break;
         default:
           break;
@@ -213,6 +230,15 @@ const ManagedResourceResources = ({
           } catch (err) {
             handleError(err);
           }
+        }}
+      />
+      <HandleManagedResources
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => setVisible(null),
+          data: visible!,
+          templates: templates || [],
         }}
       />
     </>

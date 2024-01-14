@@ -116,10 +116,14 @@ export const managedResourceQueries = (executor: IExecutor) => ({
       query Core_listManagedResources(
         $projectName: String!
         $envName: String!
+        $search: SearchManagedResources
+        $pq: CursorPaginationIn
       ) {
         core_listManagedResources(
           projectName: $projectName
           envName: $envName
+          search: $search
+          pq: $pq
         ) {
           edges {
             cursor
@@ -140,10 +144,12 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                generation
                 name
                 namespace
               }
               projectName
+              recordVersion
               spec {
                 resourceTemplate {
                   apiVersion
@@ -171,6 +177,14 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }

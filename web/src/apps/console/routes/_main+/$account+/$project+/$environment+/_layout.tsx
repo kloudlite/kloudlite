@@ -1,4 +1,14 @@
-import { ChevronDown, Plus, Search } from '@jengaicons/react';
+import {
+  BackingServices,
+  ChevronDown,
+  CirclesFour,
+  Database,
+  GearSix,
+  Plus,
+  Search,
+  File,
+  TreeStructure,
+} from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
   Link,
@@ -28,6 +38,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   BreadcrumButtonContent,
   BreadcrumSlash,
+  tabIconSize,
 } from '~/console/utils/commons';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
@@ -51,32 +62,57 @@ const Environment = () => {
 
 const tabs = [
   {
-    label: 'Apps',
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <CirclesFour size={tabIconSize} />
+        Apps
+      </span>
+    ),
     to: '/apps',
     value: '/apps',
   },
   {
-    label: 'Routers',
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <TreeStructure size={tabIconSize} />
+        Router
+      </span>
+    ),
     to: '/routers',
     value: '/routers',
   },
   {
-    label: 'Config & Secrets',
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <File size={tabIconSize} />
+        Configs and Secrets
+      </span>
+    ),
     to: '/cs/configs',
     value: '/cs',
   },
   {
-    label: 'Managed resources',
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <BackingServices size={tabIconSize} />
+        Managed resources
+      </span>
+    ),
     to: '/managed-resources',
     value: '/managed-resources',
   },
+  // {
+  //   label: 'Jobs & Crons',
+  //   to: '/jc/task',
+  //   value: '/jc',
+  // },
   {
-    label: 'Jobs & Crons',
-    to: '/jc/task',
-    value: '/jc',
-  },
-  {
-    label: 'Settings',
+    label: (
+      <span className="flex flex-row items-center gap-lg">
+        <GearSix size={tabIconSize} />
+        Settings
+      </span>
+    ),
     to: '/settings/general',
     value: '/settings',
   },

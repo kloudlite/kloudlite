@@ -204,7 +204,11 @@ export const listStatus = ({
   return {
     key,
     className,
-    render: () => <SyncStatus item={item} />,
+    render: () => (
+      <div className="min-w-[20px]">
+        <SyncStatus item={item} />
+      </div>
+    ),
     status: parseStatus({ item, type }),
   };
 };

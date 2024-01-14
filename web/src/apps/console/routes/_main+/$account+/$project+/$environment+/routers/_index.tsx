@@ -59,8 +59,9 @@ const Routers = () => {
                     variant="primary"
                     content="Create Router"
                     prefix={<PlusFill />}
-                    to="#TODO"
-                    LinkComponent={Link}
+                    onClick={() => {
+                      setVisible(true);
+                    }}
                   />
                 ),
               }}

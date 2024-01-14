@@ -60,11 +60,13 @@ const Root = (props: IDialog) => {
             port: '',
           },
       validationSchema: Yup.object({
-        path: Yup.string()
-          .required()
-          .test('is-valid', 'Path should not contain spaces.', (value) => {
-            return !value.includes(' ');
-          }),
+        path: Yup.string().test(
+          'is-valid',
+          'Path should not contain spaces.',
+          (value) => {
+            return !value?.includes(' ');
+          }
+        ),
         app: Yup.string().required(),
         port: Yup.string().required(),
       }),

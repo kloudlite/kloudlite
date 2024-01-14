@@ -108,6 +108,8 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
     }, [displayName, name]);
 
     const checkNameAvailable = () => {
+      console.log('inside ', errors);
+
       if (errors) {
         // onCheckError?.(true);
         return errors;
@@ -174,6 +176,7 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
                   'secret',
                   'project_managed_service',
                   'console_vpn_device',
+                  'router',
                 ].includes(tempResType)
                   ? {
                       projectName: project,
@@ -217,17 +220,6 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
       [displayName, name, isUpdate]
     );
 
-    useEffect(() => {
-      console.log(
-        'error: ',
-        (!nameLoading || !isUpdate) &&
-          ((!nameValid && !!name && !nameLoading) || !!errors),
-        !nameLoading || !isUpdate,
-        !nameValid && !!name && !nameLoading,
-        !!errors
-      );
-    }, []);
-
     return (
       <TextInput
         ref={ref}
@@ -244,10 +236,11 @@ export const NameIdView = forwardRef<HTMLInputElement, INameIdView>(
           if (!isUpdate) {
             handleChange?.('name')(dummyEvent(id));
           }
-
           if (v) {
             setNameLoading(true);
-            handleChange?.(nameErrorLabel)(dummyEvent(true));
+            if (!isUpdate) {
+              handleChange?.(nameErrorLabel)(dummyEvent(true));
+            }
           } else {
             setNameLoading(false);
             handleChange?.(nameErrorLabel)(dummyEvent(false));

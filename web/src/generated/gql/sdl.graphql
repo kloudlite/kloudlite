@@ -50,14 +50,14 @@ scalar Any
 
 type App {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   environmentName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -75,8 +75,10 @@ type AppEdge {
 }
 
 input AppIn {
+  apiVersion: String
   displayName: String!
   enabled: Boolean
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__AppSpecIn!
 }
@@ -298,7 +300,7 @@ type ClusterPaginatedRecords {
 
 type Config {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   binaryData: Map
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
@@ -307,7 +309,7 @@ type Config {
   environmentName: String!
   id: String!
   immutable: Boolean
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -323,10 +325,12 @@ type ConfigEdge {
 }
 
 input ConfigIn {
+  apiVersion: String
   binaryData: Map
   data: Map
   displayName: String!
   immutable: Boolean
+  kind: String
   metadata: MetadataIn
 }
 
@@ -378,13 +382,13 @@ enum ConsoleResType {
 
 type ConsoleVPNDevice {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   environmentName: String
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -392,7 +396,6 @@ type ConsoleVPNDevice {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
   wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
 }
@@ -403,8 +406,10 @@ type ConsoleVPNDeviceEdge {
 }
 
 input ConsoleVPNDeviceIn {
+  apiVersion: String
   displayName: String!
   environmentName: String
+  kind: String
   metadata: MetadataIn
   projectName: String
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
@@ -552,12 +557,12 @@ type EncodedValue {
 
 type Environment {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -575,7 +580,9 @@ type EnvironmentEdge {
 }
 
 input EnvironmentIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn
 }
@@ -1348,6 +1355,8 @@ type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
+  apiVersion: String!
+  kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
   spec: Map!
 }
@@ -2710,14 +2719,14 @@ input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementI
 
 type ManagedResource {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   environmentName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -2735,8 +2744,10 @@ type ManagedResourceEdge {
 }
 
 input ManagedResourceIn {
+  apiVersion: String
   displayName: String!
   enabled: Boolean
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn!
 }
@@ -3117,13 +3128,13 @@ input PortIn {
 
 type Project {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3140,20 +3151,22 @@ type ProjectEdge {
 }
 
 input ProjectIn {
+  apiVersion: String
   clusterName: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectSpecIn!
 }
 
 type ProjectManagedService {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3171,7 +3184,9 @@ type ProjectManagedServiceEdge {
 }
 
 input ProjectManagedServiceIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__ProjectManagedServiceSpecIn
 }
@@ -3328,14 +3343,14 @@ enum ResType {
 
 type Router {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   enabled: Boolean
   environmentName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3353,8 +3368,10 @@ type RouterEdge {
 }
 
 input RouterIn {
+  apiVersion: String
   displayName: String!
   enabled: Boolean
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__RouterSpecIn!
 }
@@ -3497,7 +3514,7 @@ input SearchVPNDevices {
 
 type Secret {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
@@ -3505,7 +3522,7 @@ type Secret {
   environmentName: String!
   id: String!
   immutable: Boolean
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3523,9 +3540,11 @@ type SecretEdge {
 }
 
 input SecretIn {
+  apiVersion: String
   data: Map
   displayName: String!
   immutable: Boolean
+  kind: String
   metadata: MetadataIn
   stringData: Map
   type: K8s__io___api___core___v1__SecretType

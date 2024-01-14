@@ -37,7 +37,7 @@ export const routerQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateRouterMutation) =>
         data.core_createRouter,
-      vars(_: ConsoleCreateRouterMutationVariables) {},
+      vars(_: ConsoleCreateRouterMutationVariables) { },
     }
   ),
   updateRouter: executor(
@@ -59,7 +59,7 @@ export const routerQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateRouterMutation) =>
         data.core_updateRouter,
-      vars(_: ConsoleUpdateRouterMutationVariables) {},
+      vars(_: ConsoleUpdateRouterMutationVariables) { },
     }
   ),
   deleteRouter: executor(
@@ -79,7 +79,7 @@ export const routerQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteRouterMutation) =>
         data.core_deleteRouter,
-      vars(_: ConsoleDeleteRouterMutationVariables) {},
+      vars(_: ConsoleDeleteRouterMutationVariables) { },
     }
   ),
   listRouters: executor(
@@ -115,43 +115,14 @@ export const routerQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                generation
                 name
                 namespace
               }
               projectName
+              recordVersion
               spec {
-                backendProtocol
-                basicAuth {
-                  enabled
-                  secretName
-                  username
-                }
-                cors {
-                  allowCredentials
-                  enabled
-                  origins
-                }
                 domains
-                https {
-                  clusterIssuer
-                  enabled
-                  forceRedirect
-                }
-                ingressClass
-                maxBodySizeInMB
-                rateLimit {
-                  connections
-                  enabled
-                  rpm
-                  rps
-                }
-                routes {
-                  app
-                  lambda
-                  path
-                  port
-                  rewrite
-                }
               }
               status {
                 checks
@@ -168,6 +139,14 @@ export const routerQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               updateTime
             }
           }
@@ -183,7 +162,7 @@ export const routerQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListRoutersQuery) => data.core_listRouters,
-      vars(_: ConsoleListRoutersQueryVariables) {},
+      vars(_: ConsoleListRoutersQueryVariables) { },
     }
   ),
   getRouter: executor(
@@ -273,7 +252,7 @@ export const routerQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetRouterQuery) => data.core_getRouter,
-      vars(_: ConsoleGetRouterQueryVariables) {},
+      vars(_: ConsoleGetRouterQueryVariables) { },
     }
   ),
 });

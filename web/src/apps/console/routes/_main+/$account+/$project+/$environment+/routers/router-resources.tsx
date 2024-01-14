@@ -6,6 +6,8 @@ import {
   ListBody,
   ListItem,
   ListTitle,
+  listFlex,
+  listTitleClass,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -23,6 +25,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IRouters } from '~/console/server/gql/queries/router-queries';
 import { Link, useParams } from '@remix-run/react';
+import { listStatus } from '~/console/components/sync-status';
 import HandleRouter from './handle-router';
 
 const RESOURCE_NAME = 'domain';
@@ -126,6 +129,7 @@ const ListView = ({ items, onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -134,9 +138,11 @@ const ListView = ({ items, onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: listTitleClass,
                 render: () => <ListTitle title={name} />,
               },
+              status,
+              listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',

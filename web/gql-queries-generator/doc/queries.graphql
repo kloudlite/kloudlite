@@ -908,6 +908,16 @@ mutation consoleUpdateApp($projectName: String!, $envName: String!, $app: AppIn!
   }
 }
 
+mutation consoleInterceptApp($projectName: String!, $envName: String!, $appname: String!, $deviceName: String!, $intercept: Boolean!) {
+  core_interceptApp(
+    projectName: $projectName
+    envName: $envName
+    appname: $appname
+    deviceName: $deviceName
+    intercept: $intercept
+  )
+}
+
 mutation consoleDeleteApp($projectName: String!, $envName: String!, $appName: String!) {
   core_deleteApp(projectName: $projectName, envName: $envName, appName: $appName)
 }
@@ -1065,7 +1075,6 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
         displayName
         enabled
         environmentName
-        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -1073,11 +1082,12 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
         }
         markedForDeletion
         metadata {
-          annotations
+          generation
           name
           namespace
         }
         projectName
+        recordVersion
         spec {
           containers {
             args
@@ -1096,23 +1106,6 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             }
             image
             imagePullPolicy
-            livenessProbe {
-              failureThreshold
-              httpGet {
-                httpHeaders
-                path
-                port
-              }
-              initialDelay
-              interval
-              shell {
-                command
-              }
-              tcp {
-                port
-              }
-              type
-            }
             name
             readinessProbe {
               failureThreshold
@@ -1127,15 +1120,6 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             resourceMemory {
               max
               min
-            }
-            volumes {
-              items {
-                fileName
-                key
-              }
-              mountPath
-              refName
-              type
             }
           }
           displayName
@@ -1183,6 +1167,14 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             name
             namespace
           }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
         }
         updateTime
       }
@@ -1243,43 +1235,14 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
         }
         markedForDeletion
         metadata {
+          generation
           name
           namespace
         }
         projectName
+        recordVersion
         spec {
-          backendProtocol
-          basicAuth {
-            enabled
-            secretName
-            username
-          }
-          cors {
-            allowCredentials
-            enabled
-            origins
-          }
           domains
-          https {
-            clusterIssuer
-            enabled
-            forceRedirect
-          }
-          ingressClass
-          maxBodySizeInMB
-          rateLimit {
-            connections
-            enabled
-            rpm
-            rps
-          }
-          routes {
-            app
-            lambda
-            path
-            port
-            rewrite
-          }
         }
         status {
           checks
@@ -1295,6 +1258,14 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
             name
             namespace
           }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
         }
         updateTime
       }
@@ -3359,8 +3330,13 @@ mutation consoleUpdateManagedResource($projectName: String!, $envName: String!, 
   }
 }
 
-query consoleListManagedResources($projectName: String!, $envName: String!) {
-  core_listManagedResources(projectName: $projectName, envName: $envName) {
+query consoleListManagedResources($projectName: String!, $envName: String!, $search: SearchManagedResources, $pq: CursorPaginationIn) {
+  core_listManagedResources(
+    projectName: $projectName
+    envName: $envName
+    search: $search
+    pq: $pq
+  ) {
     edges {
       cursor
       node {
@@ -3380,10 +3356,12 @@ query consoleListManagedResources($projectName: String!, $envName: String!) {
         }
         markedForDeletion
         metadata {
+          generation
           name
           namespace
         }
         projectName
+        recordVersion
         spec {
           resourceTemplate {
             apiVersion
@@ -3411,6 +3389,14 @@ query consoleListManagedResources($projectName: String!, $envName: String!) {
             name
             namespace
           }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
         }
         updateTime
       }
@@ -3686,29 +3672,6 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
             targetPort
           }
         }
-        status {
-          checks
-          isReady
-          lastReadyGeneration
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
-        }
         updateTime
       }
     }
@@ -3754,6 +3717,8 @@ query consoleGetConsoleVpnDevice($name: String!) {
 
 query consoleListConsoleVpnDevicesForUser {
   core_listVPNDevicesForUser {
+    accountName
+    apiVersion
     createdBy {
       userEmail
       userId
@@ -3762,6 +3727,8 @@ query consoleListConsoleVpnDevicesForUser {
     creationTime
     displayName
     environmentName
+    id
+    kind
     lastUpdatedBy {
       userEmail
       userId
@@ -3769,7 +3736,11 @@ query consoleListConsoleVpnDevicesForUser {
     }
     markedForDeletion
     metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
       generation
+      labels
       name
       namespace
     }
@@ -3788,30 +3759,11 @@ query consoleListConsoleVpnDevicesForUser {
         targetPort
       }
     }
-    status {
-      checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
-    }
-    syncStatus {
-      action
-      error
-      lastSyncedAt
-      recordVersion
-      state
-      syncScheduledAt
-    }
     updateTime
+    wireguardConfig {
+      encoding
+      value
+    }
   }
 }
 

@@ -182,12 +182,12 @@ export const EnvironmentVariables = () => {
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
     key: Yup.string().required(),
 
-    value: Yup.string().when(['type'], ([type], schema) => {
-      if (type === undefined) {
-        return schema.required();
-      }
-      return schema;
-    }),
+    // value: Yup.string().when(['type'], ([type], schema) => {
+    //   if (type === undefined) {
+    //     return schema.required();
+    //   }
+    //   return schema;
+    // }),
     refKey: Yup.string()
       .when(['type'], ([type], schema) => {
         if (type === 'config' || type === 'secret') {
@@ -211,9 +211,10 @@ export const EnvironmentVariables = () => {
     values,
     setValues,
     submit,
+    errors,
     resetValues: resetAppValue,
   } = useForm({
-    initialValues: getContainer().env,
+    initialValues: getContainer().env || [],
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
       setContainer((c) => ({
@@ -222,7 +223,14 @@ export const EnvironmentVariables = () => {
       }));
     },
   });
+
   useEffect(() => {
+    console.log('errors ', errors);
+  }, [errors]);
+
+  useEffect(() => {
+    console.log('here values: ', values);
+
     submit();
   }, [values]);
 
@@ -234,7 +242,7 @@ export const EnvironmentVariables = () => {
   }, [hasChanges]);
 
   const addEntry = (val: IEnvVariable) => {
-    setValues((v) => {
+    setValues((v = []) => {
       const data = {
         key: val.key,
         type: val.type,
@@ -242,12 +250,7 @@ export const EnvironmentVariables = () => {
         refKey: val.refKey || '',
         value: val.value || '',
       };
-      if (v) {
-        v?.push(data);
-      } else {
-        return [data];
-      }
-      return v;
+      return [...v, data];
     });
   };
 
@@ -301,6 +304,8 @@ export const EnvironmentVariables = () => {
         }),
     }),
     onSubmit: () => {
+      console.log(eValues);
+
       if (eValues.textInputValue) {
         const ev: IEnvVariable = {
           key: eValues.key,
@@ -317,7 +322,7 @@ export const EnvironmentVariables = () => {
           refKey: eValues.value.refKey,
           refName: eValues.value.refName,
           type: eValues.value.type,
-          value: undefined,
+          value: '',
         };
 
         // setEnvVariables((prev) => [...prev, ev]);
@@ -444,6 +449,8 @@ export const EnvironmentVariables = () => {
         show={showCSDialog}
         setShow={setShowCSDialog}
         onSubmit={(item) => {
+          console.log('items', item);
+
           eSetValues((v) => {
             return {
               ...v,

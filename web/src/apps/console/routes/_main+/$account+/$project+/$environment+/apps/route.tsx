@@ -41,9 +41,9 @@ const Apps = () => {
   return (
     <LoadingComp
       data={promise}
-      skeletonData={{
-        appsData: fake.ConsoleListAppsQuery.core_listApps as any,
-      }}
+      // skeletonData={{
+      //   appsData: fake.ConsoleListAppsQuery.core_listApps as any,
+      // }}
     >
       {({ appsData }) => {
         const apps = parseNodes(appsData);

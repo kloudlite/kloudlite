@@ -13,13 +13,13 @@ import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
+  ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { useParams } from '@remix-run/react';
 import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
 import HandleConsoleDevices, {
   ShowWireguardConfig,

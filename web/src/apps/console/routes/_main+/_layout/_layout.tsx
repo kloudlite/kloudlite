@@ -212,8 +212,6 @@ const Console = () => {
 
   const devicesMenu = useHandleFromMatches('devicesMenu', null);
 
-  console.log('devicemenu', devicesMenu);
-
   const headerExtra = useHandleFromMatches('headerExtra', null);
 
   const breadcrum = useCallback(() => {

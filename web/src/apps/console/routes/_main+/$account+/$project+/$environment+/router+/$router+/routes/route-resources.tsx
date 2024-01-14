@@ -169,7 +169,7 @@ const ListView = ({ items, onAction }: IResource) => {
               {
                 key: generateKey(keyPrefix, port),
                 className: 'flex-1',
-                render: () => <ListBody data={port} />,
+                render: () => <ListBody data={`:${port}`} />,
               },
               {
                 key: generateKey(keyPrefix, 'action'),

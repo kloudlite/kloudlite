@@ -16,7 +16,7 @@ import { NumberInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { cn } from '~/components/utils';
+import { cn, useMapper } from '~/components/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import QRCode from '~/console/components/qr-code';
@@ -42,8 +42,13 @@ import CodeView from '~/console/components/code-view';
 import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
-import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
+import {
+  IConsoleDevices,
+  IConsoleDevicesForUser,
+} from '~/console/server/gql/queries/console-vpn-queries';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import Select from '~/components/atoms/select';
+import { ConsoleApiType } from '../server/gql/saved-queries';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -269,7 +274,7 @@ export const QRCodeView = ({ data }: { data: string }) => {
   );
 };
 
-const decodeConfig = ({
+export const decodeConfig = ({
   encoding,
   value,
 }: {
@@ -309,15 +314,12 @@ export const ShowWireguardConfig = ({
   const [config, setConfig] = useState<string | undefined>(undefined);
   const api = useConsoleApi();
 
-  const { cluster } = useParams();
-
   useEffect(() => {
     if (visible) {
       (async () => {
         setLoading(true);
         try {
-          const { errors, data: out } = await api.getVpnDevice({
-            clusterName: cluster || '',
+          const { errors, data: out } = await api.getConsoleVpnDevice({
             name: data.device,
           });
           if (errors) {
@@ -400,13 +402,46 @@ export const ShowWireguardConfig = ({
   );
 };
 
+export const switchEnvironment = async ({
+  api,
+  device,
+  environment,
+  project,
+}: {
+  api: ConsoleApiType;
+  device: IConsoleDevicesForUser[number];
+  environment: string;
+  project: string;
+}) => {
+  try {
+    const { errors } = await api.updateConsoleVpnDevice({
+      vpnDevice: {
+        displayName: device.displayName,
+        metadata: {
+          name: parseName(device),
+        },
+        environmentName: environment,
+        projectName: project,
+        spec: {
+          ports: device.spec?.ports,
+        },
+      },
+    });
+    if (errors) {
+      throw errors[0];
+    }
+    toast.success('Device switched successfully');
+  } catch (err) {
+    handleError(err);
+  }
+};
+
 type IDialog = IDialogBase<ExtractNodeType<IConsoleDevices>>;
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const params = useParams();
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -416,17 +451,28 @@ const Root = (props: IDialog) => {
             name: parseName(props.data),
             ports: props.data.spec?.ports || [],
             isNameError: false,
+            projectName: props.data.projectName,
+            environmentName: props.data.environmentName,
           }
         : {
             displayName: '',
             name: '',
             ports: [],
             isNameError: false,
+            projectName: '',
+            environmentName: '',
           },
-      validationSchema: Yup.object({
-        name: Yup.string().required(),
-        displayName: Yup.string().required(),
-      }),
+      validationSchema: isUpdate
+        ? Yup.object({
+            name: Yup.string().required(),
+            displayName: Yup.string().required(),
+            projectName: Yup.string().required(),
+            environmentName: Yup.string().required(),
+          })
+        : Yup.object({
+            name: Yup.string().required(),
+            displayName: Yup.string().required(),
+          }),
       onSubmit: async (val) => {
         try {
           if (!isUpdate) {
@@ -435,7 +481,6 @@ const Root = (props: IDialog) => {
                 displayName: val.displayName,
                 metadata: {
                   name: val.name,
-                  namespace: ENV_NAMESPACE,
                 },
                 spec: {
                   ports: val.ports,
@@ -445,14 +490,16 @@ const Root = (props: IDialog) => {
             if (errors) {
               throw errors[0];
             }
+            toast.success('Device created successfully');
           } else if (isUpdate && props.data) {
             const { errors } = await api.updateConsoleVpnDevice({
               vpnDevice: {
                 displayName: val.displayName,
                 metadata: {
                   name: parseName(props.data),
-                  namespace: ENV_NAMESPACE,
                 },
+                environmentName: val.environmentName,
+                projectName: val.projectName,
                 spec: {
                   ports: val.ports,
                 },
@@ -461,11 +508,9 @@ const Root = (props: IDialog) => {
             if (errors) {
               throw errors[0];
             }
+            toast.success('Device updated successfully');
           }
-
           reloadPage();
-          resetValues();
-          toast.success('Device created successfully');
           setVisible(false);
         } catch (err) {
           handleError(err);
@@ -473,27 +518,69 @@ const Root = (props: IDialog) => {
       },
     });
 
-  // const {
-  //   data: projectData,
-  //   error: projectError,
-  //   isLoading: projectIsLoading,
-  // } = useCustomSwr('/projects', async () => {
-  //   return api.listProjects({});
-  // });
+  useEffect(() => {
+    if (!isUpdate) {
+      resetValues();
+    }
+  }, []);
 
-  // const {
-  //   data: projectData,
-  //   error: projectError,
-  //   isLoading: projectIsLoading,
-  // } = useCustomSwr(()=>`/environments`, async () => {
-  //   return api.listEnvironments({
-  //     projectName:""
-  //   });
-  // });
+  const {
+    data: projectData,
+    error: projectError,
+    isLoading: projectIsLoading,
+  } = useCustomSwr('/projects', async () => {
+    return api.listProjects({});
+  });
+
+  const {
+    data: envData,
+    error: envError,
+    isLoading: envLoading,
+  } = useCustomSwr(
+    () => (values.projectName ? `/environments-${values.projectName}` : null),
+    async () => {
+      if (!values.projectName) {
+        throw new Error('Project name is required!.');
+      }
+      return api.listEnvironments({
+        projectName: values.projectName,
+      });
+    }
+  );
+
+  const projects = useMapper(parseNodes(projectData), (val) => ({
+    label: val.displayName,
+    value: parseName(val),
+    project: val,
+    render: () => (
+      <div className="flex flex-col">
+        <div>{val.displayName}</div>
+        <div className="bodySm text-text-soft">{parseName(val)}</div>
+      </div>
+    ),
+  }));
+
+  const environments = useMapper(parseNodes(envData), (val) => ({
+    label: val.displayName,
+    value: parseName(val),
+    project: val,
+    render: () => (
+      <div className="flex flex-col">
+        <div>{val.displayName}</div>
+        <div className="bodySm text-text-soft">{parseName(val)}</div>
+      </div>
+    ),
+  }));
+
+  useEffect(() => {
+    console.log('errors here', errors);
+  }, [errors]);
 
   return (
     <Popup.Form
       onSubmit={(e) => {
+        console.log('name error', values.isNameError);
+
         if (!values.isNameError) {
           handleSubmit(e);
         } else {
@@ -514,12 +601,64 @@ const Root = (props: IDialog) => {
             nameErrorLabel="isNameError"
             isUpdate={isUpdate}
           />
-          {/* <ExposedPorts
-            ports={values.ports}
-            onChange={(ports) => {
-              handleChange('ports')(dummyEvent(ports));
-            }}
-          /> */}
+          {isUpdate && (
+            <>
+              <div className="flex flex-row items-start gap-3xl">
+                <div className="basis-full">
+                  <Select
+                    label="Project"
+                    size="lg"
+                    placeholder="Select a project"
+                    error={!!errors.projectName}
+                    message={errors.projectName}
+                    disableWhileLoading
+                    options={async () => [...projects]}
+                    value={
+                      values.projectName
+                        ? {
+                            label: values.projectName,
+                            value: values.projectName,
+                          }
+                        : undefined
+                    }
+                    onChange={(val) => {
+                      handleChange('projectName')(dummyEvent(val.value));
+                    }}
+                  />
+                </div>
+                <div className="basis-full">
+                  <Select
+                    label="Environment"
+                    size="lg"
+                    placeholder="Select a environment"
+                    error={!!values.projectName && !!errors.environmentName}
+                    message={values.projectName ? errors.environmentName : ''}
+                    disabled={!values.projectName}
+                    disableWhileLoading
+                    loading={projectIsLoading || envLoading}
+                    options={async () => [...environments]}
+                    value={
+                      values.environmentName
+                        ? {
+                            label: values.environmentName,
+                            value: values.environmentName,
+                          }
+                        : undefined
+                    }
+                    onChange={(val) => {
+                      handleChange('environmentName')(dummyEvent(val.value));
+                    }}
+                  />
+                </div>
+              </div>
+              <ExposedPorts
+                ports={values.ports}
+                onChange={(ports) => {
+                  handleChange('ports')(dummyEvent(ports));
+                }}
+              />
+            </>
+          )}
         </div>
       </Popup.Content>
       <Popup.Footer>
@@ -540,7 +679,7 @@ const HandleConsoleDevices = (props: IDialog) => {
     <CommonPopupHandle
       {...props}
       createTitle="Add device"
-      updateTitle="Edit device"
+      updateTitle="Device setup"
       root={Root}
     />
   );

@@ -97,7 +97,7 @@ const LocalBreadcrum = ({
     <div className="flex flex-row items-center">
       <BreadcrumSlash />
       <Breadcrum.Button
-        to={`/${account}/projects`}
+        to={`/${account}/${parseName(project)}/environments`}
         LinkComponent={Link}
         content={
           <div

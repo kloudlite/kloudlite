@@ -367,8 +367,10 @@ export type InvitationIn = {
 };
 
 export type AppIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSpecIn;
 };
@@ -505,15 +507,19 @@ export type K8s__Io___Api___Core___V1__TolerationIn = {
 };
 
 export type ConfigIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   binaryData?: InputMaybe<Scalars['Map']['input']>;
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
   immutable?: InputMaybe<Scalars['Boolean']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
 };
 
 export type EnvironmentIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentSpecIn>;
 };
@@ -541,8 +547,10 @@ export type ImagePullSecretIn = {
 };
 
 export type ManagedResourceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn;
 };
@@ -554,6 +562,8 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResour
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceTemplateIn =
   {
+    apiVersion: Scalars['String']['input'];
+    kind: Scalars['String']['input'];
     msvcRef: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefIn;
     spec: Scalars['Map']['input'];
   };
@@ -567,8 +577,10 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefI
   };
 
 export type ProjectIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   clusterName?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectSpecIn;
 };
@@ -579,7 +591,9 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectSpecIn
   };
 
 export type ProjectManagedServiceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectManagedServiceSpecIn>;
 };
@@ -603,8 +617,10 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTempla
   };
 
 export type RouterIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouterSpecIn;
 };
@@ -660,17 +676,21 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn = {
 };
 
 export type SecretIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
   immutable?: InputMaybe<Scalars['Boolean']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   stringData?: InputMaybe<Scalars['Map']['input']>;
   type?: InputMaybe<K8s__Io___Api___Core___V1__SecretType>;
 };
 
 export type ConsoleVpnDeviceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   environmentName?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   projectName?: InputMaybe<Scalars['String']['input']>;
   spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn>;
@@ -1588,10 +1608,10 @@ export type ConsoleGetProjectQuery = {
     clusterName?: string;
     displayName: string;
     accountName: string;
-    apiVersion: string;
+    apiVersion?: string;
     creationTime: any;
     id: string;
-    kind: string;
+    kind?: string;
     markedForDeletion?: boolean;
     recordVersion: number;
     updateTime: any;
@@ -2305,6 +2325,16 @@ export type ConsoleUpdateAppMutationVariables = Exact<{
 
 export type ConsoleUpdateAppMutation = { core_updateApp?: { id: string } };
 
+export type ConsoleInterceptAppMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  appname: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  intercept: Scalars['Boolean']['input'];
+}>;
+
+export type ConsoleInterceptAppMutation = { core_interceptApp: boolean };
+
 export type ConsoleDeleteAppMutationVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
@@ -2436,13 +2466,13 @@ export type ConsoleListAppsQuery = {
         displayName: string;
         enabled?: boolean;
         environmentName: string;
-        kind: string;
         markedForDeletion?: boolean;
         projectName: string;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { annotations?: any; name: string; namespace?: string };
+        metadata?: { generation: number; name: string; namespace?: string };
         spec: {
           displayName?: string;
           freeze?: boolean;
@@ -2468,15 +2498,6 @@ export type ConsoleListAppsQuery = {
               refName: string;
               type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
             }>;
-            livenessProbe?: {
-              failureThreshold?: number;
-              initialDelay?: number;
-              interval?: number;
-              type: string;
-              httpGet?: { httpHeaders?: any; path: string; port: number };
-              shell?: { command?: Array<string> };
-              tcp?: { port: number };
-            };
             readinessProbe?: {
               failureThreshold?: number;
               initialDelay?: number;
@@ -2485,12 +2506,6 @@ export type ConsoleListAppsQuery = {
             };
             resourceCpu?: { max?: string; min?: string };
             resourceMemory?: { max?: string; min?: string };
-            volumes?: Array<{
-              mountPath: string;
-              refName: string;
-              type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
-              items?: Array<{ fileName?: string; key: string }>;
-            }>;
           }>;
           hpa?: {
             enabled?: boolean;
@@ -2526,6 +2541,14 @@ export type ConsoleListAppsQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
       };
     }>;
@@ -2585,44 +2608,12 @@ export type ConsoleListRoutersQuery = {
         environmentName: string;
         markedForDeletion?: boolean;
         projectName: string;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string; namespace?: string };
-        spec: {
-          backendProtocol?: string;
-          domains: Array<string>;
-          ingressClass?: string;
-          maxBodySizeInMB?: number;
-          basicAuth?: {
-            enabled: boolean;
-            secretName?: string;
-            username?: string;
-          };
-          cors?: {
-            allowCredentials?: boolean;
-            enabled?: boolean;
-            origins?: Array<string>;
-          };
-          https?: {
-            clusterIssuer?: string;
-            enabled: boolean;
-            forceRedirect?: boolean;
-          };
-          rateLimit?: {
-            connections?: number;
-            enabled?: boolean;
-            rpm?: number;
-            rps?: number;
-          };
-          routes?: Array<{
-            app?: string;
-            lambda?: string;
-            path: string;
-            port: number;
-            rewrite?: boolean;
-          }>;
-        };
+        metadata?: { generation: number; name: string; namespace?: string };
+        spec: { domains: Array<string> };
         status?: {
           checks?: any;
           isReady: boolean;
@@ -2635,6 +2626,14 @@ export type ConsoleListRoutersQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
       };
     }>;
@@ -4630,6 +4629,8 @@ export type ConsoleUpdateManagedResourceMutation = {
 export type ConsoleListManagedResourcesQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchManagedResources>;
+  pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListManagedResourcesQuery = {
@@ -4644,10 +4645,11 @@ export type ConsoleListManagedResourcesQuery = {
         environmentName: string;
         markedForDeletion?: boolean;
         projectName: string;
+        recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string; namespace?: string };
+        metadata?: { generation: number; name: string; namespace?: string };
         spec: {
           resourceTemplate: {
             apiVersion: string;
@@ -4673,6 +4675,14 @@ export type ConsoleListManagedResourcesQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
         };
       };
     }>;
@@ -4926,27 +4936,6 @@ export type ConsoleListConsoleVpnDevicesQuery = {
           cnameRecords?: Array<{ host?: string; target?: string }>;
           ports?: Array<{ port?: number; targetPort?: number }>;
         };
-        status?: {
-          checks?: any;
-          isReady: boolean;
-          lastReadyGeneration?: number;
-          lastReconcileTime?: any;
-          message?: { RawMessage?: any };
-          resources?: Array<{
-            apiVersion: string;
-            kind: string;
-            name: string;
-            namespace: string;
-          }>;
-        };
-        syncStatus: {
-          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
-          syncScheduledAt?: any;
-        };
       };
     }>;
     pageInfo: {
@@ -4986,16 +4975,28 @@ export type ConsoleListConsoleVpnDevicesForUserQueryVariables = Exact<{
 
 export type ConsoleListConsoleVpnDevicesForUserQuery = {
   core_listVPNDevicesForUser?: Array<{
+    accountName: string;
+    apiVersion?: string;
     creationTime: any;
     displayName: string;
     environmentName?: string;
+    id: string;
+    kind?: string;
     markedForDeletion?: boolean;
     projectName?: string;
     recordVersion: number;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata?: { generation: number; name: string; namespace?: string };
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
     spec?: {
       deviceNamespace?: string;
       disabled?: boolean;
@@ -5003,27 +5004,7 @@ export type ConsoleListConsoleVpnDevicesForUserQuery = {
       cnameRecords?: Array<{ host?: string; target?: string }>;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
-    status?: {
-      checks?: any;
-      isReady: boolean;
-      lastReadyGeneration?: number;
-      lastReconcileTime?: any;
-      message?: { RawMessage?: any };
-      resources?: Array<{
-        apiVersion: string;
-        kind: string;
-        name: string;
-        namespace: string;
-      }>;
-    };
-    syncStatus: {
-      action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
-      error?: string;
-      lastSyncedAt?: any;
-      recordVersion: number;
-      state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
-      syncScheduledAt?: any;
-    };
+    wireguardConfig?: { encoding: string; value: string };
   }>;
 };
 
@@ -5267,7 +5248,7 @@ export type AuthCli_ListAppsQuery = {
         displayName: string;
         enabled?: boolean;
         environmentName: string;
-        kind: string;
+        kind?: string;
         markedForDeletion?: boolean;
         projectName: string;
         updateTime: any;
