@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -146,6 +147,8 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 	mres.AccountName = ctx.AccountName
 	mres.ProjectName = ctx.ProjectName
 	mres.EnvironmentName = ctx.EnvironmentName
+
+	mres.Spec.ResourceName = fmt.Sprintf("env-%s-%s", ctx.EnvironmentName, mres.Name)
 
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, mres.RecordVersion)
 

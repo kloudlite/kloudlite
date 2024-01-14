@@ -187,14 +187,14 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 		return false, err
 	}
 
-	intercepted := app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
+	// intercepted := app.Spec.Intercept != nil && app.Spec.Intercept.Enabled
 
-	if intercepted && app.Spec.Intercept.ToDevice != deviceName {
-		return false, errors.Newf("device (%s) is already intercepting app (%s)", app.Spec.Intercept.ToDevice, appName)
-	}
+	// if intercepted && app.Spec.Intercept.ToDevice != deviceName {
+	// 	return false, errors.Newf("device (%s) is already intercepting app (%s)", app.Spec.Intercept.ToDevice, appName)
+	// }
 
 	patch := repos.Document{
-		"intercept": crdsv1.Intercept{
+		"spec.intercept": crdsv1.Intercept{
 			Enabled:  intercept,
 			ToDevice: deviceName,
 		},
@@ -240,8 +240,8 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 		"syncStatus.error":         nil,
 	}
 
-	_, err = d.appRepo.PatchById(ctx, xApp.Id, patch)
-	d.resourceEventPublisher.PublishAppEvent(xApp, PublishUpdate)
+	uapp, err := d.appRepo.PatchById(ctx, xApp.Id, patch)
+	d.resourceEventPublisher.PublishAppEvent(uapp, PublishUpdate)
 	return errors.NewE(err)
 }
 
