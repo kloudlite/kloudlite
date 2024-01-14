@@ -1,22 +1,224 @@
 /* eslint-disable camelcase */
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import {
-  AuthCli_CreateRemoteLoginMutationVariables,
-  AuthCli_CreateRemoteLoginMutation,
-  AuthCli_GetRemoteLoginQueryVariables,
-  AuthCli_GetRemoteLoginQuery,
-  AuthCli_GetCurrentUserQuery,
-  AuthCli_GetCurrentUserQueryVariables,
-  AuthCli_ListAccountsQuery,
-  AuthCli_ListAccountsQueryVariables,
-  AuthCli_ListClustersQuery,
-  AuthCli_ListClustersQueryVariables,
-  AuthCli_GetKubeConfigQuery,
-  AuthCli_GetKubeConfigQueryVariables,
-} from '~/root/src/generated/gql/server';
+import { infraQueries } from './queries/infra-queries';
 
 export const cliQueries = (executor: IExecutor) => ({
+  ...infraQueries(executor),
+  cli_getMresKeys: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $projectName: String!
+        $envName: String!
+        $name: String!
+      ) {
+        core_getManagedResouceOutputKeys(
+          projectName: $projectName
+          envName: $envName
+          name: $name
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getManagedResouceOutputKeys,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_listMreses: executor(
+    gql`
+      query Core_listManagedResources(
+        $projectName: String!
+        $envName: String!
+        $pq: CursorPaginationIn
+      ) {
+        core_listManagedResources(
+          projectName: $projectName
+          envName: $envName
+          pq: $pq
+        ) {
+          edges {
+            node {
+              displayName
+              metadata {
+                name
+                namespace
+              }
+            }
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_listManagedResources,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getMresConfigsValues: executor(
+    gql`
+      query Core_getManagedResouceOutputKeyValues(
+        $keyrefs: [ManagedResourceKeyRefIn]
+        $envName: String!
+        $projectName: String!
+      ) {
+        core_getManagedResouceOutputKeyValues(
+          keyrefs: $keyrefs
+          envName: $envName
+          projectName: $projectName
+        ) {
+          key
+          mresName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_infraCheckNameAvailability: executor(
+    gql`
+      query Infra_checkNameAvailability(
+        $resType: ResType!
+        $name: String!
+        $clusterName: String
+      ) {
+        infra_checkNameAvailability(
+          resType: $resType
+          name: $name
+          clusterName: $clusterName
+        ) {
+          result
+          suggestedNames
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_checkNameAvailability,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_createDevice: executor(
+    gql`
+      mutation Infra_createVPNDevice(
+        $clusterName: String!
+        $vpnDevice: VPNDeviceIn!
+      ) {
+        infra_createVPNDevice(
+          clusterName: $clusterName
+          vpnDevice: $vpnDevice
+        ) {
+          metadata {
+            name
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_createVPNDevice,
+      vars: (_: any) => {},
+    }
+  ),
+
+  cli_getConfigSecretMap: executor(
+    gql`
+      query Core_getConfigValues(
+        $projectName: String!
+        $envName: String!
+        $configQueries: [ConfigKeyRefIn]
+        $secretQueries: [SecretKeyRefIn!]
+      ) {
+        configs: core_getConfigValues(
+          projectName: $projectName
+          envName: $envName
+          queries: $configQueries
+        ) {
+          configName
+          key
+          value
+        }
+        secrets: core_getSecretValues(
+          projectName: $projectName
+          envName: $envName
+          queries: $secretQueries
+        ) {
+          key
+          secretName
+          value
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => {
+        return {
+          configs: data.configs,
+          secrets: data.secrets,
+        };
+      },
+
+      vars: (_: any) => {},
+    }
+  ),
+  cli_interceptApp: executor(
+    gql`
+      mutation Core_interceptApp(
+        $projectName: String!
+        $envName: String!
+        $appname: String!
+        $deviceName: String!
+        $intercept: Boolean!
+      ) {
+        core_interceptApp(
+          projectName: $projectName
+          envName: $envName
+          appname: $appname
+          deviceName: $deviceName
+          intercept: $intercept
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_interceptApp,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_getEnvironment: executor(
+    gql`
+      query Core_getEnvironment($projectName: String!, $name: String!) {
+        core_getEnvironment(projectName: $projectName, name: $name) {
+          spec {
+            targetNamespace
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_getEnvironment,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_updateDeviceNs: executor(
+    gql`
+      mutation Infra_updateVPNDeviceNs(
+        $clusterName: String!
+        $deviceName: String!
+        $namespace: String!
+      ) {
+        infra_updateVPNDeviceNs(
+          clusterName: $clusterName
+          deviceName: $deviceName
+          namespace: $namespace
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.infra_updateVPNDeviceNs,
+      vars: (_: any) => {},
+    }
+  ),
   cli_updateDevicePort: executor(
     gql`
       mutation Mutation(
@@ -33,7 +235,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDevicePorts,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_getSecret: executor(
@@ -59,7 +261,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_getSecret,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_getConfig: executor(
@@ -85,7 +287,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_getConfig,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -243,7 +445,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listApps,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_listConfigs: executor(
@@ -266,7 +468,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listConfigs,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_listSecrets: executor(
@@ -274,13 +476,11 @@ export const cliQueries = (executor: IExecutor) => ({
       query Core_listSecrets(
         $projectName: String!
         $envName: String!
-        $search: SearchSecrets
         $pq: CursorPaginationIn
       ) {
         core_listSecrets(
           projectName: $projectName
           envName: $envName
-          search: $search
           pq: $pq
         ) {
           edges {
@@ -300,7 +500,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listSecrets,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_updateDevice: executor(
@@ -335,30 +535,23 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_listDevices: executor(
     gql`
-      query Infra_listVPNDevices(
-        $pq: CursorPaginationIn
-        $clusterName: String
-      ) {
-        infra_listVPNDevices(pq: $pq, clusterName: $clusterName) {
+      query Infra_listVPNDevices($pq: CursorPaginationIn) {
+        infra_listVPNDevices(pq: $pq) {
           edges {
             node {
               displayName
-              markedForDeletion
               metadata {
                 name
-                namespace
               }
               spec {
-                cnameRecords {
-                  host
-                  target
-                }
                 deviceNamespace
+                disabled
+                nodeSelector
                 ports {
                   port
                   targetPort
@@ -370,6 +563,10 @@ export const cliQueries = (executor: IExecutor) => ({
                   RawMessage
                 }
               }
+              wireguardConfig {
+                encoding
+                value
+              }
             }
           }
         }
@@ -377,7 +574,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_listVPNDevices,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -418,7 +615,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_getVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -426,14 +623,9 @@ export const cliQueries = (executor: IExecutor) => ({
     gql`
       query Core_listEnvironments(
         $projectName: String!
-        $search: SearchEnvironments
         $pq: CursorPaginationIn
       ) {
-        core_listEnvironments(
-          projectName: $projectName
-          search: $search
-          pq: $pq
-        ) {
+        core_listEnvironments(projectName: $projectName, pq: $pq) {
           edges {
             cursor
             node {
@@ -467,14 +659,14 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listEnvironments,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
   cli_listProjects: executor(
     gql`
-      query Core_listProjects($clusterName: String, $pq: CursorPaginationIn) {
-        core_listProjects(clusterName: $clusterName, pq: $pq) {
+      query Core_listProjects($pq: CursorPaginationIn) {
+        core_listProjects(pq: $pq) {
           edges {
             node {
               displayName
@@ -496,7 +688,7 @@ export const cliQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listProjects,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -515,8 +707,8 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: AuthCli_GetKubeConfigQuery) => data.infra_getCluster,
-      vars(_: AuthCli_GetKubeConfigQueryVariables) { },
+      transformer: (data: any) => data.infra_getCluster,
+      vars: (_: any) => {},
     }
   ),
   cli_listClusters: executor(
@@ -538,10 +730,8 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data: AuthCli_ListClustersQuery) {
-        return data.infra_listClusters;
-      },
-      vars(_: AuthCli_ListClustersQueryVariables) { },
+      transformer: (data: any) => data.infra_listClusters,
+      vars: (_: any) => {},
     }
   ),
   cli_listAccounts: executor(
@@ -556,10 +746,8 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data: AuthCli_ListAccountsQuery) {
-        return data.accounts_listAccounts;
-      },
-      vars(_: AuthCli_ListAccountsQueryVariables) { },
+      transformer: (data: any) => data.accounts_listAccounts,
+      vars: (_: any) => {},
     }
   ),
   cli_getCurrentUser: executor(
@@ -573,10 +761,8 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data: AuthCli_GetCurrentUserQuery) {
-        return data.auth_me;
-      },
-      vars(_: AuthCli_GetCurrentUserQueryVariables) { },
+      transformer: (data: any) => data.auth_me,
+      vars: (_: any) => {},
     }
   ),
 
@@ -587,9 +773,8 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: AuthCli_CreateRemoteLoginMutation) =>
-        data.auth_createRemoteLogin,
-      vars(_: AuthCli_CreateRemoteLoginMutationVariables) { },
+      transformer: (data: any) => data.auth_createRemoteLogin,
+      vars: (_: any) => {},
     }
   ),
 
@@ -603,9 +788,8 @@ export const cliQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: AuthCli_GetRemoteLoginQuery) =>
-        data.auth_getRemoteLogin,
-      vars(_: AuthCli_GetRemoteLoginQueryVariables) { },
+      transformer: (data: any) => data.auth_getRemoteLogin,
+      vars: (_: any) => {},
     }
   ),
 });

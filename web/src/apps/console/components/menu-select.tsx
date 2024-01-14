@@ -2,6 +2,7 @@ import React, { ReactNode, useState } from 'react';
 import * as Select from '@radix-ui/react-select';
 import { cn } from '~/components/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown, ChevronUp } from '@jengaicons/react';
 
 interface ISelectItem {
   children: ReactNode;
@@ -48,6 +49,7 @@ const MenuSelect = ({
   onChange,
 }: IMenuSelect) => {
   const [open, setOpen] = useState(false);
+  const scrollButtonSize = 12;
   return (
     <Select.Root
       open={open}
@@ -71,6 +73,9 @@ const MenuSelect = ({
                   'z-50 border border-border-default shadow-popover bg-surface-basic-default rounded min-w-[160px] overflow-hidden origin-top py-lg'
                 )}
               >
+                <Select.ScrollUpButton className="flex items-center justify-center h-[15px] bg-surface-basic-default text-text-default cursor-default">
+                  <ChevronUp size={scrollButtonSize} />
+                </Select.ScrollUpButton>
                 <Select.Viewport
                   onClick={(e) => {
                     console.log(e);
@@ -90,6 +95,9 @@ const MenuSelect = ({
                     </div>
                   ))}
                 </Select.Viewport>
+                <Select.ScrollDownButton className="flex items-center justify-center h-[15px] bg-surface-basic-default text-text-default cursor-default">
+                  <ChevronDown size={scrollButtonSize} />
+                </Select.ScrollDownButton>
               </motion.div>
             </Select.Content>
           </Select.Portal>

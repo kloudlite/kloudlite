@@ -10,6 +10,10 @@ import {
   ConsoleListEnvironmentsQueryVariables,
   ConsoleUpdateEnvironmentMutation,
   ConsoleUpdateEnvironmentMutationVariables,
+  ConsoleDeleteEnvironmentMutation,
+  ConsoleDeleteEnvironmentMutationVariables,
+  ConsoleCloneEnvironmentMutation,
+  ConsoleCloneEnvironmentMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IEnvironment = NN<
@@ -112,7 +116,22 @@ export const environmentQueries = (executor: IExecutor) => ({
       vars(_: ConsoleUpdateEnvironmentMutationVariables) { },
     }
   ),
-
+  deleteEnvironment: executor(
+    gql`
+      mutation Core_deleteEnvironment(
+        $projectName: String!
+        $envName: String!
+      ) {
+        core_deleteEnvironment(projectName: $projectName, envName: $envName)
+      }
+    `,
+    {
+      transformer(data: ConsoleDeleteEnvironmentMutation) {
+        return data.core_deleteEnvironment;
+      },
+      vars(_: ConsoleDeleteEnvironmentMutationVariables) { },
+    }
+  ),
   listEnvironments: executor(
     gql`
       query Core_listEnvironments(
@@ -142,17 +161,19 @@ export const environmentQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
                 generation
-                labels
                 name
                 namespace
               }
               projectName
+              recordVersion
               spec {
                 projectName
+                routing {
+                  mode
+                  privateIngressClass
+                  publicIngressClass
+                }
                 targetNamespace
               }
               status {
@@ -169,6 +190,14 @@ export const environmentQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }
@@ -187,6 +216,32 @@ export const environmentQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListEnvironmentsQuery) =>
         data.core_listEnvironments,
       vars(_: ConsoleListEnvironmentsQueryVariables) { },
+    }
+  ),
+  cloneEnvironment: executor(
+    gql`
+      mutation Core_cloneEnvironment(
+        $projectName: String!
+        $sourceEnvName: String!
+        $destinationEnvName: String!
+        $displayName: String!
+        $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!
+      ) {
+        core_cloneEnvironment(
+          projectName: $projectName
+          sourceEnvName: $sourceEnvName
+          destinationEnvName: $destinationEnvName
+          displayName: $displayName
+          environmentRoutingMode: $environmentRoutingMode
+        ) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCloneEnvironmentMutation) =>
+        data.core_cloneEnvironment,
+      vars(_: ConsoleCloneEnvironmentMutationVariables) { },
     }
   ),
 });

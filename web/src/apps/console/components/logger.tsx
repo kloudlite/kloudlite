@@ -2,17 +2,10 @@
 /* eslint-disable no-nested-ternary */
 import { ArrowsIn, ArrowsOut, List } from '@jengaicons/react';
 import Anser from 'anser';
-import axios from 'axios';
 import classNames from 'classnames';
 import Fuse from 'fuse.js';
 import hljs from 'highlight.js';
-import React, {
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { ViewportList } from 'react-viewport-list';
 import * as sock from 'websocket';
 import { dayjs } from '~/components/molecule/dayjs';
@@ -21,6 +14,8 @@ import {
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
+import logger from '~/root/lib/client/helpers/log';
+import { socketUrl } from '~/root/lib/configs/base-url.cjs';
 import generateColor from './color-generator';
 import Pulsable from './pulsable';
 import { logsMockData } from '../dummy/data';
@@ -28,13 +23,14 @@ import { logsMockData } from '../dummy/data';
 const hoverClass = `hover:bg-[#ddd]`;
 const hoverClassDark = `hover:bg-[#333]`;
 
-type ILog = { message: string; timestamp: string };
-type ILogWithPodName = ILog & { pod_name: string; lineNumber: number };
-
-type ISocketMessage = {
+type ILog = {
   pod_name: string;
-  logs: ILog[];
+  message: string;
+  timestamp: string;
 };
+type ILogWithLineNumber = ILog & { lineNumber: number };
+
+type ISocketMessage = ILog;
 
 const padLeadingZeros = (num: number, size: number) => {
   let s = `${num}`;
@@ -50,6 +46,21 @@ interface IHighlightIt {
   className?: string;
   enableHL?: boolean;
 }
+
+const getHashId = (str: string) => {
+  let hash = 0;
+  let i;
+  let chr;
+  if (str.length === 0) return hash;
+  for (i = 0; i < str.length; i += 1) {
+    chr = str.charCodeAt(i);
+    // eslint-disable-next-line no-bitwise
+    hash = (hash << 5) - hash + chr;
+    // eslint-disable-next-line no-bitwise
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
 
 const HighlightIt = ({
   language,
@@ -77,8 +88,6 @@ const HighlightIt = ({
           // @ts-ignore
           ref.current.innerHTML = Anser.ansiToHtml(inlineData);
         }
-
-        // @ts-ignore
       }
     })();
   }, [inlineData, language]);
@@ -278,7 +287,7 @@ interface ILogLine {
   language: string;
   lines: number;
   hideLines?: boolean;
-  log: ILogWithPodName & {
+  log: ILogWithLineNumber & {
     searchInf?: ISearchInfProps['searchInf'];
   };
   dark: boolean;
@@ -381,38 +390,9 @@ const LogBlock = ({
 }: ILogBlock) => {
   const [searchText, setSearchText] = useState('');
 
-  const temp: { res: ILogWithPodName[]; id: number } = {
-    res: [],
-    id: 1,
-  };
-
-  const flatLogs = useCallback(
-    () =>
-      data.reduce((acc, curr) => {
-        let { id } = acc;
-        const tres = [
-          ...acc.res,
-          ...curr.logs.map((log, index) => {
-            id = acc.id + index;
-            return {
-              ...log,
-              pod_name: curr.pod_name,
-              lineNumber: id,
-            };
-          }),
-        ];
-
-        return {
-          id,
-          res: tres,
-        };
-      }, temp).res,
-    [data]
-  )();
-
   const searchResult = useSearch(
     {
-      data: flatLogs,
+      data,
       keys: ['message'],
       searchText,
       threshold,
@@ -493,18 +473,23 @@ const LogBlock = ({
             style={{ lineHeight: `${fontSize * 1.5}px` }}
             ref={ref}
           >
-            <ViewportList items={showAll ? flatLogs : searchResult}>
-              {(log) => {
+            <ViewportList items={showAll ? data : searchResult}>
+              {(log, index) => {
                 return (
                   <LogLine
                     dark={dark}
-                    log={log}
+                    log={{
+                      ...log,
+                      lineNumber: index + 1,
+                    }}
                     language={language}
                     searchText={searchText}
                     fontSize={fontSize}
-                    lines={flatLogs.length}
+                    lines={data.length}
                     showAll={showAll}
-                    key={log.lineNumber}
+                    key={getHashId(
+                      `${log.message}${log.timestamp}${log.pod_name}${index}`
+                    )}
                     hideLines={hideLines}
                     selectableLines={selectableLines}
                   />
@@ -518,8 +503,15 @@ const LogBlock = ({
   );
 };
 
-interface IHighlightJsLog {
-  websocket?: boolean;
+interface IuseLog {
+  url?: string;
+  account: string;
+  cluster: string;
+  trackingId: string;
+}
+
+export interface IHighlightJsLog {
+  websocket: IuseLog;
   follow?: boolean;
   url?: string;
   text?: string;
@@ -540,10 +532,159 @@ interface IHighlightJsLog {
   dark?: boolean;
 }
 
-const HighlightJsLog = ({
-  websocket = false,
+const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
+  const [logs, setLogs] = useState<ISocketMessage[]>([]);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  let wsclient: Promise<sock.w3cwebsocket>;
+
+  const [socState, setSocState] = useState<sock.w3cwebsocket | null>(null);
+
+  if (typeof window !== 'undefined') {
+    try {
+      wsclient = new Promise<sock.w3cwebsocket>((res, rej) => {
+        try {
+          // eslint-disable-next-line new-cap
+          const w = new sock.w3cwebsocket(
+            url || `${socketUrl}/logs`,
+            '',
+            '',
+            {}
+          );
+
+          w.onmessage = (msg) => {
+            try {
+              const m: {
+                timestamp: string;
+                message: string;
+                type: 'update' | 'error' | 'info';
+              } = JSON.parse(msg.data as string);
+
+              if (m.type === 'error') {
+                setLogs([]);
+                console.error(m.message);
+                return;
+              }
+
+              if (m.type === 'info') {
+                console.log(m.message);
+                return;
+              }
+
+              if (m.type === 'update') {
+                console.log(m.message);
+                return;
+              }
+
+              if (m.type === 'log') {
+                setIsLoading(false);
+                setLogs((s) => [
+                  ...s,
+                  {
+                    pod_name: 'main',
+                    message: m.message,
+                    timestamp: m.timestamp,
+                  },
+                ]);
+                return;
+              }
+
+              console.log(m);
+            } catch (err) {
+              console.error(err);
+            }
+          };
+
+          w.onopen = () => {
+            res(w);
+          };
+
+          w.onerror = (e) => {
+            rej(e);
+          };
+
+          w.onclose = () => {
+            // wsclient.send(newMessage({ event: 'unsubscribe', data: 'test' }));
+            logger.log('socket disconnected');
+          };
+        } catch (e) {
+          rej(e);
+        }
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // const client = await wsclient.;
+        // 'wss://auth-vision.devc.kloudlite.io/logs'
+
+        if (account === '' || cluster === '' || trackingId === '') {
+          return () => {};
+        }
+
+        if (logs.length) {
+          setLogs([]);
+        }
+        setIsLoading(true);
+
+        const client = await wsclient;
+
+        setSocState(client);
+
+        client.send(
+          JSON.stringify({
+            event: 'subscribe',
+            data: {
+              account,
+              cluster,
+              trackingId,
+            },
+          })
+        );
+      } catch (e) {
+        console.error(e);
+        setLogs([]);
+        setError((e as Error).message);
+      }
+
+      return () => {
+        (async () => {
+          if (!socState) return;
+
+          socState.send(
+            JSON.stringify({
+              event: 'unsubscribe',
+              data: {
+                account,
+                cluster,
+                trackingId,
+              },
+            })
+          );
+
+          // client.close();
+
+          setLogs([]);
+        })();
+      };
+    })();
+  }, [account, cluster, trackingId, url]);
+
+  return {
+    logs,
+    error,
+    isLoading,
+  };
+};
+
+const LogComp = ({
+  websocket,
   follow = true,
-  url = '',
   enableSearch = true,
   selectableLines = true,
   title = '',
@@ -559,95 +700,11 @@ const HighlightJsLog = ({
   className = '',
   dark = false,
 }: IHighlightJsLog) => {
-  const [messages, setMessages] = useState<ISocketMessage[]>([]);
-  const tempMessage = useRef('');
-  const [errors, setErrors] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [fullScreen, setFullScreen] = useState(false);
-
-  useEffect(() => {
-    if (tempMessage.current) {
-      try {
-        const data = JSON.parse(tempMessage.current);
-        setMessages((s) => [...s, ...data]);
-        tempMessage.current = '';
-        setErrors('');
-        setIsLoading(false);
-      } catch (error) {
-        const e = error as Error;
-        console.log(error);
-        setErrors(
-          `'Something went wrong! Please try again.', ${e.name}: ${+e.message}`
-        );
-      }
-    }
-  }, [tempMessage.current]);
 
   const { setClassName, removeClassName } = useClass({
     elementClass: 'loading-container',
   });
-
-  useEffect(() => {
-    (async () => {
-      if (!url || websocket) return;
-      setIsLoading(true);
-      try {
-        const d = await axios({
-          url,
-          method: 'GET',
-          withCredentials: true,
-        });
-        setMessages((d.data || '').trim());
-      } catch (err) {
-        setErrors(
-          `${(err as Error).message}
-An error occurred attempting to load the provided log.
-Please check the URL and ensure it is reachable.
-${url}`
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!url || !websocket) return () => {};
-
-    // setMessages([]);
-
-    let wsclient: sock.w3cwebsocket;
-    setIsLoading(true);
-    try {
-      // eslint-disable-next-line new-cap
-      wsclient = new sock.w3cwebsocket(url, '', '', {});
-    } catch (err) {
-      setErrors(
-        `${(err as Error).message}
-An error occurred attempting to load the provided log.
-Please check the URL and ensure it is reachable.
-${url}`
-      );
-      return () => {};
-    } finally {
-      setIsLoading(false);
-    }
-    // wsclient.onopen = logger.log;
-    // wsclient.onclose = logger.log;
-    // wsclient.onerror = logger.log;
-
-    wsclient.onmessage = (msg: sock.IMessageEvent) => {
-      try {
-        const data: ISocketMessage[] = JSON.parse(msg.data.toString());
-        setMessages((s) => [...s, ...data]);
-      } catch (err) {
-        tempMessage.current += msg.data.toString();
-      }
-    };
-    return () => {
-      wsclient.close();
-    };
-  }, []);
 
   useEffect(() => {
     const keyDownListener = (e: any) => {
@@ -670,16 +727,17 @@ ${url}`
     }
   }, [fullScreen]);
 
-  const mockDataRef = useRef(
-    Array.from({ length: 15 }).map(() => {
-      return {
-        message: logsMockData[Math.floor(Math.random() * 10)],
-        timestamp: dayjs().toISOString(),
-      };
-    })
-  );
+  const { logs, error, isLoading } = useSocketLogs(websocket);
 
-  return (
+  const [isClientSide, setIsClientSide] = useState(false);
+
+  useEffect(() => {
+    if (!isClientSide) {
+      setIsClientSide(true);
+    }
+  }, []);
+
+  return isClientSide ? (
     <Pulsable isLoading={isLoading}>
       <div
         className={classNames(className, {
@@ -690,19 +748,12 @@ ${url}`
           height: fullScreen ? '100vh' : height,
         }}
       >
-        {errors ? (
-          <pre>{errors}</pre>
+        {error ? (
+          <pre>{error}</pre>
         ) : (
           <LogBlock
             {...{
-              data: isLoading
-                ? [
-                    {
-                      pod_name: 'Loading...',
-                      logs: mockDataRef.current,
-                    },
-                  ]
-                : messages,
+              data: isLoading ? logsMockData : logs,
               follow,
               dark,
               enableSearch,
@@ -743,7 +794,17 @@ ${url}`
         )}
       </div>
     </Pulsable>
+  ) : (
+    <div
+      className={classNames(className, {
+        'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
+      })}
+      style={{
+        width: fullScreen ? '100%' : width,
+        height: fullScreen ? '100vh' : height,
+      }}
+    />
   );
 };
 
-export default HighlightJsLog;
+export default LogComp;

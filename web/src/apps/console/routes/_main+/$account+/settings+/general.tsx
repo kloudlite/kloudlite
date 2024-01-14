@@ -1,6 +1,6 @@
 import { Buildings, CopySimple } from '@jengaicons/react';
-import { useOutletContext } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useNavigate, useOutletContext } from '@remix-run/react';
+import { useEffect, useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
@@ -15,10 +15,15 @@ import { parseName } from '~/console/server/r-utils/common';
 
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IAccountContext } from '../_layout';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
-import { Box, DeleteContainer } from '~/console/components/common-console-components';
+import {
+  Box,
+  DeleteContainer,
+} from '~/console/components/common-console-components';
 import { IAccount } from '~/console/server/gql/queries/account-queries';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { IAccountContext } from '../_layout';
 // import SubNavAction from '../components/sub-nav-action';
 // import { useConsoleApi } from '../server/gql/api-provider';
 // import { IAccount } from '../server/gql/queries/access-queries';
@@ -41,7 +46,6 @@ export const updateAccount = async ({
           name: parseName(data),
         },
         contactEmail: data.contactEmail,
-        spec: data.spec,
       },
     });
     if (e) {
@@ -54,9 +58,12 @@ export const updateAccount = async ({
 
 const SettingGeneral = () => {
   const { account } = useOutletContext<IAccountContext>();
+  const [deleteAccount, setDeleteAccount] = useState(false);
 
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
   const api = useConsoleApi();
+  const reload = useReload();
+  const navigate = useNavigate();
 
   const { copy } = useClipboard({
     onSuccess() {
@@ -178,11 +185,39 @@ const SettingGeneral = () => {
           </div>
         </Box>
 
-        <DeleteContainer title="Delete Account" action={() => {}}>
-          Permanently remove your personal account and all of its contents from
-          the Kloudlite platform. This action is not reversible, so please
-          continue with caution.
+        <DeleteContainer
+          title="Delete Account"
+          action={async () => {
+            setDeleteAccount(true);
+          }}
+        >
+          Permanently remove your Account and all of its contents from the
+          Kloudlite platform. This action is not reversible — please continue
+          with caution.
         </DeleteContainer>
+        <DeleteDialog
+          resourceName={parseName(account)}
+          resourceType="account"
+          show={deleteAccount}
+          setShow={setDeleteAccount}
+          onSubmit={async () => {
+            try {
+              const { errors } = await api.deleteAccount({
+                accountName: parseName(account),
+              });
+
+              if (errors) {
+                throw errors[0];
+              }
+              reload();
+              toast.success(`Account deleted successfully`);
+              setDeleteAccount(false);
+              navigate(`/`);
+            } catch (err) {
+              handleError(err);
+            }
+          }}
+        />
       </div>
     </div>
   );

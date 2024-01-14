@@ -12,6 +12,8 @@ import {
   ConsoleGetAppQueryVariables,
   ConsoleUpdateAppMutation,
   ConsoleUpdateAppMutationVariables,
+  ConsoleInterceptAppMutation,
+  ConsoleInterceptAppMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IApp = NN<ConsoleGetAppQuery['core_getApp']>;
@@ -63,6 +65,30 @@ export const appQueries = (executor: IExecutor) => ({
       vars(_: ConsoleUpdateAppMutationVariables) { },
     }
   ),
+  interceptApp: executor(
+    gql`
+      mutation Core_interceptApp(
+        $projectName: String!
+        $envName: String!
+        $appname: String!
+        $deviceName: String!
+        $intercept: Boolean!
+      ) {
+        core_interceptApp(
+          projectName: $projectName
+          envName: $envName
+          appname: $appname
+          deviceName: $deviceName
+          intercept: $intercept
+        )
+      }
+    `,
+    {
+      transformer: (data: ConsoleInterceptAppMutation) =>
+        data.core_interceptApp,
+      vars(_: ConsoleInterceptAppMutationVariables) { },
+    }
+  ),
   deleteApp: executor(
     gql`
       mutation Core_deleteApp(
@@ -90,6 +116,7 @@ export const appQueries = (executor: IExecutor) => ({
         $name: String!
       ) {
         core_getApp(projectName: $projectName, envName: $envName, name: $name) {
+          id
           createdBy {
             userEmail
             userId
@@ -107,10 +134,6 @@ export const appQueries = (executor: IExecutor) => ({
           markedForDeletion
           metadata {
             annotations
-            creationTimestamp
-            deletionTimestamp
-            generation
-            labels
             name
             namespace
           }
@@ -258,7 +281,6 @@ export const appQueries = (executor: IExecutor) => ({
               displayName
               enabled
               environmentName
-              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -266,18 +288,76 @@ export const appQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
                 generation
-                labels
                 name
                 namespace
               }
               projectName
+              recordVersion
               spec {
+                containers {
+                  args
+                  command
+                  env {
+                    key
+                    optional
+                    refKey
+                    refName
+                    type
+                    value
+                  }
+                  envFrom {
+                    refName
+                    type
+                  }
+                  image
+                  imagePullPolicy
+                  name
+                  readinessProbe {
+                    failureThreshold
+                    initialDelay
+                    interval
+                    type
+                  }
+                  resourceCpu {
+                    max
+                    min
+                  }
+                  resourceMemory {
+                    max
+                    min
+                  }
+                }
                 displayName
                 freeze
+                hpa {
+                  enabled
+                  maxReplicas
+                  minReplicas
+                  thresholdCpu
+                  thresholdMemory
+                }
+                intercept {
+                  enabled
+                  toDevice
+                }
+                nodeSelector
+                region
+                replicas
+                serviceAccount
+                services {
+                  name
+                  port
+                  targetPort
+                  type
+                }
+                tolerations {
+                  effect
+                  key
+                  operator
+                  tolerationSeconds
+                  value
+                }
               }
               status {
                 checks
@@ -293,6 +373,14 @@ export const appQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
               }
               updateTime
             }

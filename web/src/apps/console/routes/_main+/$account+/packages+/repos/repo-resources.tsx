@@ -22,7 +22,7 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { gatewayUrl } from '~/root/lib/configs/base-url.cjs';
+import { registryHost } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 
 type BaseType = ExtractNodeType<IRepos>;
@@ -63,12 +63,12 @@ const RepoUrlView = ({ name }: { name: string }) => {
       toast.success('Registry url copied successfully.');
     },
   });
-  const url = `${gatewayUrl}/${account}/${name}`;
+  const url = `${registryHost}/${account}/${name}`;
   return (
     <ListBody
       data={
         <div
-          className="cursor-pointer flex flex-row items-center gap-lg truncate"
+          className="cursor-pointer flex flex-row items-center gap-lg truncate w-fit"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -146,12 +146,12 @@ const ListView = ({ items, onDelete }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1 min-w-[200px] max-w-[200px]',
+                className: 'flex-1 min-w-[100px] max-w-[100px]',
                 render: () => <ListTitle title={name} />,
               },
               {
                 key: generateKey(keyPrefix, 'repo-url'),
-                className: 'min-w-[200px] basis-full  mr-[20px]',
+                className: 'min-w-[100px] w-[100px] basis-full  mr-[20px]',
                 render: () => <RepoUrlView name={name} />,
               },
               {

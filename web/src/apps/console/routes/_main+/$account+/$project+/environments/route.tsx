@@ -58,6 +58,7 @@ const Workspaces = () => {
       >
         {({ environmentData }) => {
           // console.log('environment: ', environmentData);
+          console.log(environmentData);
 
           const environments = parseNodes(environmentData);
 

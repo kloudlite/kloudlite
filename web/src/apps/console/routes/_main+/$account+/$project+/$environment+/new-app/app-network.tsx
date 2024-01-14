@@ -13,9 +13,11 @@ import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
-import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
 import { InfoLabel } from '~/console/components/commons';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
 import { FadeIn, parseValue } from '../../../../../../page-components/util';
 
 interface IExposedPorts {
@@ -46,7 +48,7 @@ const ExposedPortList = ({
         <List.Root
           className="min-h-[347px] !shadow-none"
           header={
-            <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center justify-between w-full">
               <div className="text-text-strong bodyMd flex-1">
                 Exposed ports
               </div>
@@ -134,6 +136,18 @@ export const ExposedPorts = () => {
   const [portError, setPortError] = useState<string>('');
 
   const { services, setServices } = useAppState();
+
+  // for updating
+  const { hasChanges } = useUnsavedChanges();
+
+  // for updating
+  useEffect(() => {
+    if (!hasChanges) {
+      setPort(3000);
+      setTargetPort(3000);
+      setPortError('');
+    }
+  }, [hasChanges]);
 
   return (
     <>

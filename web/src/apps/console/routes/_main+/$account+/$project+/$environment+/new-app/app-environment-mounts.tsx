@@ -25,6 +25,7 @@ import {
 } from '~/console/server/r-utils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import useForm from '~/root/lib/client/hooks/use-form';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
@@ -157,7 +158,6 @@ const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
 
 export const ConfigMounts = () => {
   const api = useConsoleApi();
-
   const [isloading, setIsloading] = useState<boolean>(true);
   const { environment, project } = useParams();
   const [configs, setConfigs] = useState<ExtractNodeType<IConfigs>[]>([]);
@@ -192,8 +192,11 @@ export const ConfigMounts = () => {
   const { getContainer, setContainer } = useAppState();
   const { volumes } = getContainer();
 
-  const { setValues, submit, values } = useForm({
-    initialValues: volumes || [],
+  // for updating
+  const { hasChanges } = useUnsavedChanges();
+
+  const { setValues, submit, values, resetValues } = useForm({
+    initialValues: volumes,
     validationSchema: Yup.array(
       Yup.object({
         mountPath: Yup.string().required(),
@@ -218,7 +221,7 @@ export const ConfigMounts = () => {
   const addEntry = (val: Ientry) => {
     setValues((v) => {
       return [
-        ...v,
+        ...(v || []),
         {
           type: 'config',
           mountPath: val.mountPath,
@@ -230,7 +233,7 @@ export const ConfigMounts = () => {
 
   const deleteEntry = (val: { mountPath: string }) => {
     setValues((v) => {
-      return v.filter((v) => v.mountPath !== val.mountPath);
+      return v?.filter((v) => v.mountPath !== val.mountPath);
     });
   };
 
@@ -244,13 +247,20 @@ export const ConfigMounts = () => {
     setEntryError('');
   }, [mountPath]);
 
+  // for updating
+  useEffect(() => {
+    if (!hasChanges) {
+      resetValues();
+    }
+  }, [hasChanges]);
+
   return (
     <>
       <form
         onSubmit={(e) => {
           e.preventDefault();
 
-          if (values.find((k) => k.mountPath === mountPath)) {
+          if (values?.find((k) => k.mountPath === mountPath)) {
             setEntryError('path already present');
             return;
           }

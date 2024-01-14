@@ -2,14 +2,13 @@ import { ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { IdSelector } from '~/console/components/id-selector';
-import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
-import ProgressWrapper from '~/console/components/progress-wrapper';
+import { NameIdView } from '~/console/components/name-id-view';
 
 const AppDetail = () => {
   const { app, setApp, setPage, markPageAsCompleted } = useAppState();
@@ -19,6 +18,7 @@ const AppDetail = () => {
       name: parseName(app),
       displayName: app.displayName,
       description: app.metadata?.annotations?.[keyconstants.description] || '',
+      isNameError: false,
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
@@ -32,6 +32,10 @@ const AppDetail = () => {
           ...a,
           metadata: {
             ...a.metadata,
+            annotations: {
+              ...(a.metadata?.annotations || {}),
+              [keyconstants.description]: val.description || '',
+            },
             name: val.name,
           },
           displayName: val.displayName,
@@ -43,32 +47,36 @@ const AppDetail = () => {
   });
 
   return (
-    <FadeIn onSubmit={handleSubmit} className="py-3xl">
+    <FadeIn
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+      className="py-3xl"
+    >
       <div className="bodyMd text-text-soft">
         The application streamlines project management through intuitive task
         tracking and collaboration tools.
       </div>
-      <div className="flex flex-col">
-        <div className="flex flex-col pb-3xl">
-          <TextInput
-            label="Application name"
-            size="lg"
-            value={values.displayName}
-            onChange={handleChange('displayName')}
-            error={!!errors.displayName}
-            message={errors.displayName}
-          />
-          <IdSelector
-            onChange={(v) => handleChange('name')(dummyEvent(v))}
-            name={values.displayName}
-            resType="app"
-            className="pt-2xl"
-          />
-        </div>
+      <div className="flex flex-col gap-3xl">
+        <NameIdView
+          displayName={values.displayName}
+          name={values.name}
+          resType="app"
+          errors={errors.name}
+          label="Application name"
+          placeholder="Enter application name"
+          handleChange={handleChange}
+          nameErrorLabel="isNameError"
+        />
         <TextInput
           error={!!errors.description}
           message={errors.description}
           label="Description"
+          placeholder="Enter application description"
           size="lg"
           value={values.description}
           onChange={handleChange('description')}

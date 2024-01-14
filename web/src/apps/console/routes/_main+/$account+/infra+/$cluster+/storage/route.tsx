@@ -19,7 +19,7 @@ export const loader = async (ctx: IRemixCtx) => {
   const { cluster } = ctx.params;
 
   const promise = pWrapper(async () => {
-    const { data, errors } = await GQLServerHandler(ctx.request).listPvcs({
+    const { data, errors } = await GQLServerHandler(ctx.request).listPvs({
       clusterName: cluster,
       pq: getPagination(ctx),
       search: getSearch(ctx),

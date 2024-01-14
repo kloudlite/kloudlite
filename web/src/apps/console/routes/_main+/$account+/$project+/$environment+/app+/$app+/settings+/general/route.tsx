@@ -1,5 +1,4 @@
 import { CopySimple } from '@jengaicons/react';
-import { useOutletContext } from '@remix-run/react';
 import { useEffect } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import { Box } from '~/console/components/common-console-components';
@@ -8,13 +7,15 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
-import { IAppContext } from '../../route';
+import Wrapper from '~/console/components/wrapper';
+import { Button } from '~/components/atoms/button';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 
 const SettingGeneral = () => {
   const { app, setApp } = useAppState();
-  const { environment } = useOutletContext<IAppContext>();
+  const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
 
-  const { values, errors, handleChange, submit } = useForm({
+  const { values, errors, handleChange, submit, resetValues } = useForm({
     initialValues: {
       name: parseName(app),
       displayName: app.displayName,
@@ -33,7 +34,6 @@ const SettingGeneral = () => {
           metadata: {
             ...a.metadata,
             name: val.name,
-            namespace: environment.spec?.targetNamespace,
             annotations: {
               ...(a.metadata?.annotations || {}),
               [keyconstants.description]: val.description,
@@ -49,35 +49,65 @@ const SettingGeneral = () => {
     submit();
   }, [values]);
 
+  useEffect(() => {
+    if (!hasChanges) {
+      resetValues();
+    }
+  }, [hasChanges]);
+
   return (
-    <Box title="Application detail">
-      <div className="flex flex-row items-center gap-3xl">
-        <div className="flex-1">
+    <div>
+      <Wrapper
+        secondaryHeader={{
+          title: 'General',
+          action: hasChanges && (
+            <div className="flex flex-row items-center gap-lg">
+              <Button
+                disabled={loading}
+                variant="basic"
+                content="Discard changes"
+                onClick={() => setPerformAction('discard-changes')}
+              />
+              <Button
+                disabled={loading}
+                content={loading ? 'Committing changes.' : 'View changes'}
+                loading={loading}
+                onClick={() => setPerformAction('view-changes')}
+              />
+            </div>
+          ),
+        }}
+      >
+        <Box title="Application detail">
+          <div className="flex flex-row items-center gap-3xl">
+            <div className="flex-1">
+              <TextInput
+                label="Application name"
+                error={!!errors.displayName}
+                message={errors.displayName}
+                onChange={handleChange('displayName')}
+                value={values.displayName}
+              />
+            </div>
+            <div className="flex-1">
+              <TextInput
+                label="Application ID"
+                value={values.name}
+                suffixIcon={<CopySimple />}
+                disabled
+              />
+            </div>
+          </div>
           <TextInput
-            label="Application name"
-            error={!!errors.displayName}
-            message={errors.displayName}
-            onChange={handleChange('displayName')}
-            value={values.displayName}
+            label="Description"
+            error={!!errors.description}
+            message={errors.description}
+            value={values.description}
+            onChange={handleChange('description')}
           />
-        </div>
-        <div className="flex-1">
-          <TextInput
-            label="Application ID"
-            value={values.name}
-            suffixIcon={<CopySimple />}
-            disabled
-          />
-        </div>
-      </div>
-      <TextInput
-        label="Description"
-        error={!!errors.description}
-        message={errors.description}
-        value={values.description}
-        onChange={handleChange('description')}
-      />
-    </Box>
+        </Box>
+      </Wrapper>
+    </div>
   );
 };
 export default SettingGeneral;

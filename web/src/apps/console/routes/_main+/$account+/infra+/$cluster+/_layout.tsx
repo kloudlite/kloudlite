@@ -179,7 +179,7 @@ export const loader = async (ctx: IExtRemixCtx) => {
       cluster: data,
     });
   } catch (err) {
-    return redirect(`/${account}/infra/clusters`);
+    return redirect(`/${account}/projects`);
   }
 };
 

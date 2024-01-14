@@ -22,9 +22,14 @@ import { secretQueries } from './queries/secret-queries';
 import { tagsQueries } from './queries/tags-queries';
 import { vpnQueries } from './queries/vpn-queries';
 import { pvcQueries } from './queries/pvc-queries';
+import { pvQueries } from './queries/pv-queries';
 import { clusterManagedServicesQueries } from './queries/cluster-managed-services-queries';
+import { projectManagedServicesQueries } from './queries/project-managed-services-queries';
+import { managedResourceQueries } from './queries/managed-resources-queries';
 import { managedTemplateQueries } from './queries/managed-templates-queries';
 import { helmChartQueries } from './queries/helm-chart-queries';
+import { namespaceQueries } from './queries/namespace-queries';
+import { consoleVpnQueries } from './queries/console-vpn-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -50,10 +55,15 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...buildQueries(executor),
     ...buildCachesQueries(executor),
     ...pvcQueries(executor),
+    ...pvQueries(executor),
     ...buildRunQueries(executor),
     ...clusterManagedServicesQueries(executor),
+    ...projectManagedServicesQueries(executor),
     ...managedTemplateQueries(executor),
+    ...managedResourceQueries(executor),
     ...helmChartQueries(executor),
+    ...namespaceQueries(executor),
+    ...consoleVpnQueries(executor),
   };
 };
 

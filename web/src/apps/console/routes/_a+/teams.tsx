@@ -151,7 +151,7 @@ const Accounts = () => {
       inviteToken,
       api: api.acceptInvitation,
       success: () => {
-        navigate(`/${accountName}/infra/clusters`);
+        navigate(`/${accountName}/projects`);
       },
     });
   };

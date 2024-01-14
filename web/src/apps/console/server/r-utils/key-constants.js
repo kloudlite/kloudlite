@@ -6,5 +6,6 @@ export const keyconstants = {
 
   cpuMode: 'kloudlite.io/ui-cpu-mode',
   selectedPlan: 'kloudlite.io/ui-selected-plan',
+  memPerCpu: 'kloudlite.io/ui-mem-per-cpu',
   nodeType: 'kloudlite.io/ui-node-type',
 };

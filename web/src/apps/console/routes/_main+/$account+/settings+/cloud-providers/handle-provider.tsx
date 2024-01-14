@@ -6,6 +6,7 @@ import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
@@ -67,12 +68,14 @@ const Root = (props: IDialog) => {
               (p) => p.value === props.data.cloudProviderName
             ),
             awsAccountId: '',
+            isNameError: false,
           }
         : {
             displayName: '',
             name: '',
             provider: providers[0],
             awsAccountId: '',
+            isNameError: false,
           },
       validationSchema: isUpdate
         ? Yup.object({
@@ -86,6 +89,20 @@ const Root = (props: IDialog) => {
               label: Yup.string().required(),
               value: Yup.string().required(),
             }).required(),
+            awsAccountId: Yup.string().test(
+              'provider',
+              'Account id is required',
+              function (item) {
+                return (
+                  // @ts-ignores
+                  // eslint-disable-next-line react/no-this-in-sfc
+                  this.parent.provider &&
+                  // eslint-disable-next-line react/no-this-in-sfc
+                  this.parent.provider.value === 'aws' &&
+                  item
+                );
+              }
+            ),
           }),
 
       onSubmit: async (val) => {
@@ -188,10 +205,18 @@ const Root = (props: IDialog) => {
     });
 
   return (
-    <Popup.Form onSubmit={handleSubmit}>
+    <Popup.Form
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
-          {isUpdate && (
+          {/* {isUpdate && (
             <Chips.Chip
               {...{
                 item: { id: parseName(props.data) },
@@ -201,9 +226,9 @@ const Root = (props: IDialog) => {
                 type: 'BASIC',
               }}
             />
-          )}
+          )} */}
 
-          <TextInput
+          {/* <TextInput
             label="Name"
             onChange={handleChange('displayName')}
             error={!!errors.displayName}
@@ -219,7 +244,18 @@ const Root = (props: IDialog) => {
                 handleChange('name')({ target: { value: id } });
               }}
             />
-          )}
+          )} */}
+          <NameIdView
+            resType="providersecret"
+            displayName={values.displayName}
+            name={values.name}
+            label="Name"
+            placeholder="Enter cloud provider name"
+            errors={errors.name}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
+            isUpdate={isUpdate}
+          />
           {!isUpdate && (
             <Select
               valueRender={valueRender}
@@ -241,7 +277,7 @@ const Root = (props: IDialog) => {
               error={!!errors.awsAccountId}
               message={errors.awsAccountId}
               value={values.awsAccountId}
-              label="Account ID"
+              label="Aws Account ID"
             />
           )}
         </div>

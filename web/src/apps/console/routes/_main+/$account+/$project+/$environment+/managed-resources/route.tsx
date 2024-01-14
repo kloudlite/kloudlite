@@ -6,75 +6,69 @@ import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
-import {
-  ensureAccountSet,
-  ensureClusterSet,
-} from '~/console/server/utils/auth-utils';
-import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import Tools from './tools';
+import ManagedResourceResources from './managed-resources-resource';
 
-export const loader = async (ctx: IRemixCtx) => {
-  ensureAccountSet(ctx);
-  ensureClusterSet(ctx);
+export const loader = (ctx: IRemixCtx) => {
   const { project, environment } = ctx.params;
-
   const promise = pWrapper(async () => {
-    const { data, errors } = await GQLServerHandler(ctx.request).listRouters({
-      envName: environment,
+    const { data: mData, errors: mErrors } = await GQLServerHandler(
+      ctx.request
+    ).listManagedResources({
       projectName: project,
-      pq: getPagination(ctx),
-      search: getSearch(ctx),
+      envName: environment,
     });
-    if (errors) {
-      throw errors[0];
-    }
-    return { routersData: data };
-  });
 
+    if (mErrors) {
+      throw mErrors[0];
+    }
+    return { managedResourcesData: mData };
+  });
   return defer({ promise });
 };
 
-const Routers = () => {
+const KlOperatorServices = () => {
   const { promise } = useLoaderData<typeof loader>();
 
   return (
     <LoadingComp data={promise}>
-      {({ routersData }) => {
-        const routers = parseNodes(routersData);
-        if (!routers) {
-          return null;
-        }
+      {({ managedResourcesData }) => {
+        const managedResources = parseNodes(managedResourcesData);
+
         return (
           <Wrapper
             header={{
-              title: 'Routers',
-              action: routers.length > 0 && (
+              title: 'Managed resources',
+              action: managedResources.length > 0 && (
                 <Button
                   variant="primary"
-                  content="Create Router"
+                  content="Create managed resource"
                   prefix={<PlusFill />}
-                  to="#TODO"
+                  to="../new-managed-resource"
                   LinkComponent={Link}
                 />
               ),
             }}
             empty={{
-              is: routers.length === 0,
-              title: 'This is where you’ll manage your Routers.',
+              is: managedResources.length === 0,
+              title: 'This is where you’ll manage your Managed resources.',
               content: (
-                <p>You can create a new router and manage the listed router.</p>
+                <p>
+                  You can create a new backing resource and manage the listed
+                  backing resource.
+                </p>
               ),
               action: {
-                content: 'Add new router',
+                content: 'Create new managed resource',
                 prefix: <Plus />,
+                to: '../new-managed-resource',
                 LinkComponent: Link,
-                to: `#TODO`,
               },
             }}
             tools={<Tools />}
           >
-            page under construction
+            <ManagedResourceResources items={managedResources} templates={[]} />
           </Wrapper>
         );
       }}
@@ -82,4 +76,4 @@ const Routers = () => {
   );
 };
 
-export default Routers;
+export default KlOperatorServices;

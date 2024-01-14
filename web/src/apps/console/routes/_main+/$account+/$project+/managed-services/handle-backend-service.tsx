@@ -2,7 +2,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { ArrowRight, Search, Check } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ActionList from '~/components/atoms/action-list';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
@@ -13,8 +13,7 @@ import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
-import { ExtractNodeType } from '~/console/server/r-utils/common';
+import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useInputSearch } from '~/root/lib/client/helpers/search-filter';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -24,15 +23,13 @@ import { handleError } from '~/root/lib/utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { cn } from '~/components/utils';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
+import { getManagedTemplate } from '~/console/utils/commons';
+import { NameIdView } from '~/console/components/name-id-view';
 
-type IDialog = IDialogBase<ExtractNodeType<IClusterMSvs>> & {
+type IDialog = IDialogBase<ExtractNodeType<IProjectMSvs>> & {
   templates: IMSvTemplates;
 };
-
-type IActiveCategory = {
-  name: string;
-  displayName: string;
-} | null;
 
 type ISelectedService = {
   category: {
@@ -40,224 +37,42 @@ type ISelectedService = {
     displayName: string;
   };
 
-  service: NN<IMSvTemplates>[number]['items'][number];
+  service?: NN<IMSvTemplates>[number]['items'][number];
 } | null;
-
-const ServicePicker = ({
-  activeCategory,
-  setActiveCategory,
-  templates,
-  selectedService,
-  setSelectedService,
-}: {
-  activeCategory: IActiveCategory;
-  setActiveCategory: React.Dispatch<IActiveCategory>;
-  templates: IMSvTemplates;
-  selectedService: ISelectedService;
-  setSelectedService: React.Dispatch<ISelectedService>;
-}) => {
-  const [searchProps, searchResults] = useInputSearch(
-    {
-      data:
-        templates?.find((t) => t.category === activeCategory?.name)?.items ||
-        [],
-      keys: ['name'],
-      reverse: false,
-      threshold: 0.4,
-    },
-    [activeCategory]
-  );
-  return (
-    <div className="flex min-h-[30vh]">
-      <div className="pr-3xl min-w-[180px]">
-        <ActionList.Root
-          value={activeCategory?.name || ''}
-          onChange={(v) => {
-            setActiveCategory({
-              name: v,
-              displayName:
-                templates?.find((t) => t.category === v)?.displayName || '',
-            });
-          }}
-        >
-          {templates?.map((t, index) => {
-            if (!activeCategory && index === 0) {
-              setActiveCategory({
-                name: t.category,
-                displayName: t.displayName,
-              });
-            }
-            return (
-              <ActionList.Item key={t.category} value={t.category}>
-                {t.displayName}
-              </ActionList.Item>
-            );
-          })}
-        </ActionList.Root>
-      </div>
-      <div className="flex-1 pl-3xl flex flex-col gap-4xl">
-        <TextInput
-          {...searchProps}
-          prefixIcon={<Search />}
-          placeholder="Search"
-        />
-        {templates?.find((t) => t.category === activeCategory?.name)?.items
-          .length === 0 ? (
-          <NoResultsFound
-            shadow={false}
-            border={false}
-            title={<div className="pt-2xl" />}
-            subtitle="No Services Available now"
-          />
-        ) : (
-          <List.Root>
-            {searchResults.map((item) => {
-              return (
-                <List.Row
-                  className={cn('group/team')}
-                  pressed={selectedService?.service.name === item.name}
-                  key={`${item.name}row`}
-                  onClick={() => {
-                    if (!item.apiVersion) {
-                      toast.error('not available now');
-                      return;
-                    }
-                    if (activeCategory) {
-                      setSelectedService({
-                        category: activeCategory,
-                        service: item,
-                      });
-                    }
-                  }}
-                  columns={[
-                    {
-                      key: item.name,
-                      className: 'flex-grow',
-                      render: () => (
-                        <ListTitle
-                          avatar={
-                            <img
-                              width={25}
-                              src={item.logoUrl}
-                              alt={item.displayName}
-                            />
-                          }
-                          title={
-                            <div className="bodySm">{item.displayName}</div>
-                          }
-                        />
-                      ),
-                    },
-                    {
-                      key: `${item.name}-arrow`,
-                      render: () =>
-                        selectedService?.service.name === item.name ? (
-                          <Check size={16} />
-                        ) : (
-                          <div className="invisible transition-all delay-100 duration-10 group-hover/team:visible group-hover/team:translate-x-sm">
-                            <ArrowRight size={24} />
-                          </div>
-                        ),
-                    },
-                  ]}
-                />
-              );
-            })}
-          </List.Root>
-        )}
-
-        {/* <Grid.Root className="!gap-4xl">
-          {searchResults.map((item) => {
-            return (
-              <Grid.Column
-                onClick={() => {
-                  if (!item.apiVersion) {
-                    toast.error('not available now');
-                    return;
-                  }
-                  if (activeCategory) {
-                    setSelectedService({
-                      category: activeCategory,
-                      service: item,
-                    });
-                  }
-                }}
-                key={item.name}
-                className={cn({
-                  '!bg-surface-basic-active':
-                    item.name === selectedService?.service.name,
-                  'opacity-50 cursor-not-allowed': !item.apiVersion,
-                })}
-                rows={[
-                  {
-                    key: `${item.name}first`,
-                    render() {
-                      return (
-                        <div className="flex flex-col gap-xl p-md overflow-hidden">
-                          <img
-                            className="w-5xl h-5xl aspect-square self-center"
-                            src={item.logoUrl}
-                            alt={item.displayName}
-                          />
-
-                          <div>
-                            <div
-                              key={item.name}
-                              className={cn(
-                                'bodySm-semibold text-text-default line-clamp-2 text-center',
-                                {
-                                  'text-text-primary bodyMd-medium':
-                                    item.name === selectedService?.service.name,
-                                  'text-text-default':
-                                    item.name !== selectedService?.service.name,
-                                }
-                              )}
-                            >
-                              {item.displayName}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    },
-                  },
-                ]}
-              />
-            );
-          })}
-        </Grid.Root> */}
-      </div>
-    </div>
-  );
-};
 
 const RenderField = ({
   field,
   value,
   onChange,
-  error,
-  message,
+  errors,
+  fieldKey,
 }: {
-  field: NN<ISelectedService>['service']['fields'][number];
+  field: NN<NN<ISelectedService>['service']>['fields'][number];
   onChange: (e: string) => (e: { target: { value: any } }) => void;
   value: any;
-  error: boolean;
-  message?: string;
+  errors: {
+    [key: string]: string | undefined;
+  };
+  fieldKey: string;
 }) => {
-  console.log('value', value);
-
   const [qos, setQos] = useState(false);
+
+  useEffect(() => {
+    if (field.inputType === 'Resource' && value.max === value.min) {
+      setQos(true);
+    }
+  }, []);
+
   if (field.inputType === 'Number') {
     return (
       <NumberInput
-        error={error}
-        message={message}
+        error={!!errors[fieldKey]}
+        message={errors[fieldKey]}
         label={`${field.label}${field.required ? ' *' : ''}`}
-        min={field.min}
-        max={field.max}
         placeholder={field.label}
-        value={parseFloat(value) / (field.multiplier || 1)}
+        value={parseFloat(value) / (field.multiplier || 1) || ''}
         onChange={({ target }) => {
-          onChange(`${field.name}`)(
+          onChange(`res.${field.name}`)(
             dummyEvent(
               `${parseFloat(target.value) * (field.multiplier || 1)}${
                 field.unit
@@ -274,9 +89,11 @@ const RenderField = ({
     return (
       <TextInput
         label={field.label}
-        value={value}
-        onChange={onChange(`${field.name}`)}
+        value={value || ''}
+        onChange={onChange(`res.${field.name}`)}
         suffix={field.displayUnit}
+        error={!!errors[fieldKey]}
+        message={errors[fieldKey]}
       />
     );
   }
@@ -290,14 +107,12 @@ const RenderField = ({
           <div className="flex flex-row gap-xl items-end flex-1 ">
             <div className="flex-1">
               <NumberInput
-                error={error}
-                message={message}
-                min={field.min}
-                max={field.max}
+                error={!!errors[`${fieldKey}.min`]}
+                message={errors[`${fieldKey}.min`]}
                 placeholder={qos ? field.label : `${field.label} min`}
                 value={parseFloat(value.min) / (field.multiplier || 1)}
                 onChange={({ target }) => {
-                  onChange(`${field.name}.min`)(
+                  onChange(`res.${field.name}.min`)(
                     dummyEvent(
                       `${parseFloat(target.value) * (field.multiplier || 1)}${
                         field.unit
@@ -305,7 +120,7 @@ const RenderField = ({
                     )
                   );
                   if (qos) {
-                    onChange(`${field.name}.max`)(
+                    onChange(`res.${field.name}.max`)(
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
@@ -320,14 +135,12 @@ const RenderField = ({
             {!qos && (
               <div className="flex-1">
                 <NumberInput
-                  error={error}
-                  message={message}
-                  min={field.min}
-                  max={field.max}
+                  error={!!errors[`${fieldKey}.max`]}
+                  message={errors[`${fieldKey}.max`]}
                   placeholder={`${field.label} max`}
                   value={parseFloat(value.max) / (field.multiplier || 1)}
                   onChange={({ target }) => {
-                    onChange(`${field.name}.max`)(
+                    onChange(`res.${field.name}.max`)(
                       dummyEvent(
                         `${parseFloat(target.value) * (field.multiplier || 1)}${
                           field.unit
@@ -347,7 +160,7 @@ const RenderField = ({
               onChange={(_value) => {
                 setQos(_value);
                 if (_value) {
-                  onChange(`${field.name}.max`)(dummyEvent(`${value.min}`));
+                  onChange(`res.${field.name}.max`)(dummyEvent(`${value.min}`));
                 }
               }}
             />
@@ -372,41 +185,47 @@ const Fill = ({
     [key: string]: string | undefined;
   };
 }) => {
-  console.log('values: ', values);
-
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, [nameRef.current]);
   return (
     <div className="flex flex-col gap-3xl min-h-[30vh]">
-      <TextInput
+      <NameIdView
+        isUpdate
+        ref={nameRef}
+        placeholder="Enter managed service name"
         label="Name"
-        value={values.displayName}
-        onChange={handleChange('displayName')}
-        error={!!errors.displayName}
-        message={errors.displayName}
+        resType="project_managed_service"
+        name={values.name}
+        displayName={values.displayName}
+        errors={errors.name}
+        handleChange={handleChange}
+        nameErrorLabel="isNameError"
       />
-      <IdSelector
-        name={values.displayName}
-        resType="managed_resource"
-        onChange={(v) => {
-          handleChange('name')(dummyEvent(v));
-        }}
-      />
-      {selectedService?.service.fields.map((field) => {
+
+      {selectedService?.service?.fields.map((field) => {
         const k = field.name;
         const x = k.split('.').reduce((acc, curr) => {
+          console.log(acc, curr, values);
+
           if (!acc) {
-            return values[curr];
+            return values.res[curr];
           }
+
           return acc[curr];
         }, null);
 
+        console.log('x', x);
+
         return (
           <RenderField
-            error={!!errors[k]}
-            message={errors[k]}
+            errors={errors}
             value={x}
             onChange={handleChange}
             key={k}
             field={field}
+            fieldKey={k}
           />
         );
       })}
@@ -414,196 +233,124 @@ const Fill = ({
   );
 };
 
-const flatM = (obj: Record<string, any>) => {
-  const flatJson = {};
-  for (const key in obj) {
-    const parts = key.split('.');
-    let temp: Record<string, any> = flatJson;
-
-    parts.forEach((part, index) => {
-      if (index === parts.length - 1) {
-        temp[part] = {
-          min: null,
-          max: null,
-        };
-      } else {
-        temp[part] = temp[part] || {};
-      }
-      temp = temp[part];
-    });
-  }
-  console.log('flatjson ', flatJson);
-
-  return flatJson;
-};
-
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible, templates } = props;
-  const [activeCategory, setActiveCategory] = useState<IActiveCategory>(null);
   const [selectedService, setSelectedService] =
     useState<ISelectedService>(null);
 
   const api = useConsoleApi();
   const reload = useReload();
 
-  const { cluster } = useParams();
+  const { project } = useParams();
   const [step, setStep] = useState<'choose' | 'fill'>('choose');
 
-  console.log(selectedService);
-
-  const {
-    values,
-    errors,
-    handleChange,
-    handleSubmit,
-    resetValues,
-    isLoading,
-    setValues,
-  } = useForm({
-    initialValues: {
-      name: '',
-      displayName: '',
-    },
-    validationSchema: Yup.object({}),
-    onSubmit: async (val) => {
-      const tempVal = { ...val };
-      // @ts-ignore
-      delete tempVal.name;
-      // @ts-ignore
-      delete tempVal.displayName;
-
-      try {
-        if (!cluster) {
-          throw new Error('Cluster not found.');
-        }
-        if (
-          !selectedService?.service.apiVersion ||
-          !selectedService.service.kind
-        ) {
-          throw new Error('Service apiversion or kind error.');
-        }
-        const { errors: e } = await api.createClusterMSv({
-          clusterName: cluster,
-          service: {
-            displayName: val.displayName,
-            metadata: {
-              name: val.name,
+  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
+    useForm({
+      initialValues: isUpdate
+        ? {
+            name: parseName(props.data),
+            displayName: props.data.displayName,
+            isNameError: false,
+            res: {
+              ...props.data.spec?.msvcSpec.serviceTemplate.spec,
             },
+          }
+        : {
+            name: '',
+            displayName: '',
+            res: {},
+            isNameError: false,
+          },
+      validationSchema: Yup.object({}),
+      onSubmit: async (val) => {
+        if (isUpdate) {
+          try {
+            if (!project) {
+              throw new Error('Project is required!.');
+            }
+            const { errors: e } = await api.updateProjectMSv({
+              projectName: project,
+              pmsvc: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
 
-            spec: {
-              msvcSpec: {
-                serviceTemplate: {
-                  apiVersion: selectedService.service.apiVersion,
-                  kind: selectedService.service.kind,
-                  spec: {
-                    ...tempVal,
+                spec: {
+                  msvcSpec: {
+                    serviceTemplate: {
+                      apiVersion:
+                        props.data.spec?.msvcSpec.serviceTemplate.apiVersion ||
+                        '',
+                      kind:
+                        props.data.spec?.msvcSpec.serviceTemplate.kind || '',
+                      spec: {
+                        ...val.res,
+                      },
+                    },
                   },
+                  targetNamespace: '',
                 },
               },
-              namespace: '',
-            },
-          },
-        });
-        if (e) {
-          throw e[0];
+            });
+            if (e) {
+              throw e[0];
+            }
+            setVisible(false);
+            reload();
+          } catch (err) {
+            handleError(err);
+          }
         }
-        setVisible(false);
-        reload();
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
+      },
+    });
 
-  useEffect(() => {
-    if (selectedService?.service.fields) {
-      setValues({
-        name: '',
-        displayName: '',
-        ...flatM(
-          selectedService?.service.fields.reduce((acc, curr) => {
-            return { ...acc, [curr.name]: curr.defaultValue };
-          }, {})
-        ),
+  const getService = () => {
+    if (isUpdate)
+      return getManagedTemplate({
+        templates,
+        apiVersion: props.data.spec?.msvcSpec.serviceTemplate.apiVersion || '',
+        kind: props.data.spec?.msvcSpec.serviceTemplate.kind || '',
       });
-    }
-  }, [selectedService]);
+    return undefined;
+  };
 
+  if (!isUpdate) {
+    return null;
+  }
   return (
-    // <Popup.Header>
-    //   {step === 'choose' ? (
-    //     <div>Choose a service</div>
-    //   ) : (
-    //     <div className="flex flex-row items-center gap-2xl">
-    //       <div className="flex flex-row items-center gap-lg">
-    //         <IconButton
-    //           icon={<ArrowLeft />}
-    //           size="xs"
-    //           variant="plain"
-    //           onClick={() => {
-    //             resetValues({});
-    //             setStep('choose');
-    //           }}
-    //         />
-    //         <img
-    //           className="w-3xl h-3xl aspect-square"
-    //           alt={selectedService?.service.displayName}
-    //           src={selectedService?.service.logoUrl}
-    //         />
-    //       </div>
-    //       <div>{selectedService?.service.displayName}</div>
-    //     </div>
-    //   )}
-    // </Popup.Header>
     <Popup.Form
       onSubmit={(e) => {
-        if (step === 'choose') {
-          setStep('fill');
-          e.preventDefault();
-        } else handleSubmit(e);
+        console.log('name error..', values.isNameError);
+
+        handleSubmit(e);
+        // if (!values.isNameError) {
+        //   handleSubmit(e);
+        // } else {
+        //   e.preventDefault();
+        // }
       }}
     >
       <Popup.Content className="!min-h-[500px] !max-h-[500px]">
-        {step === 'choose' ? (
-          <ServicePicker
-            {...{
-              activeCategory,
-              selectedService,
-              setActiveCategory,
-              setSelectedService,
-              templates,
-            }}
-          />
-        ) : (
-          <Fill
-            {...{
-              templates,
-              selectedService,
-              values,
-              errors,
-              handleChange,
-            }}
-          />
-        )}
+        <Fill
+          {...{
+            templates,
+            selectedService: {
+              category: { displayName: '', name: '' },
+              service: getService(),
+            },
+            values,
+            errors,
+            handleChange,
+          }}
+        />
       </Popup.Content>
       <Popup.Footer>
-        {step === 'fill' ? (
-          <Popup.Button
-            type="button"
-            variant="basic"
-            onClick={() => {
-              resetValues({});
-              setSelectedService(null);
-              setStep('choose');
-            }}
-            content="Back"
-          />
-        ) : null}
+        <Popup.Button type="button" variant="basic" content="Cancel" closable />
         <Popup.Button
-          disabled={!selectedService}
           loading={isLoading}
           type="submit"
-          content={step === 'choose' ? 'Next' : 'Create'}
+          content="Update"
           variant="primary"
         />
       </Popup.Footer>
@@ -614,13 +361,9 @@ const Root = (props: IDialog) => {
 const HandleBackendService = (props: IDialog) => {
   const { isUpdate, setVisible, visible } = props;
   return (
-    <Popup.Root
-      className="!min-w-[900px]"
-      show={visible}
-      onOpenChange={(v) => setVisible(v)}
-    >
+    <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>
-        {isUpdate ? 'Edit cloud provider' : 'Add new cloud provider'}
+        {isUpdate ? 'Edit managed service' : 'Add managed service'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>

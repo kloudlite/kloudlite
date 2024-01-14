@@ -26,7 +26,7 @@ export const baseQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleAccountCheckNameAvailabilityQuery) =>
         data.accounts_checkNameAvailability,
-      vars(_: ConsoleAccountCheckNameAvailabilityQueryVariables) {},
+      vars(_: ConsoleAccountCheckNameAvailabilityQueryVariables) { },
     }
   ),
   crCheckNameAvailability: executor(
@@ -41,7 +41,7 @@ export const baseQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCrCheckNameAvailabilityQuery) =>
         data.cr_checkUserNameAvailability,
-      vars(_: ConsoleCrCheckNameAvailabilityQueryVariables) {},
+      vars(_: ConsoleCrCheckNameAvailabilityQueryVariables) { },
     }
   ),
   infraCheckNameAvailability: executor(
@@ -64,7 +64,7 @@ export const baseQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleInfraCheckNameAvailabilityQuery) =>
         data.infra_checkNameAvailability,
-      vars(_: ConsoleInfraCheckNameAvailabilityQueryVariables) {},
+      vars(_: ConsoleInfraCheckNameAvailabilityQueryVariables) { },
     }
   ),
 
@@ -73,22 +73,23 @@ export const baseQueries = (executor: IExecutor) => ({
       query Core_checkNameAvailability(
         $resType: ConsoleResType!
         $name: String!
-        $namespace: String
+        $projectName: String
+        $envName: String
       ) {
         core_checkNameAvailability(
           resType: $resType
           name: $name
-          namespace: $namespace
+          projectName: $projectName
+          envName: $envName
         ) {
           result
-          suggestedNames
         }
       }
     `,
     {
       transformer: (data: ConsoleCoreCheckNameAvailabilityQuery) =>
         data.core_checkNameAvailability,
-      vars(_: ConsoleCoreCheckNameAvailabilityQueryVariables) {},
+      vars(_: ConsoleCoreCheckNameAvailabilityQueryVariables) { },
     }
   ),
 
@@ -106,7 +107,7 @@ export const baseQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleWhoAmIQuery) => data.auth_me,
-      vars(_: ConsoleWhoAmIQueryVariables) {},
+      vars(_: ConsoleWhoAmIQueryVariables) { },
     }
   ),
 });

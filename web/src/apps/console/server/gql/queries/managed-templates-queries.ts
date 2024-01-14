@@ -53,6 +53,18 @@ export const managedTemplateQueries = (executor: IExecutor) => ({
             displayName
             kind
             name
+            fields {
+              defaultValue
+              displayUnit
+              inputType
+              label
+              max
+              min
+              multiplier
+              name
+              required
+              unit
+            }
           }
         }
       }
@@ -101,6 +113,18 @@ export const managedTemplateQueries = (executor: IExecutor) => ({
               displayName
               kind
               name
+              fields {
+                defaultValue
+                displayUnit
+                inputType
+                label
+                max
+                min
+                multiplier
+                name
+                required
+                unit
+              }
             }
           }
         }

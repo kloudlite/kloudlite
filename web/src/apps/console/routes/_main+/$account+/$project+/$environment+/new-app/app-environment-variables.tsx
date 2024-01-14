@@ -21,6 +21,7 @@ import { useAppState } from '~/console/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import AppDialog from './app-dialogs';
 
 interface IEnvVariable {
@@ -48,17 +49,17 @@ const EnvironmentVariablesList = ({
 }: IEnvVariablesList) => {
   const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
     usePagination({
-      items: envVariables,
+      items: envVariables || [],
       itemsPerPage: 5,
     });
 
   useEffect(() => {
-    setItems(envVariables);
+    setItems(envVariables || []);
   }, [envVariables]);
 
   return (
     <div className="flex flex-col bg-surface-basic-default">
-      {envVariables.length > 0 && (
+      {envVariables?.length > 0 && (
         <List.Root
           className="min-h-[347px] !shadow-none"
           header={
@@ -153,7 +154,7 @@ const EnvironmentVariablesList = ({
           })}
         </List.Root>
       )}
-      {envVariables.length === 0 && (
+      {envVariables?.length === 0 && (
         <div className="rounded border-border-default border min-h-[347px] flex flex-row items-center justify-center">
           <NoResultsFound
             title={null}
@@ -174,16 +175,19 @@ export const EnvironmentVariables = () => {
 
   const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
 
+  // for updating
+  const { hasChanges } = useUnsavedChanges();
+
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
     key: Yup.string().required(),
 
-    value: Yup.string().when(['type'], ([type], schema) => {
-      if (type === undefined) {
-        return schema.required();
-      }
-      return schema;
-    }),
+    // value: Yup.string().when(['type'], ([type], schema) => {
+    //   if (type === undefined) {
+    //     return schema.required();
+    //   }
+    //   return schema;
+    // }),
     refKey: Yup.string()
       .when(['type'], ([type], schema) => {
         if (type === 'config' || type === 'secret') {
@@ -203,7 +207,13 @@ export const EnvironmentVariables = () => {
       .notRequired(),
   });
 
-  const { values, setValues, submit } = useForm({
+  const {
+    values,
+    setValues,
+    submit,
+    errors,
+    resetValues: resetAppValue,
+  } = useForm({
     initialValues: getContainer().env || [],
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
@@ -213,20 +223,34 @@ export const EnvironmentVariables = () => {
       }));
     },
   });
+
   useEffect(() => {
+    console.log('errors ', errors);
+  }, [errors]);
+
+  useEffect(() => {
+    console.log('here values: ', values);
+
     submit();
   }, [values]);
 
+  // for updating
+  useEffect(() => {
+    if (!hasChanges) {
+      resetAppValue();
+    }
+  }, [hasChanges]);
+
   const addEntry = (val: IEnvVariable) => {
-    setValues((v) => {
-      v?.push({
+    setValues((v = []) => {
+      const data = {
         key: val.key,
         type: val.type,
         refName: val.refName || '',
         refKey: val.refKey || '',
         value: val.value || '',
-      });
-      return v;
+      };
+      return [...v, data];
     });
   };
 
@@ -280,6 +304,8 @@ export const EnvironmentVariables = () => {
         }),
     }),
     onSubmit: () => {
+      console.log(eValues);
+
       if (eValues.textInputValue) {
         const ev: IEnvVariable = {
           key: eValues.key,
@@ -296,7 +322,7 @@ export const EnvironmentVariables = () => {
           refKey: eValues.value.refKey,
           refName: eValues.value.refName,
           type: eValues.value.type,
-          value: undefined,
+          value: '',
         };
 
         // setEnvVariables((prev) => [...prev, ev]);
@@ -346,6 +372,7 @@ export const EnvironmentVariables = () => {
                     {eValues.value.refName}
                   </div>
                   <button
+                    aria-label="clear"
                     tabIndex={-1}
                     type="button"
                     className="outline-none p-lg text-text-default rounded-full"
@@ -422,6 +449,8 @@ export const EnvironmentVariables = () => {
         show={showCSDialog}
         setShow={setShowCSDialog}
         onSubmit={(item) => {
+          console.log('items', item);
+
           eSetValues((v) => {
             return {
               ...v,

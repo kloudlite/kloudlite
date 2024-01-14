@@ -147,12 +147,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
           search: $search
           pagination: $pagination
         ) {
-          totalCount
-          pageInfo {
-            endCursor
-            hasNextPage
-            startCursor
-          }
           edges {
             cursor
             node {
@@ -171,8 +165,11 @@ export const nodepoolQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                generation
                 name
+                namespace
               }
+              recordVersion
               spec {
                 aws {
                   availabilityZone
@@ -197,6 +194,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                       instanceTypes
                     }
                     nodes
+                    spotFleetTaggingRoleName
                   }
                 }
                 cloudProvider
@@ -219,10 +217,24 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
-
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               updateTime
             }
           }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
         }
       }
     `,

@@ -1,16 +1,18 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { Copy, GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { IconButton } from '~/components/atoms/button';
+import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
-  ListBody,
   ListItem,
   ListTitle,
+  listFlex,
+  listTitleClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
 import {
   ExtractNodeType,
@@ -18,6 +20,8 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { listStatus } from '~/console/components/sync-status';
+import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'workspace';
 type BaseType = ExtractNodeType<IEnvironments>;
@@ -33,7 +37,43 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const GridView = ({ items = [] }: { items: BaseType[] }) => {
+type OnAction = ({ action, item }: { action: 'clone'; item: BaseType }) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+};
+
+const ExtraButton = ({ item, onAction }: IExtraButton) => {
+  const { account, project } = useParams();
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Clone',
+          icon: <Copy size={16} />,
+          type: 'item',
+          key: 'clone',
+          onClick: () => onAction({ action: 'clone', item }),
+        },
+        {
+          label: 'Settings',
+          icon: <GearSix size={16} />,
+          type: 'item',
+          to: `/${account}/${project}/${parseName(item)}/settings/general`,
+          key: 'settings',
+        },
+      ]}
+    />
+  );
+};
+
+interface IResource {
+  items: BaseType[];
+  onAction: OnAction;
+}
+
+const GridView = ({ items = [], onAction }: IResource) => {
   const { account, project } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -51,13 +91,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <IconButton
-                        icon={<DotsThreeVerticalFill />}
-                        variant="plain"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    }
+                    action={<ExtraButton item={item} onAction={onAction} />}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
@@ -79,7 +113,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-const ListView = ({ items }: { items: BaseType[] }) => {
+const ListView = ({ items, onAction }: IResource) => {
   const { account, project } = useParams();
 
   return (
@@ -87,6 +121,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -95,7 +130,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: listTitleClass,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -104,6 +139,8 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
+              status,
+              listFlex({ key: `${keyPrefix}flex-1` }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
@@ -116,13 +153,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <IconButton
-                    icon={<DotsThreeVerticalFill />}
-                    variant="plain"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ),
+                render: () => <ExtraButton item={item} onAction={onAction} />,
               },
             ]}
           />
@@ -133,11 +164,37 @@ const ListView = ({ items }: { items: BaseType[] }) => {
 };
 
 const Resources = ({ items = [] }: { items: BaseType[] }) => {
+  const [visible, setVisible] = useState<BaseType | null>(null);
+  const props: IResource = {
+    items,
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'clone':
+          setVisible(item);
+          break;
+        default:
+          break;
+      }
+    },
+  };
+
   return (
-    <ListGridView
-      listView={<ListView items={items} />}
-      gridView={<GridView items={items} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <CloneEnvironment
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => {
+            setVisible(null);
+          },
+          data: visible!,
+        }}
+      />
+    </>
   );
 };
 

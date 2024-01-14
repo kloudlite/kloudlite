@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import Tooltip from '~/components/atoms/tooltip';
 import { cn } from '~/components/utils';
 
 interface IBase {
@@ -7,6 +8,40 @@ interface IBase {
 }
 
 const BaseStyle = 'flex flex-row items-center gap-xl';
+
+const ListSecondary = ({
+  className,
+  action,
+  title,
+  avatar,
+  subtitle,
+}: {
+  className?: string;
+  action?: ReactNode;
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  avatar?: ReactNode;
+}) => {
+  return (
+    <div className={cn(BaseStyle, className)}>
+      <div className="flex flex-row items-center gap-xl flex-1 truncate">
+        {avatar}
+        <div className="flex flex-col gap-sm flex-1 truncate">
+          {title && (
+            <div className="bodySm truncate text-text-soft pulsable">
+              {title}
+            </div>
+          )}
+
+          {subtitle && (
+            <div className="bodyMd-medium truncate pulsable">{subtitle}</div>
+          )}
+        </div>
+      </div>
+      {action}
+    </div>
+  );
+};
 
 const ListBody = ({
   data,
@@ -68,12 +103,17 @@ const ListTitle = ({
 }) => {
   return (
     <div className={cn(BaseStyle, className)}>
-      <div className="flex flex-row items-center gap-xl flex-1">
+      <div className="flex flex-row items-center gap-xl flex-1 truncate">
         {avatar}
         <div className="flex flex-col gap-sm flex-1 truncate">
           {title && (
             <div className="bodyMd-semibold text-text-default truncate pulsable">
-              {title}
+              <Tooltip.Root
+                side="top"
+                content={<div className="bodySm text-text-strong">{title}</div>}
+              >
+                <span className="w-fit">{title}</span>
+              </Tooltip.Root>
             </div>
           )}
 
@@ -89,4 +129,19 @@ const ListTitle = ({
   );
 };
 
-export { ListBody, ListItem, ListTitle };
+const listFlex = ({ key }: { key: string }) => ({
+  key,
+  className: 'basis-full',
+  render: () => <div />,
+});
+
+const listTitleClass = 'w-[180px] min-w-[180px] max-w-[180px] mr-2xl';
+
+export {
+  ListBody,
+  ListItem,
+  ListTitle,
+  ListSecondary,
+  listFlex,
+  listTitleClass,
+};

@@ -42,13 +42,15 @@ const AppCompute = () => {
       imageUrl: app.spec.containers[activeContIndex]?.image || '',
       pullSecret: 'TODO',
       cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
-      selectedPlan: app.metadata?.annotations?.[keyconstants.selectedPlan] || 1,
+      memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || '1',
 
       cpu: parseValue(
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
         250
       ),
 
+      selectedPlan:
+        app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
       selectionMode:
         app.metadata?.annotations[keyconstants.selectionModeKey] || 'quick',
       manualCpuMin: parseValue(
@@ -81,9 +83,11 @@ const AppCompute = () => {
         metadata: {
           ...s.metadata!,
           annotations: {
+            ...(s.metadata?.annotations || {}),
             [keyconstants.cpuMode]: val.cpuMode,
-            [keyconstants.selectedPlan]: val.selectedPlan,
+            [keyconstants.memPerCpu]: val.memPerCpu,
             [keyconstants.selectionModeKey]: val.selectionMode,
+            [keyconstants.selectedPlan]: val.selectedPlan,
           },
         },
         spec: {
@@ -107,7 +111,7 @@ const AppCompute = () => {
                 val.selectionMode === 'quick'
                   ? {
                       max: `${(
-                        (values.cpu || 1) * parseValue(values.selectedPlan, 4)
+                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
                       ).toFixed(2)}Mi`,
                       min: `${val.cpu}Mi`,
                     }
@@ -201,7 +205,8 @@ const AppCompute = () => {
               ]}
               valueRender={valueRender}
               onChange={(v) => {
-                handleChange('selectedPlan')(dummyEvent(v.memoryPerCpu));
+                handleChange('selectedPlan')(dummyEvent(v.value));
+                handleChange('memPerCpu')(dummyEvent(v.memoryPerCpu));
                 handleChange('cpuMode')(
                   dummyEvent(v.isShared ? 'shared' : 'dedicated')
                 );
@@ -215,7 +220,7 @@ const AppCompute = () => {
                 <code className="bodyMd text-text-soft flex-1 text-end">
                   {((values.cpu || 1) / 1000).toFixed(2)}vCPU &{' '}
                   {(
-                    ((values.cpu || 1) * parseValue(values.selectedPlan, 4)) /
+                    ((values.cpu || 1) * parseValue(values.memPerCpu, 4)) /
                     1000
                   ).toFixed(2)}
                   GB Memory
@@ -242,7 +247,12 @@ const AppCompute = () => {
                     onChange={handleChange('manualCpuMin')}
                     label="CPU request"
                     size="lg"
-                    suffix="VCPU"
+                    suffix="m"
+                    extra={
+                      <span className="bodySm text-text-soft">
+                        1000m = 1VCPU
+                      </span>
+                    }
                   />
                 </div>
                 <div className="basis-full">
@@ -250,8 +260,13 @@ const AppCompute = () => {
                     value={values.manualCpuMax}
                     onChange={handleChange('manualCpuMax')}
                     label="CPU limit"
+                    extra={
+                      <span className="bodySm text-text-soft">
+                        1000m = 1VCPU
+                      </span>
+                    }
                     size="lg"
-                    suffix="VCPU"
+                    suffix="m"
                   />
                 </div>
               </div>
@@ -264,7 +279,7 @@ const AppCompute = () => {
                     onChange={handleChange('manualMemMin')}
                     label="Memory request"
                     size="lg"
-                    suffix="GB"
+                    suffix="MB"
                   />
                 </div>
                 <div className="basis-full">
@@ -273,7 +288,7 @@ const AppCompute = () => {
                     onChange={handleChange('manualMemMax')}
                     label="Memory limit"
                     size="lg"
-                    suffix="GB"
+                    suffix="MB"
                   />
                 </div>
               </div>

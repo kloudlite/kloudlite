@@ -76,11 +76,20 @@ export const helmChartQueries = (executor: IExecutor) => ({
   ),
   listHelmChart: executor(
     gql`
-      query Infra_listHelmReleases($clusterName: String!) {
-        infra_listHelmReleases(clusterName: $clusterName) {
-          totalCount
+      query Infra_listHelmReleases(
+        $clusterName: String!
+        $search: SearchHelmRelease
+        $pagination: CursorPaginationIn
+      ) {
+        infra_listHelmReleases(
+          clusterName: $clusterName
+          search: $search
+          pagination: $pagination
+        ) {
           edges {
+            cursor
             node {
+              clusterName
               createdBy {
                 userEmail
                 userId
@@ -95,9 +104,11 @@ export const helmChartQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                generation
                 name
                 namespace
               }
+              recordVersion
               spec {
                 chartName
                 chartRepoURL
@@ -121,9 +132,24 @@ export const helmChartQueries = (executor: IExecutor) => ({
                   namespace
                 }
               }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
               updateTime
             }
           }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
         }
       }
     `,

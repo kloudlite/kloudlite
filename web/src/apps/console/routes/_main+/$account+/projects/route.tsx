@@ -20,7 +20,7 @@ export const loader = (ctx: IRemixCtx) => {
     const { data: projects, errors } = await GQLServerHandler(
       ctx.request
     ).listProjects({
-      pagination: getPagination(ctx),
+      pq: getPagination(ctx),
       search: getSearch(ctx),
     });
     if (errors) {
@@ -168,6 +168,7 @@ const Projects = () => {
         if (!projects) {
           return null;
         }
+        console.log(projects);
 
         return (
           <Wrapper

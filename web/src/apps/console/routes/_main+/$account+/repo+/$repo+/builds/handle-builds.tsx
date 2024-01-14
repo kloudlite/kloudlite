@@ -5,21 +5,19 @@ import {
   GitBranch,
   GithubLogoFill,
   GitlabLogoFill,
-  MinusCircle,
   PencilSimple,
 } from '@jengaicons/react';
-import { useParams } from '@remix-run/react';
-import AnimateHide from '~/components/atoms/animate-hide';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { cn, useMapper, uuid } from '~/components/utils';
+import { useMapper } from '~/components/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TextArea, TextInput } from '~/components/atoms/input';
-import { Button, IconButton } from '~/components/atoms/button';
+import { Button } from '~/components/atoms/button';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -34,6 +32,8 @@ import {
 } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import KeyValuePair from '~/console/components/key-value-pair';
+import { useLog } from '~/root/lib/client/hooks/use-log';
+import { IAccountContext } from '../../../_layout';
 
 interface ISource {
   repo: string;
@@ -105,6 +105,10 @@ const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
+
+  const { user } = useOutletContext<IAccountContext>();
+
+  useLog(user);
 
   const { data: clusters, error: errorCluster } = useCustomSwr(
     '/clusters',

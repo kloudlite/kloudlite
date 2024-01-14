@@ -310,9 +310,9 @@ const AppDialog = ({
               const sC = selectedConfig;
               reset();
               onSubmit({
-                refKey: parseName(sC),
-                refName: sK,
-                type: 'config',
+                refKey: sK,
+                refName: parseName(sC),
+                type: show?.type as ICSComponent['type'],
               });
             }
           }}

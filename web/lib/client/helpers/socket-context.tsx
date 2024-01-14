@@ -43,7 +43,7 @@ const createSocketContext = () => {
   const wsclient = new Promise<sock.w3cwebsocket>((res, rej) => {
     try {
       // eslint-disable-next-line new-cap
-      const w = new sock.w3cwebsocket(socketUrl, '', '', {});
+      const w = new sock.w3cwebsocket(`${socketUrl}/ws`, '', '', {});
 
       w.onmessage = (msg) => {
         try {

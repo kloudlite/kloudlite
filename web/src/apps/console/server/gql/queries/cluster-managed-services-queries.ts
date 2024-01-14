@@ -29,20 +29,8 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
         $name: String!
       ) {
         infra_getClusterManagedService(clusterName: $clusterName, name: $name) {
-          displayName
-          creationTime
-          createdBy {
-            userEmail
-            userId
-            userName
-          }
           clusterName
-          lastUpdatedBy {
-            userEmail
-            userId
-            userName
-          }
-          markedForDeletion
+          displayName
           metadata {
             annotations
             creationTimestamp
@@ -60,24 +48,8 @@ export const clusterManagedServicesQueries = (executor: IExecutor) => ({
                 spec
               }
             }
-            namespace
+            targetNamespace
           }
-          status {
-            checks
-            isReady
-            lastReadyGeneration
-            lastReconcileTime
-            message {
-              RawMessage
-            }
-            resources {
-              apiVersion
-              kind
-              name
-              namespace
-            }
-          }
-          updateTime
         }
       }
     `,

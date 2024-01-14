@@ -38,6 +38,7 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
+  WireGuardlogo,
 } from '@jengaicons/react';
 import HandleProfile from './handle-profile';
 
@@ -101,6 +102,16 @@ const AccountTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
+              <WireGuardlogo size={iconSize} />
+              VPN
+            </span>
+          ),
+          to: '/vpn',
+          value: '/vpn',
+        },
+        {
+          label: (
+            <span className="flex flex-row items-center gap-lg">
               <GearSix size={iconSize} />
               Settings
             </span>
@@ -116,7 +127,7 @@ const AccountTabs = () => {
 const Logo = () => {
   const { account } = useParams();
   return (
-    <LogoWrapper to={`/${account}/infra/clusters`}>
+    <LogoWrapper to={`/${account}/projects`}>
       <BrandLogo />
     </LogoWrapper>
   );
@@ -199,7 +210,7 @@ const Console = () => {
 
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
-  const accountMenu = useHandleFromMatches('accountMenu', null);
+  const devicesMenu = useHandleFromMatches('devicesMenu', null);
 
   const headerExtra = useHandleFromMatches('headerExtra', null);
 
@@ -235,7 +246,7 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {/* {!!accountMenu && accountMenu} */}
+            {!!devicesMenu && devicesMenu()}
             {!!headerExtra && headerExtra()}
             <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
           </div>

@@ -2,7 +2,7 @@
 import { CopySimple } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
@@ -21,6 +21,7 @@ import {
   GQLServerHandler,
 } from '~/console/server/gql/saved-queries';
 import {
+  ExtractNodeType,
   ensureResource,
   parseName,
   parseNodes,
@@ -36,8 +37,9 @@ import { handleError } from '~/root/lib/utils/common';
 import { mapper } from '~/components/utils';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/root/lib/client/helpers/reloader';
+import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
+import Wrapper from '~/console/components/wrapper';
 import { IClusterContext } from '../../_layout';
-
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -73,7 +75,11 @@ export const updateCluster = async ({
         metadata: {
           name: data.metadata.name,
         },
-        spec: ensureResource(data.spec),
+        spec: {
+          cloudProvider: data.spec.cloudProvider,
+          credentialsRef: data.spec.credentialsRef,
+          availabilityMode: data.spec.availabilityMode,
+        },
       },
     });
     if (e) {
@@ -84,9 +90,16 @@ export const updateCluster = async ({
   }
 };
 
-const SettingGeneral = () => {
-  const { promise } = useLoaderData<typeof loader>();
-
+const Layout = ({
+  providerSecrets,
+}: {
+  providerSecrets: {
+    label: string;
+    value: string;
+    render: () => ReactNode;
+    provider: ExtractNodeType<IProviderSecrets>;
+  }[];
+}) => {
   const { account, cluster } = useOutletContext<IClusterContext>();
   const [deleteCluster, setDeleteCluster] = useState(false);
   const { setHasChanges, resetAndReload } = useUnsavedChanges();
@@ -103,7 +116,7 @@ const SettingGeneral = () => {
   const { values, handleChange, submit, isLoading, resetValues, setValues } =
     useForm({
       initialValues: {
-        displayName: account.displayName,
+        displayName: cluster.displayName,
       },
       validationSchema: Yup.object({
         displayName: Yup.string().required('Name is required.'),
@@ -119,145 +132,124 @@ const SettingGeneral = () => {
 
   useEffect(() => {
     setValues({
-      displayName: account.displayName,
+      displayName: cluster.displayName,
     });
-  }, [account]);
+  }, [cluster]);
 
   useEffect(() => {
-    setHasChanges(values.displayName !== account.displayName);
+    setHasChanges(values.displayName !== cluster.displayName);
   }, [values]);
 
+  const defaultProvider = providerSecrets.find(
+    (ps) => ps.value === cluster.spec?.credentialsRef.name
+  );
+
+  const defaultRegion = awsRegions.find(
+    (r) => r.Name === cluster.spec?.aws?.region
+  );
   return (
-    <>
-      <LoadingComp data={promise}>
-        {({ providerSecrets }) => {
-          const providerSecretsOptions = parseNodes(providerSecrets).map(
-            (provider) => ({
-              value: parseName(provider),
-              label: provider.displayName,
-              render: () => (
-                <div className="flex flex-col">
-                  <div>{provider.displayName}</div>
-                  <div className="bodySm text-text-soft">
-                    {parseName(provider)}
-                  </div>
-                </div>
-              ),
-              provider,
-            })
-          );
-
-          const defaultProvider = providerSecretsOptions.find(
-            (ps) => ps.value === cluster.spec?.credentialsRef.name
-          );
-
-          const defaultRegion = awsRegions.find(
-            (r) => r.Name === cluster.spec?.aws?.region
-          );
-
-          return (
-            <div className="flex flex-col gap-6xl">
-              <SubNavAction deps={[values, isLoading]}>
-                {values.displayName !== account.displayName && (
-                  <>
-                    <Button
-                      content="Discard"
-                      variant="basic"
-                      onClick={() => {
-                        resetValues();
-                      }}
-                    />
-                    <Button
-                      content="Save changes"
-                      variant="primary"
-                      onClick={() => {
-                        submit();
-                      }}
-                      loading={isLoading}
-                    />
-                  </>
-                )}
-              </SubNavAction>
-              <Box title="General">
-                <div className="flex flex-row items-center gap-3xl">
-                  <div className="flex-1">
-                    <TextInput
-                      label="Cluster name"
-                      value={values.displayName}
-                      onChange={handleChange('displayName')}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <TextInput
-                      value={cluster.metadata.name}
-                      label="Cluster ID"
-                      suffix={
-                        <div
-                          className="flex justify-center items-center"
-                          title="Copy"
-                        >
-                          <button
-                            onClick={() => copy(cluster.metadata.name)}
-                            className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
-                            tabIndex={-1}
-                          >
-                            <CopySimple size={16} />
-                          </button>
-                        </div>
-                      }
-                      disabled
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-row items-center gap-3xl">
-                  <div className="flex-1">
-                    {' '}
-                    <Select
-                      label="Cloud Provider"
-                      placeholder="Select cloud provider"
-                      disabled
-                      value={defaultProvider}
-                      options={async () => providerSecretsOptions}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Select
-                      disabled
-                      label="Region"
-                      placeholder="Select region"
-                      value={{
-                        value: defaultRegion?.Name || '',
-                        label: defaultRegion?.Name || '',
-                        region: defaultRegion as any,
-                      }}
-                      options={async () =>
-                        mapper(awsRegions, (v) => {
-                          return {
-                            value: v.Name,
-                            label: v.Name,
-                            region: v,
-                          };
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-              </Box>
-
-              <DeleteContainer
-                title="Delete Cluster"
-                action={async () => {
-                  setDeleteCluster(true);
-                }}
-              >
-                Permanently remove your Cluster and all of its contents from the
-                Kloudlite platform. This action is not reversible — please
-                continue with caution.
-              </DeleteContainer>
+    <Wrapper
+      secondaryHeader={{
+        title: 'General',
+        action: values.displayName !== cluster.displayName && (
+          <div className="flex flex-row gap-3xl items-center">
+            <Button
+              content="Discard"
+              variant="basic"
+              onClick={() => {
+                resetValues();
+              }}
+            />
+            <Button
+              content="Save changes"
+              variant="primary"
+              onClick={() => {
+                submit();
+              }}
+              loading={isLoading}
+            />
+          </div>
+        ),
+      }}
+    >
+      <div className="flex flex-col gap-6xl">
+        <Box title="General">
+          <div className="flex flex-row items-center gap-3xl">
+            <div className="flex-1">
+              <TextInput
+                label="Cluster name"
+                value={values.displayName}
+                onChange={handleChange('displayName')}
+              />
             </div>
-          );
-        }}
-      </LoadingComp>
+            <div className="flex-1">
+              <TextInput
+                value={cluster.metadata.name}
+                label="Cluster ID"
+                suffix={
+                  <div
+                    className="flex justify-center items-center"
+                    title="Copy"
+                  >
+                    <button
+                      onClick={() => copy(cluster.metadata.name)}
+                      className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
+                      tabIndex={-1}
+                    >
+                      <CopySimple size={16} />
+                    </button>
+                  </div>
+                }
+                disabled
+              />
+            </div>
+          </div>
+          <div className="flex flex-row items-center gap-3xl">
+            <div className="flex-1">
+              {' '}
+              <Select
+                label="Cloud Provider"
+                placeholder="Select cloud provider"
+                disabled
+                value={defaultProvider}
+                options={async () => providerSecrets}
+              />
+            </div>
+            <div className="flex-1">
+              <Select
+                disabled
+                label="Region"
+                placeholder="Select region"
+                value={{
+                  value: defaultRegion?.Name || '',
+                  label: defaultRegion?.Name || '',
+                  region: defaultRegion as any,
+                }}
+                options={async () =>
+                  mapper(awsRegions, (v) => {
+                    return {
+                      value: v.Name,
+                      label: v.Name,
+                      region: v,
+                    };
+                  })
+                }
+              />
+            </div>
+          </div>
+        </Box>
+
+        <DeleteContainer
+          title="Delete Cluster"
+          action={async () => {
+            setDeleteCluster(true);
+          }}
+        >
+          Permanently remove your Cluster and all of its contents from the
+          Kloudlite platform. This action is not reversible — please continue
+          with caution.
+        </DeleteContainer>
+      </div>
       <DeleteDialog
         resourceName={parseName(cluster)}
         resourceType="cluster"
@@ -281,7 +273,33 @@ const SettingGeneral = () => {
           }
         }}
       />
-    </>
+    </Wrapper>
+  );
+};
+
+const SettingGeneral = () => {
+  const { promise } = useLoaderData<typeof loader>();
+  return (
+    <LoadingComp data={promise}>
+      {({ providerSecrets }) => {
+        const providerSecretsOptions = parseNodes(providerSecrets).map(
+          (provider) => ({
+            value: parseName(provider),
+            label: provider.displayName,
+            render: () => (
+              <div className="flex flex-col">
+                <div>{provider.displayName}</div>
+                <div className="bodySm text-text-soft">
+                  {parseName(provider)}
+                </div>
+              </div>
+            ),
+            provider,
+          })
+        );
+        return <Layout providerSecrets={providerSecretsOptions} />;
+      }}
+    </LoadingComp>
   );
 };
 export default SettingGeneral;

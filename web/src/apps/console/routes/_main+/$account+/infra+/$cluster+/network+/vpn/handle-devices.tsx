@@ -6,6 +6,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Plus,
   SmileySad,
   X,
 } from '@jengaicons/react';
@@ -42,6 +43,7 @@ import { downloadFile } from '~/console/utils/commons';
 import CodeView from '~/console/components/code-view';
 import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IAccountContext } from '../../../../_layout';
 
 interface IExposedPorts {
@@ -163,10 +165,10 @@ export const ExposedPorts = ({
   ports: IExposedPorts[];
   onChange: (ports: IExposedPorts[]) => void;
 }) => {
-  const { errors, handleChange, submit, values } = useForm({
+  const { errors, handleChange, submit, values, resetValues } = useForm({
     initialValues: {
-      port: 3000,
-      targetPort: 3000,
+      port: '',
+      targetPort: '',
     },
     validationSchema: Yup.object({
       port: Yup.number()
@@ -177,7 +179,18 @@ export const ExposedPorts = ({
       targetPort: Yup.number().min(0).max(65535).required(),
     }),
     onSubmit: (val) => {
-      onChange?.([...ports, val]);
+      onChange?.([
+        ...ports,
+        {
+          port:
+            typeof val.port === 'string' ? parseInt(val.port, 10) : val.port,
+          targetPort:
+            typeof val.targetPort === 'string'
+              ? parseInt(val.targetPort, 10)
+              : val.targetPort,
+        },
+      ]);
+      resetValues();
     },
   });
 
@@ -218,7 +231,7 @@ export const ExposedPorts = ({
           </div>
           <div className="flex pt-5xl">
             <IconButton
-              icon={<Check />}
+              icon={<Plus />}
               variant="basic"
               disabled={!values.port || !values.targetPort}
               onClick={submit}
@@ -398,8 +411,6 @@ const Root = (props: IDialog) => {
 
   const { cluster } = params;
 
-  const { account } = useOutletContext<IAccountContext>();
-
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: isUpdate
@@ -407,11 +418,13 @@ const Root = (props: IDialog) => {
             displayName: props.data.displayName,
             name: parseName(props.data),
             ports: props.data.spec?.ports || [],
+            isNameError: false,
           }
         : {
             displayName: '',
             name: '',
             ports: [],
+            isNameError: false,
           },
       validationSchema: Yup.object({
         name: Yup.string().required(),
@@ -459,7 +472,7 @@ const Root = (props: IDialog) => {
 
           reloadPage();
           resetValues();
-          toast.success('Credential created successfully');
+          toast.success('Device created successfully');
           setVisible(false);
         } catch (err) {
           handleError(err);
@@ -468,41 +481,28 @@ const Root = (props: IDialog) => {
     });
 
   return (
-    <Popup.Form onSubmit={handleSubmit}>
+    <Popup.Form
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
       <Popup.Content>
         <div className="flex flex-col gap-3xl">
-          <div className="flex flex-col">
-            <div className="flex flex-col gap-2xl">
-              {isUpdate && (
-                <Chips.Chip
-                  {...{
-                    item: { id: parseName(props.data) },
-                    label: parseName(props.data),
-                    prefix: 'Id:',
-                    disabled: true,
-                    type: 'BASIC',
-                  }}
-                />
-              )}
-              <TextInput
-                label="Name"
-                value={values.displayName}
-                onChange={handleChange('displayName')}
-                error={!!errors.displayName}
-                message={errors.displayName}
-              />
-            </div>
-            {!isUpdate && (
-              <IdSelector
-                resType="vpn_device"
-                name={values.displayName}
-                onChange={(value) =>
-                  handleChange('name')({ target: { value } })
-                }
-                className="pt-2xl"
-              />
-            )}
-          </div>
+          <NameIdView
+            resType="vpn_device"
+            displayName={values.displayName}
+            name={values.name}
+            label="Device name"
+            placeholder="Enter device name"
+            errors={errors.name}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
+            isUpdate={isUpdate}
+          />
           <ExposedPorts
             ports={values.ports}
             onChange={(ports) => {

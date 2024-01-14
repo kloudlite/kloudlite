@@ -6,7 +6,11 @@ import { IdSelector } from '~/console/components/id-selector';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
-import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -17,7 +21,11 @@ import axios from 'axios';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Select from '~/components/atoms/select';
-import { CircleWavyCheck, CircleWavyCheckFill } from '@jengaicons/react';
+import { CircleWavyCheckFill } from '@jengaicons/react';
+import { cn, useMapper } from '~/components/utils';
+import Pulsable from 'react-pulsable';
+import { NameIdView } from '~/console/components/name-id-view';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 
 const LOGO_URL = 'https://artifacthub.io/image/';
 
@@ -108,6 +116,22 @@ const Root = (props: IDialog) => {
     }
   }, [chartVersions]);
 
+  const {
+    data: namespacesData,
+    isLoading: namespacesIsLoading,
+    error: namespacesError,
+  } = useCustomSwr('/infra_namespaces', async () => {
+    if (!cluster) {
+      throw new Error('Cluster is required!.');
+    } else {
+      return api.listNamespaces({ clusterName: cluster });
+    }
+  });
+
+  const namespaces = useMapper(parseNodes(namespacesData), (val) => {
+    return { label: parseName(val), value: parseName(val) };
+  });
+
   const fetchHelmCharts = async (repoUrl: string) => {
     try {
       setRepoErrors(false);
@@ -161,12 +185,18 @@ const Root = (props: IDialog) => {
               value: hc.package_id,
               repoUrl: hc.repository.url,
               render: () => (
-                <div className="flex flex-row gap-xl">
-                  <img
-                    className="w-4xl aspect-square object-contain"
-                    src={`${LOGO_URL}${hc.logo_image_id}`}
-                    alt={hc.name}
-                  />
+                <div className="flex flex-row gap-xl items-center">
+                  <Pulsable isLoading={!hc.logo_image_id} noPadding>
+                    <span className=" pulsable pulsable-img">
+                      <img
+                        className={cn({
+                          'w-4xl aspect-square object-contain': true,
+                        })}
+                        src={`${LOGO_URL}${hc.logo_image_id}`}
+                        alt={hc.name}
+                      />
+                    </span>
+                  </Pulsable>
                   <div className="flex flex-col flex-1">
                     <div className="flex flex-row gap-lg items-center">
                       <div className="flex-1">{hc.name}</div>
@@ -245,10 +275,12 @@ const Root = (props: IDialog) => {
             chartName: '',
             chartRepoURL: '',
             values: '',
+            isNameError: false,
           }
         : {
+            isNameError: false,
             displayName: props.data.displayName,
-            name: props.data.metadata?.name,
+            name: props.data.metadata?.name || '',
             values:
               Object.keys(props.data.spec?.values).length > 0
                 ? yaml.dump(props.data.spec?.values)
@@ -351,52 +383,67 @@ const Root = (props: IDialog) => {
   }, []);
 
   return (
-    <Popup.Form onSubmit={handleSubmit}>
+    <Popup.Form
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
       <Popup.Content className="!w-[900px]">
         <div className="flex flex-row gap-2xl ">
           <div className="flex flex-col gap-2xl basis-full border-border-default border-r pr-2xl">
-            <TextInput
-              ref={nameInputRef}
+            <NameIdView
+              resType="helm_release"
+              displayName={values.displayName}
+              name={values.name}
               label="Name"
-              placeholder="Name"
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              value={values.displayName}
-              name="helm-name"
+              placeholder="Enter helm chart name"
+              errors={errors.name}
+              handleChange={handleChange}
+              nameErrorLabel="isNameError"
+              isUpdate={isUpdate}
             />
-            {isUpdate && (
-              <Chips.Chip
-                {...{
-                  item: { id: parseName(props.data) },
-                  label: parseName(props.data),
-                  prefix: 'Id:',
-                  disabled: true,
-                  type: 'BASIC',
-                }}
-              />
-            )}
-            {!isUpdate && (
-              <IdSelector
-                name={values.displayName}
-                resType="cluster"
-                onChange={(id) => {
-                  handleChange('name')({ target: { value: id } });
-                }}
-              />
-            )}
-            <TextInput
+
+            <Select
               label="Namespace"
               placeholder="Namespace"
-              onChange={({ target }) => {
-                handleChange('namespace')(dummyEvent(target.value));
+              error={!!errors.namespace || (!isUpdate && !!namespacesError)}
+              message={
+                errors.namespace ||
+                (!isUpdate && namespacesError
+                  ? 'Error fetching namespaces'
+                  : '')
+              }
+              disabled={isUpdate || namespacesIsLoading}
+              options={async () =>
+                isUpdate
+                  ? [
+                      {
+                        label: values.namespace || '',
+                        value: values.namespace || '',
+                      },
+                    ]
+                  : namespaces
+              }
+              value={
+                values.namespace
+                  ? { label: values.namespace, value: values.namespace }
+                  : undefined
+              }
+              creatable={!isUpdate}
+              onChange={(val) => {
+                handleChange('namespace')(dummyEvent(val.value.toLowerCase()));
               }}
-              error={!!errors.namespace}
-              message={errors.namespace}
-              value={values.namespace}
-              name="helm-chart-namespace"
-              disabled={isUpdate}
+              noOptionMessage={
+                <div className="p-2xl bodyMd text-center">
+                  Type to create new namespace
+                </div>
+              }
             />
+
             {!isUpdate ? (
               <Select
                 // open
@@ -486,6 +533,7 @@ const Root = (props: IDialog) => {
           </div>
           <div className="basis-full">
             <TextArea
+              containerClassName="h-full"
               className="h-full"
               label="Helm values"
               placeholder="Helm values"

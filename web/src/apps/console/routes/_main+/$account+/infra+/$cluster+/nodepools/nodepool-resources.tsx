@@ -1,4 +1,4 @@
-import { PencilLine, Trash, Cpu } from '@jengaicons/react';
+import { PencilLine, Trash, Cpu, CircleFill } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -27,7 +27,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link } from '@remix-run/react';
 import { IStatus, listRender } from '~/console/components/commons';
-import AnimateHide from '~/components/atoms/animate-hide';
+import { listStatus } from '~/console/components/sync-status';
 import HandleNodePool from './handle-nodepool';
 import { findNodePlanWithCategory } from './nodepool-utils';
 
@@ -103,7 +103,7 @@ const ListDetail = (
 ) => {
   const { item, open, onDelete, onEdit } = props;
   const { name, id } = parseItem(item);
-  const { minCount, maxCount, cloudProvider, aws } = item.spec;
+  const { minCount, maxCount, cloudProvider, aws, targetCount } = item.spec;
   const keyPrefix = `${RESOURCE_NAME}-${id}`;
   const lR = listRender({ keyPrefix, resource: item });
 
@@ -158,26 +158,39 @@ const ListDetail = (
     type: 'nodepool',
   });
 
+  const tempStatus = listStatus({
+    key: keyPrefix,
+    item,
+    className: 'basis-full text-center',
+  });
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex flex-row items-center">
-        <div className="w-[220px] min-w-[220px] border-border-disabled border-r mr-xl">
+        <div className="w-[220px] min-w-[220px]  mr-xl flex flex-row items-center">
           <ListTitle
             title={name}
-            subtitle={id}
+            subtitle={
+              <div className="flex flex-row items-center gap-md">
+                {id}
+                <CircleFill size={7} />
+                <span>Running {targetCount} nodes</span>
+              </div>
+            }
             avatar={<NodePoolAvatar title={id} />}
           />
         </div>
-        <div className="flex flex-col gap-sm w-[150px] min-w-[150px] border-border-disabled border-r mr-xl pr-xl truncate">
+        <div className="flex items-center w-[20px] mx-xl flex-grow">
+          {tempStatus.render()}
+        </div>
+        <div className="flex flex-col gap-sm w-[150px] min-w-[150px] border-border-disabled border-x pl-xl mr-xl pr-xl truncate">
           <span className="bodySm text-text-soft pulsable">Size</span>
           <span className="bodyMd-medium pulsable">{parseSize()}</span>
         </div>
         <div className="pr-7xl w-[200px] min-w-[200px]">
           <ListItem data={parseProviderInfo()} />
         </div>
-        <div className="flex-grow flex items-center justify-center">
-          {statusRender.render()}
-        </div>
+
         {/* <div className="flex flex-row gap-2xl items-center pl-3xl pr-xl mr-3xl border-border-disabled border-r w-[160px] min-w-[160px]">
           <div className="flex flex-col gap-sm">
             <span className="bodySm text-text-soft pulsable">Expected</span>

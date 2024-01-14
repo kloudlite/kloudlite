@@ -16,13 +16,12 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import HighlightJsLog from '~/console/components/logger';
+import LogComp from '~/console/components/logger';
 import { renderCloudProvider } from '~/console/utils/commons';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { DetailItem } from '~/console/components/commons';
 import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
 import { IAccountContext } from '../../../_layout';
-
 
 const ClusterTabs = () => {
   const { account, cluster } = useParams();
@@ -97,15 +96,16 @@ const Log = ({ nodepool }: { nodepool: string }) => {
   const params = useParams();
   ensureClusterClientSide(params);
   const getUrl = (f: number) => {
-    return `wss://observability.dev.kloudlite.io/observability/logs/nodepool-job?resource_name=${nodepool}&resource_namespace=${
-      account.spec.targetNamespace
-    }&start_time=${f}&end_time=${getTime()}`;
+    // return `wss://observability.dev.kloudlite.io/observability/logs/nodepool-job?resource_name=${nodepool}&resource_namespace=${
+    //   account.spec.targetNamespace
+    // }&start_time=${f}&end_time=${getTime()}`;
+    return '';
   };
 
   // const [url, setUrl] = useState(getUrl(from));
 
   return (
-    <HighlightJsLog
+    <LogComp
       // actionComponent={
       //   <Select
       //     size="md"
@@ -117,7 +117,11 @@ const Log = ({ nodepool }: { nodepool: string }) => {
       //   />
       // }
       dark
-      websocket
+      websocket={{
+        account: '',
+        cluster: '',
+        trackingId: '',
+      }}
       height="60vh"
       width="100%"
       url={getUrl(selectOptions[3].from())}

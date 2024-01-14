@@ -1,13 +1,14 @@
-import { Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
+  listFlex,
+  listTitleClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import { IClusterMSvs } from '~/console/server/gql/queries/cluster-managed-services-queries';
 import {
   ExtractNodeType,
   parseName,
@@ -24,9 +25,12 @@ import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
+import { listStatus } from '~/console/components/sync-status';
+import HandleBackendService from './handle-backend-service';
 
 const RESOURCE_NAME = 'managed service';
-type BaseType = ExtractNodeType<IClusterMSvs>;
+type BaseType = ExtractNodeType<IProjectMSvs>;
 
 const parseItem = (item: BaseType, templates: IMSvTemplates) => {
   const template = getManagedTemplate({
@@ -49,7 +53,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'delete';
+  action: 'delete' | 'edit';
   item: BaseType;
 }) => void;
 
@@ -62,6 +66,13 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: () => onAction({ action: 'edit', item }),
+          key: 'edit',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -127,7 +138,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, logo, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-
+        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -135,7 +146,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name),
-                className: 'flex-1',
+                className: listTitleClass,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -148,6 +159,8 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                   />
                 ),
               },
+              status,
+              listFlex({ key: `${keyPrefix}flex-1` }),
               {
                 key: generateKey(keyPrefix, 'author'),
                 className: 'w-[180px]',
@@ -180,6 +193,7 @@ const BackendServicesResources = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
@@ -191,6 +205,9 @@ const BackendServicesResources = ({
       switch (action) {
         case 'delete':
           setShowDeleteDialog(item);
+          break;
+        case 'edit':
+          setVisible(item);
           break;
         default:
           break;
@@ -209,10 +226,13 @@ const BackendServicesResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!params.project) {
+            throw new Error('Project is required!.');
+          }
           try {
-            const { errors } = await api.deleteClusterMSv({
-              serviceName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
+            const { errors } = await api.deleteProjectMSv({
+              pmsvcName: parseName(showDeleteDialog),
+              projectName: params.project,
             });
 
             if (errors) {
@@ -224,6 +244,15 @@ const BackendServicesResources = ({
           } catch (err) {
             handleError(err);
           }
+        }}
+      />
+      <HandleBackendService
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => setVisible(null),
+          data: visible!,
+          templates: templates || [],
         }}
       />
     </>
