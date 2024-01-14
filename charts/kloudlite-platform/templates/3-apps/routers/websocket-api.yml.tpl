@@ -8,6 +8,12 @@ spec:
   ingressClass: {{ .Values.global.ingressClassName }}
   domains:
     - websocket.{{.Values.global.baseDomain}}
+  cors:
+    enabled: true
+    origins:
+      - https://kloudlite.io
+      - https://console.{{.Values.global.baseDomain}}
+      {{- /* - https://studio.apollographql.com */}}
   https:
     enabled: true
     forceRedirect: true
@@ -16,7 +22,7 @@ spec:
       path: /ws
       port: 80
       rewrite: false
-    - app: auth-web
+    - app: websocket-api
       path: /logs
       port: 80
       rewrite: false

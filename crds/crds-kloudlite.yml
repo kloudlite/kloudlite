@@ -2805,6 +2805,8 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
+              resourceName:
+                type: string
               resourceTemplate:
                 properties:
                   apiVersion:
@@ -3223,19 +3225,9 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              accountName:
-                type: string
-              clusterName:
-                type: string
-              displayName:
-                type: string
-              logo:
-                type: string
               targetNamespace:
                 type: string
             required:
-            - accountName
-            - clusterName
             - targetNamespace
             type: object
           status:
@@ -5284,7 +5276,6 @@ spec:
                 type: string
             required:
             - msvcRef
-            - resourceName
             type: object
           status:
             properties:
@@ -8273,6 +8264,8 @@ spec:
                 type: array
               deviceNamespace:
                 type: string
+              disabled:
+                type: boolean
               nodeSelector:
                 additionalProperties:
                   type: string
