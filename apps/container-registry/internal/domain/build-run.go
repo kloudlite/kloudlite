@@ -3,7 +3,10 @@ package domain
 import (
 	"crypto/md5"
 	"fmt"
+	"strings"
+
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -14,7 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
-	"strings"
 )
 
 func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
@@ -192,7 +194,13 @@ func (d *Impl) CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *
 		return errors.NewE(err)
 	}
 
-	if err = d.dispatcher.ApplyToTargetCluster(ctx, build.BuildClusterName, cbr, 0); err != nil {
+	if cbr.Annotations == nil {
+		cbr.Annotations = make(map[string]string)
+	}
+
+	cbr.Annotations[constants.ObservabilityTrackingKey] = string(cbr.Id)
+
+	if err = d.dispatcher.ApplyToTargetCluster(ctx, build.BuildClusterName, &cbr.BuildRun, 0); err != nil {
 		d.logger.Errorf(err, "could not apply build run")
 		return errors.NewE(err)
 	}
