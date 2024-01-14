@@ -157,9 +157,9 @@ func (d *domain) upsertInfraDevice(ctx ConsoleContext, device *entities.ConsoleV
 
 	return d.infraClient.UpsertVpnDevice(ctx, &infra.UpsertVpnDeviceIn{
 		Id:          string(device.Id),
+		VpnDevice:   deviceBytes,
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
-		VpnDevice:   deviceBytes,
 	})
 }
 
@@ -184,7 +184,7 @@ func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
-	_, err := d.findVPNDevice(ctx, device.Name)
+	xdevice, err := d.findVPNDevice(ctx, device.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -201,7 +201,7 @@ func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		},
 	}
 
-	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, device.Id, patch)
+	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, xdevice.Id, patch)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

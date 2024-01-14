@@ -39,6 +39,11 @@ type TypeMeta struct {
 	Kind       string `json:"kind" graphql:"noinput"`
 }
 
+type TypeMeta2 struct {
+	APIVersion string `json:"apiVersion" graphql:"noinput"`
+	Kind       string `json:"kind" graphql:"noinput"`
+}
+
 //
 // func TypeMetaToGraphqlFieldEntry(omitEmpty bool) string {
 // 	required := ""

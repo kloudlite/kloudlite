@@ -1012,7 +1012,6 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"IN_QUEUE",
 							"APPLIED_AT_AGENT",
 							"ERRORED_AT_AGENT",
-							"RECEIVED_UPDATE_FROM_AGENT",
 							"UPDATED_AT_AGENT",
 							"DELETING_AT_AGENT",
 							"DELETED_AT_AGENT",
@@ -1031,7 +1030,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				name: "Example",
 				data: struct {
 					// Example ExampleJson `json:"example" graphql:"uri=http://localhost:30017/example-json-schema"`
-					Example ExampleJson `json:"example" graphql:"uri=http://example.com/example-json-schema"`
+					Example ExampleJson `json:"example"`
 				}{},
 			},
 			want: map[string]*parser.Struct{
