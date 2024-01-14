@@ -3686,29 +3686,6 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
             targetPort
           }
         }
-        status {
-          checks
-          isReady
-          lastReadyGeneration
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
-        }
         updateTime
       }
     }
@@ -3754,6 +3731,8 @@ query consoleGetConsoleVpnDevice($name: String!) {
 
 query consoleListConsoleVpnDevicesForUser {
   core_listVPNDevicesForUser {
+    accountName
+    apiVersion
     createdBy {
       userEmail
       userId
@@ -3762,6 +3741,8 @@ query consoleListConsoleVpnDevicesForUser {
     creationTime
     displayName
     environmentName
+    id
+    kind
     lastUpdatedBy {
       userEmail
       userId
@@ -3769,7 +3750,11 @@ query consoleListConsoleVpnDevicesForUser {
     }
     markedForDeletion
     metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
       generation
+      labels
       name
       namespace
     }
@@ -3788,30 +3773,11 @@ query consoleListConsoleVpnDevicesForUser {
         targetPort
       }
     }
-    status {
-      checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
-    }
-    syncStatus {
-      action
-      error
-      lastSyncedAt
-      recordVersion
-      state
-      syncScheduledAt
-    }
     updateTime
+    wireguardConfig {
+      encoding
+      value
+    }
   }
 }
 

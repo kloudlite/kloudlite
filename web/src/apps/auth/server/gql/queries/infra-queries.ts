@@ -5,15 +5,10 @@ export const infraQueries = (executor: IExecutor) => ({
   cli_CoreCheckNameAvailability: executor(
     gql`
       query Core_checkNameAvailability(
-        $projectName: String!
         $resType: ConsoleResType!
         $name: String!
       ) {
-        core_checkNameAvailability(
-          projectName: $projectName
-          resType: $resType
-          name: $name
-        ) {
+        core_checkNameAvailability(resType: $resType, name: $name) {
           result
           suggestedNames
         }
