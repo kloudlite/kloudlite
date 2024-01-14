@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
@@ -73,6 +74,11 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 	router.EnvironmentName = ctx.EnvironmentName
 	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.RecordVersion)
 
+	router.Spec.Https = &crdsv1.Https{
+		Enabled:       true,
+		ForceRedirect: true,
+	}
+
 	if _, err := d.upsertEnvironmentResourceMapping(ctx, &router); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -108,6 +114,13 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 	router.Namespace = xRouter.Namespace
 	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
 		return nil, errors.NewE(err)
+	}
+
+	if router.Spec.Https == nil {
+		router.Spec.Https = &crdsv1.Https{
+			Enabled:       true,
+			ForceRedirect: true,
+		}
 	}
 
 	patch := repos.Document{

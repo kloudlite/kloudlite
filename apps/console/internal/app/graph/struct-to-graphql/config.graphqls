@@ -1,6 +1,6 @@
 type Config @shareable {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   binaryData: Map
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
@@ -9,7 +9,7 @@ type Config @shareable {
   environmentName: String!
   id: String!
   immutable: Boolean
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
@@ -31,10 +31,12 @@ type ConfigPaginatedRecords @shareable {
 }
 
 input ConfigIn {
+  apiVersion: String
   binaryData: Map
   data: Map
   displayName: String!
   immutable: Boolean
+  kind: String
   metadata: MetadataIn
 }
 

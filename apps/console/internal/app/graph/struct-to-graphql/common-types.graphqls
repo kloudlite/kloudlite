@@ -135,6 +135,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__Intercept @shareable
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec @shareable {
+  resourceName: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
@@ -400,6 +401,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__InterceptIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
+  resourceName: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 
@@ -408,6 +410,8 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecI
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
+  apiVersion: String!
+  kind: String!
   msvcRef: Github__com___kloudlite___operator___apis___crds___v1__MsvcNamedRefIn!
   spec: Map!
 }

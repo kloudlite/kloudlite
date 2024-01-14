@@ -234,6 +234,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnSecretUpdateMessage(rctx, secret, resStatus, opts)
 			}
+
 		case routerGVK.String():
 			{
 				var router entities.Router

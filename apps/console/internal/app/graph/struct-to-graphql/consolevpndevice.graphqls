@@ -1,12 +1,12 @@
 type ConsoleVPNDevice @shareable {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   environmentName: String
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
@@ -30,8 +30,10 @@ type ConsoleVPNDevicePaginatedRecords @shareable {
 }
 
 input ConsoleVPNDeviceIn {
+  apiVersion: String
   displayName: String!
   environmentName: String
+  kind: String
   metadata: MetadataIn
   projectName: String
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn

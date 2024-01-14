@@ -81,7 +81,7 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.Consol
 
 	if err := d.canPerformActionInDevice(ctx, iamT.GetVPNDeviceConnectConfig, device.Name); err != nil {
 		d.logger.Infof("user (%s) does not have to access to VPNDevice connect config (%s)", ctx.UserId, device.Name)
-		return device, nil
+		return nil, err
 	}
 
 	cluster, err := d.getClusterFromDevice(ctx, device)
@@ -184,10 +184,21 @@ func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
+	if device.ProjectName == nil || device.EnvironmentName == nil {
+		return nil, errors.New("device.projectName, and device.environmentName must be provided")
+	}
+
+	envTargetNs, err := d.envTargetNamespace(ctx, *device.ProjectName, *device.EnvironmentName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	xdevice, err := d.findVPNDevice(ctx, device.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+
+	device.Spec.DeviceNamespace = &envTargetNs
 
 	patch := repos.Document{
 		"displayName":     device.DisplayName,
@@ -288,7 +299,7 @@ func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, 
 
 	patch := repos.Document{
 		"projectName":          projectName,
-		"envName":              envName,
+		"environmentName":      envName,
 		"spec.deviceNamespace": environment.Spec.TargetNamespace,
 		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,

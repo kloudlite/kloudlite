@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -69,7 +70,10 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
+	service.Namespace = d.getProjectNamespace(projectName)
 	service.IncrementRecordVersion()
+
+	service.Spec.TargetNamespace = fmt.Sprintf("%s-pmsvc-%s", projectName, service.Name)
 
 	service.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -95,7 +99,6 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 	service.AccountName = ctx.AccountName
 	service.ProjectName = projectName
 	service.SyncStatus = t.GenSyncStatus(t.SyncActionApply, service.RecordVersion)
-	service.Namespace = d.getProjectNamespace(projectName)
 
 	service.EnsureGVK()
 
@@ -124,13 +127,14 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
-	service.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &service); err != nil {
+	pmsvc, err := d.findProjectManagedService(ctx, projectName, service.Name)
+	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	pmsvc, err := d.findProjectManagedService(ctx, projectName, service.Name)
-	if err != nil {
+	service.Namespace = pmsvc.Namespace
+	service.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &service); err != nil {
 		return nil, errors.NewE(err)
 	}
 
