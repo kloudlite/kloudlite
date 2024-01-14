@@ -85,34 +85,25 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return accountName, nil
 	}
 
-	//if isInfra {
-	//	s, _ := client.CurrentInfraAccountName()
-	//	if s != "" {
-	//		return s, nil
-	//	}
-	//} else {
-	//	s, _ := client.CurrentAccountName()
-	//	if s != "" {
-	//		return s, nil
-	//	}
-	//}
-	//
-	//account, err := SelectAccount(accountName)
-	//
-	//if err != nil {
-	//	return "", err
-	//}
 	var s string
 	if isInfra {
 		s, err := client.CurrentInfraAccountName()
 		if err != nil {
-			return s, err
+			return "", err
 		}
-	} else {
-		s, err := client.CurrentAccountName()
-		if err != nil {
-			return s, err
+		if s == "" {
+			return "", errors.New("no infra account selected")
 		}
+
+		return s, nil
+	}
+
+	s, err := client.CurrentAccountName()
+	if err != nil {
+		return "", err
+	}
+	if s == "" {
+		return "", errors.New("no account selected")
 	}
 
 	return s, nil
