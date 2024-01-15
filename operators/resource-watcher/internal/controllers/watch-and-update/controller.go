@@ -67,8 +67,6 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	r.logger.Infof("r.MsgSender is pointed to %p", r.MsgSender)
-
 	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
 	switch gvk.String() {
@@ -84,8 +82,13 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	case ManagedResourceGVK.String():
 		{
+			mr, err := fn.JsonConvert[crdsv1.ManagedResource](obj.Object)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+
 			mresSecret := &corev1.Secret{}
-			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("mres-%s-creds", obj.GetName())), mresSecret); err != nil {
+			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("mres-%s-creds", mr.Spec.ResourceName)), mresSecret); err != nil {
 				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
 				mresSecret = nil
 			}
@@ -94,7 +97,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyManagedResSecret] = mresSecret
 			}
 
-			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			err = r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,

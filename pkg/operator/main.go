@@ -29,7 +29,7 @@ type Check struct {
 
 // +kubebuilder:object:generate=true
 type ResourceRef struct {
-	metav1.TypeMeta `json:",inline"`
+	metav1.TypeMeta `json:",inline" graphql:"children-required"`
 	Namespace       string `json:"namespace"`
 	Name            string `json:"name"`
 }
