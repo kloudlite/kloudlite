@@ -19,9 +19,16 @@ type ConfigEnv struct {
 	Value      string `json:"value"`
 }
 
+type MresEnv struct {
+	Key      string `json:"key"`
+	MresName string `json:"mresName"`
+	Value    string `json:"value"`
+}
+
 type EnvRsp struct {
 	Secrets []SecretEnv `json:"secrets"`
 	Configs []ConfigEnv `json:"configs"`
+	Mreses  []MresEnv   `json:"mreses"`
 }
 
 type GeneratedEnvs struct {
@@ -146,6 +153,20 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			}
 			return queries
 		}(),
+		"mresQueries": func() []any {
+
+			var queries []any
+			for _, rt := range kt.Mres {
+				for _, v := range rt.Env {
+					queries = append(queries, map[string]any{
+						"mresName": rt.Name,
+						"key":      v.RefKey,
+					})
+				}
+			}
+
+			return queries
+		}(),
 	}, &cookie)
 
 	if err != nil {
@@ -181,7 +202,18 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 		}
 	}
 
-	for _, v := range *&fromResp.Configs {
+	mmap := CSResp{}
+
+	for _, rt := range kt.Mres {
+		mmap[rt.Name] = map[string]*Kv{}
+		for _, v := range rt.Env {
+			mmap[rt.Name][v.RefKey] = &Kv{
+				Key: v.Key,
+			}
+		}
+	}
+
+	for _, v := range fromResp.Configs {
 		ent := cmap[v.ConfigName][v.Key]
 		if ent != nil {
 			result[ent.Key] = v.Value
@@ -190,13 +222,21 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 		cmap[v.ConfigName][v.Key].Value = v.Value
 	}
 
-	for _, v := range *&fromResp.Secrets {
+	for _, v := range fromResp.Secrets {
 		ent := smap[v.SecretName][v.Key]
 		if ent != nil {
 			result[ent.Key] = v.Value
 		}
 
 		smap[v.SecretName][v.Key].Value = v.Value
+	}
+
+	for _, v := range fromResp.Mreses {
+		ent := mmap[v.MresName][v.Key]
+		if ent != nil {
+			result[ent.Key] = v.Value
+		}
+		mmap[v.MresName][v.Key].Value = v.Value
 	}
 
 	return result, cmap, smap, nil

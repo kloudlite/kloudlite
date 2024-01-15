@@ -24,8 +24,8 @@ Examples:
 
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		pName := cmd.Flag("project").Value.String()
-		aName := cmd.Flag("account").Value.String()
+		pName := fn.ParseStringFlag(cmd, "project")
+		aName := fn.ParseStringFlag(cmd, "account")
 
 		initFile, err := client.GetKlFile(nil)
 
@@ -76,9 +76,6 @@ Examples:
 }
 
 func init() {
-	p := ""
-	a := ""
-
-	InitCommand.Flags().StringVarP(&p, "project", "p", "", "project name")
-	InitCommand.Flags().StringVarP(&a, "account", "a", "", "account name")
+	InitCommand.Flags().StringP("project", "p", "", "project name")
+	InitCommand.Flags().StringP("account", "a", "", "account name")
 }

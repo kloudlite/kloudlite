@@ -68,7 +68,7 @@ func SelectMres(options ...fn.Option) (*Mres, error) {
 	}
 
 	mres, err := fzf.FindOne(m, func(item Mres) string {
-		return item.DisplayName
+		return fmt.Sprintf("%s (%s)", item.DisplayName, item.Metadata.Name)
 	}, fzf.WithPrompt("Select managed resource >"))
 
 	return mres, err

@@ -24,7 +24,6 @@ Examples:
   kl add mres --resource=<resourceId> --service=<serviceId>
 `,
 	Run: func(cmd *cobra.Command, _ []string) {
-
 		mresName := fn.ParseStringFlag(cmd, "resource")
 
 		mres, err := server.SelectMres([]fn.Option{
