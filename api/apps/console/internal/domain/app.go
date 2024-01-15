@@ -200,11 +200,12 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 		},
 	}
 
-	if _, err := d.appRepo.PatchById(ctx, app.Id, patch); err != nil {
+	uApp, err := d.appRepo.PatchById(ctx, app.Id, patch)
+	if err != nil {
 		return false, errors.NewE(err)
 	}
 
-	if err := d.applyApp(ctx, app); err != nil {
+	if err := d.applyApp(ctx, uApp); err != nil {
 		return false, errors.NewE(err)
 	}
 
