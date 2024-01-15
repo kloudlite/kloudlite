@@ -203,3 +203,20 @@ func Filter[T comparable](from []T, items []T, filterFunc func(fromItem T, targe
 	}
 	return result
 }
+
+func JsonConvert[T any](from any) (T, error) {
+	var to T
+	if from == nil {
+		return to, nil
+	}
+
+	b, err := json.Marshal(from)
+	if err != nil {
+		return to, err
+	}
+
+	if err := json.Unmarshal(b, &to); err != nil {
+		return to, errors.NewE(err)
+	}
+	return to, nil
+}

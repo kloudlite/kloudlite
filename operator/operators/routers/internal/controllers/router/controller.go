@@ -253,7 +253,7 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) (
 
 	wcdMap := make(map[string]bool, cap(wcDomains))
 
-	if obj.Spec.Https.Enabled {
+	if obj.Spec.Https != nil && obj.Spec.Https.Enabled {
 		issuerName := obj.Spec.Https.ClusterIssuer
 		if issuerName == "" {
 			issuerName = r.Env.DefaultClusterIssuer

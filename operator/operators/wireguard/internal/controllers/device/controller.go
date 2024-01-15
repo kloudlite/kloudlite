@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +26,7 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/templates"
 	networkingv1 "k8s.io/api/networking/v1"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -164,11 +164,15 @@ func (r *Reconciler) rolloutCoreDNS(req *rApi.Request[*wgv1.Device], corefileCon
 		return err
 	}
 
+	logger := r.logger.WithName("rollout-coredns")
+
+	logger.Infof("making request to resync coredns configuration")
 	resp, err := http.DefaultClient.Do(hreq)
 	if err != nil {
 		return err
 	}
 
+	logger.Infof("completed request to resync coredns configuration, with status code: %d", resp.StatusCode)
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("bad status code, received: %d, corefile not synced", resp.StatusCode)
 	}
@@ -258,6 +262,9 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 
 			domains := make(map[string]struct{})
 			for i := range ingressList.Items {
+				if ingressList.Items[i].Spec.IngressClassName != nil && *ingressList.Items[i].Spec.IngressClassName == r.Env.DefaultIngressClass {
+					continue
+				}
 				for j := range ingressList.Items[i].Spec.Rules {
 					domains[ingressList.Items[i].Spec.Rules[j].Host] = struct{}{}
 				}
@@ -686,7 +693,7 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 	if err := func() error {
 		var services corev1.ServiceList
 		if err := r.List(ctx, &services, &client.ListOptions{
-			LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.WGDeviceNameKey: obj.Name, "kloudlite.io/wg-svc-type": "external"}),
+			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{constants.WGDeviceNameKey: obj.Name, "kloudlite.io/wg-svc-type": "external"}),
 		}); err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
@@ -777,7 +784,6 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	// check deployment
 	if err := func() error {
 		dep, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.DeviceInfoNamespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &appsv1.Deployment{})
-
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
@@ -791,7 +797,6 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 				"tolerations":   []corev1.Toleration{{Operator: "Exists"}},
 				"node-selector": obj.Spec.NodeSelector,
 			})
-
 			if err != nil {
 				return err
 			}
@@ -832,7 +837,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result
 
 	var services corev1.ServiceList
 	if err := r.List(ctx, &services, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.WGDeviceNameKey: obj.Name, "kloudlite.io/wg-svc-type": "external"}),
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{constants.WGDeviceNameKey: obj.Name, "kloudlite.io/wg-svc-type": "external"}),
 	}); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
@@ -876,6 +881,27 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				}),
 		)
 	}
+	builder.Watches(
+		&networkingv1.Ingress{},
+		handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []reconcile.Request {
+				var devices wgv1.DeviceList
+				if err := r.List(ctx, &devices, &client.ListOptions{
+					LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+						"kloudlite.io/active.namespace": obj.GetNamespace(),
+					}),
+				}); err != nil {
+					return nil
+				}
+
+				rr := make([]reconcile.Request, 0, len(devices.Items))
+				for i := range devices.Items {
+					rr = append(rr, reconcile.Request{NamespacedName: fn.NN(devices.Items[i].Namespace, devices.Items[i].Name)})
+				}
+
+				return rr
+			}),
+	)
 
 	return builder.Complete(r)
 }
