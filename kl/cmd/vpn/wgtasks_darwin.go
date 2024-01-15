@@ -11,19 +11,29 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/pkg/functions"
+	"github.com/miekg/dns"
 
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/ipc"
 	"golang.zx2c4.com/wireguard/tun"
-	"k8s.io/utils/strings/slices"
 )
 
 const (
 	ifName string = "utun2464"
 )
+
+
+func getCurrentDns() ([]string, error) {
+	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config.Servers, nil
+}
 
 func configureDarwin(devName string, verbose bool) error {
 	return configure(devName, ifName, verbose)
@@ -93,77 +103,7 @@ func getDNSServers(networkService string, verbose bool) ([]string, error) {
 	return dnsServers, nil
 }
 
-func removeDNSServer(networkService string, dnsServer string, verbose bool) error {
-	dnsServers, err := getDNSServers(networkService, verbose)
-	if err != nil {
-		return err
-	}
-	newDnsServers := slices.Filter([]string{}, dnsServers, func(d string) bool {
-		return d != dnsServer
-	})
-	if len(newDnsServers) == 0 {
-		_ = execCmd(fmt.Sprintf("networksetup -setdnsservers %q empty", networkService), verbose)
-	} else {
-		_ = execCmd(fmt.Sprintf("networksetup -setdnsservers %q %s", networkService, strings.Join(newDnsServers, " ")), verbose)
-	}
-	return err
-}
 
-func addDNSServer(networkService string, dnsServer string, verbose bool) error {
-	dnsServers, err := getDNSServers(networkService, verbose)
-	if err != nil {
-		return err
-	}
-	newDnsServers := append(dnsServers, dnsServer)
-	return execCmd(fmt.Sprintf("networksetup -setdnsservers %q %s 8.8.8.8", networkService, strings.Join(newDnsServers, " ")), verbose)
-}
-
-func setDNS(dns []net.IP, verbose bool) error {
-	err := client.SetActiveDns(func() []string {
-		var dnsServers []string
-		for _, d := range dns {
-			dnsServers = append(dnsServers, d.String())
-		}
-		return dnsServers
-	}())
-	if err != nil {
-		return err
-	}
-	services, err := getNetworkServices(verbose)
-	if err != nil {
-		return err
-	}
-	for _, service := range services {
-		for _, ip := range dns {
-			err = addDNSServer(service, ip.String(), verbose)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func resetDNS(verbose bool) error {
-	dns, err := client.ActiveDns()
-	if err != nil {
-		return err
-	}
-	services, err := getNetworkServices(verbose)
-	if err != nil {
-		return err
-	}
-	for _, d := range dns {
-		for _, service := range services {
-			err = removeDNSServer(service, d, verbose)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	_ = client.SetActiveDns([]string{})
-	return nil
-}
 
 func setDeviceIp(deviceIp net.IPNet, _ string, verbose bool) error {
 	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
@@ -245,10 +185,7 @@ func stopService(verbose bool) error {
 	if p == nil {
 		return errors.New("process not found")
 	}
-	err = resetDNS(verbose)
-	if err != nil {
-		return err
-	}
+	
 	err = syscall.Kill(int(i), syscall.SIGTERM)
 	if err != nil {
 		return err

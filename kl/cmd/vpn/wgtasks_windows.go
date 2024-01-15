@@ -16,6 +16,12 @@ func configureDarwin(_ string, _ bool) error {
 	return nil
 }
 
+
+func getCurrentDns() ([]string, error) {
+	
+	return []string{}, nil
+}
+
 func connect(verbose bool) error {
 	return errors.New(
 		text.Colored("This command is not available for windows, will be available soon", 209),

@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
@@ -98,10 +99,6 @@ func configure(
 		return e
 	}
 
-	if e := setDNS(cfg.DNS, verbose); e != nil {
-		return e
-	}
-
 	wg, err := wgctrl.New()
 	if err != nil {
 		return err
@@ -115,6 +112,28 @@ func configure(
 	if err != nil {
 		fmt.Printf("failed to configure device: %v", err)
 	}
+
+	dServers, err := getCurrentDns()
+	if err != nil {
+		return err
+	}
+
+	dnsServers := func() []net.IPNet {
+		var ipNet []net.IPNet
+		for _, v := range dServers {
+			ipNet = append(ipNet, net.IPNet{
+				IP:   net.ParseIP(v),
+				Mask: net.CIDRMask(32, 32),
+			})
+		}
+
+		return ipNet
+	}()
+
+	emptydns := []net.IP{}
+	cfg.DNS = emptydns
+
+	cfg.Peers[0].AllowedIPs = append(cfg.Peers[0].AllowedIPs, dnsServers...)
 
 	for _, i2 := range cfg.Peers[0].AllowedIPs {
 		err = ipRouteAdd(i2.String(), cfg.Address[0].IP.String(), interfaceName, verbose)

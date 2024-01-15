@@ -1,21 +1,30 @@
 package vpn
 
 import (
-	"errors"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/lib/wgc"
-	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/miekg/dns"
 	"github.com/vishvananda/netlink"
 )
 
 func configureDarwin(_ string, _ bool) error {
 	// not required to implement
 	return nil
+}
+
+
+func getCurrentDns() ([]string, error) {
+	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config.Servers, nil
 }
 
 func connect(verbose bool) error {
@@ -37,61 +46,6 @@ func connect(verbose bool) error {
 
 func disconnect(verbose bool) error {
 	return stopService(verbose)
-}
-
-func setDNS(dns []net.IP, verbose bool) error {
-	if verbose {
-		fn.Log("[#] setting /etc/resolv.conf")
-	}
-
-	file, err := os.ReadFile("/etc/resolv.conf")
-	if err != nil {
-		return err
-	}
-
-	if _, e := os.Stat("/etc/resolv.conf.bak"); errors.Is(e, os.ErrNotExist) {
-		e = os.WriteFile("/etc/resolv.conf.bak", file, 0644)
-		if e != nil {
-			return e
-		}
-	}
-
-	dnsArr := make([]string, 0)
-
-	err = os.WriteFile("/etc/resolv.conf", []byte(func() string {
-		resolveString := ""
-
-		for _, i2 := range dns {
-			dnsArr = append(dnsArr, i2.String())
-			resolveString += fmt.Sprintf("nameserver %s\n", i2.String())
-		}
-		resolveString += "nameserver 8.8.8.8\n"
-
-		client.SetActiveDns(dnsArr)
-
-		return resolveString
-	}()), 0644)
-
-	return err
-}
-
-func resetDNS(verbose bool) error {
-
-	if verbose {
-		fn.Log("[#] resetting /etc/resolv.conf")
-	}
-
-	if _, e := os.Stat("/etc/resolv.conf"); e != nil && !errors.Is(e, os.ErrNotExist) {
-		if err := os.Remove("/etc/resolv.conf"); err != nil {
-			return err
-		}
-	}
-
-	if _, e := os.Stat("/etc/resolv.conf.bak"); errors.Is(e, os.ErrNotExist) {
-		return nil
-	}
-
-	return os.Rename("/etc/resolv.conf.bak", "/etc/resolv.conf")
 }
 
 func startService(_ bool) error {
@@ -168,7 +122,7 @@ func stopService(verbose bool) error {
 		return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
 	}
 
-	return resetDNS(verbose)
+	return nil
 }
 
 func setDeviceIp(ip net.IPNet, deviceName string, _ bool) error {
