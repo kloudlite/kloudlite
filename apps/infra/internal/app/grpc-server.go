@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/kloudlite/api/apps/infra/internal/domain"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
@@ -56,6 +57,7 @@ func (g *grpcServer) UpsertVpnDevice(ctx context.Context, in *infra.UpsertVpnDev
 	if err := json.Unmarshal(in.VpnDevice, &wgDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	device, err := g.d.UpsertManagedVPNDevice(dctx, in.ClusterName, entities.VPNDevice{
 		Device:           wgDevice,
 		ResourceMetadata: common.ResourceMetadata{},
@@ -64,7 +66,6 @@ func (g *grpcServer) UpsertVpnDevice(ctx context.Context, in *infra.UpsertVpnDev
 		ManagingByDev:    fn.New(repos.ID(in.Id)),
 		SyncStatus:       t.SyncStatus{},
 	}, repos.ID(in.Id))
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

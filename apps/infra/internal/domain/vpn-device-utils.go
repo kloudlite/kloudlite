@@ -39,7 +39,8 @@ func (d *domain) updateVPNDevice(ctx InfraContext, clusterName string, deviceIn 
 		"metadata.annotations": deviceIn.Annotations,
 		"displayName":          deviceIn.DisplayName,
 		"recordVersion":        currDevice.RecordVersion + 1,
-		"spec.Ports":           deviceIn.Spec.Ports,
+		"spec.ports":           deviceIn.Spec.Ports,
+		"spec.deviceNamespace": deviceIn.Spec.DeviceNamespace,
 		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
@@ -58,7 +59,6 @@ func (d *domain) updateVPNDevice(ctx InfraContext, clusterName string, deviceIn 
 		return nil, errors.NewE(err)
 	}
 	return nDevice, nil
-
 }
 
 func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string) (*entities.VPNDevice, error) {
@@ -104,9 +104,9 @@ func (d *domain) deleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	}); err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishVpnDeviceEvent(device, PublishUpdate)
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &device.Device)
-
 }
 
 func (d *domain) createVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
