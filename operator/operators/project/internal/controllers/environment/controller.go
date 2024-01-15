@@ -3,6 +3,7 @@ package environment
 import (
 	"context"
 	"fmt"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
@@ -85,7 +86,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureEnvIngressController(req); !step.ShouldProceed() {
+	if step := r.setupEnvIngressController(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -98,6 +99,108 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error()).RequeueAfter(2 * time.Second) // during finalizing, there is no need to wait for changes to happen, we are doing aggressive polling
+	}
+
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+		return step
+	}
+
+	// ensure deletion of other kloudlite resources, that belong to this environment
+	var mresList crdsv1.ManagedResourceList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &mresList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	mres := make([]client.Object, len(mresList.Items))
+	for i := range mresList.Items {
+		mres[i] = &mresList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, mres...); err != nil {
+		return fail(err)
+	}
+
+	// routers
+	var routersList crdsv1.RouterList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &routersList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	routers := make([]client.Object, len(routersList.Items))
+	for i := range routersList.Items {
+		routers[i] = &routersList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, routers...); err != nil {
+		return fail(err)
+	}
+
+	// apps
+	var appsList crdsv1.AppList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &appsList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	apps := make([]client.Object, len(appsList.Items))
+	for i := range appsList.Items {
+		apps[i] = &appsList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, apps...); err != nil {
+		return fail(err)
+	}
+
+	// configs
+	var configsList corev1.ConfigMapList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &configsList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	configs := make([]client.Object, 0, len(configsList.Items))
+	for i := range configsList.Items {
+		if configsList.Items[i].Name == "kube-root-ca.crt" {
+			continue
+		}
+		configs = append(configs, &configsList.Items[i])
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, configs...); err != nil {
+		return fail(err)
+	}
+
+	// secrets
+	var secretsList corev1.SecretList
+	if err := findResourceBelongingToEnvironment(ctx, r.Client, &secretsList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	secrets := make([]client.Object, len(secretsList.Items))
+	for i := range secretsList.Items {
+		secrets[i] = &secretsList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, secrets...); err != nil {
+		return fail(err)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
 	return req.Finalize()
 }
 
@@ -118,11 +221,23 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 
 	if obj.Spec.Routing == nil {
 		hasUpdated = true
-		obj.Spec.Routing = &crdsv1.EnvironmentRouting{
-			Mode:                crdsv1.EnvironmentRoutingModePrivate,
-			PublicIngressClass:  r.Env.DefaultIngressClass,
-			PrivateIngressClass: fmt.Sprintf("env-%s", obj.Name),
-		}
+		obj.Spec.Routing = &crdsv1.EnvironmentRouting{}
+	}
+
+	if obj.Spec.Routing.Mode == "" {
+		hasUpdated = true
+		obj.Spec.Routing.Mode = crdsv1.EnvironmentRoutingModePrivate
+	}
+
+	if obj.Spec.Routing.PublicIngressClass == "" {
+		hasUpdated = true
+		obj.Spec.Routing.PublicIngressClass = r.Env.DefaultIngressClass
+	}
+
+	if obj.Spec.Routing.PrivateIngressClass == "" {
+		hasUpdated = true
+		// obj.Spec.Routing.PrivateIngressClass = fmt.Sprintf("%s-env-%s", obj.Spec.TargetNamespace, obj.Name)
+		obj.Spec.Routing.PrivateIngressClass = fmt.Sprintf("k-%s", fn.Md5([]byte(fmt.Sprintf("%s-env-%s", obj.Spec.TargetNamespace, obj.Name))))
 	}
 
 	if hasUpdated {
@@ -243,7 +358,7 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 	return req.Next()
 }
 
-func (r *Reconciler) ensureEnvIngressController(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
+func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -256,7 +371,8 @@ func (r *Reconciler) ensureEnvIngressController(req *rApi.Request[*crdsv1.Enviro
 		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	releaseName := fmt.Sprintf("env-ingress-%s", obj.Name)
+	// releaseName := fmt.Sprintf("%s-env-ingress-%s", obj.Spec.TargetNamespace, obj.Name)
+	releaseName := obj.Spec.Routing.PrivateIngressClass
 	releaseNamespace := obj.Spec.TargetNamespace
 
 	b, err := templates.ParseBytes(r.templateHelmIngressNginx, map[string]any{
@@ -338,7 +454,7 @@ func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Enviro
 	for i := range ingressList.Items {
 		ingressList.Items[i].Spec.IngressClassName = fn.New(obj.GetIngressClassName())
 		if err := r.Update(ctx, &ingressList.Items[i]); err != nil {
-			return fail(err)
+			return stepResult.New().RequeueAfter(1 * time.Second)
 		}
 	}
 
