@@ -191,9 +191,13 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
-		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s/%s", obj.Namespace, obj.Name))
-		msvc.Spec = obj.Spec.MSVCSpec
+		m := fn.FilterObservabilityAnnotations(obj)
+		for k, v := range m {
+			fn.MapSet(&msvc.Annotations, k, v)
+		}
+		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s_%s", obj.Namespace, obj.Name))
 
+		msvc.Spec = obj.Spec.MSVCSpec
 		return nil
 	}); err != nil {
 		return failed(err)
@@ -258,7 +262,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			handler.EnqueueRequestsFromMapFunc(
 				func(_ context.Context, obj client.Object) []reconcile.Request {
 					if v, ok := obj.GetLabels()[constants.ProjectManagedServiceRefKey]; ok {
-						sp := strings.SplitN(v, "/", 2)
+						sp := strings.SplitN(v, "_", 2)
 						if len(sp) != 2 {
 							return nil
 						}

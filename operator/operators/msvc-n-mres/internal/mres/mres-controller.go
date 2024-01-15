@@ -87,11 +87,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if req.Object.Enabled != nil && !*req.Object.Enabled {
-		// TODO (nxtcoder17): need to finalize this resource
-		return req.Done().ReconcilerResponse()
-	}
-
 	// if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
 	// 	return step.ReconcilerResponse()
 	// }
@@ -106,6 +101,45 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "patch-defaults"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	hasPatched := false
+
+	// function-body
+	if obj.Spec.ResourceName == "" {
+		hasPatched = true
+		obj.Spec.ResourceName = obj.Name
+	}
+
+	if hasPatched {
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
+		}
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
@@ -176,7 +210,7 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 		"api-version": obj.Spec.ResourceTemplate.APIVersion,
 		"kind":        obj.Spec.ResourceTemplate.Kind,
 
-		"name":       obj.Name,
+		"name":       obj.Spec.ResourceName,
 		"namespace":  obj.Namespace,
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"labels":     obj.GetEnsuredLabels(),
@@ -218,7 +252,7 @@ func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResour
 			"apiVersion": obj.Spec.ResourceTemplate.APIVersion,
 			"kind":       obj.Spec.ResourceTemplate.Kind,
 			"metadata": map[string]any{
-				"name":      obj.Name,
+				"name":      obj.Spec.ResourceName,
 				"namespace": obj.Namespace,
 			},
 		},

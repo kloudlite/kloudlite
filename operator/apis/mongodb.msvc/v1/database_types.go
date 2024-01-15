@@ -14,7 +14,7 @@ type DatabaseOutput struct {
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
 	MsvcRef      ct.MsvcRef     `json:"msvcRef"`
-	ResourceName string         `json:"resourceName"`
+	ResourceName string         `json:"resourceName,omitempty"`
 	Output       DatabaseOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
