@@ -70,7 +70,7 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *apiExtensionsV1.JSON
 						CreationTimestamp metav1.Time       `json:"creationTimestamp" graphql:"noinput"`
 						DeletionTimestamp *metav1.Time      `json:"deletionTimestamp,omitempty" graphql:"noinput"`
 					}{}
-					if err := p.GenerateGraphQLSchema(commonLabel, "Metadata", reflect.TypeOf(metadata)); err != nil {
+					if err := p.GenerateGraphQLSchema(commonLabel, "Metadata", reflect.TypeOf(metadata), GraphqlTag{}); err != nil {
 						return err
 					}
 					continue
@@ -84,7 +84,7 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *apiExtensionsV1.JSON
 					fields = append(fields, genFieldEntry(k, gType, m[k]))
 
 					p2 := newParser(p.schemaCli)
-					if err := p2.GenerateGraphQLSchema(commonLabel, gType, reflect.TypeOf(rApi.Status{})); err != nil {
+					if err := p2.GenerateGraphQLSchema(commonLabel, gType, reflect.TypeOf(rApi.Status{}), GraphqlTag{}); err != nil {
 						return err
 					}
 

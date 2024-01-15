@@ -825,7 +825,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				name: "Project",
 				data: struct {
 					AccountName string
-					Project     Project `json:",inline" graphql:"uri=k8s://projects.crds.kloudlite.io"`
+					Project     Project `json:",inline"`
 				}{},
 			},
 			want: map[string]*parser.Struct{
@@ -833,8 +833,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 					Types: map[string][]string{
 						"Project": {
 							"AccountName: String!",
-							"apiVersion: String!",
-							"kind: String!",
+							"apiVersion: String",
+							"kind: String",
 							"metadata: Metadata! @goField(name: \"objectMeta\")",
 							"spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ProjectSpec!",
 							"status: Github__com___kloudlite___operator___pkg___operator__Status",
@@ -842,6 +842,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 					},
 					Inputs: map[string][]string{
 						"ProjectIn": {
+							"apiVersion: String",
+							"kind: String",
 							"AccountName: String!",
 							"metadata: MetadataIn!",
 							"spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ProjectSpecIn!",
@@ -864,8 +866,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"generation: Int",
 						},
 						"Github__com___kloudlite___operator___pkg___operator__ResourceRef": {
-							"apiVersion: String!",
-							"kind: String!",
+							"apiVersion: String",
+							"kind: String",
 							"namespace: String!",
 							"name: String!",
 						},
@@ -1029,7 +1031,6 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			args: args{
 				name: "Example",
 				data: struct {
-					// Example ExampleJson `json:"example" graphql:"uri=http://localhost:30017/example-json-schema"`
 					Example ExampleJson `json:"example"`
 				}{},
 			},
@@ -1050,8 +1051,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				"common-types": {
 					Types: map[string][]string{
 						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJson": {
-							"apiVersion: String!",
-							"kind: String!",
+							"apiVersion: String",
+							"kind: String",
 							"metadata: Metadata! @goField(name: \"objectMeta\")",
 							"Spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpec!",
 						},
@@ -1073,6 +1074,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 					},
 					Inputs: map[string][]string{
 						"Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonIn": {
+							"apiVersion: String",
+							"kind: String",
 							"metadata: MetadataIn!",
 							"Spec: Github__com___kloudlite___api___cmd___struct____to____graphql___pkg___parser_test__ExampleJsonSpecIn!",
 						},
@@ -1334,6 +1337,66 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 					},
 				},
+			},
+			wantErr: false,
+		},
+
+		{
+			name:   "test 24. overriding struct's omitempty json tags, with inline specified",
+			fields: fields{structs: map[string]*parser.Struct{}, schemaCli: schemaCli},
+			args: args{
+				name: "Sample",
+				data: struct {
+					//Type1 metav1.TypeMeta `json:"type1"`
+					//Type2 metav1.TypeMeta `json:"inline" graphql:"children-required"`
+					metav1.TypeMeta `json:",inline" graphql:"children-required"`
+				}{},
+			},
+			want: map[string]*parser.Struct{
+				"Sample": {
+					Types: map[string][]string{
+						"Sample": {
+							"apiVersion: String!",
+							"kind: String!",
+						},
+					},
+					Inputs: map[string][]string{
+						"SampleIn": {
+							"apiVersion: String!",
+							"kind: String!",
+						},
+					},
+				},
+				"common-types": {},
+			},
+			wantErr: false,
+		},
+
+		{
+			name:   "test 25. overriding struct's omitempty json tags, with inline specified",
+			fields: fields{structs: map[string]*parser.Struct{}, schemaCli: schemaCli},
+			args: args{
+				name: "Sample",
+				data: struct {
+					metav1.TypeMeta `json:",inline"`
+				}{},
+			},
+			want: map[string]*parser.Struct{
+				"Sample": {
+					Types: map[string][]string{
+						"Sample": {
+							"apiVersion: String",
+							"kind: String",
+						},
+					},
+					Inputs: map[string][]string{
+						"SampleIn": {
+							"apiVersion: String",
+							"kind: String",
+						},
+					},
+				},
+				"common-types": {},
 			},
 			wantErr: false,
 		},
