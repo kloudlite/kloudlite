@@ -108,6 +108,10 @@ export const vpnQueries = (executor: IExecutor) => ({
           metadata {
             name
           }
+          wireguardConfig {
+            encoding
+            value
+          }
         }
       }
     `,
