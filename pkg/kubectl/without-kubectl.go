@@ -100,6 +100,8 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		}()
 
 		ann := obj.GetAnnotations()
+		delete(ann, constants.LastAppliedKey)
+		obj.SetAnnotations(ann)
 		if ann == nil {
 			ann = make(map[string]string)
 		}
@@ -132,36 +134,38 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			continue
 		}
 
-		prevLastApplied, ok := cobj.GetAnnotations()[constants.LastAppliedKey]
-		if ok {
-			if prevLastApplied == ann[constants.LastAppliedKey] {
-				yc.logger.Infof("No changes for resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
-				continue
-			}
+		if cobj != nil {
+			prevLastApplied, ok := cobj.GetAnnotations()[constants.LastAppliedKey]
+			if ok {
+				if prevLastApplied == ann[constants.LastAppliedKey] {
+					yc.logger.Infof("No changes for resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+					continue
+				}
 
-			var prevAppliedObj unstructured.Unstructured
-			if err := json.Unmarshal([]byte(prevLastApplied), &prevAppliedObj); err != nil {
-				return nil, err
-			}
+				var prevAppliedObj unstructured.Unstructured
+				if err := json.Unmarshal([]byte(prevLastApplied), &prevAppliedObj); err != nil {
+					return nil, err
+				}
 
-			prevAnn := prevAppliedObj.GetAnnotations()
+				prevAnn := prevAppliedObj.GetAnnotations()
 
-			for k, v := range cobj.GetAnnotations() {
-				if !fn.MapHasKey(ann, k) && !fn.MapHasKey(prevAnn, k) {
-					ann[k] = v
+				for k, v := range cobj.GetAnnotations() {
+					if !fn.MapHasKey(ann, k) && !fn.MapHasKey(prevAnn, k) {
+						ann[k] = v
+					}
+				}
+
+				prevLabels := prevAppliedObj.GetLabels()
+
+				for k, v := range cobj.GetLabels() {
+					if !fn.MapHasKey(labels, k) && !fn.MapHasKey(prevLabels, k) {
+						labels[k] = v
+					}
 				}
 			}
-
-			prevLabels := prevAppliedObj.GetLabels()
-
-			for k, v := range cobj.GetLabels() {
-				if !fn.MapHasKey(labels, k) && !fn.MapHasKey(prevLabels, k) {
-					labels[k] = v
-				}
-			}
+			obj.Object["metadata"] = cobj.Object["metadata"]
 		}
 
-		obj.Object["metadata"] = cobj.Object["metadata"]
 		obj.SetAnnotations(ann)
 		obj.SetLabels(labels)
 		// If exists, update it
@@ -323,7 +327,6 @@ func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 
 		mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			// log.Fatal(err)
 			return err
 		}
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
@@ -336,9 +339,9 @@ func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 		}
 
 		if err := dri.Delete(ctx, unstructuredObj.GetName(), metav1.DeleteOptions{}); err != nil {
-			if apiErrors.IsNotFound(err) {
-				return nil
-			}
+			// if apiErrors.IsNotFound(err) {
+			// 	return nil
+			// }
 			return err
 		}
 	}
