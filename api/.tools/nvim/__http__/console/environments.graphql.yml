@@ -128,5 +128,5 @@ query: |+
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName2}}"
+  envName: "{{.envName}}"
 ---
