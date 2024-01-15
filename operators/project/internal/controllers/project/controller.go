@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 
@@ -88,7 +89,71 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
+func findResourceBelongingToProject(ctx context.Context, kclient client.Client, resources client.ObjectList, projectTargetNamespace string) error {
+	if err := kclient.List(ctx, resources, &client.ListOptions{
+		Namespace: projectTargetNamespace,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error()).RequeueAfter(2 * time.Second)
+	}
+
+	// ensure deletion of other kloudlite resources, that belong to this project
+	var envList crdsv1.EnvironmentList
+	if err := findResourceBelongingToProject(ctx, r.Client, &envList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	envs := make([]client.Object, len(envList.Items))
+	for i := range envList.Items {
+		envs[i] = &envList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, envs...); err != nil {
+		return fail(err)
+	}
+
+	var projectMsvcList crdsv1.ProjectManagedServiceList
+	if err := findResourceBelongingToProject(ctx, r.Client, &projectMsvcList, obj.Spec.TargetNamespace); err != nil {
+		return fail(err)
+	}
+
+	projectMsvcs := make([]client.Object, len(projectMsvcList.Items))
+	for i := range projectMsvcList.Items {
+		envs[i] = &projectMsvcList.Items[i]
+	}
+
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, projectMsvcs...); err != nil {
+		return fail(err)
+	}
+
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
+	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, ns); err != nil {
+		return fail(err)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
 	return req.Finalize()
 }
 
