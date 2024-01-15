@@ -111,21 +111,14 @@ func (f *Field) handleStruct() (fieldType string, inputFieldType string, err err
 	p2.structs[structName] = newStruct()
 
 	if f.Name == "ObjectMeta" && f.PkgPath == "k8s.io/apimachinery/pkg/apis/meta/v1" && f.Type.String() == "v1.ObjectMeta" {
-		if err := p2.GenerateGraphQLSchema(structName, "Metadata", reflect.TypeOf(types.Metadata{})); err != nil {
+		if err := p2.GenerateGraphQLSchema(structName, "Metadata", reflect.TypeOf(types.Metadata{}), f.GraphqlTag); err != nil {
 			return "", "", err
 		}
 		fieldType = types.MetadataToGraphqlFieldEntry(f.OmitEmpty)
 		inputFieldType = types.MetadataToGraphqlInputEntry(f.OmitEmpty)
 	} else {
-		//if f.Name == "TypeMeta" && f.PkgPath == "k8s.io/apimachinery/pkg/apis/meta/v1" && f.Type.String() == "v1.TypeMeta" {
-		//	if err := p2.GenerateGraphQLSchema(structName, childType, reflect.TypeOf(types.TypeMeta{})); err != nil {
-		//		//if err := p2.GenerateGraphQLSchema(structName, childType, reflect.TypeOf(metav1.TypeMeta{})); err != nil {
-		//		return "", "", err
-		//	}
-		//} else {
-		if err := p2.GenerateGraphQLSchema(structName, childType, f.Type); err != nil {
+		if err := p2.GenerateGraphQLSchema(structName, childType, f.Type, f.GraphqlTag); err != nil {
 			return "", "", err
-			//	}
 		}
 
 		if f.Inline {

@@ -153,4 +153,6 @@ const (
 	ObservabilityTrackingKey    string = "kloudlite.io/observability.tracking.id"
 	ObservabilityAccountNameKey string = "kloudlite.io/observability.account.name"
 	ObservabilityClusterNameKey string = "kloudlite.io/observability.cluster.name"
+
+	ManagedByKloudlite string = "kloudlite.io/managed-by.kloudlite"
 )

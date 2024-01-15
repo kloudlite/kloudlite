@@ -17,7 +17,7 @@ import (
 )
 
 type Parser interface {
-	GenerateGraphQLSchema(structName string, name string, t reflect.Type) error
+	GenerateGraphQLSchema(structName string, name string, t reflect.Type, parentTag GraphqlTag) error
 	LoadStruct(name string, data any) error
 
 	PrintTypes(w io.Writer)
@@ -165,14 +165,15 @@ func parseJsonTag(field reflect.StructField) JsonTag {
 type schemaFormat string
 
 type GraphqlTag struct {
-	Uri            *string
-	Enum           []string
-	Ignore         bool
-	NoInput        bool
-	OnlyInput      bool
-	InputOmitEmpty bool
-	DefaultValue   any
-	Required       bool
+	Uri               *string
+	Enum              []string
+	Ignore            bool
+	NoInput           bool
+	OnlyInput         bool
+	InputOmitEmpty    bool
+	DefaultValue      any
+	ChildrenRequired  bool
+	ChildrenOmitEmpty bool
 }
 
 func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
@@ -221,9 +222,13 @@ func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
 			{
 				gt.InputOmitEmpty = true
 			}
-		case "required":
+		case "children-required":
 			{
-				gt.Required = true
+				gt.ChildrenRequired = true
+			}
+		case "children-omitempty":
+			{
+				gt.ChildrenOmitEmpty = true
 			}
 
 		case "ignore":
@@ -278,7 +283,7 @@ func (s *Struct) mergeParser(other *Struct, overKey string) (fields []string, in
 	return fields, inputFields
 }
 
-func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect.Type) error {
+func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect.Type, parentTag GraphqlTag) error {
 	var fields []string
 	var inputFields []string
 
@@ -307,7 +312,11 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 			continue
 		}
 
-		if gt.Required {
+		if parentTag.ChildrenRequired {
+			jt.OmitEmpty = false
+		}
+
+		if parentTag.ChildrenOmitEmpty {
 			jt.OmitEmpty = true
 		}
 
@@ -411,7 +420,7 @@ func (p *parser) LoadStruct(name string, data any) error {
 		ty = ty.Elem()
 	}
 
-	return p.GenerateGraphQLSchema(name, name, ty)
+	return p.GenerateGraphQLSchema(name, name, ty, GraphqlTag{})
 }
 
 func (s *Struct) WriteSchema(w io.Writer) {
