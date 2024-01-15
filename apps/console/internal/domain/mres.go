@@ -98,15 +98,20 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []Mana
 func (d *domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
 	filters := ctx.DBFilters()
 	filters.Add("metadata.name", name)
-	mresSecrets, err := d.mresRepo.FindOne(ctx, filters)
+
+	mresSecret, err := d.findMRes(ctx, name)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	results := make([]string, 0, len(mresSecrets.SyncedOutputSecretRef.Data))
+	if mresSecret.SyncedOutputSecretRef == nil {
+		return nil, errors.Newf("waiting for managed resource output to sync")
+	}
 
-	for _, data := range mresSecrets.SyncedOutputSecretRef.Data {
-		results = append(results, string(data))
+	results := make([]string, 0, len(mresSecret.SyncedOutputSecretRef.Data))
+
+	for k := range mresSecret.SyncedOutputSecretRef.Data {
+		results = append(results, k)
 	}
 
 	return results, nil
@@ -277,7 +282,8 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 		"metadata.annotations":       mres.Annotations,
 		"metadata.generation":        mres.Generation,
 
-		"status": mres.Status,
+		"status":                mres.Status,
+		"syncedOutputSecretRef": mres.SyncedOutputSecretRef,
 
 		"syncStatus.state": func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
