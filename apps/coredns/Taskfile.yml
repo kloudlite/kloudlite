@@ -7,8 +7,11 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     cmds:
-      - go build -ldflags="-s -w" -o ./bin/kl-coredns .
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt='{{.BuiltAt}}'" -o ./bin/kl-coredns .
 
   container:build:
     cmds:

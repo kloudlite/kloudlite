@@ -1,5 +1,5 @@
 FROM docker.io/rancher/mirrored-coredns-coredns:1.10.1
-COPY ./Corefile /tmp/Corefile
+COPY ./examples/Corefile /tmp/Corefile
 WORKDIR /app
 COPY ./bin/kl-coredns /app/kl-coredns
 EXPOSE 53 53/udp

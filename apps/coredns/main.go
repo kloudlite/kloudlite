@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+
+	"github.com/kloudlite/operator/common"
 )
 
 var debug bool
@@ -71,6 +73,10 @@ func main() {
 	go runCoreDNS(ctx, newCorefilePath)
 
 	sm := http.NewServeMux()
+	sm.HandleFunc("/healthy", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
+
 	sm.HandleFunc("/resync", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("resyncing corefile")
 		b, err := io.ReadAll(r.Body)
@@ -92,6 +98,9 @@ func main() {
 		w.WriteHeader(200)
 	})
 
+	common.PrintReadyBanner()
+
+	log.Printf("use /healthy to check, if server is reachable")
 	log.Printf("http server is starting on %s", addr)
 
 	http.ListenAndServe(addr, sm)
