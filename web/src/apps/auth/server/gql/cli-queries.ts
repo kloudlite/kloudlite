@@ -129,6 +129,7 @@ export const cliQueries = (executor: IExecutor) => ({
         $projectName: String!
         $envName: String!
         $configQueries: [ConfigKeyRefIn]
+        $mresQueries: [ManagedResourceKeyRefIn]
         $secretQueries: [SecretKeyRefIn!]
       ) {
         configs: core_getConfigValues(
@@ -149,6 +150,16 @@ export const cliQueries = (executor: IExecutor) => ({
           secretName
           value
         }
+
+        mreses: core_getManagedResouceOutputKeyValues(
+          keyrefs: $mresQueries
+          envName: $envName
+          projectName: $projectName
+        ) {
+          key
+          mresName
+          value
+        }
       }
     `,
     {
@@ -156,6 +167,7 @@ export const cliQueries = (executor: IExecutor) => ({
         return {
           configs: data.configs,
           secrets: data.secrets,
+          mreses: data.mreses,
         };
       },
 
