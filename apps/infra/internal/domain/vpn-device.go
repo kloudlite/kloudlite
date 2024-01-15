@@ -30,7 +30,6 @@ func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName
 	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
 
 	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, repos.Document{
-
 		"spec.deviceNamespace": namespace,
 		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
@@ -57,7 +56,7 @@ func (d *domain) ListVPNDevices(ctx InfraContext, accountName string, clusterNam
 		return nil, errors.NewE(err)
 	}
 
-	filter := repos.Filter{"accountName": accountName}
+	filter := repos.Filter{"accountName": accountName, "managingByDev": nil}
 	if clusterName != nil {
 		filter["clusterName"] = *clusterName
 	}
@@ -92,7 +91,7 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
 
 	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, repos.Document{
-		"spec.Ports": ports,
+		"spec.ports": ports,
 		"lastUpdatedBy": common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
@@ -115,7 +114,6 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 }
 
 func (d *domain) UpsertManagedVPNDevice(ctx InfraContext, clusterName string, deviceIn entities.VPNDevice, managedDeviceId repos.ID) (*entities.VPNDevice, error) {
-
 	if managedDeviceId == "" {
 		return nil, errors.Newf("managedDeviceId cannot be empty")
 	}
@@ -139,13 +137,12 @@ func (d *domain) UpsertManagedVPNDevice(ctx InfraContext, clusterName string, de
 		"clusterName":   clusterName,
 		"metadata.name": deviceIn.Name,
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if device == nil {
-		device.ManagingByDev = &managedDeviceId
+		deviceIn.ManagingByDev = &managedDeviceId
 		device, err = d.createVPNDevice(ctx, clusterName, deviceIn)
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -155,6 +152,7 @@ func (d *domain) UpsertManagedVPNDevice(ctx InfraContext, clusterName string, de
 	}
 
 	device.ManagingByDev = &managedDeviceId
+	device.Spec = deviceIn.Spec
 	return d.updateVPNDevice(ctx, clusterName, *device, false)
 }
 
