@@ -109,6 +109,7 @@ const ListTitle = ({
           {title && (
             <div className="bodyMd-semibold text-text-default truncate pulsable">
               <Tooltip.Root
+                className="!w-fit !max-w-fit"
                 side="top"
                 content={<div className="bodySm text-text-strong">{title}</div>}
               >

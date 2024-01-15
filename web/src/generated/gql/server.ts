@@ -5058,6 +5058,63 @@ export type ConsoleDeleteConsoleVpnDeviceMutation = {
   core_deleteVPNDevice: boolean;
 };
 
+export type ConsoleCreateImagePullSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  imagePullSecretIn: ImagePullSecretIn;
+}>;
+
+export type ConsoleCreateImagePullSecretMutation = {
+  core_createImagePullSecret?: { id: string };
+};
+
+export type ConsoleListImagePullSecretsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchImagePullSecrets>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListImagePullSecretsQuery = {
+  core_listImagePullSecrets?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        dockerConfigJson?: string;
+        environmentName: string;
+        format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ImagePullSecretFormat;
+        markedForDeletion?: boolean;
+        projectName: string;
+        recordVersion: number;
+        registryPassword?: string;
+        registryURL?: string;
+        registryUsername?: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: { generation: number; name: string; namespace?: string };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
 export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
   resType: ConsoleResType;
   name: Scalars['String']['input'];

@@ -3810,6 +3810,73 @@ mutation consoleDeleteConsoleVpnDevice($deviceName: String!) {
   core_deleteVPNDevice(deviceName: $deviceName)
 }
 
+mutation consoleCreateImagePullSecret($projectName: String!, $envName: String!, $imagePullSecretIn: ImagePullSecretIn!) {
+  core_createImagePullSecret(
+    projectName: $projectName
+    envName: $envName
+    imagePullSecretIn: $imagePullSecretIn
+  ) {
+    id
+  }
+}
+
+query consoleListImagePullSecrets($projectName: String!, $envName: String!, $search: SearchImagePullSecrets, $pq: CursorPaginationIn) {
+  core_listImagePullSecrets(
+    projectName: $projectName
+    envName: $envName
+    search: $search
+    pq: $pq
+  ) {
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        dockerConfigJson
+        environmentName
+        format
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          generation
+          name
+          namespace
+        }
+        projectName
+        recordVersion
+        registryPassword
+        registryURL
+        registryUsername
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 query authCli_CoreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
   core_checkNameAvailability(resType: $resType, name: $name) {
     result

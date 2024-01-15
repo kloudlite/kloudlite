@@ -61,14 +61,13 @@ const Secrets = () => {
           if (!secrets) {
             return null;
           }
-
           return (
             <Wrapper
               secondaryHeader={{
-                title: 'Configs',
+                title: 'Secrets',
                 action: secrets.length > 0 && (
                   <Button
-                    content="Add new config"
+                    content="Add new secret"
                     variant="primary"
                     onClick={() => {
                       setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });

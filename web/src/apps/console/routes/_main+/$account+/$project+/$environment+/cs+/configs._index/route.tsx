@@ -62,10 +62,10 @@ const Configs = () => {
           return (
             <Wrapper
               secondaryHeader={{
-                title: 'Secrets',
+                title: 'Configs',
                 action: configs.length > 0 && (
                   <Button
-                    content="Add new secret"
+                    content="Add new config"
                     variant="primary"
                     onClick={() => {
                       setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
