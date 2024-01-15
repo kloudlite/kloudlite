@@ -33,30 +33,3 @@ func MetadataToGraphqlInputEntry(omitEmpty bool) string {
 	}
 	return fmt.Sprintf(`MetadataIn%s`, required)
 }
-
-type TypeMeta struct {
-	APIVersion string `json:"apiVersion" graphql:"noinput"`
-	Kind       string `json:"kind" graphql:"noinput"`
-}
-
-type TypeMeta2 struct {
-	APIVersion string `json:"apiVersion" graphql:"noinput"`
-	Kind       string `json:"kind" graphql:"noinput"`
-}
-
-//
-// func TypeMetaToGraphqlFieldEntry(omitEmpty bool) string {
-// 	required := ""
-// 	if !omitEmpty {
-// 		required = "!"
-// 	}
-// 	return fmt.Sprintf(`TypeMeta%s`, required)
-// }
-//
-// func TypeMetaToGraphqlInputEntry(omitEmpty bool) string {
-// 	required := ""
-// 	if !omitEmpty {
-// 		required = "!"
-// 	}
-// 	return fmt.Sprintf(`TypeMetaIn%s`, required)
-// }
