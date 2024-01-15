@@ -93,8 +93,8 @@ variables:
   app:
     displayName: "sample app"
     metadata:
-      # name: "{{.name}}"
-      name: "SAMPLE2"
+      name: "{{.name}}"
+      # name: "SAMPLE2"
     spec:
       services:
         - type: tcp
