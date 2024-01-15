@@ -557,6 +557,7 @@ export type ManagedResourceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn =
   {
+    resourceName?: InputMaybe<Scalars['String']['input']>;
     resourceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceTemplateIn;
   };
 
@@ -2614,7 +2615,31 @@ export type ConsoleListRoutersQuery = {
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
         spec: {
+          backendProtocol?: string;
           domains: Array<string>;
+          ingressClass?: string;
+          maxBodySizeInMB?: number;
+          basicAuth?: {
+            enabled: boolean;
+            secretName?: string;
+            username?: string;
+          };
+          cors?: {
+            allowCredentials?: boolean;
+            enabled?: boolean;
+            origins?: Array<string>;
+          };
+          https?: {
+            clusterIssuer?: string;
+            enabled: boolean;
+            forceRedirect?: boolean;
+          };
+          rateLimit?: {
+            connections?: number;
+            enabled?: boolean;
+            rpm?: number;
+            rps?: number;
+          };
           routes?: Array<{
             app?: string;
             lambda?: string;
@@ -2728,6 +2753,14 @@ export type ConsoleUpdateConfigMutationVariables = Exact<{
 export type ConsoleUpdateConfigMutation = {
   core_updateConfig?: { id: string };
 };
+
+export type ConsoleDeleteConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  configName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteConfigMutation = { core_deleteConfig: boolean };
 
 export type ConsoleGetConfigQueryVariables = Exact<{
   projectName: Scalars['String']['input'];

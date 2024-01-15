@@ -1242,7 +1242,31 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
         projectName
         recordVersion
         spec {
+          backendProtocol
+          basicAuth {
+            enabled
+            secretName
+            username
+          }
+          cors {
+            allowCredentials
+            enabled
+            origins
+          }
           domains
+          https {
+            clusterIssuer
+            enabled
+            forceRedirect
+          }
+          ingressClass
+          maxBodySizeInMB
+          rateLimit {
+            connections
+            enabled
+            rpm
+            rps
+          }
           routes {
             app
             lambda
@@ -1366,6 +1390,14 @@ mutation consoleUpdateConfig($projectName: String!, $envName: String!, $config: 
   core_updateConfig(projectName: $projectName, envName: $envName, config: $config) {
     id
   }
+}
+
+mutation consoleDeleteConfig($projectName: String!, $envName: String!, $configName: String!) {
+  core_deleteConfig(
+    projectName: $projectName
+    envName: $envName
+    configName: $configName
+  )
 }
 
 query consoleGetConfig($projectName: String!, $envName: String!, $name: String!) {

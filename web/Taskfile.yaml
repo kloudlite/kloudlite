@@ -96,6 +96,7 @@ tasks:
         BASE_URL=kloudlite.io
         URL_SUFFIX=""
         COOKIE_DOMAIN=".kloudlite.io"
+        GATEWAY_URL="http://gateway.karthik-testing.svc.cluster.local"
 
         case {{.app}} in
           "auth")
@@ -136,7 +137,7 @@ tasks:
             ;;
         esac
 
-        URL_SUFFIX=$URL_SUFFIX COOKIE_DOMAIN=$COOKIE_DOMAIN BASE_URL=$BASE_URL PORT=$PORT APP={{.app}} pnpm serve
+        GATEWAY_URL=$GATEWAY_URL URL_SUFFIX=$URL_SUFFIX COOKIE_DOMAIN=$COOKIE_DOMAIN BASE_URL=$BASE_URL PORT=$PORT APP={{.app}} pnpm serve
 
   build:
     preconditions:

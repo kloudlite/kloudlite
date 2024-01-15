@@ -1332,10 +1332,12 @@ input Github__com___kloudlite___operator___apis___crds___v1__JobVarsIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec {
+  resourceName: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate!
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpecIn {
+  resourceName: String
   resourceTemplate: Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn!
 }
 

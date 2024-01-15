@@ -21,7 +21,6 @@ import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { useMapper } from '~/components/utils';
-import { da } from '@faker-js/faker';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
 
@@ -107,6 +106,7 @@ const Root = (props: IDialog) => {
                   name: val.name,
                 },
                 spec: {
+                  ...props.data.spec,
                   domains: selectedDomains.map((sd) => sd.value),
                   https: {
                     enabled: true,

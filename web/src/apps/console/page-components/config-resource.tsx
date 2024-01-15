@@ -250,8 +250,8 @@ const ConfigResources = ({
             throw new Error('Project and Environment name is required!.');
           }
           try {
-            const { errors } = await api.deleteSecret({
-              secretName: parseName(showDeleteDialog),
+            const { errors } = await api.deleteConfig({
+              configName: parseName(showDeleteDialog),
               projectName: project,
               envName: workspace,
             });
