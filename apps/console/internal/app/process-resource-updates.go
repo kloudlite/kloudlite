@@ -75,6 +75,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
+			"resource", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
 			"accountName", ru.AccountName,
 			"clusterName", ru.ClusterName,
 		)
@@ -265,9 +266,14 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if v, ok := ru.Object[types.KeyManagedResSecret]; ok {
-					if v2, ok := v.(*corev1.Secret); ok {
-						mres.SyncedOutputSecretRef = v2
+					s, err := fn.JsonConvertP[corev1.Secret](v)
+					if err != nil {
+						mLogger.Infof("managed resource, invalid output secret received")
+						return errors.NewE(err)
 					}
+					s.SetManagedFields(nil)
+					mLogger.Infof("seting managed resource output secret")
+					mres.SyncedOutputSecretRef = s
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
