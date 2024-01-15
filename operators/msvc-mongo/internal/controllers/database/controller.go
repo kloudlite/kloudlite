@@ -17,7 +17,6 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -25,6 +24,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type Reconciler struct {
@@ -97,10 +98,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(AccessCredsReady, DBUserReady, IsOwnedByMsvc, DBUserDeleted, DefaultsPatched); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -108,10 +105,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	// if step := r.reconOwnership(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
 
 	if step := r.reconDBCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -152,6 +145,11 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.Database]) s
 		obj.Spec.Output.Credentials.Namespace = obj.Namespace
 	}
 
+	if obj.Spec.ResourceName == "" {
+		hasPatched = true
+		obj.Spec.ResourceName = obj.Name
+	}
+
 	if hasPatched {
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(DefaultsPatched, check, err.Error())
@@ -173,68 +171,30 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.Database]) s
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
-	if step := req.EnsureChecks(DBUserDeleted); !step.ShouldProceed() {
-		return step
-	}
-
+	checkName := "finalizing"
 	check := rApi.Check{Generation: obj.Generation}
 
 	_, URI, err := r.getMsvcConnectionParams(ctx, obj)
 	if err != nil {
-		return req.CheckFailed(DBUserDeleted, check, err.Error()).Err(nil)
+		if apiErrors.IsNotFound(err) {
+			return req.Finalize()
+		}
+		return req.CheckFailed(checkName, check, err.Error()).Err(nil)
 	}
 
 	mctx, cancel := r.newMongoContext(ctx)
 	defer cancel()
 	mongoCli, err := libMongo.NewClient(mctx, URI)
 	if err != nil {
-		return req.CheckFailed(DBUserDeleted, check, err.Error())
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 	defer mongoCli.Close()
 
 	if err := mongoCli.DeleteUser(ctx, obj.Name, obj.Name); err != nil {
-		return req.CheckFailed(DBUserDeleted, check, err.Error())
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
 	return req.Finalize()
-}
-
-// ensures ManagedResource is Owned by corresponding ManagedService
-func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(IsOwnedByMsvc)
-	defer req.LogPostCheck(IsOwnedByMsvc)
-
-	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
-			metav1.TypeMeta{
-				Kind:       obj.Spec.MsvcRef.Kind,
-				APIVersion: obj.Spec.MsvcRef.APIVersion,
-			},
-		),
-	)
-	if err != nil {
-		return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
-	}
-
-	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[IsOwnedByMsvc] {
-		fn.MapSet(&obj.Status.Checks, IsOwnedByMsvc, check)
-		if step := req.UpdateStatus(); !step.ShouldProceed() {
-			return step
-		}
-	}
-
-	return req.Next()
 }
 
 func (r *Reconciler) getMsvcConnectionParams(ctx context.Context, obj *mongodbMsvcv1.Database) (hosts string, URI string, err error) {

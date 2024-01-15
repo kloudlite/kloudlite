@@ -22,13 +22,14 @@ type mresKind struct {
 }
 
 type MresResourceTemplate struct {
-	metav1.TypeMeta `json:",inline"`
+	metav1.TypeMeta `json:",inline" graphql:"children-required"`
 	MsvcRef         MsvcNamedRef                    `json:"msvcRef"`
 	Spec            map[string]apiextensionsv1.JSON `json:"spec"`
 }
 
 // ManagedResourceSpec defines the desired state of ManagedResource
 type ManagedResourceSpec struct {
+	ResourceName     string               `json:"resourceName,omitempty"`
 	ResourceTemplate MresResourceTemplate `json:"resourceTemplate"`
 }
 

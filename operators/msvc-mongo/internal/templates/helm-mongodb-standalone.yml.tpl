@@ -27,11 +27,9 @@ metadata:
   annotations: {{$annotations | toYAML | nindent 4}}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 spec:
-  chartRepo:
-    url: https://charts.bitnami.com/bitnami
-    name: bitnami
+  chartRepoURL: https://charts.bitnami.com/bitnami
   chartVersion: 13.18.1
-  chartName: bitnami/mongodb
+  chartName: mongodb
 
   values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
