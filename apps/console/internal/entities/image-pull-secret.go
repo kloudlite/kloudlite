@@ -2,6 +2,7 @@ package entities
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -28,7 +29,6 @@ type ImagePullSecret struct {
 	RegistryURL      *string `json:"registryURL,omitempty"`
 
 	GeneratedK8sSecret corev1.Secret `json:"generatedK8sSecret,omitempty" graphql:"ignore"`
-	//corev1.Secret    `json:",inline"`
 
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	ProjectName     string `json:"projectName" graphql:"noinput"`

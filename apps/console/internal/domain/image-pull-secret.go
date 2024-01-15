@@ -17,7 +17,7 @@ import (
 )
 
 func (d *domain) ListImagePullSecrets(ctx ResourceContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
-	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -42,7 +42,7 @@ func (d *domain) findImagePullSecret(ctx ResourceContext, name string) (*entitie
 }
 
 func (d *domain) GetImagePullSecret(ctx ResourceContext, name string) (*entities.ImagePullSecret, error) {
-	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -86,14 +86,14 @@ func generateImagePullSecret(ips entities.ImagePullSecret) (corev1.Secret, error
 			},
 		},
 		Data: data,
-		Type: corev1.SecretTypeDockercfg,
+		Type: corev1.SecretTypeDockerConfigJson,
 	}
 
 	return secret, nil
 }
 
 func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
-	if err := d.canMutateSecretsInAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -149,7 +149,7 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 }
 
 func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
-	if err := d.canMutateSecretsInAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
 
