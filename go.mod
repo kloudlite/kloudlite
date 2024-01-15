@@ -51,7 +51,7 @@ require (
 	golang.org/x/net v0.17.0
 )
 
-require github.com/kloudlite/operator v0.0.0-20240111104606-97933f90de7b
+require github.com/kloudlite/operator v0.0.0-20240115050522-035b0feb841f
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
