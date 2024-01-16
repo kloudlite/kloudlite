@@ -91,10 +91,15 @@ func (in *DeviceSpec) DeepCopyInto(out *DeviceSpec) {
 		*out = make([]Port, len(*in))
 		copy(*out, *in)
 	}
-	if in.DeviceNamespace != nil {
-		in, out := &in.DeviceNamespace, &out.DeviceNamespace
+	if in.ActiveNamespace != nil {
+		in, out := &in.ActiveNamespace, &out.ActiveNamespace
 		*out = new(string)
 		**out = **in
+	}
+	if in.CNameRecords != nil {
+		in, out := &in.CNameRecords, &out.CNameRecords
+		*out = make([]CNameRecord, len(*in))
+		copy(*out, *in)
 	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector
@@ -102,11 +107,6 @@ func (in *DeviceSpec) DeepCopyInto(out *DeviceSpec) {
 		for key, val := range *in {
 			(*out)[key] = val
 		}
-	}
-	if in.CNameRecords != nil {
-		in, out := &in.CNameRecords, &out.CNameRecords
-		*out = make([]CNameRecord, len(*in))
-		copy(*out, *in)
 	}
 }
 

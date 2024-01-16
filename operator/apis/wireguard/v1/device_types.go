@@ -11,14 +11,6 @@ type Port struct {
 	TargetPort int32 `json:"targetPort,omitempty"`
 }
 
-// type NodeSelector struct {
-// 	MatchLabels map[string]string `json:"matchLabels,omitempty"`
-// }
-
-//	type DnsRecord struct {
-//		Host string `json:"host,omitempty"`
-//		CName string `json:"cname,omitempty"`
-//	}
 type CNameRecord struct {
 	Host   string `json:"host,omitempty"`
 	Target string `json:"target,omitempty"`
@@ -26,16 +18,17 @@ type CNameRecord struct {
 
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	Ports           []Port            `json:"ports,omitempty"`
-	DeviceNamespace *string           `json:"deviceNamespace,omitempty"`
-	NodeSelector    map[string]string `json:"nodeSelector,omitempty"`
-	CNameRecords    []CNameRecord     `json:"cnameRecords,omitempty"`
-	Disabled        bool              `json:"disabled,omitempty"`
+	Ports           []Port        `json:"ports,omitempty"`
+	ActiveNamespace *string       `json:"activeNamespace,omitempty"`
+	CNameRecords    []CNameRecord `json:"cnameRecords,omitempty"`
+
+	NodeSelector      map[string]string `json:"nodeSelector,omitempty" graphql:"noinput"`
+	Disabled          bool              `json:"disabled,omitempty" graphql:"noinput"`
+	NoExternalService bool              `json:"noExternalService,omitempty" graphql:"noinput"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/active\\.namespace",name=Active_Ns,type=string
@@ -70,10 +63,10 @@ func (d *Device) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.GVKKey: GroupVersion.WithKind("Device").String(),
 		"kloudlite.io/active.namespace": func() string {
-			if d.Spec.DeviceNamespace == nil {
+			if d.Spec.ActiveNamespace == nil {
 				return ""
 			}
-			return *d.Spec.DeviceNamespace
+			return *d.Spec.ActiveNamespace
 		}(),
 		"kloudlite.io/enabled": func() string {
 			if d.Spec.Disabled {
