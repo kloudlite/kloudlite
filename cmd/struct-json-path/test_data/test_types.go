@@ -273,14 +273,12 @@ const (
 type Test14 struct {
 	Id      string          `json:"id"`
 	TestStr Test14SampleStr `json:"testStr"`
-	Sample  *Test14Sample   `json:"sample"`
+	Sample  *Test14Sample   `json:"sample" struct-json-path:",ignore-nesting"`
 }
 
 var Test14Input = "Test14"
 var Test14Output = map[string][]string{
 	"id":      {},
 	"testStr": {},
-	"sample": {
-		"hello",
-	},
+	"sample":  {},
 }

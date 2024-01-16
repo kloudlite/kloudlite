@@ -15,7 +15,7 @@ type ProjectManagedService struct {
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ProjectName string `json:"projectName" graphql:"noinput"`
 
-	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"ignore"`
+	SyncedOutputSecretRef *corev1.Secret `json:"syncedOutputSecretRef" graphql:"ignore" struct-json-path:",ignore-nesting"`
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
