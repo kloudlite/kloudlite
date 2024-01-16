@@ -1,5 +1,7 @@
 package test_data
 
+import "time"
+
 var PkgPath = "github.com/kloudlite/api/cmd/struct-json-path/test_data"
 
 type Test1 struct {
@@ -202,21 +204,57 @@ var Test10Output = map[string][]string{
 type Test11Example struct {
 	Hello string `json:"hello"`
 }
-type Test11Example2 struct {
-	World string `json:"world"`
-}
 
 type Test11 struct {
-	Test11Example `json:"example"`
-	Test11Example2
+	_Id string `json:"_id" struct-json-path:",ignore"`
+	Id  string `json:"id"`
+	Test11Example
 }
 
 var Test11Input = "Test11"
 var Test11Output = map[string][]string{
-	"example": {
+	"id": {},
+	"Test11Example": {
 		"hello",
 	},
-	"Test11Example2": {
-		"world",
+}
+
+type Test12Sample struct {
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type Test12 struct {
+	Id string `json:"id"`
+	//Timestamp time.Time `json:"timestamp"`
+	time.Time `json:"timestamp"`
+	Sample    Test12Sample `json:"sample"`
+}
+
+var Test12Input = "Test12"
+var Test12Output = map[string][]string{
+	"id":        {},
+	"timestamp": {},
+	"sample": {
+		"timestamp",
+	},
+}
+
+type Test13Sample struct {
+	Timestamp time.Time `json:"timestamp" struct-json-path:",ignore-nesting"`
+}
+
+type Test13 struct {
+	Id string `json:"id"`
+	//Timestamp time.Time `json:"timestamp"`
+	time.Time `json:"timestamp" struct-json-path:",ignore-nesting"`
+	Sample    Test13Sample `json:"sample"`
+}
+
+var Test13Input = "Test13"
+var Test13Output = map[string][]string{
+	"id":        {},
+	"timestamp": {},
+	"sample": {
+		"timestamp",
 	},
 }

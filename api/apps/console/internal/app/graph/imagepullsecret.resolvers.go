@@ -52,7 +52,7 @@ func (r *imagePullSecretInResolver) Format(ctx context.Context, obj *entities.Im
 		return errNilImagePullSecret
 	}
 
-	obj.Format = entities.ImagePullSecretFormat(data)
+	obj.Format = entities.PullSecretFormat(data)
 	return nil
 }
 
