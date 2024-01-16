@@ -26,6 +26,7 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
+      - go generate ./internal/entities/gen_constants.go
       - go build -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
@@ -33,25 +34,25 @@ tasks:
     cmds:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-          --struct github.com/kloudlite/api/apps/console/internal/entities.Project
-          --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
-          --struct github.com/kloudlite/api/apps/console/internal/entities.App
-          --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
-          --struct github.com/kloudlite/api/apps/console/internal/entities.Config
-          --struct github.com/kloudlite/api/apps/console/internal/entities.ConsoleVPNDevice
-          --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
-          --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
-          --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
-          --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyRef
-          --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyValueRef
-          --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
-          --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
-          --struct github.com/kloudlite/api/apps/console/internal/entities.Router
-          --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
-          --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
-          --struct github.com/kloudlite/api/apps/console/internal/entities.ProjectManagedService
-          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
-          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Project
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Environment
+        --struct github.com/kloudlite/api/apps/console/internal/entities.App
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Secret
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Config
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ConsoleVPNDevice
+        --struct github.com/kloudlite/operator/apis/wireguard/v1.Port
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ConfigKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.SecretKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyRef
+        --struct github.com/kloudlite/api/apps/console/internal/domain.ManagedResourceKeyValueRef
+        --struct github.com/kloudlite/api/apps/console/internal/entities.Router
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ManagedResource
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ImagePullSecret
+        --struct github.com/kloudlite/api/apps/console/internal/entities.ProjectManagedService
+        --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+        --struct github.com/kloudlite/api/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql

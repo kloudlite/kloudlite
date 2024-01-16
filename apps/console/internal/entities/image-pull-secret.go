@@ -10,19 +10,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ImagePullSecretFormat string
+type PullSecretFormat string
 
 const (
-	DockerConfigJsonFormat ImagePullSecretFormat = "dockerConfigJson"
-	ParamsFormat           ImagePullSecretFormat = "params"
+	DockerConfigJsonFormat PullSecretFormat = "dockerConfigJson"
+	ParamsFormat           PullSecretFormat = "params"
 )
 
 type ImagePullSecret struct {
 	repos.BaseEntity  `json:",inline" graphql:"noinput"`
 	metav1.ObjectMeta `json:"metadata"`
 
-	Format           ImagePullSecretFormat `json:"format"`
-	DockerConfigJson *string               `json:"dockerConfigJson,omitempty"`
+	Format           PullSecretFormat `json:"format"`
+	DockerConfigJson *string          `json:"dockerConfigJson,omitempty"`
 
 	RegistryUsername *string `json:"registryUsername,omitempty"`
 	RegistryPassword *string `json:"registryPassword,omitempty"`

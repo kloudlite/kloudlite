@@ -3,7 +3,10 @@ version: 3
 tasks:
   run:
     cmds:
-      - go run . --struct github.com/kloudlite/api/cmd/struct-json-path/test_data.Sample --out /tmp/struct-json-path
+      - go run . --struct github.com/kloudlite/api/cmd/struct-json-path/test_data.Sample --out /tmp/struct-json-path.go
+  build:
+    cmds:
+      - go build -o /tmp/struct-jp .
 
   coverage:
     cmds:
