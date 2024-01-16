@@ -5,7 +5,7 @@ import (
 )
 
 type BaseEntity struct {
-	PrimitiveId       ID        `json:"_id,omitempty" graphql:"ignore"`
+	PrimitiveId       ID        `json:"_id,omitempty" graphql:"ignore" struct-json-path:",ignore"`
 	Id                ID        `json:"id"`
 	CreationTime      time.Time `json:"creationTime"`
 	UpdateTime        time.Time `json:"updateTime"`

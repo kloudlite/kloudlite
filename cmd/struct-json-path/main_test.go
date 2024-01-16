@@ -21,7 +21,7 @@ func Test_extractTag(t *testing.T) {
 			name: "1. json tag with name",
 			args: args{tagstr: `json:"hello"`},
 			want: map[string]Tag{
-				"json": {Value: "hello"},
+				"json": {Value: "hello", Params: map[string]struct{}{}},
 			},
 		},
 
@@ -29,7 +29,7 @@ func Test_extractTag(t *testing.T) {
 			name: "2. json tag with name and inline",
 			args: args{tagstr: `json:"hello,inline"`},
 			want: map[string]Tag{
-				"json": {Value: "hello", Params: []string{"inline"}},
+				"json": {Value: "hello", Params: map[string]struct{}{"inline": {}}},
 			},
 		},
 
@@ -37,7 +37,7 @@ func Test_extractTag(t *testing.T) {
 			name: "3. json tag with empty name but inline",
 			args: args{tagstr: `json:",inline"`},
 			want: map[string]Tag{
-				"json": {Value: "", Params: []string{"inline"}},
+				"json": {Value: "", Params: map[string]struct{}{"inline": {}}},
 			},
 		},
 
@@ -45,7 +45,7 @@ func Test_extractTag(t *testing.T) {
 			name: "3. json tag with empty value",
 			args: args{tagstr: `json:""`},
 			want: map[string]Tag{
-				"json": {Value: "", Params: nil},
+				"json": {Value: "", Params: map[string]struct{}{}},
 			},
 		},
 	}
@@ -80,8 +80,9 @@ func Test_flattenChildKeys(t *testing.T) {
 
 func Test_traverseStruct(t *testing.T) {
 	type args struct {
-		pkgPath    string
-		structName string
+		pkgPath       string
+		structName    string
+		ignoreNesting map[string]struct{}
 	}
 	tests := []struct {
 		name string
@@ -177,18 +178,46 @@ func Test_traverseStruct(t *testing.T) {
 			},
 			want: test_data.Test10Output,
 		},
+		{
+			name: "11. struct with field having struct-json-path set to ignore",
+			args: args{
+				pkgPath:    test_data.PkgPath,
+				structName: test_data.Test11Input,
+			},
+			want: test_data.Test11Output,
+		},
+		{
+			name: "12. struct with field having ignored nesting for packages",
+			args: args{
+				pkgPath:    test_data.PkgPath,
+				structName: test_data.Test12Input,
+				ignoreNesting: map[string]struct{}{
+					"time.Time": {},
+				},
+			},
+			want: test_data.Test12Output,
+		},
+		{
+			name: "13. struct with fields having ignored-nesting tag on struct field",
+			args: args{
+				pkgPath:    test_data.PkgPath,
+				structName: test_data.Test13Input,
+			},
+			want: test_data.Test13Output,
+		},
 	}
 
 	parser := ast_parser.NewASTParser()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			structObj, err := parser.FindStruct(tt.args.pkgPath, tt.args.structName)
 			if err != nil {
 				t.Errorf("no struct found with pkgpath (%s) and type (%s)", tt.args.pkgPath, tt.args.structName)
 			}
 
-			got := traverseStruct(structObj)
+			got := traverseStruct(structObj, tt.args.ignoreNesting)
 			for k := range got {
 				sort.Strings(got[k])
 			}
