@@ -15,8 +15,7 @@ type Env struct {
 
 	DnsHostedZone string `env:"DNS_HOSTED_ZONE" required:"true"`
 
-	ClusterInternalDns  string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
-	DeviceInfoNamespace string `env:"DEVICE_INFO_NAMESPACE" default:"device-info"`
+	ClusterInternalDns string `env:"CLUSTER_INTERNAL_DNS" default:"cluster.local"`
 
 	DefaultIngressClass    string `env:"DEFAULT_INGRESS_CLASS" required:"true"`
 	EnvironmentIngressName string `env:"ENVIRONMENT_INGRESS_NAME" default:"env-ingress"`

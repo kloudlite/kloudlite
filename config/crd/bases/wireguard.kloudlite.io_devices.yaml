@@ -13,7 +13,7 @@ spec:
     listKind: DeviceList
     plural: devices
     singular: device
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
@@ -48,10 +48,10 @@ spec:
           spec:
             description: DeviceSpec defines the desired state of Device
             properties:
+              activeNamespace:
+                type: string
               cnameRecords:
                 items:
-                  description: type DnsRecord struct { Host string `json:"host,omitempty"`
-                    CName string `json:"cname,omitempty"` }
                   properties:
                     host:
                       type: string
@@ -59,9 +59,9 @@ spec:
                       type: string
                   type: object
                 type: array
-              deviceNamespace:
-                type: string
               disabled:
+                type: boolean
+              noExternalService:
                 type: boolean
               nodeSelector:
                 additionalProperties:
