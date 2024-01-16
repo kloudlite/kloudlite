@@ -258,3 +258,29 @@ var Test13Output = map[string][]string{
 		"timestamp",
 	},
 }
+
+type Test14Sample struct {
+	Hello string `json:"hello"`
+}
+
+type Test14SampleStr string
+
+const (
+	Test14SampleStrHello Test14SampleStr = "hello"
+	Test14SampleStrWorld Test14SampleStr = "world"
+)
+
+type Test14 struct {
+	Id      string          `json:"id"`
+	TestStr Test14SampleStr `json:"testStr"`
+	Sample  *Test14Sample   `json:"sample"`
+}
+
+var Test14Input = "Test14"
+var Test14Output = map[string][]string{
+	"id":      {},
+	"testStr": {},
+	"sample": {
+		"hello",
+	},
+}

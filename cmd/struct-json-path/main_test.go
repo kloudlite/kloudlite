@@ -205,6 +205,14 @@ func Test_traverseStruct(t *testing.T) {
 			},
 			want: test_data.Test13Output,
 		},
+		{
+			name: "14. struct with fields having a custom string like type",
+			args: args{
+				pkgPath:    test_data.PkgPath,
+				structName: test_data.Test14Input,
+			},
+			want: test_data.Test14Output,
+		},
 	}
 
 	parser := ast_parser.NewASTParser()

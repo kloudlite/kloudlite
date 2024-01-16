@@ -89,6 +89,35 @@ func mergeUniqueKeys(keys1 []string, keys2 []string) []string {
 	return keys
 }
 
+func extractEmbeddedStruct(field *types.Var) (*types.Struct, bool) {
+	if es, ok := field.Type().Underlying().(*types.Struct); ok {
+		return es, true
+	}
+
+	if tp, ok := field.Type().Underlying().(*types.Pointer); ok {
+		if es, ok := tp.Elem().Underlying().(*types.Struct); ok {
+			return es, true
+		}
+	}
+
+	return nil, false
+}
+
+func getFieldPackagePath(field *types.Var) (string, bool) {
+	if origin, ok := field.Origin().Type().(*types.Named); ok {
+		pkgName := origin.Obj().Pkg().Path()
+		typeName := origin.Obj().Name()
+
+		pkgPath := fmt.Sprintf("%s.%s", pkgName, typeName)
+		if pkgName == "" {
+			pkgPath = typeName
+		}
+
+		return pkgPath, true
+	}
+	return "", false
+}
+
 func traverseStruct(s *types.Struct, ignoreNestingForPkgs map[string]struct{}) map[string][]string {
 	paths := make(map[string][]string)
 
@@ -122,15 +151,7 @@ func traverseStruct(s *types.Struct, ignoreNestingForPkgs map[string]struct{}) m
 			}
 
 			if _, ok := structToJsonpathTag.Params[IgnoreNestingTagValue]; ok {
-				if origin, ok := field.Origin().Type().(*types.Named); ok {
-					pkgName := origin.Obj().Pkg().Path()
-					typeName := origin.Obj().Name()
-
-					pkgPath := fmt.Sprintf("%s.%s", pkgName, typeName)
-					if pkgName == "" {
-						pkgPath = typeName
-					}
-
+				if pkgPath, ok := getFieldPackagePath(field); ok {
 					ignoredNesting[pkgPath] = struct{}{}
 				}
 			}
@@ -140,21 +161,13 @@ func traverseStruct(s *types.Struct, ignoreNestingForPkgs map[string]struct{}) m
 			paths[fieldName] = []string{}
 		}
 
-		if origin, ok := field.Origin().Type().(*types.Named); ok {
-			pkgName := origin.Obj().Pkg().Path()
-			typeName := origin.Obj().Name()
-
-			pkgPath := fmt.Sprintf("%s.%s", pkgName, typeName)
-			if pkgName == "" {
-				pkgPath = typeName
-			}
-
+		if pkgPath, ok := getFieldPackagePath(field); ok {
 			if _, ok := ignoredNesting[pkgPath]; ok {
 				continue
 			}
 		}
 
-		if es, ok := field.Type().Underlying().(*types.Struct); ok {
+		if es, ok := extractEmbeddedStruct(field); ok {
 			childKeys := flattenChildKeys(traverseStruct(es, ignoreNestingForPkgs))
 			paths[fieldName] = mergeUniqueKeys(childKeys, paths[fieldName])
 		}
@@ -260,6 +273,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if err := os.Chmod(outFile, 0600); err != nil {
+		panic(err)
+	}
 	file, err := os.Create(outFile)
 	if err != nil {
 		panic(err)
