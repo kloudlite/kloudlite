@@ -1,12 +1,12 @@
 type VolumeAttachment @shareable {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
@@ -29,6 +29,8 @@ type VolumeAttachmentPaginatedRecords @shareable {
 }
 
 input VolumeAttachmentIn {
+  apiVersion: String
+  kind: String
   metadata: MetadataIn
   spec: K8s__io___api___storage___v1__VolumeAttachmentSpecIn!
   status: K8s__io___api___storage___v1__VolumeAttachmentStatusIn

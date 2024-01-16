@@ -262,10 +262,11 @@ type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @sh
 }
 
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
+  activeNamespace: String
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
-  deviceNamespace: String
   disabled: Boolean
   nodeSelector: Map
+  noExternalService: Boolean
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
 
@@ -847,10 +848,8 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn 
 }
 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
+  activeNamespace: String
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
-  deviceNamespace: String
-  disabled: Boolean
-  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
 
@@ -1288,7 +1287,6 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
   UPDATED_AT_AGENT
 }
 

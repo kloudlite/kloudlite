@@ -178,6 +178,7 @@ type ComplexityRoot struct {
 		RecordVersion     func(childComplexity int) int
 		Spec              func(childComplexity int) int
 		Status            func(childComplexity int) int
+		SyncStatus        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 		WireguardConfig   func(childComplexity int) int
 	}
@@ -457,11 +458,12 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec struct {
-		CnameRecords    func(childComplexity int) int
-		DeviceNamespace func(childComplexity int) int
-		Disabled        func(childComplexity int) int
-		NodeSelector    func(childComplexity int) int
-		Ports           func(childComplexity int) int
+		ActiveNamespace   func(childComplexity int) int
+		CnameRecords      func(childComplexity int) int
+		Disabled          func(childComplexity int) int
+		NoExternalService func(childComplexity int) int
+		NodeSelector      func(childComplexity int) int
+		Ports             func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___wireguard___v1__Port struct {
@@ -879,7 +881,7 @@ type Github__com___kloudlite___operator___pkg___operator__StatusResolver interfa
 type ImagePullSecretResolver interface {
 	CreationTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error)
 
-	Format(ctx context.Context, obj *entities.ImagePullSecret) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat, error)
+	Format(ctx context.Context, obj *entities.ImagePullSecret) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat, error)
 	ID(ctx context.Context, obj *entities.ImagePullSecret) (string, error)
 
 	UpdateTime(ctx context.Context, obj *entities.ImagePullSecret) (string, error)
@@ -1031,7 +1033,7 @@ type EnvironmentInResolver interface {
 	Spec(ctx context.Context, obj *entities.Environment, data *model.GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn) error
 }
 type ImagePullSecretInResolver interface {
-	Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) error
+	Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) error
 	Metadata(ctx context.Context, obj *entities.ImagePullSecret, data *v12.ObjectMeta) error
 }
 type ManagedResourceInResolver interface {
@@ -1552,6 +1554,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ConsoleVPNDevice.Status(childComplexity), true
+
+	case "ConsoleVPNDevice.syncStatus":
+		if e.complexity.ConsoleVPNDevice.SyncStatus == nil {
+			break
+		}
+
+		return e.complexity.ConsoleVPNDevice.SyncStatus(childComplexity), true
 
 	case "ConsoleVPNDevice.updateTime":
 		if e.complexity.ConsoleVPNDevice.UpdateTime == nil {
@@ -2666,6 +2675,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord.Target(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.activeNamespace":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ActiveNamespace == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ActiveNamespace(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.cnameRecords":
 		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.CnameRecords == nil {
 			break
@@ -2673,19 +2689,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.CnameRecords(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.deviceNamespace":
-		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.DeviceNamespace == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.DeviceNamespace(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.disabled":
 		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Disabled == nil {
 			break
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Disabled(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.noExternalService":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.NoExternalService == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.NoExternalService(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.nodeSelector":
 		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.NodeSelector == nil {
@@ -5389,10 +5405,11 @@ type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @sh
 }
 
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
+  activeNamespace: String
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
-  deviceNamespace: String
   disabled: Boolean
   nodeSelector: Map
+  noExternalService: Boolean
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
 
@@ -5655,10 +5672,8 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn 
 }
 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
+  activeNamespace: String
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
-  deviceNamespace: String
-  disabled: Boolean
-  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
 
@@ -5682,7 +5697,7 @@ input MetadataIn {
   namespace: String
 }
 
-enum Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat {
+enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
   dockerConfigJson
   params
 }
@@ -5818,6 +5833,7 @@ input ConfigKeyValueRefIn {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
   wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
 }
@@ -5921,7 +5937,7 @@ input EnvironmentIn {
   displayName: String!
   dockerConfigJson: String
   environmentName: String!
-  format: Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   id: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -5949,7 +5965,7 @@ type ImagePullSecretPaginatedRecords @shareable {
 input ImagePullSecretIn {
   displayName: String!
   dockerConfigJson: String
-  format: Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   metadata: MetadataIn!
   registryPassword: String
   registryURL: String
@@ -11515,14 +11531,16 @@ func (ec *executionContext) fieldContext_ConsoleVPNDevice_spec(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "activeNamespace":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_activeNamespace(ctx, field)
 			case "cnameRecords":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field)
-			case "deviceNamespace":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field)
 			case "disabled":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_disabled(ctx, field)
 			case "nodeSelector":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_nodeSelector(ctx, field)
+			case "noExternalService":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_noExternalService(ctx, field)
 			case "ports":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_ports(ctx, field)
 			}
@@ -11582,6 +11600,64 @@ func (ec *executionContext) fieldContext_ConsoleVPNDevice_status(ctx context.Con
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__Status", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ConsoleVPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyncStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.SyncStatus)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___api___pkg___types__SyncStatus2githubᚗcomᚋkloudliteᚋapiᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ConsoleVPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConsoleVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "action":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_action(ctx, field)
+			case "error":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_error(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_recordVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_state(ctx, field)
+			case "syncScheduledAt":
+				return ec.fieldContext_Github__com___kloudlite___api___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___api___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -11791,6 +11867,8 @@ func (ec *executionContext) fieldContext_ConsoleVPNDeviceEdge_node(ctx context.C
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -18734,6 +18812,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_activeNamespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_activeNamespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ActiveNamespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_activeNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field)
 	if err != nil {
@@ -18776,47 +18895,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord_target(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeviceNamespace, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18899,6 +18977,47 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_noExternalService(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_noExternalService(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NoExternalService, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_noExternalService(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -19934,9 +20053,9 @@ func (ec *executionContext) _ImagePullSecret_format(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat)
+	res := resTmp.(model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat)
 	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ImagePullSecret_format(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19946,7 +20065,7 @@ func (ec *executionContext) fieldContext_ImagePullSecret_format(ctx context.Cont
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat does not have child fields")
 		},
 	}
 	return fc, nil
@@ -25704,6 +25823,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -25818,6 +25939,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -31515,6 +31638,8 @@ func (ec *executionContext) fieldContext_Query_core_listVPNDevicesForUser(ctx co
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -31618,6 +31743,8 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 				return ec.fieldContext_ConsoleVPNDevice_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_ConsoleVPNDevice_status(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_ConsoleVPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_ConsoleVPNDevice_updateTime(ctx, field)
 			case "wireguardConfig":
@@ -38122,42 +38249,26 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"cnameRecords", "deviceNamespace", "disabled", "nodeSelector", "ports"}
+	fieldsInOrder := [...]string{"activeNamespace", "cnameRecords", "ports"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "activeNamespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("activeNamespace"))
+			it.ActiveNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "cnameRecords":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cnameRecords"))
 			it.CnameRecords, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn2ᚕᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1CNameRecordInᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "deviceNamespace":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceNamespace"))
-			it.DeviceNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "disabled":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("disabled"))
-			it.Disabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nodeSelector":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeSelector"))
-			it.NodeSelector, err = ec.unmarshalOMap2map(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -38245,7 +38356,7 @@ func (ec *executionContext) unmarshalInputImagePullSecretIn(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("format"))
-			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -40236,6 +40347,13 @@ func (ec *executionContext) _ConsoleVPNDevice(ctx context.Context, sel ast.Selec
 
 			out.Values[i] = ec._ConsoleVPNDevice_status(ctx, field, obj)
 
+		case "syncStatus":
+
+			out.Values[i] = ec._ConsoleVPNDevice_syncStatus(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "updateTime":
 			field := field
 
@@ -42033,13 +42151,13 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___wiregua
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec")
+		case "activeNamespace":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_activeNamespace(ctx, field, obj)
+
 		case "cnameRecords":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_cnameRecords(ctx, field, obj)
-
-		case "deviceNamespace":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_deviceNamespace(ctx, field, obj)
 
 		case "disabled":
 
@@ -42048,6 +42166,10 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___wiregua
 		case "nodeSelector":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_nodeSelector(ctx, field, obj)
+
+		case "noExternalService":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_noExternalService(ctx, field, obj)
 
 		case "ports":
 
@@ -46042,13 +46164,13 @@ func (ec *executionContext) unmarshalNEnvironmentIn2githubᚗcomᚋkloudliteᚋa
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat, error) {
-	var res model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(ctx context.Context, v interface{}) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat, error) {
+	var res model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat2githubᚗcomᚋkloudliteᚋapiᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) graphql.Marshaler {
 	return v
 }
 
@@ -47410,7 +47532,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47418,7 +47540,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

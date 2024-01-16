@@ -234,6 +234,10 @@ type Domain interface {
 	DeleteVPNDevice(ctx ConsoleContext, name string) error
 	UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports []*wgv1.Port) error
 	UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, projectName string, envName string) error
+
+	OnVPNDeviceApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
+	OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice) error
+	OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 }
 
 type PublishMsg string

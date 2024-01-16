@@ -485,18 +485,17 @@ type GithubComKloudliteOperatorApisWireguardV1CNameRecordIn struct {
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecord `json:"cnameRecords,omitempty"`
-	DeviceNamespace *string                                                 `json:"deviceNamespace,omitempty"`
-	Disabled        *bool                                                   `json:"disabled,omitempty"`
-	NodeSelector    map[string]interface{}                                  `json:"nodeSelector,omitempty"`
-	Ports           []*GithubComKloudliteOperatorApisWireguardV1Port        `json:"ports,omitempty"`
+	ActiveNamespace   *string                                                 `json:"activeNamespace,omitempty"`
+	CnameRecords      []*GithubComKloudliteOperatorApisWireguardV1CNameRecord `json:"cnameRecords,omitempty"`
+	Disabled          *bool                                                   `json:"disabled,omitempty"`
+	NodeSelector      map[string]interface{}                                  `json:"nodeSelector,omitempty"`
+	NoExternalService *bool                                                   `json:"noExternalService,omitempty"`
+	Ports             []*GithubComKloudliteOperatorApisWireguardV1Port        `json:"ports,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
+	ActiveNamespace *string                                                   `json:"activeNamespace,omitempty"`
 	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecordIn `json:"cnameRecords,omitempty"`
-	DeviceNamespace *string                                                   `json:"deviceNamespace,omitempty"`
-	Disabled        *bool                                                     `json:"disabled,omitempty"`
-	NodeSelector    map[string]interface{}                                    `json:"nodeSelector,omitempty"`
 	Ports           []*GithubComKloudliteOperatorApisWireguardV1PortIn        `json:"ports,omitempty"`
 }
 
@@ -700,44 +699,44 @@ type SecretPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
-type GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat string
+type GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat string
 
 const (
-	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatDockerConfigJSON GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat = "dockerConfigJson"
-	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatParams           GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat = "params"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormatDockerConfigJSON GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat = "dockerConfigJson"
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormatParams           GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat = "params"
 )
 
-var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat = []GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat{
-	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatDockerConfigJSON,
-	GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatParams,
+var AllGithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat = []GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat{
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormatDockerConfigJSON,
+	GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormatParams,
 }
 
-func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) IsValid() bool {
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatDockerConfigJSON, GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormatParams:
+	case GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormatDockerConfigJSON, GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormatParams:
 		return true
 	}
 	return false
 }
 
-func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) String() string {
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) String() string {
 	return string(e)
 }
 
-func (e *GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) UnmarshalGQL(v interface{}) error {
+func (e *GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(str)
+	*e = GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat", str)
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat", str)
 	}
 	return nil
 }
 
-func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) MarshalGQL(w io.Writer) {
+func (e GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
