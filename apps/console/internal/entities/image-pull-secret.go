@@ -28,7 +28,7 @@ type ImagePullSecret struct {
 	RegistryPassword *string `json:"registryPassword,omitempty"`
 	RegistryURL      *string `json:"registryURL,omitempty"`
 
-	GeneratedK8sSecret corev1.Secret `json:"generatedK8sSecret,omitempty" graphql:"ignore"`
+	GeneratedK8sSecret corev1.Secret `json:"generatedK8sSecret,omitempty" graphql:"ignore" struct-json-path:",ignore-nesting"`
 
 	AccountName     string `json:"accountName" graphql:"noinput"`
 	ProjectName     string `json:"projectName" graphql:"noinput"`

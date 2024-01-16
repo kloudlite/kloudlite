@@ -89,6 +89,26 @@ func mergeUniqueKeys(keys1 []string, keys2 []string) []string {
 	return keys
 }
 
+func filterCommonPaths(keys []string, commonPaths []string) (commonKeys []string, others []string) {
+	for i := range keys {
+		hasFound := false
+
+		for k := range commonPaths {
+			if strings.HasPrefix(keys[i], commonPaths[k]) {
+				hasFound = true
+				commonKeys = append(commonKeys, keys[i])
+				break
+			}
+		}
+
+		if !hasFound {
+			others = append(others, keys[i])
+		}
+	}
+
+	return commonKeys, others
+}
+
 func extractEmbeddedStruct(field *types.Var) (*types.Struct, bool) {
 	if es, ok := field.Type().Underlying().(*types.Struct); ok {
 		return es, true
@@ -115,6 +135,21 @@ func getFieldPackagePath(field *types.Var) (string, bool) {
 
 		return pkgPath, true
 	}
+
+	if tp, ok := field.Origin().Type().(*types.Pointer); ok {
+		if named, ok := tp.Elem().(*types.Named); ok {
+			pkgName := named.Obj().Pkg().Path()
+			typeName := named.Obj().Name()
+
+			pkgPath := fmt.Sprintf("%s.%s", pkgName, typeName)
+			if pkgName == "" {
+				pkgPath = typeName
+			}
+
+			return pkgPath, true
+		}
+	}
+
 	return "", false
 }
 
@@ -204,7 +239,11 @@ const (
 
 	sort.Strings(jsonPaths)
 	for i := range jsonPaths {
-		fmt.Fprintf(out, "%s = %q\n", generateVariableName(structName+"."+jsonPaths[i]), jsonPaths[i])
+		varName := structName + "." + jsonPaths[i]
+		if structName == "" {
+			varName = jsonPaths[i]
+		}
+		fmt.Fprintf(out, "%s = %q\n", generateVariableName(varName), jsonPaths[i])
 	}
 
 	fmt.Fprintf(out, ")")
@@ -216,11 +255,15 @@ func main() {
 	var outFile string
 	var banner string
 	var ignoreNestingForPkgs []string
+
+	var commonPaths []string
+
 	flag.StringSliceVar(&structPaths, "struct", nil, "--struct <package-path>.<struct-name>")
 	flag.StringVar(&pkg, "pkg", "", "--pkg <package-path>")
 	flag.StringVar(&outFile, "out-file", "", "--out-file")
 	flag.StringVar(&banner, "banner", "", "--banner")
 	flag.StringSliceVar(&ignoreNestingForPkgs, "ignore-nesting", nil, "--ignore-nesting")
+	flag.StringSliceVar(&commonPaths, "common-path", nil, "--common-path")
 	flag.Parse()
 
 	nestingIgnored := make(map[string]struct{})
@@ -237,6 +280,8 @@ func main() {
 %s
 `, banner))
 
+	globalCommonKeys := make(map[string]struct{})
+
 	for i := range structPaths {
 		sp := strings.SplitN(fn.StringReverse(structPaths[i]), ".", 2)
 		if len(sp) != 2 {
@@ -251,7 +296,11 @@ func main() {
 		}
 
 		m := traverseStruct(structObj, nestingIgnored)
-		genVariables(buff, structName, flattenChildKeys(m))
+		commonKeys, others := filterCommonPaths(flattenChildKeys(m), commonPaths)
+		for _, k := range commonKeys {
+			globalCommonKeys[k] = struct{}{}
+		}
+		genVariables(buff, structName, others)
 	}
 
 	if pkg != "" {
@@ -262,9 +311,20 @@ func main() {
 
 		for i := range structObjs {
 			m := traverseStruct(structObjs[i].Struct, nestingIgnored)
-			genVariables(buff, structObjs[i].Name, flattenChildKeys(m))
+			commonKeys, others := filterCommonPaths(flattenChildKeys(m), commonPaths)
+			for _, k := range commonKeys {
+				globalCommonKeys[k] = struct{}{}
+			}
+			genVariables(buff, structObjs[i].Name, others)
 		}
 	}
+
+	commonKeys := make([]string, 0, len(globalCommonKeys))
+	for k := range globalCommonKeys {
+		commonKeys = append(commonKeys, k)
+	}
+
+	genVariables(buff, "", commonKeys)
 
 	source, err := format.Source(buff.Bytes())
 	if err != nil {
@@ -273,17 +333,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := os.Chmod(outFile, 0600); err != nil {
-		panic(err)
-	}
 	file, err := os.Create(outFile)
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
-
-	if err := os.Chmod(outFile, 0400); err != nil {
-		panic(err)
-	}
 	fmt.Fprintf(file, "%s", source)
 }

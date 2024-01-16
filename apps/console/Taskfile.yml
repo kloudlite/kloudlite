@@ -26,7 +26,7 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go generate ./internal/entities/gen_constants.go
+      - go generate ./internal/entities/field-constants/
       - go build -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
