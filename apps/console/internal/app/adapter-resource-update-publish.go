@@ -14,28 +14,25 @@ type ResourceEventPublisherImpl struct {
 	logger logging.Logger
 }
 
-// PublishImagePullSecretEvent implements domain.ResourceEventPublisher.
+func (r *ResourceEventPublisherImpl) publish(subject string, msg domain.PublishMsg) {
+	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
+		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
+	}
+}
+
 func (r *ResourceEventPublisherImpl) PublishImagePullSecretEvent(ips *entities.ImagePullSecret, msg domain.PublishMsg) {
 	subject := fmt.Sprintf("res-updates.account.%s.project.%s.imagepullsecret.%s", ips.AccountName, ips.ProjectName, ips.Name)
 	r.publish(subject, msg)
 }
 
-// PublishConfigEvent implements domain.ResourceEventPublisher.
 func (r *ResourceEventPublisherImpl) PublishConfigEvent(config *entities.Config, msg domain.PublishMsg) {
 	subject := fmt.Sprintf("res-updates.account.%s.project.%s.config.%s", config.AccountName, config.ProjectName, config.Name)
 	r.publish(subject, msg)
 }
 
-// PublishSecretEvent implements domain.ResourceEventPublisher.
 func (r *ResourceEventPublisherImpl) PublishSecretEvent(secret *entities.Secret, msg domain.PublishMsg) {
 	subject := fmt.Sprintf("res-updates.account.%s.project.%s.secret.%s", secret.AccountName, secret.ProjectName, secret.Name)
 	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) publish(subject string, msg domain.PublishMsg) {
-	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
-		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
-	}
 }
 
 func (r *ResourceEventPublisherImpl) PublishProjectManagedServiceEvent(projectManagedService *entities.ProjectManagedService, msg domain.PublishMsg) {

@@ -42,7 +42,7 @@ require (
 
 require (
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	//github.com/kloudlite/operator v0.0.0-20240111100146-7ae3169be4b1
+	github.com/kloudlite/operator v0.0.0-20240116073010-358659b6c673
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
@@ -50,8 +50,6 @@ require (
 	github.com/ztrue/tracerr v0.4.0
 	golang.org/x/net v0.17.0
 )
-
-require github.com/kloudlite/operator v0.0.0-20240115050522-035b0feb841f
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
@@ -104,7 +102,7 @@ require (
 	github.com/google/go-github/v41 v41.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/uuid v1.4.0 // indirect
+	github.com/google/uuid v1.4.0
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect

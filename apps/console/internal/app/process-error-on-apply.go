@@ -61,6 +61,19 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 		gvkStr := obj.GroupVersionKind().String()
 
 		switch gvkStr {
+		case deviceGVK.String():
+			{
+				if errObj.Action == t.ActionApply {
+					return d.OnVPNDeviceApplyError(dctx, errObj.Error, obj.GetName(), opts)
+				}
+
+				p, err := fn.JsonConvert[entities.ConsoleVPNDevice](obj.Object)
+				if err != nil {
+					return err
+				}
+
+				return d.OnVPNDeviceDeleteMessage(dctx, p)
+			}
 		case projectGVK.String():
 			{
 				if errObj.Action == t.ActionApply {

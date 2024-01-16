@@ -39,6 +39,8 @@ type Env struct {
 	KubernetesApiProxy  string `env:"KUBERNETES_API_PROXY"`
 
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
+
+	DeviceNamespace string `env:"DEVICE_NAMESPACE" default:"infra-devices"`
 }
 
 func LoadEnv() (*Env, error) {

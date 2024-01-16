@@ -23,11 +23,11 @@ func (r *imagePullSecretResolver) CreationTime(ctx context.Context, obj *entitie
 }
 
 // Format is the resolver for the format field.
-func (r *imagePullSecretResolver) Format(ctx context.Context, obj *entities.ImagePullSecret) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat, error) {
+func (r *imagePullSecretResolver) Format(ctx context.Context, obj *entities.ImagePullSecret) (model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat, error) {
 	if obj == nil {
 		return "", errNilImagePullSecret
 	}
-	return model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat(obj.Format), nil
+	return model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat(obj.Format), nil
 }
 
 // ID is the resolver for the id field.
@@ -47,7 +47,7 @@ func (r *imagePullSecretResolver) UpdateTime(ctx context.Context, obj *entities.
 }
 
 // Format is the resolver for the format field.
-func (r *imagePullSecretInResolver) Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesImagePullSecretFormat) error {
+func (r *imagePullSecretInResolver) Format(ctx context.Context, obj *entities.ImagePullSecret, data model.GithubComKloudliteAPIAppsConsoleInternalEntitiesPullSecretFormat) error {
 	if obj == nil {
 		return errNilImagePullSecret
 	}

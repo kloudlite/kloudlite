@@ -33,6 +33,8 @@ type Env struct {
 	ConsoleCacheKVBucket string `env:"CONSOLE_CACHE_KV_BUCKET" required:"true"`
 	IsDev                bool
 	KubernetesApiProxy   string `env:"KUBERNETES_API_PROXY"`
+
+	DeviceNamespace string `env:"DEVICE_NAMESPACE" default:"console-devices"`
 }
 
 func LoadEnv() (*Env, error) {

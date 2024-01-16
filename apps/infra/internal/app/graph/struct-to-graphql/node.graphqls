@@ -1,10 +1,10 @@
 type Node @shareable {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   creationTime: Date!
   id: String!
-  kind: String!
+  kind: String
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
@@ -26,6 +26,8 @@ type NodePaginatedRecords @shareable {
 }
 
 input NodeIn {
+  apiVersion: String
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn!
 }

@@ -32,6 +32,7 @@ var (
 	projectGVK               = fn.GVK("crds.kloudlite.io/v1", "Project")
 	appsGVK                  = fn.GVK("crds.kloudlite.io/v1", "App")
 	environmentGVK           = fn.GVK("crds.kloudlite.io/v1", "Environment")
+	deviceGVK                = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	configGVK                = fn.GVK("v1", "ConfigMap")
 	secretGVK                = fn.GVK("v1", "Secret")
 	routerGVK                = fn.GVK("crds.kloudlite.io/v1", "Router")
@@ -118,6 +119,20 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		opts := domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp}
 
 		switch gvkStr {
+		case deviceGVK.String():
+			{
+				dev, err := fn.JsonConvert[entities.ConsoleVPNDevice](ru.Object)
+
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				if resStatus == types.ResourceStatusDeleted {
+					return d.OnVPNDeviceDeleteMessage(dctx, dev)
+				}
+
+				return d.OnVPNDeviceUpdateMessage(dctx, dev, resStatus, opts)
+			}
 		case projectGVK.String():
 			{
 				var p entities.Project
