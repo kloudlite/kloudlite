@@ -20,6 +20,8 @@ type ConsoleVPNDevice struct {
 	EnvironmentName *string `json:"environmentName,omitempty"`
 
 	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput"`
+
+	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var VPNDeviceIndexes = []repos.IndexField{

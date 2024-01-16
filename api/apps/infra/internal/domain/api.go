@@ -76,12 +76,10 @@ type Domain interface {
 
 	CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
 	UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
-	UpsertManagedVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice, managedDeviceId repos.ID) (*entities.VPNDevice, error)
 	UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devName string, ports []*wgv1.Port) error
 	UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName string, namespace string) error
 
 	DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error
-	DeleteManagedVPNDevice(ctx InfraContext, managedDeviceId string) error
 
 	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
 	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error

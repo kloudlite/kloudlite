@@ -422,18 +422,17 @@ type GithubComKloudliteOperatorApisWireguardV1CNameRecordIn struct {
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecord `json:"cnameRecords,omitempty"`
-	DeviceNamespace *string                                                 `json:"deviceNamespace,omitempty"`
-	Disabled        *bool                                                   `json:"disabled,omitempty"`
-	NodeSelector    map[string]interface{}                                  `json:"nodeSelector,omitempty"`
-	Ports           []*GithubComKloudliteOperatorApisWireguardV1Port        `json:"ports,omitempty"`
+	ActiveNamespace   *string                                                 `json:"activeNamespace,omitempty"`
+	CnameRecords      []*GithubComKloudliteOperatorApisWireguardV1CNameRecord `json:"cnameRecords,omitempty"`
+	Disabled          *bool                                                   `json:"disabled,omitempty"`
+	NodeSelector      map[string]interface{}                                  `json:"nodeSelector,omitempty"`
+	NoExternalService *bool                                                   `json:"noExternalService,omitempty"`
+	Ports             []*GithubComKloudliteOperatorApisWireguardV1Port        `json:"ports,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
+	ActiveNamespace *string                                                   `json:"activeNamespace,omitempty"`
 	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecordIn `json:"cnameRecords,omitempty"`
-	DeviceNamespace *string                                                   `json:"deviceNamespace,omitempty"`
-	Disabled        *bool                                                     `json:"disabled,omitempty"`
-	NodeSelector    map[string]interface{}                                    `json:"nodeSelector,omitempty"`
 	Ports           []*GithubComKloudliteOperatorApisWireguardV1PortIn        `json:"ports,omitempty"`
 }
 
@@ -1299,8 +1298,10 @@ type NodeEdge struct {
 }
 
 type NodeIn struct {
-	Metadata *v1.ObjectMeta                                      `json:"metadata,omitempty"`
-	Spec     *GithubComKloudliteOperatorApisClustersV1NodeSpecIn `json:"spec"`
+	APIVersion *string                                             `json:"apiVersion,omitempty"`
+	Kind       *string                                             `json:"kind,omitempty"`
+	Metadata   *v1.ObjectMeta                                      `json:"metadata,omitempty"`
+	Spec       *GithubComKloudliteOperatorApisClustersV1NodeSpecIn `json:"spec"`
 }
 
 type NodePaginatedRecords struct {
