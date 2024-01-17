@@ -2,8 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"time"
-
+	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -25,9 +24,9 @@ import (
 
 func (d *domain) findEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-		fc.AccountName:                ctx.AccountName,
+		fields.AccountName:                ctx.AccountName,
 		fc.EnvironmentSpecProjectName: projectName,
-		fc.MetadataName:               name,
+		fields.MetadataName:               name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -73,7 +72,7 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search
 	}
 
 	filter := repos.Filter{
-		fc.AccountName:                ctx.AccountName,
+		fields.AccountName:                ctx.AccountName,
 		fc.EnvironmentSpecProjectName: projectName,
 	}
 
@@ -82,7 +81,7 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search
 
 func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Environment, error) {
 	w, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-		fc.AccountName:                    ctx.AccountName,
+		fields.AccountName:                    ctx.AccountName,
 		fc.EnvironmentSpecTargetNamespace: targetNs,
 	})
 	if err != nil {
@@ -217,9 +216,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		EnvironmentName: nenv.Name,
 	}
 	filters := repos.Filter{
-		fc.AccountName:                resContext.AccountName,
+		fields.AccountName:                resContext.AccountName,
 		fc.EnvironmentSpecProjectName: resContext.ProjectName,
-		fc.EnvironmentName:            sourceEnvName,
+		fields.EnvironmentName:            sourceEnvName,
 	}
 
 	apps, err := d.appRepo.Find(ctx, repos.Query{
@@ -358,28 +357,17 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errAlreadyMarkedForDeletion("environment", env.Namespace, env.Name)
 	}
 
-	upEnv, err := d.environmentRepo.PatchById(ctx, xenv.Id, repos.Document{
-		fc.RecordVersion: xenv.RecordVersion + 1,
-		fc.DisplayName:   env.DisplayName,
-		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&env,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.AppSpec: env.Spec,
+			},
 		},
+	)
 
-		fc.MetadataLabels:      env.Labels,
-		fc.MetadataAnnotations: env.Annotations,
-
-		fc.SyncStatusState:           t.SyncStateInQueue,
-		fc.SyncStatusSyncScheduledAt: time.Now(),
-		fc.SyncStatusAction:          t.SyncActionApply,
-		fc.EnvironmentSpecRoutingMode: func() crdsv1.EnvironmentRoutingMode {
-			if env.Spec.Routing != nil && env.Spec.Routing.Mode != "" {
-				return env.Spec.Routing.Mode
-			}
-			return ""
-		}(),
-	})
+	upEnv, err := d.environmentRepo.PatchById(ctx, xenv.Id, patchForUpdate)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -406,20 +394,16 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.Newf("no environment found")
 	}
 
+	uenv:= env
 	if !env.IsMarkedForDeletion() {
-
-		if _, err := d.environmentRepo.PatchById(ctx, env.Id, repos.Document{
-			fc.MarkedForDeletion:         true,
-			fc.SyncStatusSyncScheduledAt: time.Now(),
-			fc.SyncStatusAction:          t.SyncActionDelete,
-			fc.SyncStatusState:           t.SyncStateIdle,
-		}); err != nil {
+		uenv, err = d.environmentRepo.PatchById(ctx, env.Id, common.PatchForMarkDeletion());
+		if err != nil {
 			return errors.NewE(err)
 		}
-		d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
+		d.resourceEventPublisher.PublishEnvironmentEvent(uenv, PublishUpdate)
 	}
 
-	if err := d.deleteK8sResource(ctx, env.ProjectName, &env.Environment); err != nil {
+	if err := d.deleteK8sResource(ctx, uenv.ProjectName, &uenv.Environment); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -436,12 +420,18 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 		return errors.Newf("no environment found")
 	}
 
-	_, err := d.environmentRepo.PatchById(ctx, env.Id, repos.Document{
-		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
-		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
-		fc.SyncStatusError:        errMsg,
-	})
-	d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
+	uenv, err := d.environmentRepo.PatchById(
+		ctx,
+		env.Id,
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
+
+	d.resourceEventPublisher.PublishEnvironmentEvent(uenv, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -474,30 +464,13 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
-	xenv, err = d.environmentRepo.PatchById(ctx, xenv.Id, repos.Document{
-		fc.MetadataCreationTimestamp: env.CreationTimestamp,
-		fc.MetadataLabels:            env.Labels,
-		fc.MetadataAnnotations:       env.Annotations,
-		fc.MetadataGeneration:        env.Generation,
-
-		fc.EnvironmentSpec: env.Status,
-
-		fc.SyncStatusState: func() t.SyncState {
-			if status == types.ResourceStatusDeleting {
-				return t.SyncStateDeletingAtAgent
-			}
-			return t.SyncStateUpdatedAtAgent
-		}(),
-		fc.SyncStatusRecordVersion: xenv.RecordVersion,
-		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
-		fc.SyncStatusError:         nil,
-
-		fc.EnvironmentSpecRouting: env.Spec.Routing,
-	})
+	uenv, err := d.environmentRepo.PatchById(ctx, xenv.Id, common.PatchForSyncFromAgent(&env, status, common.PatchOpts{
+		MessageTimestamp: opts.MessageTimestamp,
+	}))
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishEnvironmentEvent(xenv, PublishUpdate)
+	d.resourceEventPublisher.PublishEnvironmentEvent(uenv, PublishUpdate)
 	return nil
 }
 

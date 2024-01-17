@@ -333,6 +333,37 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
+func(repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error){
+	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
+	}
+
+	patch["updateTime"] = time.Now()
+
+	m, err := toMap(patch)
+	if err != nil {
+		var x T
+		return x, errors.NewE(err)
+	}
+
+	updatedDoc := bson.M{"$set": m}
+	if _, ok := patch["markedForDeletion"]; ok {
+		updatedDoc["$inc"] = bson.M{"recordVersion": 1}
+	}
+
+	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
+		ctx,
+		filter,
+		updatedDoc,
+		updateOpts,
+	)
+	return bsonToStruct[T](r)
+}
+
 func(repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error){
 	after := options.After
 	updateOpts := &options.FindOneAndUpdateOptions{
@@ -350,10 +381,15 @@ func(repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts
 		return x, errors.NewE(err)
 	}
 
+	updatedDoc := bson.M{"$set": m}
+	if _, ok := patch["markedForDeletion"]; ok {
+		updatedDoc["$inc"] = bson.M{"recordVersion": 1}
+	}
+
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
 		ctx,
 		&Filter{"id": id},
-		bson.M{"$set": m},
+		updatedDoc,
 		updateOpts,
 	)
 	return bsonToStruct[T](r)
