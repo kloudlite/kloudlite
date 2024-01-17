@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
@@ -25,7 +26,7 @@ func (d *domain) ListManagedResources(ctx ResourceContext, search map[string]rep
 
 func (d *domain) findMRes(ctx ResourceContext, name string) (*entities.ManagedResource, error) {
 	filters := ctx.DBFilters()
-	filters.Add("metadata.name", name)
+	filters.Add(fc.MetadataName, name)
 
 	mres, err := d.mresRepo.FindOne(ctx, filters)
 	if err != nil {
@@ -55,7 +56,7 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []Mana
 	}
 
 	filters = d.mresRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
-		"metadata.name": {
+		fc.MetadataName: {
 			MatchType: repos.MatchTypeArray,
 			Array:     names,
 		},
@@ -97,7 +98,7 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []Mana
 // GetManagedResourceOutputKeys implements Domain.
 func (d *domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
 	filters := ctx.DBFilters()
-	filters.Add("metadata.name", name)
+	filters.Add(fc.MetadataName, name)
 
 	mresSecret, err := d.findMRes(ctx, name)
 	if err != nil {
@@ -193,26 +194,28 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"recordVersion": xmres.RecordVersion + 1,
-		"displayName":   mres.DisplayName,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+	if xmres == nil {
+		return nil, errors.Newf("no manage resource found")
+	}
+
+	upMres, err := d.mresRepo.PatchById(ctx, xmres.Id, repos.Document{
+		fc.RecordVersion: xmres.RecordVersion + 1,
+		fc.DisplayName:   mres.DisplayName,
+		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 
-		"metadata.labels":      mres.Labels,
-		"metadata.annotations": mres.Annotations,
+		fc.MetadataLabels:      mres.Labels,
+		fc.MetadataAnnotations: mres.Annotations,
 
-		"spec": mres.Spec,
+		fc.ManagedResourceSpec: mres.Spec,
 
-		"syncStatus.state":           t.SyncStateInQueue,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-	}
-
-	upMres, err := d.mresRepo.PatchById(ctx, xmres.Id, patch)
+		fc.SyncStatusState:           t.SyncStateInQueue,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionApply,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -236,14 +239,16 @@ func (d *domain) DeleteManagedResource(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"markedForDeletion":          true,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionDelete,
-		"syncStatus.state":           t.SyncStateInQueue,
+	if mres == nil {
+		return errors.Newf("no manage resource found")
 	}
 
-	umres, err := d.mresRepo.PatchById(ctx, mres.Id, patch)
+	umres, err := d.mresRepo.PatchById(ctx, mres.Id, repos.Document{
+		fc.MarkedForDeletion:         true,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionDelete,
+		fc.SyncStatusState:           t.SyncStateInQueue,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -272,31 +277,33 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 		return errors.NewE(err)
 	}
 
+	if xmres == nil {
+		return errors.Newf("no manage resource found")
+	}
+
 	if err := d.MatchRecordVersion(mres.Annotations, xmres.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, xmres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
-	patch := repos.Document{
-		"metadata.creationTimestamp": mres.CreationTimestamp,
-		"metadata.labels":            mres.Labels,
-		"metadata.annotations":       mres.Annotations,
-		"metadata.generation":        mres.Generation,
+	umres, err := d.mresRepo.PatchById(ctx, xmres.Id, repos.Document{
+		fc.MetadataCreationTimestamp: mres.CreationTimestamp,
+		fc.MetadataLabels:            mres.Labels,
+		fc.MetadataAnnotations:       mres.Annotations,
+		fc.MetadataGeneration:        mres.Generation,
 
-		"status":                mres.Status,
-		"syncedOutputSecretRef": mres.SyncedOutputSecretRef,
+		fc.Status:                               mres.Status,
+		fc.ManagedResourceSyncedOutputSecretRef: mres.SyncedOutputSecretRef,
 
-		"syncStatus.state": func() t.SyncState {
+		fc.SyncStatusState: func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
 				return t.SyncStateDeletingAtAgent
 			}
 			return t.SyncStateUpdatedAtAgent
 		}(),
-		"syncStatus.recordVersion": xmres.RecordVersion,
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
-	}
-
-	umres, err := d.mresRepo.PatchById(ctx, xmres.Id, patch)
+		fc.SyncStatusRecordVersion: xmres.RecordVersion,
+		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
+		fc.SyncStatusError:         nil,
+	})
 	if err != nil {
 		return err
 	}
@@ -310,13 +317,15 @@ func (d *domain) OnManagedResourceApplyError(ctx ResourceContext, errMsg string,
 		return err2
 	}
 
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
+	if m == nil {
+		return errors.Newf("no manage resource found")
 	}
 
-	umres, err := d.mresRepo.PatchById(ctx, m.Id, patch)
+	umres, err := d.mresRepo.PatchById(ctx, m.Id, repos.Document{
+		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
+		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+		fc.SyncStatusError:        errMsg,
+	})
 	if err != nil {
 		return err
 	}

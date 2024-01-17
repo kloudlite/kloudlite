@@ -18,15 +18,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 )
 
 func (d *domain) findEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"projectName":   projectName,
-		"metadata.name": name,
+		fc.AccountName:                ctx.AccountName,
+		fc.EnvironmentSpecProjectName: projectName,
+		fc.MetadataName:               name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -72,8 +73,8 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search
 	}
 
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"projectName": projectName,
+		fc.AccountName:                ctx.AccountName,
+		fc.EnvironmentSpecProjectName: projectName,
 	}
 
 	return d.environmentRepo.FindPaginated(ctx, d.environmentRepo.MergeMatchFilters(filter, search), pq)
@@ -81,8 +82,8 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search
 
 func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Environment, error) {
 	w, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-		"accountName":          ctx.AccountName,
-		"spec.targetNamespace": targetNs,
+		fc.AccountName:                    ctx.AccountName,
+		fc.EnvironmentSpecTargetNamespace: targetNs,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -216,9 +217,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		EnvironmentName: nenv.Name,
 	}
 	filters := repos.Filter{
-		"accountName":     resContext.AccountName,
-		"projectName":     resContext.ProjectName,
-		"environmentName": sourceEnvName,
+		fc.AccountName:                resContext.AccountName,
+		fc.EnvironmentSpecProjectName: resContext.ProjectName,
+		fc.EnvironmentName:            sourceEnvName,
 	}
 
 	apps, err := d.appRepo.Find(ctx, repos.Query{
@@ -349,32 +350,36 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errors.NewE(err)
 	}
 
+	if xenv == nil {
+		return nil, errors.Newf("no environment found")
+	}
+
 	if xenv.GetDeletionTimestamp() != nil {
 		return nil, errAlreadyMarkedForDeletion("environment", env.Namespace, env.Name)
 	}
 
-	patch := repos.Document{
-		"recordVersion": xenv.RecordVersion + 1,
-		"displayName":   env.DisplayName,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+	upEnv, err := d.environmentRepo.PatchById(ctx, xenv.Id, repos.Document{
+		fc.RecordVersion: xenv.RecordVersion + 1,
+		fc.DisplayName:   env.DisplayName,
+		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 
-		"metadata.labels":      env.Labels,
-		"metadata.annotations": env.Annotations,
+		fc.MetadataLabels:      env.Labels,
+		fc.MetadataAnnotations: env.Annotations,
 
-		"syncStatus.state":           t.SyncStateInQueue,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-	}
-
-	if env.Spec.Routing != nil && env.Spec.Routing.Mode != "" {
-		patch["spec.routing.mode"] = env.Spec.Routing.Mode
-	}
-
-	upEnv, err := d.environmentRepo.PatchById(ctx, xenv.Id, patch)
+		fc.SyncStatusState:           t.SyncStateInQueue,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionApply,
+		fc.EnvironmentSpecRoutingMode: func() crdsv1.EnvironmentRoutingMode {
+			if env.Spec.Routing != nil && env.Spec.Routing.Mode != "" {
+				return env.Spec.Routing.Mode
+			}
+			return ""
+		}(),
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -397,15 +402,18 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	if !env.IsMarkedForDeletion() {
-		patch := repos.Document{
-			"markedForDeletion":          true,
-			"syncStatus.syncScheduledAt": time.Now(),
-			"syncStatus.action":          t.SyncActionDelete,
-			"syncStatus.state":           t.SyncStateIdle,
-		}
+	if env == nil {
+		return errors.Newf("no environment found")
+	}
 
-		if _, err := d.environmentRepo.PatchById(ctx, env.Id, patch); err != nil {
+	if !env.IsMarkedForDeletion() {
+
+		if _, err := d.environmentRepo.PatchById(ctx, env.Id, repos.Document{
+			fc.MarkedForDeletion:         true,
+			fc.SyncStatusSyncScheduledAt: time.Now(),
+			fc.SyncStatusAction:          t.SyncActionDelete,
+			fc.SyncStatusState:           t.SyncStateIdle,
+		}); err != nil {
 			return errors.NewE(err)
 		}
 		d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
@@ -424,13 +432,15 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 		return err2
 	}
 
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
+	if env == nil {
+		return errors.Newf("no environment found")
 	}
 
-	_, err := d.environmentRepo.PatchById(ctx, env.Id, patch)
+	_, err := d.environmentRepo.PatchById(ctx, env.Id, repos.Document{
+		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
+		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+		fc.SyncStatusError:        errMsg,
+	})
 	d.resourceEventPublisher.PublishEnvironmentEvent(env, PublishUpdate)
 	return errors.NewE(err)
 }
@@ -456,32 +466,34 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
+	if xenv == nil {
+		return errors.Newf("no environment found")
+	}
+
 	if err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
-	patch := repos.Document{
-		"metadata.creationTimestamp": env.CreationTimestamp,
-		"metadata.labels":            env.Labels,
-		"metadata.annotations":       env.Annotations,
-		"metadata.generation":        env.Generation,
+	xenv, err = d.environmentRepo.PatchById(ctx, xenv.Id, repos.Document{
+		fc.MetadataCreationTimestamp: env.CreationTimestamp,
+		fc.MetadataLabels:            env.Labels,
+		fc.MetadataAnnotations:       env.Annotations,
+		fc.MetadataGeneration:        env.Generation,
 
-		"status": env.Status,
+		fc.EnvironmentSpec: env.Status,
 
-		"syncStatus.state": func() t.SyncState {
+		fc.SyncStatusState: func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
 				return t.SyncStateDeletingAtAgent
 			}
 			return t.SyncStateUpdatedAtAgent
 		}(),
-		"syncStatus.recordVersion": xenv.RecordVersion,
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
+		fc.SyncStatusRecordVersion: xenv.RecordVersion,
+		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
+		fc.SyncStatusError:         nil,
 
-		"spec.routing": env.Spec.Routing,
-	}
-
-	xenv, err = d.environmentRepo.PatchById(ctx, xenv.Id, patch)
+		fc.EnvironmentSpecRouting: env.Spec.Routing,
+	})
 	if err != nil {
 		return err
 	}
