@@ -13,7 +13,10 @@ metadata:
   name: {{$svcAccountName}}
   namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-imagePullSecrets: {{$imagePullSecrets | toYAML | nindent 2}}
+imagePullSecrets: 
+  {{ range $k := $imagePullSecrets }}
+  - name: {{$k}}
+  {{- end }}
 
 {{/* --- */}}
 {{/**/}}

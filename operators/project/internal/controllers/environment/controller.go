@@ -498,6 +498,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.HelmChart{},
 		&crdsv1.Router{},
 		&networkingv1.Ingress{},
+		&corev1.Secret{},
 	}
 
 	for i := range watchList {
@@ -522,27 +523,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				}),
 		)
 	}
-
-	// builder.Watches(&crdsv1.HelmChart{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
-	// 	if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
-	// 		var envList crdsv1.EnvironmentList
-	// 		if err := r.List(context.TODO(), &envList, &client.ListOptions{
-	// 			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-	// 				constants.EnvironmentNameKey: v,
-	// 			}),
-	// 		}); err != nil {
-	// 			return nil
-	// 		}
-	//
-	// 		reqs := make([]reconcile.Request, len(envList.Items))
-	// 		for i := range envList.Items {
-	// 			reqs[i] = reconcile.Request{NamespacedName: fn.NN(envList.Items[i].GetNamespace(), envList.Items[i].GetName())}
-	// 		}
-	//
-	// 		return reqs
-	// 	}
-	// 	return nil
-	// }))
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())

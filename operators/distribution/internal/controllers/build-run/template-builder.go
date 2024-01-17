@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	"github.com/kloudlite/operator/operators/distribution/internal/templates"
 	"github.com/kloudlite/operator/pkg/functions"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -226,7 +226,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		return nil, err
 	}
 
-	b, err := templates.Parse(templates.Distribution.BuildJob, o)
+	b, err := templates.Read(templates.BuildJob)
 	if err != nil {
 		return nil, err
 	}

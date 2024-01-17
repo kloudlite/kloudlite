@@ -1,7 +1,7 @@
 {{- $name := .Name -}}
 {{- $namespace := .Namespace -}}
-{{- $labels := .Labels -}}
-{{- $annotations := .Annotations -}}
+{{- $labels := .Labels | default dict -}}
+{{- $annotations := .Annotations |default dict -}}
 
 {{- $accountName := .AccountName -}}
 
@@ -13,7 +13,7 @@
 {{- $gitRepoBranch := .GitRepoBranch -}}
 
 {{- $registryTags := .RegistryTags -}}
-{{- $ownerRefs := .OwnerReferences -}}
+{{- $ownerRefs := .OwnerReferences | default list -}}
 
 apiVersion: batch/v1
 kind: Job
@@ -139,3 +139,4 @@ spec:
           claimName: {{ .BuildCacheKey }}
       {{- end}}
       restartPolicy: Never
+
