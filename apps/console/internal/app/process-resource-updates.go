@@ -13,6 +13,7 @@ import (
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
+	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -121,10 +122,23 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		switch gvkStr {
 		case deviceGVK.String():
 			{
+
 				dev, err := fn.JsonConvert[entities.ConsoleVPNDevice](ru.Object)
 
 				if err != nil {
 					return errors.NewE(err)
+				}
+
+				if v, ok := ru.Object[types.KeyVPNDeviceConfig]; ok {
+					b, err := json.Marshal(v)
+					if err != nil {
+						return errors.NewE(err)
+					}
+					var encodedStr t.EncodedString
+					if err := json.Unmarshal(b, &encodedStr); err != nil {
+						return errors.NewE(err)
+					}
+					dev.WireguardConfig = encodedStr
 				}
 
 				if resStatus == types.ResourceStatusDeleted {
