@@ -248,9 +248,3 @@ var Wireguard = struct {
 	DeviceService: "templates/wireguardv1/device-service.yml.tpl",
 	DnsConfig:     "templates/wireguardv1/dns-config.yml.tpl",
 }
-
-var Distribution = struct {
-	BuildJob templateFile
-}{
-	BuildJob: "templates/distribution/build-job.yml.tpl",
-}

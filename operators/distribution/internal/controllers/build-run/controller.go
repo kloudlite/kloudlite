@@ -140,7 +140,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		return req.CheckFailed(JobCreated, check, err.Error())
 	}
 
-	if checks[JobCreated].Status == true {
+	if checks[JobCreated].Status {
 		return req.Next()
 	}
 
@@ -158,7 +158,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 
 		for _, j := range jobs.Items {
 			if j.Status.Active > 0 {
-				return failed(fmt.Errorf("cache is in use, currently building %s", j.Name))
+				return failed(fmt.Errorf("cache is in use, currently building %s", j.Name)).Err(nil)
 			}
 		}
 	}
@@ -177,6 +177,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		checks[JobCreated] = check
 		req.UpdateStatus()
 	}
+
 	return req.Next()
 }
 
@@ -188,7 +189,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 		return req.CheckFailed(JobCompleted, check, err.Error())
 	}
 
-	if checks[JobCompleted].Status == true || checks[JobFailed].Status == true {
+	if checks[JobCompleted].Status || checks[JobFailed].Status {
 		return req.Next()
 	}
 
@@ -198,7 +199,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 	}
 
 	if j.Status.Active > 0 {
-		return failed(fmt.Errorf("job is running, and waiting for completion"))
+		return failed(fmt.Errorf("job is running, and waiting for completion")).Err(nil)
 	}
 
 	if j.Status.Succeeded > 0 {
@@ -221,7 +222,6 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-
 	ctx, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -251,7 +251,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&dbv1.BuildRun{})
-	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	watchList := []client.Object{
 		&corev1.Secret{},
@@ -261,7 +260,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		builder.Watches(
 			object,
 			handler.EnqueueRequestsFromMapFunc(
-				func(ctx context.Context, obj client.Object) []reconcile.Request {
+				func(_ context.Context, obj client.Object) []reconcile.Request {
 					if brn, ok := obj.GetAnnotations()[constants.BuildRunNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), brn)}}
 					}
@@ -270,5 +269,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		)
 	}
 
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }
