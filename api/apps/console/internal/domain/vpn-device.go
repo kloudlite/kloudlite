@@ -347,5 +347,23 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.Co
 }
 
 func (d *domain) OnVPNDeviceApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
-	panic("h")
+	device, err := d.findVPNDevice(ctx, name)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	patch := repos.Document{
+		"syncStatus.state":        t.SyncStateErroredAtAgent,
+		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
+		"syncStatus.error":        errMsg,
+	}
+
+	udevice, err := d.vpnDeviceRepo.PatchById(ctx, device.Id, patch)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishVpnDeviceEvent(udevice, PublishUpdate)
+
+	return errors.NewE(err)
 }
