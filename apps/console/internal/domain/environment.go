@@ -24,9 +24,9 @@ import (
 
 func (d *domain) findEnvironment(ctx ConsoleContext, projectName string, name string) (*entities.Environment, error) {
 	env, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:                ctx.AccountName,
-		fc.EnvironmentSpecProjectName: projectName,
-		fields.MetadataName:               name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ProjectName:  projectName,
+		fields.MetadataName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -72,7 +72,7 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search
 	}
 
 	filter := repos.Filter{
-		fields.AccountName:                ctx.AccountName,
+		fields.AccountName:            ctx.AccountName,
 		fc.EnvironmentSpecProjectName: projectName,
 	}
 
@@ -81,7 +81,7 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, projectName string, search
 
 func (d *domain) findEnvironmentByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Environment, error) {
 	w, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:                    ctx.AccountName,
+		fields.AccountName:                ctx.AccountName,
 		fc.EnvironmentSpecTargetNamespace: targetNs,
 	})
 	if err != nil {
@@ -147,7 +147,14 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEnvironmentEvent(nenv, PublishAdd)
+
+	resourceCtx := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     projectName,
+		EnvironmentName: env.Name,
+	}
+
+	d.resourceEventPublisher.PublishEvent(resourceCtx, entities.ResourceTypeEnvironment, nenv.Name, PublishAdd)
 
 	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
@@ -158,7 +165,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		d.logger.Errorf(err, "error while adding membership")
 	}
 
-	if err := d.applyK8sResource(ctx, env.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, nenv.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -216,9 +223,9 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		EnvironmentName: nenv.Name,
 	}
 	filters := repos.Filter{
-		fields.AccountName:                resContext.AccountName,
+		fields.AccountName:            resContext.AccountName,
 		fc.EnvironmentSpecProjectName: resContext.ProjectName,
-		fields.EnvironmentName:            sourceEnvName,
+		fields.EnvironmentName:        sourceEnvName,
 	}
 
 	apps, err := d.appRepo.Find(ctx, repos.Query{
@@ -332,29 +339,11 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		return nil, errors.NewE(err)
 	}
 
-	prj, err := d.findProject(ctx, projectName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	env.Namespace = prj.Spec.TargetNamespace
+	env.Namespace = "trest"
 
 	env.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
 		return nil, errors.NewE(err)
-	}
-
-	xenv, err := d.findEnvironment(ctx, projectName, env.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if xenv == nil {
-		return nil, errors.Newf("no environment found")
-	}
-
-	if xenv.GetDeletionTimestamp() != nil {
-		return nil, errAlreadyMarkedForDeletion("environment", env.Namespace, env.Name)
 	}
 
 	patchForUpdate := common.PatchForUpdate(
@@ -367,13 +356,23 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		},
 	)
 
-	upEnv, err := d.environmentRepo.PatchById(ctx, xenv.Id, patchForUpdate)
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     env.ProjectName,
+		EnvironmentName: env.Name,
+	}
+
+	upEnv, err := d.environmentRepo.Patch(
+		ctx,
+		resContext.DBFilters().Add(fields.MetadataName, env.Name),
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEnvironmentEvent(upEnv, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(resContext, entities.ResourceTypeEnvironment, upEnv.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, xenv.ProjectName, &upEnv.Environment, upEnv.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, upEnv.ProjectName, &upEnv.Environment, upEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -385,25 +384,26 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		return errors.NewE(err)
 	}
 
-	env, err := d.findEnvironment(ctx, projectName, name)
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     projectName,
+		EnvironmentName: name,
+	}
+
+	uenv, err := d.environmentRepo.Patch(
+		ctx,
+		resContext.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	if env == nil {
-		return errors.Newf("no environment found")
-	}
-
-	uenv:= env
-	if !env.IsMarkedForDeletion() {
-		uenv, err = d.environmentRepo.PatchById(ctx, env.Id, common.PatchForMarkDeletion());
-		if err != nil {
-			return errors.NewE(err)
-		}
-		d.resourceEventPublisher.PublishEnvironmentEvent(uenv, PublishUpdate)
-	}
+	d.resourceEventPublisher.PublishEvent(resContext, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, uenv.ProjectName, &uenv.Environment); err != nil {
+		if errors.Is(err, ErrNoClusterAttached) {
+			return d.appRepo.DeleteById(ctx, uenv.Id)
+		}
 		return errors.NewE(err)
 	}
 
@@ -420,6 +420,12 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 		return errors.Newf("no environment found")
 	}
 
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     env.ProjectName,
+		EnvironmentName: name,
+	}
+
 	uenv, err := d.environmentRepo.PatchById(
 		ctx,
 		env.Id,
@@ -431,7 +437,7 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 		),
 	)
 
-	d.resourceEventPublisher.PublishEnvironmentEvent(uenv, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(resContext, entities.ResourceTypeEnvironment, uenv.Name, PublishDelete)
 	return errors.NewE(err)
 }
 
@@ -441,12 +447,18 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     xenv.ProjectName,
+		EnvironmentName: xenv.Name,
+	}
+
 	err = d.environmentRepo.DeleteById(ctx, xenv.Id)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEnvironmentEvent(xenv, PublishDelete)
+	d.resourceEventPublisher.PublishEvent(resContext, entities.ResourceTypeEnvironment, env.Name, PublishDelete)
 	return nil
 }
 
@@ -470,7 +482,14 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishEnvironmentEvent(uenv, PublishUpdate)
+
+	resContext := ResourceContext{
+		ConsoleContext:  ctx,
+		ProjectName:     uenv.ProjectName,
+		EnvironmentName: uenv.Name,
+	}
+
+	d.resourceEventPublisher.PublishEvent(resContext, uenv.GetResourceType(), uenv.GetName(), PublishUpdate)
 	return nil
 }
 

@@ -23,7 +23,10 @@ func (d *domain) ListApps(ctx ResourceContext, search map[string]repos.MatchFilt
 }
 
 func (d *domain) findApp(ctx ResourceContext, name string) (*entities.App, error) {
-	app, err := d.appRepo.FindOne(ctx, ctx.DBFilters().Add(fields.MetadataName, name))
+	app, err := d.appRepo.FindOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -103,13 +106,13 @@ func (d *domain) DeleteApp(ctx ResourceContext, name string) error {
 	}
 	uapp, err := d.appRepo.Patch(
 		ctx,
-		ctx.DBFilters().Add(fields.MetadataName,name),
+		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
-	);
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx,entities.ResourceTypeApp, uapp.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, uapp.ProjectName, &uapp.App); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.appRepo.DeleteById(ctx, uapp.Id)
@@ -137,7 +140,7 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 			XPatch: repos.Document{
 				fc.AppSpec: appIn.Spec,
 			},
-	})
+		})
 
 	upApp, err := d.appRepo.Patch(
 		ctx,
@@ -147,7 +150,7 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp,upApp.Name,PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, upApp.Name, PublishUpdate)
 
 	if err := d.applyApp(ctx, upApp); err != nil {
 		return nil, errors.NewE(err)
@@ -187,19 +190,25 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 	if err := d.MatchRecordVersion(app.Annotations, xApp.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
-	uapp, err := d.appRepo.PatchById(ctx, xApp.Id, common.PatchForSyncFromAgent(&app, status, common.PatchOpts{
-		MessageTimestamp: opts.MessageTimestamp,
-	}))
-	d.resourceEventPublisher.PublishEvent(ctx, uapp.GetResourceType(),uapp.GetName(), PublishUpdate)
+	uapp, err := d.appRepo.PatchById(
+		ctx,
+		xApp.Id,
+		common.PatchForSyncFromAgent(&app, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
+	d.resourceEventPublisher.PublishEvent(ctx, uapp.GetResourceType(), uapp.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
 func (d *domain) OnAppDeleteMessage(ctx ResourceContext, app entities.App) error {
-	err := d.appRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, app.Name))
+	err := d.appRepo.DeleteOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, app.Name),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp,app.Name, PublishDelete)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, app.Name, PublishDelete)
 	return nil
 }
 
@@ -217,7 +226,7 @@ func (d *domain) OnAppApplyError(ctx ResourceContext, errMsg string, name string
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx,entities.ResourceTypeApp,uapp.Name, PublishDelete)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishDelete)
 	return errors.NewE(err)
 }
 

@@ -2,11 +2,10 @@ package domain
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -25,10 +24,10 @@ func (d *domain) ListManagedResources(ctx ResourceContext, search map[string]rep
 }
 
 func (d *domain) findMRes(ctx ResourceContext, name string) (*entities.ManagedResource, error) {
-	filters := ctx.DBFilters()
-	filters.Add(fc.MetadataName, name)
-
-	mres, err := d.mresRepo.FindOne(ctx, filters)
+	mres, err := d.mresRepo.FindOne(
+		ctx,
+		ctx.DBFilters().Add(fields.Metadata, name),
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -56,7 +55,7 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []Mana
 	}
 
 	filters = d.mresRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
-		fc.MetadataName: {
+		fields.MetadataName: {
 			MatchType: repos.MatchTypeArray,
 			Array:     names,
 		},
@@ -98,7 +97,7 @@ func (d *domain) GetManagedResourceOutputKVs(ctx ResourceContext, keyrefs []Mana
 // GetManagedResourceOutputKeys implements Domain.
 func (d *domain) GetManagedResourceOutputKeys(ctx ResourceContext, name string) ([]string, error) {
 	filters := ctx.DBFilters()
-	filters.Add(fc.MetadataName, name)
+	filters.Add(fields.MetadataName, name)
 
 	mresSecret, err := d.findMRes(ctx, name)
 	if err != nil {
@@ -170,9 +169,9 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishMresEvent(&mres, PublishAdd)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, ctx.ProjectName, &m.ManagedResource, mres.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, &m.ManagedResource, m.RecordVersion); err != nil {
 		return m, errors.NewE(err)
 	}
 
@@ -189,38 +188,34 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.NewE(err)
 	}
 
-	xmres, err := d.findMRes(ctx, mres.Name)
+	//xmres, err := d.findMRes(ctx, mres.Name)
+	//if err != nil {
+	//	return nil, errors.NewE(err)
+	//}
+	//
+	//if xmres == nil {
+	//	return nil, errors.Newf("no manage resource found")
+	//}
+
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&mres,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.ManagedResourceSpec: mres.Spec,
+			},
+		})
+
+	upMres, err := d.mresRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, mres.Name),
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	if xmres == nil {
-		return nil, errors.Newf("no manage resource found")
-	}
-
-	upMres, err := d.mresRepo.PatchById(ctx, xmres.Id, repos.Document{
-		fc.RecordVersion: xmres.RecordVersion + 1,
-		fc.DisplayName:   mres.DisplayName,
-		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-
-		fc.MetadataLabels:      mres.Labels,
-		fc.MetadataAnnotations: mres.Annotations,
-
-		fc.ManagedResourceSpec: mres.Spec,
-
-		fc.SyncStatusState:           t.SyncStateInQueue,
-		fc.SyncStatusSyncScheduledAt: time.Now(),
-		fc.SyncStatusAction:          t.SyncActionApply,
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishMresEvent(upMres, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, upMres.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
 		return upMres, errors.NewE(err)
@@ -234,40 +229,33 @@ func (d *domain) DeleteManagedResource(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	mres, err := d.findMRes(ctx, name)
+	umres, err := d.mresRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	if mres == nil {
-		return errors.Newf("no manage resource found")
-	}
-
-	umres, err := d.mresRepo.PatchById(ctx, mres.Id, repos.Document{
-		fc.MarkedForDeletion:         true,
-		fc.SyncStatusSyncScheduledAt: time.Now(),
-		fc.SyncStatusAction:          t.SyncActionDelete,
-		fc.SyncStatusState:           t.SyncStateInQueue,
-	})
-	if err != nil {
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
+	if err := d.deleteK8sResource(ctx, umres.ProjectName, &umres.ManagedResource); err != nil {
+		if errors.Is(err, ErrNoClusterAttached) {
+			return d.mresRepo.DeleteById(ctx, umres.Id)
+		}
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishMresEvent(umres, PublishUpdate)
-
-	return d.deleteK8sResource(ctx, mres.ProjectName, &mres.ManagedResource)
+	return nil
 }
 
 func (d *domain) OnManagedResourceDeleteMessage(ctx ResourceContext, mres entities.ManagedResource) error {
-	xmres, err := d.findMRes(ctx, mres.Name)
+	err := d.mresRepo.DeleteOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, mres.Name),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	err = d.mresRepo.DeleteById(ctx, xmres.Id)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishMresEvent(xmres, PublishDelete)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, mres.Name, PublishDelete)
 	return nil
 }
 
@@ -285,51 +273,38 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 		return d.resyncK8sResource(ctx, xmres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
-	umres, err := d.mresRepo.PatchById(ctx, xmres.Id, repos.Document{
-		fc.MetadataCreationTimestamp: mres.CreationTimestamp,
-		fc.MetadataLabels:            mres.Labels,
-		fc.MetadataAnnotations:       mres.Annotations,
-		fc.MetadataGeneration:        mres.Generation,
+	umres, err := d.mresRepo.PatchById(
+		ctx,
+		xmres.Id,
+		common.PatchForSyncFromAgent(&mres, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+			XPatch: repos.Document{
+				fc.ManagedResourceSyncedOutputSecretRef: mres.SyncedOutputSecretRef,
+			},
+		}))
 
-		fc.Status:                               mres.Status,
-		fc.ManagedResourceSyncedOutputSecretRef: mres.SyncedOutputSecretRef,
-
-		fc.SyncStatusState: func() t.SyncState {
-			if status == types.ResourceStatusDeleting {
-				return t.SyncStateDeletingAtAgent
-			}
-			return t.SyncStateUpdatedAtAgent
-		}(),
-		fc.SyncStatusRecordVersion: xmres.RecordVersion,
-		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
-		fc.SyncStatusError:         nil,
-	})
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishMresEvent(umres, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, umres.GetResourceType(), umres.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
 func (d *domain) OnManagedResourceApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
-	m, err2 := d.findMRes(ctx, name)
-	if err2 != nil {
-		return err2
-	}
-
-	if m == nil {
-		return errors.Newf("no manage resource found")
-	}
-
-	umres, err := d.mresRepo.PatchById(ctx, m.Id, repos.Document{
-		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
-		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
-		fc.SyncStatusError:        errMsg,
-	})
+	umres, err := d.mresRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishMresEvent(umres, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishDelete)
 	return errors.NewE(err)
 }
 
