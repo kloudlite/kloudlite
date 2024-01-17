@@ -28,10 +28,6 @@ func RegisterInto(mgr operator.Operator) {
 		panic(err)
 	}
 
-	if ev.DeviceInfoNamespace == "" {
-		ev.DeviceInfoNamespace = "device-info"
-	}
-
 	ev.IsDev = mgr.Operator().IsDev
 
 	mgr.AddToSchemes(
