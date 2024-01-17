@@ -229,12 +229,12 @@ type CloudProviderSecretPaginatedRecords {
 type Cluster {
   accountName: String!
   adminKubeconfig: EncodedValue
-  apiVersion: String!
+  apiVersion: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata!
@@ -251,20 +251,22 @@ type ClusterEdge {
 }
 
 input ClusterIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
 }
 
 type ClusterManagedService {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -281,7 +283,9 @@ type ClusterManagedServiceEdge {
 }
 
 input ClusterManagedServiceIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__ClusterManagedServiceSpecIn
 }
@@ -396,6 +400,7 @@ type ConsoleVPNDevice {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
   status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
   wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
 }
@@ -598,7 +603,7 @@ type GitBranch {
   protected: Boolean
 }
 
-enum Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat {
+enum Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat {
   dockerConfigJson
   params
 }
@@ -1569,18 +1574,17 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn 
 }
 
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec {
+  activeNamespace: String
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
-  deviceNamespace: String
   disabled: Boolean
   nodeSelector: Map
+  noExternalService: Boolean
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
 }
 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
+  activeNamespace: String
   cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
-  deviceNamespace: String
-  disabled: Boolean
-  nodeSelector: Map
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
 }
 
@@ -1711,13 +1715,13 @@ type GitlabProject {
 
 type HelmRelease {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -1734,7 +1738,9 @@ type HelmReleaseEdge {
 }
 
 input HelmReleaseIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn
 }
@@ -1752,7 +1758,7 @@ type ImagePullSecret {
   displayName: String!
   dockerConfigJson: String
   environmentName: String!
-  format: Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   id: String!
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -1774,7 +1780,7 @@ type ImagePullSecretEdge {
 input ImagePullSecretIn {
   displayName: String!
   dockerConfigJson: String
-  format: Github__com___kloudlite___api___apps___console___internal___entities__ImagePullSecretFormat!
+  format: Github__com___kloudlite___api___apps___console___internal___entities__PullSecretFormat!
   metadata: MetadataIn!
   registryPassword: String
   registryURL: String
@@ -2928,13 +2934,13 @@ type Mutation {
 
 type Namespace {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -2951,6 +2957,8 @@ type NamespaceEdge {
 }
 
 input NamespaceIn {
+  apiVersion: String
+  kind: String
   metadata: MetadataIn
   spec: K8s__io___api___core___v1__NamespaceSpecIn
   status: K8s__io___api___core___v1__NamespaceStatusIn
@@ -2964,11 +2972,11 @@ type NamespacePaginatedRecords {
 
 type Node {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   creationTime: Date!
   id: String!
-  kind: String!
+  kind: String
   markedForDeletion: Boolean
   metadata: Metadata
   recordVersion: Int!
@@ -2984,6 +2992,8 @@ type NodeEdge {
 }
 
 input NodeIn {
+  apiVersion: String
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn!
 }
@@ -2996,13 +3006,13 @@ type NodePaginatedRecords {
 
 type NodePool {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3019,7 +3029,9 @@ type NodePoolEdge {
 }
 
 input NodePoolIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn!
 }
@@ -3054,13 +3066,13 @@ input PaginationIn {
 
 type PersistentVolume {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3073,13 +3085,13 @@ type PersistentVolume {
 
 type PersistentVolumeClaim {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3107,6 +3119,8 @@ type PersistentVolumeEdge {
 }
 
 input PersistentVolumeIn {
+  apiVersion: String
+  kind: String
   metadata: MetadataIn
   spec: K8s__io___api___core___v1__PersistentVolumeSpecIn
   status: K8s__io___api___core___v1__PersistentVolumeStatusIn
@@ -3608,13 +3622,13 @@ type User {
 
 type VolumeAttachment {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata
@@ -3631,6 +3645,8 @@ type VolumeAttachmentEdge {
 }
 
 input VolumeAttachmentIn {
+  apiVersion: String
+  kind: String
   metadata: MetadataIn
   spec: K8s__io___api___storage___v1__VolumeAttachmentSpecIn!
   status: K8s__io___api___storage___v1__VolumeAttachmentStatusIn
@@ -3644,15 +3660,14 @@ type VolumeAttachmentPaginatedRecords {
 
 type VPNDevice {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   clusterName: String!
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  kind: String!
+  kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  managingByDev: String
   markedForDeletion: Boolean
   metadata: Metadata
   recordVersion: Int!
@@ -3669,7 +3684,9 @@ type VPNDeviceEdge {
 }
 
 input VPNDeviceIn {
+  apiVersion: String
   displayName: String!
+  kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }

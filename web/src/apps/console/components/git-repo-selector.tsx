@@ -23,6 +23,7 @@ import { githubAppName } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { SWRResponse } from 'swr';
 import ButtonGroup from '~/components/atoms/button-group';
+import Radio from '~/components/atoms/radio';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
   IGithubInstallations,
@@ -359,118 +360,157 @@ const ListRenderer = ({
   const { isLoading, data } = response;
 
   return (
-    <Pulsable isLoading={isLoading || !data}>
-      <List.Root className="min-h-[356px]">
-        {[...(isLoading || !data ? mockListData : data)].map((repo, index) => {
-          return (
-            <List.Row
-              key={repo.name}
-              columns={[
-                {
-                  key: generateKey(repo.name || '', index),
-                  className: 'flex-1 pulsable',
-                  render: () => (
-                    <div className="flex flex-row gap-lg items-center bodyMd-medium flex-1">
-                      <span>{repo.name}</span>
-                      <span>
-                        {repo.private ? (
-                          <LockSimple size={12} />
-                        ) : (
-                          <LockSimpleOpen size={12} />
-                        )}
-                      </span>
-                      <span>
-                        <CircleFill size={2} />
-                      </span>
-                      <span className="text-text-soft">
-                        {dayjs(repo.updatedAt).fromNow()}
-                      </span>
-                    </div>
-                  ),
-                },
-                ...[
-                  ...(selectedBranch && selectedBranch.repo === repo.url
-                    ? [
-                        {
-                          key: generateKey(repo?.url || ''),
-                          className: 'cursor-pointer',
-                          label: (
-                            <ButtonGroup.Root
-                              selectable
-                              value=""
-                              onValueChange={() => {}}
-                              onClick={() => {
-                                onShowBranch?.({
-                                  type: DIALOG_TYPE.NONE,
-                                  data: {
-                                    provider,
-                                    repo: repo.url!,
-                                    branch:
-                                      selectedBranch?.repo === repo.url
-                                        ? selectedBranch?.branch
-                                        : null,
-                                  },
-                                });
-                              }}
-                            >
-                              <ButtonGroup.IconButton
-                                icon={
-                                  <div className="flex gap-md items-center">
-                                    <GitBranch size={16} />
-                                    {selectedBranch.branch}
-                                  </div>
-                                }
-                                value="1"
-                              />
-                              <ButtonGroup.IconButton
-                                icon={<Pencil />}
-                                value=""
-                              />
-                            </ButtonGroup.Root>
-                          ),
-                        },
-                      ]
-                    : []),
-                ],
-                {
-                  key: generateKey(repo.name || '', 'action', index),
-                  className: 'pulsable',
-                  render: () => (
-                    <Button
-                      content={
-                        selectedBranch?.repo === repo.url
-                          ? 'import'
-                          : 'Choose branch'
-                      }
-                      variant={
-                        selectedBranch?.repo === repo.url ? 'primary' : 'basic'
-                      }
-                      onClick={() => {
-                        if (selectedBranch?.repo !== repo.url) {
-                          onShowBranch?.({
-                            type: DIALOG_TYPE.NONE,
-                            data: {
-                              provider,
-                              repo: repo.url!,
-                              branch:
-                                selectedBranch?.repo === repo.url
-                                  ? selectedBranch?.branch
-                                  : null,
-                            },
-                          });
-                        } else {
-                          onImport?.(selectedBranch);
-                        }
-                      }}
-                    />
-                  ),
-                },
-              ]}
-            />
-          );
-        })}
-      </List.Root>
-    </Pulsable>
+    // <Pulsable isLoading={isLoading || !data}>
+    //   <List.Root className="min-h-[356px] border border-border-default" plain>
+    //     {[...(isLoading || !data ? mockListData : data)].map((repo, index) => {
+    //       return (
+    //         <List.Row
+    //           key={repo.name}
+    //           columns={[
+    //             {
+    //               key: generateKey(repo.name || '', index),
+    //               className: 'flex-1 pulsable',
+    //               render: () => (
+    //                 <div className="flex flex-row gap-lg items-center bodyMd-medium flex-1">
+    //                   <span>{repo.name}</span>
+    //                   <span>
+    //                     {repo.private ? (
+    //                       <LockSimple size={12} />
+    //                     ) : (
+    //                       <LockSimpleOpen size={12} />
+    //                     )}
+    //                   </span>
+    //                   <span>
+    //                     <CircleFill size={2} />
+    //                   </span>
+    //                   <span className="text-text-soft">
+    //                     {dayjs(repo.updatedAt).fromNow()}
+    //                   </span>
+    //                 </div>
+    //               ),
+    //             },
+    //             ...[
+    //               ...(selectedBranch && selectedBranch.repo === repo.url
+    //                 ? [
+    //                     {
+    //                       key: generateKey(repo?.url || ''),
+    //                       className: 'cursor-pointer',
+    //                       label: (
+    //                         <ButtonGroup.Root
+    //                           selectable
+    //                           value=""
+    //                           onValueChange={() => {}}
+    //                           onClick={() => {
+    //                             onShowBranch?.({
+    //                               type: DIALOG_TYPE.NONE,
+    //                               data: {
+    //                                 provider,
+    //                                 repo: repo.url!,
+    //                                 branch:
+    //                                   selectedBranch?.repo === repo.url
+    //                                     ? selectedBranch?.branch
+    //                                     : null,
+    //                               },
+    //                             });
+    //                           }}
+    //                         >
+    //                           <ButtonGroup.IconButton
+    //                             icon={
+    //                               <div className="flex gap-md items-center">
+    //                                 <GitBranch size={16} />
+    //                                 {selectedBranch.branch}
+    //                               </div>
+    //                             }
+    //                             value="1"
+    //                           />
+    //                           <ButtonGroup.IconButton
+    //                             icon={<Pencil />}
+    //                             value=""
+    //                           />
+    //                         </ButtonGroup.Root>
+    //                       ),
+    //                     },
+    //                   ]
+    //                 : []),
+    //             ],
+    //             {
+    //               key: generateKey(repo.name || '', 'action', index),
+    //               className: 'pulsable',
+    //               render: () => (
+    //                 <Button
+    //                   content={
+    //                     selectedBranch?.repo === repo.url
+    //                       ? 'import'
+    //                       : 'Choose branch'
+    //                   }
+    //                   variant={
+    //                     selectedBranch?.repo === repo.url ? 'primary' : 'basic'
+    //                   }
+    //                   onClick={() => {
+    //                     if (selectedBranch?.repo !== repo.url) {
+    //                       onShowBranch?.({
+    //                         type: DIALOG_TYPE.NONE,
+    //                         data: {
+    //                           provider,
+    //                           repo: repo.url!,
+    //                           branch:
+    //                             selectedBranch?.repo === repo.url
+    //                               ? selectedBranch?.branch
+    //                               : null,
+    //                         },
+    //                       });
+    //                     } else {
+    //                       onImport?.(selectedBranch);
+    //                     }
+    //                   }}
+    //                 />
+    //               ),
+    //             },
+    //           ]}
+    //         />
+    //       );
+    //     })}
+    //   </List.Root>
+    // </Pulsable>
+    <div className="flex flex-col">
+      <Pulsable isLoading={isLoading || !data}>
+        <Radio.Root
+          value={data?.[0].name || ''}
+          withBounceEffect={false}
+          labelPlacement="left"
+          className="!gap-0"
+        >
+          {[...(isLoading || !data ? mockListData : data)].map((repo) => {
+            return (
+              <Radio.Item
+                key={repo.name}
+                value={repo.name}
+                className="pulsable flex-row justify-between w-full p-2xl bodyMd-medium"
+                labelPlacement="left"
+              >
+                <div className="flex flex-row items-center gap-lg bodyMd-medium">
+                  <span>{repo.name}</span>
+
+                  <span>
+                    {repo.private ? (
+                      <LockSimple size={12} />
+                    ) : (
+                      <LockSimpleOpen size={12} />
+                    )}
+                  </span>
+                  <span>
+                    <CircleFill size={2} />
+                  </span>
+                  <span className="text-text-soft">
+                    {dayjs(repo.updatedAt).fromNow()}
+                  </span>
+                </div>
+              </Radio.Item>
+            );
+          })}
+        </Radio.Root>
+      </Pulsable>
+    </div>
   );
 };
 
@@ -484,6 +524,7 @@ interface IRepoRender {
 type IFormattedData =
   | ({ data: IGithubInstallations } & { provider: 'github' })
   | ({ data: IGitlabGroups } & { provider: 'gitlab' });
+
 const formatData = (data: IFormattedData) => {
   let formattedData: IRepoRender[] = [];
 
@@ -663,137 +704,117 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
   // }, [installations]);
 
   return (
-    <>
-      {!showBranchChooser && (
-        <div className="flex flex-col gap-6xl">
-          <div className="headingXl text-text-default">
-            Import Git Repository
+    !showBranchChooser && (
+      <div className="flex flex-col relative border border-border-default rounded">
+        <div className="flex flex-row gap-lg items-center p-2xl">
+          <div className="flex-1">
+            <Pulsable isLoading={installations.isLoading || groups.isLoading}>
+              <div className="pulsable">
+                <Select
+                  size="lg"
+                  valueRender={valueRender}
+                  disabled={showProviderSwitch}
+                  options={async () => options}
+                  value={selectedAccount}
+                  onChange={(res) => {
+                    if (
+                      ![
+                        ADD_GITHUB_ACCOUNT_VALUE,
+                        SWITCH_GIT_PROVIDER_VALUE,
+                      ].includes(res.value)
+                    ) {
+                      setSelectedAccount(res);
+                      switch (provider) {
+                        case 'github':
+                          setOrganization(res.label);
+                          break;
+                        case 'gitlab':
+                          setGroupId(res.value);
+                          break;
+                        default:
+                          break;
+                      }
+                    } else if (res.value === SWITCH_GIT_PROVIDER_VALUE) {
+                      setProviderSwitch(true);
+                    } else if (res.value === ADD_GITHUB_ACCOUNT_VALUE) {
+                      popupWindow({
+                        url: githubInstallUrl,
+                      });
+                    }
+                  }}
+                />
+              </div>
+            </Pulsable>
           </div>
-          <div className="flex flex-col gap-6xl relative">
-            <div className="flex flex-row gap-lg items-center">
-              <div className="flex-1">
-                <Pulsable
-                  isLoading={installations.isLoading || groups.isLoading}
-                >
-                  <div className="pulsable">
-                    <Select
-                      valueRender={valueRender}
-                      disabled={showProviderSwitch}
-                      options={async () => options}
-                      value={selectedAccount}
-                      onChange={(res) => {
-                        if (
-                          ![
-                            ADD_GITHUB_ACCOUNT_VALUE,
-                            SWITCH_GIT_PROVIDER_VALUE,
-                          ].includes(res.value)
-                        ) {
-                          setSelectedAccount(res);
-                          switch (provider) {
-                            case 'github':
-                              setOrganization(res.label);
-                              break;
-                            case 'gitlab':
-                              setGroupId(res.value);
-                              break;
-                            default:
-                              break;
-                          }
-                        } else if (res.value === SWITCH_GIT_PROVIDER_VALUE) {
-                          setProviderSwitch(true);
-                        } else if (res.value === ADD_GITHUB_ACCOUNT_VALUE) {
-                          popupWindow({
-                            url: githubInstallUrl,
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </Pulsable>
-              </div>
-              <div className="flex-1">
-                <Pulsable
-                  isLoading={installations.isLoading || groups.isLoading}
-                >
-                  <TextInput
-                    placeholder="Search"
-                    prefixIcon={<Search />}
-                    value={searchText}
-                    onChange={({ target }) => {
-                      setSearchText(target.value);
-                    }}
-                  />
-                </Pulsable>
-              </div>
-            </div>
-            <ListRenderer
-              response={provider === 'github' ? githubRepos : gitlabRepos}
-              provider={provider}
-              selectedBranch={selectedBranch}
-              onShowBranch={(data) => {
-                setShowBranchChooser(data);
-              }}
-              onImport={(data) => {
-                onImport?.(data);
-              }}
-            />
-            <AnimatePresence mode="wait">
-              {showProviderSwitch && (
-                <motion.div
-                  // initial={{ opacity: 0.85 }}
-                  // animate={{ opacity: 1 }}
-                  // exit={{ opacity: 0 }}
-                  // transition={{ ease: 'linear' }}
-                  className="absolute z-10 inset-0 flex flex-col items-center justify-center bg-surface-basic-subdued border border-border-default rounded"
-                >
-                  <div className="text-text-soft bodyMd mb-5xl">
-                    Select a Git provider to import an existing project from a
-                    Git Repository.
-                  </div>
-                  <div className="w-[320px] flex flex-col gap-lg">
-                    <Button
-                      variant="tertiary"
-                      content="Continue with Github"
-                      prefix={<GithubLogoFill />}
-                      block
-                      onClick={() => {
-                        setProvider('github');
-                        setFetchInstallations(true);
-                        setFetchGroups(false);
-                        setProviderSwitch(false);
-                      }}
-                    />
-                    <Button
-                      variant="purple"
-                      content="Continue with Gitlab"
-                      prefix={<GitlabLogoFill />}
-                      block
-                      onClick={() => {
-                        setProvider('gitlab');
-                        setFetchInstallations(false);
-                        setFetchGroups(true);
-                        setProviderSwitch(false);
-                      }}
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+          <div className="flex-1">
+            <Pulsable isLoading={installations.isLoading || groups.isLoading}>
+              <TextInput
+                size="lg"
+                placeholder="Search"
+                prefixIcon={<Search />}
+                value={searchText}
+                onChange={({ target }) => {
+                  setSearchText(target.value);
+                }}
+              />
+            </Pulsable>
           </div>
         </div>
-      )}
-
-      {showBranchChooser && (
-        <BranchChooser
-          show={showBranchChooser}
-          setShow={setShowBranchChooser}
-          onSubmit={(val) => {
-            setSelectedBranch(val);
-            onChange?.(val);
+        <ListRenderer
+          response={provider === 'github' ? githubRepos : gitlabRepos}
+          provider={provider}
+          selectedBranch={selectedBranch}
+          onShowBranch={(data) => {
+            setShowBranchChooser(data);
+          }}
+          onImport={(data) => {
+            onImport?.(data);
           }}
         />
-      )}
-    </>
+        <AnimatePresence mode="wait">
+          {showProviderSwitch && (
+            <motion.div
+              // initial={{ opacity: 0.85 }}
+              // animate={{ opacity: 1 }}
+              // exit={{ opacity: 0 }}
+              // transition={{ ease: 'linear' }}
+              className="absolute z-10 inset-0 flex flex-col items-center justify-center bg-surface-basic-subdued border border-border-default rounded"
+            >
+              <div className="text-text-soft bodyMd mb-5xl">
+                Select a Git provider to import an existing project from a Git
+                Repository.
+              </div>
+              <div className="w-[320px] flex flex-col gap-lg">
+                <Button
+                  variant="tertiary"
+                  content="Continue with Github"
+                  prefix={<GithubLogoFill />}
+                  block
+                  onClick={() => {
+                    setProvider('github');
+                    setFetchInstallations(true);
+                    setFetchGroups(false);
+                    setProviderSwitch(false);
+                  }}
+                />
+                <Button
+                  variant="purple"
+                  content="Continue with Gitlab"
+                  prefix={<GitlabLogoFill />}
+                  block
+                  onClick={() => {
+                    setProvider('gitlab');
+                    setFetchInstallations(false);
+                    setFetchGroups(true);
+                    setProviderSwitch(false);
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
   );
 };
 

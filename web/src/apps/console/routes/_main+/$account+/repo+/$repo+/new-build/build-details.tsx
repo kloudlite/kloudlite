@@ -13,11 +13,8 @@ const BuildDetails = ({
   };
 }) => {
   return (
-    <>
-      <TitleBox
-        title="Build details"
-        subtitle="The application streamlines project management through intuitive build tracking and collaboration tools."
-      />
+    <div className="flex flex-col gap-3xl">
+      <TitleBox subtitle="The application streamlines project management through intuitive build tracking and collaboration tools." />
       <div className="flex flex-col">
         <div className="flex flex-col pb-3xl">
           <TextInput
@@ -44,7 +41,7 @@ const BuildDetails = ({
           onChange={handleChange('description')}
         />
       </div>
-    </>
+    </div>
   );
 };
 

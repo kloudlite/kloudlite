@@ -3703,7 +3703,7 @@ query consoleListConsoleVpnDevices($search: CoreSearchVPNDevices, $pq: CursorPag
             host
             target
           }
-          deviceNamespace
+          activeNamespace
           disabled
           nodeSelector
           ports {
@@ -3739,7 +3739,7 @@ query consoleGetConsoleVpnDevice($name: String!) {
         host
         target
       }
-      deviceNamespace
+      activeNamespace
       disabled
       nodeSelector
       ports {
@@ -3790,7 +3790,7 @@ query consoleListConsoleVpnDevicesForUser {
         host
         target
       }
-      deviceNamespace
+      activeNamespace
       disabled
       nodeSelector
       ports {
@@ -3877,11 +3877,16 @@ query consoleListImagePullSecrets($projectName: String!, $envName: String!, $sea
   }
 }
 
-query authCli_CoreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
-  core_checkNameAvailability(resType: $resType, name: $name) {
-    result
-    suggestedNames
-  }
+mutation authCli_CoreUpdateDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
+  core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
+}
+
+mutation authCli_CoreUpdateDeviceEnv($deviceName: String!, $projectName: String!, $envName: String!) {
+  core_updateVPNDeviceEnv(
+    deviceName: $deviceName
+    projectName: $projectName
+    envName: $envName
+  )
 }
 
 query authCli_listCoreDevices {
@@ -3903,7 +3908,7 @@ query authCli_listCoreDevices {
         host
         target
       }
-      deviceNamespace
+      activeNamespace
       disabled
       ports {
         port
@@ -3921,7 +3926,7 @@ query authCli_getCoreDevice($name: String!) {
     }
     projectName
     spec {
-      deviceNamespace
+      activeNamespace
       disabled
       ports {
         port
@@ -3937,12 +3942,139 @@ query authCli_getCoreDevice($name: String!) {
 
 mutation authCli_createCoreDevice($vpnDevice: ConsoleVPNDeviceIn!) {
   core_createVPNDevice(vpnDevice: $vpnDevice) {
-    id
+    metadata {
+      name
+    }
+    wireguardConfig {
+      encoding
+      value
+    }
   }
 }
 
 mutation authCli_updateCoreDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
   core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
+}
+
+query authCli_getDevice($clusterName: String!, $name: String!) {
+  infra_getVPNDevice(clusterName: $clusterName, name: $name) {
+    displayName
+    markedForDeletion
+    metadata {
+      name
+      namespace
+    }
+    spec {
+      cnameRecords {
+        host
+        target
+      }
+      activeNamespace
+      nodeSelector
+      ports {
+        port
+        targetPort
+      }
+    }
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+    }
+    wireguardConfig {
+      encoding
+      value
+    }
+  }
+}
+
+query authCli_listDevices($pq: CursorPaginationIn) {
+  infra_listVPNDevices(pq: $pq) {
+    edges {
+      node {
+        displayName
+        metadata {
+          name
+        }
+        spec {
+          activeNamespace
+          disabled
+          nodeSelector
+          ports {
+            port
+            targetPort
+          }
+        }
+        status {
+          isReady
+          message {
+            RawMessage
+          }
+        }
+        wireguardConfig {
+          encoding
+          value
+        }
+      }
+    }
+  }
+}
+
+mutation authCli_updateDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+  infra_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+    metadata {
+      name
+    }
+    spec {
+      activeNamespace
+      cnameRecords {
+        target
+        host
+      }
+      ports {
+        targetPort
+        port
+      }
+    }
+    status {
+      message {
+        RawMessage
+      }
+      isReady
+    }
+  }
+}
+
+mutation authCli_updateDevicePort($clusterName: String!, $deviceName: String!, $ports: [PortIn!]!) {
+  infra_updateVPNDevicePorts(
+    clusterName: $clusterName
+    deviceName: $deviceName
+    ports: $ports
+  )
+}
+
+mutation authCli_updateDeviceNs($clusterName: String!, $deviceName: String!, $namespace: String!) {
+  infra_updateVPNDeviceNs(
+    clusterName: $clusterName
+    deviceName: $deviceName
+    namespace: $namespace
+  )
+}
+
+mutation authCli_createDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+    metadata {
+      name
+    }
+  }
+}
+
+query authCli_CoreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
+  core_checkNameAvailability(resType: $resType, name: $name) {
+    result
+    suggestedNames
+  }
 }
 
 query authCli_getMresKeys($projectName: String!, $envName: String!, $name: String!) {
@@ -3990,15 +4122,7 @@ query authCli_infraCheckNameAvailability($resType: ResType!, $name: String!, $cl
   }
 }
 
-mutation authCli_createDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    metadata {
-      name
-    }
-  }
-}
-
-query authCli_getConfigSecretMap($projectName: String!, $envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!]) {
+query authCli_getConfigSecretMap($projectName: String!, $envName: String!, $configQueries: [ConfigKeyRefIn], $secretQueries: [SecretKeyRefIn!], $mresQueries: [ManagedResourceKeyRefIn]) {
   configs: core_getConfigValues(
     projectName: $projectName
     envName: $envName
@@ -4015,6 +4139,15 @@ query authCli_getConfigSecretMap($projectName: String!, $envName: String!, $conf
   ) {
     key
     secretName
+    value
+  }
+  mreses: core_getManagedResouceOutputKeyValues(
+    keyrefs: $mresQueries
+    envName: $envName
+    projectName: $projectName
+  ) {
+    key
+    mresName
     value
   }
 }
@@ -4035,22 +4168,6 @@ query authCli_getEnvironment($projectName: String!, $name: String!) {
       targetNamespace
     }
   }
-}
-
-mutation authCli_updateDeviceNs($clusterName: String!, $deviceName: String!, $namespace: String!) {
-  infra_updateVPNDeviceNs(
-    clusterName: $clusterName
-    deviceName: $deviceName
-    namespace: $namespace
-  )
-}
-
-mutation authCli_updateDevicePort($clusterName: String!, $deviceName: String!, $ports: [PortIn!]!) {
-  infra_updateVPNDevicePorts(
-    clusterName: $clusterName
-    deviceName: $deviceName
-    ports: $ports
-  )
 }
 
 query authCli_getSecret($projectName: String!, $envName: String!, $name: String!) {
@@ -4254,96 +4371,6 @@ query authCli_listSecrets($projectName: String!, $envName: String!, $pq: CursorP
         }
         stringData
       }
-    }
-  }
-}
-
-mutation authCli_updateDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  infra_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    metadata {
-      name
-    }
-    spec {
-      deviceNamespace
-      cnameRecords {
-        target
-        host
-      }
-      ports {
-        targetPort
-        port
-      }
-    }
-    status {
-      message {
-        RawMessage
-      }
-      isReady
-    }
-  }
-}
-
-query authCli_listDevices($pq: CursorPaginationIn) {
-  infra_listVPNDevices(pq: $pq) {
-    edges {
-      node {
-        displayName
-        metadata {
-          name
-        }
-        spec {
-          deviceNamespace
-          disabled
-          nodeSelector
-          ports {
-            port
-            targetPort
-          }
-        }
-        status {
-          isReady
-          message {
-            RawMessage
-          }
-        }
-        wireguardConfig {
-          encoding
-          value
-        }
-      }
-    }
-  }
-}
-
-query authCli_getDevice($clusterName: String!, $name: String!) {
-  infra_getVPNDevice(clusterName: $clusterName, name: $name) {
-    displayName
-    markedForDeletion
-    metadata {
-      name
-      namespace
-    }
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      deviceNamespace
-      nodeSelector
-      ports {
-        port
-        targetPort
-      }
-    }
-    status {
-      isReady
-      message {
-        RawMessage
-      }
-    }
-    wireguardConfig {
-      encoding
-      value
     }
   }
 }

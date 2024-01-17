@@ -82,8 +82,10 @@ global.location = new URL(
 
   fs.writeFileSync(
     './fake-data-generator/fake.js',
-    `const fake = ${JSON.stringify(data, null, 2)};
-     export default fake;
-`
+    `// Generated file, Generated for skeletons
+
+const fake = ${JSON.stringify(data, null, 2)};
+
+export default fake;`
   );
 })();

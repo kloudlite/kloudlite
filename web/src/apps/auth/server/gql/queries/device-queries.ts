@@ -13,7 +13,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_updateVPNDevicePorts,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
   cli_CoreUpdateDeviceEnv: executor(
@@ -32,7 +32,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_updateVPNDeviceEnv,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 
@@ -57,7 +57,7 @@ export const vpnQueries = (executor: IExecutor) => ({
               host
               target
             }
-            deviceNamespace
+            activeNamespace
             disabled
             ports {
               port
@@ -69,7 +69,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listVPNDevicesForUser,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
   cli_getCoreDevice: executor(
@@ -82,7 +82,7 @@ export const vpnQueries = (executor: IExecutor) => ({
           }
           projectName
           spec {
-            deviceNamespace
+            activeNamespace
             disabled
             ports {
               port
@@ -98,7 +98,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_getVPNDevice,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
   cli_createCoreDevice: executor(
@@ -117,7 +117,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_createVPNDevice,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 
@@ -129,7 +129,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_updateVPNDevicePorts,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 
@@ -148,7 +148,7 @@ export const vpnQueries = (executor: IExecutor) => ({
               host
               target
             }
-            deviceNamespace
+            activeNamespace
             nodeSelector
             ports {
               port
@@ -170,7 +170,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_getVPNDevice,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 
@@ -185,7 +185,7 @@ export const vpnQueries = (executor: IExecutor) => ({
                 name
               }
               spec {
-                deviceNamespace
+                activeNamespace
                 disabled
                 nodeSelector
                 ports {
@@ -210,7 +210,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_listVPNDevices,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 
@@ -225,7 +225,7 @@ export const vpnQueries = (executor: IExecutor) => ({
             name
           }
           spec {
-            deviceNamespace
+            activeNamespace
             cnameRecords {
               target
               host
@@ -246,7 +246,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDevice,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 
@@ -266,7 +266,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDevicePorts,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
   cli_updateDeviceNs: executor(
@@ -285,7 +285,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDeviceNs,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
   cli_createDevice: executor(
@@ -306,7 +306,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_createVPNDevice,
-      vars: (_: any) => {},
+      vars: (_: any) => { },
     }
   ),
 });
