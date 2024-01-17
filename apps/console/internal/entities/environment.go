@@ -1,6 +1,7 @@
 package entities
 
 import (
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -26,30 +27,30 @@ func (e Environment) GetResourceType() ResourceType {
 var EnvironmentIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fc.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "projectName", Value: repos.IndexAsc},
+			{Key: fc.MetadataName, Value: repos.IndexAsc},
+			{Key: fc.MetadataNamespace, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
+			{Key: fc.ProjectName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "projectName", Value: repos.IndexAsc},
-			{Key: "spec.targetNamespace", Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
+			{Key: fc.EnvironmentSpecProjectName, Value: repos.IndexAsc},
+			{Key: fc.EnvironmentSpecTargetNamespace, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "projectName", Value: repos.IndexAsc},
+			{Key: fc.EnvironmentSpecProjectName, Value: repos.IndexAsc},
 		},
 	},
 }

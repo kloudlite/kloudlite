@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
@@ -28,7 +29,7 @@ func (d *domain) ListImagePullSecrets(ctx ResourceContext, search map[string]rep
 
 func (d *domain) findImagePullSecret(ctx ResourceContext, name string) (*entities.ImagePullSecret, error) {
 	filters := ctx.DBFilters()
-	filters.Add("metadata.name", name)
+	filters.Add(fc.MetadataName, name)
 
 	ips, err := d.pullSecretsRepo.FindOne(ctx, filters)
 	if err != nil {
@@ -162,38 +163,40 @@ func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 		return nil, errors.NewE(err)
 	}
 
+	if xips == nil {
+		return nil, errors.Newf("no image pull secret found")
+	}
+
 	pullSecret, err := generateImagePullSecret(*xips)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"recordVersion": ips.RecordVersion + 1,
-		"displayName":   ips.DisplayName,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+	upIps, err := d.pullSecretsRepo.PatchById(ctx, xips.Id, repos.Document{
+		fc.RecordVersion: ips.RecordVersion + 1,
+		fc.DisplayName:   ips.DisplayName,
+		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 
-		"format":           ips.Format,
-		"dockerConfigJson": ips.DockerConfigJson,
+		fc.ImagePullSecretFormat:           ips.Format,
+		fc.ImagePullSecretDockerConfigJson: ips.DockerConfigJson,
 
-		"registryURL":      ips.RegistryURL,
-		"registryUsername": ips.RegistryUsername,
-		"registryPassword": ips.RegistryPassword,
+		fc.ImagePullSecretRegistryURL:      ips.RegistryURL,
+		fc.ImagePullSecretRegistryUsername: ips.RegistryUsername,
+		fc.ImagePullSecretRegistryPassword: ips.RegistryPassword,
 
-		"metadata.labels":      ips.Labels,
-		"metadata.annotations": ips.Annotations,
+		fc.MetadataLabels:      ips.Labels,
+		fc.MetadataAnnotations: ips.Annotations,
 
-		"generatedK8sSecret": pullSecret,
+		fc.ImagePullSecretGeneratedK8sSecret: pullSecret,
 
-		"syncStatus.state":           t.SyncStateInQueue,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-	}
-
-	upIps, err := d.pullSecretsRepo.PatchById(ctx, xips.Id, patch)
+		fc.SyncStatusState:           t.SyncStateInQueue,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionApply,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -217,14 +220,16 @@ func (d *domain) DeleteImagePullSecret(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"markedForDeletion":          true,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionDelete,
-		"syncStatus.state":           t.SyncStateInQueue,
+	if ips == nil {
+		return errors.Newf("no image pull secret found")
 	}
 
-	uips, err := d.pullSecretsRepo.PatchById(ctx, ips.Id, patch)
+	uips, err := d.pullSecretsRepo.PatchById(ctx, ips.Id, repos.Document{
+		fc.MarkedForDeletion:         true,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionDelete,
+		fc.SyncStatusState:           t.SyncStateInQueue,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -250,28 +255,30 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 		return errors.NewE(err)
 	}
 
+	if xips == nil {
+		return errors.Newf("no image pull secret found")
+	}
+
 	if err := d.MatchRecordVersion(ips.Annotations, xips.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, xips.ProjectName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 	}
 
-	patch := repos.Document{
-		"metadata.creationTimestamp": ips.CreationTimestamp,
-		"metadata.labels":            ips.Labels,
-		"metadata.annotations":       ips.Annotations,
-		"metadata.generation":        ips.Generation,
+	uips, err := d.pullSecretsRepo.PatchById(ctx, xips.Id, repos.Document{
+		fc.MetadataCreationTimestamp: ips.CreationTimestamp,
+		fc.MetadataLabels:            ips.Labels,
+		fc.MetadataAnnotations:       ips.Annotations,
+		fc.MetadataGeneration:        ips.Generation,
 
-		"syncStatus.state": func() t.SyncState {
+		fc.SyncStatusState: func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
 				return t.SyncStateDeletingAtAgent
 			}
 			return t.SyncStateUpdatedAtAgent
 		}(),
-		"syncStatus.recordVersion": xips.RecordVersion,
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
-	}
-
-	uips, err := d.pullSecretsRepo.PatchById(ctx, xips.Id, patch)
+		fc.SyncStatusRecordVersion: xips.RecordVersion,
+		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
+		fc.SyncStatusError:         nil,
+	})
 	if err != nil {
 		return err
 	}
@@ -295,13 +302,15 @@ func (d *domain) OnImagePullSecretApplyError(ctx ResourceContext, errMsg string,
 		return err
 	}
 
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
+	if ips == nil {
+		return errors.Newf("no image pull secret found")
 	}
 
-	_, err = d.pullSecretsRepo.PatchById(ctx, ips.Id, patch)
+	_, err = d.pullSecretsRepo.PatchById(ctx, ips.Id, repos.Document{
+		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
+		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+		fc.SyncStatusError:        errMsg,
+	})
 	return errors.NewE(err)
 }
 

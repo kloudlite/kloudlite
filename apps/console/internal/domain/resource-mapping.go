@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -35,17 +36,17 @@ func (d *domain) upsertEnvironmentResourceMapping(ctx ResourceContext, res resou
 	}
 
 	return d.resourceMappingRepo.Upsert(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyEnvironment,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
 
-		"clusterName": clusterName,
+		fc.ClusterName: clusterName,
 
-		"resourceType":      res.GetResourceType(),
-		"resourceName":      res.GetName(),
-		"resourceNamespace": res.GetNamespace(),
+		fc.ResourceMappingResourceType:      res.GetResourceType(),
+		fc.ResourceMappingResourceName:      res.GetName(),
+		fc.ResourceMappingResourceNamespace: res.GetNamespace(),
 
-		"accountName":     ctx.AccountName,
-		"projectName":     ctx.ProjectName,
-		"environmentName": ctx.EnvironmentName,
+		fc.AccountName:     ctx.AccountName,
+		fc.ProjectName:     ctx.ProjectName,
+		fc.EnvironmentName: ctx.EnvironmentName,
 	}, &entities.ResourceMapping{
 		ResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
 
@@ -72,16 +73,16 @@ func (d *domain) upsertProjectResourceMapping(ctx ConsoleContext, projectName st
 	}
 
 	return d.resourceMappingRepo.Upsert(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyProject,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyProject,
 
-		"resourceType":      res.GetResourceType(),
-		"resourceName":      res.GetName(),
-		"resourceNamespace": res.GetNamespace(),
+		fc.ResourceMappingResourceType:      res.GetResourceType(),
+		fc.ResourceMappingResourceName:      res.GetName(),
+		fc.ResourceMappingResourceNamespace: res.GetNamespace(),
 
-		"accountName": ctx.AccountName,
-		"clusterName": *clusterName,
+		fc.AccountName: ctx.AccountName,
+		fc.ClusterName: *clusterName,
 
-		"projectName": projectName,
+		fc.ProjectName: projectName,
 	}, &entities.ResourceMapping{
 		ResourceHeirarchy: entities.ResourceHeirarchyProject,
 
@@ -98,21 +99,21 @@ func (d *domain) upsertProjectResourceMapping(ctx ConsoleContext, projectName st
 
 func (d *domain) GetEnvironmentResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyEnvironment,
-		"accountName":       ctx.AccountName,
-		"resourceType":      resType,
-		"resourceName":      name,
-		"clusterName":       clusterName,
-		"resourceNamespace": namespace,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
+		fc.AccountName:                      ctx.AccountName,
+		fc.ResourceMappingResourceType:      resType,
+		fc.ResourceMappingResourceName:      name,
+		fc.ClusterName:                      clusterName,
+		fc.ResourceMappingResourceNamespace: namespace,
 	})
 }
 
 func (d *domain) GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyProject,
-		"accountName":       ctx.AccountName,
-		"clusterName":       clusterName,
-		"resourceType":      resType,
-		"resourceName":      name,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyProject,
+		fc.AccountName:                      ctx.AccountName,
+		fc.ClusterName:                      clusterName,
+		fc.ResourceMappingResourceType:      resType,
+		fc.ResourceMappingResourceName:      name,
 	})
 }

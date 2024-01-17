@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
 
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
@@ -19,8 +20,8 @@ func (d *domain) ListProjectManagedServices(ctx ConsoleContext, projectName stri
 	}
 
 	f := repos.Filter{
-		"projectName": projectName,
-		"accountName": ctx.AccountName,
+		fc.ProjectName: projectName,
+		fc.AccountName: ctx.AccountName,
 	}
 
 	pr, err := d.pmsRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
@@ -33,9 +34,9 @@ func (d *domain) ListProjectManagedServices(ctx ConsoleContext, projectName stri
 
 func (d *domain) findProjectManagedService(ctx ConsoleContext, projectName string, svcName string) (*entities.ProjectManagedService, error) {
 	pmsvc, err := d.pmsRepo.FindOne(ctx, repos.Filter{
-		"projectName":   projectName,
-		"accountName":   ctx.AccountName,
-		"metadata.name": svcName,
+		fc.ProjectName:  projectName,
+		fc.AccountName:  ctx.AccountName,
+		fc.MetadataName: svcName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -84,9 +85,9 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 	service.LastUpdatedBy = service.CreatedBy
 
 	existing, err := d.pmsRepo.FindOne(ctx, repos.Filter{
-		"projectName":   projectName,
-		"accountName":   ctx.AccountName,
-		"metadata.name": service.Name,
+		fc.ProjectName:  projectName,
+		fc.AccountName:  ctx.AccountName,
+		fc.MetadataName: service.Name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -132,6 +133,10 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
+	if pmsvc == nil {
+		return nil, errors.Newf("no project manage service found")
+	}
+
 	service.Namespace = pmsvc.Namespace
 	service.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &service); err != nil {
@@ -142,23 +147,21 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.Newf("cluster managed service %q (projectName=%q) is marked for deletion", service.Name, projectName)
 	}
 
-	patch := repos.Document{
-		"recordVersion": pmsvc.RecordVersion + 1,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+	upmsvc, err := d.pmsRepo.PatchById(ctx, pmsvc.Id, repos.Document{
+		fc.RecordVersion: pmsvc.RecordVersion + 1,
+		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 
-		"metadata.labels":      service.Labels,
-		"metadata.annotations": service.Annotations,
+		fc.MetadataLabels:      service.Labels,
+		fc.MetadataAnnotations: service.Annotations,
 
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-		"syncStatus.state":           t.SyncStateInQueue,
-	}
-
-	upmsvc, err := d.pmsRepo.PatchById(ctx, pmsvc.Id, patch)
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionApply,
+		fc.SyncStatusState:           t.SyncStateInQueue,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -182,15 +185,18 @@ func (d *domain) DeleteProjectManagedService(ctx ConsoleContext, projectName str
 		return errors.NewE(err)
 	}
 
-	if !pmsvc.IsMarkedForDeletion() {
-		patch := repos.Document{
-			"markedForDeletion":          true,
-			"syncStatus.action":          t.SyncActionDelete,
-			"syncStatus.syncScheduledAt": time.Now(),
-			"syncStatus.state":           t.SyncStateInQueue,
-		}
+	if pmsvc == nil {
+		return errors.Newf("no project manage service found")
+	}
 
-		upC, err := d.pmsRepo.PatchById(ctx, pmsvc.Id, patch)
+	if !pmsvc.IsMarkedForDeletion() {
+
+		upC, err := d.pmsRepo.PatchById(ctx, pmsvc.Id, repos.Document{
+			fc.MarkedForDeletion:         true,
+			fc.SyncStatusAction:          t.SyncActionDelete,
+			fc.SyncStatusSyncScheduledAt: time.Now(),
+			fc.SyncStatusState:           t.SyncStateInQueue,
+		})
 		if err != nil {
 			return errors.NewE(err)
 		}
@@ -207,13 +213,15 @@ func (d *domain) OnProjectManagedServiceApplyError(ctx ConsoleContext, projectNa
 		return errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
+	if svc == nil {
+		return errors.Newf("no project manage service found")
 	}
 
-	usvc, err := d.pmsRepo.PatchById(ctx, svc.Id, patch)
+	usvc, err := d.pmsRepo.PatchById(ctx, svc.Id, repos.Document{
+		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
+		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+		fc.SyncStatusError:        errMsg,
+	})
 	if err != nil {
 		return err
 	}
@@ -246,31 +254,33 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 		return errors.NewE(err)
 	}
 
+	if svc == nil {
+		return errors.Newf("no project manage service found")
+	}
+
 	if err := d.MatchRecordVersion(service.Annotations, svc.RecordVersion); err != nil {
 		return d.ResyncProjectManagedService(ctx, service.ProjectName, service.Name)
 	}
 
-	patch := repos.Document{
-		"metadata.annotations":       service.Annotations,
-		"metadata.labels":            service.Annotations,
-		"metadata.generation":        service.Generation,
-		"metadata.creationTimestamp": service.CreationTimestamp,
+	if _, err := d.pmsRepo.PatchById(ctx, svc.Id, repos.Document{
+		fc.MetadataAnnotations:       service.Annotations,
+		fc.MetadataLabels:            service.Annotations,
+		fc.MetadataGeneration:        service.Generation,
+		fc.MetadataCreationTimestamp: service.CreationTimestamp,
 
-		"syncedOutputSecretRef": service.SyncedOutputSecretRef,
+		fc.ProjectManagedServiceSyncedOutputSecretRef: service.SyncedOutputSecretRef,
 
-		"status": service.Status,
-		"syncStatus.state": func() t.SyncState {
+		fc.Status: service.Status,
+		fc.SyncStatusState: func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
 				return t.SyncStateDeletingAtAgent
 			}
 			return t.SyncStateUpdatedAtAgent
 		}(),
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
-		"syncStatus.recordVersion": svc.RecordVersion,
-	}
-
-	if _, err := d.pmsRepo.PatchById(ctx, svc.Id, patch); err != nil {
+		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
+		fc.SyncStatusError:         nil,
+		fc.SyncStatusRecordVersion: svc.RecordVersion,
+	}); err != nil {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishProjectManagedServiceEvent(svc, PublishUpdate)
