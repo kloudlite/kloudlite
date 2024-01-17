@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/kloudlite/api/common/fields"
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -25,7 +26,10 @@ func (d *domain) findRouter(ctx ResourceContext, name string) (*entities.Router,
 	filter := ctx.DBFilters()
 	filter.Add("metadata.name", name)
 
-	router, err := d.routerRepo.FindOne(ctx, filter)
+	router, err := d.routerRepo.FindOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -83,7 +87,7 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	r, err := d.routerRepo.Create(ctx, &router)
+	nrouter, err := d.routerRepo.Create(ctx, &router)
 	if err != nil {
 		if d.routerRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -91,13 +95,13 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishRouterEvent(&router, PublishAdd)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, nrouter.Name, PublishAdd)
 
-	if err := d.applyK8sResource(ctx, router.ProjectName, &router.Router, router.RecordVersion); err != nil {
-		return r, errors.NewE(err)
+	if err := d.applyK8sResource(ctx, nrouter.ProjectName, &nrouter.Router, nrouter.RecordVersion); err != nil {
+		return nrouter, errors.NewE(err)
 	}
 
-	return r, nil
+	return nrouter, nil
 }
 
 func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*entities.Router, error) {

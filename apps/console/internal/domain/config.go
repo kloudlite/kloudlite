@@ -134,14 +134,6 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 	}
 
 	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
-	xconfig, err := d.findConfig(ctx, config.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if xconfig == nil {
-		return nil, errors.Newf("no config found")
-	}
 
 	patchForUpdate := common.PatchForUpdate(
 		ctx,
@@ -152,12 +144,17 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 			},
 		})
 
-	upConfig, err := d.configRepo.PatchById(ctx, xconfig.Id, patchForUpdate)
+	upConfig, err := d.configRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, config.Name),
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, upConfig.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, xconfig.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
 		return upConfig, errors.NewE(err)
 	}
 
@@ -169,19 +166,16 @@ func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	c, err := d.findConfig(ctx, name)
+	uc, err := d.configRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForMarkDeletion(),
+	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	uc:= c
-	if !c.IsMarkedForDeletion() {
-		uc, err = d.configRepo.PatchById(ctx, c.Id, common.PatchForMarkDeletion());
-		if err != nil {
-			return errors.NewE(err)
-		}
-		d.resourceEventPublisher.PublishConfigEvent(uc, PublishUpdate)
-	}
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, uc.ProjectName, &uc.ConfigMap); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
@@ -193,18 +187,9 @@ func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
 }
 
 func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, opts UpdateAndDeleteOpts) error {
-	c, err := d.findConfig(ctx, name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if c == nil {
-		return errors.Newf("no config found")
-	}
-
-	uc, err := d.configRepo.PatchById(
+	uc, err := d.configRepo.Patch(
 		ctx,
-		c.Id,
+		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForErrorFromAgent(
 			errMsg,
 			common.PatchOpts{
@@ -215,20 +200,17 @@ func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, op
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConfigEvent(uc, PublishUpdate)
+
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishDelete)
 	return nil
 }
 
 func (d *domain) OnConfigDeleteMessage(ctx ResourceContext, config entities.Config) error {
-	c, err := d.findConfig(ctx, config.Name)
+	err := d.configRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, config.Name))
 	if err != nil {
 		return errors.NewE(err)
 	}
-	err = d.configRepo.DeleteById(ctx, c.Id)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishConfigEvent(c, PublishDelete)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, config.Name, PublishDelete)
 	return nil
 }
 
@@ -246,10 +228,10 @@ func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Co
 		return d.resyncK8sResource(ctx, xconfig.ProjectName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
 	}
 
-	c, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, status, common.PatchOpts{
+	uc, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, status, common.PatchOpts{
 		MessageTimestamp: opts.MessageTimestamp,
 	}))
-	d.resourceEventPublisher.PublishConfigEvent(c, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, uc.GetResourceType(), uc.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
