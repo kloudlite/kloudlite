@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"github.com/kloudlite/api/common/fields"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -22,6 +23,18 @@ type ConsoleContext struct {
 	UserName  string
 }
 
+func (c ConsoleContext) GetUserId() repos.ID {
+	return c.UserId
+}
+
+func (c ConsoleContext) GetUserEmail() string {
+	return c.UserEmail
+}
+
+func (c ConsoleContext) GetUserName() string {
+	return c.UserName
+}
+
 func (c ConsoleContext) GetAccountName() string {
 	return c.AccountName
 }
@@ -34,9 +47,9 @@ type ResourceContext struct {
 
 func (r ResourceContext) DBFilters() repos.Filter {
 	return repos.Filter{
-		"accountName":     r.AccountName,
-		"projectName":     r.ProjectName,
-		"environmentName": r.EnvironmentName,
+		fields.AccountName:     r.AccountName,
+		fields.ProjectName:     r.ProjectName,
+		fields.EnvironmentName: r.EnvironmentName,
 	}
 }
 
@@ -249,14 +262,5 @@ const (
 )
 
 type ResourceEventPublisher interface {
-	PublishAppEvent(app *entities.App, msg PublishMsg)
-	PublishConfigEvent(config *entities.Config, msg PublishMsg)
-	PublishSecretEvent(secret *entities.Secret, msg PublishMsg)
-	PublishImagePullSecretEvent(ips *entities.ImagePullSecret, msg PublishMsg)
-	PublishMresEvent(mres *entities.ManagedResource, msg PublishMsg)
-	PublishProjectEvent(project *entities.Project, msg PublishMsg)
-	PublishProjectManagedServiceEvent(project *entities.ProjectManagedService, msg PublishMsg)
-	PublishRouterEvent(router *entities.Router, msg PublishMsg)
-	PublishEnvironmentEvent(environment *entities.Environment, msg PublishMsg)
-	PublishVpnDeviceEvent(device *entities.ConsoleVPNDevice, msg PublishMsg)
+	PublishEvent(ctx ResourceContext, resourceType entities.ResourceType, name string, update PublishMsg)
 }

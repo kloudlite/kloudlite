@@ -1,4 +1,4 @@
-package common
+package fields
 
 // constant vars generated for struct
 const (

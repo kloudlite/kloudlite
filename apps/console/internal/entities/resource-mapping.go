@@ -2,6 +2,7 @@ package entities
 
 import (
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -46,23 +47,23 @@ type ResourceMapping struct {
 var ResourceMappingIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.Id, Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.AccountName, Value: repos.IndexAsc},
-			{Key: fc.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fields.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceType, Value: repos.IndexAsc},
-			{Key: fc.EnvironmentName, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.ResourceMappingClusterName, Value: repos.IndexAsc},
+			{Key: fields.ClusterName, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceType, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceName, Value: repos.IndexAsc},
 			{Key: fc.ResourceMappingResourceNamespace, Value: repos.IndexAsc},

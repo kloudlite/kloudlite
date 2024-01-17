@@ -1,12 +1,14 @@
 package entities
 
 import (
-	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
+	"time"
 )
 
 type ProjectManagedService struct {
@@ -22,6 +24,18 @@ type ProjectManagedService struct {
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
+func (s *ProjectManagedService) GetDisplayName() string {
+	return s.ResourceMetadata.DisplayName
+}
+
+func (s *ProjectManagedService) GetCreationTimestamp() time.Time {
+	return s.CreationTimestamp.Time
+}
+
+func (s *ProjectManagedService) GetStatus() operator.Status {
+	return s.ProjectManagedService.Status
+}
+
 // GetResourceType implements domain.resource.
 func (*ProjectManagedService) GetResourceType() ResourceType {
 	return ResourceTypeProjectManagedService
@@ -30,15 +44,15 @@ func (*ProjectManagedService) GetResourceType() ResourceType {
 var ProjectManagedServiceIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.Id, Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.MetadataName, Value: repos.IndexAsc},
-			{Key: fc.AccountName, Value: repos.IndexAsc},
-			{Key: fc.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.MetadataName, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fields.ProjectName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
