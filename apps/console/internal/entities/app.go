@@ -36,9 +36,9 @@ var AppIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: fc.MetadataName, Value: repos.IndexAsc},
 			{Key: fc.MetadataNamespace, Value: repos.IndexAsc},
-			{Key: fc.AppAccountName, Value: repos.IndexAsc},
-			{Key: fc.AppProjectName, Value: repos.IndexAsc},
-			{Key: fc.AppEnvironmentName, Value: repos.IndexAsc},
+			{Key: fc.AccountName, Value: repos.IndexAsc},
+			{Key: fc.ProjectName, Value: repos.IndexAsc},
+			{Key: fc.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

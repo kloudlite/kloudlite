@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -22,7 +23,7 @@ func (d *domain) ListConfigs(ctx ResourceContext, search map[string]repos.MatchF
 
 func (d *domain) findConfig(ctx ResourceContext, name string) (*entities.Config, error) {
 	filters := ctx.DBFilters()
-	filters.Add("metadata.name", name)
+	filters.Add(fc.MetadataName, name)
 
 	cfg, err := d.configRepo.FindOne(ctx, filters)
 	if err != nil {
@@ -51,7 +52,7 @@ func (d *domain) GetConfigEntries(ctx ResourceContext, keyrefs []ConfigKeyRef) (
 	}
 
 	filters = d.configRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
-		"metadata.name": {
+		fc.MetadataName: {
 			MatchType: repos.MatchTypeArray,
 			Array:     names,
 		},
@@ -147,26 +148,28 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"recordVersion": xconfig.RecordVersion + 1,
-		"displayName":   config.DisplayName,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+	if xconfig == nil {
+		return nil, errors.Newf("no config found")
+	}
+
+	upConfig, err := d.configRepo.PatchById(ctx, xconfig.Id, repos.Document{
+		fc.RecordVersion: xconfig.RecordVersion + 1,
+		fc.DisplayName:   config.DisplayName,
+		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 
-		"metadata.labels":      config.Labels,
-		"metadata.annotations": config.Annotations,
+		fc.MetadataLabels:      config.Labels,
+		fc.MetadataAnnotations: config.Annotations,
 
-		"data": config.Data,
+		fc.ConfigData: config.Data,
 
-		"syncStatus.state":           t.SyncStateInQueue,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-	}
-
-	upConfig, err := d.configRepo.PatchById(ctx, xconfig.Id, patch)
+		fc.SyncStatusState:           t.SyncStateInQueue,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionApply,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -196,14 +199,12 @@ func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"markedForDeletion":          true,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionDelete,
-		"syncStatus.state":           t.SyncStateInQueue,
-	}
-
-	if _, err := d.configRepo.PatchById(ctx, c.Id, patch); err != nil {
+	if _, err := d.configRepo.PatchById(ctx, c.Id, repos.Document{
+		fc.MarkedForDeletion:         true,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionDelete,
+		fc.SyncStatusState:           t.SyncStateInQueue,
+	}); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -222,13 +223,15 @@ func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, op
 		return errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
+	if c == nil {
+		return errors.Newf("no config found")
 	}
 
-	_, err = d.configRepo.PatchById(ctx, c.Id, patch)
+	_, err = d.configRepo.PatchById(ctx, c.Id, repos.Document{
+		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
+		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+		fc.SyncStatusError:        errMsg,
+	})
 	return errors.NewE(err)
 }
 
@@ -247,28 +250,30 @@ func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Co
 		return errors.NewE(err)
 	}
 
+	if xconfig == nil {
+		return errors.Newf("no config found")
+	}
+
 	if err := d.MatchRecordVersion(configIn.Annotations, xconfig.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, xconfig.ProjectName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
 	}
 
-	patch := repos.Document{
-		"metadata.creationTimestamp": configIn.CreationTimestamp,
-		"metadata.labels":            configIn.Labels,
-		"metadata.annotations":       configIn.Annotations,
-		"metadata.generation":        configIn.Generation,
+	_, err = d.configRepo.PatchById(ctx, xconfig.Id, repos.Document{
+		fc.MetadataCreationTimestamp: configIn.CreationTimestamp,
+		fc.MetadataLabels:            configIn.Labels,
+		fc.MetadataAnnotations:       configIn.Annotations,
+		fc.MetadataGeneration:        configIn.Generation,
 
-		"syncStatus.state": func() t.SyncState {
+		fc.SyncStatusState: func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
 				return t.SyncStateDeletingAtAgent
 			}
 			return t.SyncStateUpdatedAtAgent
 		}(),
-		"syncStatus.recordVersion": xconfig.RecordVersion,
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
-	}
-
-	_, err = d.configRepo.PatchById(ctx, xconfig.Id, patch)
+		fc.SyncStatusRecordVersion: xconfig.RecordVersion,
+		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
+		fc.SyncStatusError:         nil,
+	})
 	return errors.NewE(err)
 }
 

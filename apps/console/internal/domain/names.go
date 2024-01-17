@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -21,7 +22,7 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 
 	return &CheckNameAvailabilityOutput{
 		Result:         false,
-		SuggestedNames: fn.GenValidK8sResourceNames(filters["metadata.name"].(string), 3),
+		SuggestedNames: fn.GenValidK8sResourceNames(filters[fc.MetadataName].(string), 3),
 	}, nil
 }
 
@@ -45,12 +46,12 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 
 	case entities.ResourceTypeVPNDevice:
 		{
-			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "metadata.name": name}, d.vpnDeviceRepo)
+			return checkResourceName(ctx, repos.Filter{fc.AccountName: accountName, fc.MetadataName: name}, d.vpnDeviceRepo)
 		}
 
 	case entities.ResourceTypeProject:
 		{
-			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "metadata.name": name}, d.projectRepo)
+			return checkResourceName(ctx, repos.Filter{fc.AccountName: accountName, fc.MetadataName: name}, d.projectRepo)
 		}
 
 	case entities.ResourceTypeProjectManagedService:
@@ -58,7 +59,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 			if projectName == nil {
 				return nil, errProjectRequired()
 			}
-			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "projectName": projectName, "metadata.name": name}, d.pmsRepo)
+			return checkResourceName(ctx, repos.Filter{fc.AccountName: accountName, fc.ProjectName: projectName, fc.MetadataName: name}, d.pmsRepo)
 		}
 
 	case entities.ResourceTypeEnvironment:
@@ -66,7 +67,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 			if projectName == nil {
 				return nil, errProjectRequired()
 			}
-			return checkResourceName(ctx, repos.Filter{"accountName": accountName, "projectName": projectName, "metadata.name": name}, d.environmentRepo)
+			return checkResourceName(ctx, repos.Filter{fc.AccountName: accountName, fc.ProjectName: projectName, fc.MetadataName: name}, d.environmentRepo)
 		}
 	default:
 		{
@@ -79,10 +80,10 @@ func (d *domain) CheckNameAvailability(ctx context.Context, accountName string, 
 			}
 
 			filter := repos.Filter{
-				"accountName":     accountName,
-				"projectName":     projectName,
-				"environmentName": environmentName,
-				"metadata.name":   name,
+				fc.AccountName:     accountName,
+				fc.ProjectName:     projectName,
+				fc.EnvironmentName: environmentName,
+				fc.MetadataName:    name,
 			}
 
 			switch resType {

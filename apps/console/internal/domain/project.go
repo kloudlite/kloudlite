@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -31,8 +32,8 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 
 	if len(clusterName) == 0 {
 		proj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-			"accountName":   ctx.GetAccountName(),
-			"metadata.name": projectName,
+			fc.AccountName:  ctx.GetAccountName(),
+			fc.MetadataName: projectName,
 		})
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -73,7 +74,7 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 		return nil, errors.Newf("unauthorized to get project")
 	}
 
-	filter := repos.Filter{"accountName": accountName}
+	filter := repos.Filter{fc.AccountName: accountName}
 
 	// return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
 	return d.projectRepo.FindPaginated(ctx, d.projectRepo.MergeMatchFilters(filter, search), pagination)
@@ -81,8 +82,8 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 
 func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"metadata.name": name,
+		fc.AccountName:  ctx.AccountName,
+		fc.MetadataName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -95,8 +96,8 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 
 func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"accountName":          ctx.AccountName,
-		"spec.targetNamespace": targetNamespace,
+		fc.AccountName:                ctx.AccountName,
+		fc.ProjectSpecTargetNamespace: targetNamespace,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -225,14 +226,16 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	patch := repos.Document{
-		"markedForDeletion":          true,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionDelete,
-		"syncStatus.state":           t.SyncStateInQueue,
+	if prj == nil {
+		return errors.Newf("no project found")
 	}
 
-	uproj, err := d.projectRepo.PatchById(ctx, prj.Id, patch)
+	uproj, err := d.projectRepo.PatchById(ctx, prj.Id, repos.Document{
+		fc.MarkedForDeletion:         true,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionDelete,
+		fc.SyncStatusState:           t.SyncStateInQueue,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -268,30 +271,32 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errors.NewE(err)
 	}
 
+	if xProject == nil {
+		return nil, errors.Newf("no project found")
+	}
+
 	if xProject.GetDeletionTimestamp() != nil {
 		return nil, errAlreadyMarkedForDeletion("project", "", project.Name)
 	}
 
-	patch := repos.Document{
-		"metadata.labels":       project.Labels,
-		"metadata.annnotations": project.Annotations,
+	upProject, err := d.projectRepo.PatchById(ctx, xProject.Id, repos.Document{
+		fc.MetadataLabels:      project.Labels,
+		fc.MetadataAnnotations: project.Annotations,
 
-		"recordVersion": xProject.RecordVersion + 1,
-		"displayName":   project.DisplayName,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+		fc.RecordVersion: xProject.RecordVersion + 1,
+		fc.DisplayName:   project.DisplayName,
+		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 
-		"spec": project.Spec,
+		fc.ProjectSpec: project.Spec,
 
-		"syncStatus.state":           t.SyncStateInQueue,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-	}
-
-	upProject, err := d.projectRepo.PatchById(ctx, xProject.Id, patch)
+		fc.SyncStatusState:           t.SyncStateInQueue,
+		fc.SyncStatusSyncScheduledAt: time.Now(),
+		fc.SyncStatusAction:          t.SyncActionApply,
+	})
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -325,30 +330,32 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 		return errors.NewE(err)
 	}
 
+	if proj == nil {
+		return errors.Newf("no project found")
+	}
+
 	if err := d.MatchRecordVersion(project.Annotations, proj.RecordVersion); err != nil {
 		return nil
 	}
 
-	patch := repos.Document{
-		"metadata.creationTimestamp": project.CreationTimestamp,
-		"metadata.labels":            project.Labels,
-		"metadata.annotations":       project.Annotations,
-		"metadata.generation":        project.Generation,
+	uproj, err := d.projectRepo.PatchById(ctx, proj.Id, repos.Document{
+		fc.MetadataCreationTimestamp: project.CreationTimestamp,
+		fc.MetadataLabels:            project.Labels,
+		fc.MetadataAnnotations:       project.Annotations,
+		fc.MetadataGeneration:        project.Generation,
 
-		"status": project.Status,
+		fc.Status: project.Status,
 
-		"syncStatus.state": func() t.SyncState {
+		fc.SyncStatusState: func() t.SyncState {
 			if status == types.ResourceStatusDeleting {
 				return t.SyncStateDeletingAtAgent
 			}
 			return t.SyncStateUpdatedAtAgent
 		}(),
-		"syncStatus.recordVersion": proj.RecordVersion,
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
-	}
-
-	uproj, err := d.projectRepo.PatchById(ctx, proj.Id, patch)
+		fc.SyncStatusRecordVersion: proj.RecordVersion,
+		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
+		fc.SyncStatusError:         nil,
+	})
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -362,13 +369,11 @@ func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name str
 		return err2
 	}
 
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
-	}
-
-	uproject, err := d.projectRepo.PatchById(ctx, p.Id, patch)
+	uproject, err := d.projectRepo.PatchById(ctx, p.Id, repos.Document{
+		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
+		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
+		fc.SyncStatusError:        errMsg,
+	})
 	d.resourceEventPublisher.PublishProjectEvent(uproject, PublishUpdate)
 	return errors.NewE(err)
 }
