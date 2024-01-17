@@ -105,6 +105,9 @@ operators:
       # -- enabled example wireguard server, and device
       enableExamples: false
 
+      infraDeviceNamespace: "kloudlite-infra-devices"
+      consoleDeviceNamespace: "kloudlite-console-devices"
+
 helmCharts:
   ingressNginx:
     enabled: true

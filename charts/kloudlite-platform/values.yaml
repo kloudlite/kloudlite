@@ -262,6 +262,8 @@ apps:
     image: ghcr.io/kloudlite/api/console:v1.0.5-nightly
     configuration:
       logsAndMetricsHttpPort: 9100
+      consoleVPNDeviceNamespace: "kloudlite-console-devices"
+        
   accountsApi:
     # -- image (with tag) for accounts api
     image: ghcr.io/kloudlite/api/accounts:v1.0.5-nightly
@@ -271,6 +273,10 @@ apps:
   infraApi:
     # -- image (with tag) for infra api
     image: ghcr.io/kloudlite/api/infra:v1.0.5-nightly
+
+    configuration:
+      infraVPNDeviceNamespace: "kloudlite-infra-devices"
+
   gatewayApi:
     image: ghcr.io/kloudlite/api/gateway:v1.0.5-nightly
   containerRegistryApi:

@@ -76,24 +76,37 @@ helm show values kloudlite/kloudlite-agent
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | accessToken | string | `""` | kloudlite issued access token (if already have) |
-| accountName | string ⚠️  **Required** | `""` | kloudlite account name |
+| accountName | string REQUIRED | `""` | kloudlite account name |
 | agent.enabled | bool | `true` | enable/disable kloudlite agent |
 | agent.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/agents/kl-agent","tag":""}` | kloudlite agent image name and tag |
 | agent.image.pullPolicy | string | `""` | image pull policy for kloudlite agent, default is .imagePullPolicy |
 | agent.image.tag | string | `""` | image tag for kloudlite agent, by default uses kloudlite_release |
+| agent.nodeSelector | object | `{}` |  |
+| agent.tolerations | list | `[]` |  |
 | clusterIdentitySecretName | string | `"kl-cluster-identity"` | cluster identity secret name, which keeps cluster token and access token |
 | clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS, like 'cluster.local' |
-| clusterName | string ⚠️  **Required** | `""` | kloudlite cluster name |
-| clusterToken | string ⚠️  **Required** | `""` | kloudlite issued cluster token |
-| helmCharts.cert-manager.affinity | object | `{}` |  |
-| helmCharts.cert-manager.enabled | bool | `true` |  |
-| helmCharts.cert-manager.name | string | `"cert-manager"` |  |
-| helmCharts.cert-manager.nodeSelector | object | `{}` |  |
-| helmCharts.cert-manager.tolerations | list | `[]` |  |
-| helmCharts.ingress-nginx.controllerKind | string | `"DaemonSet"` |  |
-| helmCharts.ingress-nginx.enabled | bool | `true` |  |
-| helmCharts.ingress-nginx.ingressClassName | string | `"nginx"` |  |
-| helmCharts.ingress-nginx.name | string | `"ingress-nginx"` |  |
+| clusterName | string REQUIRED | `""` | kloudlite cluster name |
+| clusterToken | string REQUIRED | `""` | kloudlite issued cluster token |
+| defaults.imagePullPolicy | string | `"Always"` |  |
+| defaults.imageTag | string | `""` |  |
+| defaults.nodeSelector | object | `{}` |  |
+| defaults.tolerations | list | `[]` |  |
+| helmCharts.certManager.affinity | object | `{}` |  |
+| helmCharts.certManager.configuration.clusterIssuers[0].acme.email | string | `"support@kloudlite.io"` |  |
+| helmCharts.certManager.configuration.clusterIssuers[0].acme.server | string | `"https://acme-v02.api.letsencrypt.org/directory"` |  |
+| helmCharts.certManager.configuration.clusterIssuers[0].default | bool | `true` |  |
+| helmCharts.certManager.configuration.clusterIssuers[0].name | string | `"letsencrypt-prod"` |  |
+| helmCharts.certManager.configuration.defaultClusterIssuer | string | `"letsencrypt-prod"` |  |
+| helmCharts.certManager.enabled | bool | `true` |  |
+| helmCharts.certManager.name | string | `"cert-manager"` |  |
+| helmCharts.certManager.nodeSelector | object | `{}` |  |
+| helmCharts.certManager.tolerations | list | `[]` |  |
+| helmCharts.ingressNginx.configuration.controllerKind | string | `"DaemonSet"` |  |
+| helmCharts.ingressNginx.configuration.ingressClassName | string | `"nginx"` |  |
+| helmCharts.ingressNginx.enabled | bool | `true` |  |
+| helmCharts.ingressNginx.name | string | `"ingress-nginx"` |  |
+| helmCharts.ingressNginx.nodeSelector | object | `{}` |  |
+| helmCharts.ingressNginx.tolerations | list | `[]` |  |
 | helmCharts.vector.debugOnStdout | bool | `false` |  |
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
@@ -101,17 +114,27 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.tolerations | list | `[]` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
-| operators.resourceWatcher.enabled | bool | `true` | enable/disable kloudlite resource watcher |
-| operators.resourceWatcher.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/agents/resource-watcher","tag":""}` | kloudlite resource watcher image name and tag |
-| operators.resourceWatcher.image.pullPolicy | string | `""` | image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion |
-| operators.resourceWatcher.image.tag | string | `""` | image tag for kloudlite resource watcher, by default uses .Chart.AppVersion |
-| operators.wgOperator.configuration | object | `{"dnsHostedZone":"","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
+| operators.agentOperator.configuration.cloudProvider.name | string | `""` |  |
+| operators.agentOperator.configuration.cloudProvider.region | string | `""` | cloud provider region |
+| operators.agentOperator.configuration.k3sJoinToken | string | `""` |  |
+| operators.agentOperator.configuration.k3sServerPublicHost | string | `""` |  |
+| operators.agentOperator.configuration.letsEncryptSupportEmail | string | `"support@kloudlite.io"` |  |
+| operators.agentOperator.enabled | bool | `true` | enable/disable kloudlite agent operator |
+| operators.agentOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operator/agent","tag":""}` | kloudlite resource watcher image name and tag |
+| operators.agentOperator.image.pullPolicy | string | `""` | image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion |
+| operators.agentOperator.image.tag | string | `""` | image tag for kloudlite resource watcher, by default uses .Chart.AppVersion |
+| operators.agentOperator.name | string | `"kl-agent-operator"` | workload name for kloudlite agent operator |
+| operators.agentOperator.nodeSelector | object | `{}` |  |
+| operators.agentOperator.tolerations | list | `[]` |  |
+| operators.wgOperator.configuration | object | `{"consoleDeviceNamespace":"kloudlite-console-devices","dnsHostedZone":"","infraDeviceNamespace":"kloudlite-infra-devices","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
 | operators.wgOperator.configuration.dnsHostedZone | string | `""` | dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com' |
 | operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
-| operators.wgOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operators/wireguard","tag":""}` | wg operator image and tag |
+| operators.wgOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operator/wireguard","tag":""}` | wg operator image and tag |
 | operators.wgOperator.image.pullPolicy | string | `""` | image pull policy for kloudlite wireguard operator, default is .imagePullPolicy |
 | operators.wgOperator.image.tag | string | `""` | image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion |
+| operators.wgOperator.nodeSelector | object | `{}` |  |
+| operators.wgOperator.tolerations | list | `[]` |  |
 | preferOperatorsOnMasterNodes | boolean | `true` | configuration for different kloudlite operators used in this chart |
 | svcAccountName | string | `"sa"` | k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName> |

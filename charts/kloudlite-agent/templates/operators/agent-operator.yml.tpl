@@ -77,6 +77,10 @@ spec:
             {{- /* for: resource watcher */}}
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
+            - name: INFRA_DEVICE_NAMESPACE
+              value: {{.Values.operators.wgOperator.configuration.infraDeviceNamespace}}
+            - name: CONSOLE_DEVICE_NAMESPACE
+              value: {{.Values.operators.wgOperator.configuration.consoleDeviceNamespace}}
 
             - name: CLUSTER_NAME
               valueFrom:

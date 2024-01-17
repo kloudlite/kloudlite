@@ -90,6 +90,9 @@ spec:
         - key: PROM_HTTP_ADDR
           value: http://{{ .Values.prometheus.name }}-prometheus.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:9090
 
+        - key: DEVICE_NAMESPACE
+          value: {{.Values.apps.consoleApi.configuration.consoleVPNDeviceNamespace}}
+
       volumes:
         - mountPath: /console.d/templates
           type: config
