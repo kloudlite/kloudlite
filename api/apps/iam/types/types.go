@@ -8,8 +8,9 @@ const (
 	ResourceAccount ResourceType = "account"
 	ResourceProject ResourceType = "project"
 
-	ResourceEnvironment ResourceType = "environment"
-	ResourceVPNDevice   ResourceType = "vpn_device"
+	ResourceEnvironment      ResourceType = "environment"
+	ResourceConsoleVPNDevice ResourceType = "console_vpn_device"
+	ResourceInfraVPNDevice   ResourceType = "infra_vpn_device"
 )
 
 type Role string

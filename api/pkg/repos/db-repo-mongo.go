@@ -350,11 +350,6 @@ func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document,
 		return x, errors.NewE(err)
 	}
 
-	if res == nil {
-		var x T
-		return x, errors.Newf("resource not found")
-	}
-
 	if res.IsMarkedForDeletion() {
 		var x T
 		return x, errors.Newf("cannot patch as resource is mark for deletion")
@@ -390,6 +385,19 @@ func (repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opt
 	}
 
 	patch["updateTime"] = time.Now()
+
+	res, err := repo.FindOne(ctx, Filter{
+		"id": id,
+	})
+	if err != nil {
+		var x T
+		return x, errors.NewE(err)
+	}
+
+	if res.IsMarkedForDeletion() {
+		var x T
+		return x, errors.Newf("cannot patch as resource is mark for deletion")
+	}
 
 	m, err := toMap(patch)
 	if err != nil {
