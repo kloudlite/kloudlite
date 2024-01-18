@@ -81,6 +81,8 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
+	device.Namespace = d.envVars.DeviceNamespace
+
 	device.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
 		return nil, errors.NewE(err)
@@ -97,8 +99,6 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 	device.AccountName = ctx.AccountName
 
 	device.SyncStatus = t.GenSyncStatus(t.SyncActionApply, device.RecordVersion)
-
-	device.Namespace = d.envVars.DeviceNamespace
 
 	if device.ProjectName != nil && device.EnvironmentName != nil {
 		s, err := d.envTargetNamespace(ctx, *device.ProjectName, *device.EnvironmentName)
@@ -137,6 +137,13 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 }
 
 func (d *domain) updateVpnOnCluster(ctx ConsoleContext, ndev, xdev *entities.ConsoleVPNDevice) error {
+
+	ndev.Namespace = d.envVars.DeviceNamespace
+	ndev.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &ndev.Device); err != nil {
+		return errors.NewE(err)
+	}
+
 	if ndev.ProjectName != nil && ndev.EnvironmentName != nil {
 		if err := d.applyK8sResource(ctx, *ndev.ProjectName, &ndev.Device, ndev.RecordVersion); err != nil {
 			return errors.NewE(err)
@@ -158,6 +165,7 @@ func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
+	device.Namespace = d.envVars.DeviceNamespace
 	xdevice, err := d.findVPNDevice(ctx, device.Name)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -208,6 +216,7 @@ func (d *domain) DeleteVPNDevice(ctx ConsoleContext, name string) error {
 		return errors.NewE(err)
 	}
 
+	device.Namespace = d.envVars.DeviceNamespace
 	d.resourceEventPublisher.PublishVpnDeviceEvent(device, PublishDelete)
 
 	if err := d.deleteK8sResource(ctx, *device.ProjectName, &device.Device); err != nil {
