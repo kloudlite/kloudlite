@@ -24,7 +24,8 @@ type ConsoleVPNDevice struct {
 
 	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput" struct-json-path:",ignore-nesting"`
 
-	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	LinkedClusters []string     `json:"linkedClusters,omitempty" graphql:"noinput"`
+	SyncStatus     t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 func (c *ConsoleVPNDevice) GetCreationTimestamp() time.Time {

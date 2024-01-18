@@ -40,7 +40,7 @@ type Env struct {
 
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 
-	DeviceNamespace string `env:"DEVICE_NAMESPACE" default:"infra-devices"`
+	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
