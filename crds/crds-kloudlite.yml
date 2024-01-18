@@ -511,8 +511,8 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.annotations.nodepool-min-target-max
-      name: Min/Target/Max
+    - jsonPath: .metadata.annotations.nodepool-min-max
+      name: Min/Max
       type: string
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
@@ -726,15 +726,11 @@ spec:
                   - key
                   type: object
                 type: array
-              targetCount:
-                minimum: 0
-                type: integer
             required:
             - cloudProvider
             - iac
             - maxCount
             - minCount
-            - targetCount
             type: object
           status:
             properties:
