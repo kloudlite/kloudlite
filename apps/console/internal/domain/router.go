@@ -150,14 +150,17 @@ func (d *domain) DeleteRouter(ctx ResourceContext, name string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
+
 	urouter, err := d.routerRepo.Patch(
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
 	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, urouter.ProjectName, &urouter.Router); err != nil {
@@ -174,9 +177,11 @@ func (d *domain) OnRouterDeleteMessage(ctx ResourceContext, router entities.Rout
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, router.Name),
 	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, router.Name, PublishDelete)
 	return nil
 }
@@ -201,9 +206,11 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 		common.PatchForSyncFromAgent(&router, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, urouter.GetResourceType(), urouter.GetName(), PublishUpdate)
 	return nil
 }
@@ -219,10 +226,13 @@ func (d *domain) OnRouterApplyError(ctx ResourceContext, errMsg string, name str
 			},
 		),
 	)
+
 	if err != nil {
 		return err
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishDelete)
+
 	return nil
 }
 

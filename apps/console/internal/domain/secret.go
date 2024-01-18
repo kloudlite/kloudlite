@@ -160,11 +160,13 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 				fc.SecretStringData: secret.StringData,
 			},
 		})
+
 	upSecret, err := d.secretRepo.Patch(
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, secret.Name),
 		patchForUpdate,
 	)
+
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -190,15 +192,19 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
+
 	usecret, err := d.secretRepo.Patch(
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
 	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishUpdate)
+
 	if err := d.deleteK8sResource(ctx, usecret.ProjectName, &usecret.Secret); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.secretRepo.DeleteById(ctx, usecret.Id)
@@ -213,15 +219,19 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, secret.Name),
 	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, secret.Name, PublishDelete)
+
 	return nil
 }
 
 func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xSecret, err := d.findSecret(ctx, secretIn.Name)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -236,7 +246,9 @@ func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Se
 		common.PatchForSyncFromAgent(&secretIn, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, usecret.GetResourceType(), usecret.GetName(), PublishUpdate)
+
 	return errors.NewE(err)
 }
 
@@ -251,10 +263,13 @@ func (d *domain) OnSecretApplyError(ctx ResourceContext, errMsg, name string, op
 			},
 		),
 	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishDelete)
+
 	return errors.NewE(err)
 }
 
