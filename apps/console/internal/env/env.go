@@ -34,7 +34,7 @@ type Env struct {
 	IsDev                bool
 	KubernetesApiProxy   string `env:"KUBERNETES_API_PROXY"`
 
-	DeviceNamespace string `env:"DEVICE_NAMESPACE" default:"console-devices"`
+	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

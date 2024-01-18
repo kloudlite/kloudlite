@@ -8,6 +8,7 @@ type ConsoleVPNDevice @shareable {
   id: String!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  linkedClusters: [String!]
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   projectName: String
