@@ -224,11 +224,12 @@ func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Co
 		return errors.Newf("no config found")
 	}
 
-	if err := d.MatchRecordVersion(configIn.Annotations, xconfig.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(configIn.Annotations, xconfig.RecordVersion)
+	if err != nil {
 		return d.resyncK8sResource(ctx, xconfig.ProjectName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
 	}
 
-	uc, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, status, common.PatchOpts{
+	uc, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, recordVersion, status, common.PatchOpts{
 		MessageTimestamp: opts.MessageTimestamp,
 	}))
 	d.resourceEventPublisher.PublishResourceEvent(ctx, uc.GetResourceType(), uc.GetName(), PublishUpdate)

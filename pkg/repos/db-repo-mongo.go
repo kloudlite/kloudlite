@@ -344,20 +344,19 @@ func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document,
 
 	patch["updateTime"] = time.Now()
 
+	var x T
+
 	res, err := repo.FindOne(ctx, filter)
 	if err != nil {
-		var x T
 		return x, errors.NewE(err)
 	}
 
 	if res.IsMarkedForDeletion() {
-		var x T
 		return x, errors.Newf("cannot patch as resource is mark for deletion")
 	}
 
 	m, err := toMap(patch)
 	if err != nil {
-		var x T
 		return x, errors.NewE(err)
 	}
 
@@ -386,22 +385,20 @@ func (repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opt
 
 	patch["updateTime"] = time.Now()
 
-	res, err := repo.FindOne(ctx, Filter{
+	var x T
+	res, err := repo.findOne(ctx, Filter{
 		"id": id,
 	})
 	if err != nil {
-		var x T
 		return x, errors.NewE(err)
 	}
 
 	if res.IsMarkedForDeletion() {
-		var x T
 		return x, errors.Newf("cannot patch as resource is mark for deletion")
 	}
 
 	m, err := toMap(patch)
 	if err != nil {
-		var x T
 		return x, errors.NewE(err)
 	}
 

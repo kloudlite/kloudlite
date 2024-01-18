@@ -249,7 +249,8 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 		return errors.Newf("no project manage service found")
 	}
 
-	if err := d.MatchRecordVersion(service.Annotations, svc.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(service.Annotations, svc.RecordVersion)
+	if err != nil {
 		return d.ResyncProjectManagedService(ctx, service.ProjectName, service.Name)
 	}
 
@@ -258,6 +259,7 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 		svc.Id,
 		common.PatchForSyncFromAgent(
 			&service,
+			recordVersion,
 			status,
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,

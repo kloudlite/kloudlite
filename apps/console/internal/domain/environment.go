@@ -451,7 +451,8 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		return errors.Newf("no environment found")
 	}
 
-	if err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(env.Annotations, xenv.RecordVersion)
+	if err != nil {
 		return d.resyncK8sResource(ctx, xenv.ProjectName, xenv.SyncStatus.Action, &xenv.Environment, xenv.RecordVersion)
 	}
 
@@ -460,6 +461,7 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 		xenv.Id,
 		common.PatchForSyncFromAgent(
 			&env,
+			recordVersion,
 			status,
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,
