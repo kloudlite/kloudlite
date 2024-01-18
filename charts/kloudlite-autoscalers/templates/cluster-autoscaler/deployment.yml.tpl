@@ -30,13 +30,13 @@ spec:
             - --cloud-provider
             - kloudlite
             - --logtostderr
-            - true
+            - "true"
             - --stderrthreshold
             - info
             - --scale-down-unneeded-time
-            - {{.Values.clusterAutoscaler.configuration.scaleDownUnneededTime}}
+            - {{.Values.clusterAutoscaler.configuration.scaleDownUnneededTime | squote}}
             - --enforce-node-group-min-size 
-            - true
+            - "true"
           image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion }}
           imagePullPolicy: {{.Values.clusterAutoscaler.image.pullPolicy | default .Values.defaults.imagePullPolicy }}
           name: main
