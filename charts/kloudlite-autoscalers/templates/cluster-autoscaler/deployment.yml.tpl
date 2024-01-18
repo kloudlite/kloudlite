@@ -25,8 +25,11 @@ spec:
 
       tolerations: {{.Values.clusterAutoscaler.tolerations | default list | toYaml | nindent 8}}
       nodeSelector: {{.Values.clusterAutoscaler.nodeSelector | default dict | toYaml | nindent 8}}
+
       containers:
-        - args:
+        - command:
+            - /cluster-autoscaler
+          args:
             - --cloud-provider
             - kloudlite
             - --logtostderr
@@ -37,7 +40,7 @@ spec:
             - {{.Values.clusterAutoscaler.configuration.scaleDownUnneededTime | squote}}
             - --enforce-node-group-min-size 
             - "true"
-          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion }}
+          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag  | default .Chart.AppVersion }}
           imagePullPolicy: {{.Values.clusterAutoscaler.image.pullPolicy | default .Values.defaults.imagePullPolicy }}
           name: main
           securityContext:
