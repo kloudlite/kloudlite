@@ -231,15 +231,11 @@ spec:
                   - key
                   type: object
                 type: array
-              targetCount:
-                minimum: 0
-                type: integer
             required:
             - cloudProvider
             - iac
             - maxCount
             - minCount
-            - targetCount
             type: object
           status:
             properties:
