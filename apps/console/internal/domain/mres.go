@@ -169,7 +169,7 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, m.Name, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, ctx.ProjectName, &m.ManagedResource, m.RecordVersion); err != nil {
 		return m, errors.NewE(err)
@@ -215,7 +215,7 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, upMres.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, upMres.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upMres.ManagedResource, upMres.RecordVersion); err != nil {
 		return upMres, errors.NewE(err)
@@ -237,7 +237,7 @@ func (d *domain) DeleteManagedResource(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, umres.ProjectName, &umres.ManagedResource); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.mresRepo.DeleteById(ctx, umres.Id)
@@ -255,7 +255,7 @@ func (d *domain) OnManagedResourceDeleteMessage(ctx ResourceContext, mres entiti
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, mres.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, mres.Name, PublishDelete)
 	return nil
 }
 
@@ -286,7 +286,7 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, umres.GetResourceType(), umres.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, umres.GetResourceType(), umres.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -304,7 +304,7 @@ func (d *domain) OnManagedResourceApplyError(ctx ResourceContext, errMsg string,
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeManagedResource, umres.Name, PublishDelete)
 	return errors.NewE(err)
 }
 

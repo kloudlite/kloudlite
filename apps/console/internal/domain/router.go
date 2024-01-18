@@ -95,7 +95,7 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, nrouter.Name, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, nrouter.Name, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, nrouter.ProjectName, &nrouter.Router, nrouter.RecordVersion); err != nil {
 		return nrouter, errors.NewE(err)

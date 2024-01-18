@@ -3,8 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
-	"time"
-
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/kv"
@@ -32,8 +31,8 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 
 	if len(clusterName) == 0 {
 		proj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-			fc.AccountName:  ctx.GetAccountName(),
-			fc.MetadataName: projectName,
+			fields.AccountName:  ctx.GetAccountName(),
+			fields.MetadataName: projectName,
 		})
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -74,7 +73,7 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 		return nil, errors.Newf("unauthorized to get project")
 	}
 
-	filter := repos.Filter{fc.AccountName: accountName}
+	filter := repos.Filter{fields.AccountName: accountName}
 
 	// return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
 	return d.projectRepo.FindPaginated(ctx, d.projectRepo.MergeMatchFilters(filter, search), pagination)
@@ -82,8 +81,8 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 
 func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		fc.AccountName:  ctx.AccountName,
-		fc.MetadataName: name,
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -96,7 +95,7 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 
 func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		fc.AccountName:                ctx.AccountName,
+		fields.AccountName:                ctx.AccountName,
 		fc.ProjectSpecTargetNamespace: targetNamespace,
 	})
 	if err != nil {
@@ -177,7 +176,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishProjectEvent(prj, PublishAdd)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx,entities.ResourceTypeProject, prj.Name, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, prj.Name, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
@@ -221,26 +220,19 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		return errors.Newf("unauthorized to delete project")
 	}
 
-	prj, err := d.findProject(ctx, name)
+	uproj, err := d.projectRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: name,
+		},
+		common.PatchForMarkDeletion(),
+	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	if prj == nil {
-		return errors.Newf("no project found")
-	}
-
-	uproj, err := d.projectRepo.PatchById(ctx, prj.Id, repos.Document{
-		fc.MarkedForDeletion:         true,
-		fc.SyncStatusSyncScheduledAt: time.Now(),
-		fc.SyncStatusAction:          t.SyncActionDelete,
-		fc.SyncStatusState:           t.SyncStateInQueue,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishProjectEvent(uproj, PublishUpdate)
-
+	d.resourceEventPublisher.PublishConsoleEvent(ctx,entities.ResourceTypeProject, name, PublishUpdate)
 	return d.deleteK8sResource(ctx, uproj.Name, &uproj.Project)
 }
 
@@ -266,41 +258,24 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errors.NewE(err)
 	}
 
-	xProject, err := d.findProject(ctx, project.Name)
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&project,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.ProjectSpec: project.Spec,
+			},
+		})
+
+
+	upProject, err := d.projectRepo.Patch(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: project.Name,
+	}, patchForUpdate)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-
-	if xProject == nil {
-		return nil, errors.Newf("no project found")
-	}
-
-	if xProject.GetDeletionTimestamp() != nil {
-		return nil, errAlreadyMarkedForDeletion("project", "", project.Name)
-	}
-
-	upProject, err := d.projectRepo.PatchById(ctx, xProject.Id, repos.Document{
-		fc.MetadataLabels:      project.Labels,
-		fc.MetadataAnnotations: project.Annotations,
-
-		fc.RecordVersion: xProject.RecordVersion + 1,
-		fc.DisplayName:   project.DisplayName,
-		fc.LastUpdatedBy: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-
-		fc.ProjectSpec: project.Spec,
-
-		fc.SyncStatusState:           t.SyncStateInQueue,
-		fc.SyncStatusSyncScheduledAt: time.Now(),
-		fc.SyncStatusAction:          t.SyncActionApply,
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishProjectEvent(upProject, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject,project.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upProject.Name, &upProject.Project, upProject.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -310,17 +285,17 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 }
 
 func (d *domain) OnProjectDeleteMessage(ctx ConsoleContext, project entities.Project) error {
-	p, err := d.findProject(ctx, project.Name)
+	err := d.projectRepo.DeleteOne(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: project.Name,
+		},
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	err = d.projectRepo.DeleteById(ctx, p.Id)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishProjectEvent(p, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeApp, project.Name, PublishDelete)
 	return nil
 }
 
@@ -338,43 +313,38 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 		return nil
 	}
 
-	uproj, err := d.projectRepo.PatchById(ctx, proj.Id, repos.Document{
-		fc.MetadataCreationTimestamp: project.CreationTimestamp,
-		fc.MetadataLabels:            project.Labels,
-		fc.MetadataAnnotations:       project.Annotations,
-		fc.MetadataGeneration:        project.Generation,
+	uproject, err := d.appRepo.PatchById(
+		ctx,
+		proj.Id,
+		common.PatchForSyncFromAgent(&project, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
 
-		fc.Status: project.Status,
-
-		fc.SyncStatusState: func() t.SyncState {
-			if status == types.ResourceStatusDeleting {
-				return t.SyncStateDeletingAtAgent
-			}
-			return t.SyncStateUpdatedAtAgent
-		}(),
-		fc.SyncStatusRecordVersion: proj.RecordVersion,
-		fc.SyncStatusLastSyncedAt:  opts.MessageTimestamp,
-		fc.SyncStatusError:         nil,
-	})
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishProjectEvent(uproj, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx,entities.ResourceTypeProject,uproject.Name, PublishUpdate)
 	return nil
 }
 
 func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
-	p, err2 := d.findProject(ctx, name)
-	if err2 != nil {
-		return err2
+	uproject, err := d.projectRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: name,
+		},
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
+	if err != nil {
+		return errors.NewE(err)
 	}
-
-	uproject, err := d.projectRepo.PatchById(ctx, p.Id, repos.Document{
-		fc.SyncStatusState:        t.SyncStateErroredAtAgent,
-		fc.SyncStatusLastSyncedAt: opts.MessageTimestamp,
-		fc.SyncStatusError:        errMsg,
-	})
-	d.resourceEventPublisher.PublishProjectEvent(uproject, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeApp, uproject.Name, PublishDelete)
 	return errors.NewE(err)
 }
 
