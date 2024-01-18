@@ -4,34 +4,29 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/nodepool/internal/env"
 	"github.com/kloudlite/operator/operators/nodepool/internal/templates"
-
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	job_manager "github.com/kloudlite/operator/pkg/job-helper"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	ct "github.com/kloudlite/operator/apis/common-types"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	job_manager "github.com/kloudlite/operator/pkg/job-helper"
+	rApi "github.com/kloudlite/operator/pkg/operator"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 type Reconciler struct {
@@ -50,30 +45,15 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	ensureJobNamespace                 = "ensure-job-namespace"
-	nodepoolApplyJob                   = "nodepool-apply-job"
-	nodepoolNodesHash                  = "nodepool-nodes-hash"
-	nodepoolDeleteJob                  = "nodepool-delete-job"
-	deleteClusterAutoscalerMarkedNodes = "delete-cluster-autoscaler-marked-nodes"
-	trackUpdatesOnNodes                = "track-updates-on-nodes"
-	cleanupOrphanNodes                 = "cleanup-orphan-nodes"
-	defaultsPatched                    = "defaults-patched"
+	labelNodePoolApplyJob   string = "kloudlite.io/nodepool-apply-job"
+	labelResourceGeneration string = "kloudlite.io/resource-generation"
 
-	deleteNodeAfterTimestamp    = "kloudlite.io/delete-node-after-timestamp"
-	markedForFutureDeletion     = "kloudlite.io/marked-for-future-deletion"
-	excludeFromCalculation      = "kloudlite.io/marked-for-future-deletion"
-	clusterAutoscalerDeleteNode = "kloudlite.io/cluster-autoscaler-delete-node"
+	labelNodenameWithoutPrefix string = "kloudlite.io/node-name-without-prefix"
 
-	labelNodePoolApplyJob   = "kloudlite.io/nodepool-apply-job"
-	labelNodePoolDeleteJob  = "kloudlite.io/nodepool-delete-job"
-	labelResourceGeneration = "kloudlite.io/resource-generation"
+	annotationNodesChecksum string = "kloudlite.io/nodes.checksum"
 
-	annotationDesiredNodesChecksum = "kloudlite.io/nodepool.nodes-checksum"
+	nodeFinalizer string = "kloudlite.io/nodepool-node-finalizer"
 )
-
-// +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
@@ -84,19 +64,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.PreReconcile()
 	defer req.PostReconcile()
 
-	if v, ok := req.Object.Annotations[constants.AnnotationReconcileScheduledAfter]; ok {
-		t, err := time.Parse(time.RFC3339, v)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		if time.Now().Before(t) {
-			req.Logger.Infof("reconcile has been scheduled after %s, will reque after that", t)
-			return ctrl.Result{RequeueAfter: time.Until(t)}, nil
-		}
-		delete(req.Object.Annotations, constants.AnnotationReconcileScheduledAfter)
-		if err := r.Update(ctx, req.Object); err != nil {
-			return ctrl.Result{}, err
-		}
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -114,7 +83,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
+	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -122,15 +91,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureNodepoolJobNamespace(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.cleanupOrphanCorev1Nodes(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.startNodepoolApplyJob(req); !step.ShouldProceed() {
+	if step := r.syncNodepool(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -138,12 +99,22 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
+func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	return req.Done()
+}
+
 func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(defaultsPatched)
-	defer req.LogPostCheck(defaultsPatched)
+	checkName := "patch-defaults"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	hasUpdated := false
 
@@ -159,14 +130,14 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(defaultsPatched, check, err.Error())
+			return fail(err)
 		}
 		return req.Done()
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[defaultsPatched] {
-		obj.Status.Checks[defaultsPatched] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -175,175 +146,168 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 	return req.Next()
 }
 
-func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-
-	checkName := "finalizing"
+func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "sync-nodepool"
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
 
-	if step := r.startNodepoolDeleteJob(req); !step.ShouldProceed() {
-		check.Status = false
-		check.Message = "waiting for nodepool delete job to finish execution"
-		if check != checks[checkName] {
-			checks[checkName] = check
-			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-				return sr
-			}
-		}
-		return step
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	if obj.Status.Checks[nodepoolDeleteJob].Status {
-		if err := r.deleteAllNodesOfNodepool(ctx, obj.Name); err != nil {
-			return req.CheckFailed(checkName, check, err.Error())
-		}
-
-		return req.Finalize()
+	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
+	if err != nil {
+		return fail(err)
 	}
 
-	return req.Done()
-}
-
-func listNodesInNodepool(ctx context.Context, cli client.Client, nodepoolName string) ([]clustersv1.Node, error) {
-	var nodesList clustersv1.NodeList
-	if err := cli.List(ctx, &nodesList, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			constants.NodePoolNameKey: nodepoolName,
-		}),
-	}); err != nil {
-		return nil, err
+	if err := addFinalizersOnNodes(ctx, r.Client, nodes, nodeFinalizer); err != nil {
+		return fail(err)
 	}
 
-	return nodesList.Items, nil
-}
+	markedForDeletion := filterNodesMarkedForDeletion(nodes)
 
-func (r *Reconciler) deleteAllNodesOfNodepool(ctx context.Context, nodePoolName string) error {
-	var nodesList corev1.NodeList
-	if err := r.List(ctx, &nodesList, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			constants.NodePoolNameKey: nodePoolName,
-		}),
-	}); err != nil {
-		return err
-	}
-
-	if len(nodesList.Items) == 0 {
-		r.logger.Infof("all nodes belongig to nodepool %s have been deleted", nodePoolName)
-		return nil
-	}
-
-	for i := range nodesList.Items {
-		if err := r.Delete(ctx, &nodesList.Items[i]); err != nil {
-			return err
+	nodesMap := make(map[string]clustersv1.NodeProps, len(nodes)-len(markedForDeletion))
+	for i := range nodes {
+		rawName := nodes[i].GetName()[len(obj.GetName())+1:]
+		if _, ok := markedForDeletion[nodes[i].GetName()]; !ok {
+			nodesMap[rawName] = clustersv1.NodeProps{}
 		}
 	}
 
-	return fmt.Errorf("waiting for nodes belonging to nodepool %s to be deleted", nodePoolName)
-}
+	checksum := nodesChecksum(nodesMap)
 
-func (r *Reconciler) cleanupOrphanCorev1Nodes(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	accessKey, err := func() (string, error) {
+		s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderAccessKey.Namespace, obj.Spec.IAC.CloudProviderAccessKey.Name), &corev1.Secret{})
+		if err2 != nil {
+			return "", err2
+		}
 
-	req.LogPreCheck(cleanupOrphanNodes)
-	defer req.LogPostCheck(cleanupOrphanNodes)
-
-	var nodesList corev1.NodeList
-	if err := r.List(ctx, &nodesList, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			constants.NodePoolNameKey: obj.Name,
-		}),
-	}); err != nil {
-		return req.CheckFailed(cleanupOrphanNodes, check, err.Error())
+		return string(s.Data[obj.Spec.IAC.CloudProviderAccessKey.Key]), nil
+	}()
+	if err != nil {
+		return fail(err)
 	}
 
-	for i := range nodesList.Items {
-		var managerNode clustersv1.Node
-		if err := r.Get(ctx, fn.NN("", nodesList.Items[i].Name), &managerNode); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return req.CheckFailed(cleanupOrphanNodes, check, err.Error())
-			}
+	secretKey, err := func() (string, error) {
+		s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderSecretKey.Namespace, obj.Spec.IAC.CloudProviderSecretKey.Name), &corev1.Secret{})
+		if err2 != nil {
+			return "", err2
+		}
 
-			// INFO: when clustersv1.Node, is not found for a corev1.Node belonging to a nodepool,
-			// it means that the node is orphaned, and we need to delete it
-			if err := r.Delete(ctx, &nodesList.Items[i]); err != nil {
-				return req.CheckFailed(cleanupOrphanNodes, check, err.Error())
-			}
+		return string(s.Data[obj.Spec.IAC.CloudProviderSecretKey.Key]), nil
+	}()
+	if err != nil {
+		return fail(err)
+	}
+
+	varfileJson, err := r.parseSpecToVarFileJson(ctx, obj, nodesMap, accessKey, secretKey)
+	if err != nil {
+		return fail(err).Err(nil)
+	}
+
+	jobName := obj.Spec.IAC.JobName
+	jobNamespace := obj.Spec.IAC.JobNamespace
+
+	job := &batchv1.Job{}
+	if err := r.Get(ctx, fn.NN(jobNamespace, jobName), job); err != nil {
+		job = nil
+	}
+
+	if job == nil {
+		b, err := templates.ParseBytes(r.templateNodePoolJob, map[string]any{
+			"action": "apply",
+
+			"job-name":      jobName,
+			"job-namespace": jobNamespace,
+			"annotations": map[string]string{
+				annotationNodesChecksum: checksum,
+			},
+			"labels": map[string]string{
+				constants.NodePoolNameKey: obj.Name,
+				labelNodePoolApplyJob:     "true",
+				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
+			},
+			// "annotations": obj.Annotations,
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+			"job-node-selector": constants.K8sMasterNodeSelector,
+
+			"service-account-name": "",
+
+			"aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
+			"aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
+			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
+			"aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
+
+			"aws-s3-access-key": accessKey,
+			"aws-s3-secret-key": secretKey,
+
+			"values.json": string(varfileJson),
+		})
+		if err != nil {
+			return fail(err).Err(nil)
+		}
+
+		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		if err != nil {
+			return fail(err).Err(nil)
+		}
+
+		req.AddToOwnedResources(rr...)
+		req.Logger.Infof("waiting for job to be created")
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	isMyJob := job.Labels[labelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[labelNodePoolApplyJob] == "true" && job.Annotations[annotationNodesChecksum] == checksum
+
+	if !isMyJob {
+		if !job_manager.HasJobFinished(ctx, r.Client, job) {
+			return fail(fmt.Errorf("waiting for previous jobs to finish execution"))
+		}
+
+		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
+			return fail(err)
+		}
+
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	if !job_manager.HasJobFinished(ctx, r.Client, job) {
+		return fail(fmt.Errorf("waiting for job to finish execution")).Err(nil)
+	}
+
+	jobSucceeded := job.Status.Succeeded > 0
+
+	if jobSucceeded {
+		if err := deleteFinalizersOnNodes(ctx, r.Client, fn.MapValues(markedForDeletion), nodeFinalizer); err != nil {
+			return fail(err)
+		}
+		if err := deleteNodes(ctx, r.Client, fn.MapValues(markedForDeletion)...); err != nil {
+			return fail(err)
 		}
 	}
 
-	check.Status = true
-	if check != obj.Status.Checks[cleanupOrphanNodes] {
-		obj.Status.Checks[cleanupOrphanNodes] = check
+	check.Status = jobSucceeded
+
+	if !check.Status {
+		check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
+	}
+	if check != obj.Status.Checks[checkName] {
+		obj.Status.Checks[checkName] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
 	}
 
+	if !check.Status {
+		return req.Done()
+	}
+
 	return req.Next()
-}
-
-type NodeCalculator struct {
-	DesiredNodes       map[string]clustersv1.NodeProps
-	MarkedForDeletions map[string]clustersv1.Node
-}
-
-func (r *Reconciler) calculateNodes(ctx context.Context, obj *clustersv1.NodePool) (*NodeCalculator, error) {
-	nc := &NodeCalculator{
-		DesiredNodes:       map[string]clustersv1.NodeProps{},
-		MarkedForDeletions: map[string]clustersv1.Node{},
-	}
-
-	extractNodeName := func(advertisedName string) string {
-		return advertisedName[len(obj.Name)+1:]
-	}
-
-	currNodes, err := listNodesInNodepool(ctx, r.Client, obj.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	sort.SliceStable(currNodes, func(i, j int) bool {
-		return currNodes[i].CreationTimestamp.Before(&currNodes[j].CreationTimestamp)
-	})
-
-	for i := 0; i < len(currNodes); i++ {
-		nodeName := extractNodeName(currNodes[i].Name)
-
-		dt := currNodes[i].GetDeletionTimestamp().IsZero()
-		if dt {
-			nc.DesiredNodes[nodeName] = clustersv1.NodeProps{}
-		}
-	}
-
-	// INFO: when desirednodes is more than targetcount, we need to delete #diff nodes
-	for i := len(nc.DesiredNodes); i > obj.Spec.TargetCount; i -= 1 {
-		if err := r.Delete(ctx, &currNodes[i-1]); err != nil {
-			return nil, err
-		}
-	}
-
-	for i := len(nc.DesiredNodes); i < obj.Spec.TargetCount && i < obj.Spec.MaxCount; i++ {
-		nodeName := fmt.Sprintf("node-%s", strings.ToLower(fn.CleanerNanoid(8)))
-		node := &clustersv1.Node{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-%s", obj.Name, nodeName)}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, node, func() error {
-			if node.Labels == nil {
-				node.Labels = make(map[string]string, 2)
-			}
-			node.Labels[constants.NodePoolNameKey] = obj.Name
-			node.Labels[constants.NodeNameKey] = node.Name
-			node.Spec.NodepoolName = obj.Name
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-		nc.DesiredNodes[nodeName] = clustersv1.NodeProps{}
-	}
-
-	return nc, nil
 }
 
 func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string]clustersv1.NodeProps, accessKey, secretKey string) (string, error) {
@@ -456,373 +420,6 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 	}
 }
 
-func (r *Reconciler) ensureNodepoolJobNamespace(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(ensureJobNamespace)
-	defer req.LogPostCheck(ensureJobNamespace)
-
-	jobNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.IAC.JobNamespace}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, jobNs, func() error {
-		if jobNs.Labels == nil {
-			jobNs.Labels = make(map[string]string, 1)
-		}
-		jobNs.Labels[constants.KloudliteManagedNamespace] = "true"
-
-		if jobNs.Annotations == nil {
-			jobNs.Annotations = make(map[string]string, 1)
-		}
-		jobNs.Annotations[constants.DescriptionKey] = "kloudlite managed namespace for running cluster specific jobs, like nodepool, autoscaling, etc."
-		return nil
-	}); err != nil {
-		return req.CheckFailed(ensureJobNamespace, check, err.Error()).Err(nil)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[ensureJobNamespace] {
-		obj.Status.Checks[ensureJobNamespace] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
-func getSortedKeys(data map[string]clustersv1.NodeProps) []string {
-	keys := make([]string, 0, len(data))
-	for i := range data {
-		keys = append(keys, i)
-	}
-
-	sort.SliceStable(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-
-	return keys
-}
-
-func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(nodepoolApplyJob)
-	defer req.LogPostCheck(nodepoolApplyJob)
-
-	job := &batchv1.Job{}
-	jobName := obj.Spec.IAC.JobName
-	jobNs := obj.Spec.IAC.JobNamespace
-
-	if err := r.Get(ctx, fn.NN(jobNs, jobName), job); err != nil {
-		job = nil
-	}
-
-	failedWithErr := func(err error) stepResult.Result {
-		return req.CheckFailed(nodepoolApplyJob, check, err.Error())
-	}
-
-	nc, err := r.calculateNodes(ctx, obj)
-	if err != nil {
-		return failedWithErr(err)
-	}
-
-	b, err := json.Marshal(nc.DesiredNodes)
-	if err != nil {
-		return failedWithErr(err)
-	}
-	checksum := fn.Md5(b)
-
-	if job == nil {
-		obj.Annotations[annotationDesiredNodesChecksum] = checksum
-		if err := r.Update(ctx, obj); err != nil {
-			return failedWithErr(err)
-		}
-
-		accessKey, err := func() (string, error) {
-			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderAccessKey.Namespace, obj.Spec.IAC.CloudProviderAccessKey.Name), &corev1.Secret{})
-			if err2 != nil {
-				return "", err2
-			}
-
-			return string(s.Data[obj.Spec.IAC.CloudProviderAccessKey.Key]), nil
-		}()
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-		}
-
-		secretKey, err := func() (string, error) {
-			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderSecretKey.Namespace, obj.Spec.IAC.CloudProviderSecretKey.Name), &corev1.Secret{})
-			if err2 != nil {
-				return "", err2
-			}
-
-			return string(s.Data[obj.Spec.IAC.CloudProviderSecretKey.Key]), nil
-		}()
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-		}
-
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes, accessKey, secretKey)
-		if err != nil {
-			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
-		}
-
-		b, err := templates.ParseBytes(r.templateNodePoolJob, map[string]any{
-			"action": "apply",
-
-			"job-name":      jobName,
-			"job-namespace": jobNs,
-			"labels": map[string]string{
-				constants.NodePoolNameKey: obj.Name,
-				labelNodePoolApplyJob:     "true",
-				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
-			},
-			"annotations": obj.Annotations,
-			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"job-node-selector": constants.K8sMasterNodeSelector,
-
-			"service-account-name": "",
-
-			"aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
-			"aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
-			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
-			"aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
-
-			"aws-s3-access-key": accessKey,
-			"aws-s3-secret-key": secretKey,
-
-			"values.json": string(valuesJson),
-		})
-		if err != nil {
-			return req.CheckFailed(nodepoolApplyJob, check, err.Error()).Err(nil)
-		}
-
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return req.CheckFailed(nodepoolApplyJob, check, err.Error()).Err(nil)
-		}
-		req.AddToOwnedResources(rr...)
-		req.Logger.Infof("waiting for job to be created")
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	isMyJob := job.Labels[labelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[labelNodePoolApplyJob] == "true"
-	isMyJob = isMyJob && job.Annotations[annotationDesiredNodesChecksum] == checksum
-
-	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(nodepoolApplyJob, check, "waiting for previous jobs to finish execution")
-		}
-
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(nodepoolApplyJob, check, "waiting for job to finish execution").Err(nil)
-	}
-
-	if err := actOnAutoscalerDeleteNode(ctx, r.Client, job, obj); err != nil {
-		return req.CheckFailed(nodepoolApplyJob, check, err.Error())
-	}
-
-	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	check.Status = job.Status.Succeeded > 0
-	if check != obj.Status.Checks[nodepoolApplyJob] {
-		obj.Status.Checks[nodepoolApplyJob] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	if !check.Status {
-		return req.Done()
-	}
-
-	return req.Next()
-}
-
-func actOnAutoscalerDeleteNode(ctx context.Context, cli client.Client, job *batchv1.Job, nodepool *clustersv1.NodePool) error {
-	npAnnValue, ok := nodepool.Annotations[clusterAutoscalerDeleteNode]
-	if !ok {
-		return nil
-	}
-
-	jobAnnValue, ok := job.Annotations[clusterAutoscalerDeleteNode]
-	if !ok {
-		return job_manager.DeleteJob(ctx, cli, job.Namespace, job.Name)
-	}
-
-	if npAnnValue != jobAnnValue {
-		return job_manager.DeleteJob(ctx, cli, job.Namespace, job.Name)
-	}
-
-	delete(nodepool.Annotations, clusterAutoscalerDeleteNode)
-	nodepool.Spec.TargetCount = nodepool.Spec.TargetCount - 1
-	if err := cli.Update(ctx, nodepool); err != nil {
-		return err
-	}
-
-	if err := cli.Delete(ctx, &corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: jobAnnValue}}); err != nil {
-		return client.IgnoreNotFound(err)
-	}
-
-	return nil
-}
-
-func (r *Reconciler) drainNodesOfNodepool(ctx context.Context, nodepoolName string) error {
-	var nodesList corev1.NodeList
-	if err := r.List(ctx, &nodesList, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			constants.NodePoolNameKey: nodepoolName,
-		}),
-	}); err != nil {
-		return err
-	}
-
-	for i := range nodesList.Items {
-		nodesList.Items[i].Spec.Unschedulable = true
-		if err := r.Update(ctx, &nodesList.Items[i]); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(nodepoolDeleteJob)
-	defer req.LogPostCheck(nodepoolDeleteJob)
-
-	// INFO: draining nodes belonging to this nodegroup, prior to deleting them
-	if err := r.drainNodesOfNodepool(ctx, obj.Name); err != nil {
-		return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-	}
-
-	job := &batchv1.Job{}
-	jobName := obj.Spec.IAC.JobName
-	jobNs := obj.Spec.IAC.JobNamespace
-	if err := r.Get(ctx, fn.NN(jobNs, jobName), job); err != nil {
-		job = nil
-	}
-
-	nc, err := r.calculateNodes(ctx, obj)
-	if err != nil {
-		return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-	}
-
-	if job == nil {
-		accessKey, err := func() (string, error) {
-			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderAccessKey.Namespace, obj.Spec.IAC.CloudProviderAccessKey.Name), &corev1.Secret{})
-			if err2 != nil {
-				return "", err2
-			}
-
-			return string(s.Data[obj.Spec.IAC.CloudProviderAccessKey.Key]), nil
-		}()
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-		}
-
-		secretKey, err := func() (string, error) {
-			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderSecretKey.Namespace, obj.Spec.IAC.CloudProviderSecretKey.Name), &corev1.Secret{})
-			if err2 != nil {
-				return "", err2
-			}
-
-			return string(s.Data[obj.Spec.IAC.CloudProviderSecretKey.Key]), nil
-		}()
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-		}
-
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes, accessKey, secretKey)
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-		}
-
-		b, err := templates.ParseBytes(r.templateNodePoolJob, map[string]any{
-			"action": "delete",
-
-			"job-name":      jobName,
-			"job-namespace": jobNs,
-			"labels": map[string]string{
-				constants.NodePoolNameKey: obj.Name,
-				labelNodePoolDeleteJob:    "true",
-				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
-			},
-			"annotations": obj.Annotations,
-			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			"job-node-selector": constants.K8sMasterNodeSelector,
-
-			"service-account-name": "",
-
-			"aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
-			"aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
-			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
-			"aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
-
-			"aws-s3-access-key": accessKey,
-			"aws-s3-secret-key": secretKey,
-
-			"values.json": string(valuesJson),
-		})
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error()).Err(nil)
-		}
-
-		rr, err := r.yamlClient.ApplyYAML(ctx, b)
-		if err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error()).Err(nil)
-		}
-		req.AddToOwnedResources(rr...)
-		req.Logger.Infof("waiting for job to be created")
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	isMyJob := job.Labels[labelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[labelNodePoolDeleteJob] == "true"
-
-	if !isMyJob {
-		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(nodepoolDeleteJob, check, "waiting for previous jobs to finish execution").Err(nil)
-		}
-
-		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
-		}
-
-		return req.Done().RequeueAfter(1 * time.Second)
-	}
-
-	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(nodepoolDeleteJob, check, "waiting for job to finish execution").Err(nil)
-	}
-
-	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	check.Status = job.Status.Succeeded > 0
-	if check != obj.Status.Checks[nodepoolDeleteJob] {
-		obj.Status.Checks[nodepoolDeleteJob] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	if !check.Status {
-		return req.Done()
-	}
-
-	return req.Next()
-}
-
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
@@ -838,7 +435,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.NodePool{})
 
 	watches := []client.Object{
-		&corev1.Node{},
+		&clustersv1.Node{},
 		&batchv1.Job{},
 	}
 
@@ -846,7 +443,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		builder.Watches(
 			obj,
 			handler.EnqueueRequestsFromMapFunc(
-				func(ctx context.Context, o client.Object) []reconcile.Request {
+				func(_ context.Context, o client.Object) []reconcile.Request {
 					npName, ok := o.GetLabels()[constants.NodePoolNameKey]
 					if !ok {
 						return nil

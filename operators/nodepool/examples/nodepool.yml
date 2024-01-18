@@ -4,7 +4,7 @@ metadata:
   name: np-1
 spec:
   maxCount: 3
-  minCount: 1
+  minCount: 2
   targetCount: 1
 
   cloudProvider: aws
