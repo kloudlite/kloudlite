@@ -70,8 +70,6 @@ type NodePoolSpec struct {
 	MaxCount int `json:"maxCount"`
 	// +kubebuilder:validation:Minimum=0
 	MinCount int `json:"minCount"`
-	// +kubebuilder:validation:Minimum=0
-	TargetCount int `json:"targetCount"`
 
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
 	NodeTaints []corev1.Taint    `json:"nodeTaints,omitempty"`
@@ -117,8 +115,9 @@ func (n *NodePool) GetEnsuredLabels() map[string]string {
 
 func (n *NodePool) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.GVKKey:          GroupVersion.WithKind("NodePool").String(),
-		"nodepool-min-target-max": fmt.Sprintf("%d/%d/%d", n.Spec.MinCount, n.Spec.TargetCount, n.Spec.MaxCount),
+		constants.GVKKey: GroupVersion.WithKind("NodePool").String(),
+		// "nodepool-min-target-max": fmt.Sprintf("%d/%d/%d", n.Spec.MinCount, n.Spec.TargetCount, n.Spec.MaxCount),
+		"nodepool-min-target-max": fmt.Sprintf("%d/%d", n.Spec.MinCount, n.Spec.MaxCount),
 	}
 }
 

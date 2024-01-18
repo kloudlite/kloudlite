@@ -42,6 +42,7 @@ const (
 	trackCorev1Node      = "track-corev1-node"
 
 	nodeFinalizer = "finalizers.kloudlite.io/node"
+	selfFinalizer = "kloudlite.io/node-controller-finalizer"
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -72,7 +73,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
+	if step := req.EnsureFinalizers(selfFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -81,7 +82,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
@@ -100,11 +101,11 @@ func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) 
 		return failWithErr(err)
 	}
 
-	if controllerutil.AddFinalizer(cn, nodeFinalizer) {
-		if err := r.Update(ctx, cn); err != nil {
-			return failWithErr(err)
-		}
-	}
+	// if controllerutil.AddFinalizer(cn, nodeFinalizer) {
+	// 	if err := r.Update(ctx, cn); err != nil {
+	// 		return failWithErr(err)
+	// 	}
+	// }
 
 	if cn.GetDeletionTimestamp() != nil {
 		if err := r.Delete(ctx, obj); err != nil {
@@ -130,6 +131,52 @@ func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) 
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	// function-body
+	node, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Node{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return fail(err)
+		}
+	}
+
+	if node != nil {
+		if err := drainNode(ctx, r.Client, node); err != nil {
+			return fail(err)
+		}
+	}
+
+	if len(obj.Finalizers) == 1 && obj.Finalizers[0] == selfFinalizer {
+		// it's time to delete the underlying corev1.Node
+		if node != nil {
+			if err := r.Delete(ctx, node); err != nil {
+				if !apiErrors.IsNotFound(err) {
+					return fail(err)
+				}
+			}
+		}
+
+		controllerutil.RemoveFinalizer(obj, selfFinalizer)
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
+		}
+	}
+
+	return req.Done()
+}
+
+func (r *Reconciler) finalizeOld(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 
 	checkName := "finalizing"
