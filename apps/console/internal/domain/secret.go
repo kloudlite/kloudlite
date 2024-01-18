@@ -177,7 +177,7 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		upSecret.Annotations[k] = v
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeSecret, upSecret.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, upSecret.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upSecret.ProjectName, &upSecret.Secret, upSecret.RecordVersion); err != nil {
 		return upSecret, errors.NewE(err)
@@ -198,7 +198,7 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, usecret.ProjectName, &usecret.Secret); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.secretRepo.DeleteById(ctx, usecret.Id)
@@ -216,7 +216,7 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeSecret, secret.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, secret.Name, PublishDelete)
 	return nil
 }
 
@@ -236,7 +236,7 @@ func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Se
 		common.PatchForSyncFromAgent(&secretIn, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
-	d.resourceEventPublisher.PublishEvent(ctx, usecret.GetResourceType(), usecret.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, usecret.GetResourceType(), usecret.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -254,7 +254,7 @@ func (d *domain) OnSecretApplyError(ctx ResourceContext, errMsg, name string, op
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeSecret, usecret.Name, PublishDelete)
 	return errors.NewE(err)
 }
 

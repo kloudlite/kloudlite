@@ -137,7 +137,7 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, upRouter.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, upRouter.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upRouter.ProjectName, &upRouter.Router, upRouter.RecordVersion); err != nil {
 		return upRouter, errors.NewE(err)
@@ -158,7 +158,7 @@ func (d *domain) DeleteRouter(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, urouter.ProjectName, &urouter.Router); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
@@ -177,7 +177,7 @@ func (d *domain) OnRouterDeleteMessage(ctx ResourceContext, router entities.Rout
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, router.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, router.Name, PublishDelete)
 	return nil
 }
 
@@ -204,7 +204,7 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, urouter.GetResourceType(), urouter.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, urouter.GetResourceType(), urouter.GetName(), PublishUpdate)
 	return nil
 }
 
@@ -222,7 +222,7 @@ func (d *domain) OnRouterApplyError(ctx ResourceContext, errMsg string, name str
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishDelete)
 	return nil
 }
 
