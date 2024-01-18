@@ -48,48 +48,48 @@ jobs:
         include:
           - name: platform
             buildDir: cmd/platform-operator
-          - name: resource-watcher
-            buildDir: operators/resource-watcher
           - name: agent
             buildDir: cmd/agent-operator
-          - name: account
-            buildDir: operators/account
-          - name: app
-            buildDir: operators/app-n-lambda
-          - name: clusters
-            buildDir: operators/clusters
-          - name: distribution
-            buildDir: operators/distribution
-          - name: helm-charts
-            buildDir: operators/helm-charts
-          - name: msvc-elasticsearch
-            buildDir: operators/msvc-elasticsearch
-          - name: msvc-influx
-            buildDir: operators/msvc-influx
-          - name: msvc-mongo
-            buildDir: operators/msvc-mongo
-          - name: msvc-mysql
-            buildDir: operators/msvc-mysql
-          - name: msvc-n-mres
-            buildDir: operators/msvc-n-mres
-          - name: msvc-neo4j
-            buildDir: operators/msvc-neo4j
-          - name: msvc-redis
-            buildDir: operators/msvc-redis
-          - name: msvc-redpanda
-            buildDir: operators/msvc-redpanda
-          - name: msvc-zookeeper
-            buildDir: operators/msvc-zookeeper
-          - name: nodepool
-            buildDir: operators/nodepool
-          - name: project
-            buildDir: operators/project
-          - name: resource-watcher
-            buildDir: operators/resource-watcher
-          - name: routers
-            buildDir: operators/routers
-          - name: wireguard
-            buildDir: operators/wireguard
+          # - name: resource-watcher
+          #   buildDir: operators/resource-watcher
+          # - name: account
+          #   buildDir: operators/account
+          # - name: app
+          #   buildDir: operators/app-n-lambda
+          # - name: clusters
+          #   buildDir: operators/clusters
+          # - name: distribution
+          #   buildDir: operators/distribution
+          # - name: helm-charts
+          #   buildDir: operators/helm-charts
+          # - name: msvc-elasticsearch
+          #   buildDir: operators/msvc-elasticsearch
+          # - name: msvc-influx
+          #   buildDir: operators/msvc-influx
+          # - name: msvc-mongo
+          #   buildDir: operators/msvc-mongo
+          # - name: msvc-mysql
+          #   buildDir: operators/msvc-mysql
+          # - name: msvc-n-mres
+          #   buildDir: operators/msvc-n-mres
+          # - name: msvc-neo4j
+          #   buildDir: operators/msvc-neo4j
+          # - name: msvc-redis
+          #   buildDir: operators/msvc-redis
+          # - name: msvc-redpanda
+          #   buildDir: operators/msvc-redpanda
+          # - name: msvc-zookeeper
+          #   buildDir: operators/msvc-zookeeper
+          # - name: nodepool
+          #   buildDir: operators/nodepool
+          # - name: project
+          #   buildDir: operators/project
+          # - name: resource-watcher
+          #   buildDir: operators/resource-watcher
+          # - name: routers
+          #   buildDir: operators/routers
+          # - name: wireguard
+          #   buildDir: operators/wireguard
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
