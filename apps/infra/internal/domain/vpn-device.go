@@ -173,6 +173,7 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	if device.IsMarkedForDeletion() {
 		return errors.Newf("vpnDevice %q (clusterName=%q) is already marked for deletion", name, clusterName)
 	}
@@ -236,8 +237,8 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 
 	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
-		ResourceType: string(iamT.ResourceVPNDevice),
-		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceVPNDevice, device.Name),
+		ResourceType: string(iamT.ResourceInfraVPNDevice),
+		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceInfraVPNDevice, device.Name),
 		Role:         string(iamT.RoleResourceOwner),
 	}); err != nil {
 		return nil, errors.NewE(err)
@@ -299,6 +300,13 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 func (d *domain) OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error {
 	currDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
 	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if _, err = d.iamClient.RemoveMembership(ctx, &iam.RemoveMembershipIn{
+		UserId:      string(ctx.UserId),
+		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceInfraVPNDevice, currDevice.Name),
+	}); err != nil {
 		return errors.NewE(err)
 	}
 

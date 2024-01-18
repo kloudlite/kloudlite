@@ -134,6 +134,34 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 	return errors.NewE(err)
 }
 
+func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, obj client.Object) error {
+
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		return errors.Newf("object GVK is not set, can not apply")
+	}
+
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.GetAccountName(),
+		ClusterName: clusterName,
+		Action:      t.ActionDelete,
+		Object:      m,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), clusterName),
+		Payload: b,
+	})
+
+	return errors.NewE(err)
+}
+
 func (d *domain) deleteK8sResource(ctx K8sContext, projectName string, obj client.Object) error {
 	clusterName, err := d.getClusterAttachedToProject(ctx, projectName)
 	if err != nil {
@@ -353,7 +381,7 @@ func (d *domain) canPerformActionInDevice(ctx ConsoleContext, action iamT.Action
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceVPNDevice, devName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceConsoleVPNDevice, devName),
 		},
 		Action: string(action),
 	})

@@ -51,7 +51,7 @@ func (d *domain) canPerformActionInDevice(ctx InfraContext, action iamT.Action, 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceVPNDevice, devName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceInfraVPNDevice, devName),
 		},
 		Action: string(action),
 	})

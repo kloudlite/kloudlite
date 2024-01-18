@@ -35,6 +35,7 @@ const (
 
 // constant vars generated for struct ConsoleVPNDevice
 const (
+	ConsoleVPNDeviceLinkedClusters        = "linkedClusters"
 	ConsoleVPNDeviceSpec                  = "spec"
 	ConsoleVPNDeviceSpecActiveNamespace   = "spec.activeNamespace"
 	ConsoleVPNDeviceSpecCnameRecords      = "spec.cnameRecords"
