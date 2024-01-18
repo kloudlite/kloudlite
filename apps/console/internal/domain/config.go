@@ -152,7 +152,7 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, upConfig.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, upConfig.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
 		return upConfig, errors.NewE(err)
@@ -175,7 +175,7 @@ func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, uc.ProjectName, &uc.ConfigMap); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
@@ -201,7 +201,7 @@ func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, op
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishDelete)
 	return nil
 }
 
@@ -210,7 +210,7 @@ func (d *domain) OnConfigDeleteMessage(ctx ResourceContext, config entities.Conf
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeConfig, config.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, config.Name, PublishDelete)
 	return nil
 }
 
@@ -231,7 +231,7 @@ func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Co
 	uc, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, status, common.PatchOpts{
 		MessageTimestamp: opts.MessageTimestamp,
 	}))
-	d.resourceEventPublisher.PublishEvent(ctx, uc.GetResourceType(), uc.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uc.GetResourceType(), uc.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 

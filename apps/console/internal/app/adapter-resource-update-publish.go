@@ -14,7 +14,12 @@ type ResourceEventPublisherImpl struct {
 	logger logging.Logger
 }
 
-func (r *ResourceEventPublisherImpl) PublishEvent(ctx domain.ResourceContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
+func (r *ResourceEventPublisherImpl) PublishConsoleEvent(ctx domain.ConsoleContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
+	subject := fmt.Sprintf("res-updates.account.%s.project.%s.%s", ctx.AccountName,resourceType, name)
+	r.publish(subject, update)
+}
+
+func (r *ResourceEventPublisherImpl) PublishResourceEvent(ctx domain.ResourceContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
 	subject := fmt.Sprintf("res-updates.account.%s.project.%s.%s.%s", ctx.AccountName, ctx.ProjectName,resourceType, name)
 	r.publish(subject, update)
 }
