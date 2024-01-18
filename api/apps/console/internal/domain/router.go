@@ -196,14 +196,16 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 		return errors.Newf("no router found")
 	}
 
-	if err := d.MatchRecordVersion(router.Annotations, xRouter.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(router.Annotations, xRouter.RecordVersion)
+	if err != nil {
 		return d.resyncK8sResource(ctx, xRouter.ProjectName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
 	}
 
+	router.RecordVersion = xRouter.RecordVersion
 	urouter, err := d.routerRepo.PatchById(
 		ctx,
 		xRouter.Id,
-		common.PatchForSyncFromAgent(&router, status, common.PatchOpts{
+		common.PatchForSyncFromAgent(&router, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
 

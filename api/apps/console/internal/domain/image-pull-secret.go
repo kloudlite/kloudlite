@@ -243,14 +243,15 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 		return errors.Newf("no image pull secret found")
 	}
 
-	if err := d.MatchRecordVersion(ips.Annotations, xips.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(ips.Annotations, xips.RecordVersion)
+	if err != nil {
 		return d.resyncK8sResource(ctx, xips.ProjectName, xips.SyncStatus.Action, &xips.GeneratedK8sSecret, xips.RecordVersion)
 	}
 
 	uips, err := d.pullSecretsRepo.PatchById(
 		ctx,
 		xips.Id,
-		common.PatchForSyncFromAgent(&ips, status, common.PatchOpts{
+		common.PatchForSyncFromAgent(&ips, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
 

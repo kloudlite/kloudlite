@@ -325,7 +325,8 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(device.Annotations, xdevice.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(device.Annotations, xdevice.RecordVersion)
+	if err != nil {
 		if xdevice.ProjectName != nil {
 			return d.resyncK8sResource(ctx, *xdevice.ProjectName, xdevice.SyncStatus.Action, &xdevice.Device, xdevice.RecordVersion)
 		}
@@ -336,6 +337,7 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 		xdevice.Id,
 		common.PatchForSyncFromAgent(
 			&device,
+			recordVersion,
 			status,
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,

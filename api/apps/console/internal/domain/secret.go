@@ -236,14 +236,15 @@ func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Se
 		return errors.NewE(err)
 	}
 
-	if err := d.MatchRecordVersion(secretIn.Annotations, xSecret.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(secretIn.Annotations, xSecret.RecordVersion)
+	if err != nil {
 		return d.resyncK8sResource(ctx, xSecret.ProjectName, xSecret.SyncStatus.Action, &xSecret.Secret, xSecret.RecordVersion)
 	}
 
 	usecret, err := d.secretRepo.PatchById(
 		ctx,
 		xSecret.Id,
-		common.PatchForSyncFromAgent(&secretIn, status, common.PatchOpts{
+		common.PatchForSyncFromAgent(&secretIn, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
 
