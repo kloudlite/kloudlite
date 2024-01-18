@@ -100,7 +100,32 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	return req.Done()
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
+	if err != nil {
+		return fail(err)
+	}
+
+	if err := deleteNodes(ctx, r.Client, nodes...); err != nil {
+		return fail(err)
+	}
+
+	if step := r.syncNodepool(req); !step.ShouldProceed() {
+		return step
+	}
+
+	return req.Finalize()
 }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {

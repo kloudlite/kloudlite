@@ -83,7 +83,7 @@ type NodePoolSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.nodepool-min-target-max",name=Min/Target/Max,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.nodepool-min-max",name=Min/Max,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
@@ -115,9 +115,7 @@ func (n *NodePool) GetEnsuredLabels() map[string]string {
 
 func (n *NodePool) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.GVKKey: GroupVersion.WithKind("NodePool").String(),
-		// "nodepool-min-target-max": fmt.Sprintf("%d/%d/%d", n.Spec.MinCount, n.Spec.TargetCount, n.Spec.MaxCount),
-		"nodepool-min-target-max": fmt.Sprintf("%d/%d", n.Spec.MinCount, n.Spec.MaxCount),
+		"nodepool-min-max": fmt.Sprintf("%d/%d", n.Spec.MinCount, n.Spec.MaxCount),
 	}
 }
 
