@@ -333,7 +333,7 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 	return nil
 }
 
-func(repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error){
+func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
 	after := options.After
 	updateOpts := &options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
@@ -343,6 +343,22 @@ func(repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, 
 	}
 
 	patch["updateTime"] = time.Now()
+
+	res, err := repo.FindOne(ctx, filter)
+	if err != nil {
+		var x T
+		return x, errors.NewE(err)
+	}
+
+	if res == nil {
+		var x T
+		return x, errors.Newf("resource not found")
+	}
+
+	if res.IsMarkedForDeletion() {
+		var x T
+		return x, errors.Newf("cannot patch as resource is mark for deletion")
+	}
 
 	m, err := toMap(patch)
 	if err != nil {
@@ -364,7 +380,7 @@ func(repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, 
 	return bsonToStruct[T](r)
 }
 
-func(repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error){
+func (repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error) {
 	after := options.After
 	updateOpts := &options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
@@ -423,7 +439,7 @@ func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData
 	return bsonToStruct[T](r)
 }
 
-func (repo *dbRepo[T])PatchOne(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error){
+func (repo *dbRepo[T]) PatchOne(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
 	after := options.After
 	updateOpts := &options.FindOneAndUpdateOptions{
 		ReturnDocument: &after,
