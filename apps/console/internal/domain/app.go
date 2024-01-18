@@ -187,13 +187,15 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 	if xApp == nil {
 		return errors.Newf("no apps found")
 	}
-	if err := d.MatchRecordVersion(app.Annotations, xApp.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(app.Annotations, xApp.RecordVersion)
+	if err != nil {
 		return errors.NewE(err)
 	}
+
 	uapp, err := d.appRepo.PatchById(
 		ctx,
 		xApp.Id,
-		common.PatchForSyncFromAgent(&app, status, common.PatchOpts{
+		common.PatchForSyncFromAgent(&app, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
 	d.resourceEventPublisher.PublishResourceEvent(ctx, uapp.GetResourceType(), uapp.GetName(), PublishUpdate)

@@ -269,14 +269,15 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 		return errors.Newf("no manage resource found")
 	}
 
-	if err := d.MatchRecordVersion(mres.Annotations, xmres.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(mres.Annotations, xmres.RecordVersion)
+	if err != nil {
 		return d.resyncK8sResource(ctx, xmres.ProjectName, mres.SyncStatus.Action, &mres.ManagedResource, mres.RecordVersion)
 	}
 
 	umres, err := d.mresRepo.PatchById(
 		ctx,
 		xmres.Id,
-		common.PatchForSyncFromAgent(&mres, status, common.PatchOpts{
+		common.PatchForSyncFromAgent(&mres, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 			XPatch: repos.Document{
 				fc.ManagedResourceSyncedOutputSecretRef: mres.SyncedOutputSecretRef,

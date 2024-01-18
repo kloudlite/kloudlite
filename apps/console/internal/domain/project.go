@@ -315,15 +315,18 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 		return errors.Newf("no project found")
 	}
 
-	if err := d.MatchRecordVersion(project.Annotations, proj.RecordVersion); err != nil {
+	recordVersion, err := d.MatchRecordVersion(project.Annotations, proj.RecordVersion)
+	if err != nil {
 		return nil
 	}
 
-	uproject, err := d.appRepo.PatchById(
+	project.RecordVersion = proj.RecordVersion
+	uproject, err := d.projectRepo.PatchById(
 		ctx,
 		proj.Id,
 		common.PatchForSyncFromAgent(
 			&project,
+			recordVersion,
 			status,
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,
