@@ -91,7 +91,7 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 		return nil, err
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, napp.Name, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, napp.Name, PublishAdd)
 
 	if err := d.applyApp(ctx, napp); err != nil {
 		return nil, errors.NewE(err)
@@ -112,7 +112,7 @@ func (d *domain) DeleteApp(ctx ResourceContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishUpdate)
 	if err := d.deleteK8sResource(ctx, uapp.ProjectName, &uapp.App); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
 			return d.appRepo.DeleteById(ctx, uapp.Id)
@@ -150,7 +150,7 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, upApp.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, upApp.Name, PublishUpdate)
 
 	if err := d.applyApp(ctx, upApp); err != nil {
 		return nil, errors.NewE(err)
@@ -196,7 +196,7 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 		common.PatchForSyncFromAgent(&app, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
-	d.resourceEventPublisher.PublishEvent(ctx, uapp.GetResourceType(), uapp.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uapp.GetResourceType(), uapp.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -208,7 +208,7 @@ func (d *domain) OnAppDeleteMessage(ctx ResourceContext, app entities.App) error
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, app.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, app.Name, PublishDelete)
 	return nil
 }
 
@@ -226,7 +226,7 @@ func (d *domain) OnAppApplyError(ctx ResourceContext, errMsg string, name string
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishDelete)
 	return errors.NewE(err)
 }
 

@@ -142,7 +142,7 @@ func (d *domain) CreateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeImagePullSecret, nips.Name, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, nips.Name, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, nips.ProjectName, &pullSecret, nips.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -196,7 +196,7 @@ func (d *domain) UpdateImagePullSecret(ctx ResourceContext, ips entities.ImagePu
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeImagePullSecret, upIps.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, upIps.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upIps.ProjectName, &pullSecret, upIps.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -219,7 +219,7 @@ func (d *domain) DeleteImagePullSecret(ctx ResourceContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeApp, uips.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uips.Name, PublishUpdate)
 
 	if err := d.deleteK8sResource(ctx, uips.ProjectName, &corev1.Secret{
 		TypeMeta:   v1.TypeMeta{APIVersion: "v1", Kind: "Secret"},
@@ -258,7 +258,7 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 		return err
 	}
 
-	d.resourceEventPublisher.PublishEvent(ctx, uips.GetResourceType(), uips.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uips.GetResourceType(), uips.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -270,7 +270,7 @@ func (d *domain) OnImagePullSecretDeleteMessage(ctx ResourceContext, ips entitie
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeImagePullSecret, ips.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, ips.Name, PublishDelete)
 	return nil
 }
 
@@ -288,7 +288,7 @@ func (d *domain) OnImagePullSecretApplyError(ctx ResourceContext, errMsg string,
 	if err != nil {
 		return err
 	}
-	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeImagePullSecret, uips.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeImagePullSecret, uips.Name, PublishDelete)
 	return nil
 }
 
