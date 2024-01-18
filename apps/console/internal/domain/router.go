@@ -1,11 +1,10 @@
 package domain
 
 import (
-	"github.com/kloudlite/api/common/fields"
-	"time"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -108,14 +107,8 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
 	}
-
-	xRouter, err := d.findRouter(ctx, router.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	router.EnsureGVK()
-	router.Namespace = xRouter.Namespace
+	router.Namespace = "trest"
 	if err := d.k8sClient.ValidateObject(ctx, &router.Router); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -127,29 +120,24 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 		}
 	}
 
-	patch := repos.Document{
-		"recordVersion": xRouter.RecordVersion + 1,
-		"displayName":   router.DisplayName,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		"metadata.labels":       router.Labels,
-		"metadata.annnotations": router.Annotations,
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&router,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.AppSpec: router.Spec,
+			},
+		})
 
-		"spec": router.Spec,
-
-		"syncStatus.state":           t.SyncStateInQueue,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionApply,
-	}
-
-	upRouter, err := d.routerRepo.PatchById(ctx, xRouter.Id, patch)
+	upRouter, err := d.routerRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, router.Name),
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishRouterEvent(upRouter, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, upRouter.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upRouter.ProjectName, &upRouter.Router, upRouter.RecordVersion); err != nil {
 		return upRouter, errors.NewE(err)
@@ -162,46 +150,34 @@ func (d *domain) DeleteRouter(ctx ResourceContext, name string) error {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return errors.NewE(err)
 	}
-
-	r, err := d.findRouter(ctx, name)
+	urouter, err := d.routerRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishUpdate)
 
-	patch := repos.Document{
-		"markedForDeletion":          true,
-		"syncStatus.syncScheduledAt": time.Now(),
-		"syncStatus.action":          t.SyncActionDelete,
-		"syncStatus.state":           t.SyncStateInQueue,
-	}
-
-	urouter, err := d.routerRepo.PatchById(ctx, r.Id, patch)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishRouterEvent(urouter, PublishUpdate)
-
-	if err := d.deleteK8sResource(ctx, r.ProjectName, &r.Router); err != nil {
+	if err := d.deleteK8sResource(ctx, urouter.ProjectName, &urouter.Router); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
-			return d.routerRepo.DeleteById(ctx, r.Id)
+			return d.routerRepo.DeleteById(ctx, urouter.Id)
 		}
-		return err
+		return errors.NewE(err)
 	}
-
 	return nil
 }
 
 func (d *domain) OnRouterDeleteMessage(ctx ResourceContext, router entities.Router) error {
-	xRouter, err := d.findRouter(ctx, router.Name)
+	err := d.routerRepo.DeleteOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, router.Name),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	err = d.routerRepo.DeleteById(ctx, xRouter.Id)
-	if err != nil {
-		return errors.NewE(err)
-	}
-	d.resourceEventPublisher.PublishRouterEvent(xRouter, PublishDelete)
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, router.Name, PublishDelete)
 	return nil
 }
 
@@ -211,56 +187,42 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 		return errors.NewE(err)
 	}
 
+	if xRouter == nil {
+		return errors.Newf("no router found")
+	}
+
 	if err := d.MatchRecordVersion(router.Annotations, xRouter.RecordVersion); err != nil {
 		return d.resyncK8sResource(ctx, xRouter.ProjectName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
 	}
 
-	patch := repos.Document{
-		"metadata.creationTimestamp": router.CreationTimestamp,
-		"metadata.labels":            router.Labels,
-		"metadata.annotations":       router.Annotations,
-		"metadata.generation":        router.Generation,
-
-		"status": router.Status,
-
-		"syncStatus.state": func() t.SyncState {
-			if status == types.ResourceStatusDeleting {
-				return t.SyncStateDeletingAtAgent
-			}
-			return t.SyncStateUpdatedAtAgent
-		}(),
-		"syncStatus.recordVersion": xRouter.RecordVersion,
-		"syncStatus.lastSyncedAt":  opts.MessageTimestamp,
-		"syncStatus.error":         nil,
-	}
-
-	urouter, err := d.routerRepo.PatchById(ctx, xRouter.Id, patch)
+	urouter, err := d.routerRepo.PatchById(
+		ctx,
+		xRouter.Id,
+		common.PatchForSyncFromAgent(&router, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishRouterEvent(urouter, PublishUpdate)
+	d.resourceEventPublisher.PublishEvent(ctx, urouter.GetResourceType(), urouter.GetName(), PublishUpdate)
 	return nil
 }
 
 func (d *domain) OnRouterApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
-	m, err := d.findRouter(ctx, name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	patch := repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        errMsg,
-	}
-
-	urouter, err := d.routerRepo.PatchById(ctx, m.Id, patch)
+	urouter, err := d.routerRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
 	if err != nil {
 		return err
 	}
-
-	d.resourceEventPublisher.PublishRouterEvent(urouter, PublishUpdate)
-
+	d.resourceEventPublisher.PublishEvent(ctx, entities.ResourceTypeRouter, urouter.Name, PublishDelete)
 	return nil
 }
 
