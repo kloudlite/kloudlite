@@ -12,5 +12,8 @@ clusterAutoscaler:
   enabled: true
   image:
     repository: "ghcr.io/kloudlite/cluster-autoscaler-amd64"
+    tag: kloudlite-v1.0.5-nightly
   nodeSelector: {}
   tolerations: []
+  configuration:
+    scaleDownUnneededTime: 1m
