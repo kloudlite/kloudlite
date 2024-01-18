@@ -95,7 +95,7 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 
 func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:                ctx.AccountName,
+		fields.AccountName:            ctx.AccountName,
 		fc.ProjectSpecTargetNamespace: targetNamespace,
 	})
 	if err != nil {
@@ -176,7 +176,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx,entities.ResourceTypeProject, prj.Name, PublishAdd)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, prj.Name, PublishAdd)
 
 	if err := d.applyK8sResource(ctx, prj.Name, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
@@ -232,7 +232,9 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx,entities.ResourceTypeProject, name, PublishUpdate)
+
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, name, PublishUpdate)
+
 	return d.deleteK8sResource(ctx, uproj.Name, &uproj.Project)
 }
 
@@ -267,15 +269,19 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 			},
 		})
 
+	upProject, err := d.projectRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: project.Name,
+		},
+		patchForUpdate,
+	)
 
-	upProject, err := d.projectRepo.Patch(ctx, repos.Filter{
-		fields.AccountName:  ctx.AccountName,
-		fields.MetadataName: project.Name,
-	}, patchForUpdate)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject,project.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, project.Name, PublishUpdate)
 
 	if err := d.applyK8sResource(ctx, upProject.Name, &upProject.Project, upProject.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -316,14 +322,19 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 	uproject, err := d.appRepo.PatchById(
 		ctx,
 		proj.Id,
-		common.PatchForSyncFromAgent(&project, status, common.PatchOpts{
-			MessageTimestamp: opts.MessageTimestamp,
-		}))
+		common.PatchForSyncFromAgent(
+			&project,
+			status,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			}))
 
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx,entities.ResourceTypeProject,uproject.Name, PublishUpdate)
+
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, uproject.Name, PublishUpdate)
+
 	return nil
 }
 
@@ -341,10 +352,13 @@ func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name str
 			},
 		),
 	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeApp, uproject.Name, PublishDelete)
+
 	return errors.NewE(err)
 }
 
