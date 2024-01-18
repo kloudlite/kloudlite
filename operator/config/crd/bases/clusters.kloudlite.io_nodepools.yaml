@@ -16,8 +16,8 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.annotations.nodepool-min-target-max
-      name: Min/Target/Max
+    - jsonPath: .metadata.annotations.nodepool-min-max
+      name: Min/Max
       type: string
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
