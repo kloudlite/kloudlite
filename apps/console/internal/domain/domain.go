@@ -240,7 +240,7 @@ func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) (int,
 		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
 	}
 
-	return -1, nil
+	return annVersion, nil
 }
 
 func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, projectName string) error {

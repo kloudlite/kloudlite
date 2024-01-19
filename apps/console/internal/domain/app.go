@@ -184,6 +184,7 @@ func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, statu
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	if xApp == nil {
 		return errors.Newf("no apps found")
 	}

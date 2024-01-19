@@ -320,7 +320,6 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 		return nil
 	}
 
-	project.RecordVersion = proj.RecordVersion
 	uproject, err := d.projectRepo.PatchById(
 		ctx,
 		proj.Id,
