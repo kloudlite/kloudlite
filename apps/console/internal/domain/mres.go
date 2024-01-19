@@ -26,7 +26,7 @@ func (d *domain) ListManagedResources(ctx ResourceContext, search map[string]rep
 func (d *domain) findMRes(ctx ResourceContext, name string) (*entities.ManagedResource, error) {
 	mres, err := d.mresRepo.FindOne(
 		ctx,
-		ctx.DBFilters().Add(fields.Metadata, name),
+		ctx.DBFilters().Add(fields.MetadataName, name),
 	)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -187,15 +187,6 @@ func (d *domain) UpdateManagedResource(ctx ResourceContext, mres entities.Manage
 	if err := d.k8sClient.ValidateObject(ctx, &mres.ManagedResource); err != nil {
 		return nil, errors.NewE(err)
 	}
-
-	//xmres, err := d.findMRes(ctx, mres.Name)
-	//if err != nil {
-	//	return nil, errors.NewE(err)
-	//}
-	//
-	//if xmres == nil {
-	//	return nil, errors.Newf("no manage resource found")
-	//}
 
 	patchForUpdate := common.PatchForUpdate(
 		ctx,

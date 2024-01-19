@@ -216,6 +216,7 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, errors.NewE(err)
 	}
 
+	device.Namespace = d.env.DeviceNamespace
 	device.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
 		return nil, errors.NewE(err)
@@ -231,7 +232,6 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 
 	device.AccountName = ctx.AccountName
 	device.ClusterName = clusterName
-	device.Namespace = d.env.DeviceNamespace
 	device.SyncStatus = t.GenSyncStatus(t.SyncActionApply, device.RecordVersion)
 	device.Spec.NoExternalService = true
 
