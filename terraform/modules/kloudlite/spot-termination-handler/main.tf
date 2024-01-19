@@ -20,11 +20,8 @@ metadata:
   name: ${var.release_name}
   namespace: ${var.release_namespace}
 spec:
-  chartRepo:
-    name: kloudlite
-    url: https://kloudlite.github.io/helm-charts
-
-  chartName: kloudlite/aws-spot-termination-handler
+  chartRepoURL: https://kloudlite.github.io/helm-charts
+  chartName: aws-spot-termination-handler
   chartVersion: ${var.kloudlite_release}
 
   jobVars:
