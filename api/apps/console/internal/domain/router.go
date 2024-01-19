@@ -201,7 +201,6 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 		return d.resyncK8sResource(ctx, xRouter.ProjectName, xRouter.SyncStatus.Action, &xRouter.Router, xRouter.RecordVersion)
 	}
 
-	router.RecordVersion = xRouter.RecordVersion
 	urouter, err := d.routerRepo.PatchById(
 		ctx,
 		xRouter.Id,
