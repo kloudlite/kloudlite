@@ -2,6 +2,9 @@ package entities
 
 import (
 	"fmt"
+	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/operator/pkg/operator"
+	"time"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -38,6 +41,18 @@ type ImagePullSecret struct {
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
+func (ips *ImagePullSecret) GetDisplayName() string {
+	return ips.ResourceMetadata.DisplayName
+}
+
+func (ips *ImagePullSecret) GetCreationTimestamp() time.Time {
+	return ips.CreationTimestamp.Time
+}
+
+func (ips *ImagePullSecret) GetStatus() operator.Status {
+	return operator.Status{}
+}
+
 func (ips *ImagePullSecret) GetResourceType() ResourceType {
 	return ResourceTypeImagePullSecret
 }
@@ -63,17 +78,17 @@ func (ips *ImagePullSecret) Validate() error {
 var ImagePullSecretIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "projectName", Value: repos.IndexAsc},
-			{Key: "environmentName", Value: repos.IndexAsc},
+			{Key: fields.MetadataName, Value: repos.IndexAsc},
+			{Key: fields.MetadataNamespace, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fields.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
