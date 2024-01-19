@@ -2,12 +2,13 @@ package infra
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/cmd/infra/cluster"
 	"os"
 	"os/exec"
 
-	"github.com/kloudlite/kl/cmd/infra/context"
+	"github.com/kloudlite/kl/cmd/infra/cluster"
 	"github.com/kloudlite/kl/cmd/infra/vpn"
+
+	"github.com/kloudlite/kl/cmd/infra/context"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"

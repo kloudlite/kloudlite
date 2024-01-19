@@ -6,6 +6,7 @@ import (
 
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn"
 
 	"github.com/spf13/cobra"
 )
@@ -28,7 +29,7 @@ var startFgCmd = &cobra.Command{
 			return
 		}
 
-		if err := startService(devName, false); err != nil {
+		if err := wg_vpn.StartService(devName, false); err != nil {
 			fn.PrintError(err)
 			return
 		}

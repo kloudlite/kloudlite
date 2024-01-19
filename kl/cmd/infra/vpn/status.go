@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/lib/wgc"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/spf13/cobra"
 )
 

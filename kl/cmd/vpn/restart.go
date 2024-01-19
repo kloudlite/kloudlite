@@ -1,13 +1,14 @@
 package vpn
 
 import (
-	"github.com/kloudlite/kl/domain/client"
 	"os"
 	"time"
 
-	"github.com/kloudlite/kl/lib/wgc"
+	"github.com/kloudlite/kl/domain/client"
+
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/spf13/cobra"
 )
 
@@ -50,14 +51,7 @@ Example:
 		fn.Log("[#] connecting")
 		time.Sleep(time.Second * 1)
 
-		devName, err := client.CurrentDeviceName()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		startServiceInBg(devName)
-		if err := connect(reconnectVerbose); err != nil {
+		if err := startConnecting(reconnectVerbose); err != nil {
 			fn.PrintError(err)
 			return
 		}

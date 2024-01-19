@@ -2,13 +2,14 @@ package vpn
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/lib/wgc"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var statusCmd = &cobra.Command{

@@ -1,44 +1,17 @@
 package vpn
 
 import (
-	"fmt"
+	"os"
+
 	"github.com/kloudlite/kl/domain/client"
-	"github.com/kloudlite/kl/lib/wgc"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/kloudlite/kl/pkg/wg_vpn"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
 )
 
 // not required in linux
-func startServiceInBg(devName string) {
-	command := exec.Command("kl", "vpn", "start-fg", "-d", devName)
-	err := command.Start()
-	if err != nil {
-		fn.PrintError(err)
-		return
-	}
-	configFolder, err := client.GetConfigFolder()
-	if err != nil {
-		fn.PrintError(err)
-		return
-	}
-
-	err = os.WriteFile(configFolder+"/wgpid", []byte(fmt.Sprintf("%d", command.Process.Pid)), 0644)
-	if err != nil {
-		fn.PrintError(err)
-		return
-	}
-
-	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = execCmd(fmt.Sprintf("chown %s %s", usr, configFolder+"/wgpid"),
-			false); err != nil {
-			fn.PrintError(err)
-			return
-		}
-	}
-}
 
 var foreground bool
 var connectVerbose bool
@@ -78,14 +51,7 @@ Example:
 				return
 			}
 
-			devName, err := client.CurrentDeviceName()
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
-			startServiceInBg(devName)
-
-			if err := connect(connectVerbose); err != nil {
+			if err := startConnecting(connectVerbose); err != nil {
 				fn.PrintError(err)
 				return
 			}
@@ -96,14 +62,7 @@ Example:
 			return
 		}
 
-		devName, err := client.CurrentDeviceName()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-		startServiceInBg(devName)
-
-		if err := connect(connectVerbose); err != nil {
+		if err := startConnecting(connectVerbose); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -127,6 +86,28 @@ Example:
 			text.Red(s),
 		)
 	},
+}
+
+func startConnecting(verbose bool) error {
+	configFolder, err := client.GetConfigFolder()
+	if err != nil {
+		return err
+	}
+
+	devName, err := client.CurrentDeviceName()
+	if err != nil {
+		return err
+	}
+
+	if err := wg_vpn.StartServiceInBg(devName, configFolder); err != nil {
+		return err
+	}
+
+	if err := connect(verbose); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func init() {
