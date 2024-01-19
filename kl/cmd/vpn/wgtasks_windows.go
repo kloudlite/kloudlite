@@ -2,21 +2,12 @@ package vpn
 
 import (
 	"errors"
-
-	"github.com/kloudlite/kl/pkg/ui/text"
-)
-
-const (
-	KlWgInterface = "wgkl"
 )
 
 func connect(verbose bool) error {
-	return errors.New(
-		text.Colored("This command is not available for windows, will be available soon", 209),
-	)
+	return errors.New("This command is not available for windows, will be available soon")
 }
+
 func disconnect(verbose bool) error {
-	return errors.New(
-		text.Colored("This command is not available for windows, will be available soon", 209),
-	)
+	return errors.New("This command is not available for windows, will be available soon")
 }
