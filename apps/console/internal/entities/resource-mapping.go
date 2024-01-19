@@ -1,6 +1,10 @@
 package entities
 
-import "github.com/kloudlite/api/pkg/repos"
+import (
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/pkg/repos"
+)
 
 type ResourceType string
 
@@ -43,26 +47,26 @@ type ResourceMapping struct {
 var ResourceMappingIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "projectName", Value: repos.IndexAsc},
-			{Key: "resourceType", Value: repos.IndexAsc},
-			{Key: "environmentName", Value: repos.IndexAsc},
-			{Key: "resourceName", Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fields.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
+			{Key: fc.ResourceMappingResourceType, Value: repos.IndexAsc},
+			{Key: fc.ResourceMappingResourceName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "clusterName", Value: repos.IndexAsc},
-			{Key: "resourceType", Value: repos.IndexAsc},
-			{Key: "resourceName", Value: repos.IndexAsc},
-			{Key: "resourceNamespace", Value: repos.IndexAsc},
+			{Key: fields.ClusterName, Value: repos.IndexAsc},
+			{Key: fc.ResourceMappingResourceType, Value: repos.IndexAsc},
+			{Key: fc.ResourceMappingResourceName, Value: repos.IndexAsc},
+			{Key: fc.ResourceMappingResourceNamespace, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
