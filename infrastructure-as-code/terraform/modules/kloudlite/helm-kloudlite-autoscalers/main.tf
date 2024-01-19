@@ -26,11 +26,8 @@ metadata:
   labels:
     kloudlite.io/created-by: kloudlite-iac
 spec:
-  chartRepo:
-    name: kloudlite
-    url: https://kloudlite.github.io/helm-charts
-
-  chartName: kloudlite/kloudlite-autoscalers
+  chartRepoURL: https://kloudlite.github.io/helm-charts
+  chartName: kloudlite-autoscalers
   chartVersion: ${var.kloudlite_release}
 
   jobVars:

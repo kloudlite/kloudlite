@@ -4,12 +4,10 @@ metadata:
   name: aws-ebs-csi
   namespace: kube-system
 spec:
-  chartRepo:
-    name: aws-ebs-csi-driver
-    url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+  chartRepoURL: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
   chartVersion: 2.22.0
 
-  chartName: aws-ebs-csi-driver/aws-ebs-csi-driver
+  chartName: aws-ebs-csi-driver
 
   jobVars:
     tolerations:
