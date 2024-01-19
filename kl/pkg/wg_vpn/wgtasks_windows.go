@@ -2,9 +2,6 @@ package wg_vpn
 
 import (
 	"errors"
-	"net"
-
-	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func getCurrentDns() ([]string, error) {
