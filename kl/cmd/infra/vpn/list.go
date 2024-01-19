@@ -51,7 +51,7 @@ func listDevices() error {
 		rows = append(rows, table.Row{
 			fn.GetPrintRow(d, activeDevName, d.DisplayName, true),
 			fn.GetPrintRow(d, activeDevName, d.Metadata.Name),
-			fn.GetPrintRow(d, activeDevName, d.Spec.DeviceNamespace),
+			fn.GetPrintRow(d, activeDevName, d.Spec.ActiveNamespace),
 			fn.GetPrintRow(d, activeDevName, func() string {
 				if d.Spec.Ports == nil {
 					return ""

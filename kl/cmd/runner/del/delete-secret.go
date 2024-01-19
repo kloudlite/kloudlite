@@ -6,13 +6,12 @@ import (
 	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 )
 
 var deleteSecretCommand = &cobra.Command{
 	Use:   "secret",
-	Short: "remove one secret environment from your " + constants.CmdName + "-config",
+	Short: "remove one secret environment from your kl-config",
 	Long: `This command help you to delete environment that that is comming from secret
 
 Examples:
@@ -34,7 +33,7 @@ func removeSecret() error {
 	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		common_util.PrintError(err)
-		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
+		es := "please run 'kl init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -66,7 +65,7 @@ func removeSecret() error {
 
 		klFile.Secrets = newSecrets
 
-		fmt.Printf("removed secret %s form your %s-file\n", selectedSecret.Name, constants.CmdName)
+		common_util.Log("removed secret %s form your kl-file\n", selectedSecret.Name)
 
 	} else {
 
@@ -92,7 +91,7 @@ func removeSecret() error {
 
 		selectedSecret.Env = newEnvs
 
-		fmt.Printf("removed key %s/%s form your %s-file\n", selectedSecret.Name, selectedSecret.Name, constants.CmdName)
+		common_util.Log("removed key %s/%s form your kl-file\n", selectedSecret.Name, selectedSecret.Name)
 	}
 
 	err = client.WriteKLFile(*klFile)

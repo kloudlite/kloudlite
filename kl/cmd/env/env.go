@@ -10,6 +10,7 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
+	Cmd.Aliases = append(Cmd.Aliases, "envs")
 	Cmd.AddCommand(switchCmd)
 	Cmd.AddCommand(listCmd)
 }

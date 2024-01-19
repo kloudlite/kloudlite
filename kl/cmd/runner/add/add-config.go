@@ -195,7 +195,7 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("added config %s/%s to your %s-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key, "kl")
+	fn.Log("added config %s/%s to your %s-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key, "kl")
 
 	return nil
 }

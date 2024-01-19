@@ -19,42 +19,27 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
-func getSelectedDevice() (*server.Device, error) {
+func getSelectedDevice() (string, error) {
 
-	devName, err := client.CurrentDeviceName()
+	devName, err := client.GetDeviceContext()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
-	devices, err := server.ListDevices()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, d := range devices {
-		if d.Metadata.Name == devName {
-			return &d, err
-		}
-	}
-	return nil, errors.New("please select a device first using \"kl vpn switch\"")
+	return devName.DeviceName, nil
 
 }
 
 func startConfiguration(verbose bool) error {
 
-	device, err := getSelectedDevice()
+	deviceName, err := getSelectedDevice()
 	if err != nil {
 		return err
 	}
 
 	if runtime.GOOS == "darwin" {
-		return configureDarwin(device.Metadata.Name, verbose)
+		return configureDarwin(deviceName, verbose)
 	}
-	if device.ProjectName == "" || device.EnvName == "" {
-		return fmt.Errorf("env not activated to current device. Please activate using 'kl vpn activate'")
-	}
-
-	return configure(device.Metadata.Name, device.Metadata.Name, verbose)
+	return configure(deviceName, deviceName, verbose)
 }
 
 func configure(
@@ -70,8 +55,13 @@ func configure(
 	if err != nil {
 		return err
 	}
-
 	// time.Sleep(time.Second * 2)
+	if device.Spec.ActiveNamespace == "" {
+		return errors.New(fmt.Sprintf("no env name found for device %s, please use env using kl env switch\n", devName))
+	}
+	if len(device.Spec.Ports) == 0 {
+		return errors.New(fmt.Sprintf("no ports found for device %s, please export ports using kl vpn expose\n", devName))
+	}
 	if device.WireguardConfig == nil {
 		return errors.New("no wireguard config found")
 	}
@@ -89,7 +79,6 @@ func configure(
 		return e
 	}
 	s.Stop()
-
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
 	} else if e := setDeviceIp(cfg.Address[0], devName, verbose); e != nil {
@@ -114,10 +103,20 @@ func configure(
 
 		var ipNet []net.IPNet
 		for _, v := range dServers {
-			ipNet = append(ipNet, net.IPNet{
-				IP:   net.ParseIP(v),
-				Mask: net.CIDRMask(32, 32),
-			})
+			ip := net.ParseIP(v)
+			if ip == nil {
+				continue
+			}
+			in := net.IPNet{
+				IP: ip,
+				Mask: func() net.IPMask {
+					if ip.To4() != nil {
+						return net.CIDRMask(32, 32)
+					}
+					return net.CIDRMask(128, 128)
+				}(),
+			}
+			ipNet = append(ipNet, in)
 		}
 
 		return ipNet
@@ -130,7 +129,7 @@ func configure(
 
 	err = wg.ConfigureDevice(interfaceName, cfg.Config)
 	if err != nil {
-		fmt.Printf("failed to configure device: %v", err)
+		fn.Log("failed to configure device: %v", err)
 	}
 
 	for _, i2 := range cfg.Peers[0].AllowedIPs {

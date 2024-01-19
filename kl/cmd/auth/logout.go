@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"fmt"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/spf13/cobra"
@@ -13,7 +13,7 @@ var logoutCmd = &cobra.Command{
 	Long: `This command will logout your session from the cli
 Example:
   # Logout from kloudlite
-  kl logout
+  kl auth logout
 
   using above command you can expire your session from the current device shell.
 
@@ -22,10 +22,10 @@ Example:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := client.Logout()
 		if err != nil {
-			fmt.Println(err)
+			fn.Log(err)
 			return
 		}
-		fmt.Println(`successfully logged out.
+		fn.Log(`successfully logged out.
 
 but the mounted configs, secrets and kl-config stil there, so if you want to also clear this you have clean these manually. 
 		`)

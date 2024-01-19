@@ -2,15 +2,13 @@ package vpn
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/lib/wgc"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
+	"os"
+	"os/exec"
 )
 
 // not required in linux
@@ -18,7 +16,7 @@ func startServiceInBg(devName string) {
 	command := exec.Command("kl", "vpn", "start-fg", "-d", devName)
 	err := command.Start()
 	if err != nil {
-		fmt.Println(err)
+		fn.Log(err)
 		return
 	}
 	configFolder, err := client.GetConfigFolder()
@@ -70,7 +68,7 @@ Example:
 			return
 		}
 
-		if strings.TrimSpace(wgInterface) != "" {
+		if len(wgInterface) != 0 {
 			fn.Log("[#] already connected")
 
 			fn.Log("\n[#] reconnecting")
@@ -132,7 +130,7 @@ Example:
 			return
 		}
 
-		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+		fn.Log(text.Bold(text.Green("\n[#]Selected Device:")),
 			text.Red(s),
 		)
 	},

@@ -16,7 +16,6 @@ func configureDarwin(_ string, _ bool) error {
 	return nil
 }
 
-
 func getCurrentDns() ([]string, error) {
 	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 
@@ -49,7 +48,7 @@ func disconnect(verbose bool) error {
 }
 
 func startService(_ bool) error {
-	devName, err := client.CurrentDeviceName()
+	devName, err := client.CurrentInfraDeviceName()
 	if err != nil {
 		return err
 	}
@@ -109,17 +108,22 @@ func stopService(verbose bool) error {
 		return err
 	}
 
-	if strings.TrimSpace(wgInterface) == "" {
+	if len(wgInterface) == 0 {
 		return nil
 	}
 
-	link, err := netlink.LinkByName(strings.TrimSpace(wgInterface))
-	if err != nil {
-		return fmt.Errorf("failed to find the interface %s: %v", wgInterface, err)
-	}
+	for _, v := range wgInterface {
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
+		link, err := netlink.LinkByName(strings.TrimSpace(v))
+		if err != nil {
+			return fmt.Errorf("failed to find the interface %s: %v", wgInterface, err)
+		}
 
-	if err := netlink.LinkDel(link); err != nil {
-		return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
+		if err := netlink.LinkDel(link); err != nil {
+			return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
+		}
 	}
 
 	return nil

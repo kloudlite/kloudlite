@@ -6,13 +6,12 @@ import (
 	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 )
 
 var deleteMountCommand = &cobra.Command{
 	Use:   "mount",
-	Short: "remove one mount from your " + constants.CmdName + "-config",
+	Short: "remove one mount from your kl-config",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command.`,
 	Run: func(_ *cobra.Command, _ []string) {
@@ -58,5 +57,5 @@ func removeConfigMount() {
 		common_util.PrintError(err)
 	}
 
-	fmt.Println("mount removed")
+	common_util.Log("mount removed")
 }

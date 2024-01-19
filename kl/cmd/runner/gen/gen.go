@@ -190,7 +190,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		return err
 	}
 
-	fmt.Println("Mount added to config")
+	fn.Log("Mount added to config")
 	return nil
 }
 

@@ -2,6 +2,7 @@ package wgc
 
 import (
 	"fmt"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"math"
@@ -34,8 +35,8 @@ func getOptions() *WgShowOptions {
 	return &opts
 }
 
-func Show(opts *WgShowOptions) (string, error) {
-	res := ""
+func Show(opts *WgShowOptions) ([]string, error) {
+	res := []string{}
 	// opts := getOptions()
 	if opts == nil {
 		opts = getOptions()
@@ -43,7 +44,7 @@ func Show(opts *WgShowOptions) (string, error) {
 
 	client, err := wgctrl.New()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// checkError(err)
@@ -51,32 +52,31 @@ func Show(opts *WgShowOptions) (string, error) {
 	case "interfaces":
 		devices, err := client.Devices()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		for i := 0; i < len(devices); i++ {
-			// fmt.Println(text.Colored(devices[i].Name, 2))
-			res += devices[i].Name
+			res = append(res, devices[i].Name)
 		}
 	case "all":
 		devices, err := client.Devices()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		for _, dev := range devices {
 			err := showDevice(*dev, opts)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 		}
 	default:
 		dev, err := client.Device(opts.Interface)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		err = showDevice(*dev, opts)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
@@ -86,12 +86,12 @@ func Show(opts *WgShowOptions) (string, error) {
 func showDevice(dev wgtypes.Device, opts *WgShowOptions) error {
 	if opts.Option == "" {
 		showKeys := opts.ShowKeys
-		fmt.Println()
-		fmt.Println(text.Bold(text.Green("Interface:")), text.Red(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String())))
+		fn.Println("")
+		fn.Println(text.Bold(text.Green("Interface:")), text.Red(fmt.Sprintf("%s (%s)", dev.Name, dev.Type.String())))
 		table.KVOutput("  public key:", text.Colored(dev.PublicKey.String(), 4), true)
 		table.KVOutput("  private key:", formatKey(dev.PrivateKey, showKeys), true)
 		table.KVOutput("  listening port:", text.Colored(dev.ListenPort, 2), true)
-		fmt.Println()
+		fn.Println("")
 
 		for _, peer := range dev.Peers {
 			err := showPeers(peer, showKeys)
@@ -106,45 +106,45 @@ func showDevice(dev wgtypes.Device, opts *WgShowOptions) error {
 		}
 		switch opts.Option {
 		case "public-key":
-			fmt.Printf("%s%s\n", deviceName, dev.PublicKey.String())
+			fn.Printf("%s%s\n", deviceName, dev.PublicKey.String())
 		case "private-key":
-			fmt.Printf("%s%s\n", deviceName, dev.PrivateKey.String())
+			fn.Printf("%s%s\n", deviceName, dev.PrivateKey.String())
 		case "listen-port":
-			fmt.Printf("%s%d\n", deviceName, dev.ListenPort)
+			fn.Printf("%s%d\n", deviceName, dev.ListenPort)
 		case "fwmark":
-			fmt.Printf("%s%d\n", deviceName, dev.FirewallMark)
+			fn.Printf("%s%d\n", deviceName, dev.FirewallMark)
 		case "peers":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\n", deviceName, peer.PublicKey.String())
+				fn.Printf("%s%s\n", deviceName, peer.PublicKey.String())
 			}
 		case "preshared-keys":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatPSK(peer.PresharedKey, "(none)"))
+				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatPSK(peer.PresharedKey, "(none)"))
 			}
 		case "endpoints":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatEndpoint(peer.Endpoint))
+				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), formatEndpoint(peer.Endpoint))
 			}
 		case "allowed-ips":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), joinIPs(peer.AllowedIPs))
+				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), joinIPs(peer.AllowedIPs))
 			}
 		case "latest-handshakes":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%d\n", deviceName, peer.PublicKey.String(), peer.LastHandshakeTime.Unix())
+				fn.Printf("%s%s\t%d\n", deviceName, peer.PublicKey.String(), peer.LastHandshakeTime.Unix())
 			}
 		case "transfer":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%d\t%d\n", deviceName, peer.PublicKey.String(), peer.ReceiveBytes, peer.TransmitBytes)
+				fn.Printf("%s%s\t%d\t%d\n", deviceName, peer.PublicKey.String(), peer.ReceiveBytes, peer.TransmitBytes)
 			}
 		case "persistent-keepalive":
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), zeroToOff(strconv.FormatFloat(peer.PersistentKeepaliveInterval.Seconds(), 'g', 0, 64)))
+				fn.Printf("%s%s\t%s\n", deviceName, peer.PublicKey.String(), zeroToOff(strconv.FormatFloat(peer.PersistentKeepaliveInterval.Seconds(), 'g', 0, 64)))
 			}
 		case "dump":
-			fmt.Printf("%s%s\t%s\t%d\t%s\n", deviceName, dev.PrivateKey.String(), dev.PublicKey.String(), dev.ListenPort, zeroToOff(strconv.FormatInt(int64(dev.FirewallMark), 10)))
+			fn.Printf("%s%s\t%s\t%d\t%s\n", deviceName, dev.PrivateKey.String(), dev.PublicKey.String(), dev.ListenPort, zeroToOff(strconv.FormatInt(int64(dev.FirewallMark), 10)))
 			for _, peer := range dev.Peers {
-				fmt.Printf("%s%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
+				fn.Printf("%s%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\n",
 					deviceName,
 					peer.PublicKey.String(),
 					formatPSK(peer.PresharedKey, "(none)"),

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path"
 
@@ -32,7 +31,7 @@ Find more information at https://kloudlite.io/docs/cli
 
 		if len(args) == 0 {
 			if err := cmd.Help(); err != nil {
-				fmt.Println(err)
+				fn.Log(err)
 				os.Exit(1)
 			}
 

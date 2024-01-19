@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/kl/cmd/vpn"
 	"github.com/spf13/cobra"
 
-	"github.com/kloudlite/kl/cmd/context"
+	"github.com/kloudlite/kl/cmd/account"
 	"github.com/kloudlite/kl/cmd/get"
 	"github.com/kloudlite/kl/cmd/list"
 	"github.com/kloudlite/kl/cmd/runner"
@@ -33,8 +33,8 @@ func init() {
 	rootCmd.AddCommand(get.Cmd)
 
 	rootCmd.AddCommand(auth.Cmd)
+	rootCmd.AddCommand(account.Cmd)
 
-	rootCmd.AddCommand(context.Cmd)
 	rootCmd.AddCommand(infra.Cmd)
 	rootCmd.AddCommand(vpn.Cmd)
 	//rootCmd.AddCommand(auth.logoutCmd)

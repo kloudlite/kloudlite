@@ -14,5 +14,4 @@ func init() {
 	Command.AddCommand(addConfigCommand)
 	Command.AddCommand(addMresCommand)
 	Command.AddCommand(addSecretCommand)
-	// Command.Command(addMountCommand)
 }

@@ -85,7 +85,6 @@ func startService(devName string, _ bool) error {
 }
 
 func ipRouteAdd(ip string, _ string, devName string, _ bool) error {
-	fmt.Println("ipRouteAdd", ip)
 	_, dst, err := net.ParseCIDR(ip)
 	if err != nil {
 		return fmt.Errorf("failed to parse CIDR: %v", err)
@@ -116,17 +115,20 @@ func stopService(verbose bool) error {
 		return err
 	}
 
-	if strings.TrimSpace(wgInterface) == "" {
+	if len(wgInterface) == 0 {
 		return nil
 	}
-
-	link, err := netlink.LinkByName(strings.TrimSpace(wgInterface))
-	if err != nil {
-		return fmt.Errorf("failed to find the interface %s: %v", wgInterface, err)
-	}
-
-	if err := netlink.LinkDel(link); err != nil {
-		return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
+	for _, v := range wgInterface {
+		if strings.TrimSpace(v) == "" {
+			continue
+		}
+		link, err := netlink.LinkByName(strings.TrimSpace(v))
+		if err != nil {
+			return fmt.Errorf("failed to find the interface %s: %v", wgInterface, err)
+		}
+		if err := netlink.LinkDel(link); err != nil {
+			return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
+		}
 	}
 
 	return nil

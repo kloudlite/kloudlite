@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/kloudlite/kl/constants"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
@@ -26,10 +27,10 @@ kl update
 		}
 		err := ExecUpdateCmd(version)
 		if err != nil {
-			fmt.Println(err)
+			fn.Log(err)
 			return
 		}
-		fmt.Println("successfully updated")
+		fn.Log("successfully updated")
 	},
 }
 

@@ -26,7 +26,7 @@ Examples:
 	kl infra vpn list
 
 	# switch to vpn
-	kl infra vpn switch <vpn_name>
+	kl infra vpn switch
 
 	`,
 }

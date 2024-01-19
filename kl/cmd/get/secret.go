@@ -55,14 +55,14 @@ func printSecret(secret *server.Secret, cmd *cobra.Command) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(configBytes))
+		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(secret.StringData)
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(configBytes))
+		fn.Println(string(configBytes))
 
 	default:
 		header := table.Row{

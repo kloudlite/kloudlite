@@ -3,6 +3,7 @@ package mounter
 import (
 	"errors"
 	"fmt"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"os"
 	"os/exec"
 	"path"
@@ -27,7 +28,7 @@ func mountFile(_file, data, mountPath string) error {
 	}
 
 	if err := os.WriteFile(file, []byte(data), os.ModePerm); err != nil {
-		fmt.Println("error writing file", err)
+		fn.Log("error writing file", err)
 	}
 
 	return nil
@@ -65,7 +66,7 @@ func Load(envs map[string]string, args []string) error {
 
 	for k, v := range envs {
 		if len(args) == 0 {
-			fmt.Printf("%s=%q\n", k, v)
+			fn.Log("%s=%q\n", k, v)
 		} else {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 		}

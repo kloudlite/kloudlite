@@ -1,10 +1,8 @@
 package vpn
 
 import (
-	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/kloudlite/kl/lib/wgc"
@@ -40,7 +38,7 @@ Example:
 			return
 		}
 
-		if strings.TrimSpace(wgInterface) == "" {
+		if len(wgInterface) == 0 {
 			fn.Log(text.Colored("[#] no devices connected yet", 209))
 		} else {
 			if err := disconnect(reconnectVerbose); err != nil {
@@ -79,7 +77,7 @@ Example:
 			return
 		}
 
-		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+		fn.Log(text.Bold(text.Green("\n[#]Selected Device:")),
 			text.Red(s),
 		)
 	},

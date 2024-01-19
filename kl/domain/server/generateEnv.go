@@ -65,8 +65,6 @@ func GenerateEnv() (*GeneratedEnvs, error) {
 		return nil, err
 	}
 
-	// fmt.Println(string(respData))
-
 	type Response struct {
 		GeneratedEnvVars GeneratedEnvs `json:"data"`
 	}

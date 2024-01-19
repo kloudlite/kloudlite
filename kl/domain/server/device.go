@@ -1,45 +1,17 @@
 package server
 
 import (
-	"errors"
 	"fmt"
-	"github.com/kloudlite/kl/pkg/ui/input"
-
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
-func ListDevices() ([]Device, error) {
-
-	_, err := EnsureAccount()
-	if err != nil {
-		return nil, err
-	}
-
-	cookie, err := getCookie()
-	if err != nil {
-		return nil, err
-	}
-
-	respData, err := klFetch("cli_listCoreDevices", map[string]any{
-		"pq": PaginationDefault,
-	}, &cookie)
-	if err != nil {
-		return nil, err
-	}
-	if fromResp, err := GetFromResp[[]Device](respData); err != nil {
-		return nil, err
-	} else {
-		return *fromResp, nil
-	}
-}
-
 func GetDevice(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
 
 	var err error
-	devName, err = EnsureDevice(options...)
+	_, err = EnsureDevice(options...)
 
 	cookie, err := getCookie()
 	if err != nil {
@@ -60,82 +32,6 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 	}
 }
 
-func SelectDevice(devName string) (*Device, error) {
-	persistSelectedDevice := func(deviceName string) error {
-		err := client.SelectDevice(deviceName)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	devices, err := ListDevices()
-	if err != nil {
-		return nil, err
-	}
-
-	if devName != "" {
-		for _, d := range devices {
-			if d.Metadata.Name == devName {
-				if err := persistSelectedDevice(d.Metadata.Name); err != nil {
-					return nil, err
-				}
-				return &d, nil
-			}
-		}
-		return nil, errors.New("you don't have access to this device")
-	}
-	if len(devices) == 0 {
-		deviceName, err := input.Prompt(input.Options{
-			Placeholder: "Enter device name",
-			CharLimit:   25,
-			Password:    false,
-		})
-		if err != nil {
-			return nil, err
-		}
-		suggestedNames, err := GetDeviceName(deviceName)
-		if err != nil {
-			fn.PrintError(err)
-			return nil, err
-		}
-		selectedDeviceName := ""
-		if suggestedNames.Result == true {
-			selectedDeviceName = deviceName
-		} else {
-			selectedDeviceName, err = SelectDeviceName(suggestedNames.SuggestedNames)
-			if err != nil {
-				return nil, err
-			}
-		}
-		device, err := CreateDevice(selectedDeviceName, deviceName)
-		//device, err := CreateDevice(deviceName, deviceName)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Println(deviceName, "has been created")
-		return device, nil
-	}
-
-	device, err := fzf.FindOne(
-		devices,
-		func(device Device) string {
-			return fmt.Sprintf("%s (%s)", device.DisplayName, device.Metadata.Name)
-		},
-		fzf.WithPrompt("Select Device > "),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if err := persistSelectedDevice(device.Metadata.Name); err != nil {
-		return nil, err
-	}
-
-	return device, nil
-}
-
 func GetDeviceName(devName string) (*CheckName, error) {
 	_, err := EnsureAccount()
 	if err != nil {
@@ -152,7 +48,6 @@ func GetDeviceName(devName string) (*CheckName, error) {
 		"name":    devName,
 	}, &cookie)
 	if err != nil {
-		fmt.Println(respData, err)
 		return nil, err
 	}
 
@@ -188,7 +83,6 @@ func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	respData, err := klFetch("cli_createCoreDevice", map[string]any{
 		"vpnDevice": map[string]any{
 			"displayName": devName,
@@ -200,7 +94,6 @@ func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	if fromResp, err := GetFromResp[Device](respData); err != nil {
 		return nil, err
 	} else {
@@ -210,7 +103,7 @@ func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
 
 func UpdateDevice(ports []DevicePort) error {
 
-	devName, err := EnsureDevice()
+	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
@@ -261,19 +154,13 @@ func UpdateDevice(ports []DevicePort) error {
 }
 
 func DeleteDevicePort(ports []DevicePort) error {
-	devName, err := EnsureDevice()
-	if err != nil {
-		return err
-	}
-
-	clusterName, err := client.CurrentClusterName()
+	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
 
 	device, err := GetDevice([]fn.Option{
 		fn.MakeOption("deviceName", devName),
-		fn.MakeOption("clusterName", clusterName),
 	}...)
 
 	newPorts := make([]DevicePort, 0)
@@ -299,9 +186,8 @@ func DeleteDevicePort(ports []DevicePort) error {
 	}
 
 	respData, err := klFetch("cli_CoreUpdateDevicePorts", map[string]any{
-		"clusterName": clusterName,
-		"deviceName":  devName,
-		"ports":       device.Spec.Ports,
+		"deviceName": devName,
+		"ports":      device.Spec.Ports,
 	}, &cookie)
 
 	if err != nil {
@@ -317,19 +203,27 @@ func DeleteDevicePort(ports []DevicePort) error {
 
 func EnsureDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
-
-	if devName != "" {
-		return devName, nil
+	if devName == "" {
+		return "", fmt.Errorf("device name is required")
 	}
-
-	devName, _ = client.CurrentDeviceName()
-
-	if devName != "" {
-		return devName, nil
+	currDevName, _ := client.CurrentDeviceName()
+	if currDevName != "" {
+		return currDevName, nil
 	}
-
-	dev, err := SelectDevice("")
-
+	devResult, err := GetDeviceName(devName)
+	if err != nil {
+		return "", err
+	}
+	selectedDeviceName := ""
+	if devResult.Result == true {
+		selectedDeviceName = devName
+	} else {
+		selectedDeviceName, err = SelectDeviceName(devResult.SuggestedNames)
+		if err != nil {
+			return "", err
+		}
+	}
+	dev, err := CreateDevice(selectedDeviceName, devName)
 	if err != nil {
 		return "", err
 	}
@@ -354,7 +248,7 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 		return err
 	}
 
-	devName, err := EnsureDevice(options...)
+	devName, err := client.CurrentDeviceName()
 	if err != nil {
 		return err
 	}
@@ -363,13 +257,11 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(projectName, env)
 	respData, err := klFetch("cli_CoreUpdateDeviceEnv", map[string]any{
 		"deviceName":  devName,
 		"envName":     env.Name,
 		"projectName": projectName,
 	}, &cookie)
-
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package table
 import (
 	"encoding/json"
 	"fmt"
+	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
@@ -58,7 +59,7 @@ func KVOutput(k string, v interface{}, printIt bool) string {
 	)
 
 	if printIt {
-		fmt.Println(result)
+		fn.Log(result)
 	}
 
 	return result

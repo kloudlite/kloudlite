@@ -6,13 +6,12 @@ import (
 	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 )
 
 var deleteConfigCommand = &cobra.Command{
 	Use:   "config",
-	Short: "remove one config environment from your " + constants.CmdName + "-config",
+	Short: "remove one config environment from your kl-config",
 	Long: `This command help you to delete environment that that is comming from config
 
 Examples:
@@ -33,7 +32,7 @@ func removeConfig() error {
 	klFile, err := client.GetKlFile(nil)
 	if err != nil {
 		common_util.PrintError(err)
-		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
+		es := "please run 'kl init' if you are not initialized the file already"
 		common_util.PrintError(fmt.Errorf(es))
 	}
 
@@ -65,7 +64,7 @@ func removeConfig() error {
 
 		klFile.Configs = newConfigs
 
-		fmt.Printf("removed config %s form your %s-file\n", selectedConfig.Name, constants.CmdName)
+		common_util.Log("removed config %s form your kl-file\n", selectedConfig.Name)
 
 	} else {
 
@@ -91,7 +90,7 @@ func removeConfig() error {
 
 		selectedConfig.Env = newEnvs
 
-		fmt.Printf("removed key %s/%s form your %s-file\n", selectedConfig.Name, selectedConfig.Name, constants.CmdName)
+		common_util.Log("removed key %s/%s form your kl-file\n", selectedConfig.Name, selectedConfig.Name)
 	}
 
 	err = client.WriteKLFile(*klFile)

@@ -3,28 +3,28 @@ package client
 import "errors"
 
 func SelectAccount(accountName string) error {
-	file, err := GetActiveContext()
+	file, err := GetAccountContext()
 	if err != nil {
 		return err
 	}
 
 	file.AccountName = accountName
 
-	if file.Name == "" {
+	if file.AccountName == "" {
 		return nil
 	}
 
-	err = WriteContextFile(*file)
+	err = WriteAccountContext(accountName)
 	return err
 }
 
 func CurrentAccountName() (string, error) {
-	file, err := GetActiveContext()
+	file, err := GetAccountContext()
 	if err != nil {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "", errors.New("noSelectedContext")
+		return "", errors.New("no Selected account")
 	}
 	if file.AccountName == "" {
 		return "",

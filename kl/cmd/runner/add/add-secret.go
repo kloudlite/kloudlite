@@ -196,7 +196,7 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		fn.PrintError(err)
 	}
 
-	fmt.Printf("added secret %s/%s to your %s-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key, "kl")
+	fn.Log("added secret %s/%s to your %s-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key, "kl")
 	return nil
 }
 

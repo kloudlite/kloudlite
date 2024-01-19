@@ -6,28 +6,28 @@ import (
 
 func SelectProject(projectId string) error {
 
-	file, err := client.GetActiveContext()
+	file, err := client.GetAccountContext()
 	if err != nil {
 		return err
 	}
 
-	file.ProjectName = projectId
+	file.AccountName = projectId
 
-	err = client.WriteContextFile(*file)
+	err = client.WriteAccountContext(file.AccountName)
 	return err
 
 }
 
 func SelectDevice(deviceId string) error {
 
-	file, err := client.GetActiveContext()
+	file, err := client.GetAccountContext()
 	if err != nil {
 		return err
 	}
 
-	file.DeviceName = deviceId
+	file.AccountName = deviceId
 
-	err = client.WriteContextFile(*file)
+	err = client.WriteAccountContext(file.AccountName)
 	return err
 
 }

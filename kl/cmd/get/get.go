@@ -27,5 +27,4 @@ Examples:
 func init() {
 	Cmd.AddCommand(configCmd)
 	Cmd.AddCommand(secretCmd)
-	// Cmd.AddCommand(appsCmd)
 }

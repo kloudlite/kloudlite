@@ -2,6 +2,7 @@ package vpn
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/input"
@@ -10,14 +11,14 @@ import (
 
 var newCmd = &cobra.Command{
 	Use:   "new",
-	Short: "Create new context",
-	Long: `This command let create new context.
+	Short: "Create new infra vpn device",
+	Long: `This command let you create new infra vpn device.
 Example:
-  # create new context
+  # create new infra vpn device
   kl infra vpn new
 
-	# creating new context with name
-	kl infra vpn   --name <context_name>
+	# creating new infra vpn device with name
+	kl infra vpn  --name <device_name>
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		deviceName := ""
@@ -56,6 +57,17 @@ Example:
 			}
 		}
 		device, err := server.CreateInfraDevice(selectedDeviceName, deviceName)
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		infraContext, err := client.GetActiveInfraContext()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		infraContext.DeviceName = device.Metadata.Name
+		err = client.WriteInfraContextFile(*infraContext)
 		if err != nil {
 			fn.PrintError(err)
 			return

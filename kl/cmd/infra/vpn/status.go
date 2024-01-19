@@ -1,7 +1,6 @@
 package vpn
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -39,7 +38,7 @@ Example:
 			return
 		}
 
-		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+		functions.Log(text.Bold(text.Green("\n[#]Selected Device:")),
 			text.Red(s),
 		)
 

@@ -1,15 +1,12 @@
 package vpn
 
 import (
-	"fmt"
 	"github.com/kloudlite/kl/domain/client"
-	"os"
-	"strings"
-
 	"github.com/kloudlite/kl/lib/wgc"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 var disconnectVerbose bool
@@ -40,7 +37,7 @@ Example:
 			return
 		}
 
-		if strings.TrimSpace(wgInterface) == "" {
+		if len(wgInterface) == 0 {
 			fn.Log(text.Colored("[#] no device connected yet", 209))
 			return
 		}
@@ -59,7 +56,7 @@ Example:
 			return
 		}
 
-		fmt.Println(text.Bold(text.Green("\n[#]Selected Device:")),
+		fn.Log(text.Bold(text.Green("\n[#]Selected Device:")),
 			text.Red(s),
 		)
 	},

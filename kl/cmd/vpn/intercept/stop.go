@@ -19,9 +19,6 @@ Examples:
 		ns := ""
 
 		app := fn.ParseStringFlag(cmd, "app")
-		device := fn.ParseStringFlag(cmd, "device")
-		env := fn.ParseStringFlag(cmd, "env")
-		project := fn.ParseStringFlag(cmd, "project")
 
 		if cmd.Flags().Changed("name") {
 			ns, _ = cmd.Flags().GetString("name")
@@ -39,9 +36,6 @@ Examples:
 
 		if err := server.InterceptApp(false, []fn.Option{
 			fn.MakeOption("appName", app),
-			fn.MakeOption("deviceName", device),
-			fn.MakeOption("envName", env),
-			fn.MakeOption("projectName", project),
 		}...); err != nil {
 			fn.PrintError(err)
 			return

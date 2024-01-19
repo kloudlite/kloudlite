@@ -74,7 +74,12 @@ func configure(
 		return err
 	}
 
-	// time.Sleep(time.Second * 2)
+	if device.Spec.ActiveNamespace == "" {
+		return errors.New(fmt.Sprintf("no env name found for device %s, please use env using kl env switch\n", devName))
+	}
+	if len(device.Spec.Ports) == 0 {
+		return errors.New(fmt.Sprintf("no ports found for device %s, please export ports using kl infra vpn expose\n", devName))
+	}
 	if device.WireguardConfig == nil {
 		return errors.New("no wireguard config found")
 	}
@@ -110,7 +115,7 @@ func configure(
 
 	err = wg.ConfigureDevice(interfaceName, cfg.Config)
 	if err != nil {
-		fmt.Printf("failed to configure device: %v", err)
+		fn.Log("failed to configure device: %v", err)
 	}
 
 	dServers, err := getCurrentDns()
@@ -119,12 +124,29 @@ func configure(
 	}
 
 	dnsServers := func() []net.IPNet {
+		//	var ipNet []net.IPNet
+		//	for _, v := range dServers {
+		//		ipNet = append(ipNet, net.IPNet{
+		//			IP:   net.ParseIP(v),
+		//			Mask: net.CIDRMask(32, 32),
+		//		})
+		//	}
 		var ipNet []net.IPNet
 		for _, v := range dServers {
-			ipNet = append(ipNet, net.IPNet{
-				IP:   net.ParseIP(v),
-				Mask: net.CIDRMask(32, 32),
-			})
+			ip := net.ParseIP(v)
+			if ip == nil {
+				continue
+			}
+			in := net.IPNet{
+				IP: ip,
+				Mask: func() net.IPMask {
+					if ip.To4() != nil {
+						return net.CIDRMask(32, 32)
+					}
+					return net.CIDRMask(128, 128)
+				}(),
+			}
+			ipNet = append(ipNet, in)
 		}
 
 		return ipNet

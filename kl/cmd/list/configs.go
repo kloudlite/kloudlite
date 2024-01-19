@@ -67,9 +67,8 @@ func printConfigs(cmd *cobra.Command, configs []server.Config) error {
 		if pName != "" {
 			table.KVOutput("configs of", pName, true)
 		}
-		table.TotalResults(len(configs), true)
 	}
-
+	table.TotalResults(len(configs), true)
 	return nil
 }
 

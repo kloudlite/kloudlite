@@ -87,7 +87,6 @@ func generateDocs(cmd *cobra.Command, dir string) error {
 `, cmd.CommandPath(), cmd.Short, getSynopsis(cmd), getOptions(cmd), commandsList(cmd),
 		fmt.Sprintf("%d-%s-%d", time.Now().Day(), time.Now().Month(), time.Now().Year()))
 
-	// fmt.Println(fileContent)
 	if err := os.WriteFile(path.Join(dir, strings.ReplaceAll(cmd.CommandPath(), " ", "_")+".md"), []byte(fileContent), 0644); err != nil {
 		return err
 	}
@@ -152,6 +151,6 @@ Example:
 			return
 		}
 
-		fmt.Println("successfully generated docs")
+		common_util.Log("successfully generated docs")
 	},
 }

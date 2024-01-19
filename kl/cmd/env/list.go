@@ -72,7 +72,7 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
 		table.TotalResults(len(envs), true)
 	}
-
+	table.TotalResults(len(envs), true)
 	return nil
 }
 

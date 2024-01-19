@@ -2,8 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -25,7 +23,7 @@ type Device struct {
 			Host   string `json:"host"`
 			Target string `json:"target"`
 		} `json:"cnameRecords"`
-		DeviceNamespace string       `json:"deviceNamespace"`
+		ActiveNamespace string       `json:"activeNamespace"`
 		Ports           []DevicePort `json:"ports"`
 	} `json:"spec"`
 	WireguardConfig *struct {
@@ -114,7 +112,9 @@ func SelectInfraDevice(devName string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if len(devices) == 0 {
+		return nil, errors.New("No infra vpn devices found")
+	}
 	if devName != "" {
 		for _, d := range devices {
 			if d.Metadata.Name == devName {
@@ -163,7 +163,7 @@ func GetInfraDeviceName(devName string) (*CheckName, error) {
 		"name":        devName,
 	}, &cookie)
 	if err != nil {
-		fmt.Println(respData, err)
+		fn.Log(respData, err)
 		return nil, err
 	}
 
@@ -200,13 +200,14 @@ func CreateInfraDevice(selectedDeviceName string, devName string) (*Device, erro
 	if err != nil {
 		return nil, err
 	}
-
 	respData, err := klFetch("cli_createDevice", map[string]any{
 		"clusterName": clusterName,
 		"vpnDevice": map[string]any{
 			"displayName": devName,
 			"metadata": map[string]any{
 				"name": selectedDeviceName,
+				// TODO: remove below
+				"namespace": "test-namespace",
 			},
 		},
 	}, &cookie)

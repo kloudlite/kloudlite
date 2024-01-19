@@ -36,8 +36,16 @@ func PrintError(err error) {
 	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s\n", text.Colored(err.Error(), 1)))
 }
 
-func Log(str string) {
-	_, _ = fmt.Fprintf(os.Stderr, "%s\n", str)
+func Log(str ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprint(str...))
+}
+
+func Printf(format string, str ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stdout, format, str...)
+}
+
+func Println(str ...interface{}) {
+	_, _ = fmt.Println(str...)
 }
 
 type resType struct {

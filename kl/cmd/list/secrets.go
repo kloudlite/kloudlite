@@ -67,9 +67,9 @@ func printSecrets(cmd *cobra.Command, secrets []server.Secret) error {
 	}
 
 	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
-		table.TotalResults(len(secrets), true)
+		table.KVOutput("secret of", pName, true)
 	}
-
+	table.TotalResults(len(secrets), true)
 	return nil
 }
 

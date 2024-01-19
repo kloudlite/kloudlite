@@ -20,7 +20,10 @@ Example:
 		if cmd.Flags().Changed("name") {
 			ns, _ = cmd.Flags().GetString("name")
 		}
-
+		if ns == "" {
+			fn.Log("namespace is missing, please provide using kl infra vpn activate -n <namespace>")
+			return
+		}
 		if err := server.UpdateInfraDeviceNS(ns); err != nil {
 			fn.PrintError(err)
 			return

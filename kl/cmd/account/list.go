@@ -1,4 +1,4 @@
-package list
+package account
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var accountsCmd = &cobra.Command{
-	Use:   "accounts",
+var listCmd = &cobra.Command{
+	Use:   "list",
 	Short: "list all the accounts accessible to you",
 	Long: `List Accounts
 
@@ -21,9 +21,9 @@ This command will provide the list of all the accounts that's accessible to you.
 
 Examples:
   # list accounts accessible to you
-  kl list accounts
+  kl account list
 
-Note: selected project will be highlighted with green color.
+Note: selected account will be highlighted with green color.
 
 `,
 	Run: func(cmd *cobra.Command, _ []string) {
@@ -70,12 +70,13 @@ func listAccounts(cmd *cobra.Command) error {
 	}
 
 	fmt.Println(table.Table(&header, rows, cmd))
+
+	table.TotalResults(len(rows), true)
 	return nil
 }
 
 func init() {
-	accountsCmd.Aliases = append(accountsCmd.Aliases, "account")
-	accountsCmd.Aliases = append(accountsCmd.Aliases, "acc")
+	listCmd.Aliases = append(listCmd.Aliases, "ls")
 
-	fn.WithOutputVariant(accountsCmd)
+	fn.WithOutputVariant(listCmd)
 }

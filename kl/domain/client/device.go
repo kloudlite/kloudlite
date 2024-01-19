@@ -1,18 +1,20 @@
 package client
 
-import "errors"
+import (
+	"errors"
+)
 
-func SelectDevice(devName string) error {
-	file, err := GetActiveContext()
-	if err != nil {
-		return err
-	}
-
-	file.DeviceName = devName
-
-	err = WriteContextFile(*file)
-	return err
-}
+//func SelectDevice(devName string) error {
+//	file, err := GetDeviceContext()
+//	if err != nil {
+//		return err
+//	}
+//
+//	file.DeviceName = devName
+//
+//	err = WriteDeviceContext(devName)
+//	return err
+//}
 
 func SelectInfraDevice(devName string) error {
 	file, err := GetActiveInfraContext()
@@ -27,13 +29,13 @@ func SelectInfraDevice(devName string) error {
 }
 
 func CurrentDeviceName() (string, error) {
-	file, err := GetActiveContext()
+	file, err := GetDeviceContext()
 	if err != nil {
 		return "", err
 	}
 	if file.DeviceName == "" {
 		return "",
-			errors.New("no selected device. please select one using \"kl vpn switch\"")
+			errors.New("no selected device. please select one using \"kl account switch\"")
 	}
 	return file.DeviceName, nil
 }

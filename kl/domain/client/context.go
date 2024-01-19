@@ -13,11 +13,12 @@ import (
 )
 
 const (
-	ConfigFileName        string = "kl-session.yaml"
-	SessionFileName       string = "kl-session.yaml"
-	ContextsFileName      string = "kl-contexts.yaml"
-	ExtraDataFileName     string = "kl-extra-data.yaml"
-	InfraContextsFileName string = "kl-infra-contexts.yaml"
+	ConfigFileName          string = "kl-session.yaml"
+	SessionFileName         string = "kl-session.yaml"
+	AccountContextsFileName string = "kl-account-contexts.yaml"
+	ExtraDataFileName       string = "kl-extra-data.yaml"
+	InfraContextsFileName   string = "kl-infra-contexts.yaml"
+	DeviceFileName          string = "kl-device.yaml"
 )
 
 type Env struct {
@@ -29,10 +30,12 @@ type Session struct {
 	Session string `json:"session"`
 }
 
-type Context struct {
-	Name        string `json:"name"`
+type AccountContext struct {
 	AccountName string `json:"accountName"`
-	DeviceName  string `json:"deviceName"`
+}
+
+type DeviceContext struct {
+	DeviceName string `json:"deviceName"`
 }
 
 type InfraContext struct {
@@ -40,11 +43,6 @@ type InfraContext struct {
 	AccountName string `json:"accountName"`
 	ClusterName string `json:"ClusterName"`
 	DeviceName  string `json:"deviceName"`
-}
-
-type Contexts struct {
-	Contexts      map[string]*Context `json:"contexts"`
-	ActiveContext string              `json:"activeContext"`
 }
 
 type InfraContexts struct {
@@ -109,28 +107,6 @@ func GetConfigFolder() (configFolder string, err error) {
 	return configPath, nil
 }
 
-func GetActiveContext() (*Context, error) {
-	c, err := GetContexts()
-	if err != nil {
-		return nil, err
-	}
-
-	if c.ActiveContext == "" {
-		return &Context{}, nil
-	}
-
-	if c.Contexts == nil {
-		c.Contexts = map[string]*Context{}
-	}
-
-	ctx, ok := c.Contexts[c.ActiveContext]
-	if !ok {
-		return &Context{}, nil
-	}
-
-	return ctx, nil
-}
-
 func GetActiveInfraContext() (*InfraContext, error) {
 	c, err := GetInfraContexts()
 	if err != nil {
@@ -153,24 +129,6 @@ func GetActiveInfraContext() (*InfraContext, error) {
 	return ctx, nil
 }
 
-func SetActiveContext(name string) error {
-	file, err := GetContexts()
-
-	if err != nil {
-		return err
-	}
-
-	file.ActiveContext = name
-
-	b, err := yaml.Marshal(file)
-
-	if err != nil {
-		return err
-	}
-
-	return writeOnUserScope(ContextsFileName, b)
-}
-
 func SetActiveInfraContext(name string) error {
 	file, err := GetInfraContexts()
 
@@ -187,31 +145,6 @@ func SetActiveInfraContext(name string) error {
 	}
 
 	return writeOnUserScope(InfraContextsFileName, b)
-}
-
-func DeleteContext(name string) error {
-	if name == "" {
-		return fmt.Errorf("context name is required")
-	}
-
-	c, err := GetContexts()
-
-	if err != nil {
-		return err
-	}
-
-	if _, ok := c.Contexts[name]; !ok {
-		return fmt.Errorf("context %s not found", name)
-	}
-
-	delete(c.Contexts, name)
-
-	b, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	return writeOnUserScope(ContextsFileName, b)
 }
 
 func DeleteInfraContext(name string) error {
@@ -239,26 +172,6 @@ func DeleteInfraContext(name string) error {
 	return writeOnUserScope(InfraContextsFileName, b)
 }
 
-func WriteContextFile(fileObj Context) error {
-	c, err := GetContexts()
-	if err != nil {
-		return err
-	}
-	if c.Contexts == nil {
-		c.Contexts = map[string]*Context{}
-	}
-
-	c.Contexts[fileObj.Name] = &fileObj
-
-	file, err := yaml.Marshal(c)
-
-	if err != nil {
-		return err
-	}
-
-	return writeOnUserScope(ContextsFileName, file)
-}
-
 func WriteInfraContextFile(fileObj InfraContext) error {
 	c, err := GetInfraContexts()
 	if err != nil {
@@ -277,32 +190,6 @@ func WriteInfraContextFile(fileObj InfraContext) error {
 	}
 
 	return writeOnUserScope(InfraContextsFileName, file)
-}
-
-func GetContexts() (*Contexts, error) {
-	file, err := ReadFile(ContextsFileName)
-	contexts := Contexts{}
-
-	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-
-			b, err := yaml.Marshal(contexts)
-			if err != nil {
-				return nil, err
-			}
-
-			if err := writeOnUserScope(ContextsFileName, b); err != nil {
-				return nil, err
-			}
-
-		}
-	}
-
-	if err = yaml.Unmarshal(file, &contexts); err != nil {
-		return nil, err
-	}
-
-	return &contexts, nil
 }
 
 func GetInfraContexts() (*InfraContexts, error) {
@@ -329,6 +216,171 @@ func GetInfraContexts() (*InfraContexts, error) {
 	}
 
 	return &infraContexts, nil
+}
+
+func GetInfraCookieString() (string, error) {
+	session, err := GetAuthSession()
+	if err != nil {
+		return "", err
+	}
+
+	if session == "" {
+		return "", fmt.Errorf("no session found")
+	}
+
+	c, err := GetInfraContexts()
+	if err != nil {
+		return fmt.Sprintf("hotspot-session=%s", session), nil
+	}
+
+	if c.ActiveContext == "" {
+		return fmt.Sprintf("hotspot-session=%s", session), nil
+	}
+
+	ctx, ok := c.InfraContexts[c.ActiveContext]
+	if !ok {
+		return fmt.Sprintf("hotspot-session=%s", session), nil
+	}
+
+	return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", ctx.AccountName, session), nil
+}
+
+func DeleteAccountContext(aName string) error {
+	if aName == "" {
+		return fmt.Errorf("Account Name is required")
+	}
+
+	c, err := GetAccountContext()
+
+	if err != nil {
+		return err
+	}
+
+	if c.AccountName != aName {
+		return fmt.Errorf("Account %s not found", aName)
+	}
+
+	c.AccountName = ""
+
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(AccountContextsFileName, b)
+}
+
+func WriteAccountContext(aName string) error {
+	c, err := GetAccountContext()
+	if err != nil {
+		return err
+	}
+
+	c.AccountName = aName
+
+	file, err := yaml.Marshal(c)
+
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(AccountContextsFileName, file)
+}
+
+func GetAccountContext() (*AccountContext, error) {
+	file, err := ReadFile(AccountContextsFileName)
+	contexts := AccountContext{}
+
+	// need to check if file exists
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+
+			b, err := yaml.Marshal(contexts)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := writeOnUserScope(AccountContextsFileName, b); err != nil {
+				return nil, err
+			}
+
+		}
+	}
+
+	if err = yaml.Unmarshal(file, &contexts); err != nil {
+		return nil, err
+	}
+
+	return &contexts, nil
+}
+
+func DeleteDeviceContext(dName string) error {
+	if dName == "" {
+		return fmt.Errorf("Device Name is required")
+	}
+
+	c, err := GetDeviceContext()
+
+	if err != nil {
+		return err
+	}
+
+	if c.DeviceName != dName {
+		return fmt.Errorf("Device %s not found", dName)
+	}
+
+	c.DeviceName = ""
+
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(DeviceFileName, b)
+}
+
+func WriteDeviceContext(dName string) error {
+	c, err := GetDeviceContext()
+	if err != nil {
+		return err
+	}
+
+	c.DeviceName = dName
+
+	file, err := yaml.Marshal(c)
+
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(DeviceFileName, file)
+}
+
+func GetDeviceContext() (*DeviceContext, error) {
+	file, err := ReadFile(DeviceFileName)
+	contexts := DeviceContext{}
+
+	// need to check if file exists
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+
+			b, err := yaml.Marshal(contexts)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := writeOnUserScope(DeviceFileName, b); err != nil {
+				return nil, err
+			}
+
+		}
+	}
+
+	if err = yaml.Unmarshal(file, &contexts); err != nil {
+		return nil, err
+	}
+
+	return &contexts, nil
 }
 
 func SaveExtraData(extraData *ExtraData) error {
@@ -376,48 +428,16 @@ func GetCookieString() (string, error) {
 		return "", fmt.Errorf("no session found")
 	}
 
-	c, err := GetContexts()
+	c, err := GetAccountContext()
 	if err != nil {
 		return fmt.Sprintf("hotspot-session=%s", session), nil
 	}
 
-	if c.ActiveContext == "" {
+	if c.AccountName == "" {
 		return fmt.Sprintf("hotspot-session=%s", session), nil
 	}
 
-	ctx, ok := c.Contexts[c.ActiveContext]
-	if !ok {
-		return fmt.Sprintf("hotspot-session=%s", session), nil
-	}
-
-	return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", ctx.AccountName, session), nil
-}
-
-func GetInfraCookieString() (string, error) {
-	session, err := GetAuthSession()
-	if err != nil {
-		return "", err
-	}
-
-	if session == "" {
-		return "", fmt.Errorf("no session found")
-	}
-
-	c, err := GetInfraContexts()
-	if err != nil {
-		return fmt.Sprintf("hotspot-session=%s", session), nil
-	}
-
-	if c.ActiveContext == "" {
-		return fmt.Sprintf("hotspot-session=%s", session), nil
-	}
-
-	ctx, ok := c.InfraContexts[c.ActiveContext]
-	if !ok {
-		return fmt.Sprintf("hotspot-session=%s", session), nil
-	}
-
-	return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", ctx.AccountName, session), nil
+	return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", c.AccountName, session), nil
 }
 
 func GetAuthSession() (string, error) {

@@ -10,6 +10,12 @@ var Cmd = &cobra.Command{
 	Short: "work with vpn",
 	Long: `work with vpn
 Examples:
+  # expose port of selected device
+	kl vpn expose port -p <port>:<your_local_port>
+
+  # delete exposed port of selected device
+	kl vpn expose port -d -p <port>:<your_local_port> 
+	
 	# start vpn
   sudo kl vpn start
 
@@ -21,27 +27,17 @@ Examples:
 
 	# status vpn
 	sudo kl vpn status
-
-	# list all vpn
-	kl vpn list
-
-	# switch to vpn
-	kl vpn switch <vpn_name>
 	`,
 }
 
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "dev")
 
-	Cmd.AddCommand(newCmd)
 	Cmd.AddCommand(exposeCmd)
-	Cmd.AddCommand(listCmd)
-	Cmd.AddCommand(switchCmd)
-	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(startCmd)
 	Cmd.AddCommand(startFgCmd)
+	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(stopCmd)
 	Cmd.AddCommand(statusCmd)
-	Cmd.AddCommand(activateCmd)
 	Cmd.AddCommand(intercept.Cmd)
 }

@@ -1,7 +1,6 @@
 package vpn
 
 import (
-	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 
 	"github.com/kloudlite/kl/domain/server"
@@ -18,7 +17,7 @@ Example:
   kl infra vpn switch
 
 	# switch to vpn device with device name
-	kl infra vpn switch --name <device_name>
+	kl infra vpn switch
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		name := ""
@@ -45,7 +44,7 @@ Example:
 			return
 		}
 
-		fmt.Println("Selected vpn device: ", d.Metadata.Name)
+		fn.Log("Selected vpn device: ", d.Metadata.Name)
 
 	},
 }

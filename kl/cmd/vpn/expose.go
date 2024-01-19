@@ -2,7 +2,6 @@ package vpn
 
 import (
 	"errors"
-	"fmt"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
@@ -65,14 +64,14 @@ Examples:
 				return
 			}
 
-			fmt.Println("ports exposed")
+			fn.Log("ports exposed")
 		} else {
 			if err := server.DeleteDevicePort(ports); err != nil {
 				fn.PrintError(err)
 				return
 			}
 
-			fmt.Println("ports deleted")
+			fn.Log("ports deleted")
 		}
 
 	},

@@ -2,6 +2,7 @@ package infra
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/cmd/infra/cluster"
 	"os"
 	"os/exec"
 
@@ -15,20 +16,8 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "infra",
-	Short: "create new infra context and manage existing infra contexts",
-	Long: `Create new infra context and manage infra existing contexts
-Examples:
-  # creating new context
-  kl infra context new
-
-  # list all contexts
-  kl infra context list
-
-  # switch to context
-  kl infra context switch <context_name>
-
-  # remove context
-  kl infra context remove <context_name>
+	Short: "create new infra context and vpn and manage existing infra contexts and vpn",
+	Long: `create new infra context and vpn and manage existing infra contexts and vpn. Also list of clusters.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -53,7 +42,7 @@ Examples:
 				return err
 			}
 
-			fmt.Println(
+			functions.Log(
 				text.Bold(text.Green("\nSelected Cluster:")),
 				text.Blue(fmt.Sprintf("%s", clusterName)),
 			)
@@ -100,7 +89,7 @@ func run(envs map[string]string, args []string) error {
 
 	for k, v := range envs {
 		if len(args) == 0 {
-			fmt.Printf("%s=%q\n", k, v)
+			functions.Log("%s=%q\n", k, v)
 		} else {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 		}
@@ -121,4 +110,5 @@ func init() {
 
 	Cmd.AddCommand(context.Cmd)
 	Cmd.AddCommand(vpn.Cmd)
+	Cmd.AddCommand(cluster.Cmd)
 }

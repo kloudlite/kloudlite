@@ -28,18 +28,18 @@ Example:
 			return
 		}
 
-		link := fmt.Sprintf("%s/%s%s", constants.LoginUrl, "?loginId=", loginId)
+		link := text.Blue(fmt.Sprintf("%s/%s%s", constants.LoginUrl, "?loginId=", loginId))
 
-		fmt.Println(text.Colored("Opening browser for login in the browser to authenticate your account\n", 2))
+		functions.Log(text.Colored("Opening browser for login in the browser to authenticate your account\n", 2))
 		fmt.Println(text.Colored(link, 21))
-		fmt.Println("")
+		functions.Log("\n")
 
 		if err = server.Login(loginId); err != nil {
 			functions.PrintError(err)
 			return
 		}
 
-		fmt.Println("successfully logged in")
+		functions.Log("successfully logged in\n")
 
 	},
 }

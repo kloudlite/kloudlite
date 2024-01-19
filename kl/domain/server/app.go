@@ -127,7 +127,7 @@ func InterceptApp(status bool, options ...fn.Option) error {
 	}
 
 	if devName == "" {
-		ctx, err := client.GetActiveContext()
+		ctx, err := client.GetDeviceContext()
 		if err != nil {
 			return err
 		}

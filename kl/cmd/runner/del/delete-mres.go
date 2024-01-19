@@ -6,14 +6,13 @@ import (
 	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
-	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 )
 
 var deleteMresCommand = &cobra.Command{
 	Use:   "mres",
 	Short: "A brief description of your command",
-	Long: `This command help you to delete environment that that is comming from managed resource
+	Long: `This command help you to delete environment that that is coming from managed resource
 
 Examples:
   # remove mres
@@ -34,7 +33,7 @@ func removeMreses() error {
 
 	if err != nil {
 		common_util.PrintError(err)
-		es := "please run '" + constants.CmdName + " init' if you are not initialized the file already"
+		es := "please run 'kl init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
 
@@ -71,7 +70,7 @@ func removeMreses() error {
 		return err
 	}
 
-	fmt.Printf("removed mres %s from %s-file\n", selectedMres.Name, constants.CmdName)
+	common_util.Log("removed mres %s from kl-file\n", selectedMres.Name)
 
 	return nil
 }

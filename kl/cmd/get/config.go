@@ -55,14 +55,14 @@ func printConfig(config *server.Config, cmd *cobra.Command) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(configBytes))
+		fn.Println(string(configBytes))
 
 	case "yaml", "yml":
 		configBytes, err := yaml.Marshal(config.Data)
 		if err != nil {
 			return err
 		}
-		fmt.Println(string(configBytes))
+		fn.Println(string(configBytes))
 
 	default:
 		header := table.Row{

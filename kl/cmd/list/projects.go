@@ -94,8 +94,8 @@ func listProjects(cmd *cobra.Command, accountName string) error {
 			table.KVOutput("projects of", accountName, true)
 		}
 
-		table.TotalResults(len(projects), true)
 	}
+	table.TotalResults(len(projects), true)
 
 	return nil
 }

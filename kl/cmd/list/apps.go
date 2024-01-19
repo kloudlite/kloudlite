@@ -78,9 +78,8 @@ func listapps(cmd *cobra.Command, args []string) error {
 		}
 
 		table.KVOutput("apps of", projectId, true)
-		table.TotalResults(len(apps), true)
 	}
-
+	table.TotalResults(len(apps), true)
 	return nil
 }
 

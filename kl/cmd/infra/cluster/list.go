@@ -1,4 +1,4 @@
-package list
+package cluster
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ import (
 )
 
 var clustersCmd = &cobra.Command{
-	Use:   "clusters",
+	Use:   "list",
 	Short: "list all the clusters accessible to you",
 	Long: `List Clusters
 
@@ -22,7 +22,7 @@ This command will provide the list of all the clusters that's accessible to you.
 
 Examples:
   # list clusters accessible to you
-  kl list clusters
+  kl infra clusters list
 
 Note: selected project will be highlighted with green color.
 
@@ -77,15 +77,11 @@ func listClusters(cmd *cobra.Command) error {
 
 	fmt.Println(table.Table(&header, rows, cmd))
 
-	if s := fn.ParseStringFlag(cmd, "output"); s == "table" {
-		table.TotalResults(len(clusters), true)
-	}
+	table.TotalResults(len(clusters), true)
 
 	return nil
 }
 
 func init() {
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "cluster")
-	clustersCmd.Aliases = append(clustersCmd.Aliases, "clus")
-	fn.WithOutputVariant(clustersCmd)
+	clustersCmd.Aliases = append(clustersCmd.Aliases, "ls")
 }
