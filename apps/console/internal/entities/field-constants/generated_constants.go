@@ -4,10 +4,7 @@ package field_constants
 
 // constant vars generated for struct App
 const (
-	AppAccountName            = "accountName"
 	AppEnabled                = "enabled"
-	AppEnvironmentName        = "environmentName"
-	AppProjectName            = "projectName"
 	AppSpec                   = "spec"
 	AppSpecContainers         = "spec.containers"
 	AppSpecDisplayName        = "spec.displayName"
@@ -31,32 +28,26 @@ const (
 
 // constant vars generated for struct Config
 const (
-	ConfigAccountName     = "accountName"
-	ConfigBinaryData      = "binaryData"
-	ConfigData            = "data"
-	ConfigEnvironmentName = "environmentName"
-	ConfigImmutable       = "immutable"
-	ConfigProjectName     = "projectName"
+	ConfigBinaryData = "binaryData"
+	ConfigData       = "data"
+	ConfigImmutable  = "immutable"
 )
 
 // constant vars generated for struct ConsoleVPNDevice
 const (
-	ConsoleVPNDeviceAccountName         = "accountName"
-	ConsoleVPNDeviceEnvironmentName     = "environmentName"
-	ConsoleVPNDeviceProjectName         = "projectName"
-	ConsoleVPNDeviceSpec                = "spec"
-	ConsoleVPNDeviceSpecCnameRecords    = "spec.cnameRecords"
-	ConsoleVPNDeviceSpecDeviceNamespace = "spec.deviceNamespace"
-	ConsoleVPNDeviceSpecDisabled        = "spec.disabled"
-	ConsoleVPNDeviceSpecNodeSelector    = "spec.nodeSelector"
-	ConsoleVPNDeviceSpecPorts           = "spec.ports"
-	ConsoleVPNDeviceWireguardConfig     = "wireguardConfig"
+	ConsoleVPNDeviceLinkedClusters        = "linkedClusters"
+	ConsoleVPNDeviceSpec                  = "spec"
+	ConsoleVPNDeviceSpecActiveNamespace   = "spec.activeNamespace"
+	ConsoleVPNDeviceSpecCnameRecords      = "spec.cnameRecords"
+	ConsoleVPNDeviceSpecDisabled          = "spec.disabled"
+	ConsoleVPNDeviceSpecNoExternalService = "spec.noExternalService"
+	ConsoleVPNDeviceSpecNodeSelector      = "spec.nodeSelector"
+	ConsoleVPNDeviceSpecPorts             = "spec.ports"
+	ConsoleVPNDeviceWireguardConfig       = "wireguardConfig"
 )
 
 // constant vars generated for struct Environment
 const (
-	EnvironmentAccountName                    = "accountName"
-	EnvironmentProjectName                    = "projectName"
 	EnvironmentSpec                           = "spec"
 	EnvironmentSpecProjectName                = "spec.projectName"
 	EnvironmentSpecRouting                    = "spec.routing"
@@ -68,12 +59,9 @@ const (
 
 // constant vars generated for struct ImagePullSecret
 const (
-	ImagePullSecretAccountName        = "accountName"
 	ImagePullSecretDockerConfigJson   = "dockerConfigJson"
-	ImagePullSecretEnvironmentName    = "environmentName"
 	ImagePullSecretFormat             = "format"
 	ImagePullSecretGeneratedK8sSecret = "generatedK8sSecret"
-	ImagePullSecretProjectName        = "projectName"
 	ImagePullSecretRegistryPassword   = "registryPassword"
 	ImagePullSecretRegistryURL        = "registryURL"
 	ImagePullSecretRegistryUsername   = "registryUsername"
@@ -81,10 +69,7 @@ const (
 
 // constant vars generated for struct ManagedResource
 const (
-	ManagedResourceAccountName                           = "accountName"
 	ManagedResourceEnabled                               = "enabled"
-	ManagedResourceEnvironmentName                       = "environmentName"
-	ManagedResourceProjectName                           = "projectName"
 	ManagedResourceSpec                                  = "spec"
 	ManagedResourceSpecResourceName                      = "spec.resourceName"
 	ManagedResourceSpecResourceTemplate                  = "spec.resourceTemplate"
@@ -101,16 +86,12 @@ const (
 
 // constant vars generated for struct Project
 const (
-	ProjectAccountName         = "accountName"
-	ProjectClusterName         = "clusterName"
 	ProjectSpec                = "spec"
 	ProjectSpecTargetNamespace = "spec.targetNamespace"
 )
 
 // constant vars generated for struct ProjectManagedService
 const (
-	ProjectManagedServiceAccountName                           = "accountName"
-	ProjectManagedServiceProjectName                           = "projectName"
 	ProjectManagedServiceSpec                                  = "spec"
 	ProjectManagedServiceSpecMsvcSpec                          = "spec.msvcSpec"
 	ProjectManagedServiceSpecMsvcSpecServiceTemplate           = "spec.msvcSpec.serviceTemplate"
@@ -129,10 +110,6 @@ const (
 	ResourceMappingBaseEntityMarkedForDeletion = "BaseEntity.markedForDeletion"
 	ResourceMappingBaseEntityRecordVersion     = "BaseEntity.recordVersion"
 	ResourceMappingBaseEntityUpdateTime        = "BaseEntity.updateTime"
-	ResourceMappingAccountName                 = "accountName"
-	ResourceMappingClusterName                 = "clusterName"
-	ResourceMappingEnvironmentName             = "environmentName"
-	ResourceMappingProjectName                 = "projectName"
 	ResourceMappingResourceHeirarchy           = "resourceHeirarchy"
 	ResourceMappingResourceName                = "resourceName"
 	ResourceMappingResourceNamespace           = "resourceNamespace"
@@ -141,10 +118,7 @@ const (
 
 // constant vars generated for struct Router
 const (
-	RouterAccountName              = "accountName"
 	RouterEnabled                  = "enabled"
-	RouterEnvironmentName          = "environmentName"
-	RouterProjectName              = "projectName"
 	RouterSpec                     = "spec"
 	RouterSpecBackendProtocol      = "spec.backendProtocol"
 	RouterSpecBasicAuth            = "spec.basicAuth"
@@ -172,65 +146,8 @@ const (
 
 // constant vars generated for struct Secret
 const (
-	SecretAccountName     = "accountName"
-	SecretData            = "data"
-	SecretEnvironmentName = "environmentName"
-	SecretImmutable       = "immutable"
-	SecretProjectName     = "projectName"
-	SecretStringData      = "stringData"
-	SecretType            = "type"
-)
-
-// constant vars generated for struct
-const (
-	ApiVersion                         = "apiVersion"
-	CreatedBy                          = "createdBy"
-	CreatedByUserEmail                 = "createdBy.userEmail"
-	CreatedByUserId                    = "createdBy.userId"
-	CreatedByUserName                  = "createdBy.userName"
-	CreationTime                       = "creationTime"
-	DisplayName                        = "displayName"
-	Id                                 = "id"
-	Kind                               = "kind"
-	LastUpdatedBy                      = "lastUpdatedBy"
-	LastUpdatedByUserEmail             = "lastUpdatedBy.userEmail"
-	LastUpdatedByUserId                = "lastUpdatedBy.userId"
-	LastUpdatedByUserName              = "lastUpdatedBy.userName"
-	MarkedForDeletion                  = "markedForDeletion"
-	Metadata                           = "metadata"
-	MetadataAnnotations                = "metadata.annotations"
-	MetadataCreationTimestamp          = "metadata.creationTimestamp"
-	MetadataCreationTimestampTime      = "metadata.creationTimestamp.Time"
-	MetadataDeletionGracePeriodSeconds = "metadata.deletionGracePeriodSeconds"
-	MetadataDeletionTimestamp          = "metadata.deletionTimestamp"
-	MetadataDeletionTimestampTime      = "metadata.deletionTimestamp.Time"
-	MetadataFinalizers                 = "metadata.finalizers"
-	MetadataGenerateName               = "metadata.generateName"
-	MetadataGeneration                 = "metadata.generation"
-	MetadataLabels                     = "metadata.labels"
-	MetadataManagedFields              = "metadata.managedFields"
-	MetadataName                       = "metadata.name"
-	MetadataNamespace                  = "metadata.namespace"
-	MetadataOwnerReferences            = "metadata.ownerReferences"
-	MetadataResourceVersion            = "metadata.resourceVersion"
-	MetadataSelfLink                   = "metadata.selfLink"
-	MetadataUid                        = "metadata.uid"
-	RecordVersion                      = "recordVersion"
-	Status                             = "status"
-	StatusChecks                       = "status.checks"
-	StatusIsReady                      = "status.isReady"
-	StatusLastReadyGeneration          = "status.lastReadyGeneration"
-	StatusLastReconcileTime            = "status.lastReconcileTime"
-	StatusLastReconcileTimeTime        = "status.lastReconcileTime.Time"
-	StatusMessage                      = "status.message"
-	StatusMessageItems                 = "status.message.items"
-	StatusResources                    = "status.resources"
-	SyncStatus                         = "syncStatus"
-	SyncStatusAction                   = "syncStatus.action"
-	SyncStatusError                    = "syncStatus.error"
-	SyncStatusLastSyncedAt             = "syncStatus.lastSyncedAt"
-	SyncStatusRecordVersion            = "syncStatus.recordVersion"
-	SyncStatusState                    = "syncStatus.state"
-	SyncStatusSyncScheduledAt          = "syncStatus.syncScheduledAt"
-	UpdateTime                         = "updateTime"
+	SecretData       = "data"
+	SecretImmutable  = "immutable"
+	SecretStringData = "stringData"
+	SecretType       = "type"
 )
