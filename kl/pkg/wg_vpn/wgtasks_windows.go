@@ -2,6 +2,7 @@ package wg_vpn
 
 import (
 	"errors"
+	"net"
 )
 
 func getCurrentDns() ([]string, error) {
