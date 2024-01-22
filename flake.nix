@@ -14,15 +14,16 @@
             allowUnfree = true;
           };
         };
-      in
-      {
+      in {
         devShells.default = pkgs.mkShell {
           # hardeningDisable = [ "all" ];
           buildInputs = with pkgs; [
             # cli tools
             bash
             go-task
+
             terraform
+            packer
 
             # source version control
             git
@@ -33,10 +34,15 @@
             # build tools
             podman
             upx
+
+            # # custom
+            # packages.new-infra
+            # new-infra
           ];
 
           shellHook = ''
             export TF_PLUGIN_CACHE_DIR="$PWD/.terraform.d/plugin-cache"
+            export PATH="$PWD/cmd:$PATH"
             mkdir -p $TF_PLUGIN_CACHE_DIR
           '';
         };

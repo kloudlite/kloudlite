@@ -20,14 +20,11 @@ resource "random_password" "k3s_agent_token" {
 }
 
 locals {
-  backup_crontab_schedule = {
-    # for idx, name in local.master_names : name => "*/1 * * * *"
-    for idx, node_name in [for k, _node_cfg in var.master_nodes : k] : node_name =>
-    "* ${2 * (tonumber(idx) + 1)}/${2 * length(var.master_nodes)} * * *"
-  }
+  # backup_crontab_schedule = "1 2/${2 * length(var.master_nodes)} * * *" # explanation https://crontab.guru/#1_1/2_*_*_*
+  backup_crontab_schedule = "1/3 0/2 * * *" # explanation https://crontab.guru/#1/3_0/2_*_*_*
 
   k3s_server_extra_args = {
-    for k, v in var.master_nodes : k=> concat(
+    for k, v in var.master_nodes : k => concat(
       [
         "--agent-token", random_password.k3s_agent_token.result,
         "--disable-helm-controller",
@@ -38,25 +35,24 @@ locals {
         "--flannel-external-ip",
         "--cluster-domain", var.cluster_internal_dns_host,
       ],
-      var.backup_to_s3.enabled ? [
+      var.backup_to_s3.enabled && v.role == "primary-master" ? [
         "--etcd-s3",
-        "--etcd-s3-endpoint", "s3.amazonaws.com",
+        "--etcd-s3-endpoint", var.backup_to_s3.endpoint,
 
         "--etcd-s3-bucket", var.backup_to_s3.bucket_name,
         "--etcd-s3-region", var.backup_to_s3.bucket_region,
         "--etcd-s3-folder", var.backup_to_s3.bucket_folder,
 
         "--etcd-snapshot-compress",
-        "--etcd-snapshot-schedule-cron", local.backup_crontab_schedule[k],
+        "--etcd-snapshot-schedule-cron", local.backup_crontab_schedule,
       ] : [],
       var.extra_server_args
     )
   }
-
 }
 
 resource "ssh_resource" "k3s_primary_master" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -72,6 +68,10 @@ resource "ssh_resource" "k3s_primary_master" {
 
   when = "create"
 
+  triggers = {
+    always_run = var.restore_from_latest_s3_snapshot ? timestamp() : false
+  }
+
   file {
     source      = "${path.module}/scripts/k8s-user-account.sh"
     destination = "./k8s-user-account.sh"
@@ -82,17 +82,33 @@ resource "ssh_resource" "k3s_primary_master" {
     <<-EOT
 
     if [ "${var.restore_from_latest_s3_snapshot}" = "true" ]; then
-      cat > k3s-list-snapshots.sh <<'EOF2'
+    	sudo systemctl stop kloudlite-k3s.service
 
-sudo k3s etcd-snapshot list \
-  --s3  \
+      cat > k3s-list-snapshots.sh <<'EOF2'
+sudo k3s etcd-snapshot ls \
+  --s3 \
   --s3-region="${var.backup_to_s3.bucket_region}" \
   --s3-bucket="${var.backup_to_s3.bucket_name}" \
-  --s3-folder="${var.backup_to_s3.bucket_folder}" \
+  --s3-folder="${var.backup_to_s3.bucket_folder}"
 EOF2
 
-      latest_snapshot=$(bash k3s-list-snapshot.sh 2> /dev/null | tail -n +2 | sort -k 3 -r | head -n +1 | awk '{print $1}')
+      echo "listing all snapshots: "
+      bash k3s-list-snapshots.sh
+      latest_snapshot=$(bash k3s-list-snapshots.sh 2> /dev/null | tail -n +2 | sort -k 3 -r | head -n +1 | awk '{print $1}')
       [ -z "$latest_snapshot" ] && echo "no snapshot found, exiting ..." && exit 1
+
+      sudo k3s server \
+       	--cluster-init \
+      	--cluster-reset \
+      	--cluster-reset-restore-path "$latest_snapshot" \
+  			--etcd-s3 \
+  			--etcd-s3-region="${var.backup_to_s3.bucket_region}" \
+  			--etcd-s3-bucket="${var.backup_to_s3.bucket_name}" \
+  			--etcd-s3-folder="${var.backup_to_s3.bucket_folder}"
+
+			# k3s server complains about it, after restoring
+			sudo rm /var/lib/rancher/k3s/server/cred/passwd
+    	sudo systemctl start kloudlite-k3s.service
     fi
 
     echo "setting up k3s on primary master"
@@ -107,10 +123,6 @@ primaryMaster:
   taints: ${jsonencode(local.node_taints)}
   extraServerArgs: ${jsonencode(concat(
     local.k3s_server_extra_args[each.key],
-    var.restore_from_latest_s3_snapshot ? [
-        "--cluster-reset",
-        "--cluster-reset-restore-path", "$latest_snapshot",
-    ]:  []
   )
 )}
 
@@ -118,7 +130,7 @@ EOF2
 
     sudo ln -sf $PWD/runner-config.yml /runner-config.yml
 EOT
-  ]
+]
 }
 
 locals {
@@ -129,7 +141,7 @@ locals {
 }
 
 resource "null_resource" "wait_till_k3s_primary_server_is_ready" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
 
   connection {
     type        = "ssh"
@@ -179,7 +191,7 @@ EOC
 }
 
 resource "ssh_resource" "create_revocable_kubeconfig" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.primary_master_role }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -200,7 +212,11 @@ EOT
 }
 
 resource "ssh_resource" "k3s_secondary_masters" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role}
+  for_each = { for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role }
+
+  triggers = {
+    always_run = var.restore_from_latest_s3_snapshot ? timestamp() : false
+  }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -216,8 +232,9 @@ resource "ssh_resource" "k3s_secondary_masters" {
   commands = [
     <<EOT
 if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
-  systemctl stop kloudlite-k3s.service
-  rm -rf /var/lib/rancher/k3s/server/db/
+  sudo systemctl stop kloudlite-k3s.service
+  sudo rm -rf /var/lib/rancher/k3s/server/db/
+  sudo systemctl start kloudlite-k3s.service
 fi
 
 cat > runner-config.yml<<EOF2

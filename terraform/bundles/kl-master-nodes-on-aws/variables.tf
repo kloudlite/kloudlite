@@ -27,6 +27,7 @@ variable "k3s_masters" {
       enabled = bool
 
       # it assumes, access to bucket is managed by IAM instance profile
+      endpoint      = optional(string)
       bucket_name   = optional(string)
       bucket_region = optional(string)
       bucket_folder = optional(string)
@@ -49,8 +50,9 @@ variable "k3s_masters" {
   })
 
   validation {
-    error_message = "when backup_to_s3 is enabled, all the following variables must be set: aws_access_key, aws_secret_key, bucket_name, bucket_region, bucket_folder"
+    error_message = "when backup_to_s3 is enabled, all the following variables must be set: endpoint, bucket_name, bucket_region, bucket_folder"
     condition     = var.k3s_masters.backup_to_s3.enabled == false || alltrue([
+      var.k3s_masters.backup_to_s3.endpoint != "",
       var.k3s_masters.backup_to_s3.bucket_name != "",
       var.k3s_masters.backup_to_s3.bucket_region != "",
       var.k3s_masters.backup_to_s3.bucket_folder != "",

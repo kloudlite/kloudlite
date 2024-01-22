@@ -57,3 +57,10 @@ const (
 	RunAsPrimaryMaster   RunAsMode = "primaryMaster"
 	RunAsSecondaryMaster RunAsMode = "secondaryMaster"
 )
+
+type K3sRunnerConfig struct {
+	RunAs           RunAsMode              `json:"runAs"`
+	Agent           *AgentConfig           `json:"agent"`
+	PrimaryMaster   *PrimaryMasterConfig   `json:"primaryMaster"`
+	SecondaryMaster *SecondaryMasterConfig `json:"secondaryMaster"`
+}
