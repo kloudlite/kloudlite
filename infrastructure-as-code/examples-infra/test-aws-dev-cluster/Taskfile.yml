@@ -1,23 +1,3 @@
-#! /usr/bin/env bash
-
-destination_path=$(realpath "$1")
-
-SCRIPT_DIR=$(realpath $(dirname $0))
-
-templates_dir="$SCRIPT_DIR/../infrastructure-templates"
-
-[ -d "$destination_path" ] && echo "Directory $destination_path already exists" && exit 1
-
-infra_template=$(ls "$templates_dir" | fzf --prompt "Choose An Infrastructure template")
-
-mkdir -p "$destination_path"
-
-pushd "$destination_path" >/dev/null 2>&1 || exit
-mkdir -p .secrets
-
-touch .secrets/env
-
-cat >Taskfile.yml <<EOF
 version: 3
 
 dotenv:
@@ -29,7 +9,7 @@ vars:
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: $(realpath $SCRIPT_DIR/../infrastructure-templates/${infra_template} --relative-to=$destination_path)
+      InfrastructureTemplate: ../../infrastructure-templates/kl-target-cluster-aws-only-masters
     env:
       SHELL: bash
     silent: true
@@ -40,6 +20,8 @@ tasks:
       - echo "sync complete"
 
   init:
+    # env:
+    #   TS_PLUGIN_CACHE_DIR: /var/home/nxtcoder17/workspace/kloudlite/infrastructure-as-code/.terraform.d/plugin-cache
     cmds:
       - terraform init
     silent: true
@@ -76,6 +58,3 @@ tasks:
       - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
       - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.PlanOutput}}"
       - terraform apply "{{.PlanOutput}}"
-EOF
-
-popd

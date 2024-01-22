@@ -21,13 +21,6 @@ import (
 
 var logger = log.New(os.Stdout, "k3s-runner", log.LstdFlags)
 
-type K3sRunnerConfig struct {
-	RunAs           RunAsMode              `json:"runAs"`
-	Agent           *AgentConfig           `json:"agent"`
-	PrimaryMaster   *PrimaryMasterConfig   `json:"primaryMaster"`
-	SecondaryMaster *SecondaryMasterConfig `json:"secondaryMaster"`
-}
-
 func execK3s(ctx context.Context, args ...string) error {
 	cmd := exec.CommandContext(ctx, "k3s", args...)
 	logger.Printf("executing shell cmd: %s\n", cmd.String())
@@ -162,7 +155,6 @@ func StartPrimaryK3sMaster(ctx context.Context, pmc *PrimaryMasterConfig) error 
 	}
 
 	argsAndFlags = append(argsAndFlags, pmc.ParseIntoFlags()...)
-
 	argsAndFlags = append(argsAndFlags, pmc.ExtraServerArgs...)
 
 	return execK3s(ctx, argsAndFlags...)
@@ -183,8 +175,7 @@ func StartSecondaryK3sMaster(ctx context.Context, smc *SecondaryMasterConfig) er
 		argsAndFlags = append(argsAndFlags, "--tls-san", smc.SANs[i])
 	}
 
-	argsAndFlags = append(argsAndFlags, smc.K3sCommonFlags.ParseIntoFlags()...)
-
+	argsAndFlags = append(argsAndFlags, smc.ParseIntoFlags()...)
 	argsAndFlags = append(argsAndFlags, smc.ExtraServerArgs...)
 
 	return execK3s(ctx, argsAndFlags...)
@@ -210,7 +201,6 @@ func StartK3sAgent(ctx context.Context, agentCfg *AgentConfig) error {
 	}
 
 	argsAndFlags = append(argsAndFlags, agentCfg.ParseIntoFlags()...)
-
 	argsAndFlags = append(argsAndFlags, agentCfg.ExtraAgentArgs...)
 
 	return execK3s(ctx, argsAndFlags...)

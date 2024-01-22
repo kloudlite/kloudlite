@@ -8,7 +8,7 @@ resource "aws_iam_instance_profile" "iam_instance_profile" {
 }
 
 module "aws-security-groups" {
-  source                                = "../../modules/aws/security-groups"
+  source                                = "../../../modules/aws/security-groups"
   allow_incoming_http_traffic_on_master = true
   allow_metrics_server_on_master        = true
   expose_k8s_node_ports_on_master       = true
@@ -89,7 +89,7 @@ locals {
 }
 
 module "ec2-nodes" {
-  source       = "../../modules/aws/ec2-node"
+  source       = "../../../modules/aws/ec2-node"
   save_ssh_key = {
     enabled = true
     path    = "/tmp/ec2-ssh-key.pem"
@@ -109,7 +109,7 @@ locals {
 }
 
 module "k3s-primary-master" {
-  source = "../../modules/k3s/__deprecated__/k3s-primary-master"
+  source = "../../../modules/k3s/__deprecated__/k3s-primary-master"
 
   node_name           = local.primary_master_node_name
   public_dns_host = var.k3s_server_dns_hostname
@@ -140,7 +140,7 @@ module "k3s-primary-master" {
 }
 
 module "k3s-secondary-master" {
-  source = "../../modules/k3s/__deprecated__/k3s-secondary-master"
+  source = "../../../modules/k3s/__deprecated__/k3s-secondary-master"
 
   k3s_token                = module.k3s-primary-master.k3s_token
   primary_master_public_ip = module.k3s-primary-master.public_ip
@@ -181,7 +181,7 @@ module "k3s-secondary-master" {
 
 module "cloudflare-dns" {
   count  = var.cloudflare.enabled ? 1 : 0
-  source = "../../modules/cloudflare/dns"
+  source = "../../../modules/cloudflare/dns"
 
   cloudflare_api_token = var.cloudflare.api_token
   cloudflare_domain    = var.cloudflare.domain
@@ -192,7 +192,7 @@ module "cloudflare-dns" {
 }
 
 module "k3s-agents" {
-  source = "../../modules/k3s/__deprecated__/k3s-agent"
+  source = "../../../modules/k3s/__deprecated__/k3s-agent"
 
   agent_nodes = {
     for node_name, node_cfg in local.agent_nodes : node_name => {
@@ -215,7 +215,7 @@ module "k3s-agents" {
 
 module "k3s-agents-on-aws-spot-fleets" {
   count  = var.spot_settings.enabled ? 1 : 0
-  source = "../../modules/k3s/__deprecated__/k3s-agents-on-aws-spot-fleets"
+  source = "../../../modules/k3s/__deprecated__/k3s-agents-on-aws-spot-fleets"
 
   aws_ami                 = var.aws_ami
   aws_nvidia_gpu_ami      = var.aws_nvidia_gpu_ami
@@ -243,7 +243,7 @@ module "k3s-agents-on-aws-spot-fleets" {
 
 module "aws-k3s-spot-termination-handler" {
   count               = var.spot_settings.enabled ? 1 : 0
-  source              = "../../modules/kloudlite/spot-termination-handler"
+  source              = "../../../modules/kloudlite/spot-termination-handler"
   depends_on          = [module.k3s-primary-master]
   spot_nodes_selector = local.spot_node_labels
   ssh_params          = {
@@ -255,7 +255,7 @@ module "aws-k3s-spot-termination-handler" {
 
 module "kloudlite-crds" {
   count             = var.kloudlite.install_crds ? 1 : 0
-  source            = "../../modules/kloudlite/crds"
+  source            = "../../../modules/kloudlite/crds"
   kloudlite_release = var.kloudlite.release
   depends_on        = [module.k3s-primary-master]
   ssh_params        = {
@@ -267,7 +267,7 @@ module "kloudlite-crds" {
 
 module "nvidia-container-runtime" {
   count      = var.enable_nvidia_gpu_support ? 1 : 0
-  source     = "../../modules/nvidia-container-runtime"
+  source     = "../../../modules/nvidia-container-runtime"
   depends_on = [module.kloudlite-crds]
   ssh_params = {
     public_ip   = module.ec2-nodes.ec2_instances_public_ip[local.primary_master_node_name]
@@ -279,7 +279,7 @@ module "nvidia-container-runtime" {
 
 module "helm-aws-ebs-csi" {
   count           = var.kloudlite.install_csi_driver ? 1 : 0
-  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
+  source          = "../../../modules/helm-charts/helm-aws-ebs-csi"
   depends_on      = [module.kloudlite-crds]
   storage_classes = {
     "sc-xfs" : {
@@ -301,7 +301,7 @@ module "helm-aws-ebs-csi" {
 
 module "kloudlite-operators" {
   count             = var.kloudlite.install_operators ? 1 : 0
-  source            = "../../modules/kloudlite/helm-kloudlite-operators"
+  source            = "../../../modules/kloudlite/helm-kloudlite-operators"
   depends_on        = [module.kloudlite-crds]
   kloudlite_release = var.kloudlite.release
   node_selector     = {}
@@ -314,7 +314,7 @@ module "kloudlite-operators" {
 
 module "kloudlite-agent" {
   count                              = var.kloudlite.install_agent ? 1 : 0
-  source                             = "../../modules/kloudlite/helm-kloudlite-agent"
+  source                             = "../../../modules/kloudlite/helm-kloudlite-agent"
   kloudlite_account_name             = var.kloudlite.agent_vars.account_name
   kloudlite_cluster_name             = var.kloudlite.agent_vars.cluster_name
   kloudlite_cluster_token            = var.kloudlite.agent_vars.cluster_token
@@ -330,7 +330,7 @@ module "kloudlite-agent" {
 
 module "disable_ssh_on_instances" {
   count      = var.disable_ssh ? 1 : 0
-  source     = "../../modules/disable-ssh-on-nodes"
+  source     = "../../../modules/disable-ssh-on-nodes"
   depends_on = [
     module.k3s-primary-master,
     module.k3s-secondary-master,

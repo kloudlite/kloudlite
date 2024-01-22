@@ -24,7 +24,7 @@ RUN mkdir -p $TF_PLUGIN_CACHE_DIR
 #   zip terraform.zip -r $tdir && rm -rf $tdir
 # EOF
 RUN mkdir build-scripts
-COPY ./build-scripts/terraform-module-cache.sh ./build-scripts/terraform-module-cache.sh
+COPY .ci/terraform-module-cache.sh ./build-scripts/terraform-module-cache.sh
 RUN bash build-scripts/terraform-module-cache.sh ./infrastructure-templates
 ENV TERRAFORM_ZIPFILE="/app/terraform.zip"
 ENV TEMPLATES_DIR="/app/infrastructure-templates"

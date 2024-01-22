@@ -7,3 +7,4 @@
 .terraform.d
 .direnv
 .terraform.d
+.dump
