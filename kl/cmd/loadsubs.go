@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/infra"
+	app "github.com/kloudlite/kl/cmd/start-app"
 	"github.com/kloudlite/kl/cmd/vpn"
 	"github.com/spf13/cobra"
 
@@ -24,6 +25,8 @@ func init() {
 		Use:    "no-help",
 		Hidden: true,
 	})
+
+	rootCmd.AddCommand(app.Cmd)
 
 	rootCmd.AddCommand(DocsCmd)
 	rootCmd.AddCommand(UpdateCmd)

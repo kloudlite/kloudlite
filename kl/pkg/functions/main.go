@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kloudlite/kl/pkg/ui/text"
+	"github.com/martinlindhe/notify"
 	"github.com/spf13/cobra"
 )
 
@@ -155,4 +156,12 @@ func IsInfraFlagAvailable(options ...Option) bool {
 		return true
 	}
 	return false
+}
+
+func Alert(str ...interface{}) {
+	notify.Alert("Kloudlite", "alert", fmt.Sprint(str...), "")
+}
+
+func Notify(str ...interface{}) {
+	notify.Notify("Kloudlite", "notice", fmt.Sprint(str...), "")
 }
