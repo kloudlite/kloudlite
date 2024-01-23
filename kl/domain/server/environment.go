@@ -90,8 +90,7 @@ func ListEnvs(options ...fn.Option) ([]Env, error) {
 	}
 }
 
-func SelectEnv(envName string) (*Env, error) {
-
+func SelectEnv(envName string, options ...fn.Option) (*Env, error) {
 	persistSelectedEnv := func(env client.Env) error {
 		err := client.SelectEnv(env)
 		if err != nil {
@@ -100,7 +99,7 @@ func SelectEnv(envName string) (*Env, error) {
 		return nil
 	}
 
-	envs, err := ListEnvs()
+	envs, err := ListEnvs(options...)
 	if err != nil {
 		return nil, err
 	}

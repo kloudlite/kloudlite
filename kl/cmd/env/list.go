@@ -40,7 +40,13 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 	if len(args) >= 1 {
 		pName = args[0]
 	}
-
+	var err error
+	if pName == "" {
+		pName, err = client.CurrentProjectName()
+		if err != nil {
+			return err
+		}
+	}
 	envs, err := server.ListEnvs(fn.MakeOption("projectName", pName))
 	if err != nil {
 		return err

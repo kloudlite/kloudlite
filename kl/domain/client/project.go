@@ -6,14 +6,13 @@ import (
 )
 
 func CurrentProjectName() (string, error) {
+	returnErr :=
+		errors.New("can't get current project from you kl file. please initialize your project using \"kl init\" first.")
 
 	kfile, err := GetKlFile(nil)
 	if err != nil {
-		return "", err
+		return "", returnErr
 	}
-
-	returnErr :=
-		errors.New("can't get current project from you kl file. please initialize your project using \"kl init\" first.")
 
 	if kfile.Project == "" {
 		return "", returnErr

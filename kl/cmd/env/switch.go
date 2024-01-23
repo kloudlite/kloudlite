@@ -2,7 +2,7 @@ package env
 
 import (
 	"fmt"
-
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -17,38 +17,52 @@ var switchCmd = &cobra.Command{
 Examples:
   # switch to a different environment
   kl env switch
-
-  # switch to a different environment with environment name
-  kl env switch 
 	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
 
 		envName := fn.ParseStringFlag(cmd, "envname")
 		projectName := fn.ParseStringFlag(cmd, "projectname")
+		var err error
+		if projectName == "" {
+			projectName, err = client.CurrentProjectName()
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+		}
 
-		env, err := server.SelectEnv(envName)
+		projects, err := server.ListProjects()
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-
-		proj, err := server.SelectProject(projectName)
+		var projectExists = false
+		for _, project := range projects {
+			if project.Metadata.Name == projectName {
+				projectExists = true
+				break
+			}
+		}
+		if !projectExists {
+			fn.PrintError(fmt.Errorf("project %s does not exist", projectName))
+			return
+		}
+		env, err := server.SelectEnv(envName, fn.MakeOption("projectName", projectName))
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
-
 		if err := server.UpdateDeviceEnv([]fn.Option{
 			fn.MakeOption("envName", env.Metadata.Name),
-			fn.MakeOption("projectName", proj.Metadata.Name),
+			fn.MakeOption("projectName", projectName),
 		}...); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
 		fn.Log(text.Bold(text.Green("\nSelected Environment and Project:")),
-			text.Blue(fmt.Sprintf("\n%s (%s) and %s (%s)", env.DisplayName, env.Metadata.Name, proj.DisplayName, proj.Metadata.Name)),
+			text.Blue(fmt.Sprintf("\n%s (%s) and %s ", env.DisplayName, env.Metadata.Name, projectName)),
 		)
 	},
 }

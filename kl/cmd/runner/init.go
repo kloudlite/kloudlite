@@ -63,7 +63,7 @@ Examples:
 				},
 			}
 		} else {
-			fn.Log("file already present")
+			fn.Log("file already present \n")
 		}
 
 		if err = client.WriteKLFile(*initFile); err != nil {
@@ -71,7 +71,7 @@ Examples:
 			return
 		}
 
-		fn.Log("Initialized file", client.GetConfigPath())
+		fn.Log("Initialized file ", client.GetConfigPath())
 	},
 }
 

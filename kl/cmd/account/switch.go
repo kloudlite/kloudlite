@@ -14,7 +14,7 @@ var switchCmd = &cobra.Command{
 	Short: "Switch account",
 	Long: `Use this command to switch account
 Example:
-  # switch account context
+  # switch to a different account
   kl account switch
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {

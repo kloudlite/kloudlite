@@ -20,6 +20,9 @@ Examples:
 	# list all the secrets with selected project
   kl list secrets
 
+	# This command will provide the list of all the configs for the provided project name.
+  kl list configs <projectName>
+
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 

@@ -7,6 +7,14 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "env",
 	Short: "env specific commands",
+	Long: `Use this command to switch and list environments
+Examples:
+		# list environments accessible to you
+      kl env list
+
+    # switch to a different environment
+      kl env switch
+	`,
 }
 
 func init() {

@@ -10,7 +10,7 @@ Examples:
 		# list accounts accessible to you
       kl account list
 
-    # switch account context
+    # switch to a different account
       kl account switch
 	`,
 }
