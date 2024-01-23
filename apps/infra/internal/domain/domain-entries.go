@@ -4,7 +4,9 @@ import (
 	"context"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -15,7 +17,7 @@ func (d *domain) ListDomainEntries(ctx InfraContext, search map[string]repos.Mat
 	}
 
 	filters := map[string]any{
-		"accountName": ctx.AccountName,
+		fields.AccountName: ctx.AccountName,
 	}
 	return d.domainEntryRepo.FindPaginated(ctx, d.domainEntryRepo.MergeMatchFilters(filters, search), pagination)
 }
@@ -43,7 +45,7 @@ func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishDomainResEvent(nde, PublishAdd)
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, nde.DomainName, PublishAdd)
 
 	return nde, nil
 }
@@ -69,7 +71,7 @@ func (d *domain) UpdateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishDomainResEvent(newDe, PublishUpdate)
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, newDe.DomainName, PublishUpdate)
 	return newDe, nil
 }
 
@@ -77,22 +79,24 @@ func (d *domain) DeleteDomainEntry(ctx InfraContext, domainName string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteDomainEntry); err != nil {
 		return errors.NewE(err)
 	}
-	entry, err := d.findDomainEntry(ctx, ctx.AccountName, domainName)
+	err := d.domainEntryRepo.DeleteOne(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: domainName,
+		},
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	if err = d.domainEntryRepo.DeleteById(ctx, entry.Id); err != nil {
-		return err
-	}
-	d.resourceEventPublisher.PublishDomainResEvent(entry, PublishUpdate)
-	return err
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, domainName, PublishDelete)
+	return nil
 }
 
 func (d *domain) findDomainEntry(ctx context.Context, accountName string, domainName string) (*entities.DomainEntry, error) {
 	filters := repos.Filter{
-		"accountName": accountName,
-		"domainName":  domainName,
+		fields.AccountName:       accountName,
+		fc.DomainEntryDomainName: domainName,
 	}
 	one, err := d.domainEntryRepo.FindOne(ctx, filters)
 	if err != nil {

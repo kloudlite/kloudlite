@@ -2,13 +2,13 @@ package domain
 
 import (
 	"fmt"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"time"
-
-	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/common"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -113,9 +113,9 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	existing, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-		"metadata.name":      cluster.Name,
-		"metadata.namespace": cluster.Namespace,
-		"accountName":        ctx.AccountName,
+		fields.MetadataName:      cluster.Name,
+		fields.MetadataNamespace: cluster.Namespace,
+		fields.AccountName:       ctx.AccountName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -249,7 +249,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishAdd)
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
 
 	return nCluster, nil
 }
@@ -265,8 +265,8 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 	}
 
 	f := repos.Filter{
-		"accountName":        ctx.AccountName,
-		"metadata.namespace": accNs,
+		fields.AccountName:       ctx.AccountName,
+		fields.MetadataNamespace: accNs,
 	}
 
 	pr, err := d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
@@ -295,29 +295,24 @@ func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*e
 		return nil, errors.NewE(err)
 	}
 	clusterIn.EnsureGVK()
-	clus, err := d.findCluster(ctx, clusterIn.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
 
-	if clus.IsMarkedForDeletion() {
-		return nil, errors.Newf("clusterIn %q in namespace %q is marked for deletion, could not perform any update operation", clus.Name, clus.Namespace)
-	}
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&clusterIn,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.ClusterSpec: clusterIn.Spec,
+			},
+		})
 
-	uCluster, err := d.clusterRepo.PatchById(ctx, clus.Id, repos.Document{
-		"metadata.labels":      clusterIn.Labels,
-		"metadata.annotations": clusterIn.Annotations,
-		"displayName":          clusterIn.DisplayName,
-		"recordVersion":        clus.RecordVersion + 1,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	uCluster, err := d.clusterRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: clusterIn.Name,
 		},
-		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":       t.SyncActionApply,
-		"syncStatus.state":        t.SyncStateInQueue,
-	})
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -326,7 +321,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*e
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishClusterEvent(&clusterIn, PublishUpdate)
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, uCluster.Name, PublishUpdate)
 	return uCluster, nil
 }
 
@@ -344,35 +339,23 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCluster); err != nil {
 		return errors.NewE(err)
 	}
-	c, err := d.findCluster(ctx, name)
+
+	ucluster, err := d.clusterRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: name,
+		},
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if c.MarkedForDeletion == nil || *c.MarkedForDeletion {
-		c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
-		upC, err := d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
-			"markedForDeletion": fn.New(true),
-			"lastUpdatedBy": common.CreatedOrUpdatedBy{
-				UserId:    ctx.UserId,
-				UserName:  ctx.UserName,
-				UserEmail: ctx.UserEmail,
-			},
-			"syncStatus.lastSyncedAt": time.Now(),
-			"syncStatus.action":       t.SyncActionDelete,
-			"syncStatus.state":        t.SyncStateInQueue,
-		})
-		if err != nil {
-			return errors.NewE(err)
-		}
-
-		deletedCluster := d.deleteK8sResource(ctx, &upC.Cluster)
-
-		d.resourceEventPublisher.PublishClusterEvent(c, PublishUpdate)
-
-		return deletedCluster
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, ucluster.Name, PublishUpdate)
+	if err := d.deleteK8sResource(ctx, &ucluster.Cluster); err != nil {
+		return errors.NewE(err)
 	}
-
 	return nil
 
 }
@@ -382,48 +365,48 @@ func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Clust
 	if err != nil {
 		return errors.NewE(err)
 	}
-	onDeletedClusterMessage := d.clusterRepo.DeleteOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"metadata.name":      cluster.Name,
-		"metadata.namespace": accNs,
+	err = d.clusterRepo.DeleteOne(ctx, repos.Filter{
+		fields.AccountName:       ctx.AccountName,
+		fields.MetadataName:      cluster.Name,
+		fields.MetadataNamespace: accNs,
 	})
-	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishDelete)
-
-	return onDeletedClusterMessage
-}
-
-func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	c, err := d.findCluster(ctx, cluster.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(cluster.Annotations, c.RecordVersion); err != nil {
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, cluster.Name, PublishDelete)
+
+	return nil
+}
+
+func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xCluster, err := d.findCluster(ctx, cluster.Name)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if xCluster == nil {
+		return errors.Newf("no cluster found")
+	}
+
+	if _, err := d.matchRecordVersion(cluster.Annotations, xCluster.RecordVersion); err != nil {
 		return nil
 	}
-	annVersion, _ := d.parseRecordVersionFromAnnotations(cluster.Annotations)
+	recordVersion, err := d.matchRecordVersion(cluster.Annotations, xCluster.RecordVersion)
+	if err != nil {
+		return errors.NewE(err)
+	}
 
-	_, err = d.clusterRepo.PatchById(ctx, c.Id, repos.Document{
-		"metadata.labels":            cluster.Labels,
-		"metadata.annotations":       cluster.Annotations,
-		"metadata.generation":        cluster.Generation,
-		"metadata.creationTimestamp": cluster.CreationTimestamp,
-		"status":                     cluster.Status,
-		"spec.output":                cluster.Spec.Output,
-		"syncStatus": t.SyncStatus{
-			LastSyncedAt:  opts.MessageTimestamp,
-			Error:         nil,
-			Action:        t.SyncActionApply,
-			RecordVersion: annVersion,
-			State: func() t.SyncState {
-				if status == types.ResourceStatusDeleting {
-					return t.SyncStateDeletingAtAgent
-				}
-				return t.SyncStateUpdatedAtAgent
-			}(),
-		},
-	})
-	d.resourceEventPublisher.PublishClusterEvent(&cluster, PublishUpdate)
+	uCluster, err := d.clusterRepo.PatchById(
+		ctx,
+		xCluster.Id,
+		common.PatchForSyncFromAgent(&cluster, recordVersion, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+			XPatch: repos.Document{
+				fc.ClusterSpecOutput: cluster.Spec.Output,
+			},
+		}))
+	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, uCluster.GetName(), PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -434,9 +417,9 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 	}
 
 	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"metadata.name":      clusterName,
-		"metadata.namespace": accNs,
+		fields.AccountName:       ctx.AccountName,
+		fields.MetadataName:      clusterName,
+		fields.MetadataNamespace: accNs,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)

@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	wireguardV1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type VPNDevice struct {
@@ -21,6 +22,14 @@ type VPNDevice struct {
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+}
+
+func (v *VPNDevice) GetDisplayName() string {
+	return v.ResourceMetadata.DisplayName
+}
+
+func (v *VPNDevice) GetStatus() operator.Status {
+	return v.Device.Status
 }
 
 var VPNDeviceIndexes = []repos.IndexField{

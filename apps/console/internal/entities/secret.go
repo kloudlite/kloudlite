@@ -7,7 +7,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
-	"time"
 )
 
 type Secret struct {
@@ -24,10 +23,6 @@ type Secret struct {
 
 func (s *Secret) GetDisplayName() string {
 	return s.ResourceMetadata.DisplayName
-}
-
-func (s *Secret) GetCreationTimestamp() time.Time {
-	return s.CreationTimestamp.Time
 }
 
 func (s *Secret) GetStatus() operator.Status {

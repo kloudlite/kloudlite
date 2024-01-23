@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/accounts/internal/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"strings"
 
@@ -20,8 +22,8 @@ import (
 
 func (d *domain) findAccount(ctx context.Context, name string) (*entities.Account, error) {
 	result, err := d.accountRepo.FindOne(ctx, repos.Filter{
-		"metadata.name": name,
-		"markedForDeletion": repos.Filter{"$ne": true},
+		fields.MetadataName:      name,
+		fields.MarkedForDeletion: repos.Filter{"$ne": true},
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -49,8 +51,8 @@ func (d *domain) ListAccounts(ctx UserContext) ([]*entities.Account, error) {
 	}
 
 	return d.accountRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"metadata.name": repos.Filter{"$in": accountNames},
-		"markedForDeletion": repos.Filter{"$ne": true},
+		fields.MetadataName:      repos.Filter{"$in": accountNames},
+		fields.MarkedForDeletion: repos.Filter{"$ne": true},
 	}})
 }
 
@@ -135,16 +137,17 @@ func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*en
 	}
 
 	uAcc, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
-		"labels":      accountIn.Labels,
-		"displayName": accountIn.DisplayName,
-		"logo":        accountIn.Logo,
-		"contactEmail": accountIn.ContactEmail,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+		fields.MetadataLabels:  accountIn.Labels,
+		fields.DisplayName:     accountIn.DisplayName,
+		fc.AccountLogo:         accountIn.Logo,
+		fc.AccountContactEmail: accountIn.ContactEmail,
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
 	})
+
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -156,19 +159,20 @@ func (d *domain) DeleteAccount(ctx UserContext, name string) (bool, error) {
 		return false, errors.NewE(err)
 	}
 
-	account, err := d.findAccount(ctx, name)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if _, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
-		"markedForDeletion": fn.New(true),
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	if _, err := d.accountRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.MetadataName:      name,
+			fields.MarkedForDeletion: repos.Filter{"$ne": true},
 		},
-	}); err != nil {
+		repos.Document{
+			fields.MarkedForDeletion: fn.New(true),
+			fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+		}); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -201,8 +205,8 @@ func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {
 	}
 
 	if _, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
-		"isActive": fn.New(true),
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+		fc.AccountIsActive: fn.New(true),
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
@@ -229,8 +233,8 @@ func (d *domain) DeactivateAccount(ctx UserContext, name string) (bool, error) {
 	}
 
 	if _, err := d.accountRepo.PatchById(ctx, account.Id, repos.Document{
-		"isActive": fn.New(false),
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
+		fc.AccountIsActive: fn.New(false),
+		fields.LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,

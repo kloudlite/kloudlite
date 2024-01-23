@@ -2,6 +2,8 @@ package domain
 
 import (
 	"fmt"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"log"
 	"net/url"
@@ -77,16 +79,16 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 	}
 
 	if _, err = d.repositoryRepo.FindOne(ctx, repos.Filter{
-		"name":        repoName,
-		"accountName": ctx.AccountName,
+		fc.RepositoryName:  repoName,
+		fields.AccountName: ctx.AccountName,
 	}); err != nil {
 		return errors.NewE(err)
 	}
 
 	res, err := d.digestRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
-			"repository":  repoName,
-			"accountName": ctx.AccountName,
+			fc.RepositoryName:  repoName,
+			fields.AccountName: ctx.AccountName,
 		},
 	})
 
@@ -120,9 +122,9 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 	}
 
 	e, err := d.digestRepo.FindOne(ctx, repos.Filter{
-		"digest":      digest,
-		"repository":  repoName,
-		"accountName": ctx.AccountName,
+		fc.DigestDigest:     digest,
+		fc.DigestRepository: repoName,
+		fields.AccountName:  ctx.AccountName,
 	})
 
 	if err != nil {
@@ -157,7 +159,7 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 
 	// update if present else, ignore
 	e.Deleting = true
-	if _,err:=d.digestRepo.UpdateById(ctx, e.Id, e); err != nil {
+	if _, err := d.digestRepo.UpdateById(ctx, e.Id, e); err != nil {
 		d.logger.Errorf(err)
 	}
 
@@ -183,7 +185,9 @@ func (d *Impl) ListRepositories(ctx RegistryContext, search map[string]repos.Mat
 		return nil, errors.Newf("unauthorized to list repositories")
 	}
 
-	filter := repos.Filter{"accountName": ctx.AccountName}
+	filter := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+	}
 	return d.repositoryRepo.FindPaginated(ctx, d.repositoryRepo.MergeMatchFilters(filter, search), pagination)
 }
 
@@ -204,6 +208,9 @@ func (d *Impl) ListRepositoryDigests(ctx RegistryContext, repoName string, searc
 		return nil, errors.Newf("unauthorized to list repository digests")
 	}
 
-	filter := repos.Filter{"accountName": ctx.AccountName, "repository": repoName}
+	filter := repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fc.DigestRepository: repoName,
+	}
 	return d.digestRepo.FindPaginated(ctx, d.digestRepo.MergeMatchFilters(filter, search), pagination)
 }
