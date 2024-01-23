@@ -8,7 +8,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	"time"
 )
 
 type Environment struct {
@@ -25,10 +24,6 @@ type Environment struct {
 
 func (e *Environment) GetDisplayName() string {
 	return e.ResourceMetadata.DisplayName
-}
-
-func (e *Environment) GetCreationTimestamp() time.Time {
-	return e.CreationTimestamp.Time
 }
 
 func (e *Environment) GetStatus() operator.Status {

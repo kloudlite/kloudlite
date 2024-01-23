@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 	"regexp"
 	"strings"
 
@@ -75,11 +77,11 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 			digest, err := d.digestRepo.FindOne(ctx, repos.Filter{
-				"tags": map[string]any{
+				fc.DigestTags: map[string]any{
 					"$in": []string{tag},
 				},
-				"repository":  repoName,
-				"accountName": accountName,
+				fc.DigestRepository: repoName,
+				fields.AccountName:  accountName,
 			})
 			if err != nil {
 				return errors.NewE(err)
@@ -113,9 +115,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
-				"digest":      e.Target.Digest,
-				"repository":  repoName,
-				"accountName": accountName,
+				fc.DigestDigest:     e.Target.Digest,
+				fc.DigestRepository: repoName,
+				fields.AccountName:  accountName,
 			})
 
 			if err != nil {
@@ -152,8 +154,8 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
-				"accountName": accountName,
-				"name":        repoName,
+				fields.AccountName: accountName,
+				fc.RepositoryName:  repoName,
 			})
 			if err != nil {
 				return errors.NewE(err)
@@ -180,9 +182,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			l.Infof("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
 
 			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
-				"digest":      e.Target.Digest,
-				"repository":  repoName,
-				"accountName": accountName,
+				fc.DigestDigest:     e.Target.Digest,
+				fc.DigestRepository: repoName,
+				fields.AccountName:  accountName,
 			}); err != nil {
 				d.logger.Errorf(err)
 				return errors.NewE(err)
