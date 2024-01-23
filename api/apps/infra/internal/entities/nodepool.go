@@ -5,6 +5,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type NodePool struct {
@@ -17,6 +18,14 @@ type NodePool struct {
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+}
+
+func (n *NodePool) GetDisplayName() string {
+	return n.ResourceMetadata.DisplayName
+}
+
+func (n *NodePool) GetStatus() operator.Status {
+	return n.NodePool.Status
 }
 
 var NodePoolIndices = []repos.IndexField{

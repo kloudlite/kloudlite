@@ -5,6 +5,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type HelmRelease struct {
@@ -17,6 +18,14 @@ type HelmRelease struct {
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+}
+
+func (h *HelmRelease) GetDisplayName() string {
+	return h.ResourceMetadata.DisplayName
+}
+
+func (h *HelmRelease) GetStatus() operator.Status {
+	return operator.Status{}
 }
 
 var HelmReleaseIndices = []repos.IndexField{

@@ -7,7 +7,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	"time"
 )
 
 type App struct {
@@ -25,10 +24,6 @@ type App struct {
 
 func (a *App) GetDisplayName() string {
 	return a.ResourceMetadata.DisplayName
-}
-
-func (a *App) GetCreationTimestamp() time.Time {
-	return a.CreationTimestamp.Time
 }
 
 func (a *App) GetGeneration() int64 {

@@ -3,18 +3,18 @@ package domain
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
-	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 // GetNamespace implements Domain.
 func (d *domain) GetNamespace(ctx InfraContext, clusterName string, namespace string) (*entities.Namespace, error) {
 	ns, err := d.namespaceRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": namespace,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: namespace,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -29,8 +29,8 @@ func (d *domain) GetNamespace(ctx InfraContext, clusterName string, namespace st
 // ListNamespaces implements Domain.
 func (d *domain) ListNamespaces(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Namespace], error) {
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"clusterName": clusterName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
 	}
 	return d.namespaceRepo.FindPaginated(ctx, d.namespaceRepo.MergeMatchFilters(filter, search), pagination)
 }
@@ -38,10 +38,10 @@ func (d *domain) ListNamespaces(ctx InfraContext, clusterName string, search map
 // OnNamespaceDeleteMessage implements Domain.
 func (d *domain) OnNamespaceDeleteMessage(ctx InfraContext, clusterName string, namespace entities.Namespace) error {
 	if err := d.namespaceRepo.DeleteOne(ctx, repos.Filter{
-		"metadata.name":      namespace.Name,
-		"metadata.namespace": namespace.Namespace,
-		"accountName":        ctx.AccountName,
-		"clusterName":        clusterName,
+		fields.MetadataName:      namespace.Name,
+		fields.MetadataNamespace: namespace.Namespace,
+		fields.AccountName:       ctx.AccountName,
+		fields.ClusterName:       clusterName,
 	}); err != nil {
 		return errors.NewE(err)
 	}
@@ -51,9 +51,9 @@ func (d *domain) OnNamespaceDeleteMessage(ctx InfraContext, clusterName string, 
 // OnNamespaceUpdateMessage implements Domain.
 func (d *domain) OnNamespaceUpdateMessage(ctx InfraContext, clusterName string, namespace entities.Namespace, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	ns, err := d.namespaceRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": namespace.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: namespace.Name,
 	})
 	if err != nil {
 		return err
@@ -76,15 +76,12 @@ func (d *domain) OnNamespaceUpdateMessage(ctx InfraContext, clusterName string, 
 		}
 	}
 
-	ns.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	ns.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-
-	ns, err = d.namespaceRepo.UpdateById(ctx, ns.Id, ns)
+	_, err = d.namespaceRepo.PatchById(
+		ctx,
+		ns.Id,
+		common.PatchForSyncFromAgent(&namespace, ns.RecordVersion, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
 	if err != nil {
 		return errors.NewE(err)
 	}

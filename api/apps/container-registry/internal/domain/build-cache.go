@@ -2,7 +2,9 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
@@ -49,22 +51,16 @@ func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache ent
 		return nil, errors.Newf("unauthorized to update build cache")
 	}
 
-	back, err := d.buildCacheRepo.FindOne(ctx, repos.Filter{
-		"accountName": ctx.AccountName,
-		"id":          id,
-	})
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	buildCacheRepoUpdated, err := d.buildCacheRepo.PatchById(
+		ctx,
+		id,
+		repos.Document{
+			fc.BuildCacheKeyVolumeSizeInGB: buildCache.VolumeSize,
+			fields.DisplayName:             buildCache.DisplayName,
+			fields.AccountName:             ctx.AccountName,
+		},
+	)
 
-	back.VolumeSize = buildCache.VolumeSize
-	back.DisplayName = buildCache.DisplayName
-	back.AccountName = ctx.AccountName
-
-	buildCacheRepoUpdated, err := d.buildCacheRepo.UpdateById(ctx, id, back)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
 	d.resourceEventPublisher.PublishBuildCacheEvent(buildCacheRepoUpdated, PublishUpdate)
 	return buildCacheRepoUpdated, nil
 }
@@ -86,8 +82,8 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 	}
 
 	back, err := d.buildCacheRepo.FindOne(ctx, repos.Filter{
-		"accountName": ctx.AccountName,
-		"id":          id,
+		fields.AccountName: ctx.AccountName,
+		fields.Id:          id,
 	})
 
 	if err != nil {
@@ -95,8 +91,8 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 	}
 
 	i, err := d.buildRepo.Count(ctx, repos.Filter{
-		"spec.accountName":  ctx.AccountName,
-		"spec.cacheKeyName": back.Name,
+		fc.BuildSpecAccountName:  ctx.AccountName,
+		fc.BuildSpecCacheKeyName: back.Name,
 	})
 	if err != nil {
 		return errors.NewE(err)

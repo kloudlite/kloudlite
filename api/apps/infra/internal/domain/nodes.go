@@ -2,14 +2,15 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 func (d *domain) ListNodes(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error) {
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"clusterName": clusterName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
 	}
 
 	return d.nodeRepo.FindPaginated(ctx, d.nodeRepo.MergeMatchFilters(filter, matchFilters), pagination)
@@ -23,9 +24,9 @@ func (d *domain) GetNode(ctx InfraContext, clusterName string, nodeName string) 
 
 func (d *domain) findNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error) {
 	node, err := d.nodeRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": nodeName,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: nodeName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -40,9 +41,9 @@ func (d *domain) findNode(ctx InfraContext, clusterName string, nodeName string)
 
 func (d *domain) OnNodeUpdateMessage(ctx InfraContext, clusterName string, node entities.Node) error {
 	if _, err := d.nodeRepo.Upsert(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": node.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: node.Name,
 	}, &node); err != nil {
 		return errors.NewE(err)
 	}
@@ -50,10 +51,12 @@ func (d *domain) OnNodeUpdateMessage(ctx InfraContext, clusterName string, node 
 }
 
 func (d *domain) OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error {
-	n, err := d.findNode(ctx, clusterName, node.Name)
-	if err != nil {
+	if err := d.namespaceRepo.DeleteOne(ctx, repos.Filter{
+		fields.MetadataName: node.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+	}); err != nil {
 		return errors.NewE(err)
 	}
-
-	return d.nodeRepo.DeleteById(ctx, n.Id)
+	return nil
 }

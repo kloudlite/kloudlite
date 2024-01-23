@@ -3,8 +3,10 @@ package domain
 import (
 	"context"
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
@@ -28,7 +30,10 @@ func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, paginati
 		return nil, errors.Newf("unauthorized to list builds")
 	}
 
-	filter := repos.Filter{"spec.accountName": ctx.AccountName, "spec.cacheKeyName": cacheId}
+	filter := repos.Filter{
+		fc.BuildSpecAccountName:  ctx.AccountName,
+		fc.BuildSpecCacheKeyName: cacheId,
+	}
 
 	return d.buildRepo.FindPaginated(ctx, filter, pagination)
 }
@@ -63,20 +68,19 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		}
 	}
 
-
 	return d.buildRepo.Create(ctx, &entities.Build{
-		Spec: func() dbv1.BuildRunSpec{
+		Spec: func() dbv1.BuildRunSpec {
 			build.Spec.AccountName = ctx.AccountName
 			return build.Spec
 		}(),
-		Name:          build.Name,
+		Name:             build.Name,
 		BuildClusterName: build.BuildClusterName,
-		CreatedBy:     common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
-		LastUpdatedBy: common.CreatedOrUpdatedBy{},
-		Source:        entities.GitSource{Repository: build.Source.Repository, Branch: build.Source.Branch, Provider: build.Source.Provider, WebhookId: webhookId},
-		CredUser:      common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
-		ErrorMessages: map[string]string{},
-		Status:        entities.BuildStatusIdle,
+		CreatedBy:        common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		LastUpdatedBy:    common.CreatedOrUpdatedBy{},
+		Source:           entities.GitSource{Repository: build.Source.Repository, Branch: build.Source.Branch, Provider: build.Source.Provider, WebhookId: webhookId},
+		CredUser:         common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		ErrorMessages:    map[string]string{},
+		Status:           entities.BuildStatusIdle,
 	})
 }
 
@@ -101,18 +105,18 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 		return nil, errors.NewE(err)
 	}
 	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
-		Spec: func() dbv1.BuildRunSpec{
+		Spec: func() dbv1.BuildRunSpec {
 			build.Spec.AccountName = ctx.AccountName
 			return build.Spec
 		}(),
-		Name:          build.Name,
+		Name:             build.Name,
 		BuildClusterName: build.BuildClusterName,
-		CreatedBy:     common.CreatedOrUpdatedBy{},
-		LastUpdatedBy: common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
-		Source:        build.Source,
-		CredUser:      common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
-		ErrorMessages: map[string]string{},
-		Status:        build.Status,
+		CreatedBy:        common.CreatedOrUpdatedBy{},
+		LastUpdatedBy:    common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		Source:           build.Source,
+		CredUser:         common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		ErrorMessages:    map[string]string{},
+		Status:           build.Status,
 	})
 }
 
@@ -122,9 +126,9 @@ func (d *Impl) UpdateBuildInternal(ctx context.Context, build *entities.Build) (
 
 func (d *Impl) ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error) {
 	filter := repos.Filter{
-		"source.repository": repoUrl,
-		"source.branch":     branch,
-		"source.provider":   provider,
+		fc.BuildSourceRepository: repoUrl,
+		fc.BuildSourceBranch:     branch,
+		fc.BuildSourceProvider:   provider,
 	}
 
 	b, err := d.buildRepo.Find(ctx, repos.Query{
@@ -154,7 +158,10 @@ func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[strin
 		return nil, errors.Newf("unauthorized to list builds")
 	}
 
-	filter := repos.Filter{"spec.accountName": ctx.AccountName, "spec.registry.repo.name": repoName}
+	filter := repos.Filter{
+		fc.BuildSpecAccountName:      ctx.AccountName,
+		fc.BuildSpecRegistryRepoName: repoName,
+	}
 
 	return d.buildRepo.FindPaginated(ctx, d.buildRepo.MergeMatchFilters(filter, search), pagination)
 }
@@ -210,7 +217,10 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 		return errors.NewE(err)
 	}
 
-	if err = d.buildRepo.DeleteOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId}); err != nil {
+	if err = d.buildRepo.DeleteOne(ctx, repos.Filter{
+		fc.BuildSpecAccountName: ctx.AccountName,
+		fields.Id:               buildId,
+	}); err != nil {
 		return errors.NewE(err)
 	}
 
@@ -220,7 +230,7 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 			return nil
 		}
 
-		if err:=d.gitlab.DeleteWebhook(ctx, at, string(b.Source.Repository), entities.GitlabWebhookId(*b.Source.WebhookId));err!=nil {
+		if err := d.gitlab.DeleteWebhook(ctx, at, string(b.Source.Repository), entities.GitlabWebhookId(*b.Source.WebhookId)); err != nil {
 			d.logger.Errorf(err, "error while deleting webhook")
 		}
 	}
