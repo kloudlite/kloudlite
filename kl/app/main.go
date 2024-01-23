@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/getlantern/systray"
 	"github.com/kloudlite/kl/app/handler"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -14,12 +15,15 @@ func RunApp() error {
 		// ioutil.WriteFile(fmt.Sprintf(`on_exit_%d.txt`, now.UnixNano()), []byte(now.String()), 0644)
 	}
 
-	systray.Run(onReady, onExit)
+	for {
+		fmt.Println("here we go")
+		systray.Run(onReady, onExit)
+	}
 
-	return nil
 }
 
 func onReady() {
+
 	channel := make(chan handler.ChanelMsg)
 	h := handler.NewHandler(channel)
 
@@ -36,13 +40,12 @@ func onReady() {
 	systray.AddSeparator()
 
 	// handle actions releated to environment
-	// h.ReconEnv()
-	// systray.AddSeparator()
+	h.ReconEnv()
+	systray.AddSeparator()
 
 	h.ReconUser()
 	h.ReconAuth()
 
 	h.ReconQuit()
-
 	h.StartListener()
 }

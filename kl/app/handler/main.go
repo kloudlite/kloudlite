@@ -4,11 +4,13 @@ import (
 	"time"
 
 	"github.com/getlantern/systray"
+	"github.com/getlantern/systray/example/icon"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
-	"github.com/kloudlite/kl/app/icons"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
+
+type projectMap map[string]map[string]string
 
 type ChanelMsg struct {
 	Msg       string
@@ -29,6 +31,8 @@ type Handler interface {
 	StartListener()
 	Channel() chan ChanelMsg
 
+	RedrawEnvs(projectMap)
+
 	ItemMap() map[ns.ItemName]*systray.MenuItem
 	AddItem(ns.ItemName, *systray.MenuItem)
 	DeleteItem(ns.ItemName)
@@ -42,15 +46,29 @@ func (h *handler) DeleteItem(name ns.ItemName) {
 	delete(h.itemMap, name)
 }
 
+type env struct {
+	name   string
+	envBtn *systray.MenuItem
+}
+
+type project struct {
+	name       string
+	projectBtn *systray.MenuItem
+	envs       []env
+}
+
 type handler struct {
-	channel chan ChanelMsg
-	itemMap map[ns.ItemName]*systray.MenuItem
+	channel              chan ChanelMsg
+	itemMap              map[ns.ItemName]*systray.MenuItem
+	projects             []project
+	projectRenderVersion string
 }
 
 func NewHandler(channel chan ChanelMsg) Handler {
 	return &handler{
-		channel: channel,
-		itemMap: make(map[ns.ItemName]*systray.MenuItem),
+		channel:  channel,
+		itemMap:  make(map[ns.ItemName]*systray.MenuItem),
+		projects: []project{},
 	}
 }
 
@@ -63,7 +81,8 @@ func (h *handler) ItemMap() map[ns.ItemName]*systray.MenuItem {
 }
 
 func (h *handler) ReconMeta() {
-	systray.SetTemplateIcon(icons.KlIcon, icons.KlIcon)
+	systray.SetIcon(icon.Data)
+	systray.SetTitle("Kloudlite")
 	systray.SetTooltip("Kloudlite vpn client")
 
 	go func() {
@@ -75,9 +94,9 @@ func (h *handler) ReconMeta() {
 			}
 
 			if b {
-				systray.SetTemplateIcon(icons.LoadingIcon, icons.LoadingIcon)
+				systray.SetIcon(icon.Data)
 			} else {
-				systray.SetTemplateIcon(icons.KlIcon, icons.KlIcon)
+				systray.SetIcon(icon.Data)
 			}
 
 			<-time.After(time.Millisecond * 500)

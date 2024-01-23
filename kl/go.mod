@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/gum v0.13.0
 	github.com/getlantern/systray v1.2.2
+	github.com/google/uuid v1.5.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/koki-develop/go-fzf v0.15.0
 	github.com/lixiangzhong/dnsutil v1.4.0

@@ -77,6 +77,7 @@ func (h *handler) StartListener() {
 						}
 
 						h.ReconAccount()
+						h.ReconEnv()
 					}
 
 				case ns.ToggleDevice:
