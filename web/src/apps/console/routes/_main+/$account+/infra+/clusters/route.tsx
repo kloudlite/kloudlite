@@ -131,18 +131,19 @@ const Clusters = () => {
         const { pageInfo, totalCount } = clustersData;
         return (
           <div className="flex flex-col gap-6xl">
-            <SecondarySubHeader
-              title="Clusters"
-              action={
-                <Button
-                  content="Create cluster"
-                  variant="primary"
-                  LinkComponent={Link}
-                  to={`/${account}/new-cluster`}
-                />
-              }
-            />
             <Wrapper
+              secondaryHeader={{
+                title: 'Clusters',
+                action: clusters.length > 0 && (
+                  <Button
+                    content="Create cluster"
+                    variant="primary"
+                    prefix={<Plus />}
+                    LinkComponent={Link}
+                    to={`/${account}/new-cluster`}
+                  />
+                ),
+              }}
               empty={getEmptyState({
                 clustersCount: clusters.length,
                 cloudProviderSecretsCount: secretsCount,

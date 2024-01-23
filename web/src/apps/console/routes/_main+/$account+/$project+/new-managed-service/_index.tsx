@@ -5,7 +5,6 @@ import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import Select from '~/components/atoms/select';
 import { NameIdView } from '~/console/components/name-id-view';
-import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -19,6 +18,10 @@ import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
 import { titleCase } from '~/components/utils';
 import { flatMapValidations, flatM } from '~/console/utils/commons';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import { IProjectContext } from '../_layout';
 import { ReviewComponent } from '../$environment+/new-app/app-review';
 
@@ -32,11 +35,6 @@ const valueRender = ({ label, icon }: { label: string; icon: string }) => {
     </div>
   );
 };
-
-type steps = 'Select template' | 'Configure managed service' | 'Review';
-
-const hasTemplate = (res: any) =>
-  (!!res && res?.template?.fields.length > 0) || !res;
 
 const RenderField = ({
   field,
@@ -184,34 +182,9 @@ const TemplateView = ({
   isLoading: boolean;
   handleChange: (key: string) => (e: { target: { value: any } }) => void;
 }) => {
-  const nameRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    nameRef.current?.focus();
-  }, [nameRef.current]);
   return (
-    <form
-      className="flex flex-col gap-3xl py-3xl"
-      onSubmit={(e) => {
-        if (!values.isNameError) {
-          handleSubmit(e);
-        } else {
-          e.preventDefault();
-        }
-      }}
-    >
+    <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
       <div className="bodyMd text-text-soft">Create your managed services.</div>
-
-      <NameIdView
-        ref={nameRef}
-        placeholder="Enter managed service name"
-        label="Name"
-        resType="project_managed_service"
-        name={values.name}
-        displayName={values.displayName}
-        errors={errors.name}
-        handleChange={handleChange}
-        nameErrorLabel="isNameError"
-      />
       <Select
         label="Template"
         size="lg"
@@ -261,7 +234,7 @@ const TemplateView = ({
         <Button
           loading={isLoading}
           variant="primary"
-          content={hasTemplate(values.selectedTemplate) ? 'Next' : 'Create'}
+          content="Next"
           suffix={<ArrowRight />}
           type="submit"
         />
@@ -283,13 +256,37 @@ const FieldView = ({
   errors: Record<string, any>;
   selectedTemplate: ISelectedTemplate | null;
 }) => {
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, [nameRef.current]);
   return (
-    <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
+    <form
+      className="flex flex-col gap-3xl"
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
+        }
+      }}
+    >
+      <NameIdView
+        ref={nameRef}
+        placeholder="Enter managed service name"
+        label="Name"
+        resType="project_managed_service"
+        name={values.name}
+        displayName={values.displayName}
+        errors={errors.name}
+        handleChange={handleChange}
+        nameErrorLabel="isNameError"
+      />
       {selectedTemplate?.template.fields?.map((field) => {
         const k = field.name;
         const x = k.split('.').reduce((acc, curr) => {
           if (!acc) {
-            return values[curr];
+            return values.res?.[curr];
           }
           return acc[curr];
         }, null);
@@ -320,8 +317,10 @@ const ReviewView = ({
   handleSubmit,
   values,
   isLoading,
+  onEdit,
 }: {
   values: Record<string, any>;
+  onEdit: (step: number) => void;
   handleSubmit: FormEventHandler<HTMLFormElement>;
   isLoading?: boolean;
 }) => {
@@ -331,7 +330,12 @@ const ReviewView = ({
     );
     if (fields.length > 0) {
       return (
-        <ReviewComponent title="Fields" onEdit={() => {}}>
+        <ReviewComponent
+          title="Fields"
+          onEdit={() => {
+            onEdit(2);
+          }}
+        >
           <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
             {fields?.map(([key, value]) => {
               const k = key as string;
@@ -357,7 +361,12 @@ const ReviewView = ({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3xl py-3xl">
       <div className="flex flex-col gap-xl">
-        <ReviewComponent title="Basic detail" onEdit={() => {}}>
+        <ReviewComponent
+          title="Basic detail"
+          onEdit={() => {
+            onEdit(2);
+          }}
+        >
           <div className="flex flex-col p-xl gap-lg rounded border border-border-default">
             <div className="flex flex-col gap-md">
               <div className="bodyMd-semibold text-text-default">
@@ -367,7 +376,12 @@ const ReviewView = ({
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Service detail" onEdit={() => {}}>
+        <ReviewComponent
+          title="Service detail"
+          onEdit={() => {
+            onEdit(1);
+          }}
+        >
           <div className="flex flex-col p-xl gap-md rounded border border-border-default">
             <div className="bodyMd-semibold text-text-default">
               {values?.selectedTemplate?.categoryDisplayName}
@@ -379,7 +393,12 @@ const ReviewView = ({
         </ReviewComponent>
         {renderFieldView()}
         {values?.res?.resources && (
-          <ReviewComponent title="Fields" onEdit={() => {}}>
+          <ReviewComponent
+            title="Fields"
+            onEdit={() => {
+              onEdit(2);
+            }}
+          >
             <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
               {Object.entries(values?.res?.resources).map(([key, value]) => {
                 return (
@@ -422,14 +441,15 @@ const ReviewView = ({
 
 const ManagedServiceLayout = () => {
   const { msvtemplates } = useOutletContext<IProjectContext>();
-  const [activeState, setActiveState] = useState<steps>('Select template');
   const navigate = useNavigate();
   const api = useConsoleApi();
 
   const { project, account } = useParams();
 
-  const isActive = (step: steps) => step === activeState;
-
+  const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
+    defaultStep: 1,
+    totalSteps: 3,
+  });
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
       initialValues: {
@@ -440,8 +460,12 @@ const ManagedServiceLayout = () => {
         isNameError: false,
       },
       validationSchema: Yup.object().shape({
-        name: Yup.string().required(),
-        displayName: Yup.string().required(),
+        name: Yup.string().test('required', 'Name is required', (v) => {
+          return !(currentStep === 2 && !v);
+        }),
+        displayName: Yup.string().test('required', 'Name is required', (v) => {
+          return !(currentStep === 2 && !v);
+        }),
         selectedTemplate: Yup.object({}).required('Template is required.'),
         // @ts-ignore
         res: Yup.object({}).test({
@@ -452,10 +476,7 @@ const ManagedServiceLayout = () => {
 
             let vs = Yup.object({});
 
-            if (
-              selfValue.selectedTemplate &&
-              isActive('Configure managed service')
-            ) {
+            if (selfValue.selectedTemplate && currentStep === 2) {
               vs = Yup.object(
                 flatMapValidations(
                   selfValue.selectedTemplate?.template?.fields.reduce(
@@ -480,7 +501,6 @@ const ManagedServiceLayout = () => {
       onSubmit: async (val) => {
         const selectedTemplate =
           val.selectedTemplate as unknown as ISelectedTemplate;
-
         const submit = async () => {
           try {
             if (!project) {
@@ -523,22 +543,14 @@ const ManagedServiceLayout = () => {
           }
         };
 
-        switch (activeState) {
-          case 'Select template':
-            if (!hasTemplate(val.selectedTemplate)) {
-              await submit();
-              break;
-            }
-            setActiveState('Configure managed service');
+        switch (currentStep) {
+          case 1:
+            nextStep();
             break;
-          case 'Configure managed service':
-            if (!hasTemplate(val.selectedTemplate)) {
-              await submit();
-              break;
-            }
-            setActiveState('Review');
+          case 2:
+            nextStep();
             break;
-          case 'Review':
+          case 3:
             await submit();
             break;
           default:
@@ -564,17 +576,13 @@ const ManagedServiceLayout = () => {
     }
   }, [values.selectedTemplate]);
 
-  useEffect(() => {
-    console.log(errors, 'errors');
-  }, [errors]);
-
-  const getItems = () => {
-    return [
-      {
-        label: 'Select template',
-        active: isActive('Select template'),
-        completed: false,
-        children: isActive('Select template') ? (
+  return (
+    <MultiStepProgressWrapper
+      title="Let’s create new managed service."
+      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
+    >
+      <MultiStepProgress.Root currentStep={currentStep} jumpStep={jumpStep}>
+        <MultiStepProgress.Step label="Select template" step={1}>
           <TemplateView
             isLoading={isLoading}
             templates={msvtemplates}
@@ -583,54 +591,26 @@ const ManagedServiceLayout = () => {
             errors={errors}
             values={values}
           />
-        ) : null,
-      },
-      ...(hasTemplate(values.selectedTemplate)
-        ? [
-            {
-              label: 'Configure managed service',
-              active: isActive('Configure managed service'),
-              completed: false,
-              children: isActive('Configure managed service') ? (
-                <FieldView
-                  selectedTemplate={values.selectedTemplate}
-                  values={values.res}
-                  errors={errors}
-                  handleChange={handleChange}
-                  handleSubmit={handleSubmit}
-                />
-              ) : null,
-            },
-          ]
-        : []),
-      ...(hasTemplate(values.selectedTemplate)
-        ? [
-            {
-              label: 'Review',
-              active: isActive('Review'),
-              completed: false,
-              children: isActive('Review') ? (
-                <ReviewView
-                  values={values}
-                  handleSubmit={handleSubmit}
-                  isLoading={isLoading}
-                />
-              ) : null,
-            },
-          ]
-        : []),
-    ];
-  };
-
-  return (
-    <ProgressWrapper
-      title="Let’s create new managed service."
-      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
-      progressItems={{
-        items: getItems(),
-      }}
-      onClick={({ label }) => {}}
-    />
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step label="Configure managed service" step={2}>
+          <FieldView
+            selectedTemplate={values.selectedTemplate}
+            values={values}
+            errors={errors}
+            handleChange={handleChange}
+            handleSubmit={handleSubmit}
+          />
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step label="Review" step={3}>
+          <ReviewView
+            onEdit={jumpStep}
+            values={values}
+            handleSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        </MultiStepProgress.Step>
+      </MultiStepProgress.Root>
+    </MultiStepProgressWrapper>
   );
 };
 

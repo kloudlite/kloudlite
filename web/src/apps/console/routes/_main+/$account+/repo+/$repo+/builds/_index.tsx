@@ -1,5 +1,5 @@
 import { defer } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
@@ -9,6 +9,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Plus } from '@jengaicons/react';
+import { Button } from '~/components/atoms/button';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
 import Tools from './tools';
@@ -49,21 +50,30 @@ const Builds = () => {
             <Wrapper
               header={{
                 title: 'Build Integrations',
+                action: builds.length > 0 && (
+                  <Button
+                    content="Create build"
+                    variant="primary"
+                    to="../new-build"
+                    LinkComponent={Link}
+                    prefix={<Plus />}
+                  />
+                ),
               }}
               empty={{
                 is: builds.length === 0,
-                title: 'This is where you’ll manage your Build Configs.',
+                title: 'This is where you’ll manage your Build Integrations.',
                 action: {
                   content: 'create build',
-                  onClick: () => {
-                    setVisible(true);
-                  },
+
+                  to: '../new-build',
+                  LinkComponent: Link,
                   prefix: <Plus />,
                 },
                 content: (
                   <p>
-                    You can create a new Build Config and manage the listed
-                    Build Configs.
+                    You can create a new Build Integration and manage the listed
+                    Build Integrations.
                   </p>
                 ),
               }}

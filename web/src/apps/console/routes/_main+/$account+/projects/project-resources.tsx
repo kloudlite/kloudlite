@@ -1,11 +1,11 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
-import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListTitle,
+  listClass,
   listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
@@ -110,7 +110,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, 0),
-                className: 'w-[180px] min-w-[180px] mr-xl',
+                className: listClass.title,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -123,7 +123,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               listFlex({ key: `${keyPrefix}flex` }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+                className: listClass.author,
                 render: () => (
                   <ListItem
                     data={`${updateInfo.author}`}

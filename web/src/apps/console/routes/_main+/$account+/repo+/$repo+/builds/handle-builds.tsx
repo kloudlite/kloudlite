@@ -331,12 +331,12 @@ const Root = (props: IDialog) => {
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={1}>
             <div className="p-xl !pt-0">
-              <GitRepoSelector
+              {/* <GitRepoSelector
                 onImport={(val) => {
                   setSource({ ...val, branch: val.branch! });
                   onNext();
                 }}
-              />
+              /> */}
             </div>
           </MultiStep.Step>
           <MultiStep.Step step={2}>

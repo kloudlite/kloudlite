@@ -77,13 +77,13 @@ const GridView = ({ items, onDelete }: IResource) => {
                   <ListTitle
                     title={name}
                     subtitle={id}
-                    // action={
-                    //   <ExtraButton
-                    //     onDelete={() => {
-                    //       onDelete(item);
-                    //     }}
-                    //   />
-                    // }
+                  // action={
+                  //   <ExtraButton
+                  //     onDelete={() => {
+                  //       onDelete(item);
+                  //     }}
+                  //   />
+                  // }
                   />
                 ),
               },
@@ -101,6 +101,17 @@ const GridView = ({ items, onDelete }: IResource) => {
   );
 };
 
+const ListItem = ({ item }: { item: BaseType }) => {
+  const { name, id, updateInfo } = parseItem(item);
+  return (
+    <div className="flex flex-col">
+      <div className="flex flex-row">
+        <ListTitle title={name} subtitle={id} />
+      </div>
+      <div className="">Logs</div>
+    </div>
+  );
+};
 const ListView = ({ items, onDelete }: IResource) => {
   return (
     <List.Root>
@@ -114,25 +125,8 @@ const ListView = ({ items, onDelete }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
-                render: () => <ListTitle title={name} subtitle={id} />,
+                render: () => <ListItem item={item} />,
               },
-              {
-                key: generateKey(keyPrefix, 'time'),
-                render: () => (
-                  <ListBody data={`Last Updated ${updateInfo.time}`} />
-                ),
-              },
-              // {
-              //   key: generateKey(keyPrefix, 'action'),
-              //   render: () => (
-              //     <ExtraButton
-              //       onDelete={() => {
-              //         onDelete(item);
-              //       }}
-              //     />
-              //   ),
-              // },
             ]}
           />
         );

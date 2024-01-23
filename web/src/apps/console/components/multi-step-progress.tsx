@@ -1,5 +1,11 @@
 import { Check } from '@jengaicons/react';
-import { Children, ReactElement, ReactNode, useRef, useState } from 'react';
+import React, {
+  Children,
+  ReactElement,
+  ReactNode,
+  useRef,
+  useState,
+} from 'react';
 import { cn } from '~/components/utils';
 
 interface IUseMultiStepProgress {
@@ -41,6 +47,7 @@ type IProgressTrackerItem = {
   onClick?: () => void;
   hasBorder: boolean;
   index: number;
+  noJump?: boolean;
 };
 
 function ProgressTrackerItem(
@@ -54,9 +61,8 @@ function ProgressTrackerItem(
     onClick,
     hasBorder,
     index,
+    noJump,
   } = props;
-
-  console.log(children);
 
   return (
     <div
@@ -67,7 +73,9 @@ function ProgressTrackerItem(
       )}
     >
       <div>
-        <div
+        <button
+          type="button"
+          aria-label={`step-${index}`}
           onClick={onClick}
           className={cn(
             'border-2 border-surface-basic-default headingXs box-content w-3xl h-3xl rounded-full flex items-center justify-center absolute left-0 -ml-[12px]',
@@ -75,16 +83,18 @@ function ProgressTrackerItem(
               ? 'bg-surface-primary-default text-text-on-primary'
               : 'bg-surface-primary-selected',
             active && !completed ? 'text-text-primary' : 'text-text-disabled',
-            onClick ? 'cursor-pointer' : ''
+            onClick && !noJump ? 'cursor-pointer' : 'cursor-default'
           )}
         >
           {completed ? <Check size={12} /> : index}
-        </div>
+        </button>
         <span
           className={cn(
             '-mt-[14px] headingMd',
+            !noJump ? 'cursor-pointer select-none' : '',
             !active || completed ? 'text-text-disabled' : 'text-text-default'
           )}
+          onClick={onClick}
         >
           {label}
         </span>
@@ -95,7 +105,7 @@ function ProgressTrackerItem(
 }
 
 interface IStep {
-  children: ReactNode;
+  children?: ReactNode;
   label: ReactNode;
   step: number;
   className?: string;
@@ -112,11 +122,24 @@ interface IMultiStepProgress {
   children: ReactElement<IStep> | ReactElement<IStep>[];
   currentStep: number;
   jumpStep: (step: number) => void;
+  noJump?: boolean;
 }
-const Root = ({ children, currentStep, jumpStep }: IMultiStepProgress) => {
+const Root = ({
+  children,
+  currentStep,
+  jumpStep,
+  noJump,
+}: IMultiStepProgress) => {
+  let child = children;
+  // @ts-ignore
+  if (child.type === React.Fragment) {
+    // @ts-ignore
+    child = child.props.children;
+  }
+
   return (
     <div className="flex flex-col relative [counter-reset:steps]">
-      {Children.map(children, (ch, index) => {
+      {Children.map(child, (ch, index) => {
         return (
           <ProgressTrackerItem
             {...ch}
@@ -124,9 +147,12 @@ const Root = ({ children, currentStep, jumpStep }: IMultiStepProgress) => {
             label={ch.props.label}
             hasBorder={ch.props.step <= currentStep}
             active={currentStep === ch.props.step}
+            noJump={noJump}
             onClick={() => {
               if (index + 1 < currentStep) {
-                jumpStep(index + 1);
+                if (!noJump) {
+                  jumpStep(index + 1);
+                }
               }
             }}
           >

@@ -23,10 +23,13 @@ import {
   validateClusterCloudProvider,
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
-// import { IAccountContext } from '../routes/_main+/$account+/_layout';
-import ProgressWrapper from '../components/progress-wrapper';
 import { NameIdView } from '../components/name-id-view';
 import { ReviewComponent } from '../routes/_main+/$account+/$project+/$environment+/new-app/app-review';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '../components/multi-step-progress';
+import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
+import { TitleBox } from '../components/raw-wrapper';
 
 type props =
   | {
@@ -38,13 +41,10 @@ type props =
       cloudProvider: IProviderSecret;
     };
 
-type steps = 'Configure cluster' | 'Review';
-
 export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 
-  // const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const api = useConsoleApi();
 
   const cloudProviders = useMemo(
@@ -66,9 +66,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const { a: accountName } = useParams();
 
-  // const { account } = useOutletContext<IAccountContext>();
-  const [activeState, setActiveState] = useState<steps>('Configure cluster');
-  const isActive = (step: steps) => step === activeState;
+  const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
+    defaultStep: isOnboarding ? 4 : 1,
+    totalSteps: isOnboarding ? 4 : 2,
+  });
+
   const navigate = useNavigate();
 
   const [selectedProvider, setSelectedProvider] = useState<
@@ -155,11 +157,12 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         }
       };
 
-      switch (activeState) {
-        case 'Configure cluster':
-          setActiveState('Review');
+      switch (currentStep) {
+        case 1:
+          nextStep();
           break;
-        case 'Review':
+        case 2:
+        case 4:
           await submit();
           break;
         default:
@@ -170,20 +173,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const getView = () => {
     return (
-      <form
-        className="flex flex-col gap-3xl py-3xl"
-        onSubmit={(e) => {
-          if (!values.isNameError) {
-            handleSubmit(e);
-          } else {
-            e.preventDefault();
-          }
-        }}
-      >
-        <div className="bodyMd text-text-soft">
-          A cluster is a group of interconnected elements working together as a
-          single unit.
-        </div>
+      <div className="flex flex-col gap-3xl py-3xl">
+        <TitleBox
+          subtitle="A cluster is a group of interconnected elements working together as a
+          single unit."
+        />
         <div className="flex flex-col">
           <div className="flex flex-col gap-3xl pb-xl">
             <NameIdView
@@ -274,15 +268,15 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           <div className="flex flex-row gap-xl justify-start">
             <Button
               variant="primary"
-              content="Continue"
+              content="Create"
               suffix={<ArrowRight />}
               type="submit"
+              loading={isLoading}
             />
           </div>
         ) : (
           <div className="flex flex-row justify-start">
             <Button
-              loading={isLoading}
               variant="primary"
               content="Continue"
               suffix={<ArrowRight />}
@@ -290,125 +284,116 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             />
           </div>
         )}
-      </form>
+      </div>
     );
   };
-
-  const getReviewView = () => {
-    return (
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3xl py-3xl">
-        <ReviewComponent
-          title="Cluster detail"
-          onEdit={() => {
-            setActiveState('Configure cluster');
-          }}
-        >
-          <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
-            <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
-              <div className="bodyMd-semibold text-text-default">
-                Cluster name
-              </div>
-              <div className="bodySm text-text-soft">{values.name}</div>
-            </div>
-            <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
-              <div className="bodyMd-semibold text-text-default">
-                Cloud provider
-              </div>
-              <div className="bodySm text-text-soft">
-                {values.cloudProvider}
-              </div>
-            </div>
-            {values.cloudProvider === 'aws' && (
-              <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
-                <div className="bodyMd-semibold text-text-default">Region</div>
-                <div className="bodySm text-text-soft">{values.region}</div>
-              </div>
-            )}
-            <div className="flex flex-col gap-md  pb-lg">
-              <div className="bodyMd-semibold text-text-default">
-                Availability Mode
-              </div>
-              <div className="bodySm text-text-soft">
-                {values.availabilityMode === 'HA'
-                  ? 'High Availability'
-                  : 'Development'}
-              </div>
-            </div>
-          </div>
-        </ReviewComponent>
-        <div className="flex flex-row justify-start">
-          <Button
-            loading={isLoading}
-            variant="primary"
-            content="Create"
-            suffix={<ArrowRight />}
-            type="submit"
-          />
-        </div>
-      </form>
-    );
-  };
-
-  const items = () => {
-    return isOnboarding
-      ? [
-          {
-            label: 'Create Team',
-            active: false,
-            id: 1,
-            completed: true,
-          },
-          {
-            label: 'Add your Cloud Provider',
-            active: false,
-            id: 3,
-            completed: true,
-          },
-          {
-            label: 'Validate Cloud Provider',
-            active: false,
-            id: 4,
-            completed: true,
-          },
-          {
-            label: 'Setup First Cluster',
-            active: true,
-            id: 5,
-            completed: false,
-            children: getView(),
-          },
-        ]
-      : [
-          {
-            label: 'Configure cluster',
-            active: isActive('Configure cluster'),
-            completed: false,
-            children: isActive('Configure cluster') ? getView() : null,
-          },
-          {
-            label: 'Review',
-            active: isActive('Review'),
-            completed: false,
-            children: isActive('Review') ? getReviewView() : null,
-          },
-        ];
-  };
-
   return (
-    <ProgressWrapper
-      title={isOnboarding ? 'Setup your account!' : 'Let’s create new cluster.'}
-      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
-  teams"
-      progressItems={{
-        items: items(),
-      }}
-      onClick={() => {
-        if (!isOnboarding) {
-          if (isActive('Review')) {
-            setActiveState('Configure cluster');
-          }
+    <form
+      onSubmit={(e) => {
+        if (!values.isNameError) {
+          handleSubmit(e);
+        } else {
+          e.preventDefault();
         }
       }}
-    />
+    >
+      <MultiStepProgressWrapper
+        title={
+          isOnboarding ? 'Setup your account!' : 'Let’s create new cluster.'
+        }
+        subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
+        {...(isOnboarding
+          ? {}
+          : {
+              backButton: {
+                content: 'Back to clusters',
+                to: `/${accountName}/infra/clusters`,
+              },
+            })}
+      >
+        <MultiStepProgress.Root
+          noJump={isOnboarding}
+          currentStep={currentStep}
+          jumpStep={jumpStep}
+        >
+          {!isOnboarding ? (
+            <>
+              <MultiStepProgress.Step label="Configure cluster" step={1}>
+                {getView()}
+              </MultiStepProgress.Step>
+              <MultiStepProgress.Step label="Review" step={2}>
+                <ReviewComponent
+                  title="Cluster detail"
+                  onEdit={() => {
+                    jumpStep(1);
+                  }}
+                >
+                  <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+                    <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+                      <div className="bodyMd-semibold text-text-default">
+                        Cluster name
+                      </div>
+                      <div className="bodySm text-text-soft">{values.name}</div>
+                    </div>
+                    <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+                      <div className="bodyMd-semibold text-text-default">
+                        Cloud provider
+                      </div>
+                      <div className="bodySm text-text-soft">
+                        {values.cloudProvider}
+                      </div>
+                    </div>
+                    {values.cloudProvider === 'aws' && (
+                      <div className="flex flex-col gap-md">
+                        <div className="bodyMd-semibold text-text-default">
+                          Region
+                        </div>
+                        <div className="bodySm text-text-soft">
+                          {values.region}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-md  pb-lg">
+                      <div className="bodyMd-semibold text-text-default">
+                        Availability Mode
+                      </div>
+                      <div className="bodySm text-text-soft">
+                        {values.availabilityMode === 'HA'
+                          ? 'High Availability'
+                          : 'Development'}
+                      </div>
+                    </div>
+                  </div>
+                </ReviewComponent>
+                <div className="flex flex-row justify-start">
+                  <Button
+                    loading={isLoading}
+                    variant="primary"
+                    content="Create"
+                    suffix={<ArrowRight />}
+                    type="submit"
+                  />
+                </div>
+              </MultiStepProgress.Step>
+            </>
+          ) : (
+            <>
+              <MultiStepProgress.Step step={1} label="Create team" />
+              <MultiStepProgress.Step
+                step={2}
+                label="Add your cloud provider"
+              />
+              <MultiStepProgress.Step
+                step={3}
+                label="Validate cloud provider"
+              />
+              <MultiStepProgress.Step step={4} label="Setup first cluster">
+                {getView()}
+              </MultiStepProgress.Step>
+            </>
+          )}
+        </MultiStepProgress.Root>
+      </MultiStepProgressWrapper>
+    </form>
   );
 };

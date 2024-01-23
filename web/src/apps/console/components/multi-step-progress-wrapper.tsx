@@ -1,4 +1,7 @@
+import { ArrowLeft } from '@jengaicons/react';
+import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
+import { Button } from '~/components/atoms/button';
 
 type ITitleSection = {
   title: ReactNode;
@@ -16,16 +19,33 @@ const TitleSection = ({ title, subTitle }: ITitleSection) => {
 
 interface IProgressWrapper extends ITitleSection {
   children: ReactNode;
+  backButton?: {
+    to: string;
+    content: string;
+  };
 }
 const MultiStepProgressWrapper = ({
   subTitle,
   title,
   children,
+  backButton,
 }: IProgressWrapper) => {
   return (
     <div className="min-h-screen p-10xl pb-4xl max-w-[1024px] bg-surface-basic-default">
       <div className="max-w-[568px] flex flex-col gap-7xl">
-        <TitleSection title={title} subTitle={subTitle} />
+        <div className="flex flex-col gap-xl">
+          {backButton && (
+            <Button
+              variant="plain"
+              prefix={<ArrowLeft />}
+              size="sm"
+              content={backButton.content}
+              to={backButton.to}
+              LinkComponent={Link}
+            />
+          )}
+          <TitleSection title={title} subTitle={subTitle} />
+        </div>
         {children}
       </div>
     </div>
