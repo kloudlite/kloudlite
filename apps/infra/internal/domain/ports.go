@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -25,14 +24,6 @@ const (
 )
 
 type ResourceEventPublisher interface {
-	PublishClusterEvent(cluster *entities.Cluster, msg PublishMsg)
-
-	PublishNodePoolEvent(np *entities.NodePool, msg PublishMsg)
-	PublishVpnDeviceEvent(dev *entities.VPNDevice, msg PublishMsg)
-	PublishDomainResEvent(domain *entities.DomainEntry, msg PublishMsg)
-	PublishPvcResEvent(pvc *entities.PersistentVolumeClaim, msg PublishMsg)
-	PublishCMSEvent(cms *entities.ClusterManagedService, msg PublishMsg)
-	PublishHelmReleaseEvent(hr *entities.HelmRelease, msg PublishMsg)
-	PublishPvResEvent(pv *entities.PersistentVolume, msg PublishMsg)
-	PublishVolumeAttachmentEvent(volatt *entities.VolumeAttachment, msg PublishMsg)
+	PublishInfraEvent(ctx InfraContext, resourceType ResourceType, resName string, update PublishMsg)
+	PublishResourceEvent(ctx InfraContext, clusterName string, resourceType ResourceType, resName string, update PublishMsg)
 }

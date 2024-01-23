@@ -8,7 +8,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	wireguardV1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	"time"
 )
 
 type ConsoleVPNDevice struct {
@@ -26,10 +25,6 @@ type ConsoleVPNDevice struct {
 
 	LinkedClusters []string     `json:"linkedClusters,omitempty" graphql:"noinput"`
 	SyncStatus     t.SyncStatus `json:"syncStatus" graphql:"noinput"`
-}
-
-func (c *ConsoleVPNDevice) GetCreationTimestamp() time.Time {
-	return c.CreationTimestamp.Time
 }
 
 func (c *ConsoleVPNDevice) GetDisplayName() string {

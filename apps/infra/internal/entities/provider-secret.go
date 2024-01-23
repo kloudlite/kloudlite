@@ -3,6 +3,7 @@ package entities
 import (
 	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/operator/pkg/operator"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
@@ -82,6 +83,14 @@ type CloudProviderSecret struct {
 	AWS                     *AWSSecretCredentials `json:"aws,omitempty"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
+}
+
+func (cps *CloudProviderSecret) GetDisplayName() string {
+	return cps.ResourceMetadata.DisplayName
+}
+
+func (cps *CloudProviderSecret) GetStatus() operator.Status {
+	return operator.Status{}
 }
 
 var CloudProviderSecretIndices = []repos.IndexField{

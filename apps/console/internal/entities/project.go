@@ -8,7 +8,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	"time"
 )
 
 type Project struct {
@@ -26,10 +25,6 @@ type Project struct {
 
 func (p *Project) GetDisplayName() string {
 	return p.ResourceMetadata.DisplayName
-}
-
-func (p *Project) GetCreationTimestamp() time.Time {
-	return p.CreationTimestamp.Time
 }
 
 func (p *Project) GetStatus() operator.Status {

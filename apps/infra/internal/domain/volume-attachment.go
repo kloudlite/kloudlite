@@ -3,18 +3,18 @@ package domain
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
-	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 // GetVolumeAttachment implements Domain.
 func (d *domain) GetVolumeAttachment(ctx InfraContext, clusterName string, volAttachmentName string) (*entities.VolumeAttachment, error) {
 	volatt, err := d.volumeAttachmentRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": volAttachmentName,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: volAttachmentName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -29,8 +29,8 @@ func (d *domain) GetVolumeAttachment(ctx InfraContext, clusterName string, volAt
 // ListVolumeAttachments implements Domain.
 func (d *domain) ListVolumeAttachments(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VolumeAttachment], error) {
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"clusterName": clusterName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
 	}
 	return d.volumeAttachmentRepo.FindPaginated(ctx, d.nodePoolRepo.MergeMatchFilters(filter, search), pagination)
 }
@@ -38,22 +38,22 @@ func (d *domain) ListVolumeAttachments(ctx InfraContext, clusterName string, sea
 // OnVolumeAttachmentDeleteMessage implements Domain.
 func (d *domain) OnVolumeAttachmentDeleteMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment) error {
 	if err := d.volumeAttachmentRepo.DeleteOne(ctx, repos.Filter{
-		"metadata.name":      volumeAttachment.Name,
-		"accountName":        ctx.AccountName,
-		"clusterName":        clusterName,
+		fields.MetadataName: volumeAttachment.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
 	}); err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVolumeAttachmentEvent(&volumeAttachment, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVolumeAttachment, volumeAttachment.Name, PublishDelete)
 	return nil
 }
 
 // OnVolumeAttachmentUpdateMessage implements Domain.
 func (d *domain) OnVolumeAttachmentUpdateMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	vatt, err := d.volumeAttachmentRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": volumeAttachment.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: volumeAttachment.Name,
 	})
 	if err != nil {
 		return err
@@ -75,18 +75,15 @@ func (d *domain) OnVolumeAttachmentUpdateMessage(ctx InfraContext, clusterName s
 		}
 	}
 
-	vatt.SyncStatus.LastSyncedAt = opts.MessageTimestamp
-	vatt.SyncStatus.State = func() t.SyncState {
-		if status == types.ResourceStatusDeleting {
-			return t.SyncStateDeletingAtAgent
-		}
-		return t.SyncStateUpdatedAtAgent
-	}()
-
-	vatt, err = d.volumeAttachmentRepo.UpdateById(ctx, vatt.Id, vatt)
+	upvatt, err := d.volumeAttachmentRepo.PatchById(
+		ctx,
+		vatt.Id,
+		common.PatchForSyncFromAgent(&volumeAttachment, volumeAttachment.RecordVersion, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVolumeAttachmentEvent(vatt, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVolumeAttachment, upvatt.Name, PublishUpdate)
 	return nil
 }

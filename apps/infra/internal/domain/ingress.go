@@ -2,7 +2,9 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -12,9 +14,9 @@ func (d *domain) OnIngressUpdateMessage(ctx InfraContext, clusterName string, in
 	for i := range ingress.Spec.Rules {
 		domainName := ingress.Spec.Rules[i].Host
 		de, err := d.domainEntryRepo.Upsert(ctx, repos.Filter{
-			"accountName": ctx.AccountName,
-			"clusterName": clusterName,
-			"domainName":  domainName,
+			fields.AccountName:       ctx.AccountName,
+			fields.ClusterName:       clusterName,
+			fc.DomainEntryDomainName: domainName,
 		}, &entities.DomainEntry{
 			ResourceMetadata: common.ResourceMetadata{
 				DisplayName:   domainName,
@@ -29,7 +31,7 @@ func (d *domain) OnIngressUpdateMessage(ctx InfraContext, clusterName string, in
 			return err
 		}
 
-		d.resourceEventPublisher.PublishDomainResEvent(de, PublishUpdate)
+		d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, de.DomainName, PublishUpdate)
 	}
 
 	return nil
@@ -42,12 +44,12 @@ func (d *domain) OnIngressDeleteMessage(ctx InfraContext, clusterName string, in
 	}
 
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"clusterName": clusterName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
 	}
 
 	filters := d.domainEntryRepo.MergeMatchFilters(filter, map[string]repos.MatchFilter{
-		"domainName": {
+		fc.DomainEntryDomainName: {
 			MatchType: repos.MatchTypeArray,
 			Array:     domainNames,
 		},
@@ -59,11 +61,7 @@ func (d *domain) OnIngressDeleteMessage(ctx InfraContext, clusterName string, in
 	}
 
 	for i := range domainNames {
-		d.resourceEventPublisher.PublishDomainResEvent(&entities.DomainEntry{
-			DomainName:  domainNames[i].(string),
-			AccountName: ctx.AccountName,
-			ClusterName: clusterName,
-		}, PublishDelete)
+		d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, domainNames[i].(string), PublishDelete)
 	}
 	return nil
 }

@@ -7,15 +7,15 @@ import (
 )
 
 type Account struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	repos.BaseEntity  `json:",inline" graphql:"noinput"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	TargetNamespace  string `json:"targetNamespace,omitempty" graphql:"noinput"`
+	TargetNamespace   string `json:"targetNamespace,omitempty" graphql:"noinput"`
 
 	common.ResourceMetadata `json:",inline"`
 
 	Logo         *string `json:"logo"`
 	IsActive     *bool   `json:"isActive,omitempty"`
-	ContactEmail string `json:"contactEmail,omitempty"`
+	ContactEmail string  `json:"contactEmail,omitempty"`
 }
 
 var AccountIndices = []repos.IndexField{
