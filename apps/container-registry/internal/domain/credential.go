@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 	"regexp"
 	"time"
 
@@ -33,8 +35,8 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 	}
 
 	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
-		"username":    username,
-		"accountName": accountname,
+		fc.CredentialUsername: username,
+		fields.AccountName:    accountname,
 	})
 	if err != nil {
 		return "", errors.NewE(err)
@@ -76,8 +78,8 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 	}
 
 	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
-		"username":    username,
-		"accountName": ctx.AccountName,
+		fc.CredentialUsername: username,
+		fields.AccountName:    ctx.AccountName,
 	})
 	if err != nil {
 		return "", errors.NewE(err)
@@ -116,8 +118,8 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 	}
 
 	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
-		"username":    username,
-		"accountName": ctx.AccountName,
+		fc.CredentialUsername: username,
+		fields.AccountName:    ctx.AccountName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -190,7 +192,9 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 		return nil, errors.Newf("unauthorized to get credentials")
 	}
 
-	filter := repos.Filter{"accountName": ctx.AccountName}
+	filter := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+	}
 	return d.credentialRepo.FindPaginated(ctx, d.credentialRepo.MergeMatchFilters(filter, search), pagination)
 }
 
@@ -212,8 +216,8 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 	}
 
 	err = d.credentialRepo.DeleteOne(ctx, repos.Filter{
-		"username":    userName,
-		"accountName": ctx.AccountName,
+		fc.CredentialUsername: userName,
+		fields.AccountName:    ctx.AccountName,
 	})
 	if err != nil {
 		return errors.NewE(err)

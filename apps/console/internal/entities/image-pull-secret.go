@@ -2,13 +2,11 @@ package entities
 
 import (
 	"fmt"
-	"github.com/kloudlite/api/common/fields"
-	"github.com/kloudlite/operator/pkg/operator"
-	"time"
-
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,10 +41,6 @@ type ImagePullSecret struct {
 
 func (ips *ImagePullSecret) GetDisplayName() string {
 	return ips.ResourceMetadata.DisplayName
-}
-
-func (ips *ImagePullSecret) GetCreationTimestamp() time.Time {
-	return ips.CreationTimestamp.Time
 }
 
 func (ips *ImagePullSecret) GetStatus() operator.Status {

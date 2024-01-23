@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
@@ -11,9 +12,9 @@ import (
 // GetPV implements Domain.
 func (d *domain) GetPV(ctx InfraContext, clusterName string, pvName string) (*entities.PersistentVolume, error) {
 	pv, err := d.pvRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": pvName,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: pvName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -28,8 +29,8 @@ func (d *domain) GetPV(ctx InfraContext, clusterName string, pvName string) (*en
 // ListPVs implements Domain.
 func (d *domain) ListPVs(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolume], error) {
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"clusterName": clusterName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
 	}
 	return d.pvRepo.FindPaginated(ctx, d.nodePoolRepo.MergeMatchFilters(filter, search), pagination)
 }
@@ -37,13 +38,13 @@ func (d *domain) ListPVs(ctx InfraContext, clusterName string, search map[string
 // OnPVDeleteMessage implements Domain.
 func (d *domain) OnPVDeleteMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume) error {
 	if err := d.pvRepo.DeleteOne(ctx, repos.Filter{
-		"metadata.name":      pv.Name,
-		"accountName":        ctx.AccountName,
-		"clusterName":        clusterName,
+		fields.MetadataName: pv.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
 	}); err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishPvResEvent(&pv, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypePV, pv.Name, PublishDelete)
 	return nil
 }
 
@@ -59,13 +60,13 @@ func (d *domain) OnPVUpdateMessage(ctx InfraContext, clusterName string, pv enti
 	pv.AccountName = ctx.AccountName
 	pv.ClusterName = clusterName
 	upsert, err := d.pvRepo.Upsert(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": pv.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: pv.Name,
 	}, &pv)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishPvResEvent(upsert, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypePV, upsert.Name, PublishUpdate)
 	return nil
 }

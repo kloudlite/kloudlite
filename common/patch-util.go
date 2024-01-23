@@ -19,7 +19,7 @@ type PatchOpts struct {
 type ResourceForSync interface {
 	GetName() string
 	GetNamespace() string
-	GetCreationTimestamp() time.Time
+	GetCreationTimestamp() metav1.Time
 	GetLabels() map[string]string
 	GetDisplayName() string
 	GetAnnotations() map[string]string
@@ -42,7 +42,7 @@ func PatchForSyncFromAgent(
 ) repos.Document {
 	res.GetCreationTimestamp()
 	generatedPatch := repos.Document{
-		fields.MetadataCreationTimestamp: metav1.Time{Time: res.GetCreationTimestamp()},
+		fields.MetadataCreationTimestamp: res.GetCreationTimestamp(),
 		fields.MetadataLabels:            res.GetLabels(),
 		fields.MetadataAnnotations:       res.GetAnnotations(),
 		fields.MetadataGeneration:        res.GetGeneration(),

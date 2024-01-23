@@ -4,6 +4,7 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -16,6 +17,14 @@ type PersistentVolumeClaim struct {
 
 	common.ResourceMetadata `json:",inline" graphql:"noinput"`
 	SyncStatus              types.SyncStatus `json:"syncStatus" graphql:"noinput"`
+}
+
+func (p *PersistentVolumeClaim) GetDisplayName() string {
+	return p.ResourceMetadata.DisplayName
+}
+
+func (p *PersistentVolumeClaim) GetStatus() operator.Status {
+	return operator.Status{}
 }
 
 var PersistentVolumeClaimIndices = []repos.IndexField{

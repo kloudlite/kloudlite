@@ -7,7 +7,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
-	"time"
 )
 
 type Config struct {
@@ -25,10 +24,6 @@ type Config struct {
 
 func (c *Config) GetDisplayName() string {
 	return c.ResourceMetadata.DisplayName
-}
-
-func (c *Config) GetCreationTimestamp() time.Time {
-	return c.CreationTimestamp.Time
 }
 
 func (c *Config) GetStatus() operator.Status {

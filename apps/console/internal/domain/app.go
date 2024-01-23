@@ -147,6 +147,7 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 		ctx.DBFilters().Add(fields.MetadataName, appIn.Name),
 		patchForUpdate,
 	)
+	
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

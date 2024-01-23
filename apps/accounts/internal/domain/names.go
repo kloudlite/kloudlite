@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 
 	fn "github.com/kloudlite/api/pkg/functions"
@@ -11,7 +12,7 @@ import (
 func (d *domain) CheckNameAvailability(ctx context.Context, name string) (*CheckNameAvailabilityOutput, error) {
 	if fn.IsValidK8sResourceName(name) {
 		p, err := d.accountRepo.FindOne(ctx, repos.Filter{
-			"metadata.name": name,
+			fields.MetadataName: name,
 		})
 		if err != nil {
 			return &CheckNameAvailabilityOutput{Result: false}, errors.NewE(err)

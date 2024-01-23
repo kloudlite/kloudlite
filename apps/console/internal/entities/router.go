@@ -7,7 +7,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
-	"time"
 )
 
 type Router struct {
@@ -24,10 +23,6 @@ type Router struct {
 
 func (r *Router) GetDisplayName() string {
 	return r.ResourceMetadata.DisplayName
-}
-
-func (r *Router) GetCreationTimestamp() time.Time {
-	return r.CreationTimestamp.Time
 }
 
 func (r *Router) GetStatus() operator.Status {
