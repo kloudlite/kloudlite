@@ -1,15 +1,15 @@
 package domain
 
 import (
-
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"time"
 )
 
 func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error) {
@@ -18,8 +18,8 @@ func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string
 	}
 
 	f := repos.Filter{
-		"clusterName": clusterName,
-		"accountName": ctx.AccountName,
+		fields.ClusterName: clusterName,
+		fields.AccountName: ctx.AccountName,
 	}
 
 	pr, err := d.clusterManagedServiceRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
@@ -32,9 +32,9 @@ func (d *domain) ListClusterManagedServices(ctx InfraContext, clusterName string
 
 func (d *domain) findClusterManagedService(ctx InfraContext, clusterName string, svcName string) (*entities.ClusterManagedService, error) {
 	cmsvc, err := d.clusterManagedServiceRepo.FindOne(ctx, repos.Filter{
-		"clusterName":   clusterName,
-		"accountName":   ctx.AccountName,
-		"metadata.name": svcName,
+		fields.ClusterName:  clusterName,
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: svcName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -80,9 +80,9 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 	service.LastUpdatedBy = service.CreatedBy
 
 	existing, err := d.clusterManagedServiceRepo.FindOne(ctx, repos.Filter{
-		"clusterName":   clusterName,
-		"accountName":   ctx.AccountName,
-		"metadata.name": service.Name,
+		fields.ClusterName:  clusterName,
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: service.Name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -102,7 +102,7 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 		return nil, errors.NewE(err)
 	}
 
-	cms, err := d.clusterManagedServiceRepo.Create(ctx, &service)
+	ncms, err := d.clusterManagedServiceRepo.Create(ctx, &service)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -111,9 +111,9 @@ func (d *domain) CreateClusterManagedService(ctx InfraContext, clusterName strin
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishCMSEvent(&service, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterManagedService, ncms.Name, PublishAdd)
 
-	return cms, nil
+	return ncms, nil
 }
 
 func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName string, serviceIn entities.ClusterManagedService) (*entities.ClusterManagedService, error) {
@@ -122,45 +122,39 @@ func (d *domain) UpdateClusterManagedService(ctx InfraContext, clusterName strin
 	}
 
 	serviceIn.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &serviceIn); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &serviceIn.ClusterManagedService); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	cms, err := d.findClusterManagedService(ctx, clusterName, serviceIn.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&serviceIn,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.ClusterManagedServiceSpecMsvcSpec: serviceIn.Spec,
+			},
+		})
 
-	if cms.IsMarkedForDeletion() {
-		return nil, errors.Newf("cluster managed serviceIn %q (clusterName=%q) is marked for deletion", serviceIn.Name, clusterName)
-	}
-
-	unp, err := d.clusterManagedServiceRepo.PatchById(ctx, cms.Id, repos.Document{
-		"metadata.labels":      serviceIn.Labels,
-		"metadata.annotations": serviceIn.Annotations,
-		"displayName":          serviceIn.DisplayName,
-		"recordVersion":        cms.RecordVersion + 1,
-		"spec":                 serviceIn.Spec,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	ucmsvc, err := d.clusterManagedServiceRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.ClusterName:  clusterName,
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: serviceIn.Name,
 		},
-		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":       t.SyncActionApply,
-		"syncStatus.state":        t.SyncStateInQueue,
-	})
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishCMSEvent(unp, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterManagedService, ucmsvc.Name, PublishUpdate)
 
-	if err := d.applyClusterManagedService(ctx, unp); err != nil {
+	if err := d.applyClusterManagedService(ctx, ucmsvc); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	return unp, nil
+	return ucmsvc, nil
 }
 
 func (d *domain) DeleteClusterManagedService(ctx InfraContext, clusterName string, name string) error {
@@ -168,64 +162,60 @@ func (d *domain) DeleteClusterManagedService(ctx InfraContext, clusterName strin
 		return errors.NewE(err)
 	}
 
-	svc, err := d.findClusterManagedService(ctx, clusterName, name)
-	if err != nil {
-		return errors.NewE(err)
-	}
-
-	if svc.IsMarkedForDeletion() {
-		return errors.Newf("cluster managed service with name %q is marked for deletion", name)
-	}
-
-	upC, err := d.clusterManagedServiceRepo.PatchById(ctx, svc.Id, repos.Document{
-		"markedForDeletion": true,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	ucmsvc, err := d.clusterManagedServiceRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.ClusterName:  clusterName,
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: name,
 		},
-		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":       t.SyncActionDelete,
-		"syncStatus.state":        t.SyncStateInQueue,
-	})
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishCMSEvent(upC, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterManagedService, ucmsvc.Name, PublishUpdate)
 
-	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upC.ClusterManagedService)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &ucmsvc.ClusterManagedService)
 }
 
 func (d *domain) OnClusterManagedServiceApplyError(ctx InfraContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error {
-	svc, err := d.findClusterManagedService(ctx, clusterName, name)
+	ucmsvc, err := d.clusterManagedServiceRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.ClusterName:  clusterName,
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: name,
+		},
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	_, err = d.clusterManagedServiceRepo.PatchById(ctx, svc.Id, repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        &errMsg,
-	})
-	d.resourceEventPublisher.PublishCMSEvent(svc, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterManagedService, ucmsvc.Name, PublishDelete)
 	return errors.NewE(err)
 }
 
 func (d *domain) OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error {
-	xService, err := d.findClusterManagedService(ctx, clusterName, service.Name)
+	err := d.clusterManagedServiceRepo.DeleteOne(
+		ctx,
+		repos.Filter{
+			fields.ClusterName:  clusterName,
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: service.Name,
+		},
+	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-	if xService == nil {
-		// does not exist, (maybe already deleted)
-		return nil
-	}
-
-	if err := d.clusterManagedServiceRepo.DeleteById(ctx, xService.Id); err != nil {
-		return err
-	}
-	d.resourceEventPublisher.PublishCMSEvent(xService, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterManagedService, service.Name, PublishDelete)
 	return err
 }
 
@@ -235,31 +225,29 @@ func (d *domain) OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterN
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(service.Annotations, xService.RecordVersion); err != nil {
+	if xService == nil {
+		return errors.Newf("no cluster manage service found")
+	}
+
+	if _, err := d.matchRecordVersion(service.Annotations, xService.RecordVersion); err != nil {
 		return d.resyncToTargetCluster(ctx, xService.SyncStatus.Action, clusterName, xService, xService.RecordVersion)
 	}
 
-	if _, err := d.clusterManagedServiceRepo.PatchById(ctx, xService.Id, repos.Document{
-		"metadata.labels":            service.Labels,
-		"metadata.annotations":       service.Annotations,
-		"metadata.generation":        service.Generation,
-		"metadata.creationTimestamp": service.CreationTimestamp,
-		"status":                     service.Status,
-		"syncStatus": t.SyncStatus{
-			LastSyncedAt:  opts.MessageTimestamp,
-			Error:         nil,
-			Action:        t.SyncActionApply,
-			RecordVersion: xService.RecordVersion,
-			State: func() t.SyncState {
-				if status == types.ResourceStatusDeleting {
-					return t.SyncStateDeletingAtAgent
-				}
-				return t.SyncStateUpdatedAtAgent
-			}(),
-		},
-	}); err != nil {
+	recordVersion, err := d.matchRecordVersion(service.Annotations, xService.RecordVersion)
+	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishCMSEvent(xService, PublishUpdate)
+
+	ucmsvc, err := d.clusterManagedServiceRepo.PatchById(
+		ctx,
+		xService.Id,
+		common.PatchForSyncFromAgent(&service, recordVersion, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeClusterManagedService, ucmsvc.GetName(), PublishUpdate)
 	return nil
 }

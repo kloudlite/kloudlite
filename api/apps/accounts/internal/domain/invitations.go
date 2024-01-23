@@ -3,7 +3,9 @@ package domain
 import (
 	"context"
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
+	fc "github.com/kloudlite/api/apps/accounts/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/pkg/errors"
@@ -14,8 +16,8 @@ import (
 
 func (d *domain) findInvitation(ctx context.Context, accountName string, invitationId repos.ID) (*entities.Invitation, error) {
 	inv, err := d.invitationRepo.FindOne(ctx, repos.Filter{
-		"accountName": accountName,
-		"id":          invitationId,
+		fields.AccountName: accountName,
+		fields.Id:          invitationId,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -30,9 +32,9 @@ func (d *domain) findInvitation(ctx context.Context, accountName string, invitat
 
 func (d *domain) findInvitationByInviteToken(ctx context.Context, accountName string, userEmail string, inviteToken string) (*entities.Invitation, error) {
 	inv, err := d.invitationRepo.FindOne(ctx, repos.Filter{
-		"userEmail":   userEmail,
-		"accountName": accountName,
-		"inviteToken": inviteToken,
+		fc.InvitationUserEmail:   userEmail,
+		fields.AccountName:       accountName,
+		fc.InvitationInviteToken: inviteToken,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -133,7 +135,7 @@ func (d *domain) ListInvitations(ctx UserContext, accountName string) ([]*entiti
 
 func (d *domain) ListInvitationsForUser(ctx UserContext, onlyPending bool) ([]*entities.Invitation, error) {
 	var filters repos.Filter = map[string]any{
-		"userEmail": ctx.UserEmail,
+		fc.InvitationUserEmail: ctx.UserEmail,
 	}
 
 	if onlyPending {

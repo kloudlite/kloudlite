@@ -3,6 +3,7 @@ package entities
 import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type DomainEntry struct {
@@ -13,6 +14,14 @@ type DomainEntry struct {
 
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName"`
+}
+
+func (d DomainEntry) GetDisplayName() string {
+	return d.ResourceMetadata.DisplayName
+}
+
+func (d DomainEntry) GetStatus() operator.Status {
+	return operator.Status{}
 }
 
 var DomainEntryIndices = []repos.IndexField{

@@ -8,7 +8,6 @@ import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
-	"time"
 )
 
 type ManagedResource struct {
@@ -27,10 +26,6 @@ type ManagedResource struct {
 
 func (m *ManagedResource) GetDisplayName() string {
 	return m.ResourceMetadata.DisplayName
-}
-
-func (m *ManagedResource) GetCreationTimestamp() time.Time {
-	return m.CreationTimestamp.Time
 }
 
 func (m *ManagedResource) GetStatus() operator.Status {
