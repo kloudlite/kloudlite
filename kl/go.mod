@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/bubbles v0.17.1
 	github.com/charmbracelet/bubbletea v0.25.0
 	github.com/charmbracelet/gum v0.13.0
-	github.com/getlantern/systray v1.2.2
+	github.com/google/uuid v1.5.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/koki-develop/go-fzf v0.15.0
 	github.com/lixiangzhong/dnsutil v1.4.0
@@ -32,13 +32,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/deckarep/gosx-notifier v0.0.0-20180201035817-e127226297fb // indirect
 	github.com/fatih/color v1.7.0 // indirect
-	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
-	github.com/getlantern/errors v0.0.0-20190325191628-abdb3e3e36f7 // indirect
-	github.com/getlantern/golog v0.0.0-20190830074920-4ef2e798c2d7 // indirect
-	github.com/getlantern/hex v0.0.0-20190417191902-c6586a6fe0b7 // indirect
-	github.com/getlantern/hidden v0.0.0-20190325191715-f02dbb02be55 // indirect
-	github.com/getlantern/ops v0.0.0-20190325191751-d70cb0d6f85f // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -57,7 +50,6 @@ require (
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
-	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

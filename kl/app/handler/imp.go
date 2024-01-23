@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/getlantern/systray"
+	"fyne.io/systray"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/pkg/functions"

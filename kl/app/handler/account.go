@@ -1,9 +1,12 @@
 package handler
 
 import (
-	"github.com/getlantern/systray"
+	"fmt"
+
+	"fyne.io/systray"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
 
@@ -42,32 +45,32 @@ func (h *handler) ReconAccount() {
 	}
 
 	if isFirstTime {
-		// accounts, err := server.ListAccounts()
-		// if err != nil {
-		// 	fn.PrintError(err)
-		// 	fn.Notify("Error", err.Error())
-		// }
+		accounts, err := server.ListAccounts()
+		if err != nil {
+			fn.PrintError(err)
+			fn.Notify("Error", err.Error())
+		}
 
-		// account.AddSubMenuItem("Switch Accounts", "").Disable()
-		//
-		// for _, a := range accounts {
-		// 	cm := account.AddSubMenuItem(a.Metadata.Name, fmt.Sprintf("switch to %s", a.Metadata.Name))
-		//
-		// 	go func(name string) {
-		// 		for {
-		// 			select {
-		// 			case <-cm.ClickedCh:
-		// 				h.channel <- ChanelMsg{
-		// 					Msg:      name,
-		// 					Item:     cm,
-		// 					Action:   ns.SwitchAccount,
-		// 					ItemName: ns.AccountItem,
-		// 				}
-		// 			}
-		// 		}
-		//
-		// 	}(a.Metadata.Name)
-		// }
+		account.AddSubMenuItem("Switch Accounts", "").Disable()
+
+		for _, a := range accounts {
+			cm := account.AddSubMenuItem(a.Metadata.Name, fmt.Sprintf("switch to %s", a.Metadata.Name))
+
+			go func(name string) {
+				for {
+					select {
+					case <-cm.ClickedCh:
+						h.channel <- ChanelMsg{
+							Msg:      name,
+							Item:     cm,
+							Action:   ns.SwitchAccount,
+							ItemName: ns.AccountItem,
+						}
+					}
+				}
+
+			}(a.Metadata.Name)
+		}
 
 	}
 

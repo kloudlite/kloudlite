@@ -1,13 +1,10 @@
 package client
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/kloudlite/kl/constants"
+	confighandler "github.com/kloudlite/kl/pkg/config-handler"
 	fn "github.com/kloudlite/kl/pkg/functions"
-
-	"sigs.k8s.io/yaml"
 )
 
 type CSType string
@@ -68,20 +65,26 @@ func GetConfigPath() string {
 }
 
 func WriteKLFile(fileObj KLFileType) error {
-	file, err := yaml.Marshal(fileObj)
-	if err != nil {
+
+	if err := confighandler.WriteConfig(GetConfigPath(), fileObj, 0644); err != nil {
 		fn.PrintError(err)
-		return nil
+		return err
 	}
 
-	writeContent := fmt.Sprint("# To generate this config file please visit ", constants.ServerURL, "\n\n", string(file))
+	// file, err := yaml.Marshal(fileObj)
+	// if err != nil {
+	// 	fn.PrintError(err)
+	// 	return nil
+	// }
+	//
+	// writeContent := fmt.Sprint("# To generate this config file please visit ", constants.ServerURL, "\n\n", string(file))
 
-	err = os.WriteFile(GetConfigPath(), []byte(writeContent), 0644)
-	if err != nil {
-		fn.PrintError(err)
-	}
+	// err = os.WriteFile(GetConfigPath(), []byte(writeContent), 0644)
+	// if err != nil {
+	// 	fn.PrintError(err)
+	// }
 
-	return err
+	return nil
 }
 
 func GetKlFile(filePath *string) (*KLFileType, error) {
@@ -90,17 +93,22 @@ func GetKlFile(filePath *string) (*KLFileType, error) {
 		filePath = &s
 	}
 
-	file, err := os.ReadFile(*filePath)
+	klfile, err := confighandler.ReadConfig[KLFileType](*filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	klfile := KLFileType{}
+	// file, err := os.ReadFile(*filePath)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
+	// klfile := KLFileType{}
+	//
+	// err = yaml.Unmarshal(file, &klfile)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	err = yaml.Unmarshal(file, &klfile)
-	if err != nil {
-		return nil, err
-	}
-
-	return &klfile, nil
+	return klfile, nil
 }

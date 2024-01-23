@@ -3,7 +3,7 @@ package handler
 import (
 	"time"
 
-	"github.com/getlantern/systray"
+	"fyne.io/systray"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
