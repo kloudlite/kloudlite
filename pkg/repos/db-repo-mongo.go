@@ -334,77 +334,36 @@ func (repo *dbRepo[T]) UpdateMany(ctx context.Context, filter Filter, updatedDat
 }
 
 func (repo *dbRepo[T]) Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error) {
-	after := options.After
-	updateOpts := &options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	}
-	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
-		updateOpts.Upsert = &opt.Upsert
-	}
-
-	patch["updateTime"] = time.Now()
-
 	var x T
 
-	res, err := repo.FindOne(ctx, filter)
+	res, err := repo.findOne(ctx, filter)
 	if err != nil {
 		return x, errors.NewE(err)
 	}
 
-	if res.IsMarkedForDeletion() {
-		return x, errors.Newf("cannot patch as resource is mark for deletion")
-	}
-
-	m, err := toMap(patch)
-	if err != nil {
-		return x, errors.NewE(err)
-	}
-
-	updatedDoc := bson.M{"$set": m}
-	if _, ok := patch["markedForDeletion"]; ok {
-		updatedDoc["$inc"] = bson.M{"recordVersion": 1}
-	}
-
-	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
-		ctx,
-		filter,
-		updatedDoc,
-		updateOpts,
-	)
-	return bsonToStruct[T](r)
+	return repo.patchRecordByID(ctx, res.GetId(), patch, res.IsMarkedForDeletion(), opts...)
 }
 
-func (repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error) {
-	after := options.After
-	updateOpts := &options.FindOneAndUpdateOptions{
-		ReturnDocument: &after,
-	}
-	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
-		updateOpts.Upsert = &opt.Upsert
-	}
-
+func (repo *dbRepo[T]) patchRecordByID(ctx context.Context, id ID, patch Document, markedForDeletion bool, opts ...UpdateOpts) (T, error) {
 	patch["updateTime"] = time.Now()
 
 	var x T
-	res, err := repo.findOne(ctx, Filter{
-		"id": id,
-	})
-	if err != nil {
-		return x, errors.NewE(err)
-	}
-
-	if res.IsMarkedForDeletion() {
-		return x, errors.Newf("cannot patch as resource is mark for deletion")
-	}
-
 	m, err := toMap(patch)
 	if err != nil {
 		return x, errors.NewE(err)
 	}
 
 	updatedDoc := bson.M{"$set": m}
-	if _, ok := patch["markedForDeletion"]; ok {
+	if _, ok := patch["markedForDeletion"]; !ok {
 		updatedDoc["$inc"] = bson.M{"recordVersion": 1}
+	}
+
+	after := options.After
+	updateOpts := &options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
+		updateOpts.Upsert = &opt.Upsert
 	}
 
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
@@ -414,6 +373,18 @@ func (repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opt
 		updateOpts,
 	)
 	return bsonToStruct[T](r)
+}
+
+func (repo *dbRepo[T]) PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error) {
+	var x T
+	res, err := repo.findOne(ctx, Filter{
+		"id": id,
+	})
+	if err != nil {
+		return x, errors.NewE(err)
+	}
+
+	return repo.patchRecordByID(ctx, res.GetId(), patch, res.IsMarkedForDeletion(), opts...)
 }
 
 func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error) {
