@@ -4193,6 +4193,7 @@ export type ConsoleListBuildRunsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        id: string;
         clusterName: string;
         creationTime: any;
         markedForDeletion?: boolean;
@@ -5231,6 +5232,7 @@ export type AuthCli_GetDeviceQuery = {
 
 export type AuthCli_ListDevicesQueryVariables = Exact<{
   pq?: InputMaybe<CursorPaginationIn>;
+  clusterName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type AuthCli_ListDevicesQuery = {

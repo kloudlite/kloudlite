@@ -22,6 +22,7 @@ export const buildRunQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
+              id
               clusterName
               creationTime
               markedForDeletion

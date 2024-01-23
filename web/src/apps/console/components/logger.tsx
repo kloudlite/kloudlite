@@ -16,7 +16,7 @@ import {
 import useClass from '~/root/lib/client/hooks/use-class';
 import logger from '~/root/lib/client/helpers/log';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
-import generateColor from './color-generator';
+import { generatePlainColor } from './color-generator';
 import Pulsable from './pulsable';
 import { logsMockData } from '../dummy/data';
 
@@ -331,8 +331,9 @@ const LogLine = ({
 
       <div
         className="w-[3px] mr-xl ml-sm h-full pulsable pulsable-hidden"
-        style={{ backgroundImage: generateColor(log.pod_name) }}
+        style={{ background: generatePlainColor(log.pod_name) }}
       />
+
       <div className="inline-flex gap-xl pulsable">
         <HighlightIt
           {...{
@@ -597,16 +598,18 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
           };
 
           w.onopen = () => {
+            // console.log('socket connected');
             res(w);
           };
 
           w.onerror = (e) => {
+            console.error(e);
             rej(e);
           };
 
           w.onclose = () => {
             // wsclient.send(newMessage({ event: 'unsubscribe', data: 'test' }));
-            logger.log('socket disconnected');
+            // logger.log('socket disconnected');
           };
         } catch (e) {
           rej(e);
@@ -633,6 +636,7 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
         setIsLoading(true);
 
         const client = await wsclient;
+        console.log('client', client);
 
         setSocState(client);
 
