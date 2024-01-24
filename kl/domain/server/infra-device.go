@@ -42,7 +42,7 @@ const (
 )
 
 func ListInfraDevices() ([]Device, error) {
-	_, err := EnsureAccount(fn.MakeOption("isInfra", "yes"))
+	accountName, err := EnsureAccount(fn.MakeOption("isInfra", "yes"))
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +50,17 @@ func ListInfraDevices() ([]Device, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	clusterName, err := EnsureCluster(fn.MakeOption("accountName", accountName), fn.MakeOption("isInfra", "yes"))
+	if err != nil {
+		return nil, err
+	}
 	respData, err := klFetch("cli_listDevices", map[string]any{
 		"pq": map[string]any{
 			"orderBy":       "name",
 			"sortDirection": "ASC",
 			"first":         99999999,
 		},
+		"clusterName": clusterName,
 	}, &cookie)
 	if err != nil {
 		return nil, err

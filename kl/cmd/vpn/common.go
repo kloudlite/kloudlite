@@ -35,7 +35,7 @@ func startConfiguration(verbose bool) error {
 	if len(device.Spec.Ports) == 0 {
 		return errors.New(fmt.Sprintf("no ports found for device %s, please export ports using kl vpn expose\n", devName))
 	}
-	if device.WireguardConfig == nil {
+	if device.WireguardConfig.Value == "" {
 		return errors.New("no wireguard config found")
 	}
 
