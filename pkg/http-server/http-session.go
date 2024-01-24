@@ -3,9 +3,10 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/pkg/kv"
@@ -35,9 +36,9 @@ func NewSessionMiddleware(
 			var get any
 			get, err := repo.Get(ctx.Context(), key)
 			if err != nil {
-				if !errors.Is(err, kv.ErrKeyNotFound) {
+			  if !repo.ErrKeyNotFound(err) {
 					return errors.NewE(err)
-				}
+			  }
 			}
 
 			if get != nil {
