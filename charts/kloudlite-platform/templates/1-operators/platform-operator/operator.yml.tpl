@@ -35,12 +35,10 @@ spec:
       labels:
         control-plane: kloudlite-platform-operator
     spec:
-      {{- if .Values.operators.preferOperatorsOnMasterNodes }}
       affinity:
-        nodeAffinity: {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
-      {{- end }}
-      tolerations: {{.Values.operators.platformOperator.configuration.tolerations | toYaml | nindent 8 }}
-      nodeSelector: {{.Values.operators.platformOperator.configuration.nodeSelector | toYaml | nindent 8 }}
+        nodeAffinity: {{include "required-node-affinity-to-masters" . | nindent 10 }}
+      tolerations:
+        - operator: Exists
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
@@ -81,6 +79,8 @@ spec:
             {{ include "project-operator-env" . | nindent 12 }}
             {{ include "cluster-operator-env" . | nindent 12 }}
             {{ include "router-operator-env" . | nindent 12 }}
+            {{ include "nodepool-operator-env" . | nindent 12 }}
+            {{ include "wg-operator-env" . | nindent 12 }}
 
           livenessProbe:
             httpGet:

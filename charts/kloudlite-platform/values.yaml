@@ -1,6 +1,7 @@
 # Globals
 global:
   isDev: false
+
   # -- image pull policies for kloudlite pods, belonging to this chart
   imagePullPolicy: Always
 
@@ -16,8 +17,10 @@ global:
 
   # -- base domain for all routers exposed through this cluster
   baseDomain: 'platform.kloudlite.io'
-
   secondaryDomain: 'khost.dev'
+
+  # -- router domain defaults to `global.baseDomain`
+  routerDomain: ''
 
   # -- kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name
   accountName: 'kloudlite'
@@ -64,6 +67,7 @@ certManager:
   configuration:
     nodeSelector: {}
     tolerations: []
+
 ingressController:
   enabled: true
   name: ingress-nginx
@@ -76,14 +80,16 @@ ingressController:
 
     tolerations:
       - key: node-role.kubernetes.io/master
-        value: "true"
         effect: NoSchedule
+
 descheduler:
   enabled: true
+
 vectorAgent:
   enabled: true
   name: vector-agent
   description: "vector agent for shipping logs to centralized vector aggregator"
+
 cloudflareWildCardCert:
   enabled: true
   certificateName: cloudflare-wildcard-cert
@@ -91,28 +97,28 @@ cloudflareWildCardCert:
   # -- cloudflare authz credentials
   cloudflareCreds:
     # -- cloudflare authorized email
-    email: <cloudflare-email>
+    email: ""
     # -- cloudflare authorized secret token
-    secretToken: <cloudflare-secret-token>
+    secretToken: ""
   # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
   domains:
+    # -- should default to basedomain
     - '*.platform.kloudlite.io'
 
 # Backing Services
 loki:
-  enabled: true
+  enabled: false
   name: loki-stack
   configuration:
     s3credentials:
-      awsAccessKeyId: <loki-s3-aws-access-key-id>
-      awsSecretAccessKey: <loki-s3-aws-secret-access-key>
-      region: <loki-s3-bucket-region>
-      bucketName: <loki-s3-bucket-name>
+      awsAccessKeyId: ""
+      awsSecretAccessKey: ""
+      region: ""
+      bucketName: ""
 
 vector:
   enabled: true
   name: vector
-
 
 grafana:
   enabled: true
@@ -140,7 +146,7 @@ victoriaMetrics:
 
 nats:
   runAsCluster: false
-  replicas: 1
+  replicas: 3
 
 distribution:
   domain: cr.khost.dev
@@ -149,19 +155,20 @@ distribution:
     enabled: true
   s3:
     enabled: false
-    bucketName: <distribution-s3-bucket-name>
-    endpoint: <distribution-s3-bucket-endpoint>
-    accessKey: <distribution-s3-bucket-access-key>
-    secretKey: <distribution-s3-bucket-secret-key>
-    region: <distribution-s3-bucket-region>
+
+    bucketName: ""
+    endpoint: ""
+    accessKey: ""
+    secretKey: ""
+    region: ""
 
 mongo:
-  rootPassword: <mongo-root-password>
+  # rootPassword: <mongo-root-password>
   size: 2Gi
   nodeSelector: {}
   externalDB:
-    dbURL: <mongo-db-url>
-    authDBName: <mongo-db-name>
+    dbURL: ""
+    authDBName: ""
   runAsCluster: false
   replicas: 1
 
@@ -185,43 +192,48 @@ oAuth:
       # -- google oAuth2 callback url
       callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/google
       # -- google oAuth2 Client ID
-      clientId: <google-client-id>
+      clientId: ""
       # -- google oAuth2 Client Secret
-      clientSecret: <google-client-secret>
+      clientSecret: ""
     gitlab:
       # -- whether to enable gitlab oAuth2
       enabled: true
       # -- gitlab oAuth2 callback url
       callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/gitlab
       # -- gitlab oAuth2 Client ID
-      clientId: <gitlab-client-id>
+      clientId: ""
       # -- gitlab oAuth2 Client Secret
-      clientSecret: <gitlab-client-secret>
+      clientSecret: ""
     github:
       # -- whether to enable GitHub oAuth2
       enabled: true
       # -- GitHub oAuth2 callback url
       callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/github
-      # -- GitHub oAuth2 Client ID
-      clientId: <github-client-id>
-      # -- GitHub oAuth2 Client Secret
-      clientSecret: <github-client-secret>
+      # -- (string) (REQUIRED, if enabled) GitHub oAuth2 Client ID
+      clientId: ""
+      # -- (string) (REQUIRED, if enabled) GitHub oAuth2 Client Secret
+      clientSecret: ""
 
       # -- GitHub app id
-      appId: <github-app-id>
+      appId: ""
       # -- GitHub app private key (base64 encoded)
-      appPrivateKey: <pvt-key>
+      appPrivateKey: ""
       # -- GitHub app name, that we want to install on user's GitHub account
-      githubAppName: kloudlite-dev
+      githubAppName: "" # kloudlite-dev
+
 sendGrid:
   # -- sendgrid api key for email communications, if (sendgrid.enabled)
-  apiKey:
+  apiKey: ""
   # -- email through which we should be sending emails to target users, if (sendgrid.enabled)
-  supportEmail:
-aws:
-  accessKey: <access-key>
-  secretKey: <secret-key>
+  supportEmail: ""
 
+aws:
+  # (string) REQUIRED, AWS Access Key
+  accessKey: ""
+  # (string) REQUIRED, AWS Secret Key
+  secretKey: ""
+
+  # fill in the values via, the cloudformation stack, created by `github.com/kloudlite/infrastructure-as-code/aws/cloudformation`
   cloudformation:
     stackNamePrefix: "kloudlite-tenant-stack"
     roleNamePrefix: "kloudlite-tenant-role"
@@ -233,13 +245,13 @@ aws:
 webhookSecrets:
   name: webhook-secrets
   # -- webhook authz secret for gitlab webhooks
-  gitlabSecret: <webhook-authz-gitlab-secret>
+  gitlabSecret: ""
   # -- webhook authz secret for GitHub webhooks
-  githubSecret: <webhook-authz-github-secret>
-  githubAuthzSecret: <webhook-authz-github-authz-secret>
-  authzSecret: <webhook-authz-github-authz-secret>
+  githubSecret: ""
+  githubAuthzSecret: ""
+  authzSecret: ""
   # -- webhook authz secret for kloudlite internal calls
-  kloudliteSecret: <webhook-authz-kloudlite-secret>
+  kloudliteSecret: ""
 
 # Microservices
 apps:
@@ -279,13 +291,14 @@ apps:
 
   gatewayApi:
     image: ghcr.io/kloudlite/api/gateway:v1.0.5-nightly
+
   containerRegistryApi:
     # -- image (with tag) for container registry api
     image: ghcr.io/kloudlite/api/container-registry:v1.0.5-nightly
     configuration:
       # -- (number) port on which container registry event listener should listen
       eventListenerPort: 4001
-      registrySecret: <registry-secret>
+      registrySecret: ""
 
       buildClusterName: ""
       buildClusterAccountName: ""
@@ -313,7 +326,7 @@ apps:
 
       # -- token hashing secret, that is used to hash access tokens for kloudlite agents
       # -- consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
-      tokenHashingSecret: <token-hashing-secret>
+      tokenHashingSecret: ""
       platformAccessToken: "sample"
   consoleWeb:
     enabled: true
@@ -333,6 +346,16 @@ operators:
     image: ghcr.io/kloudlite/operator/platform:v1.0.5-nightly
 
     configuration:
+      nodepool:
+        cloudProviderName: "aws"
+        cloudProviderRegion: "ap-south-1"
+
+        # -- k3s agent join token, as nodepools are effectively agent nodes
+        k3sAgentJoinToken: ""
+
+        # -- k3s masters public DNS Host
+        k3sServerPublicHost: ""
+
       cluster:
         jobImage: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly
 
@@ -343,14 +366,15 @@ operators:
           s3BucketRegion: "ap-south-1"
           s3BucketDir: "terraform-states"
 
-          accessKey: <access-key>
-          secretKey: <secret-key>
+          accessKey: ""
+          secretKey: ""
 
         cloudflare:
           # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
-          zoneId: <zone-id>
-          # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created
-          baseDomain: "infra.kloudlite.io"
+          zoneId: ""
+          # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created, defaults to `global.baseDomain`
+          baseDomain: ""
+
   wgOperator:
     enabled: false
     # -- wg operator image and tag
@@ -361,8 +385,8 @@ operators:
       podCIDR: 10.42.0.0/16
       # -- cluster services CIDR range
       svcCIDR: 10.43.0.0/16
-      # -- dns hosted zone, i.e., dns pointing to this cluster
-      dnsHostedZone: <dns-hosted-zone>
+      # # -- dns hosted zone, i.e., dns pointing to this cluster, defaults to `global.baseDomain`
+      # dnsHostedZone: ""
       enableExamples: false
 
 envVars:
@@ -392,6 +416,7 @@ envVars:
         name: logs
         subjects: "logs.>"
         maxMsgBytes: 2MB
+        maxAge: "3h"
     buckets:
       sessionKVBucket:
         name: auth-session

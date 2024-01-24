@@ -70,8 +70,10 @@ helm show values kloudlite/kloudlite-autoscalers
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| clusterAutoscaler.configuration.scaleDownUnneededTime | string | `"1m"` |  |
 | clusterAutoscaler.enabled | bool | `true` |  |
 | clusterAutoscaler.image.repository | string | `"ghcr.io/kloudlite/cluster-autoscaler-amd64"` |  |
+| clusterAutoscaler.image.tag | string | `"kloudlite-v1.0.5-nightly"` |  |
 | clusterAutoscaler.nodeSelector | object | `{}` |  |
 | clusterAutoscaler.tolerations | list | `[]` |  |
 | defaults.imagePullPolicy | string | `"Always"` |  |

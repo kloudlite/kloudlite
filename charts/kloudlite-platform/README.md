@@ -86,7 +86,7 @@ helm show values kloudlite/kloudlite-platform
 | apps.containerRegistryApi.configuration.buildClusterName | string | `""` |  |
 | apps.containerRegistryApi.configuration.eventListenerPort | number | `4001` | port on which container registry event listener should listen |
 | apps.containerRegistryApi.configuration.jobBuildNamespace | string | `"kloudlite"` | namespace, in which build runs should be created |
-| apps.containerRegistryApi.configuration.registrySecret | string | `"<registry-secret>"` |  |
+| apps.containerRegistryApi.configuration.registrySecret | string | `""` |  |
 | apps.containerRegistryApi.image | string | `"ghcr.io/kloudlite/api/container-registry:v1.0.5-nightly"` | image (with tag) for container registry api |
 | apps.gatewayApi.image | string | `"ghcr.io/kloudlite/api/gateway:v1.0.5-nightly"` |  |
 | apps.iamApi.image | string | `"ghcr.io/kloudlite/api/iam:v1.0.5-nightly"` | image (with tag) for iam api |
@@ -94,17 +94,17 @@ helm show values kloudlite/kloudlite-platform
 | apps.infraApi.image | string | `"ghcr.io/kloudlite/api/infra:v1.0.5-nightly"` | image (with tag) for infra api |
 | apps.klInstaller.image | string | `"ghcr.io/kloudlite/kl/installer:v1.0.5-nightly"` | image (with tag) for comms api |
 | apps.messageOfficeApi.configuration.platformAccessToken | string | `"sample"` |  |
-| apps.messageOfficeApi.configuration.tokenHashingSecret | string | `"<token-hashing-secret>"` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
+| apps.messageOfficeApi.configuration.tokenHashingSecret | string | `""` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
 | apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/api/message-office:v1.0.5-nightly"` | image (with tag) for message office api |
 | apps.webhooksApi.image | string | `"ghcr.io/kloudlite/api/webhook:v1.0.5-nightly"` | image (with tag) for webhooks api |
 | apps.websocketApi.image | string | `"ghcr.io/kloudlite/api/websocket-server:v1.0.5-nightly"` | image (with tag) for websocket-server api |
-| aws.accessKey | string | `"<access-key>"` |  |
+| aws.accessKey | string | `""` |  |
 | aws.cloudformation.instanceProfileNamePrefix | string | `"kloudlite-instance-profile"` |  |
 | aws.cloudformation.params.trustedARN | string | `"arn:aws:iam::855999427630:root"` |  |
 | aws.cloudformation.roleNamePrefix | string | `"kloudlite-tenant-role"` |  |
 | aws.cloudformation.stackNamePrefix | string | `"kloudlite-tenant-stack"` |  |
 | aws.cloudformation.stackS3URL | string | `"https://kloudlite-platform-production-assets.s3.ap-south-1.amazonaws.com/public/cloudformation-templates/cloudformation.yml"` |  |
-| aws.secretKey | string | `"<secret-key>"` |  |
+| aws.secretKey | string | `""` |  |
 | certManager.certIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with lets-encrypt services |
 | certManager.certIssuer.name | string | `"kloudlite-cluster-issuer"` |  |
 | certManager.configuration.nodeSelector | object | `{}` |  |
@@ -112,20 +112,21 @@ helm show values kloudlite/kloudlite-platform
 | certManager.enabled | bool | `true` | whether to enable cert-manager |
 | certManager.name | string | `"cert-manager"` |  |
 | cloudflareWildCardCert.certificateName | string | `"cloudflare-wildcard-cert"` |  |
-| cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
-| cloudflareWildCardCert.cloudflareCreds.email | string | `"<cloudflare-email>"` | cloudflare authorized email |
-| cloudflareWildCardCert.cloudflareCreds.secretToken | string | `"<cloudflare-secret-token>"` | cloudflare authorized secret token |
+| cloudflareWildCardCert.cloudflareCreds | object | `{"email":"","secretToken":""}` | cloudflare authz credentials |
+| cloudflareWildCardCert.cloudflareCreds.email | string | `""` | cloudflare authorized email |
+| cloudflareWildCardCert.cloudflareCreds.secretToken | string | `""` | cloudflare authorized secret token |
 | cloudflareWildCardCert.domains | list | `["*.platform.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
+| cloudflareWildCardCert.domains[0] | string | `"*.platform.kloudlite.io"` | should default to basedomain |
 | cloudflareWildCardCert.enabled | bool | `true` |  |
 | cloudflareWildCardCert.tlsSecretName | string | `"kl-cert-wildcard-tls"` |  |
 | descheduler.enabled | bool | `true` |  |
 | distribution.domain | string | `"cr.khost.dev"` |  |
-| distribution.s3.accessKey | string | `"<distribution-s3-bucket-access-key>"` |  |
-| distribution.s3.bucketName | string | `"<distribution-s3-bucket-name>"` |  |
+| distribution.s3.accessKey | string | `""` |  |
+| distribution.s3.bucketName | string | `""` |  |
 | distribution.s3.enabled | bool | `false` |  |
-| distribution.s3.endpoint | string | `"<distribution-s3-bucket-endpoint>"` |  |
-| distribution.s3.region | string | `"<distribution-s3-bucket-region>"` |  |
-| distribution.s3.secretKey | string | `"<distribution-s3-bucket-secret-key>"` |  |
+| distribution.s3.endpoint | string | `""` |  |
+| distribution.s3.region | string | `""` |  |
+| distribution.s3.secretKey | string | `""` |  |
 | distribution.secret | string | `"<distribution-secret>"` |  |
 | distribution.tls.enabled | bool | `true` |  |
 | envVars.db.accountsDB | string | `"accounts-db"` |  |
@@ -148,6 +149,7 @@ helm show values kloudlite/kloudlite-platform
 | envVars.nats.streams.events.maxMsgBytes | string | `"2MB"` |  |
 | envVars.nats.streams.events.name | string | `"events"` |  |
 | envVars.nats.streams.events.subjects | string | `"events.>"` |  |
+| envVars.nats.streams.logs.maxAge | string | `"3h"` |  |
 | envVars.nats.streams.logs.maxMsgBytes | string | `"2MB"` |  |
 | envVars.nats.streams.logs.name | string | `"logs"` |  |
 | envVars.nats.streams.logs.subjects | string | `"logs.>"` |  |
@@ -169,6 +171,7 @@ helm show values kloudlite/kloudlite-platform
 | global.nodeSelector | object | `{}` |  |
 | global.normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
 | global.podLabels | object | `{}` | podlabels for pods belonging to this release |
+| global.routerDomain | string | `""` | router domain defaults to `global.baseDomain` |
 | global.secondaryDomain | string | `"khost.dev"` |  |
 | global.statefulPriorityClassName | string | `"stateful"` |  |
 | global.tolerations | list | `[]` | tolerations for pods belonging to this release |
@@ -180,54 +183,55 @@ helm show values kloudlite/kloudlite-platform
 | ingressController.configuration.nodeSelector."node-role.kubernetes.io/control-plane" | string | `"true"` |  |
 | ingressController.configuration.tolerations[0].effect | string | `"NoSchedule"` |  |
 | ingressController.configuration.tolerations[0].key | string | `"node-role.kubernetes.io/master"` |  |
-| ingressController.configuration.tolerations[0].value | string | `"true"` |  |
 | ingressController.enabled | bool | `true` |  |
 | ingressController.name | string | `"ingress-nginx"` |  |
-| loki.configuration.s3credentials.awsAccessKeyId | string | `"<loki-s3-aws-access-key-id>"` |  |
-| loki.configuration.s3credentials.awsSecretAccessKey | string | `"<loki-s3-aws-secret-access-key>"` |  |
-| loki.configuration.s3credentials.bucketName | string | `"<loki-s3-bucket-name>"` |  |
-| loki.configuration.s3credentials.region | string | `"<loki-s3-bucket-region>"` |  |
-| loki.enabled | bool | `true` |  |
+| loki.configuration.s3credentials.awsAccessKeyId | string | `""` |  |
+| loki.configuration.s3credentials.awsSecretAccessKey | string | `""` |  |
+| loki.configuration.s3credentials.bucketName | string | `""` |  |
+| loki.configuration.s3credentials.region | string | `""` |  |
+| loki.enabled | bool | `false` |  |
 | loki.name | string | `"loki-stack"` |  |
-| mongo.externalDB.authDBName | string | `"<mongo-db-name>"` |  |
-| mongo.externalDB.dbURL | string | `"<mongo-db-url>"` |  |
+| mongo.externalDB.authDBName | string | `""` |  |
+| mongo.externalDB.dbURL | string | `""` |  |
 | mongo.nodeSelector | object | `{}` |  |
 | mongo.replicas | int | `1` |  |
-| mongo.rootPassword | string | `"<mongo-root-password>"` |  |
 | mongo.runAsCluster | bool | `false` |  |
 | mongo.size | string | `"2Gi"` |  |
-| nats.replicas | int | `1` |  |
+| nats.replicas | int | `3` |  |
 | nats.runAsCluster | bool | `false` |  |
 | oAuth.enabled | bool | `true` |  |
-| oAuth.providers.github.appId | string | `"<github-app-id>"` | GitHub app id |
-| oAuth.providers.github.appPrivateKey | string | `"<pvt-key>"` | GitHub app private key (base64 encoded) |
+| oAuth.providers.github.appId | string | `""` | GitHub app id |
+| oAuth.providers.github.appPrivateKey | string | `""` | GitHub app private key (base64 encoded) |
 | oAuth.providers.github.callbackUrl | string | `"https://auth.platform.kloudlite.io/oauth2/callback/github"` | GitHub oAuth2 callback url |
-| oAuth.providers.github.clientId | string | `"<github-client-id>"` | GitHub oAuth2 Client ID |
-| oAuth.providers.github.clientSecret | string | `"<github-client-secret>"` | GitHub oAuth2 Client Secret |
+| oAuth.providers.github.clientId | string | `""` | (REQUIRED, if enabled) GitHub oAuth2 Client ID |
+| oAuth.providers.github.clientSecret | string | `""` | (REQUIRED, if enabled) GitHub oAuth2 Client Secret |
 | oAuth.providers.github.enabled | bool | `true` | whether to enable GitHub oAuth2 |
-| oAuth.providers.github.githubAppName | string | `"kloudlite-dev"` | GitHub app name, that we want to install on user's GitHub account |
+| oAuth.providers.github.githubAppName | string | `""` | GitHub app name, that we want to install on user's GitHub account |
 | oAuth.providers.gitlab.callbackUrl | string | `"https://auth.platform.kloudlite.io/oauth2/callback/gitlab"` | gitlab oAuth2 callback url |
-| oAuth.providers.gitlab.clientId | string | `"<gitlab-client-id>"` | gitlab oAuth2 Client ID |
-| oAuth.providers.gitlab.clientSecret | string | `"<gitlab-client-secret>"` | gitlab oAuth2 Client Secret |
+| oAuth.providers.gitlab.clientId | string | `""` | gitlab oAuth2 Client ID |
+| oAuth.providers.gitlab.clientSecret | string | `""` | gitlab oAuth2 Client Secret |
 | oAuth.providers.gitlab.enabled | bool | `true` | whether to enable gitlab oAuth2 |
 | oAuth.providers.google.callbackUrl | string | `"https://auth.platform.kloudlite.io/oauth2/callback/google"` | google oAuth2 callback url |
-| oAuth.providers.google.clientId | string | `"<google-client-id>"` | google oAuth2 Client ID |
-| oAuth.providers.google.clientSecret | string | `"<google-client-secret>"` | google oAuth2 Client Secret |
+| oAuth.providers.google.clientId | string | `""` | google oAuth2 Client ID |
+| oAuth.providers.google.clientSecret | string | `""` | google oAuth2 Client Secret |
 | oAuth.providers.google.enabled | bool | `true` | whether to enable google oAuth2 |
 | oAuth.secretName | string | `"oauth-secrets"` | secret where all oauth credentials should be |
-| operators.platformOperator.configuration.cluster.IACStateStore.accessKey | string | `"<access-key>"` |  |
+| operators.platformOperator.configuration.cluster.IACStateStore.accessKey | string | `""` |  |
 | operators.platformOperator.configuration.cluster.IACStateStore.s3BucketDir | string | `"terraform-states"` |  |
 | operators.platformOperator.configuration.cluster.IACStateStore.s3BucketName | string | `"kloudlite-dev-tf"` | s3 bucket name, to store kloudlite's infrastructure-as-code remote state |
 | operators.platformOperator.configuration.cluster.IACStateStore.s3BucketRegion | string | `"ap-south-1"` | s3 bucket region, to store kloudlite's infrastructure-as-code remote state |
-| operators.platformOperator.configuration.cluster.IACStateStore.secretKey | string | `"<secret-key>"` |  |
-| operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `"infra.kloudlite.io"` | cloudflare base domain, on top of which CNAMES and wildcard names will be created |
-| operators.platformOperator.configuration.cluster.cloudflare.zoneId | string | `"<zone-id>"` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
+| operators.platformOperator.configuration.cluster.IACStateStore.secretKey | string | `""` |  |
+| operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created, defaults to `global.baseDomain` |
+| operators.platformOperator.configuration.cluster.cloudflare.zoneId | string | `""` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
 | operators.platformOperator.configuration.cluster.jobImage | string | `"ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly"` |  |
+| operators.platformOperator.configuration.nodepool.cloudProviderName | string | `"aws"` |  |
+| operators.platformOperator.configuration.nodepool.cloudProviderRegion | string | `"ap-south-1"` |  |
+| operators.platformOperator.configuration.nodepool.k3sAgentJoinToken | string | `""` | k3s agent join token, as nodepools are effectively agent nodes |
+| operators.platformOperator.configuration.nodepool.k3sServerPublicHost | string | `""` | k3s masters public DNS Host |
 | operators.platformOperator.enabled | bool | `true` | whether to enable platform operator |
 | operators.platformOperator.image | string | `"ghcr.io/kloudlite/operator/platform:v1.0.5-nightly"` | image (with tag) for platform operator |
 | operators.preferOperatorsOnMasterNodes | bool | `true` |  |
-| operators.wgOperator.configuration | object | `{"dnsHostedZone":"<dns-hosted-zone>","enableExamples":false,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
-| operators.wgOperator.configuration.dnsHostedZone | string | `"<dns-hosted-zone>"` | dns hosted zone, i.e., dns pointing to this cluster |
+| operators.wgOperator.configuration | object | `{"enableExamples":false,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
 | operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `false` |  |
@@ -239,8 +243,8 @@ helm show values kloudlite/kloudlite-platform
 | prometheus.configuration.prometheus.volumeSize | string | `"2Gi"` |  |
 | prometheus.enabled | bool | `true` |  |
 | prometheus.name | string | `"prometheus"` |  |
-| sendGrid.apiKey | string | `nil` | sendgrid api key for email communications, if (sendgrid.enabled) |
-| sendGrid.supportEmail | string | `nil` | email through which we should be sending emails to target users, if (sendgrid.enabled) |
+| sendGrid.apiKey | string | `""` | sendgrid api key for email communications, if (sendgrid.enabled) |
+| sendGrid.supportEmail | string | `""` | email through which we should be sending emails to target users, if (sendgrid.enabled) |
 | vector.enabled | bool | `true` |  |
 | vector.name | string | `"vector"` |  |
 | vectorAgent.description | string | `"vector agent for shipping logs to centralized vector aggregator"` |  |
@@ -250,9 +254,9 @@ helm show values kloudlite/kloudlite-platform
 | victoriaMetrics.configuration.volumeSize | string | `"2Gi"` |  |
 | victoriaMetrics.enabled | bool | `true` |  |
 | victoriaMetrics.name | string | `"victoria-metrics"` |  |
-| webhookSecrets.authzSecret | string | `"<webhook-authz-github-authz-secret>"` |  |
-| webhookSecrets.githubAuthzSecret | string | `"<webhook-authz-github-authz-secret>"` |  |
-| webhookSecrets.githubSecret | string | `"<webhook-authz-github-secret>"` | webhook authz secret for GitHub webhooks |
-| webhookSecrets.gitlabSecret | string | `"<webhook-authz-gitlab-secret>"` | webhook authz secret for gitlab webhooks |
-| webhookSecrets.kloudliteSecret | string | `"<webhook-authz-kloudlite-secret>"` | webhook authz secret for kloudlite internal calls |
+| webhookSecrets.authzSecret | string | `""` |  |
+| webhookSecrets.githubAuthzSecret | string | `""` |  |
+| webhookSecrets.githubSecret | string | `""` | webhook authz secret for GitHub webhooks |
+| webhookSecrets.gitlabSecret | string | `""` | webhook authz secret for gitlab webhooks |
+| webhookSecrets.kloudliteSecret | string | `""` | webhook authz secret for kloudlite internal calls |
 | webhookSecrets.name | string | `"webhook-secrets"` |  |

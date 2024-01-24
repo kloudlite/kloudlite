@@ -89,6 +89,7 @@ helm show values kloudlite/kloudlite-agent
 | clusterToken | string REQUIRED | `""` | kloudlite issued cluster token |
 | defaults.imagePullPolicy | string | `"Always"` |  |
 | defaults.imageTag | string | `""` |  |
+| defaults.jobsNamespace | string | `"kloudlite-jobs"` |  |
 | defaults.nodeSelector | object | `{}` |  |
 | defaults.tolerations | list | `[]` |  |
 | helmCharts.certManager.affinity | object | `{}` |  |

@@ -120,3 +120,8 @@ kloudlite.io/resource_component: {{$resourceComponent}}
 {{- define "msg-office-platform-access-token" -}}
 {{ printf "account=%s;cluster=%s;platform-token=%s" .Values.accountName .Values.clusterName .Values.apps.messageOfficeApi.configuration.platformAccessToken }}
 {{- end -}}
+
+{{- define "router-domain" -}}
+{{ .Values.global.routerDomain | default .Values.global.baseDomain }}
+{{- end -}}
+

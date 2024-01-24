@@ -22,10 +22,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - "*.{{ .Values.global.baseDomain }}"
+      - "*.{{include "router-domain" .}}"
   ingressClassName: {{ .Values.global.ingressClassName }}
   rules:
-  - host: kl.{{ .Values.global.baseDomain }}
+  - host: kl.{{include "router-domain" .}}
     http:
       paths:
       - backend:

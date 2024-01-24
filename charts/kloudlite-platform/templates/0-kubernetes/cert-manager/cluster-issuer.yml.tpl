@@ -23,6 +23,7 @@ spec:
             {{- range $v := .Values.cloudflareWildCardCert.domains}}
             - {{$v | squote}}
             {{- end }}
+            - "*.{{.Values.global.routerDomain}}"
       {{- end}}
       {{- $ingClass := .Values.global.ingressClassName }}
       {{- if $ingClass }}
