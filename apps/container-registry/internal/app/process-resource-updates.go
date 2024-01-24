@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/apps/container-registry/internal/domain"
-	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"strings"
 	"time"
+
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
@@ -26,9 +27,7 @@ func gvk(obj client.Object) string {
 	return val
 }
 
-var (
-	buildRunGVK     = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
-)
+var buildRunGVK = fn.GVK("distribution.kloudlite.io/v1", "BuildRun")
 
 func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	readMsg := func(msg *msgTypes.ConsumeMsg) error {
