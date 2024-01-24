@@ -22,7 +22,7 @@ metadata:
   namespace: {{ $namespace }}
   labels: {{ $labels | toJson }}
   annotations: {{ $annotations | toJson }}
-  ownerReferences: {{ $ownerRefs| toJson}}
+  {{- /* ownerReferences: {{ $ownerRefs| toJson}} */}}
 spec:
   backoffLimit: 0
   suspend: false

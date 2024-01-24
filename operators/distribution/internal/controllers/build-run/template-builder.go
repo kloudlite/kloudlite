@@ -8,6 +8,7 @@ import (
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	"github.com/kloudlite/operator/operators/distribution/internal/templates"
 	"github.com/kloudlite/operator/pkg/functions"
+	fn "github.com/kloudlite/operator/pkg/functions"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,6 +50,8 @@ type BuildObj struct {
 	ClientResource  Resource
 	OwnerReferences []metav1.OwnerReference
 }
+
+const buildrunNamespaceAnn = "kloudlite.io/buildrun.namespace"
 
 func (r *Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra []byte, rp []byte, rh []byte, gp []byte) {
 	ctx, obj := req.Context(), req.Object
@@ -121,11 +124,14 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		return nil, err
 	}
 
+	ann := obj.Annotations
+	fn.MapSet(&ann, buildrunNamespaceAnn, obj.Namespace)
+
 	o := &BuildObj{
 		Name:             obj.Name,
-		Namespace:        obj.Namespace,
+		Namespace:        r.Env.BuildNamespace,
 		Labels:           obj.Labels,
-		Annotations:      obj.Annotations,
+		Annotations:      ann,
 		AccountName:      obj.Spec.AccountName,
 		RegistryHost:     string(rh),
 		RegistryReponame: obj.Spec.Registry.Repo.Name,
@@ -226,10 +232,10 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		return nil, err
 	}
 
-	b, err := templates.Read(templates.BuildJob)
+	templateBuildJob, err := templates.Read(templates.BuildJob)
 	if err != nil {
 		return nil, err
 	}
 
-	return b, nil
+	return templates.ParseBytes(templateBuildJob, o)
 }
