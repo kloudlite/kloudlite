@@ -2,6 +2,7 @@ package templates
 
 import (
 	"embed"
+	"path/filepath"
 
 	"github.com/kloudlite/operator/pkg/templates"
 )
@@ -9,8 +10,15 @@ import (
 //go:embed *
 var templatesDir embed.FS
 
-func ReadNodepoolJobTemplate() ([]byte, error) {
-	return templatesDir.ReadFile("nodepool-job.yml.tpl")
+type templateFile string
+
+const (
+	NodepoolJobNamespaceRBAC templateFile = "./nodepool-job-namespace-rbac.yml.tpl"
+	NodepoolJob              templateFile = "./nodepool-job.yml.tpl"
+)
+
+func Read(t templateFile) ([]byte, error) {
+	return templatesDir.ReadFile(filepath.Join(string(t)))
 }
 
 var ParseBytes = templates.ParseBytes
