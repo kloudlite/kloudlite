@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -99,7 +100,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	case ct.CloudProviderAWS:
 		{
 			nodepool.Spec.AWS = &clustersv1.AWSNodePoolConfig{
-				ImageId:          "ami-06d146e85d1709abb",
+				ImageId:          d.env.AWSAMI,
 				ImageSSHUsername: "ubuntu",
 				AvailabilityZone: nodepool.Spec.AWS.AvailabilityZone,
 				NvidiaGpuEnabled: nodepool.Spec.AWS.NvidiaGpuEnabled,
@@ -126,10 +127,6 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 				}(),
 			}
 		}
-	}
-
-	if nodepool.Spec.TargetCount < nodepool.Spec.MinCount {
-		nodepool.Spec.TargetCount = nodepool.Spec.MinCount
 	}
 
 	nodepool.AccountName = ctx.AccountName
@@ -168,25 +165,12 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePoolIn
 		return nil, errors.NewE(err)
 	}
 
-	np, err := d.findNodePool(ctx, clusterName, nodePoolIn.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	patchForUpdate := common.PatchForUpdate(
 		ctx,
 		&nodePoolIn,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.NodePoolSpec:         nodePoolIn.Spec,
-				fc.NodePoolSpecMinCount: nodePoolIn.Spec.MinCount,
-				fc.NodePoolSpecMaxCount: nodePoolIn.Spec.MaxCount,
-				fc.NodePoolSpecTargetCount: func() int {
-					if np.Spec.TargetCount < nodePoolIn.Spec.MinCount {
-						return nodePoolIn.Spec.MinCount
-					}
-					return nodePoolIn.Spec.TargetCount
-				}(),
+				fc.NodePoolSpec: nodePoolIn.Spec,
 			},
 		})
 
@@ -319,6 +303,7 @@ func (d *domain) OnNodePoolUpdateMessage(ctx InfraContext, clusterName string, n
 	if _, err := d.matchRecordVersion(nodePool.Annotations, xnp.RecordVersion); err != nil {
 		return d.resyncToTargetCluster(ctx, xnp.SyncStatus.Action, clusterName, &xnp.NodePool, xnp.RecordVersion)
 	}
+
 	recordVersion, err := d.matchRecordVersion(nodePool.Annotations, xnp.RecordVersion)
 	if err != nil {
 		return errors.NewE(err)
@@ -331,10 +316,10 @@ func (d *domain) OnNodePoolUpdateMessage(ctx InfraContext, clusterName string, n
 			recordVersion, status,
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,
-				XPatch: repos.Document{
-					fc.NodePoolSpecTargetCount: nodePool.Spec.TargetCount,
-				},
 			}))
+	if err != nil {
+		return errors.NewE(err)
+	}
 
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeNodePool, unp.GetName(), PublishUpdate)
 	return nil
