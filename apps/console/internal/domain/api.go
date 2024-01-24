@@ -250,7 +250,7 @@ type Domain interface {
 
 	OnVPNDeviceApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice) error
-	OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts, clusterName string) error
 }
 
 type PublishMsg string
@@ -262,6 +262,6 @@ const (
 )
 
 type ResourceEventPublisher interface {
-	PublishConsoleEvent(ctx ConsoleContext, resourceType entities.ResourceType,name string, update PublishMsg)
+	PublishConsoleEvent(ctx ConsoleContext, resourceType entities.ResourceType, name string, update PublishMsg)
 	PublishResourceEvent(ctx ResourceContext, resourceType entities.ResourceType, name string, update PublishMsg)
 }

@@ -124,7 +124,6 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			{
 
 				dev, err := fn.JsonConvert[entities.ConsoleVPNDevice](ru.Object)
-
 				if err != nil {
 					return errors.NewE(err)
 				}
@@ -145,7 +144,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return d.OnVPNDeviceDeleteMessage(dctx, dev)
 				}
 
-				return d.OnVPNDeviceUpdateMessage(dctx, dev, resStatus, opts)
+				return d.OnVPNDeviceUpdateMessage(dctx, dev, resStatus, opts, ru.ClusterName)
 			}
 		case projectGVK.String():
 			{
