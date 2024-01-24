@@ -2,9 +2,9 @@ package errors
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/ztrue/tracerr"
-	"net/http"
 
 	"github.com/pkg/errors"
 )
@@ -32,6 +32,10 @@ func AssertNoError(err error, msg error) {
 
 func Is(err error, target error) bool {
 	return errors.Is(err, target)
+}
+
+func As(err error, target any) bool {
+	return errors.As(err, target)
 }
 
 func NewEf(err error, msg string, args ...any) error {
