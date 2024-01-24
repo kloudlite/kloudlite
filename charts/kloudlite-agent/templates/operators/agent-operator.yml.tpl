@@ -141,7 +141,7 @@ spec:
 
             {{- /* for buildrun */}}
             - name: BUILD_NAMESPACE
-              value: {{.Release.Namespace}}
+              value: {{.Values.defaults.jobsNamespace}}
 
             {{- /* for wireguard controller */}}
             - name: CLUSTER_POD_CIDR
