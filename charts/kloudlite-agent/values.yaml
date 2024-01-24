@@ -30,6 +30,7 @@ defaults:
   imagePullPolicy: "Always"
   tolerations: []
   nodeSelector: {}
+  jobsNamespace: "kloudlite-jobs"
 
 agent:
   # -- enable/disable kloudlite agent

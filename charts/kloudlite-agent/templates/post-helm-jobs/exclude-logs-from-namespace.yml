@@ -1,13 +1,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: nats-setup-job
+  name: exclude-logs-from-namespace
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
 spec:
   template:
     spec:
+      tolerations:
+        - operator: Exists
       serviceAccountName: {{ include "serviceAccountName" . }}
       containers:
       - name: kubectl
