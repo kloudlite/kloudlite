@@ -10,6 +10,8 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
+import { clearAppState } from '~/console/page-components/app-states';
+import { useEffect } from 'react';
 import AppsResources from './apps-resources';
 import Tools from './tools';
 
@@ -38,12 +40,16 @@ export const loader = async (ctx: IRemixCtx) => {
 const Apps = () => {
   const { promise } = useLoaderData<typeof loader>();
 
+  useEffect(() => {
+    clearAppState();
+  }, []);
+
   return (
     <LoadingComp
       data={promise}
-      // skeletonData={{
-      //   appsData: fake.ConsoleListAppsQuery.core_listApps as any,
-      // }}
+      skeletonData={{
+        appsData: fake.ConsoleListAppsQuery.core_listApps as any,
+      }}
     >
       {({ appsData }) => {
         const apps = parseNodes(appsData);

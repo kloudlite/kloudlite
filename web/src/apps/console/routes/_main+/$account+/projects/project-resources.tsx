@@ -122,6 +122,18 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               status,
               listFlex({ key: `${keyPrefix}flex` }),
               {
+                key: generateKey(keyPrefix, item.clusterName || ''),
+                className: '',
+                render: () => (
+                  <div className="flex whitespace-pre items-center gap-md">
+                    <span className="bodyMd-semibold">cluster:</span>{' '}
+                    <span className="bodyMd-medium text-text-soft">
+                      {item.clusterName}
+                    </span>
+                  </div>
+                ),
+              },
+              {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: listClass.author,
                 render: () => (
