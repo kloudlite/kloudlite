@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -35,7 +36,8 @@ func (gh *githubI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oau
 
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
 	if !gh.enabled {
-		return "", errors.Newf("github oauth is disabled")
+		fmt.Println("github oauth is disabled")
+		return "", nil
 	}
 	csrfToken := fn.Must(fn.CleanerNanoid(32))
 	b64state, err := fn.ToBase64UrlFromJson(map[string]string{"csrf": csrfToken, "state": state})

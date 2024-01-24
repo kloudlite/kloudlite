@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/kloudlite/api/apps/auth/internal/domain"
@@ -26,7 +27,8 @@ func (gl *gitlabI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oau
 
 func (gl *gitlabI) Authorize(_ context.Context, state string) (string, error) {
 	if !gl.enabled {
-		return "", errors.Newf("gitlab oauth is disabled")
+		fmt.Println("gitlab oauth is disabled")
+		return "", nil
 	}
 	return gl.cfg.AuthCodeURL(state), nil
 }
