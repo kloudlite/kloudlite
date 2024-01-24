@@ -2846,6 +2846,7 @@ query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: Cu
     edges {
       cursor
       node {
+        id
         clusterName
         creationTime
         markedForDeletion
@@ -3989,8 +3990,8 @@ query authCli_getDevice($clusterName: String!, $name: String!) {
   }
 }
 
-query authCli_listDevices($pq: CursorPaginationIn) {
-  infra_listVPNDevices(pq: $pq) {
+query authCli_listDevices($pq: CursorPaginationIn, $clusterName: String) {
+  infra_listVPNDevices(clusterName: $clusterName, pq: $pq) {
     edges {
       node {
         displayName

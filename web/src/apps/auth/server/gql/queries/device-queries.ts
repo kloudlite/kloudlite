@@ -13,7 +13,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_updateVPNDevicePorts,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_CoreUpdateDeviceEnv: executor(
@@ -32,7 +32,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_updateVPNDeviceEnv,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -69,7 +69,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_listVPNDevicesForUser,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_getCoreDevice: executor(
@@ -98,7 +98,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_getVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_createCoreDevice: executor(
@@ -117,7 +117,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_createVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -129,7 +129,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_updateVPNDevicePorts,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -170,14 +170,17 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_getVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
   cli_listDevices: executor(
     gql`
-      query Infra_listVPNDevices($pq: CursorPaginationIn) {
-        infra_listVPNDevices(pq: $pq) {
+      query Infra_listVPNDevices(
+        $pq: CursorPaginationIn
+        $clusterName: String
+      ) {
+        infra_listVPNDevices(clusterName: $clusterName, pq: $pq) {
           edges {
             node {
               displayName
@@ -210,7 +213,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_listVPNDevices,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -246,7 +249,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 
@@ -266,7 +269,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDevicePorts,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_updateDeviceNs: executor(
@@ -285,7 +288,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_updateVPNDeviceNs,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
   cli_createDevice: executor(
@@ -306,7 +309,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.infra_createVPNDevice,
-      vars: (_: any) => { },
+      vars: (_: any) => {},
     }
   ),
 });
