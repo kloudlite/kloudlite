@@ -238,17 +238,9 @@ func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string
 		return errors.NewE(err)
 	}
 
-	if xhr == nil {
-		return errors.Newf("no helm chart found")
-	}
-
-	if _, err := d.matchRecordVersion(hr.Annotations, xhr.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, clusterName, xhr, xhr.RecordVersion)
-	}
-
 	recordVersion, err := d.matchRecordVersion(hr.Annotations, xhr.RecordVersion)
 	if err != nil {
-		return errors.NewE(err)
+		return d.resyncToTargetCluster(ctx, xhr.SyncStatus.Action, clusterName, xhr, xhr.RecordVersion)
 	}
 
 	uphr, err := d.helmReleaseRepo.PatchById(
