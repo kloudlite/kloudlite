@@ -30,11 +30,13 @@ func startConfiguration(verbose bool) error {
 	}
 
 	if device.Spec.ActiveNamespace == "" {
-		return errors.New(fmt.Sprintf("no env name found for device %s, please use env using kl env switch\n", devName))
+		return errors.New(fmt.Sprintf("no environment selected for the device %s, please select a environment using 'kl env switch'\n", devName))
 	}
+
 	if len(device.Spec.Ports) == 0 {
-		return errors.New(fmt.Sprintf("no ports found for device %s, please export ports using kl vpn expose\n", devName))
+		fn.Log(fmt.Sprintf("[#] no ports found for device %s, you can export ports using kl vpn expose\n", devName))
 	}
+
 	if device.WireguardConfig.Value == "" {
 		return errors.New("no wireguard config found")
 	}

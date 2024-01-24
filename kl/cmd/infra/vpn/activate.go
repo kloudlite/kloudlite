@@ -35,5 +35,5 @@ Example:
 
 func init() {
 	activateCmd.Aliases = append(listCmd.Aliases, "active", "act", "a")
-	activateCmd.Flags().StringP("name", "n", "", "namespace")
+	activateCmd.Flags().StringP("namespace", "n", "", "namespace")
 }

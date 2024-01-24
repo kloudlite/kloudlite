@@ -26,11 +26,13 @@ func startConfiguration(verbose bool) error {
 	device, err := server.GetInfraDevice(fn.MakeOption("deviceName", devName))
 
 	if device.Spec.ActiveNamespace == "" {
-		return errors.New(fmt.Sprintf("no namespace found for device %s, please provide using kl infra vpn activate\n", devName))
+		fn.Log(fmt.Sprintf("[#] no namespace selected for the device %s, you can select namespace using 'kl infra vpn activate -n <namespace>'\n", devName))
 	}
+
 	if len(device.Spec.Ports) == 0 {
-		return errors.New(fmt.Sprintf("no ports found for device %s, please export ports using kl infra vpn expose\n", devName))
+		fn.Log(fmt.Sprintf("[#] no ports found for device %s, you can expose ports using 'kl infra vpn expose'\n", devName))
 	}
+
 	if device.WireguardConfig.Value == "" {
 		return errors.New("no wireguard config found")
 	}

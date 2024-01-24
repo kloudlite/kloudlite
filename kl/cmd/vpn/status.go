@@ -48,14 +48,14 @@ Example:
 			return
 		}
 
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device:")),
+		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")),
 			text.Red(s),
 		)
 
 		if len(dev.Spec.Ports) != 0 {
-			fn.Log(text.Bold(text.Green("\n[#]Exposed Ports:")))
+			fn.Log(text.Bold(text.Green("\n[#]Exposed Ports: ")))
 			for _, v := range dev.Spec.Ports {
-				fn.Log(text.Blue(fmt.Sprintf("%d\t", v)))
+				fn.Log(text.Blue(fmt.Sprintf("%d:%d\t", v.Port, v.TargetPort)))
 			}
 		} else {
 			fn.Log("No ports exposed")

@@ -57,7 +57,7 @@ Example:
 			return
 		}
 
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device:")),
+		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")),
 			text.Red(s),
 		)
 	},
