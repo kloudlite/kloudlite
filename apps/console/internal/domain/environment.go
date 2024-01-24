@@ -440,7 +440,7 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		UserId:      string(ctx.UserId),
 		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, env.Name),
 	}); err != nil {
-		d.logger.Errorf(err, "error while removing membership")
+		return errors.NewE(err)
 	}
 
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeEnvironment, env.Name, PublishDelete)
