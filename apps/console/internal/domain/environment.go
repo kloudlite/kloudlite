@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/common/fields"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
-	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/constants"
@@ -41,7 +41,7 @@ func (d *domain) envTargetNamespace(ctx ConsoleContext, projectName string, envN
 	key := fmt.Sprintf("environment-namespace.%s/%s/%s", ctx.AccountName, projectName, envName)
 	b, err := d.consoleCacheStore.Get(ctx, key)
 	if err != nil {
-		if errors.Is(err, kv.ErrKeyNotFound) {
+		if d.consoleCacheStore.ErrKeyNotFound(err) {
 			env, err := d.findEnvironment(ctx, projectName, envName)
 			if err != nil {
 				return "", err
@@ -383,7 +383,6 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 		},
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -414,7 +413,6 @@ func (d *domain) OnEnvironmentApplyError(ctx ConsoleContext, errMsg, namespace, 
 			},
 		),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -436,8 +434,7 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 		return errors.NewE(err)
 	}
 
-	if _, err = d.iamClient.RemoveMembership(ctx, &iam.RemoveMembershipIn{
-		UserId:      string(ctx.UserId),
+	if _, err = d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
 		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, env.Name),
 	}); err != nil {
 		return errors.NewE(err)
@@ -472,7 +469,6 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,
 			}))
-
 	if err != nil {
 		return err
 	}

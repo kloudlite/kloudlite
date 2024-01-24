@@ -431,8 +431,7 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.Co
 			return errors.NewE(err)
 		}
 
-		if _, err = d.iamClient.RemoveMembership(ctx, &iam.RemoveMembershipIn{
-			UserId:      string(ctx.UserId),
+		if _, err = d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
 			ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceConsoleVPNDevice, device.Name),
 		}); err != nil {
 			return errors.NewE(err)
