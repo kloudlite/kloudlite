@@ -28,14 +28,6 @@ export const restActions = async (ctx: IRemixCtx) => {
     logger.error(checkError);
   }
 
-  if (checkData.find((v) => !v.enabled)) {
-    return {
-      githubLoginUrl: '',
-      gitlabLoginUrl: '',
-      googleLoginUrl: '',
-    };
-  }
-
   const { data, errors } = await GQLServerHandler(
     ctx.request
   ).loginPageInitUrls();
@@ -51,9 +43,15 @@ export const restActions = async (ctx: IRemixCtx) => {
   } = data || {};
 
   return {
-    githubLoginUrl,
-    gitlabLoginUrl,
-    googleLoginUrl,
+    githubLoginUrl: checkData.find((v) => v.provider === 'github' && !v.enabled)
+      ? ''
+      : githubLoginUrl,
+    gitlabLoginUrl: checkData.find((v) => v.provider === 'gitlab' && !v.enabled)
+      ? ''
+      : gitlabLoginUrl,
+    googleLoginUrl: checkData.find((v) => v.provider === 'google' && !v.enabled)
+      ? ''
+      : googleLoginUrl,
   };
 };
 
