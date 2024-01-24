@@ -3,7 +3,11 @@ package domain
 import (
 	"crypto/md5"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"strings"
+	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/constants"
@@ -21,8 +25,8 @@ import (
 
 func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error) {
 	filter := repos.Filter{
-		"accountName":             ctx.AccountName,
-		"spec.registry.repo.name": repoName,
+		fields.AccountName:              ctx.AccountName,
+		fc.BuildRunSpecRegistryRepoName: repoName,
 	}
 	paginated, err := d.buildRunRepo.FindPaginated(ctx, d.buildRunRepo.MergeMatchFilters(filter, matchFilters), pagination)
 	return paginated, err
@@ -30,9 +34,9 @@ func (d *Impl) ListBuildRuns(ctx RegistryContext, repoName string, matchFilters 
 
 func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName string) (*entities.BuildRun, error) {
 	brun, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
-		"accountName":             ctx.AccountName,
-		"metadata.name":           buildRunName,
-		"spec.registry.repo.name": repoName,
+		fields.AccountName:              ctx.AccountName,
+		fields.MetadataName:             buildRunName,
+		fc.BuildRunSpecRegistryRepoName: repoName,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -46,10 +50,10 @@ func (d *Impl) GetBuildRun(ctx RegistryContext, repoName string, buildRunName st
 
 func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun) error {
 	if _, err := d.buildRunRepo.Upsert(ctx, repos.Filter{
-		"metadata.name":      buildRun.Name,
-		"metadata.namespace": buildRun.Namespace,
-		"accountName":        ctx.AccountName,
-		"clusterName":        buildRun.ClusterName,
+		fields.MetadataName:      buildRun.Name,
+		fields.MetadataNamespace: buildRun.Namespace,
+		fields.AccountName:       ctx.AccountName,
+		fields.ClusterName:       buildRun.ClusterName,
 	}, &buildRun); err != nil {
 		return errors.NewE(err)
 	}
@@ -60,10 +64,10 @@ func (d *Impl) OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.Bu
 
 func (d *Impl) OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.BuildRun) error {
 	if err := d.buildRunRepo.DeleteOne(ctx, repos.Filter{
-		"metadata.name":      buildRun.Name,
-		"metadata.namespace": buildRun.Namespace,
-		"accountName":        ctx.AccountName,
-		"clusterName":        buildRun.ClusterName,
+		fields.MetadataName:      buildRun.Name,
+		fields.MetadataNamespace: buildRun.Namespace,
+		fields.AccountName:       ctx.AccountName,
+		fields.ClusterName:       buildRun.ClusterName,
 	}); err != nil {
 		return errors.NewE(err)
 	}
@@ -72,20 +76,22 @@ func (d *Impl) OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.Bu
 }
 
 func (d *Impl) OnBuildRunApplyErrorMessage(ctx RegistryContext, clusterName string, name string, errorMsg string) error {
-	buildRun, err := d.buildRunRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"metadata.name": name,
-		"clusterName":   clusterName,
-	})
-	if err != nil {
-		return errors.NewE(err)
-	}
+	upBuildRun, err := d.buildRunRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: name,
+			fields.ClusterName:  clusterName,
+		},
+		common.PatchForErrorFromAgent(
+			errorMsg,
+			common.PatchOpts{
+				MessageTimestamp: time.Time{},
+			},
+		),
+	)
 
-	buildRun.SyncStatus = t.GenSyncStatus(t.SyncActionApply, buildRun.RecordVersion)
-	buildRun.SyncStatus.Error = &errorMsg
-
-	_, err = d.buildRunRepo.UpdateById(ctx, buildRun.Id, buildRun)
-	d.resourceEventPublisher.PublishBuildRunEvent(buildRun, PublishUpdate)
+	d.resourceEventPublisher.PublishBuildRunEvent(upBuildRun, PublishUpdate)
 	return errors.NewE(err)
 }
 

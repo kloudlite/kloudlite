@@ -28,8 +28,9 @@ type Opts map[string]interface{}
 type SortOpts map[string]int32
 type Filter map[string]interface{}
 
-func (f *Filter) Add(key string, value interface{}) {
-	(*f)[key] = value
+func (f Filter) Add(key string, value interface{}) Filter{
+	f[key] = value
+	return f
 }
 
 type Query struct {
@@ -94,6 +95,8 @@ type DbRepo[T Entity] interface {
 	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error
 	UpdateById(ctx context.Context, id ID, updatedData T, opts ...UpdateOpts) (T, error)
 	PatchById(ctx context.Context, id ID, patch Document, opts ...UpdateOpts) (T, error)
+
+	Patch(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error)
 	UpdateOne(ctx context.Context, filter Filter, updatedData T, opts ...UpdateOpts) (T, error)
 	PatchOne(ctx context.Context, filter Filter, patch Document, opts ...UpdateOpts) (T, error)
 	DeleteById(ctx context.Context, id ID) error

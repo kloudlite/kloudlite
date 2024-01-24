@@ -2,10 +2,12 @@ package entities
 
 import (
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	wireguardV1 "github.com/kloudlite/operator/apis/wireguard/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type ConsoleVPNDevice struct {
@@ -25,17 +27,25 @@ type ConsoleVPNDevice struct {
 	SyncStatus     t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
+func (c *ConsoleVPNDevice) GetDisplayName() string {
+	return c.ResourceMetadata.DisplayName
+}
+
+func (c *ConsoleVPNDevice) GetStatus() operator.Status {
+	return c.Device.Status
+}
+
 var VPNDeviceIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: fields.MetadataName, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

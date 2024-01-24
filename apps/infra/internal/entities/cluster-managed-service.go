@@ -5,6 +5,7 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -19,6 +20,14 @@ type ClusterManagedService struct {
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+}
+
+func (c *ClusterManagedService) GetDisplayName() string {
+	return c.ResourceMetadata.DisplayName
+}
+
+func (c *ClusterManagedService) GetStatus() operator.Status {
+	return c.ClusterManagedService.Status
 }
 
 var ClusterManagedServiceIndices = []repos.IndexField{

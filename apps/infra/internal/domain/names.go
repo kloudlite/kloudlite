@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -14,12 +15,12 @@ func (d *domain) SuggestName(ctx context.Context, seed *string) string {
 type ResType string
 
 const (
-	ResTypeCluster        ResType = "cluster"
-	ResTypeClusterManagedService        ResType = "cluster_managed_service"
-	ResTypeProviderSecret ResType = "providersecret"
-	ResTypeNodePool       ResType = "nodepool"
-	ResTypeHelmRelease       ResType = "helm_release"
-	ResTypeVPNDevice      ResType = "vpn_device"
+	ResTypeCluster               ResType = "cluster"
+	ResTypeClusterManagedService ResType = "cluster_managed_service"
+	ResTypeProviderSecret        ResType = "providersecret"
+	ResTypeNodePool              ResType = "nodepool"
+	ResTypeHelmRelease           ResType = "helm_release"
+	ResTypeVPNDevice             ResType = "vpn_device"
 )
 
 type CheckNameAvailabilityOutput struct {
@@ -39,10 +40,9 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 
 	return &CheckNameAvailabilityOutput{
 		Result:         false,
-		SuggestedNames: fn.GenValidK8sResourceNames(filters["metadata.name"].(string), 3),
+		SuggestedNames: fn.GenValidK8sResourceNames(filters[fields.MetadataName].(string), 3),
 	}, nil
 }
-
 
 func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
 
@@ -54,15 +54,15 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 	case ResTypeCluster:
 		{
 			return checkResourceName(ctx, repos.Filter{
-				"accountName": ctx.AccountName,
-				"metadata.name": name,
+				fields.AccountName:  ctx.AccountName,
+				fields.MetadataName: name,
 			}, d.clusterRepo)
 		}
 	case ResTypeProviderSecret:
 		{
 			return checkResourceName(ctx, repos.Filter{
-				"accountName":        ctx.AccountName,
-				"metadata.name": name,
+				fields.AccountName:  ctx.AccountName,
+				fields.MetadataName: name,
 			}, d.secretRepo)
 		}
 	case ResTypeNodePool:
@@ -71,9 +71,9 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeHelmRelease)
 			}
 			return checkResourceName(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"clusterName":   clusterName,
-				"metadata.name": name,
+				fields.AccountName:  ctx.AccountName,
+				fields.ClusterName:  clusterName,
+				fields.MetadataName: name,
 			}, d.nodePoolRepo)
 		}
 	case ResTypeHelmRelease:
@@ -82,9 +82,9 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
 			}
 			return checkResourceName(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"clusterName":   clusterName,
-				"metadata.name": name,
+				fields.AccountName:  ctx.AccountName,
+				fields.ClusterName:  clusterName,
+				fields.MetadataName: name,
 			}, d.helmReleaseRepo)
 		}
 	case ResTypeClusterManagedService:
@@ -93,9 +93,9 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeNodePool)
 			}
 			return checkResourceName(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"clusterName":   clusterName,
-				"metadata.name": name,
+				fields.AccountName:  ctx.AccountName,
+				fields.ClusterName:  clusterName,
+				fields.MetadataName: name,
 			}, d.clusterManagedServiceRepo)
 		}
 	case ResTypeVPNDevice:
@@ -105,9 +105,9 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 			}
 
 			return checkResourceName(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"clusterName":   clusterName,
-				"metadata.name": name,
+				fields.AccountName:  ctx.AccountName,
+				fields.ClusterName:  clusterName,
+				fields.MetadataName: name,
 			}, d.vpnDeviceRepo)
 		}
 	default:
