@@ -326,8 +326,7 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, 
 		return errors.NewE(err)
 	}
 
-	if _, err = d.iamClient.RemoveMembership(ctx, &iam.RemoveMembershipIn{
-		UserId:      string(ctx.UserId),
+	if _, err = d.iamClient.RemoveResource(ctx, &iam.RemoveResourceIn{
 		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceInfraVPNDevice, device.Name),
 	}); err != nil {
 		return errors.NewE(err)

@@ -2,9 +2,10 @@ package app
 
 import (
 	"context"
+	"strings"
+
 	"github.com/kloudlite/api/apps/iam/internal/entities"
 	"github.com/kloudlite/api/pkg/grpc"
-	"strings"
 
 	t "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -41,7 +42,7 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 	rb.Role = t.Role(in.Role)
 
 	if _, err = s.rbRepo.UpdateById(ctx, rb.Id, rb); err != nil {
-		return nil, errors.NewE(err)
+	return nil, errors.NewE(err)
 	}
 
 	return &iam.UpdateMembershipOut{
@@ -64,64 +65,6 @@ func (s *GrpcService) findRoleBinding(ctx context.Context, userId repos.ID, reso
 	}
 	return rb, nil
 }
-
-//func (s *GrpcService) ConfirmMembership(ctx context.Context, in *iam.ConfirmMembershipIn) (*iam.ConfirmMembershipOut, error) {
-//	//rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
-//	//if err != nil {
-//	//	return nil, err
-//	//}
-//	//
-//	//if t.Role(in.Role) != rb.Role {
-//	//	return nil, errors.New("The invitation has been updated")
-//	//}
-//	//
-//	//_, err = s.rbRepo.UpdateById(ctx, rb.Id, rb)
-//	//if err != nil {
-//	//	return nil, err
-//	//}
-//	//return &iam.ConfirmMembershipOut{}, nil
-//	return nil, errors.Newf("not implemented")
-//}
-
-//func (s *GrpcService) InviteMembership(ctx context.Context, in *iam.AddMembershipIn) (*iam.AddMembershipOut, error) {
-//	rb, err := s.rbRepo.FindOne(
-//		ctx, repos.Filter{
-//			"user_id":      in.UserId,
-//			"resource_ref": in.ResourceRef,
-//		},
-//	)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if rb != nil {
-//		if string(rb.Role) == in.Role {
-//			s.logger.Infof("user %s already has role %s on resource %s", in.UserId, in.Role, in.ResourceRef)
-//			return &iam.AddMembershipOut{Result: true}, nil
-//		}
-//		rb.Role = t.Role(in.Role)
-//		//rb.Accepted = false
-//		_, err := s.rbRepo.UpdateById(ctx, rb.Id, rb)
-//		if err != nil {
-//			return nil, err
-//		}
-//		return &iam.AddMembershipOut{Result: true}, nil
-//	}
-//
-//	_, err = s.rbRepo.Create(
-//		ctx, &entities.RoleBinding{
-//			UserId:       in.UserId,
-//			ResourceType: t.ResourceType(in.ResourceType),
-//			ResourceRef:  in.ResourceRef,
-//			Role:         t.Role(in.Role),
-//			//Accepted:     false,
-//		},
-//	)
-//	if err != nil {
-//		return nil, errors.NewEf(err, "could not create rolebinding")
-//	}
-//	return &iam.AddMembershipOut{Result: true}, nil
-//}
 
 func (s *GrpcService) GetMembership(ctx context.Context, in *iam.GetMembershipIn) (*iam.GetMembershipOut, error) {
 	rb, err := s.findRoleBinding(ctx, repos.ID(in.UserId), in.ResourceRef)
@@ -168,7 +111,7 @@ func (s *GrpcService) ListMembershipsForResource(ctx context.Context, in *iam.Me
 
 func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error) {
 	if strings.HasPrefix(in.UserId, "sys-user") {
-		return &iam.CanOut{Status: true}, nil
+	return &iam.CanOut{Status: true}, nil
 	}
 
 	rbs, err := s.rbRepo.Find(
@@ -177,7 +120,6 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 			"user_id":      in.UserId,
 		}},
 	)
-
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find rolebindings for (resourceRefs=%s)", strings.Join(in.ResourceRefs, ","))
 	}
@@ -242,6 +184,7 @@ func (s *GrpcService) AddMembership(ctx context.Context, in *iam.AddMembershipIn
 }
 
 func (s *GrpcService) RemoveMembership(ctx context.Context, in *iam.RemoveMembershipIn) (*iam.RemoveMembershipOut, error) {
+	s.logger.Debugf("received request for membership deletion for userid=%s, resourceRef=%s", in.UserId, in.ResourceRef)
 	if in.UserId == "" || in.ResourceRef == "" {
 		return nil, errors.Newf("userId or resourceRef is empty, rejecting")
 	}
@@ -254,6 +197,7 @@ func (s *GrpcService) RemoveMembership(ctx context.Context, in *iam.RemoveMember
 	if err := s.rbRepo.DeleteById(ctx, rb.Id); err != nil {
 		return nil, errors.NewEf(err, "could not delete resource for (userId=%s, resourceRef=%s)", in.UserId, in.ResourceRef)
 	}
+	s.logger.Debugf("removed user (%s) membership resourceRef=%s", in.UserId, in.ResourceRef)
 
 	return &iam.RemoveMembershipOut{Result: true}, nil
 }

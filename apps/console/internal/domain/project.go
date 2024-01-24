@@ -3,10 +3,10 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
-	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +25,7 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 	cacheKey := fmt.Sprintf("account_name_%s-project_name_%s", ctx.GetAccountName(), projectName)
 
 	clusterName, err := d.consoleCacheStore.Get(ctx, cacheKey)
-	if err != nil && !errors.Is(err, kv.ErrKeyNotFound) {
+	if err != nil && !d.consoleCacheStore.ErrKeyNotFound(err) {
 		return nil, err
 	}
 
