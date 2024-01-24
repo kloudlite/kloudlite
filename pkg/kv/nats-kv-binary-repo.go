@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/kloudlite/api/pkg/nats"
 	"github.com/nats-io/nats.go/jetstream"
-	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
 )
@@ -44,12 +45,7 @@ func (r *natsKVBinaryRepo) Set(c context.Context, key string, value []byte) erro
 func (r *natsKVBinaryRepo) Get(c context.Context, key string) ([]byte, error) {
 	get, err := r.keyValue.Get(c, key)
 	if err != nil {
-		if errors.Is(err, jetstream.ErrKeyNotFound) {
-			return nil, ErrKeyNotFound
-		}
-
-		var x []byte
-		return x, errors.NewE(err)
+		return nil, errors.NewE(err)
 	}
 	var value BinaryValue
 	err = json.Unmarshal(get.Value(), &value)
@@ -62,6 +58,11 @@ func (r *natsKVBinaryRepo) Get(c context.Context, key string) ([]byte, error) {
 		return value.Data, errors.New("Key is expired")
 	}
 	return value.Data, errors.NewE(err)
+}
+
+// ErrKeyNotFound implements BinaryDataRepo.
+func (*natsKVBinaryRepo) ErrKeyNotFound(err error) bool {
+	return errors.Is(err, jetstream.ErrKeyNotFound)
 }
 
 func (r *natsKVBinaryRepo) SetWithExpiry(c context.Context, key string, value []byte, duration time.Duration) error {
