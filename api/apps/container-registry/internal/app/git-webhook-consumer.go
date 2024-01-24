@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 
@@ -23,7 +24,6 @@ type (
 	GitWebhookConsumer messaging.Consumer
 	BuildRunProducer   messaging.Producer
 )
-
 
 func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhookConsumer, logr logging.Logger) error {
 	err := consumer.Consume(func(msg *msgTypes.ConsumeMsg) error {
@@ -113,7 +113,6 @@ func processGitWebhooks(ctx context.Context, d domain.Domain, consumer GitWebhoo
 				logger.Warnf("pull token is empty")
 				continue
 			}
-
 
 			if err != nil {
 				logger.Errorf(err, "could not generate pull-token")
