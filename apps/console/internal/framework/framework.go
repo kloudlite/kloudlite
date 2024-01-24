@@ -15,7 +15,6 @@ import (
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
-	loki_client "github.com/kloudlite/api/pkg/loki-client"
 	"github.com/kloudlite/api/pkg/nats"
 	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
@@ -116,26 +115,6 @@ var Module = fx.Module("framework",
 			},
 			OnStop: func(context.Context) error {
 				return server.Close()
-			},
-		})
-	}),
-
-	fx.Provide(func(ev *env.Env, logger logging.Logger) (loki_client.LokiClient, error) {
-		return loki_client.NewLokiClient(ev.LokiServerHttpAddr, loki_client.ClientOpts{Logger: logger.WithKV("component", "loki-client")})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, lc loki_client.LokiClient, logger logging.Logger, ev *env.Env) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				if err := lc.Ping(ctx); err != nil {
-					return errors.NewE(err)
-				}
-				logger.Infof("loki client successfully connected to loki server running @ %s", ev.LokiServerHttpAddr)
-				return nil
-			},
-			OnStop: func(context.Context) error {
-				lc.Close()
-				return nil
 			},
 		})
 	}),

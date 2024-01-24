@@ -71,7 +71,6 @@ func (gl *gitlabI) getRepoId(repoUrl string) string {
 
 // DeleteWebhook implements domain.Gitlab.
 func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *entities.AccessToken, repoUrl string, hookId entities.GitlabWebhookId) error {
-
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return errors.NewE(err)
@@ -91,7 +90,6 @@ func (*gitlabI) GetRepoId(repoUrl string) string {
 	// re := regexp.MustCompile("https://(.*?)/(.*)(.git)?")
 	matches := re.FindStringSubmatch(repoUrl)
 	return strings.Split(matches[2], ".git")[0]
-
 }
 
 // GetTriggerWebhookUrl implements domain.Gitlab.
@@ -101,7 +99,6 @@ func (*gitlabI) GetTriggerWebhookUrl() string {
 
 // ListBranches implements domain.Gitlab.
 func (gl *gitlabI) ListBranches(ctx context.Context, token *entities.AccessToken, repoId string, query *string, pagination *types.Pagination) ([]*gitlab.Branch, error) {
-
 	client, err := gl.getClient(ctx, token)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -160,7 +157,6 @@ func (gl *gitlabI) ListGroups(ctx context.Context, token *entities.AccessToken, 
 			WithCustomAttributes: nil,
 		},
 	)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -230,7 +226,6 @@ func (*gitlabI) RepoToken(ctx context.Context, token *entities.AccessToken) (*oa
 func fxGitlab[T gitlabOptions]() fx.Option {
 	return fx.Module("gitlab-fx", fx.Provide(
 		func(env T) (domain.Gitlab, error) {
-
 			clientId, clientSecret, callbackUrl := env.GitlabConfig()
 			cfg := oauth2.Config{
 				ClientID:     clientId,
