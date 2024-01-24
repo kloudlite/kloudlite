@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -102,7 +104,23 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.Consol
 		return nil, errors.NewE(err)
 	}
 
-	return d.findVPNDevice(ctx, name)
+	device, err := d.findVPNDevice(ctx, name)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	clusterName, err := d.getClusterFromDevice(ctx, device)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if device.WireguardConfigs == nil || device.WireguardConfigs[clusterName].Value == "" {
+		return nil, errors.Newf("no wireguard configs found")
+	}
+
+	device.WireguardConfig = device.WireguardConfigs[clusterName]
+
+	return device, nil
 }
 
 func (d *domain) applyVPNDevice(ctx ConsoleContext, device *entities.ConsoleVPNDevice) error {
@@ -345,7 +363,7 @@ func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, 
 	return nil
 }
 
-func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts, clusterName string) error {
 	xdevice, err := d.findVPNDevice(ctx, device.Name)
 	if err != nil {
 		return errors.NewE(err)
@@ -368,7 +386,7 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,
 				XPatch: repos.Document{
-					fc.ConsoleVPNDeviceWireguardConfig: device.WireguardConfig,
+					fmt.Sprintf("%s.%s", fc.ConsoleVPNDeviceWireguardConfigs, clusterName): device.WireguardConfig,
 				},
 			}))
 	if err != nil {

@@ -44,6 +44,7 @@ const (
 	ConsoleVPNDeviceSpecNodeSelector      = "spec.nodeSelector"
 	ConsoleVPNDeviceSpecPorts             = "spec.ports"
 	ConsoleVPNDeviceWireguardConfig       = "wireguardConfig"
+	ConsoleVPNDeviceWireguardConfigs      = "wireguardConfigs"
 )
 
 // constant vars generated for struct Environment
