@@ -1,14 +1,13 @@
 package domain
 
 import (
-	"time"
-
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
@@ -17,9 +16,9 @@ import (
 
 func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string) (*entities.VPNDevice, error) {
 	device, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   clusterName,
-		"metadata.name": name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -37,30 +36,32 @@ func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName
 		return errors.NewE(err)
 	}
 
-	currDevice, err := d.findVPNDevice(ctx, clusterName, devName)
+	xDevice, err := d.findVPNDevice(ctx, clusterName, devName)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		xDevice,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.VPNDeviceSpecActiveNamespace: namespace,
+			},
+		})
 
-	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, repos.Document{
-		"spec.activeNamespace": namespace,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":       t.SyncActionApply,
-		"syncStatus.state":        t.SyncStateInQueue,
-	})
+	upDevice, err := d.vpnDeviceRepo.PatchById(
+		ctx,
+		xDevice.Id,
+		patchForUpdate,
+	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVpnDeviceEvent(nDevice, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, upDevice.Name, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &upDevice.Device, upDevice.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
 	return nil
@@ -71,9 +72,9 @@ func (d *domain) ListVPNDevices(ctx InfraContext, accountName string, clusterNam
 		return nil, errors.NewE(err)
 	}
 
-	filter := repos.Filter{"accountName": accountName}
+	filter := repos.Filter{fields.AccountName: accountName}
 	if clusterName != nil {
-		filter["clusterName"] = *clusterName
+		filter[fields.ClusterName] = *clusterName
 	}
 	return d.vpnDeviceRepo.FindPaginated(ctx, d.vpnDeviceRepo.MergeMatchFilters(filter, search), pagination)
 }
@@ -95,38 +96,35 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, deviceIn 
 		return nil, errors.NewE(err)
 	}
 
-	currDevice, err := d.findVPNDevice(ctx, clusterName, deviceIn.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&deviceIn,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.VPNDeviceSpec:                deviceIn.Spec,
+				fc.VPNDeviceSpecPorts:           deviceIn.Spec.Ports,
+				fc.VPNDeviceSpecActiveNamespace: deviceIn.Spec.ActiveNamespace,
+			},
+		})
 
-	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
-
-	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, repos.Document{
-		"metadata.labels":      deviceIn.Labels,
-		"metadata.annotations": deviceIn.Annotations,
-		"displayName":          deviceIn.DisplayName,
-		"recordVersion":        currDevice.RecordVersion + 1,
-		"spec.ports":           deviceIn.Spec.Ports,
-		"spec.activeNamespace": deviceIn.Spec.ActiveNamespace,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	upDevice, err := d.vpnDeviceRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.ClusterName:  clusterName,
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: deviceIn.Name,
 		},
-		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":       t.SyncActionApply,
-		"syncStatus.state":        t.SyncStateInQueue,
-	})
+		patchForUpdate,
+	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVpnDeviceEvent(nDevice, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, upDevice.Name, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &upDevice.Device, upDevice.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
-	return nDevice, nil
+	return upDevice, nil
 }
 
 func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devName string, ports []*wgv1.Port) error {
@@ -134,31 +132,32 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 		return errors.NewE(err)
 	}
 
-	currDevice, err := d.findVPNDevice(ctx, clusterName, devName)
+	xdevice, err := d.findVPNDevice(ctx, clusterName, devName)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	currDevice.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currDevice.RecordVersion)
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		xdevice,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.VPNDeviceSpecPorts: ports,
+			},
+		})
 
-	nDevice, err := d.vpnDeviceRepo.PatchById(ctx, currDevice.Id, repos.Document{
-		"spec.ports": ports,
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		"syncStatus.lastSyncedAt": time.Now(),
+	upDevice, err := d.vpnDeviceRepo.Patch(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: devName,
+	}, patchForUpdate)
 
-		"syncStatus.action": t.SyncActionApply,
-		"syncStatus.state":  t.SyncStateInQueue,
-	})
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVpnDeviceEvent(nDevice, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, devName, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &upDevice.Device, upDevice.RecordVersion); err != nil {
 		return errors.NewE(err)
 	}
 	return nil
@@ -169,45 +168,43 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 		return errors.NewE(err)
 	}
 
-	device, err := d.findVPNDevice(ctx, clusterName, name)
+	upDevice, err := d.vpnDeviceRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.ClusterName:  clusterName,
+			fields.MetadataName: name,
+		},
+		common.PatchForMarkDeletion(),
+	)
+
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if device.IsMarkedForDeletion() {
-		return errors.Newf("vpnDevice %q (clusterName=%q) is already marked for deletion", name, clusterName)
-	}
-
-	if _, err := d.vpnDeviceRepo.PatchById(ctx, device.Id, repos.Document{
-		"markedForDeletion": fn.New(true),
-		"lastUpdatedBy": common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		"syncStatus.lastSyncedAt": time.Now(),
-		"syncStatus.action":       t.SyncActionDelete,
-		"syncStatus.state":        t.SyncStateInQueue,
-	}); err != nil {
-		return errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishVpnDeviceEvent(device, PublishUpdate)
-	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &device.Device)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, name, PublishUpdate)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upDevice.Device)
 }
 
 func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error {
-	currentDevice, err := d.findVPNDevice(ctx, clusterName, name)
+	udevice, err := d.vpnDeviceRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.ClusterName:  clusterName,
+			fields.MetadataName: name,
+		},
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
-
-	_, err = d.vpnDeviceRepo.PatchById(ctx, currentDevice.Id, repos.Document{
-		"syncStatus.state":        t.SyncStateErroredAtAgent,
-		"syncStatus.lastSyncedAt": opts.MessageTimestamp,
-		"syncStatus.error":        &errMsg,
-	})
-	d.resourceEventPublisher.PublishVpnDeviceEvent(currentDevice, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, udevice.Name, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -216,6 +213,7 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, errors.NewE(err)
 	}
 
+	device.Namespace = d.env.DeviceNamespace
 	device.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &device.Device); err != nil {
 		return nil, errors.NewE(err)
@@ -231,7 +229,6 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 
 	device.AccountName = ctx.AccountName
 	device.ClusterName = clusterName
-	device.Namespace = d.env.DeviceNamespace
 	device.SyncStatus = t.GenSyncStatus(t.SyncActionApply, device.RecordVersion)
 	device.Spec.NoExternalService = true
 
@@ -252,7 +249,7 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 		}
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishVpnDeviceEvent(&device, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, nDevice.Name, PublishAdd)
 
 	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
@@ -261,59 +258,62 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 }
 
 func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
-	currentDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
+	xdevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.matchRecordVersion(device.Annotations, currentDevice.RecordVersion); err != nil {
-		return d.resyncToTargetCluster(ctx, currentDevice.SyncStatus.Action, clusterName, &currentDevice.Device, currentDevice.RecordVersion)
+	if _, err := d.matchRecordVersion(device.Annotations, xdevice.RecordVersion); err != nil {
+		return d.resyncToTargetCluster(ctx, xdevice.SyncStatus.Action, clusterName, &xdevice.Device, xdevice.RecordVersion)
 	}
 
-	if _, err = d.vpnDeviceRepo.PatchById(ctx, currentDevice.Id, repos.Document{
-		"metadata.labels":            device.Labels,
-		"metadata.annotations":       device.Annotations,
-		"metadata.generation":        device.Generation,
-		"metadata.creationTimestamp": device.CreationTimestamp,
-		"wireguardConfig":            device.WireguardConfig,
-		"status":                     device.Status,
-		"syncStatus": t.SyncStatus{
-			LastSyncedAt:  opts.MessageTimestamp,
-			Error:         nil,
-			Action:        t.SyncActionApply,
-			RecordVersion: currentDevice.RecordVersion,
-			State: func() t.SyncState {
-				if status == types.ResourceStatusDeleting {
-					return t.SyncStateDeletingAtAgent
-				}
-				return t.SyncStateUpdatedAtAgent
-			}(),
-		},
-	}); err != nil {
-		return err
+	recordVersion, err := d.matchRecordVersion(device.Annotations, xdevice.RecordVersion)
+	if err != nil {
+		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishVpnDeviceEvent(currentDevice, PublishUpdate)
+	upDevice, err := d.vpnDeviceRepo.PatchById(
+		ctx,
+		xdevice.Id,
+		common.PatchForSyncFromAgent(
+			&device,
+			recordVersion,
+			status,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+				XPatch: repos.Document{
+					fc.VPNDeviceWireguardConfig: device.WireguardConfig,
+				},
+			}))
+
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, upDevice.Name, PublishUpdate)
 	return nil
 }
 
 func (d *domain) OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error {
-	currDevice, err := d.findVPNDevice(ctx, clusterName, device.Name)
+	err := d.vpnDeviceRepo.DeleteOne(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.ClusterName:  clusterName,
+			fields.MetadataName: device.Name,
+		},
+	)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	if _, err = d.iamClient.RemoveMembership(ctx, &iam.RemoveMembershipIn{
 		UserId:      string(ctx.UserId),
-		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceInfraVPNDevice, currDevice.Name),
+		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceInfraVPNDevice, device.Name),
 	}); err != nil {
 		return errors.NewE(err)
 	}
 
-	if err = d.vpnDeviceRepo.DeleteById(ctx, currDevice.Id); err != nil {
-		return errors.NewE(err)
-	}
-
-	d.resourceEventPublisher.PublishVpnDeviceEvent(currDevice, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, device.Name, PublishDelete)
 	return nil
 }

@@ -2,13 +2,15 @@ package domain
 
 import (
 	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 type resource interface {
-	GetName() string
-	GetNamespace() string
+	common.ResourceForSync
 	GetResourceType() entities.ResourceType
 }
 
@@ -35,17 +37,16 @@ func (d *domain) upsertEnvironmentResourceMapping(ctx ResourceContext, res resou
 	}
 
 	return d.resourceMappingRepo.Upsert(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyEnvironment,
+		fields.ClusterName: clusterName,
+		fields.AccountName:     ctx.AccountName,
+		fields.ProjectName:     ctx.ProjectName,
+		fields.EnvironmentName: ctx.EnvironmentName,
 
-		"clusterName": clusterName,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
+		fc.ResourceMappingResourceType:      res.GetResourceType(),
+		fc.ResourceMappingResourceName:      res.GetName(),
+		fc.ResourceMappingResourceNamespace: res.GetNamespace(),
 
-		"resourceType":      res.GetResourceType(),
-		"resourceName":      res.GetName(),
-		"resourceNamespace": res.GetNamespace(),
-
-		"accountName":     ctx.AccountName,
-		"projectName":     ctx.ProjectName,
-		"environmentName": ctx.EnvironmentName,
 	}, &entities.ResourceMapping{
 		ResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
 
@@ -72,16 +73,13 @@ func (d *domain) upsertProjectResourceMapping(ctx ConsoleContext, projectName st
 	}
 
 	return d.resourceMappingRepo.Upsert(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyProject,
-
-		"resourceType":      res.GetResourceType(),
-		"resourceName":      res.GetName(),
-		"resourceNamespace": res.GetNamespace(),
-
-		"accountName": ctx.AccountName,
-		"clusterName": *clusterName,
-
-		"projectName": projectName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: *clusterName,
+		fields.ProjectName: projectName,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyProject,
+		fc.ResourceMappingResourceType:      res.GetResourceType(),
+		fc.ResourceMappingResourceName:      res.GetName(),
+		fc.ResourceMappingResourceNamespace: res.GetNamespace(),
 	}, &entities.ResourceMapping{
 		ResourceHeirarchy: entities.ResourceHeirarchyProject,
 
@@ -98,21 +96,21 @@ func (d *domain) upsertProjectResourceMapping(ctx ConsoleContext, projectName st
 
 func (d *domain) GetEnvironmentResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyEnvironment,
-		"accountName":       ctx.AccountName,
-		"resourceType":      resType,
-		"resourceName":      name,
-		"clusterName":       clusterName,
-		"resourceNamespace": namespace,
+		fields.AccountName:                      ctx.AccountName,
+		fields.ClusterName:                      clusterName,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
+		fc.ResourceMappingResourceType:      resType,
+		fc.ResourceMappingResourceName:      name,
+		fc.ResourceMappingResourceNamespace: namespace,
 	})
 }
 
 func (d *domain) GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
-		"resourceHeirarchy": entities.ResourceHeirarchyProject,
-		"accountName":       ctx.AccountName,
-		"clusterName":       clusterName,
-		"resourceType":      resType,
-		"resourceName":      name,
+		fields.AccountName:                      ctx.AccountName,
+		fields.ClusterName:                      clusterName,
+		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyProject,
+		fc.ResourceMappingResourceType:      resType,
+		fc.ResourceMappingResourceName:      name,
 	})
 }

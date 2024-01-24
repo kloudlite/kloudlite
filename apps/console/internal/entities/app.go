@@ -1,11 +1,12 @@
 package entities
 
 import (
-	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 )
 
 type App struct {
@@ -21,6 +22,18 @@ type App struct {
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
+func (a *App) GetDisplayName() string {
+	return a.ResourceMetadata.DisplayName
+}
+
+func (a *App) GetGeneration() int64 {
+	return a.ObjectMeta.Generation
+}
+
+func (a *App) GetStatus() operator.Status {
+	return a.App.Status
+}
+
 func (a *App) GetResourceType() ResourceType {
 	return ResourceTypeApp
 }
@@ -28,17 +41,17 @@ func (a *App) GetResourceType() ResourceType {
 var AppIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.Id, Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: fc.MetadataName, Value: repos.IndexAsc},
-			{Key: fc.MetadataNamespace, Value: repos.IndexAsc},
-			{Key: fc.AppAccountName, Value: repos.IndexAsc},
-			{Key: fc.AppProjectName, Value: repos.IndexAsc},
-			{Key: fc.AppEnvironmentName, Value: repos.IndexAsc},
+			{Key: fields.MetadataName, Value: repos.IndexAsc},
+			{Key: fields.MetadataNamespace, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fields.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

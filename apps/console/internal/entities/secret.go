@@ -2,8 +2,10 @@ package entities
 
 import (
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -19,6 +21,14 @@ type Secret struct {
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
+func (s *Secret) GetDisplayName() string {
+	return s.ResourceMetadata.DisplayName
+}
+
+func (s *Secret) GetStatus() operator.Status {
+	return operator.Status{}
+}
+
 func (s *Secret) GetResourceType() ResourceType {
 	return ResourceTypeSecret
 }
@@ -26,17 +36,17 @@ func (s *Secret) GetResourceType() ResourceType {
 var SecretIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
-			{Key: "id", Value: repos.IndexAsc},
+			{Key: fields.Id, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "metadata.namespace", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
-			{Key: "projectName", Value: repos.IndexAsc},
-			{Key: "environmentName", Value: repos.IndexAsc},
+			{Key: fields.MetadataName, Value: repos.IndexAsc},
+			{Key: fields.MetadataNamespace, Value: repos.IndexAsc},
+			{Key: fields.AccountName, Value: repos.IndexAsc},
+			{Key: fields.ProjectName, Value: repos.IndexAsc},
+			{Key: fields.EnvironmentName, Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

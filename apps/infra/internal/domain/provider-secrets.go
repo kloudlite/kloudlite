@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
@@ -207,7 +209,7 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecretIn entities.Cloud
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	if err := d.applyK8sResource(ctx, secret, psecretIn.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, secret, nSecret.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 	return nSecret, nil
@@ -223,11 +225,6 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, providerSecretIn entitie
 		return nil, errors.NewE(err)
 	}
 
-	currScrt, err := d.findProviderSecret(ctx, providerSecretIn.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	//switch providerSecretIn.CloudProviderName {
 	//case ct.CloudProviderAWS:
 	//	{
@@ -236,17 +233,19 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, providerSecretIn entitie
 	//	}
 	//}
 
-	uScrt, err := d.secretRepo.PatchById(ctx, currScrt.Id, repos.Document{
-		"recordVersion": currScrt.RecordVersion+1,
-		"metadata.labels": providerSecretIn.Labels,
-		"metadata.annotations": providerSecretIn.Annotations,
-		"displayName": providerSecretIn.DisplayName,
-		"lastUpdatedBy"	: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&providerSecretIn,
+	)
+
+	uScrt, err := d.secretRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: providerSecretIn.Name,
 		},
-	})
+		patchForUpdate,
+	)
 
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -270,8 +269,8 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 
 	clusters, err := d.clusterRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
-			"accountName":              ctx.AccountName,
-			"spec.credentialsRef.name": secretName,
+			fields.AccountName:               ctx.AccountName,
+			fc.ClusterSpecCredentialsRefName: secretName,
 		},
 	})
 	if err != nil {
@@ -294,7 +293,7 @@ func (d *domain) ListProviderSecrets(ctx InfraContext, matchFilters map[string]r
 	}
 
 	filter := repos.Filter{
-		"accountName":        ctx.AccountName,
+		fields.AccountName: ctx.AccountName,
 	}
 	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
@@ -308,8 +307,8 @@ func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.Clo
 
 func (d *domain) findProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
 	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"metadata.name":      name,
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: name,
 	})
 	if err != nil {
 		return nil, errors.NewE(err)
