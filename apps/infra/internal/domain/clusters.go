@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -184,7 +185,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 			return &clustersv1.AWSClusterConfig{
 				Region: cluster.Spec.AWS.Region,
 				K3sMasters: clustersv1.AWSK3sMastersConfig{
-					ImageId:          "ami-06d146e85d1709abb",
+					ImageId:          d.env.AWSAMI,
 					ImageSSHUsername: "ubuntu",
 					InstanceType:     cluster.Spec.AWS.K3sMasters.InstanceType,
 					NvidiaGpuEnabled: cluster.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
@@ -296,22 +297,13 @@ func (d *domain) UpdateCluster(ctx InfraContext, clusterIn entities.Cluster) (*e
 	}
 	clusterIn.EnsureGVK()
 
-	patchForUpdate := common.PatchForUpdate(
-		ctx,
-		&clusterIn,
-		common.PatchOpts{
-			XPatch: repos.Document{
-				fc.ClusterSpec: clusterIn.Spec,
-			},
-		})
-
 	uCluster, err := d.clusterRepo.Patch(
 		ctx,
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
 			fields.MetadataName: clusterIn.Name,
 		},
-		patchForUpdate,
+		common.PatchForUpdate(ctx, &clusterIn),
 	)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -357,7 +349,6 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 	return nil
-
 }
 
 func (d *domain) OnClusterDeleteMessage(ctx InfraContext, cluster entities.Cluster) error {

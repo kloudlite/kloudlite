@@ -1,14 +1,15 @@
 package common
 
 import (
+	"maps"
+	"time"
+
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"maps"
-	"time"
 )
 
 type PatchOpts struct {
@@ -109,6 +110,9 @@ func PatchForUpdate(
 		fields.SyncStatusSyncScheduledAt: time.Now(),
 		fields.SyncStatusState:           t.SyncStateInQueue,
 		fields.SyncStatusAction:          t.SyncActionApply,
+		"$inc": repos.Document{
+			fields.RecordVersion: 1,
+		},
 	}
 	var patch repos.Document
 	if len(opts) > 0 {

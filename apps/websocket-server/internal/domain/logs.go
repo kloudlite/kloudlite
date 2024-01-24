@@ -78,7 +78,6 @@ type LogsReqData struct {
 }
 
 func (d *domain) newJetstreamConsumerForLog(ctx context.Context, subject string, consumetId string, since *string) (*msg_nats.JetstreamConsumer, error) {
-
 	t, err := parseSince(since)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -109,7 +108,6 @@ func (d *domain) newJetstreamConsumerForLog(ctx context.Context, subject string,
 			},
 		},
 	})
-
 }
 
 func getLogHash(ld LogsReqData, userId repos.ID) string {
@@ -126,8 +124,6 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 	if sess == nil {
 		return errors.NewE(fmt.Errorf("session not found"))
 	}
-
-	// NewJetstreamConsumer(ctx, d.env, d.natsClient.JetstreamClient, "logs.*.*.*", "logs")
 
 	defer func() {
 		if err := c.Close(); err != nil {
@@ -242,7 +238,6 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 
 			if err := jc.Consume(
 				func(msg *types.ConsumeMsg) error {
-
 					if c != nil {
 
 						var resp MessageResponse
@@ -288,7 +283,6 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 			}
 
 		case "unsubscribe":
-
 			if _, ok := resources[hash]; !ok {
 				if err := writeError(
 					c, errors.Newf("not subscribed to logs for account: %s, cluster: %s, trackingId: %s",

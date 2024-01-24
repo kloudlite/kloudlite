@@ -12,6 +12,9 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"github.com/kloudlite/operator/pkg/constants"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string) (*entities.VPNDevice, error) {
@@ -29,6 +32,29 @@ func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string
 	}
 
 	return device, nil
+}
+
+func (d *domain) applyVPNDevice(ctx InfraContext, clusterName string, device *entities.VPNDevice) error {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: d.env.DeviceNamespace,
+			Annotations: map[string]string{
+				constants.DescriptionKey: "namespace created by kloudlite platform to manage infra level VPN Devices",
+			},
+		},
+	}, device.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, device, device.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
 }
 
 func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName string, namespace string) error {
@@ -50,18 +76,13 @@ func (d *domain) UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName
 			},
 		})
 
-	upDevice, err := d.vpnDeviceRepo.PatchById(
-		ctx,
-		xDevice.Id,
-		patchForUpdate,
-	)
-
+	upDevice, err := d.vpnDeviceRepo.PatchById(ctx, xDevice.Id, patchForUpdate)
 	if err != nil {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, upDevice.Name, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &upDevice.Device, upDevice.RecordVersion); err != nil {
+	if err := d.applyVPNDevice(ctx, clusterName, upDevice); err != nil {
 		return errors.NewE(err)
 	}
 	return nil
@@ -121,7 +142,7 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, deviceIn 
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, upDevice.Name, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &upDevice.Device, upDevice.RecordVersion); err != nil {
+	if err := d.applyVPNDevice(ctx, clusterName, upDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
 	return upDevice, nil
@@ -151,13 +172,12 @@ func (d *domain) UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devN
 		fields.ClusterName:  clusterName,
 		fields.MetadataName: devName,
 	}, patchForUpdate)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, devName, PublishUpdate)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &upDevice.Device, upDevice.RecordVersion); err != nil {
+	if err := d.applyVPNDevice(ctx, clusterName, upDevice); err != nil {
 		return errors.NewE(err)
 	}
 	return nil
@@ -177,7 +197,6 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 		},
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -251,9 +270,10 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 	}
 	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeVpnDevice, nDevice.Name, PublishAdd)
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.applyVPNDevice(ctx, clusterName, nDevice); err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	return nDevice, nil
 }
 
@@ -285,7 +305,6 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 					fc.VPNDeviceWireguardConfig: device.WireguardConfig,
 				},
 			}))
-
 	if err != nil {
 		return errors.NewE(err)
 	}
