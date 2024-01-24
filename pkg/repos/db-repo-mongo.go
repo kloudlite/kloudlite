@@ -353,9 +353,11 @@ func (repo *dbRepo[T]) patchRecordByID(ctx context.Context, id ID, patch Documen
 		return x, errors.NewE(err)
 	}
 
+	delete(m, "$inc")
+
 	updatedDoc := bson.M{"$set": m}
-	if _, ok := patch["markedForDeletion"]; !ok {
-		updatedDoc["$inc"] = bson.M{"recordVersion": 1}
+	if v, ok := patch["$inc"]; ok {
+		updatedDoc["$inc"] = v
 	}
 
 	after := options.After

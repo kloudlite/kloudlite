@@ -3,11 +3,12 @@ package domain
 import (
 	"crypto/md5"
 	"fmt"
+	"strings"
+	"time"
+
 	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
-	"strings"
-	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/constants"
