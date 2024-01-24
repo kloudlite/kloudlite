@@ -417,7 +417,7 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.Co
 			UserId:      string(ctx.UserId),
 			ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceConsoleVPNDevice, device.Name),
 		}); err != nil {
-			d.logger.Errorf(err, "error while removing membership")
+			return errors.NewE(err)
 		}
 
 		d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, device.Name, PublishDelete)
