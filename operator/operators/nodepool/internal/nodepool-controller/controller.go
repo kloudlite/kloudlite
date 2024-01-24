@@ -37,7 +37,8 @@ type Reconciler struct {
 	Name       string
 	yamlClient kubectl.YAMLClient
 
-	templateNodePoolJob []byte
+	templateNodePoolJob   []byte
+	templateNamespaceRBAC []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -87,7 +88,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
+	if step := r.ensureJobNamespaceExists(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -158,6 +159,42 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 			return fail(err)
 		}
 		return req.Done()
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) ensureJobNamespaceExists(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "nodepool-job-namespace"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	b, err := templates.ParseBytes(r.templateNamespaceRBAC, map[string]any{
+		"namespace": obj.Spec.IAC.JobNamespace,
+	})
+	if err != nil {
+		return fail(err).Err(nil)
+	}
+
+	_, err = r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return fail(err)
 	}
 
 	check.Status = true
@@ -452,7 +489,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	var err error
-	r.templateNodePoolJob, err = templates.ReadNodepoolJobTemplate()
+	r.templateNodePoolJob, err = templates.Read(templates.NodepoolJob)
+	if err != nil {
+		return err
+	}
+
+	r.templateNamespaceRBAC, err = templates.Read(templates.NodepoolJobNamespaceRBAC)
 	if err != nil {
 		return err
 	}
