@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var addConfigCommand = &cobra.Command{
+var confCmd = &cobra.Command{
 	Use:   "config",
 	Short: "add config to your kl-config file by selection from the all the config available in selected project",
 	Long: `Add env from managed resource
@@ -40,8 +40,8 @@ Examples:
 }
 
 func selectAndAddConfig(cmd *cobra.Command, args []string) error {
-	m := cmd.Flag("map").Value.String()
-	name := cmd.Flag("name").Value.String()
+	name := fn.ParseStringFlag(cmd, "name")
+	m := fn.ParseStringFlag(cmd, "map")
 
 	if name == "" && len(args) >= 1 {
 		name = args[0]
@@ -195,15 +195,13 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fn.Log("added config %s/%s to your %s-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key, "kl")
+	fn.Log(fmt.Sprintf("added config %s/%s to your kl-file\n", selectedConfigGroup.Metadata.Name, selectedConfigKey.Key))
 
 	return nil
 }
 
 func init() {
-	k := ""
-	addConfigCommand.Flags().StringVarP(&k, "map", "", "", "config_key=your_var_key")
-
-	l := ""
-	addConfigCommand.Flags().StringVarP(&l, "name", "", "", "config name")
+	confCmd.Flags().StringP("map", "m", "", "config_key=your_var_key")
+	confCmd.Flags().StringP("name", "n", "", "config name")
+	confCmd.Aliases = append(confCmd.Aliases, "conf")
 }

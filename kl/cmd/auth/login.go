@@ -17,9 +17,6 @@ var loginCmd = &cobra.Command{
 Example:
   # Login to kloudlite
   kl auth login 
-
-  when you execute the above command a link will be opened on your browser. 
-  visit your browser and approve there to access your account using this cli.
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		loginId, err := server.CreateRemoteLogin()

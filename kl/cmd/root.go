@@ -27,14 +27,14 @@ kl(Kloudlite Cli) will manage and attach to kloudlite environments.
 Find more information at https://kloudlite.io/docs/cli
 
 > NOTE: default kl-config file is kl.yml you can provide your own by providing KLCONFIG_PATH to the environment.`,
+	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if len(args) == 0 {
+		if len(args) < 2 || args[0] != "--" {
 			if err := cmd.Help(); err != nil {
 				fn.Log(err)
 				os.Exit(1)
 			}
-
 			return
 		}
 
@@ -77,7 +77,7 @@ Find more information at https://kloudlite.io/docs/cli
 
 		envs["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
 
-		if err = mounter.Load(envs, args); err != nil {
+		if err = mounter.Load(envs, args[1:]); err != nil {
 			fn.PrintError(err)
 			return
 		}

@@ -102,6 +102,6 @@ func listProjects(cmd *cobra.Command, accountName string) error {
 
 func init() {
 	projectsCmd.Aliases = append(projectsCmd.Aliases, "project")
-	projectsCmd.Aliases = append(projectsCmd.Aliases, "proj")
+	projectsCmd.Aliases = append(projectsCmd.Aliases, "prj")
 	fn.WithOutputVariant(projectsCmd)
 }

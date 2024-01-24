@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var addMresCommand = &cobra.Command{
+var mresCmd = &cobra.Command{
 	Use:   "mres",
 	Short: "add mres to your kl-config file by selection from the all the mres available selected project",
 	Long: `Add env from managed resource
@@ -100,5 +100,5 @@ Examples:
 }
 
 func init() {
-	addMresCommand.Flags().StringP("resource", "", "", "managed resource name")
+	mresCmd.Flags().StringP("name", "n", "", "managed resource name")
 }

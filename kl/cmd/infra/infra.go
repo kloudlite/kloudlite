@@ -16,14 +16,15 @@ import (
 )
 
 var Cmd = &cobra.Command{
-	Use:   "infra",
-	Short: "create new infra context and vpn and manage existing infra contexts and vpn",
-	Long: `create new infra context and vpn and manage existing infra contexts and vpn. Also list of clusters.
-	`,
+	Use:                "infra",
+	Short:              "infra releated commands",
+	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if len(args) == 0 {
-			cmd.Help()
+		if len(args) < 2 || args[0] != "--" {
+			if err := cmd.Help(); err != nil {
+				functions.PrintError(err)
+			}
 			return
 		}
 
@@ -58,7 +59,7 @@ var Cmd = &cobra.Command{
 			}
 			if err := run(map[string]string{
 				"KUBECONFIG": *configPath,
-			}, args); err != nil {
+			}, args[1:]); err != nil {
 				return err
 			}
 			return nil
@@ -90,7 +91,7 @@ func run(envs map[string]string, args []string) error {
 
 	for k, v := range envs {
 		if len(args) == 0 {
-			functions.Log("%s=%q\n", k, v)
+			functions.Log(fmt.Sprintf("%s=%s", k, v))
 		} else {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 		}
@@ -104,7 +105,7 @@ func run(envs map[string]string, args []string) error {
 }
 
 func init() {
-	Cmd.Aliases = append(Cmd.Aliases, "infra")
+	Cmd.Aliases = append(Cmd.Aliases, "i")
 
 	Cmd.Flags().StringP("cluster", "o", "", "cluster name")
 	Cmd.Flags().StringP("account", "a", "", "account name")

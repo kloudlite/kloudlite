@@ -7,8 +7,8 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "vpn",
-	Short: "work with vpn",
-	Long: `work with vpn
+	Short: "vpn related commands",
+	Long: `vpn related commands
 Examples:
   # expose port of selected device
 	kl vpn expose port -p <port>:<your_local_port>

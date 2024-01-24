@@ -1,4 +1,4 @@
-package account
+package sw
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 	"os"
 )
 
-var switchCmd = &cobra.Command{
-	Use:   "switch",
+var accCmd = &cobra.Command{
+	Use:   "account",
 	Short: "Switch account",
 	Long: `Use this command to switch account
 Example:
@@ -60,5 +60,6 @@ Example:
 }
 
 func init() {
-	switchCmd.Flags().StringP("account", "a", "", "account name")
+	accCmd.Flags().StringP("account", "a", "", "account name")
+	accCmd.Aliases = append(accCmd.Aliases, "acc")
 }

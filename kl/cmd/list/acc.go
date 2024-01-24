@@ -1,4 +1,4 @@
-package account
+package list
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
+var accCmd = &cobra.Command{
+	Use:   "accounts",
 	Short: "list all the accounts accessible to you",
 	Long: `List Accounts
 
@@ -76,7 +76,7 @@ func listAccounts(cmd *cobra.Command) error {
 }
 
 func init() {
-	listCmd.Aliases = append(listCmd.Aliases, "ls")
+	accCmd.Aliases = append(accCmd.Aliases, "acc", "account")
 
-	fn.WithOutputVariant(listCmd)
+	fn.WithOutputVariant(accCmd)
 }

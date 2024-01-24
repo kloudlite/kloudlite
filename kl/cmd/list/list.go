@@ -6,7 +6,7 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "projects | configs | secrets | apps",
+	Short: "accounts | projects | env | configs | secrets | apps",
 	Long: `Using this command you can list multiple resources.
 `,
 }
@@ -16,6 +16,8 @@ func init() {
 	Cmd.AddCommand(configsCmd)
 	Cmd.AddCommand(secretsCmd)
 	Cmd.AddCommand(appsCmd)
+	Cmd.AddCommand(accCmd)
+	Cmd.AddCommand(envCmd)
 
 	Cmd.Aliases = append(Cmd.Aliases, "ls")
 

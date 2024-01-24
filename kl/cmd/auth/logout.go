@@ -14,10 +14,6 @@ var logoutCmd = &cobra.Command{
 Example:
   # Logout from kloudlite
   kl auth logout
-
-  using above command you can expire your session from the current device shell.
-
-  logging out will not delete your mounted config/secret files or kl-config file.
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		err := client.Logout()

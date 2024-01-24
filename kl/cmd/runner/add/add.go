@@ -6,12 +6,13 @@ import (
 
 var Command = &cobra.Command{
 	Use:   "add",
-	Short: "add [ secret | config | mres ] configuration to your kl-config file",
+	Short: "add [ secret | config | mres | mount ] configuration to your kl-config file",
 	Long:  `add an environment variable from secret,config or managed resource`,
 }
 
 func init() {
-	Command.AddCommand(addConfigCommand)
-	Command.AddCommand(addMresCommand)
-	Command.AddCommand(addSecretCommand)
+	Command.AddCommand(confCmd)
+	Command.AddCommand(mresCmd)
+	Command.AddCommand(secCmd)
+	Command.AddCommand(secCmd)
 }

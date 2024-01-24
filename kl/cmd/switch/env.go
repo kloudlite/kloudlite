@@ -1,4 +1,4 @@
-package env
+package sw
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 var switchCmd = &cobra.Command{
-	Use:   "switch",
+	Use:   "env",
 	Short: "switch to a different environment",
 	Long: `Switch Environment
 Examples:
@@ -68,7 +68,6 @@ Examples:
 }
 
 func init() {
-	switchCmd.Aliases = append(switchCmd.Aliases, "sw")
 
 	switchCmd.Flags().StringP("envname", "e", "", "environment name")
 	switchCmd.Flags().StringP("projectname", "p", "", "project name")

@@ -6,14 +6,17 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "auth",
-	Short: "login and logout",
-	Long: `Login and logout
+	Short: "login,logout and status",
+	Long: `Login, logout and status
 Examples:
   # login to kloudlite
   kl auth login
 
   # logout from kloudlite
   kl auth logout
+
+  # get auth status
+  kl auth status
 	`,
 }
 

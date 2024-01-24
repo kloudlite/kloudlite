@@ -1,4 +1,4 @@
-package env
+package list
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listCmd = &cobra.Command{
-	Use:   "list",
+var envCmd = &cobra.Command{
+	Use:   "envs",
 	Short: "list all the environments accessible to you",
 	Long: `List Environments
 
@@ -83,6 +83,6 @@ func listEnvironments(cmd *cobra.Command, args []string) error {
 }
 
 func init() {
-	listCmd.Aliases = append(listCmd.Aliases, "ls")
-	fn.WithOutputVariant(listCmd)
+	fn.WithOutputVariant(envCmd)
+	envCmd.Aliases = append(envCmd.Aliases, "env")
 }

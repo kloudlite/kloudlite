@@ -1,9 +1,9 @@
-package account
+package sw
 
 import "github.com/spf13/cobra"
 
 var Cmd = &cobra.Command{
-	Use:   "account",
+	Use:   "switch",
 	Short: "switch and list account",
 	Long: `Use this command to switch and list accounts
 Examples:
@@ -16,7 +16,7 @@ Examples:
 }
 
 func init() {
-	Cmd.Aliases = append(Cmd.Aliases, "acc")
-	Cmd.AddCommand(listCmd)
+	Cmd.Aliases = append(Cmd.Aliases, "sw")
+	Cmd.AddCommand(accCmd)
 	Cmd.AddCommand(switchCmd)
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var addSecretCommand = &cobra.Command{
+var secCmd = &cobra.Command{
 	Use:   "secret",
 	Short: "add secret to your kl-config file by selection from the all the secrets available in selected project",
 	Long: `Add env from secret
@@ -40,8 +40,8 @@ Examples:
 }
 
 func selectAndAddSecret(cmd *cobra.Command, args []string) error {
-	m := cmd.Flag("map").Value.String()
-	name := cmd.Flag("name").Value.String()
+	m := fn.ParseStringFlag(cmd, "map")
+	name := fn.ParseStringFlag(cmd, "name")
 
 	if name == "" && len(args) >= 1 {
 		name = args[0]
@@ -196,14 +196,13 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 		fn.PrintError(err)
 	}
 
-	fn.Log("added secret %s/%s to your %s-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key, "kl")
+	fn.Log(fmt.Sprintf("added secret %s/%s to your kl-file\n", selectedSecretGroup.Metadata.Name, selectedSecretKey.Key))
 	return nil
 }
 
 func init() {
-	k := ""
-	addSecretCommand.Flags().StringVarP(&k, "map", "", "", "secret_key=your_var_key")
+	secCmd.Flags().StringP("map", "m", "", "secret_key=your_var_key")
+	secCmd.Flags().StringP("name", "n", "", "secret name")
 
-	l := ""
-	addSecretCommand.Flags().StringVarP(&l, "name", "", "", "secret name")
+	secCmd.Aliases = append(secCmd.Aliases, "sec")
 }
