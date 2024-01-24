@@ -134,7 +134,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Project]) stepResult.Res
 
 	projectMsvcs := make([]client.Object, len(projectMsvcList.Items))
 	for i := range projectMsvcList.Items {
-		envs[i] = &projectMsvcList.Items[i]
+		projectMsvcs[i] = &projectMsvcList.Items[i]
 	}
 
 	if err := fn.DeleteAndWait(ctx, r.logger, r.Client, projectMsvcs...); err != nil {

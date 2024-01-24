@@ -6,9 +6,10 @@ import (
 	clusters "github.com/kloudlite/operator/operators/clusters/controller"
 	helmCharts "github.com/kloudlite/operator/operators/helm-charts/controller"
 	msvcMongo "github.com/kloudlite/operator/operators/msvc-mongo/controller"
+	nodepool "github.com/kloudlite/operator/operators/nodepool/controller"
 	project "github.com/kloudlite/operator/operators/project/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
-	// routers "github.com/kloudlite/operator/operators/routers/controller"
+	wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 
 	// kloudlite cluster management
 	clusters.RegisterInto(mgr)
+	nodepool.RegisterInto(mgr)
+	wireguard.RegisterInto(mgr)
 
 	mgr.Start()
 }
