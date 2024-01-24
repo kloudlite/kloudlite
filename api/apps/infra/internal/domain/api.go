@@ -19,9 +19,35 @@ type InfraContext struct {
 	AccountName string
 }
 
+func (i InfraContext) GetUserId() repos.ID {
+	return i.UserId
+}
+
+func (i InfraContext) GetUserEmail() string {
+	return i.UserEmail
+}
+
+func (i InfraContext) GetUserName() string {
+	return i.UserName
+}
+
 type UpdateAndDeleteOpts struct {
 	MessageTimestamp time.Time
 }
+
+type ResourceType string
+
+const (
+	ResourceTypeClusterManagedService ResourceType = "cluster_managed_service"
+	ResourceTypeCluster               ResourceType = "cluster"
+	ResourceTypeDomainEntries         ResourceType = "domain_entries"
+	ResourceTypeHelmRelease           ResourceType = "helm_release"
+	ResourceTypeNodePool              ResourceType = "nodepool"
+	ResourceTypeVpnDevice             ResourceType = "vpn_device"
+	ResourceTypePVC                   ResourceType = "persistance_volume_claim"
+	ResourceTypePV                    ResourceType = "persistance_volume"
+	ResourceTypeVolumeAttachment      ResourceType = "volume_attachment"
+)
 
 type Domain interface {
 	CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error)

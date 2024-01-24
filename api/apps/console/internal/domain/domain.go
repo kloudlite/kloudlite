@@ -230,17 +230,17 @@ func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string
 	return int(annVersion), nil
 }
 
-func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) error {
+func (d *domain) MatchRecordVersion(annotations map[string]string, rv int) (int, error) {
 	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
 	if err != nil {
-		return errors.NewE(err)
+		return -1, errors.NewE(err)
 	}
 
 	if annVersion != rv {
-		return errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
+		return -1, errors.Newf("record version mismatch, expected %d, got %d", rv, annVersion)
 	}
 
-	return nil
+	return annVersion, nil
 }
 
 func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, projectName string) error {

@@ -14,68 +14,20 @@ type ResourceEventPublisherImpl struct {
 	logger logging.Logger
 }
 
+func (r *ResourceEventPublisherImpl) PublishConsoleEvent(ctx domain.ConsoleContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
+	subject := fmt.Sprintf("res-updates.account.%s.resourceType.%s.%s", ctx.AccountName, resourceType, name)
+	r.publish(subject, update)
+}
+
+func (r *ResourceEventPublisherImpl) PublishResourceEvent(ctx domain.ResourceContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
+	subject := fmt.Sprintf("res-updates.account.%s.project.%s.%s.%s", ctx.AccountName, ctx.ProjectName, resourceType, name)
+	r.publish(subject, update)
+}
+
 func (r *ResourceEventPublisherImpl) publish(subject string, msg domain.PublishMsg) {
 	if err := r.cli.Conn.Publish(subject, []byte(msg)); err != nil {
 		r.logger.Errorf(err, "failed to publish message to subject %q", subject)
 	}
-}
-
-func (r *ResourceEventPublisherImpl) PublishImagePullSecretEvent(ips *entities.ImagePullSecret, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.imagepullsecret.%s", ips.AccountName, ips.ProjectName, ips.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishConfigEvent(config *entities.Config, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.config.%s", config.AccountName, config.ProjectName, config.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishSecretEvent(secret *entities.Secret, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.secret.%s", secret.AccountName, secret.ProjectName, secret.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishProjectManagedServiceEvent(projectManagedService *entities.ProjectManagedService, msg domain.PublishMsg) {
-	subject := fmt.Sprintf(
-		"res-updates.account.%s.project.%s.app.%s",
-		projectManagedService.AccountName,
-		projectManagedService.ProjectName,
-		projectManagedService.Name,
-	)
-
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishAppEvent(app *entities.App, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.app.%s", app.AccountName, app.ProjectName, app.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishMresEvent(mres *entities.ManagedResource, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.mres.%s", mres.AccountName, mres.ProjectName, mres.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishProjectEvent(project *entities.Project, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.project.%s", project.AccountName, project.Name, project.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishRouterEvent(router *entities.Router, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.router.%s", router.AccountName, router.ProjectName, router.Name)
-
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishEnvironmentEvent(env *entities.Environment, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.environment.%s", env.AccountName, env.ProjectName, env.Name)
-	r.publish(subject, msg)
-}
-
-func (r *ResourceEventPublisherImpl) PublishVpnDeviceEvent(device *entities.ConsoleVPNDevice, msg domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.vpn-device.%s", device.AccountName, device.Name)
-
-	r.publish(subject, msg)
 }
 
 func NewResourceEventPublisher(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
