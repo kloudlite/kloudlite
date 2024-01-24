@@ -39,7 +39,7 @@ spec:
       readinessProbe: *probe
       env:
         - key: BASE_URL
-          value: "{{.Values.global.baseDomain}}"
+          value: {{include "router-domain" .}}
         - key: GATEWAY_URL
           value: "http://gateway"
         - key: COOKIE_DOMAIN

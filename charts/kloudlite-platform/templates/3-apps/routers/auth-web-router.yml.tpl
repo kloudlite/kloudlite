@@ -7,7 +7,7 @@ metadata:
 spec:
   ingressClass: {{ .Values.global.ingressClassName }}
   domains:
-    - auth.{{.Values.global.baseDomain}}
+    - auth.{{include "router-domain" .}}
   https:
     enabled: true
     forceRedirect: true

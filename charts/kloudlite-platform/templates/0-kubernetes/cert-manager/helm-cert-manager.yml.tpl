@@ -8,9 +8,9 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://charts.jetstack.io
-
-  chartName: jetstack/cert-manager
-  chartVersion: v1.11.0
+  chartName: cert-manager
+  {{- /* chartVersion: v1.11.0 */}}
+  chartVersion: v1.13.2
 
   values:
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare

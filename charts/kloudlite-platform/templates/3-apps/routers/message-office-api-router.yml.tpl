@@ -9,7 +9,7 @@ spec:
   backendProtocol: GRPC
   maxBodySizeInMB: 50
   domains:
-    - "message-office.{{.Values.global.baseDomain}}"
+    - message-office.{{include "router-domain" .}}
   https:
     enabled: true
     forceRedirect: true

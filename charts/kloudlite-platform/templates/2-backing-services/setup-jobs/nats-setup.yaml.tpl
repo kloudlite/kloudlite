@@ -22,7 +22,7 @@ spec:
 
             echo "creatings NATS STREAMs"
             {{- range $k,$stream := .Values.envVars.nats.streams }}
-            nats --server nats://nats:4222 stream add {{ $stream.name }} --replicas={{$.Values.nats.replicas}} --subjects={{ $stream.subjects | squote }} --max-msg-size={{ $stream.maxMsgBytes }} --storage=file --defaults
+            nats --server nats://nats:4222 stream add {{ $stream.name }} --replicas={{$.Values.nats.replicas}} --subjects={{ $stream.subjects | squote }} --max-msg-size={{ $stream.maxMsgBytes }} --storage=file {{ if $stream.maxAge }} --max-age={{$stream.maxAge}} {{ end }} --defaults
             {{- end }}
       restartPolicy: Never
   backoffLimit: 0
