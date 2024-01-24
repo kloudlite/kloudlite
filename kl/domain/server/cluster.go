@@ -25,17 +25,13 @@ type Cluster struct {
 	} `json:"status"`
 }
 
-func ListClusters() ([]Cluster, error) {
-	s, _ := client.CurrentInfraAccountName()
-	if s == "" {
-		_, err := client.GetActiveInfraContext()
-		if err != nil {
-			return nil, err
-		}
-		return nil, errors.New("Please select a infra context first")
+func ListClusters(options ...fn.Option) ([]Cluster, error) {
+	_, err := EnsureAccount(options...)
+	if err != nil {
+		return nil, err
 	}
 
-	cookie, err := getInfraCookie()
+	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}

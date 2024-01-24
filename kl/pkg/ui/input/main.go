@@ -11,6 +11,7 @@ import (
 func Prompt(o Options) (string, error) {
 	i := textinput.New()
 	i.Focus()
+	i.SetValue(o.Value)
 	i.Prompt = o.Prompt
 	i.Placeholder = o.Placeholder
 	i.Width = o.Width

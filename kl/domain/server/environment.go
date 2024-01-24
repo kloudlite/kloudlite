@@ -156,18 +156,20 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 		return env, nil
 	}
 
-	mEnv, err := SelectEnv(func() string {
-		if env != nil {
-			return env.Name
-		}
-		return ""
-	}())
-	if err != nil {
-		return nil, err
-	}
+	return nil, errors.New("please select an environment using 'kl switch env'")
 
-	return &client.Env{
-		Name:     mEnv.Metadata.Name,
-		TargetNs: mEnv.Spec.TargetNamespace,
-	}, nil
+	// mEnv, err := SelectEnv(func() string {
+	// 	if env != nil {
+	// 		return env.Name
+	// 	}
+	// 	return ""
+	// }())
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return &client.Env{
+	// 	Name:     mEnv.Metadata.Name,
+	// 	TargetNs: mEnv.Spec.TargetNamespace,
+	// }, nil
 }

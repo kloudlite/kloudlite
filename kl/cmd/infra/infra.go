@@ -45,7 +45,7 @@ var Cmd = &cobra.Command{
 			}
 
 			functions.Log(
-				text.Bold(text.Green("\nSelected Cluster:")),
+				text.Bold(text.Green("\nSelected Cluster: ")),
 				text.Blue(fmt.Sprintf("%s", clusterName)),
 			)
 

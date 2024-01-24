@@ -24,7 +24,7 @@ func CurrentAccountName() (string, error) {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "", errors.New("no Selected account")
+		return "", errors.New("no account selected, please select one using \"kl switch account\"")
 	}
 	if file.AccountName == "" {
 		return "",
@@ -39,7 +39,7 @@ func CurrentInfraAccountName() (string, error) {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "", errors.New("noSelectedInfraContext")
+		return "", errors.New("no infra context is selected yet. please select one using \"kl infra ctx switch\"")
 	}
 	if file.AccountName == "" {
 		return "",

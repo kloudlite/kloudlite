@@ -39,20 +39,26 @@ Examples:
 				return
 			}
 
-			prj, err := server.EnsureProject(
-				[]fn.Option{
-					fn.MakeOption("accountName", aName),
-					fn.MakeOption("projectName", pName),
-				}...,
-			)
+			p, err := server.SelectProject(pName)
 			if err != nil {
 				fn.PrintError(err)
 				return
 			}
 
+			// prj, err := server.EnsureProject(
+			// 	[]fn.Option{
+			// 		fn.MakeOption("accountName", aName),
+			// 		fn.MakeOption("projectName", pName),
+			// 	}...,
+			// )
+			// if err != nil {
+			// 	fn.PrintError(err)
+			// 	return
+			// }
+
 			initFile = &client.KLFileType{
 				Version: "v1",
-				Project: fmt.Sprintf("%s/%s", acc, prj),
+				Project: fmt.Sprintf("%s/%s", acc, p.Metadata.Name),
 				Mres:    make([]client.ResType, 0),
 				Configs: make([]client.ResType, 0),
 				Secrets: make([]client.ResType, 0),

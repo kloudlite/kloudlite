@@ -23,7 +23,11 @@ type App struct {
 
 func ListApps(options ...fn.Option) ([]App, error) {
 
-	env, err := EnsureEnv(nil, options...)
+	envName := fn.GetOption(options, "envName")
+
+	env, err := EnsureEnv(&client.Env{
+		Name: envName,
+	}, options...)
 	if err != nil {
 		return nil, err
 	}

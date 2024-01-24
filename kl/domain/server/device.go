@@ -1,7 +1,8 @@
 package server
 
 import (
-	"fmt"
+	"os"
+
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -9,9 +10,6 @@ import (
 
 func GetDevice(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
-
-	var err error
-	_, err = EnsureDevice(options...)
 
 	cookie, err := getCookie()
 	if err != nil {
@@ -56,22 +54,6 @@ func GetDeviceName(devName string) (*CheckName, error) {
 	} else {
 		return fromResp, nil
 	}
-}
-
-func SelectDeviceName(suggestedNames []string) (string, error) {
-	deviceName, err := fzf.FindOne(
-		suggestedNames,
-		func(deviceName string) string {
-			return deviceName
-		},
-		fzf.WithPrompt("Select Device Name > "),
-	)
-
-	if err != nil {
-		return "", err
-	}
-
-	return *deviceName, nil
 }
 
 func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
@@ -203,30 +185,61 @@ func DeleteDevicePort(ports []DevicePort) error {
 
 func EnsureDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
+
 	if devName == "" {
-		return "", fmt.Errorf("device name is required")
+		currDevName, _ := client.CurrentDeviceName()
+		if currDevName != "" {
+			devName = currDevName
+		}
 	}
-	currDevName, _ := client.CurrentDeviceName()
-	if currDevName != "" {
-		return currDevName, nil
+
+	if devName != "" {
+		dev, err := GetDevice(fn.MakeOption("deviceName", devName))
+
+		if err == nil {
+			return dev.Metadata.Name, nil
+		}
 	}
-	devResult, err := GetDeviceName(devName)
-	if err != nil {
-		return "", err
-	}
-	selectedDeviceName := ""
-	if devResult.Result == true {
-		selectedDeviceName = devName
-	} else {
-		selectedDeviceName, err = SelectDeviceName(devResult.SuggestedNames)
+
+	if devName != "" {
+		var err error
+		devName, err = os.Hostname()
 		if err != nil {
 			return "", err
 		}
 	}
+
+	devResult, err := GetDeviceName(devName)
+	if err != nil {
+		return "", err
+	}
+
+	selectedDeviceName := ""
+	if devResult.Result == true {
+		selectedDeviceName = devName
+	} else {
+		deviceName, err := fzf.FindOne(
+			devResult.SuggestedNames,
+			func(deviceName string) string {
+				return deviceName
+			},
+			fzf.WithPrompt("Select Device Name > "),
+		)
+		if err != nil {
+			return "", err
+		}
+
+		selectedDeviceName = *deviceName
+	}
+
 	dev, err := CreateDevice(selectedDeviceName, devName)
 	if err != nil {
 		return "", err
 	}
+
+	fn.Logf("Device created: %s", dev.Metadata.Name)
+	client.WriteDeviceContext(dev.Metadata.Name)
+
 	return dev.Metadata.Name, nil
 }
 

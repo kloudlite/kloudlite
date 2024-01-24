@@ -38,7 +38,15 @@ func PrintError(err error) {
 }
 
 func Log(str ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprint(str...))
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprint(fmt.Sprint(str...), "\n"))
+}
+
+func Warn(str ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, text.Yellow(fmt.Sprint(fmt.Sprint(str...), "\n")))
+}
+
+func Logf(format string, str ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, fmt.Sprintf(fmt.Sprint(format, "\n"), str...))
 }
 
 func Printf(format string, str ...interface{}) {

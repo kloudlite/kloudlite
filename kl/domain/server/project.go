@@ -100,10 +100,12 @@ func EnsureProject(options ...fn.Option) (string, error) {
 		return s, nil
 	}
 
-	project, err := SelectProject(projectName)
-	if err != nil {
-		return "", err
-	}
+	return "", errors.New("can't find project, please initialize project first using 'kl init'\n")
 
-	return project.Metadata.Name, nil
+	// project, err := SelectProject(projectName)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// return project.Metadata.Name, nil
 }

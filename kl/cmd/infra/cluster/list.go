@@ -37,7 +37,10 @@ Note: selected project will be highlighted with green color.
 }
 
 func listClusters(cmd *cobra.Command) error {
-	clusters, err := server.ListClusters()
+
+	accName := fn.ParseStringFlag(cmd, "account")
+
+	clusters, err := server.ListClusters(fn.MakeOption("accountName", accName))
 	if err != nil {
 		return err
 	}
@@ -84,4 +87,5 @@ func listClusters(cmd *cobra.Command) error {
 
 func init() {
 	clustersCmd.Aliases = append(clustersCmd.Aliases, "ls")
+	clustersCmd.Flags().StringP("account", "a", "", "account name")
 }

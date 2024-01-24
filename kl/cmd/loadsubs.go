@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/infra"
+	sw "github.com/kloudlite/kl/cmd/switch"
 	"github.com/kloudlite/kl/cmd/vpn"
 	"github.com/spf13/cobra"
 
@@ -29,6 +30,7 @@ func init() {
 	rootCmd.AddCommand(infra.Cmd)
 	rootCmd.AddCommand(vpn.Cmd)
 
+	rootCmd.AddCommand(sw.Cmd)
 	rootCmd.AddCommand(runner.InitCommand)
 
 	rootCmd.AddCommand(add.Command)

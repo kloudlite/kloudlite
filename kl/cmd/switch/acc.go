@@ -1,12 +1,10 @@
 package sw
 
 import (
-	"fmt"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var accCmd = &cobra.Command{
@@ -15,36 +13,26 @@ var accCmd = &cobra.Command{
 	Long: `Use this command to switch account
 Example:
   # switch to a different account
-  kl account switch
+  kl switch account
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		accountName := ""
+		accountName := fn.ParseStringFlag(cmd, "account")
 
-		accountName = fn.ParseStringFlag(cmd, "account")
-
-		a, err := server.SelectAccount(accountName)
+		acc, err := server.SelectAccount(accountName)
 		if err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		if err := client.WriteAccountContext(a.Metadata.Name); err != nil {
+		if err := client.WriteAccountContext(acc.Metadata.Name); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
-		devName, err := os.Hostname()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
 		d, err := server.EnsureDevice([]fn.Option{
-			fn.MakeOption("deviceName", devName),
+			fn.MakeOption("accountName", acc.Metadata.Name),
 		}...)
+
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -54,8 +42,6 @@ Example:
 			fn.PrintError(err)
 			return
 		}
-
-		fn.Log(fmt.Sprintf("Account Context %s and Device Context %s created", a.Metadata.Name, d))
 	},
 }
 

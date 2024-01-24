@@ -92,7 +92,7 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 			return "", err
 		}
 		if s == "" {
-			return "", errors.New("no infra account selected")
+			return "", errors.New("no account selected, please create and select an context using 'kl infra ctx'")
 		}
 
 		return s, nil
@@ -103,7 +103,7 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return "", err
 	}
 	if s == "" {
-		return "", errors.New("no account selected")
+		return "", errors.New("no account selected, please select an account using 'kl switch account'")
 	}
 
 	return s, nil

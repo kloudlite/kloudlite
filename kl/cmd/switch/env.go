@@ -2,7 +2,7 @@ package sw
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/domain/client"
+
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -23,13 +23,15 @@ Examples:
 
 		envName := fn.ParseStringFlag(cmd, "envname")
 		projectName := fn.ParseStringFlag(cmd, "projectname")
-		var err error
-		if projectName == "" {
-			projectName, err = client.CurrentProjectName()
-			if err != nil {
-				fn.PrintError(err)
-				return
-			}
+		accountName := fn.ParseStringFlag(cmd, "account")
+
+		projectName, err := server.EnsureProject([]fn.Option{
+			fn.MakeOption("projectName", projectName),
+			fn.MakeOption("accountName", accountName),
+		}...)
+		if err != nil {
+			fn.PrintError(err)
+			return
 		}
 
 		projects, err := server.ListProjects()
@@ -37,6 +39,7 @@ Examples:
 			fn.PrintError(err)
 			return
 		}
+
 		var projectExists = false
 		for _, project := range projects {
 			if project.Metadata.Name == projectName {
@@ -71,4 +74,5 @@ func init() {
 
 	switchCmd.Flags().StringP("envname", "e", "", "environment name")
 	switchCmd.Flags().StringP("projectname", "p", "", "project name")
+	switchCmd.Flags().StringP("account", "a", "", "account name")
 }

@@ -2,8 +2,7 @@ package list
 
 import (
 	"errors"
-	"fmt"
-	"github.com/kloudlite/kl/domain/client"
+
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
@@ -30,22 +29,17 @@ Examples:
 	},
 }
 
-func listapps(cmd *cobra.Command, args []string) error {
-	var apps []server.App
-	var err error
+func listapps(cmd *cobra.Command, _ []string) error {
 
-	projectId := ""
+	projectName := fn.ParseStringFlag(cmd, "project")
+	envName := fn.ParseStringFlag(cmd, "env")
+	accName := fn.ParseStringFlag(cmd, "account")
 
-	if len(args) >= 1 {
-		projectId = args[0]
-	}
-
-	if projectId == "" {
-		apps, err = server.ListApps()
-	} else {
-		apps, err = server.ListApps(fn.MakeOption("projectId", args[0]))
-	}
-
+	apps, err := server.ListApps([]fn.Option{
+		fn.MakeOption("accountName", accName),
+		fn.MakeOption("projectName", projectName),
+		fn.MakeOption("envName", envName),
+	}...)
 	if err != nil {
 		return err
 	}
@@ -56,7 +50,7 @@ func listapps(cmd *cobra.Command, args []string) error {
 
 	header := table.Row{
 		table.HeaderText("apps"),
-		table.HeaderText("id"),
+		table.HeaderText("name"),
 	}
 
 	rows := make([]table.Row, 0)
@@ -65,25 +59,16 @@ func listapps(cmd *cobra.Command, args []string) error {
 		rows = append(rows, table.Row{a.DisplayName, a.Metadata.Name})
 	}
 
-	fmt.Println(table.Table(&header, rows, cmd))
+	fn.Println(table.Table(&header, rows, cmd))
 
-	s := fn.ParseStringFlag(cmd, "output")
-	if s == "table" {
-
-		if projectId == "" {
-			projectId, err = client.CurrentProjectName()
-			if err != nil {
-				return err
-			}
-		}
-
-		table.KVOutput("apps of", projectId, true)
-	}
+	table.KVOutput("apps of", projectName, true)
 	table.TotalResults(len(apps), true)
 	return nil
 }
 
 func init() {
 	appsCmd.Aliases = append(appsCmd.Aliases, "app")
+	appsCmd.Flags().StringP("project", "p", "", "project name")
+	appsCmd.Flags().StringP("env", "e", "", "environment name")
 	fn.WithOutputVariant(appsCmd)
 }
