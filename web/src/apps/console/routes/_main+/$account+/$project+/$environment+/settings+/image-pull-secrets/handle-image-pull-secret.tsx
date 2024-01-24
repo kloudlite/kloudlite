@@ -21,8 +21,10 @@ import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { useMapper } from '~/components/utils';
+import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
+import { PasswordInput, TextInput } from '~/components/atoms/input';
 
-type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
+type IDialog = IDialogBase<ExtractNodeType<IImagePullSecrets>>;
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible } = props;
@@ -30,17 +32,6 @@ const Root = (props: IDialog) => {
   const reloadPage = useReload();
 
   const { project: projectName, environment: envName } = useParams();
-  const [selectedDomains, setSelectedDomains] = useState<
-    { label: string; value: string; domain: ExtractNodeType<IDomains> }[]
-  >([]);
-
-  const {
-    data,
-    isLoading: domainLoading,
-    error: domainLoadingError,
-  } = useCustomSwr('/domains', async () => {
-    return api.listDomains({});
-  });
 
   const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =
     useForm({
@@ -48,6 +39,9 @@ const Root = (props: IDialog) => {
         ? {
             name: parseName(props.data),
             displayName: props.data.displayName,
+            registryUsername: '',
+            registryPassword: '',
+            registryURL: '',
             domains: [],
             isNameError: false,
           }
@@ -56,13 +50,16 @@ const Root = (props: IDialog) => {
             displayName: '',
             domains: [],
             isNameError: false,
+            registryUsername: '',
+            registryPassword: '',
+            registryURL: '',
           },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
         name: Yup.string().required(),
-        domains: Yup.array().test('required', 'domain is required', (val) => {
-          return val && val?.length > 0;
-        }),
+        registryUsername: Yup.string().required(),
+        registryPassword: Yup.string().required(),
+        registryURL: Yup.string().required(),
         // .test('is-valid', 'invalid domain names', (val) => {
         //   console.log('vals', val);
 
@@ -71,53 +68,51 @@ const Root = (props: IDialog) => {
       }),
 
       onSubmit: async (val) => {
-        if (!projectName || !envName || selectedDomains?.length === 0) {
+        if (!projectName || !envName) {
           throw new Error('Project, Environment and Domain is required!.');
         }
         try {
           if (!isUpdate) {
-            const { errors: e } = await api.createRouter({
+            const { errors: e } = await api.createImagePullSecret({
               envName,
               projectName,
-              router: {
+              imagePullSecretIn: {
                 displayName: val.displayName,
                 metadata: {
                   name: val.name,
                 },
-                spec: {
-                  domains: selectedDomains.map((sd) => sd.value),
-                  https: {
-                    enabled: true,
-                  },
-                },
+                registryUsername: val.registryUsername,
+                registryPassword: val.registryPassword,
+                registryURL: val.registryURL,
+                format: 'params',
               },
             });
             if (e) {
               throw e[0];
             }
-            toast.success('Router created successfully');
+            toast.success('Image pull secrets created successfully');
           } else {
-            const { errors: e } = await api.updateRouter({
-              envName,
-              projectName,
-              router: {
-                displayName: val.displayName,
-                metadata: {
-                  name: val.name,
-                },
-                spec: {
-                  ...props.data.spec,
-                  domains: selectedDomains.map((sd) => sd.value),
-                  https: {
-                    enabled: true,
-                  },
-                },
-              },
-            });
-            if (e) {
-              throw e[0];
-            }
-            toast.success('Router updated successfully');
+            // const { errors: e } = await api.updateRouter({
+            //   envName,
+            //   projectName,
+            //   router: {
+            //     displayName: val.displayName,
+            //     metadata: {
+            //       name: val.name,
+            //     },
+            //     spec: {
+            //       ...props.data.spec,
+            //       domains: selectedDomains.map((sd) => sd.value),
+            //       https: {
+            //         enabled: true,
+            //       },
+            //     },
+            //   },
+            // });
+            // if (e) {
+            //   throw e[0];
+            // }
+            // toast.success('Router updated successfully');
           }
           reloadPage();
           setVisible(false);
@@ -127,23 +122,6 @@ const Root = (props: IDialog) => {
         }
       },
     });
-
-  const domains = useMapper(parseNodes(data), (val) => ({
-    label: val.displayName,
-    value: val.domainName,
-    domain: val,
-    render: () => val.displayName,
-  }));
-
-  useEffect(() => {
-    if (isUpdate) {
-      const d = domains.filter((d) =>
-        props.data.spec.domains.includes(d.value)
-      );
-      setSelectedDomains(d);
-      handleChange('domains')(dummyEvent([...d.map((v) => v.value)]));
-    }
-  }, [data]);
 
   const nameIDRef = useRef<HTMLInputElement>(null);
 
@@ -173,24 +151,32 @@ const Root = (props: IDialog) => {
           nameErrorLabel="isNameError"
           isUpdate={isUpdate}
         />
-        <Select
-          creatable
+        <TextInput
           size="lg"
-          label="Domains"
-          multiple
-          value={selectedDomains}
-          options={async () => [...domains]}
-          onChange={(val) => {
-            setSelectedDomains(val);
-            handleChange('domains')(dummyEvent([...val.map((v) => v.value)]));
-          }}
-          error={!!errors.domains || !!domainLoadingError}
-          message={
-            errors.domains ||
-            (domainLoadingError ? 'Error fetching domains.' : '')
-          }
-          loading={domainLoading}
-          disableWhileLoading
+          label="Registry url"
+          placeholder="Enter registry url"
+          value={values.registryURL}
+          onChange={handleChange('registryURL')}
+          error={!!errors.registryURL}
+          message={errors.registryURL}
+        />
+        <TextInput
+          size="lg"
+          label="Registry username"
+          placeholder="Enter registry username"
+          value={values.registryUsername}
+          onChange={handleChange('registryUsername')}
+          error={!!errors.registryUsername}
+          message={errors.registryUsername}
+        />
+        <PasswordInput
+          size="lg"
+          label="Registry password"
+          placeholder="Enter registry password"
+          value={values.registryPassword}
+          onChange={handleChange('registryPassword')}
+          error={!!errors.registryPassword}
+          message={errors.registryPassword}
         />
       </Popup.Content>
       <Popup.Footer>
@@ -206,14 +192,14 @@ const Root = (props: IDialog) => {
   );
 };
 
-const HandleRouter = (props: IDialog) => {
+const HandleImagePullSecret = (props: IDialog) => {
   return (
     <CommonPopupHandle
       {...props}
-      createTitle="Create router"
-      updateTitle="Update router"
+      createTitle="Create image pull secret"
+      updateTitle="Update image pull secret"
       root={Root}
     />
   );
 };
-export default HandleRouter;
+export default HandleImagePullSecret;

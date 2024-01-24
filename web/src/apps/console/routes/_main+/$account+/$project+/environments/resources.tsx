@@ -6,8 +6,8 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListTitle,
+  listClass,
   listFlex,
-  listTitleClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -87,6 +87,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
+                className: listClass.title,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -98,6 +99,7 @@ const GridView = ({ items = [], onAction }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: listClass.author,
                 render: () => (
                   <ListItem
                     data={updateInfo.author}
@@ -130,7 +132,7 @@ const ListView = ({ items, onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: listTitleClass,
+                className: listClass.title,
                 render: () => (
                   <ListTitle
                     title={name}
@@ -143,7 +145,7 @@ const ListView = ({ items, onAction }: IResource) => {
               listFlex({ key: `${keyPrefix}flex-1` }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+                className: listClass.author,
                 render: () => (
                   <ListItem
                     data={updateInfo.author}

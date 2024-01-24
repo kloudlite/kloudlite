@@ -122,7 +122,31 @@ export const routerQueries = (executor: IExecutor) => ({
               projectName
               recordVersion
               spec {
+                backendProtocol
+                basicAuth {
+                  enabled
+                  secretName
+                  username
+                }
+                cors {
+                  allowCredentials
+                  enabled
+                  origins
+                }
                 domains
+                https {
+                  clusterIssuer
+                  enabled
+                  forceRedirect
+                }
+                ingressClass
+                maxBodySizeInMB
+                rateLimit {
+                  connections
+                  enabled
+                  rpm
+                  rps
+                }
                 routes {
                   app
                   lambda

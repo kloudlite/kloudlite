@@ -14,9 +14,8 @@ import {
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
-import logger from '~/root/lib/client/helpers/log';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
-import generateColor from './color-generator';
+import { generatePlainColor } from './color-generator';
 import Pulsable from './pulsable';
 import { logsMockData } from '../dummy/data';
 
@@ -331,8 +330,9 @@ const LogLine = ({
 
       <div
         className="w-[3px] mr-xl ml-sm h-full pulsable pulsable-hidden"
-        style={{ backgroundImage: generateColor(log.pod_name) }}
+        style={{ background: generatePlainColor(log.pod_name) }}
       />
+
       <div className="inline-flex gap-xl pulsable">
         <HighlightIt
           {...{
@@ -402,13 +402,19 @@ const LogBlock = ({
   );
 
   const [showAll, setShowAll] = useState(true);
+
   const ref = useRef(null);
+  // const listRef = useRef(null);
 
   useEffect(() => {
+    console.log('data', ref.current);
+
     (async () => {
       if (follow && ref.current) {
         // @ts-ignore
-        ref.current.scrollTo(0, ref.current.scrollHeight);
+        ref.current.scrollToIndex({
+          index: data.length - 1,
+        });
       }
     })();
   }, [data, maxLines]);
@@ -469,11 +475,15 @@ const LogBlock = ({
       >
         <div className="flex flex-1 h-full">
           <div
-            className="flex-1 flex flex-col pb-8"
+            className="flex-1 flex flex-col pb-8 scroll-container"
             style={{ lineHeight: `${fontSize * 1.5}px` }}
             ref={ref}
           >
-            <ViewportList items={showAll ? data : searchResult}>
+            <ViewportList
+              items={showAll ? data : searchResult}
+              ref={ref}
+              // viewportRef={listRef}
+            >
               {(log, index) => {
                 return (
                   <LogLine
@@ -597,16 +607,18 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
           };
 
           w.onopen = () => {
+            // console.log('socket connected');
             res(w);
           };
 
           w.onerror = (e) => {
+            console.error(e);
             rej(e);
           };
 
           w.onclose = () => {
             // wsclient.send(newMessage({ event: 'unsubscribe', data: 'test' }));
-            logger.log('socket disconnected');
+            // logger.log('socket disconnected');
           };
         } catch (e) {
           rej(e);
@@ -633,6 +645,7 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
         setIsLoading(true);
 
         const client = await wsclient;
+        console.log('client', client);
 
         setSocState(client);
 

@@ -26,7 +26,12 @@ export const ReviewComponent = ({
     <div className="flex flex-col gap-2xl pb-3xl">
       <div className="flex flex-row items-center">
         <span className="text-text-soft bodyMd flex-1">{title}</span>
-        <button aria-label="edit" className="text-icon-soft" onClick={onEdit}>
+        <button
+          type="button"
+          aria-label="edit"
+          className="text-icon-soft"
+          onClick={onEdit}
+        >
           <PencilLine size={16} />
         </button>
       </div>

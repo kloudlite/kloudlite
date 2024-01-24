@@ -14,6 +14,7 @@ interface IKeyValuePair {
   label?: ReactNode;
   message?: ReactNode;
   error?: boolean;
+  size?: 'lg' | 'md';
 }
 const KeyValuePair = ({
   onChange,
@@ -21,6 +22,7 @@ const KeyValuePair = ({
   label,
   message,
   error,
+  size,
 }: IKeyValuePair) => {
   const newItem = [{ key: '', value: '', id: uuid() }];
   const [items, setItems] = useState<Array<Record<string, any>>>(newItem);
@@ -66,9 +68,10 @@ const KeyValuePair = ({
             <span className="text-text-default bodyMd-medium">{label}</span>
           )}
           {items.map((item) => (
-            <div key={item.id} className="flex flex-row gap-xl items-end">
+            <div key={item.id} className="flex flex-row gap-xl items-start">
               <div className="flex-1">
                 <TextInput
+                  size={size || 'md'}
                   error={error}
                   placeholder="Key"
                   value={item.key}
@@ -79,6 +82,7 @@ const KeyValuePair = ({
               </div>
               <div className="flex-1">
                 <TextInput
+                  size={size || 'md'}
                   error={error}
                   placeholder="Value"
                   value={item.value}
@@ -87,14 +91,16 @@ const KeyValuePair = ({
                   }
                 />
               </div>
-              <IconButton
-                icon={<MinusCircle />}
-                variant="plain"
-                disabled={items.length < 2}
-                onClick={() => {
-                  setItems(items.filter((i) => i.id !== item.id));
-                }}
-              />
+              <div className="self-center">
+                <IconButton
+                  icon={<MinusCircle />}
+                  variant="plain"
+                  disabled={items.length < 2}
+                  onClick={() => {
+                    setItems(items.filter((i) => i.id !== item.id));
+                  }}
+                />
+              </div>
             </div>
           ))}
         </div>

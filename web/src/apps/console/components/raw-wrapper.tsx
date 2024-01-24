@@ -89,13 +89,13 @@ function RawWrapper<V = any>({
 }
 
 interface ITitleBox {
-  title: ReactNode;
-  subtitle: ReactNode;
+  title?: ReactNode;
+  subtitle?: ReactNode;
 }
 export const TitleBox = ({ title, subtitle }: ITitleBox) => {
   return (
     <div className="flex flex-col gap-lg">
-      <div className="headingXl text-text-default">{title}</div>
+      {title && <div className="headingXl text-text-default">{title}</div>}
       {subtitle && <div className="bodyMd text-text-soft">{subtitle}</div>}
     </div>
   );

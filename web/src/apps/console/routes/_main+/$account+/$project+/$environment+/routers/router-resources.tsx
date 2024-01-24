@@ -1,13 +1,11 @@
 import { Trash, PencilLine } from '@jengaicons/react';
 import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { generateKey, titleCase } from '~/components/utils';
+import { generateKey } from '~/components/utils';
 import {
-  ListBody,
   ListItem,
   ListTitle,
+  listClass,
   listFlex,
-  listTitleClass,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -138,14 +136,14 @@ const ListView = ({ items, onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: listTitleClass,
+                className: listClass.title,
                 render: () => <ListTitle title={name} />,
               },
               status,
               listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+                className: listClass.author,
                 render: () => (
                   <ListItem
                     data={updateInfo.author}

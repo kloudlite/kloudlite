@@ -131,8 +131,8 @@ const ExposedPortList = ({
 };
 
 export const ExposedPorts = () => {
-  const [port, setPort] = useState<number>(3000);
-  const [targetPort, setTargetPort] = useState<number>(3000);
+  const [port, setPort] = useState<number | string>('');
+  const [targetPort, setTargetPort] = useState<number | string>('');
   const [portError, setPortError] = useState<string>('');
 
   const { services, setServices } = useAppState();
@@ -143,8 +143,8 @@ export const ExposedPorts = () => {
   // for updating
   useEffect(() => {
     if (!hasChanges) {
-      setPort(3000);
-      setTargetPort(3000);
+      setPort('');
+      setTargetPort('');
       setPortError('');
     }
   }, [hasChanges]);
@@ -155,6 +155,8 @@ export const ExposedPorts = () => {
         <div className="flex flex-row gap-3xl items-start">
           <div className="flex-1">
             <NumberInput
+              min={0}
+              max={65534}
               label={
                 <InfoLabel label="Expose Port" info="info about expose port" />
               }
@@ -170,7 +172,7 @@ export const ExposedPorts = () => {
           <div className="flex-1">
             <NumberInput
               min={0}
-              max={65536}
+              max={65534}
               label={
                 <InfoLabel
                   info="info about container port"
@@ -196,23 +198,23 @@ export const ExposedPorts = () => {
             variant="basic"
             disabled={!port || !targetPort}
             onClick={() => {
-              if (
-                services?.find(
-                  (ep) => ep.targetPort && ep.targetPort === targetPort
-                )
-              ) {
+              console.log('here');
+
+              if (services?.find((ep) => ep.port && ep.port === port)) {
                 setPortError('Port is already exposed.');
               } else {
-                setServices((prev) => [
-                  ...prev,
-                  {
-                    name: `port-${port}`,
-                    port,
-                    targetPort,
-                  },
-                ]);
-                setPort(3000);
-                setTargetPort(3000);
+                if (typeof port === 'number' && typeof targetPort === 'number')
+                  setServices((prev) => [
+                    ...prev,
+                    {
+                      name: `port-${port}`,
+                      port,
+                      targetPort,
+                    },
+                  ]);
+                setPort('');
+                setTargetPort('');
+                setPortError('');
               }
             }}
           />
@@ -232,6 +234,7 @@ export const ExposedPorts = () => {
 
 const AppNetwork = () => {
   const { setPage, markPageAsCompleted } = useAppState();
+  console.log('networkd');
   return (
     <FadeIn className="py-3xl">
       <div className="bodyMd text-text-soft">

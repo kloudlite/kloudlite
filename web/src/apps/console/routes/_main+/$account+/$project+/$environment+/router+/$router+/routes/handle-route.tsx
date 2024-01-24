@@ -50,7 +50,10 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            path: props.data.path,
+            path:
+              props.data.path?.[0] === '/'
+                ? props.data.path.substring(1)
+                : props.data.path,
             app: props.data.app || '',
             port: `${props.data.port}`,
           }
@@ -84,7 +87,7 @@ const Root = (props: IDialog) => {
               router: {
                 displayName: router.displayName,
                 spec: {
-                  domains: router.spec.domains,
+                  ...router.spec,
                   routes: [
                     ...(router.spec.routes?.map((r) => ({
                       path: r.path,
@@ -114,7 +117,7 @@ const Root = (props: IDialog) => {
               router: {
                 displayName: router.displayName,
                 spec: {
-                  domains: router.spec.domains,
+                  ...router.spec,
                   routes: [
                     ...(router.spec.routes
 

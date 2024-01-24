@@ -61,43 +61,41 @@ const Secrets = () => {
           if (!secrets) {
             return null;
           }
-
           return (
-            <>
-              {secrets.length > 0 && (
-                <SubNavAction deps={[secrets.length]}>
+            <Wrapper
+              secondaryHeader={{
+                title: 'Secrets',
+                action: secrets.length > 0 && (
                   <Button
-                    content="Add new config"
+                    content="Add new secret"
                     variant="primary"
                     onClick={() => {
                       setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
                     }}
                   />
-                </SubNavAction>
-              )}
-              <Wrapper
-                empty={{
-                  is: secrets.length === 0,
-                  title: 'This is where you’ll manage your Secret.',
-                  content: (
-                    <p>
-                      You can create a new secret and manage the listed secrets.
-                    </p>
-                  ),
-                  action: {
-                    content: 'Create secret',
-                    prefix: <Plus />,
-                    LinkComponent: Link,
-                    onClick: () => {
-                      setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
-                    },
+                ),
+              }}
+              empty={{
+                is: secrets.length === 0,
+                title: 'This is where you’ll manage your Secret.',
+                content: (
+                  <p>
+                    You can create a new secret and manage the listed secrets.
+                  </p>
+                ),
+                action: {
+                  content: 'Create secret',
+                  prefix: <Plus />,
+                  LinkComponent: Link,
+                  onClick: () => {
+                    setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
                   },
-                }}
-                tools={<Tools />}
-              >
-                <SecretResources items={secrets} linkComponent={Link} />
-              </Wrapper>
-            </>
+                },
+              }}
+              tools={<Tools />}
+            >
+              <SecretResources items={secrets} linkComponent={Link} />
+            </Wrapper>
           );
         }}
       </LoadingComp>

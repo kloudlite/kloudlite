@@ -7,7 +7,6 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { defer } from '@remix-run/node';
 import fake from '~/root/fake-data-generator/fake';
-import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import Tools from './tools';
 import BuildRunResources from './buildruns-resources';
 
@@ -24,7 +23,6 @@ export const loader = async (ctx: IRemixCtx) => {
     if (errors) {
       throw errors[0];
     }
-    console.log(data);
     return { buildRunData: data };
   });
 

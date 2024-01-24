@@ -10,6 +10,8 @@ import {
   ConsoleListConfigsQueryVariables,
   ConsoleUpdateConfigMutation,
   ConsoleUpdateConfigMutationVariables,
+  ConsoleDeleteConfigMutation,
+  ConsoleDeleteConfigMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IConfig = NN<ConsoleGetConfigQuery['core_getConfig']>;
@@ -35,6 +37,25 @@ export const configQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateConfigMutation) => data,
       vars(_: ConsoleUpdateConfigMutationVariables) { },
+    }
+  ),
+  deleteConfig: executor(
+    gql`
+      mutation Core_deleteConfig(
+        $projectName: String!
+        $envName: String!
+        $configName: String!
+      ) {
+        core_deleteConfig(
+          projectName: $projectName
+          envName: $envName
+          configName: $configName
+        )
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteConfigMutation) => data,
+      vars(_: ConsoleDeleteConfigMutationVariables) { },
     }
   ),
   getConfig: executor(

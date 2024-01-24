@@ -13,8 +13,8 @@ import {
   ListItem,
   ListSecondary,
   ListTitle,
+  listClass,
   listFlex,
-  listTitleClass,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -175,7 +175,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: listTitleClass,
+                className: listClass.title,
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
               status,
@@ -184,7 +184,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 intercept && !!intercept.enabled
                   ? {
                       key: generateKey(keyPrefix, `${name + id}intercept`),
-                      className: listTitleClass,
+                      className: listClass.title,
                       render: () => (
                         <ListSecondary
                           title="intercepted toDevice"
@@ -197,7 +197,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
               listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+                className: listClass.author,
                 render: () => (
                   <ListItem
                     data={updateInfo.author}

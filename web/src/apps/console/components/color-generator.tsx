@@ -69,4 +69,8 @@ const generateColor = (str = '#', contrast: Contrast = 'dark') => {
   )}, ${generateColorFromName(`${str + str + str}`, cc, contrast)})`;
 };
 
+export const generatePlainColor = (str = '#') => {
+  const cc = colorCode(str);
+  return generateColorFromName(str, cc, 'dark');
+};
 export default generateColor;

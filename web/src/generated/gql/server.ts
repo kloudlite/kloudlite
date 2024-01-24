@@ -85,7 +85,7 @@ export type ConfigKeyRefIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode =
   'private' | 'public';
 
-export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ImagePullSecretFormat =
+export type Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat =
   'dockerConfigJson' | 'params';
 
 export type ManagedResourceKeyRefIn = {
@@ -539,7 +539,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRo
 export type ImagePullSecretIn = {
   displayName: Scalars['String']['input'];
   dockerConfigJson?: InputMaybe<Scalars['String']['input']>;
-  format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__ImagePullSecretFormat;
+  format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
   metadata: MetadataIn;
   registryPassword?: InputMaybe<Scalars['String']['input']>;
   registryURL?: InputMaybe<Scalars['String']['input']>;
@@ -557,6 +557,7 @@ export type ManagedResourceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn =
   {
+    resourceName?: InputMaybe<Scalars['String']['input']>;
     resourceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresResourceTemplateIn;
   };
 
@@ -698,12 +699,10 @@ export type ConsoleVpnDeviceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn =
   {
+    activeNamespace?: InputMaybe<Scalars['String']['input']>;
     cnameRecords?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__CNameRecordIn>
     >;
-    deviceNamespace?: InputMaybe<Scalars['String']['input']>;
-    disabled?: InputMaybe<Scalars['Boolean']['input']>;
-    nodeSelector?: InputMaybe<Scalars['Map']['input']>;
     ports?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn>
     >;
@@ -799,7 +798,9 @@ export type RepositoryIn = {
 };
 
 export type ClusterIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecIn;
 };
@@ -832,7 +833,9 @@ export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretR
   };
 
 export type ClusterManagedServiceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ClusterManagedServiceSpecIn>;
 };
@@ -850,7 +853,9 @@ export type DomainEntryIn = {
 };
 
 export type HelmReleaseIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__HelmChartSpecIn>;
 };
@@ -957,7 +962,9 @@ export type K8s__Io___Api___Core___V1__PodAntiAffinityIn = {
 };
 
 export type NodePoolIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolSpecIn;
 };
@@ -1034,7 +1041,9 @@ export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__
   };
 
 export type VpnDeviceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn>;
 };
@@ -1445,17 +1454,23 @@ export type ManagedResourceKeyValueRefIn = {
 };
 
 export type NamespaceIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<K8s__Io___Api___Core___V1__NamespaceSpecIn>;
   status?: InputMaybe<K8s__Io___Api___Core___V1__NamespaceStatusIn>;
 };
 
 export type NodeIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodeSpecIn;
 };
 
 export type PersistentVolumeIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeSpecIn>;
   status?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeStatusIn>;
@@ -1468,6 +1483,8 @@ export type SecretKeyValueRefIn = {
 };
 
 export type VolumeAttachmentIn = {
+  apiVersion?: InputMaybe<Scalars['String']['input']>;
+  kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: K8s__Io___Api___Storage___V1__VolumeAttachmentSpecIn;
   status?: InputMaybe<K8s__Io___Api___Storage___V1__VolumeAttachmentStatusIn>;
@@ -1818,11 +1835,11 @@ export type ConsoleGetClusterQueryVariables = Exact<{
 export type ConsoleGetClusterQuery = {
   infra_getCluster?: {
     accountName: string;
-    apiVersion: string;
+    apiVersion?: string;
     creationTime: any;
     displayName: string;
     id: string;
-    kind: string;
+    kind?: string;
     markedForDeletion?: boolean;
     recordVersion: number;
     updateTime: any;
@@ -2013,7 +2030,7 @@ export type ConsoleGetNodePoolQuery = {
     clusterName: string;
     creationTime: any;
     displayName: string;
-    kind: string;
+    kind?: string;
     markedForDeletion?: boolean;
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
@@ -2614,7 +2631,31 @@ export type ConsoleListRoutersQuery = {
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
         spec: {
+          backendProtocol?: string;
           domains: Array<string>;
+          ingressClass?: string;
+          maxBodySizeInMB?: number;
+          basicAuth?: {
+            enabled: boolean;
+            secretName?: string;
+            username?: string;
+          };
+          cors?: {
+            allowCredentials?: boolean;
+            enabled?: boolean;
+            origins?: Array<string>;
+          };
+          https?: {
+            clusterIssuer?: string;
+            enabled: boolean;
+            forceRedirect?: boolean;
+          };
+          rateLimit?: {
+            connections?: number;
+            enabled?: boolean;
+            rpm?: number;
+            rps?: number;
+          };
           routes?: Array<{
             app?: string;
             lambda?: string;
@@ -2728,6 +2769,14 @@ export type ConsoleUpdateConfigMutationVariables = Exact<{
 export type ConsoleUpdateConfigMutation = {
   core_updateConfig?: { id: string };
 };
+
+export type ConsoleDeleteConfigMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  configName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteConfigMutation = { core_deleteConfig: boolean };
 
 export type ConsoleGetConfigQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
@@ -4144,6 +4193,7 @@ export type ConsoleListBuildRunsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        id: string;
         clusterName: string;
         creationTime: any;
         markedForDeletion?: boolean;
@@ -4851,12 +4901,12 @@ export type ConsoleListNamespacesQuery = {
       cursor: string;
       node: {
         accountName: string;
-        apiVersion: string;
+        apiVersion?: string;
         clusterName: string;
         creationTime: any;
         displayName: string;
         id: string;
-        kind: string;
+        kind?: string;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
@@ -4939,7 +4989,7 @@ export type ConsoleListConsoleVpnDevicesQuery = {
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: { generation: number; name: string; namespace?: string };
         spec?: {
-          deviceNamespace?: string;
+          activeNamespace?: string;
           disabled?: boolean;
           nodeSelector?: any;
           cnameRecords?: Array<{ host?: string; target?: string }>;
@@ -4968,7 +5018,7 @@ export type ConsoleGetConsoleVpnDeviceQuery = {
     recordVersion: number;
     metadata?: { name: string; namespace?: string };
     spec?: {
-      deviceNamespace?: string;
+      activeNamespace?: string;
       disabled?: boolean;
       nodeSelector?: any;
       cnameRecords?: Array<{ host?: string; target?: string }>;
@@ -5007,7 +5057,7 @@ export type ConsoleListConsoleVpnDevicesForUserQuery = {
       namespace?: string;
     };
     spec?: {
-      deviceNamespace?: string;
+      activeNamespace?: string;
       disabled?: boolean;
       nodeSelector?: any;
       cnameRecords?: Array<{ host?: string; target?: string }>;
@@ -5025,16 +5075,80 @@ export type ConsoleDeleteConsoleVpnDeviceMutation = {
   core_deleteVPNDevice: boolean;
 };
 
-export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
-  resType: ConsoleResType;
-  name: Scalars['String']['input'];
+export type ConsoleCreateImagePullSecretMutationVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  imagePullSecretIn: ImagePullSecretIn;
 }>;
 
-export type AuthCli_CoreCheckNameAvailabilityQuery = {
-  core_checkNameAvailability: {
-    result: boolean;
-    suggestedNames?: Array<string>;
+export type ConsoleCreateImagePullSecretMutation = {
+  core_createImagePullSecret?: { id: string };
+};
+
+export type ConsoleListImagePullSecretsQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  search?: InputMaybe<SearchImagePullSecrets>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListImagePullSecretsQuery = {
+  core_listImagePullSecrets?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        displayName: string;
+        dockerConfigJson?: string;
+        environmentName: string;
+        format: Github__Com___Kloudlite___Api___Apps___Console___Internal___Entities__PullSecretFormat;
+        markedForDeletion?: boolean;
+        projectName: string;
+        recordVersion: number;
+        registryPassword?: string;
+        registryURL?: string;
+        registryUsername?: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: { generation: number; name: string; namespace?: string };
+        syncStatus: {
+          action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Github__Com___Kloudlite___Api___Pkg___Types__SyncState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
+};
+
+export type AuthCli_CoreUpdateDevicePortsMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+  ports: Array<PortIn> | PortIn;
+}>;
+
+export type AuthCli_CoreUpdateDevicePortsMutation = {
+  core_updateVPNDevicePorts: boolean;
+};
+
+export type AuthCli_CoreUpdateDeviceEnvMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_CoreUpdateDeviceEnvMutation = {
+  core_updateVPNDeviceEnv: boolean;
 };
 
 export type AuthCli_ListCoreDevicesQueryVariables = Exact<{
@@ -5049,7 +5163,7 @@ export type AuthCli_ListCoreDevicesQuery = {
     metadata?: { name: string };
     status?: { isReady: boolean; message?: { RawMessage?: any } };
     spec?: {
-      deviceNamespace?: string;
+      activeNamespace?: string;
       disabled?: boolean;
       cnameRecords?: Array<{ host?: string; target?: string }>;
       ports?: Array<{ port?: number; targetPort?: number }>;
@@ -5067,7 +5181,7 @@ export type AuthCli_GetCoreDeviceQuery = {
     projectName?: string;
     metadata?: { name: string };
     spec?: {
-      deviceNamespace?: string;
+      activeNamespace?: string;
       disabled?: boolean;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
@@ -5080,7 +5194,10 @@ export type AuthCli_CreateCoreDeviceMutationVariables = Exact<{
 }>;
 
 export type AuthCli_CreateCoreDeviceMutation = {
-  core_createVPNDevice?: { id: string };
+  core_createVPNDevice?: {
+    metadata?: { name: string };
+    wireguardConfig?: { encoding: string; value: string };
+  };
 };
 
 export type AuthCli_UpdateCoreDevicePortsMutationVariables = Exact<{
@@ -5090,6 +5207,109 @@ export type AuthCli_UpdateCoreDevicePortsMutationVariables = Exact<{
 
 export type AuthCli_UpdateCoreDevicePortsMutation = {
   core_updateVPNDevicePorts: boolean;
+};
+
+export type AuthCli_GetDeviceQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_GetDeviceQuery = {
+  infra_getVPNDevice?: {
+    displayName: string;
+    markedForDeletion?: boolean;
+    metadata?: { name: string; namespace?: string };
+    spec?: {
+      activeNamespace?: string;
+      nodeSelector?: any;
+      cnameRecords?: Array<{ host?: string; target?: string }>;
+      ports?: Array<{ port?: number; targetPort?: number }>;
+    };
+    status?: { isReady: boolean; message?: { RawMessage?: any } };
+    wireguardConfig?: { encoding: string; value: string };
+  };
+};
+
+export type AuthCli_ListDevicesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+  clusterName?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthCli_ListDevicesQuery = {
+  infra_listVPNDevices?: {
+    edges: Array<{
+      node: {
+        displayName: string;
+        metadata?: { name: string };
+        spec?: {
+          activeNamespace?: string;
+          disabled?: boolean;
+          nodeSelector?: any;
+          ports?: Array<{ port?: number; targetPort?: number }>;
+        };
+        status?: { isReady: boolean; message?: { RawMessage?: any } };
+        wireguardConfig?: { encoding: string; value: string };
+      };
+    }>;
+  };
+};
+
+export type AuthCli_UpdateDeviceMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  vpnDevice: VpnDeviceIn;
+}>;
+
+export type AuthCli_UpdateDeviceMutation = {
+  infra_updateVPNDevice?: {
+    metadata?: { name: string };
+    spec?: {
+      activeNamespace?: string;
+      cnameRecords?: Array<{ target?: string; host?: string }>;
+      ports?: Array<{ targetPort?: number; port?: number }>;
+    };
+    status?: { isReady: boolean; message?: { RawMessage?: any } };
+  };
+};
+
+export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  ports: Array<PortIn> | PortIn;
+}>;
+
+export type AuthCli_UpdateDevicePortMutation = {
+  infra_updateVPNDevicePorts: boolean;
+};
+
+export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  deviceName: Scalars['String']['input'];
+  namespace: Scalars['String']['input'];
+}>;
+
+export type AuthCli_UpdateDeviceNsMutation = {
+  infra_updateVPNDeviceNs: boolean;
+};
+
+export type AuthCli_CreateDeviceMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  vpnDevice: VpnDeviceIn;
+}>;
+
+export type AuthCli_CreateDeviceMutation = {
+  infra_createVPNDevice?: { metadata?: { name: string } };
+};
+
+export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
+  resType: ConsoleResType;
+  name: Scalars['String']['input'];
+}>;
+
+export type AuthCli_CoreCheckNameAvailabilityQuery = {
+  core_checkNameAvailability: {
+    result: boolean;
+    suggestedNames?: Array<string>;
+  };
 };
 
 export type AuthCli_GetMresKeysQueryVariables = Exact<{
@@ -5149,15 +5369,6 @@ export type AuthCli_InfraCheckNameAvailabilityQuery = {
   };
 };
 
-export type AuthCli_CreateDeviceMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  vpnDevice: VpnDeviceIn;
-}>;
-
-export type AuthCli_CreateDeviceMutation = {
-  infra_createVPNDevice?: { metadata?: { name: string } };
-};
-
 export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
@@ -5165,11 +5376,16 @@ export type AuthCli_GetConfigSecretMapQueryVariables = Exact<{
     Array<InputMaybe<ConfigKeyRefIn>> | InputMaybe<ConfigKeyRefIn>
   >;
   secretQueries?: InputMaybe<Array<SecretKeyRefIn> | SecretKeyRefIn>;
+  mresQueries?: InputMaybe<
+    | Array<InputMaybe<ManagedResourceKeyRefIn>>
+    | InputMaybe<ManagedResourceKeyRefIn>
+  >;
 }>;
 
 export type AuthCli_GetConfigSecretMapQuery = {
   configs?: Array<{ configName: string; key: string; value: string }>;
   secrets?: Array<{ key: string; secretName: string; value: string }>;
+  mreses: Array<{ key: string; mresName: string; value: string }>;
 };
 
 export type AuthCli_InterceptAppMutationVariables = Exact<{
@@ -5189,26 +5405,6 @@ export type AuthCli_GetEnvironmentQueryVariables = Exact<{
 
 export type AuthCli_GetEnvironmentQuery = {
   core_getEnvironment?: { spec?: { targetNamespace?: string } };
-};
-
-export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
-  namespace: Scalars['String']['input'];
-}>;
-
-export type AuthCli_UpdateDeviceNsMutation = {
-  infra_updateVPNDeviceNs: boolean;
-};
-
-export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
-  ports: Array<PortIn> | PortIn;
-}>;
-
-export type AuthCli_UpdateDevicePortMutation = {
-  infra_updateVPNDevicePorts: boolean;
 };
 
 export type AuthCli_GetSecretQueryVariables = Exact<{
@@ -5399,67 +5595,6 @@ export type AuthCli_ListSecretsQuery = {
         metadata?: { name: string; namespace?: string };
       };
     }>;
-  };
-};
-
-export type AuthCli_UpdateDeviceMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  vpnDevice: VpnDeviceIn;
-}>;
-
-export type AuthCli_UpdateDeviceMutation = {
-  infra_updateVPNDevice?: {
-    metadata?: { name: string };
-    spec?: {
-      deviceNamespace?: string;
-      cnameRecords?: Array<{ target?: string; host?: string }>;
-      ports?: Array<{ targetPort?: number; port?: number }>;
-    };
-    status?: { isReady: boolean; message?: { RawMessage?: any } };
-  };
-};
-
-export type AuthCli_ListDevicesQueryVariables = Exact<{
-  pq?: InputMaybe<CursorPaginationIn>;
-}>;
-
-export type AuthCli_ListDevicesQuery = {
-  infra_listVPNDevices?: {
-    edges: Array<{
-      node: {
-        displayName: string;
-        metadata?: { name: string };
-        spec?: {
-          deviceNamespace?: string;
-          disabled?: boolean;
-          nodeSelector?: any;
-          ports?: Array<{ port?: number; targetPort?: number }>;
-        };
-        status?: { isReady: boolean; message?: { RawMessage?: any } };
-        wireguardConfig?: { encoding: string; value: string };
-      };
-    }>;
-  };
-};
-
-export type AuthCli_GetDeviceQueryVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-}>;
-
-export type AuthCli_GetDeviceQuery = {
-  infra_getVPNDevice?: {
-    displayName: string;
-    markedForDeletion?: boolean;
-    metadata?: { name: string; namespace?: string };
-    spec?: {
-      deviceNamespace?: string;
-      nodeSelector?: any;
-      cnameRecords?: Array<{ host?: string; target?: string }>;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-    status?: { isReady: boolean; message?: { RawMessage?: any } };
-    wireguardConfig?: { encoding: string; value: string };
   };
 };
 

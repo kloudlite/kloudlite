@@ -60,9 +60,10 @@ const Configs = () => {
           const { pageInfo, totalCount } = configsData;
 
           return (
-            <>
-              {configs.length > 0 && (
-                <SubNavAction deps={[configs.length]}>
+            <Wrapper
+              secondaryHeader={{
+                title: 'Configs',
+                action: configs.length > 0 && (
                   <Button
                     content="Add new config"
                     variant="primary"
@@ -70,34 +71,32 @@ const Configs = () => {
                       setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
                     }}
                   />
-                </SubNavAction>
-              )}
-              <Wrapper
-                empty={{
-                  is: configs.length === 0,
-                  title: 'This is where you’ll manage your Config.',
-                  content: (
-                    <p>
-                      You can create a new config and manage the listed configs.
-                    </p>
-                  ),
-                  action: {
-                    content: 'Create config',
-                    prefix: <Plus />,
-                    onClick: () => {
-                      setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
-                    },
+                ),
+              }}
+              empty={{
+                is: configs.length === 0,
+                title: 'This is where you’ll manage your Config.',
+                content: (
+                  <p>
+                    You can create a new config and manage the listed configs.
+                  </p>
+                ),
+                action: {
+                  content: 'Create config',
+                  prefix: <Plus />,
+                  onClick: () => {
+                    setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
                   },
-                }}
-                pagination={{
-                  pageInfo,
-                  totalCount,
-                }}
-                tools={<Tools />}
-              >
-                <ConfigResources items={configs} linkComponent={Link} />
-              </Wrapper>
-            </>
+                },
+              }}
+              pagination={{
+                pageInfo,
+                totalCount,
+              }}
+              tools={<Tools />}
+            >
+              <ConfigResources items={configs} linkComponent={Link} />
+            </Wrapper>
           );
         }}
       </LoadingComp>

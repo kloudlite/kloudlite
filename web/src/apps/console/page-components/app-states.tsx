@@ -214,6 +214,11 @@ export const useAppState = () => {
   };
 };
 
+export const clearAppState = () => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem('state');
+};
+
 export const AppContextProvider = ({
   children,
   initialAppState,
