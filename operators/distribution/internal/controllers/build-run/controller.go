@@ -116,7 +116,7 @@ func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		return req.Next()
 	}
 
-	_, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, *obj.Spec.CacheKeyName), &corev1.PersistentVolumeClaim{})
+	_, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, *obj.Spec.CacheKeyName), &corev1.PersistentVolumeClaim{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
@@ -150,7 +150,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		if err := r.List(ctx, &jobs,
 			&client.ListOptions{
 				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.BuildNameKey: *obj.Spec.CacheKeyName}),
-				Namespace:     obj.Namespace,
+				Namespace:     r.Env.BuildNamespace,
 			},
 		); err != nil {
 			return failed(err)
@@ -168,9 +168,12 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		return failed(err)
 	}
 
-	if _, err = r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
 		return failed(err)
 	}
+
+	req.AddToOwnedResources(rr...)
 
 	check.Status = true
 	if check != checks[JobCreated] {
@@ -193,7 +196,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 		return req.Next()
 	}
 
-	j, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint("build-", obj.Name)), &batchv1.Job{})
+	j, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.BuildNamespace, fmt.Sprint("build-", obj.Name)), &batchv1.Job{})
 	if err != nil {
 		return failed(err)
 	}
@@ -229,6 +232,10 @@ func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Resu
 		return req.CheckFailed(JobDeleted, check, err.Error())
 	}
 
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+		return step
+	}
+
 	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
@@ -261,8 +268,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			object,
 			handler.EnqueueRequestsFromMapFunc(
 				func(_ context.Context, obj client.Object) []reconcile.Request {
+					if obj.GetNamespace() != r.Env.BuildNamespace {
+						return nil
+					}
+
 					if brn, ok := obj.GetAnnotations()[constants.BuildRunNameKey]; ok {
-						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), brn)}}
+						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetAnnotations()[buildrunNamespaceAnn], brn)}}
 					}
 					return nil
 				}),

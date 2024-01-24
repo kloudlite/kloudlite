@@ -10,7 +10,7 @@ type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
 
-	BuildNameSpace string `env:"BUILD_NAMESPACE" required:"true"`
+	BuildNamespace string `env:"BUILD_NAMESPACE" required:"true"`
 	IsDev          bool
 }
 
