@@ -12,6 +12,9 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"github.com/kloudlite/operator/pkg/constants"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -51,7 +54,6 @@ func (d *domain) getClusterFromDevice(ctx ConsoleContext, device *entities.Conso
 }
 
 func (d *domain) updateVpnOnCluster(ctx ConsoleContext, ndev, xdev *entities.ConsoleVPNDevice) error {
-
 	ndev.Namespace = d.envVars.DeviceNamespace
 	ndev.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &ndev.Device); err != nil {
@@ -59,14 +61,14 @@ func (d *domain) updateVpnOnCluster(ctx ConsoleContext, ndev, xdev *entities.Con
 	}
 
 	if ndev.ProjectName != nil && ndev.EnvironmentName != nil {
-		if err := d.applyK8sResource(ctx, *ndev.ProjectName, &ndev.Device, ndev.RecordVersion); err != nil {
+		if err := d.applyVPNDevice(ctx, ndev); err != nil {
 			return errors.NewE(err)
 		}
 	}
 
 	if (xdev.ProjectName != nil) && (*xdev.ProjectName != *ndev.ProjectName) {
 		xdev.Spec.Disabled = true
-		if err := d.applyK8sResource(ctx, *xdev.ProjectName, &xdev.Device, xdev.RecordVersion); err != nil {
+		if err := d.applyVPNDevice(ctx, xdev); err != nil {
 			return errors.NewE(err)
 		}
 	}
@@ -101,6 +103,31 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.Consol
 	}
 
 	return d.findVPNDevice(ctx, name)
+}
+
+func (d *domain) applyVPNDevice(ctx ConsoleContext, device *entities.ConsoleVPNDevice) error {
+	if err := d.applyK8sResource(ctx, *device.ProjectName, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Namespace",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: d.envVars.DeviceNamespace,
+			Annotations: map[string]string{
+				constants.DescriptionKey: "namespace created by kloudlite platform to manage infra level VPN Devices",
+			},
+		},
+	}, device.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+
+	if device.ProjectName != nil {
+		if err := d.applyK8sResource(ctx, *device.ProjectName, &device.Device, device.RecordVersion); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
 }
 
 func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error) {
@@ -167,9 +194,9 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 	if device.ProjectName == nil || device.EnvironmentName == nil {
 		return nDevice, nil
 	}
-	err = d.applyK8sResource(ctx, *nDevice.ProjectName, &nDevice.Device, nDevice.RecordVersion)
-	if err != nil {
-		return nil, err
+
+	if err := d.applyVPNDevice(ctx, nDevice); err != nil {
+		return nDevice, err
 	}
 	return nDevice, nil
 }
@@ -221,7 +248,6 @@ func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		fields.AccountName:  ctx.AccountName,
 		fields.MetadataName: device.Name,
 	}, patchForUpdate)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -248,7 +274,6 @@ func (d *domain) DeleteVPNDevice(ctx ConsoleContext, name string) error {
 		},
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -292,14 +317,14 @@ func (d *domain) UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports 
 		fields.AccountName:  ctx.AccountName,
 		fields.MetadataName: devName,
 	}, patchForUpdate)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, *upDevice.ProjectName, &upDevice.Device, upDevice.RecordVersion); err != nil {
+	if err := d.applyVPNDevice(ctx, upDevice); err != nil {
 		return errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, devName, PublishUpdate)
 	return nil
 }
@@ -309,8 +334,10 @@ func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, 
 	if err != nil {
 		return errors.NewE(err)
 	}
+
 	xdevice.ProjectName = &projectName
 	xdevice.EnvironmentName = &envName
+
 	_, err = d.UpdateVPNDevice(ctx, *xdevice)
 	if err != nil {
 		return errors.NewE(err)
@@ -320,7 +347,6 @@ func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, 
 
 func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xdevice, err := d.findVPNDevice(ctx, device.Name)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -345,7 +371,6 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 					fc.ConsoleVPNDeviceWireguardConfig: device.WireguardConfig,
 				},
 			}))
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -356,24 +381,25 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 }
 
 func (d *domain) OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice) error {
-	xdevice, err := d.vpnDeviceRepo.FindOne(
-		ctx,
-		repos.Filter{
-			fields.AccountName:  ctx.AccountName,
-			fields.MetadataName: device.Name,
-		},
-	)
+	xdevice, err := d.findVPNDevice(ctx, device.Name)
 	if err != nil {
 		return errors.NewE(err)
 	}
-	clusterName, err := d.getClusterAttachedToProject(ctx, *device.ProjectName)
-	if clusterName == nil {
-		return errors.Newf("No Cluster found")
-	}
+
 	var linkedClusters []string
-	slices.Filter(linkedClusters, xdevice.LinkedClusters, func(item string) bool {
-		return item != *clusterName
-	})
+	if device.ProjectName != nil {
+		clusterName, err := d.getClusterAttachedToProject(ctx, *device.ProjectName)
+		if err != nil {
+			return errors.NewE(err)
+		}
+		if clusterName == nil {
+			return errors.Newf("No Cluster found")
+		}
+		var linkedClusters []string
+		slices.Filter(linkedClusters, xdevice.LinkedClusters, func(item string) bool {
+			return item != *clusterName
+		})
+	}
 
 	if len(linkedClusters) == 0 {
 		err := d.vpnDeviceRepo.DeleteOne(
