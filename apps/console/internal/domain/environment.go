@@ -432,8 +432,14 @@ func (d *domain) OnEnvironmentDeleteMessage(ctx ConsoleContext, env entities.Env
 			fields.MetadataName: env.Name,
 		},
 	)
-
 	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if _, err = d.iamClient.RemoveMembership(ctx, &iam.RemoveMembershipIn{
+		UserId:      string(ctx.UserId),
+		ResourceRef: iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, env.Name),
+	}); err != nil {
 		return errors.NewE(err)
 	}
 
