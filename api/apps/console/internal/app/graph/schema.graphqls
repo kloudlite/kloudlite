@@ -102,6 +102,7 @@ type Query {
     core_listApps(projectName: String!, envName: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getApp(projectName: String!, envName: String!, name: String!): App @isLoggedInAndVerified @hasAccount
     core_resyncApp(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_restartApp(projectName: String!, envName: String!, appName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_getConfigValues(projectName: String!, envName: String!, queries: [ConfigKeyRefIn]): [ConfigKeyValueRef!] @isLoggedInAndVerified @hasAccount
     core_listConfigs(projectName: String!, envName: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -117,7 +118,6 @@ type Query {
     core_getRouter(projectName: String!, envName: String!, name: String!): Router @isLoggedInAndVerified @hasAccount
     core_resyncRouter(projectName: String!, envName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-
     core_getManagedResouceOutputKeys(projectName: String!, envName: String!, name: String!): [String!]! @isLoggedInAndVerified @hasAccount
     core_getManagedResouceOutputKeyValues(projectName: String!, envName: String!, keyrefs: [ManagedResourceKeyRefIn]): [ManagedResourceKeyValueRef!]! @isLoggedInAndVerified @hasAccount
     core_listManagedResources(projectName: String!, envName: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -126,7 +126,8 @@ type Query {
 
     core_listProjectManagedServices(projectName: String!, search: SearchProjectManagedService, pq: CursorPaginationIn): ProjectManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
     core_getProjectManagedService(projectName: String!,  name: String!): ProjectManagedService @isLoggedInAndVerified @hasAccount
-    core_resyncProjectManagedService(projectName: String!,  name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_resyncProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_restartProjectManagedService(projectName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_listVPNDevices(search: CoreSearchVPNDevices, pq: CursorPaginationIn): ConsoleVPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     core_listVPNDevicesForUser: [ConsoleVPNDevice!] @isLoggedInAndVerified @hasAccount
