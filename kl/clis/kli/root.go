@@ -1,4 +1,4 @@
-package kli
+package main
 
 import (
 	"os"

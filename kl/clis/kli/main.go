@@ -1,4 +1,4 @@
-package kli
+package main
 
 /*
 Copyright © 2022 Kloudlite <support@kloudlite.io>

@@ -1,4 +1,4 @@
-package kli
+package main
 
 import (
 	"github.com/kloudlite/kl/cmd/auth"

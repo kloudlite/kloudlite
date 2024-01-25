@@ -10,7 +10,7 @@ tasks:
 
   kli-dev:
     cmds:
-      - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kli-build && echo '# build success' || exit"
+      - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task main-build && echo '# build success' || exit"
   kli-build:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/cmd.Version=v1.0.0-nightly" -o ./bin/kli github.com/kloudlite/kl/clis/kli
+      - go build -ldflags="-X github.com/kloudlite/kl/cmd.Version=v1.0.0-nightly" -o ./bin/main github.com/kloudlite/kl/clis/kli
