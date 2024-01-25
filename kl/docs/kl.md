@@ -1,21 +1,8 @@
 ## kl
 
-kl is command line interface to interact with kloudlite environments
 
-### Synopsis
 
-```
 
-you can use kl -- <cmd> to execute any command with loaded environments.
-# example
-kl -- npm start
-
-kl(Kloudlite Cli) will manage and attach to kloudlite environments.
-
-Find more information at https://kloudlite.io/docs/cli
-
-> NOTE: default kl-config file is kl.yml you can provide your own by providing KLCONFIG_PATH to the environment.
-```
 
 ### Options
 
@@ -26,15 +13,15 @@ Find more information at https://kloudlite.io/docs/cli
 
 ### SEE ALSO
 
+* [kl add](kl_add.md)  - add [ secret | config | mres | mount ] configuration to your kl-config file
 * [kl auth](kl_auth.md)  - login,logout and status
 * [kl completion](kl_completion.md)  - Generate the autocompletion script for the specified shell
 * [kl docs](kl_docs.md)  - generate docs for kloudlite cli
-* [kl import](kl_import.md)  - import [ secret | config | mres | mount ] configuration to your kl-config file
-* [kl infra](kl_infra.md)  - infra releated commands
+* [kl get](kl_get.md)  - get [ config | secret ] entries
 * [kl init](kl_init.md)  - Initialize your kl-config file with some sample values
-* [kl list](kl_list.md)  - accounts | projects | env | configs | secrets | apps
+* [kl list](kl_list.md)  - list [accounts | projects | env | configs | secrets | apps]
 * [kl no-help](kl_no-help.md)  - 
-* [kl switch](kl_switch.md)  - switch and list account
+* [kl switch](kl_switch.md)  - select env and account
 * [kl update](kl_update.md)  - Update the kl to latest version
 * [kl vpn](kl_vpn.md)  - vpn related commands
 

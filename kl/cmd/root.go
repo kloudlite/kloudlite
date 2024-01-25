@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path"
 
@@ -12,58 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func GetRootHelp(cmd *cobra.Command) string {
-
-	return fmt.Sprintf(`Usage: kl [command] [options] [-- command] [command options]
-
-These are common kl commands used in various situatiions:
-
-Authentication
-      auth login                  - login to kloudlite account
-      auth logout                 - logout from kloudlite account
-      auth whoami                 - get current logged in user
-
-Manage Context:
-      auth login                  - login to kloudlite account
-      auth logout                 - logout from kloudlite account
-      status                      - get status of your current context (user, account, project, environment, vpn status)
-
-      list account                - list all accounts
-      switch account              - switch between kloudlite accounts
-
-Setup a kloudlite environment:
-      init                        - initilize kloudlite configuration file in current working directory
-      add config                  - add config entries to kloudlite configuration file
-      add secret                  - add secret entries to kloudlite cofiguration file
-      add mres                    - add managed resource params to kloudlite configuration file
-
-Working inside environment:
-      intercept <appname>         - intercept the application in the environment with your device.
-                                    This will tunnel all the incoming traffic to your device
-
-      -- <command>                - execute any command with loaded env variables
-                                    Example: kl -- npm start
-
-      list env                    - list all environments in current project
-      switch environment          - inside the current project context you can switch between environments
-
-VPN management:
-      vpn connect                 - connect/switch your device to current working environment (requires sudo)
-      vpn disconnect              - disconnect your device (requires sudo)
-      vpn wg                      - get status of your device. (handshake, ip, port, etc) (requires sudo)
-      vpn status                  - get status of your device. (connected/disconnected & connected environemnt)
-      vpn expose                  - expose your local device ports
-
-Fetch resources of current environment:
-      get config <config-name>    - get config entries
-      get secret <secret-name>    - get secret entries
-      get mres <mres-name>        - get managed resource parameters
-      list config                 - list all configs in current environment of project
-      list secret                 - list all secrets in current environemnt of project
-      list mres                   - list all managed resources in current environemnt of project
-	`)
-}
-
 var Version = "development"
 
 // rootCmd represents the base command when called without any subcommands
@@ -73,9 +20,7 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) < 2 || args[0] != "--" {
-
-			s := GetRootHelp(cmd)
-			fn.Log(s)
+			fn.Log(GetRootHelp(cmd))
 
 			// if err := cmd.Help(); err != nil {
 			// 	fn.Log(err)

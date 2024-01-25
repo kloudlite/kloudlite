@@ -18,7 +18,7 @@ See each sub-command's help for details on how to use the generated script.
 
 ### SEE ALSO
 
-* [kl](kl.md)  - kl is command line interface to interact with kloudlite environments
+* [kl](kl.md)  - 
 * [kl completion bash](kl_completion_bash.md)  - Generate the autocompletion script for bash
 * [kl completion fish](kl_completion_fish.md)  - Generate the autocompletion script for fish
 * [kl completion powershell](kl_completion_powershell.md)  - Generate the autocompletion script for powershell

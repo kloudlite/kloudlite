@@ -1,19 +1,8 @@
 ## kl switch
 
-switch and list account
+select env and account
 
-### Synopsis
 
-```
-Use this command to switch and list accounts
-Examples:
-		# list accounts accessible to you
-      kl account list
-
-    # switch to a different account
-      kl account switch
-	
-```
 
 ### Options
 
@@ -24,7 +13,7 @@ Examples:
 
 ### SEE ALSO
 
-* [kl](kl.md)  - kl is command line interface to interact with kloudlite environments
+* [kl](kl.md)  - 
 * [kl switch account](kl_switch_account.md)  - Switch account
 * [kl switch env](kl_switch_env.md)  - switch to a different environment
 * [kl switch help](kl_switch_help.md)  - Help about any command

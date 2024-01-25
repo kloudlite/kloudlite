@@ -1,6 +1,6 @@
 ## kl list
 
-accounts | projects | env | configs | secrets | apps
+list [accounts | projects | env | configs | secrets | apps]
 
 ### Synopsis
 
@@ -18,7 +18,7 @@ Using this command you can list multiple resources.
 
 ### SEE ALSO
 
-* [kl](kl.md)  - kl is command line interface to interact with kloudlite environments
+* [kl](kl.md)  - 
 * [kl list accounts](kl_list_accounts.md)  - list all the accounts accessible to you
 * [kl list apps](kl_list_apps.md)  - list all the apps available in selected project
 * [kl list configs](kl_list_configs.md)  - list all the configs available in selected project

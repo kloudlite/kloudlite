@@ -27,7 +27,7 @@ Examples:
 
 ### SEE ALSO
 
-* [kl](kl.md)  - kl is command line interface to interact with kloudlite environments
+* [kl](kl.md)  - 
 * [kl auth help](kl_auth_help.md)  - Help about any command
 * [kl auth login](kl_auth_login.md)  - login to kloudlite
 * [kl auth logout](kl_auth_logout.md)  - logout from kloudlite

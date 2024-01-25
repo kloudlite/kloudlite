@@ -36,7 +36,7 @@ Examples:
 
 ### SEE ALSO
 
-* [kl](kl.md)  - kl is command line interface to interact with kloudlite environments
+* [kl](kl.md)  - 
 * [kl vpn expose](kl_vpn_expose.md)  - expose port of selected device
 * [kl vpn help](kl_vpn_help.md)  - Help about any command
 * [kl vpn intercept](kl_vpn_intercept.md)  - intercept app to tunnel trafic to your device
