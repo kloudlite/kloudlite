@@ -9,7 +9,7 @@
   value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
 
 - name: DNS_HOSTED_ZONE
-  value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
+  value: {{.Values.global.baseDomain}}
 
 - name: CLUSTER_INTERNAL_DNS
   value: {{.Values.global.clusterInternalDNS}}
