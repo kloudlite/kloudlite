@@ -41,7 +41,6 @@ func PatchForSyncFromAgent(
 	status types.ResourceStatus,
 	opts PatchOpts,
 ) repos.Document {
-	res.GetCreationTimestamp()
 	generatedPatch := repos.Document{
 		fields.MetadataCreationTimestamp: res.GetCreationTimestamp(),
 		fields.MetadataLabels:            res.GetLabels(),
