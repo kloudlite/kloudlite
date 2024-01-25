@@ -65,19 +65,9 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 			return nil
 		}
 
-		obj := unstructured.Unstructured{Object: su.Object}
-		mLogger := logger.WithKV(
-			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
-		)
-
-		mLogger.Infof("received message")
-		defer func() {
-			mLogger.Infof("processed message")
-		}()
-
 		dctx := domain.InfraContext{Context: context.TODO(), UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
 
+		obj := unstructured.Unstructured{Object: su.Object}
 		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
 
 		resStatus, err := func() (types.ResourceStatus, error) {
@@ -95,6 +85,18 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 		if err != nil {
 			return err
 		}
+
+		mLogger := logger.WithKV(
+			"gvk", obj.GetObjectKind().GroupVersionKind(),
+			"NN", fmt.Sprintf("%s/%s", obj.GetNamespace(), obj.GetName()),
+			"resource-status", resStatus,
+			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
+		)
+
+		mLogger.Infof("received message")
+		defer func() {
+			mLogger.Infof("processed message")
+		}()
 
 		switch gvkStr {
 		case clusterGVK.String():
