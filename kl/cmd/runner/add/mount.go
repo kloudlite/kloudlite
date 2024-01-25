@@ -25,7 +25,9 @@ Examples:
   kl add mount --secretName=<secret_name>
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		klFile, err := client.GetKlFile(nil)
+		filePath := fn.ParseKlFile(cmd)
+
+		klFile, err := client.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			es := "please run 'kl init' if you are not initialized the file already"
@@ -197,4 +199,5 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 func init() {
 	mountCommand.Flags().StringP("config", "", "", "config name")
 	mountCommand.Flags().StringP("secret", "", "", "secret name")
+	fn.WithKlFile(mountCommand)
 }

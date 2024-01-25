@@ -29,6 +29,7 @@ Examples:
 		mres, err := server.SelectMres([]fn.Option{
 			fn.MakeOption("mresName", mresName),
 		}...)
+		filePath := fn.ParseKlFile(cmd)
 
 		if err != nil {
 			fn.PrintError(err)
@@ -44,7 +45,7 @@ Examples:
 			return
 		}
 
-		kt, err := client.GetKlFile(nil)
+		kt, err := client.GetKlFile(filePath)
 		if err != nil {
 			fn.PrintError(err)
 			return
@@ -101,4 +102,5 @@ Examples:
 
 func init() {
 	mresCmd.Flags().StringP("name", "n", "", "managed resource name")
+	fn.WithKlFile(mresCmd)
 }

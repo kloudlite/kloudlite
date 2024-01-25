@@ -154,6 +154,19 @@ func WithOutputVariant(cmd *cobra.Command) {
 	cmd.Flags().StringP("output", "o", "table", "output format [table | json | yaml]")
 }
 
+func WithKlFile(cmd *cobra.Command) {
+	cmd.Flags().StringP("klfile", "k", "", "kloudlite file")
+}
+
+func ParseKlFile(cmd *cobra.Command) string {
+	if cmd.Flags().Changed("klfile") {
+		v, _ := cmd.Flags().GetString("klfile")
+		return v
+	}
+
+	return ""
+}
+
 func InfraMarkOption() Option {
 	return MakeOption("isInfra", "yes")
 }

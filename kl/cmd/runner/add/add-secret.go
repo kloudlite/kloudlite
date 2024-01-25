@@ -42,12 +42,13 @@ Examples:
 func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 	m := fn.ParseStringFlag(cmd, "map")
 	name := fn.ParseStringFlag(cmd, "name")
+	filePath := fn.ParseKlFile(cmd)
 
 	if name == "" && len(args) >= 1 {
 		name = args[0]
 	}
 
-	klFile, err := client.GetKlFile(nil)
+	klFile, err := client.GetKlFile(filePath)
 	if err != nil {
 		fn.PrintError(err)
 		es := "please run 'kl init' if you are not initialized the file already"
@@ -205,4 +206,5 @@ func init() {
 	secCmd.Flags().StringP("name", "n", "", "secret name")
 
 	secCmd.Aliases = append(secCmd.Aliases, "sec")
+	fn.WithKlFile(secCmd)
 }

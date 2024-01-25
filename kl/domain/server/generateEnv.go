@@ -37,7 +37,7 @@ type GeneratedEnvs struct {
 }
 
 func GenerateEnv() (*GeneratedEnvs, error) {
-	klFile, err := client.GetKlFile(nil)
+	klFile, err := client.GetKlFile("")
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ type CSResp map[string]map[string]*Kv
 
 func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 
-	kt, err := client.GetKlFile(nil)
+	kt, err := client.GetKlFile("")
 	if err != nil {
 		return nil, nil, nil, err
 	}

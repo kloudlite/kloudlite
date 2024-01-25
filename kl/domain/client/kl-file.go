@@ -87,13 +87,13 @@ func WriteKLFile(fileObj KLFileType) error {
 	return nil
 }
 
-func GetKlFile(filePath *string) (*KLFileType, error) {
-	if filePath == nil {
+func GetKlFile(filePath string) (*KLFileType, error) {
+	if filePath == "" {
 		s := GetConfigPath()
-		filePath = &s
+		filePath = s
 	}
 
-	klfile, err := confighandler.ReadConfig[KLFileType](*filePath)
+	klfile, err := confighandler.ReadConfig[KLFileType](filePath)
 	if err != nil {
 		return nil, err
 	}

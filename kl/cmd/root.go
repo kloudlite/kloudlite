@@ -38,7 +38,7 @@ Find more information at https://kloudlite.io/docs/cli
 			return
 		}
 
-		klfile, err := client.GetKlFile(nil)
+		klfile, err := client.GetKlFile("")
 		if err != nil {
 			fn.PrintError(err)
 			return

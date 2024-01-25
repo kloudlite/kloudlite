@@ -43,11 +43,13 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 	name := fn.ParseStringFlag(cmd, "name")
 	m := fn.ParseStringFlag(cmd, "map")
 
+	filePath := fn.ParseKlFile(cmd)
+
 	if name == "" && len(args) >= 1 {
 		name = args[0]
 	}
 
-	klFile, err := client.GetKlFile(nil)
+	klFile, err := client.GetKlFile(filePath)
 	if err != nil {
 		fn.PrintError(err)
 		es := "please run 'kl init' if you are not initialized the file already"
@@ -204,4 +206,5 @@ func init() {
 	confCmd.Flags().StringP("map", "m", "", "config_key=your_var_key")
 	confCmd.Flags().StringP("name", "n", "", "config name")
 	confCmd.Aliases = append(confCmd.Aliases, "conf")
+	fn.WithKlFile(confCmd)
 }

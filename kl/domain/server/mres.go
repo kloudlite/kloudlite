@@ -151,7 +151,7 @@ func GetMresConfigValues(options ...fn.Option) (map[string]string, error) {
 		return nil, err
 	}
 
-	kt, err := client.GetKlFile(nil)
+	kt, err := client.GetKlFile("")
 	if err != nil {
 		return nil, err
 	}

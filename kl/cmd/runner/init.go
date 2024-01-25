@@ -26,8 +26,8 @@ Examples:
 
 		pName := fn.ParseStringFlag(cmd, "project")
 		aName := fn.ParseStringFlag(cmd, "account")
-
-		initFile, err := client.GetKlFile(nil)
+		filePath := fn.ParseKlFile(cmd)
+		initFile, err := client.GetKlFile(filePath)
 
 		if err != nil {
 
@@ -84,4 +84,6 @@ Examples:
 func init() {
 	InitCommand.Flags().StringP("project", "p", "", "project name")
 	InitCommand.Flags().StringP("account", "a", "", "account name")
+	InitCommand.Flags().StringP("file", "f", "", "file name")
+	fn.WithKlFile(InitCommand)
 }

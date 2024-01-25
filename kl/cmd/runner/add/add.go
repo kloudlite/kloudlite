@@ -5,9 +5,9 @@ import (
 )
 
 var Command = &cobra.Command{
-	Use:   "add",
-	Short: "add [ secret | config | mres | mount ] configuration to your kl-config file",
-	Long:  `add an environment variable from secret,config or managed resource`,
+	Use:   "import",
+	Short: "import [ secret | config | mres | mount ] configuration to your kl-config file",
+	Long:  `imports an environment variable from secret,config or managed resource`,
 }
 
 func init() {

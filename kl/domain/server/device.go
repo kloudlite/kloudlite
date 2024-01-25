@@ -201,12 +201,10 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 		}
 	}
 
-	if devName != "" {
-		var err error
-		devName, err = os.Hostname()
-		if err != nil {
-			return "", err
-		}
+	var err error
+	devName, err = os.Hostname()
+	if err != nil {
+		return "", err
 	}
 
 	devResult, err := GetDeviceName(devName)

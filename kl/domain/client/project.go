@@ -9,7 +9,7 @@ func CurrentProjectName() (string, error) {
 	returnErr :=
 		errors.New("can't get current project from you kl file. please initialize your project using \"kl init\" first.")
 
-	kfile, err := GetKlFile(nil)
+	kfile, err := GetKlFile("")
 	if err != nil {
 		return "", returnErr
 	}
