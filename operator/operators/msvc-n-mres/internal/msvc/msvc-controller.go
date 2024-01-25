@@ -122,7 +122,7 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 
 		"name":       obj.Name,
 		"namespace":  obj.Namespace,
-		"labels":     obj.GetEnsuredLabels(),
+		"labels":     obj.GetLabels(),
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 		"service-template-spec": obj.Spec.ServiceTemplate.Spec,
