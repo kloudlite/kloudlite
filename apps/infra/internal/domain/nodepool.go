@@ -170,7 +170,8 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePoolIn
 		&nodePoolIn,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.NodePoolSpec: nodePoolIn.Spec,
+				fc.NodePoolSpecMinCount: nodePoolIn.Spec.MinCount,
+				fc.NodePoolSpecMaxCount: nodePoolIn.Spec.MaxCount,
 			},
 		})
 
