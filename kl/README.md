@@ -112,11 +112,11 @@ for that you need to perform following actions.
 - [intercept an app](./docs/kl_vpn_intercept.md)
 
 So you can use following commands to work with interception. 
-For more details visit [kl vpn intecept](./docs/kl_vpn_intercept.md) and [kl vpn intecept leave](./docs/kl_vpn_intercept_leave.md)
+For more details visit [kl vpn intecept start](./docs/kl_vpn_intercept_start.md) and [kl vpn intecept stop](./docs/kl_vpn_intercept_stop.md)
 
 ```sh
-kl vpn intercept
-kl vpn intercept leave
+kl vpn intercept start
+kl vpn intercept stop
 ```
 
 ### KL Config File structure
