@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	"github.com/kloudlite/api/common/fields"
 	"time"
+
+	"github.com/kloudlite/api/common/fields"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
@@ -150,6 +151,7 @@ type Domain interface {
 	DeleteApp(ctx ResourceContext, name string) error
 
 	InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool) (bool, error)
+	RestartApp(ctx ResourceContext, appName string) error
 
 	OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnAppDeleteMessage(ctx ResourceContext, app entities.App) error
@@ -234,6 +236,9 @@ type Domain interface {
 	CreateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
 	UpdateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error)
 	DeleteProjectManagedService(ctx ConsoleContext, projectName string, name string) error
+
+	RestartProjectManagedService(ctx ConsoleContext, projectName string, name string) error
+
 	OnProjectManagedServiceApplyError(ctx ConsoleContext, projectName, name, errMsg string, opts UpdateAndDeleteOpts) error
 	OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) error
 	OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projectName string, service entities.ProjectManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error

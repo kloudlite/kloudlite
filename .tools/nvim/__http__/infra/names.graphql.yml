@@ -16,7 +16,7 @@ query: |+
 variables:
   resType: vpn_device
   # name: sample 
-  name: saple
+  name: sample
 ---
 
 label: Check Name Availability, with ClusterName
