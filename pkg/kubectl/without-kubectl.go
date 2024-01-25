@@ -356,6 +356,10 @@ const (
 	StatefulSet Restartable = "statefulset"
 )
 
+func (r Restartable) String() string {
+	return string(r)
+}
+
 func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error {
 	switch kind {
 	case Deployment:
@@ -372,7 +376,7 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 				if d.Annotations == nil {
 					d.Annotations = map[string]string{}
 				}
-				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				d.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 				if _, err := yc.k8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
 					return err
 				}
@@ -392,7 +396,7 @@ func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, name
 				if d.Annotations == nil {
 					d.Annotations = map[string]string{}
 				}
-				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				d.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
 				if _, err := yc.k8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
 					return err
 				}

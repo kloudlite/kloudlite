@@ -195,8 +195,10 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 		for k, v := range m {
 			fn.MapSet(&msvc.Annotations, k, v)
 		}
-		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s_%s", obj.Namespace, obj.Name))
+		labels := obj.GetLabels()
+		fn.MapSet(&labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s_%s", obj.Namespace, obj.Name))
 
+		msvc.SetLabels(labels)
 		msvc.Spec = obj.Spec.MSVCSpec
 		return nil
 	}); err != nil {
