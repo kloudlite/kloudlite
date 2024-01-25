@@ -67,6 +67,10 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
+	ann := obj.GetAnnotations()
+	delete(ann, constants.LastAppliedKey)
+	obj.SetAnnotations(ann)
+
 	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
 
 	switch gvk.String() {
@@ -260,9 +264,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
 	if r.MsgSender == nil {
 		r.logger.Infof("message-sender is nil")
-		return ctrl.Result{
-			// RequeueAfter: 2 *time.Second,
-		}, errors.New("waiting for message sender to be initialized")
+		return ctrl.Result{}, errors.New("waiting for message sender to be initialized")
 	}
 
 	var wName types.WrappedName
