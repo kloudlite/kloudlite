@@ -1,4 +1,4 @@
-package main
+package kli
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 func GetRootHelp(cmd *cobra.Command) string {
-	return fmt.Sprintf(`Usage: kl [command] [options] [-- command] [command options]
+	return fmt.Sprintf(`Usage: kli [command] [options] [-- command] [command options]
 
 These are common kl commands used in various situatiions:
 

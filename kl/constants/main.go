@@ -42,3 +42,7 @@ var (
 		return os.Getenv("Update_URL")
 	}()
 )
+
+var (
+	Version = "development"
+)

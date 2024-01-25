@@ -27,6 +27,4 @@ Examples:
 func init() {
 	Cmd.AddCommand(configCmd)
 	Cmd.AddCommand(secretCmd)
-
-	Cmd.GroupID = "list"
 }

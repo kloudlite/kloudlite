@@ -112,5 +112,4 @@ func init() {
 
 	Cmd.AddCommand(context.Cmd)
 	Cmd.AddCommand(vpn.Cmd)
-	Cmd.AddCommand(cluster.Cmd)
 }

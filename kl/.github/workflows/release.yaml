@@ -28,7 +28,7 @@ jobs:
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
         goversion: "https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz"
-        project_path: "clis/${{ matrix.clis }}"
-        ldflags: "-X github.com/kloudlite/kl/cmd.Version=${{ steps.tag_name.outputs.TAG_NAME }}"
+        project_path: "."
+        ldflags: "-X github.com/kloudlite/kl/constants.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X main.Cli=${{ matrix.clis }}"
         binary_name: ${{ matrix.clis }}
         extra_files: LICENSE README.md

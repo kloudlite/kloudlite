@@ -11,6 +11,13 @@ var Cmd = &cobra.Command{
 `,
 }
 
+var InfraCmd = &cobra.Command{
+	Use:   "list",
+	Short: "list accounts | cluster",
+	Long: `Using this command you can list multiple resources.
+`,
+}
+
 func init() {
 	Cmd.AddCommand(projectsCmd)
 	Cmd.AddCommand(configsCmd)
@@ -21,5 +28,7 @@ func init() {
 
 	Cmd.Aliases = append(Cmd.Aliases, "ls")
 
-	Cmd.GroupID = "list"
+	InfraCmd.AddCommand(accCmd)
+	InfraCmd.AddCommand(clusterCmd)
+	InfraCmd.Aliases = append(InfraCmd.Aliases, "ls")
 }

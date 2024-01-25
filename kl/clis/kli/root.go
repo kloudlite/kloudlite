@@ -1,31 +1,30 @@
-package main
+package kli
 
 import (
 	"os"
 	"path"
 
 	"github.com/kloudlite/kl/cmd/runner/mounter"
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
-var Version = "development"
-
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:                "kl",
+	Use:                "kli",
 	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) < 2 || args[0] != "--" {
-			fn.Log(GetRootHelp(cmd))
+			// fn.Log(GetRootHelp(cmd))
 
-			// if err := cmd.Help(); err != nil {
-			// 	fn.Log(err)
-			// 	os.Exit(1)
-			// }
+			if err := cmd.Help(); err != nil {
+				fn.Log(err)
+				os.Exit(1)
+			}
 			return
 		}
 
@@ -84,5 +83,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Version = Version
+	rootCmd.Version = constants.Version
 }
