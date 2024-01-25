@@ -122,7 +122,6 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, deviceIn 
 		&deviceIn,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.VPNDeviceSpec:                deviceIn.Spec,
 				fc.VPNDeviceSpecPorts:           deviceIn.Spec.Ports,
 				fc.VPNDeviceSpecActiveNamespace: deviceIn.Spec.ActiveNamespace,
 			},

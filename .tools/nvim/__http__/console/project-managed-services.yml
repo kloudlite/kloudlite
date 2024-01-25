@@ -1,0 +1,29 @@
+---
+label: list project managed services
+query: |+
+  query Core_listProjectManagedServices($projectName: String!) {
+    core_listProjectManagedServices(projectName: $projectName) {
+      edges { 
+        node {
+          metadata {
+            name
+            annotations
+          }
+        }
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+---
+
+label: restart project managed service
+query: |+ #graphql
+  query Query($projectName: String!, $name: String!) {
+    core_restartProjectManagedService(projectName: $projectName, name: $name)
+  }
+variables:
+  projectName: "{{.projectName}}"
+  name: "sampledbservice"
+
+---

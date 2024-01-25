@@ -145,7 +145,6 @@ func (d *domain) UpdateHelmRelease(ctx InfraContext, clusterName string, hrIn en
 		&hrIn,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.HelmReleaseSpec:             hrIn.Spec,
 				fc.HelmReleaseSpecChartVersion: hrIn.Spec.ChartVersion,
 				fc.HelmReleaseSpecValues:       hrIn.Spec.Values,
 			},
