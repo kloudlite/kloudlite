@@ -147,7 +147,6 @@ func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.A
 		ctx.DBFilters().Add(fields.MetadataName, appIn.Name),
 		patchForUpdate,
 	)
-	
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -178,6 +177,23 @@ func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName st
 		return false, errors.NewE(err)
 	}
 	return true, nil
+}
+
+func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return errors.NewE(err)
+	}
+
+	app, err := d.findApp(ctx, appName)
+	if err != nil {
+		return err
+	}
+
+	if err := d.restartK8sResource(ctx, ctx.ProjectName, app.Namespace, app.GetEnsuredLabels()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
