@@ -21,11 +21,11 @@ type HelmRelease struct {
 }
 
 func (h *HelmRelease) GetDisplayName() string {
-	return h.ResourceMetadata.DisplayName
+	return h.DisplayName
 }
 
 func (h *HelmRelease) GetStatus() operator.Status {
-	return operator.Status{}
+	return h.Status.Status
 }
 
 var HelmReleaseIndices = []repos.IndexField{
