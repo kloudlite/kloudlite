@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	"github.com/kloudlite/api/common/fields"
 
@@ -153,7 +154,7 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		&service,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.ProjectManagedServiceSpec: service.Spec,
+				fc.ProjectManagedServiceSpecMsvcSpecServiceTemplateSpec: service.Spec.MSVCSpec.ServiceTemplate.Spec,
 			},
 		})
 
@@ -200,6 +201,24 @@ func (d *domain) DeleteProjectManagedService(ctx ConsoleContext, projectName str
 	return d.deleteK8sResource(ctx, projectName, &upmsvc.ProjectManagedService)
 }
 
+// RestartProjectManagedService implements Domain.
+func (d *domain) RestartProjectManagedService(ctx ConsoleContext, projectName string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
+		return errors.NewE(err)
+	}
+
+	pms, err := d.findProjectManagedService(ctx, projectName, name)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.restartK8sResource(ctx, projectName, pms.Spec.TargetNamespace, pms.GetEnsuredLabels()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (d *domain) OnProjectManagedServiceApplyError(ctx ConsoleContext, projectName, name, errMsg string, opts UpdateAndDeleteOpts) error {
 	upmsvc, err := d.pmsRepo.Patch(
 		ctx,
@@ -214,7 +233,6 @@ func (d *domain) OnProjectManagedServiceApplyError(ctx ConsoleContext, projectNa
 			},
 		),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -267,7 +285,6 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 					fc.ProjectManagedServiceSyncedOutputSecretRef: service.SyncedOutputSecretRef,
 				},
 			}))
-
 	if err != nil {
 		return errors.NewE(err)
 	}

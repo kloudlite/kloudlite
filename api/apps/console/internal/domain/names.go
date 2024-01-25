@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/common/fields"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -22,7 +23,7 @@ func checkResourceName[T repos.Entity](ctx context.Context, filters repos.Filter
 
 	return &CheckNameAvailabilityOutput{
 		Result:         false,
-		SuggestedNames: fn.GenValidK8sResourceNames(filters[fields.Metadata].(string), 3),
+		SuggestedNames: fn.GenValidK8sResourceNames(filters[fields.MetadataName].(string), 3),
 	}, nil
 }
 

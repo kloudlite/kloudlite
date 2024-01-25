@@ -16,6 +16,10 @@ query: |+ #graphql
             userId
             userName
           }
+          metadata {
+            name
+            annotations
+          }
           syncStatus {
             state
             action
@@ -149,4 +153,16 @@ variables:
   projectName: "{{.projectName}}"
   envName: "{{.envName}}"
   appName: "{{.name}}"
+---
+
+---
+label: restart app
+query: |+
+  query Query($projectName: String!, $envName: String!, $appName: String!) {
+    core_restartApp(projectName: $projectName, envName: $envName, appName: $appName)
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  appName: "nginx"
 ---
