@@ -53,7 +53,7 @@ data:
   value: {{ required ".Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketDir must be set" .Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketDir }} 
 
 - name: MESSAGE_OFFICE_GRPC_ADDR
-  value: "message-office.{{.Values.global.baseDomain}}:443"
+  value: message-office.{{include "router-domain" .}}:443
 
 - name: KL_AWS_ACCESS_KEY
   value: {{ required ".Values.aws.accessKey" .Values.aws.accessKey }} 

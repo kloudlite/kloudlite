@@ -407,16 +407,19 @@ envVars:
       events:
         name: events
         subjects: "events.>"
-        maxMsgBytes: 2MB
+        maxMsgBytes: 500kB
+        maxMsgsPerSubject: 2
       resourceSync:
         name: resource-sync
         subjects: "resource-sync.>"
-        maxMsgBytes: 2MB
+        maxMsgBytes: 500kB
+        # maxMsgsPerSubject: 2
       logs:
         name: logs
         subjects: "logs.>"
         maxMsgBytes: 2MB
         maxAge: "3h"
+        # maxMsgsPerSubject: 2
     buckets:
       sessionKVBucket:
         name: auth-session

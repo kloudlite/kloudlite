@@ -40,8 +40,7 @@ spec:
           {{- /* subject: {{ range .Files.Get "files/nats-logs-sink-subject.txt" | nindent 13 | trim | splitList "\n" }} */}}
           {{- /*   {{- . | trim -}} */}}
           {{- /*   {{ end}} */}}
-          subject: |+
-            {{ range .Files.Lines "files/nats-logs-sink-subject.txt" }} 
+          subject: {{ range .Files.Lines "files/nats-logs-sink-subject.txt" }} 
             {{- . | trim -}}
             {{ end }}
           url: {{.Values.envVars.nats.url}}
@@ -59,21 +58,21 @@ spec:
           address: 0.0.0.0:9090
           flush_period_secs: 20
 
-        loki:
-          type: loki
-          inputs:
-            - vector
-          endpoint: http://{{.Values.loki.name}}.{{.Release.Namespace}}:3100
-          encoding:
-            codec: json
-            only_fields:
-              - message
-              - timestamp
-            timestamp_format: rfc3339
-          labels: 
-            {{ range .Files.Lines "files/vector-aggregation-loki-labels.yml" }}
-            {{ . -}}
-            {{ end }}
+        {{- /* loki: */}}
+        {{- /*   type: loki */}}
+        {{- /*   inputs: */}}
+        {{- /*     - vector */}}
+        {{- /*   endpoint: http://{{.Values.loki.name}}.{{.Release.Namespace}}:3100 */}}
+        {{- /*   encoding: */}}
+        {{- /*     codec: json */}}
+        {{- /*     only_fields: */}}
+        {{- /*       - message */}}
+        {{- /*       - timestamp */}}
+        {{- /*     timestamp_format: rfc3339 */}}
+        {{- /*   labels:  */}}
+        {{- /*     {{ range .Files.Lines "files/vector-aggregation-loki-labels.yml" }} */}}
+        {{- /*     {{ . -}} */}}
+        {{- /*     {{ end }} */}}
         stdout:
           type: console
           inputs: [vector]
