@@ -19,7 +19,9 @@ spec:
     {{range $v := .Values.cloudflareWildCardCert.domains}}
     - {{$v | squote}}
     {{end}}
+    {{ if .Values.global.routerDomain }}
     - '*.{{include "router-domain" .}}'
+    {{ end }}
   secretName: kl-cert-wildcard-tls
   issuerRef:
     name: {{.Values.certManager.certIssuer.name}}
