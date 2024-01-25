@@ -267,11 +267,9 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 
 	// TODO (nxtcoder17): when increasing pvc volume size, we can not trigger helm update, as it complains about forbidden field
 	b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
-		"name":      obj.Name,
-		"namespace": obj.Namespace,
-		"labels": map[string]string{
-			constants.MsvcNameKey: obj.Name,
-		},
+		"name":          obj.Name,
+		"namespace":     obj.Namespace,
+		"labels":        obj.GetLabels(),
 		"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj)},
 		"node-selector": obj.Spec.NodeSelector,
 
