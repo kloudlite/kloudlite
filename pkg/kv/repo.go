@@ -34,6 +34,10 @@ func (r *redisRepo[T]) Get(c context.Context, key string) (T, error) {
 	return value, errors.NewE(err)
 }
 
+func (r *redisRepo[T]) ErrKeyNotFound(err error) bool {
+	return errors.Is(err, redis.Nil)
+}
+
 func (r *redisRepo[T]) SetWithExpiry(c context.Context, key string, value T, duration time.Duration) error {
 	marshal, err := json.Marshal(value)
 	if err != nil {
