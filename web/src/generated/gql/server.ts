@@ -689,6 +689,7 @@ export type SecretIn = {
 
 export type ConsoleVpnDeviceIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  clusterName?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   environmentName?: InputMaybe<Scalars['String']['input']>;
   kind?: InputMaybe<Scalars['String']['input']>;
@@ -5132,6 +5133,24 @@ export type ConsoleListImagePullSecretsQuery = {
   };
 };
 
+export type AuthCli_UpdateDeviceClusterMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+  clusterName: Scalars['String']['input'];
+}>;
+
+export type AuthCli_UpdateDeviceClusterMutation = {
+  core_updateVpnClusterName: boolean;
+};
+
+export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+  ns: Scalars['String']['input'];
+}>;
+
+export type AuthCli_UpdateDeviceNsMutation = {
+  core_updateVpnDeviceNs: boolean;
+};
+
 export type AuthCli_CoreUpdateDevicePortsMutationVariables = Exact<{
   deviceName: Scalars['String']['input'];
   ports: Array<PortIn> | PortIn;
@@ -5207,97 +5226,6 @@ export type AuthCli_UpdateCoreDevicePortsMutationVariables = Exact<{
 
 export type AuthCli_UpdateCoreDevicePortsMutation = {
   core_updateVPNDevicePorts: boolean;
-};
-
-export type AuthCli_GetDeviceQueryVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-}>;
-
-export type AuthCli_GetDeviceQuery = {
-  infra_getVPNDevice?: {
-    displayName: string;
-    markedForDeletion?: boolean;
-    metadata?: { name: string; namespace?: string };
-    spec?: {
-      activeNamespace?: string;
-      nodeSelector?: any;
-      cnameRecords?: Array<{ host?: string; target?: string }>;
-      ports?: Array<{ port?: number; targetPort?: number }>;
-    };
-    status?: { isReady: boolean; message?: { RawMessage?: any } };
-    wireguardConfig?: { encoding: string; value: string };
-  };
-};
-
-export type AuthCli_ListDevicesQueryVariables = Exact<{
-  pq?: InputMaybe<CursorPaginationIn>;
-  clusterName?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-export type AuthCli_ListDevicesQuery = {
-  infra_listVPNDevices?: {
-    edges: Array<{
-      node: {
-        displayName: string;
-        metadata?: { name: string };
-        spec?: {
-          activeNamespace?: string;
-          disabled?: boolean;
-          nodeSelector?: any;
-          ports?: Array<{ port?: number; targetPort?: number }>;
-        };
-        status?: { isReady: boolean; message?: { RawMessage?: any } };
-        wireguardConfig?: { encoding: string; value: string };
-      };
-    }>;
-  };
-};
-
-export type AuthCli_UpdateDeviceMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  vpnDevice: VpnDeviceIn;
-}>;
-
-export type AuthCli_UpdateDeviceMutation = {
-  infra_updateVPNDevice?: {
-    metadata?: { name: string };
-    spec?: {
-      activeNamespace?: string;
-      cnameRecords?: Array<{ target?: string; host?: string }>;
-      ports?: Array<{ targetPort?: number; port?: number }>;
-    };
-    status?: { isReady: boolean; message?: { RawMessage?: any } };
-  };
-};
-
-export type AuthCli_UpdateDevicePortMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
-  ports: Array<PortIn> | PortIn;
-}>;
-
-export type AuthCli_UpdateDevicePortMutation = {
-  infra_updateVPNDevicePorts: boolean;
-};
-
-export type AuthCli_UpdateDeviceNsMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
-  namespace: Scalars['String']['input'];
-}>;
-
-export type AuthCli_UpdateDeviceNsMutation = {
-  infra_updateVPNDeviceNs: boolean;
-};
-
-export type AuthCli_CreateDeviceMutationVariables = Exact<{
-  clusterName: Scalars['String']['input'];
-  vpnDevice: VpnDeviceIn;
-}>;
-
-export type AuthCli_CreateDeviceMutation = {
-  infra_createVPNDevice?: { metadata?: { name: string } };
 };
 
 export type AuthCli_CoreCheckNameAvailabilityQueryVariables = Exact<{
