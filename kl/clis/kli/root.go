@@ -1,78 +1,104 @@
 package kli
 
 import (
+	"fmt"
 	"os"
-	"path"
+	"os/exec"
 
-	"github.com/kloudlite/kl/cmd/runner/mounter"
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:                "kli",
+	Use:                flags.CliName,
 	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) < 2 || args[0] != "--" {
-			// fn.Log(GetRootHelp(cmd))
-
 			if err := cmd.Help(); err != nil {
-				fn.Log(err)
-				os.Exit(1)
+				fn.PrintError(err)
 			}
 			return
 		}
 
-		klfile, err := client.GetKlFile("")
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
+		var fnn func() error
+		fnn = func() error {
 
-		envs, cmap, smap, err := server.GetLoadMaps()
-		if err != nil {
-			fn.PrintError(err)
-			return
-		}
+			accountName := fn.ParseStringFlag(cmd, "account")
+			clusterName := fn.ParseStringFlag(cmd, "cluster")
 
-		mountfiles := map[string]string{}
+			var err error
+			clusterName, err = server.EnsureCluster([]fn.Option{
+				fn.MakeOption("accountName", accountName),
+				fn.MakeOption("clusterName", clusterName),
+			}...)
 
-		for _, fe := range klfile.FileMount.Mounts {
-			pth := fe.Path
-			if pth == "" {
-				pth = fe.Key
+			if err != nil {
+				return err
 			}
 
-			if fe.Type == client.ConfigType {
-				mountfiles[pth] = cmap[fe.Name][fe.Key].Value
-			} else {
-				mountfiles[pth] = smap[fe.Name][fe.Key].Value
+			fn.Log(
+				text.Bold(text.Green("\nSelected Cluster: ")),
+				text.Blue(fmt.Sprintf("%s", clusterName)),
+			)
+
+			configPath, err := server.SyncKubeConfig([]fn.Option{
+				fn.MakeOption("accountName", accountName),
+				fn.MakeOption("clusterName", clusterName),
+			}...)
+
+			if err != nil {
+				return err
 			}
+			if err := run(map[string]string{
+				"KUBECONFIG": *configPath,
+			}, args[1:]); err != nil {
+				return err
+			}
+			return nil
 		}
-
-		if err = mounter.Mount(mountfiles, klfile.FileMount.MountBasePath); err != nil {
-			fn.PrintError(err)
-			return
-		}
-
-		cwd, err := os.Getwd()
-		if err != nil {
-			cwd = "."
-		}
-
-		envs["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
-
-		if err = mounter.Load(envs, args[1:]); err != nil {
+		if err := fnn(); err != nil {
 			fn.PrintError(err)
 			return
 		}
 
 	},
+}
+
+func run(envs map[string]string, args []string) error {
+	var cmd *exec.Cmd
+	if len(args) > 0 {
+		argsWithoutProg := args[1:]
+		cmd = exec.Command(args[0], argsWithoutProg...)
+	} else {
+		cmd = exec.Command("printenv")
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+
+	if len(args) > 0 {
+		cmd.Env = os.Environ()
+	}
+
+	for k, v := range envs {
+		if len(args) == 0 {
+			fn.Log(fmt.Sprintf("%s=%s", k, v))
+		} else {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	return cmd.Run()
 }
 
 func Execute() {
@@ -83,5 +109,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Version = constants.Version
+	rootCmd.Version = flags.Version
 }

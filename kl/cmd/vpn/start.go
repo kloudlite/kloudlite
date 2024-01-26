@@ -2,8 +2,11 @@ package vpn
 
 import (
 	"os"
+	"time"
 
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
@@ -19,17 +22,27 @@ var connectVerbose bool
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start vpn device",
-	Long: `This command let you start vpn device.
-Example:
-  # start vpn device
-  sudo kl vpn start
-	`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Example: fn.Description(`# start vpn device
+sudo {cmd} vpn start`),
+	Run: func(cmd *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
 			fn.Log(
 				text.Colored("make sure you are running command with sudo", 209),
 			)
 			return
+		}
+
+		options := []fn.Option{}
+		switch flags.CliName {
+		case constants.CoreCliName:
+			envName := fn.ParseStringFlag(cmd, "env")
+			projectName := fn.ParseStringFlag(cmd, "project")
+			options = append(options, fn.MakeOption("projectName", projectName))
+			options = append(options, fn.MakeOption("environmentName", envName))
+
+		case constants.InfraCliName:
+			clusterName := fn.ParseStringFlag(cmd, "cluster")
+			options = append(options, fn.MakeOption("clusterName", clusterName))
 		}
 
 		wgInterface, err := wgc.Show(&wgc.WgShowOptions{
@@ -51,7 +64,7 @@ Example:
 				return
 			}
 
-			if err := startConnecting(connectVerbose); err != nil {
+			if err := startConnecting(connectVerbose, options...); err != nil {
 				fn.PrintError(err)
 				return
 			}
@@ -62,7 +75,7 @@ Example:
 			return
 		}
 
-		if err := startConnecting(connectVerbose); err != nil {
+		if err := startConnecting(connectVerbose, options...); err != nil {
 			fn.PrintError(err)
 			return
 		}
@@ -88,7 +101,16 @@ Example:
 	},
 }
 
-func startConnecting(verbose bool) error {
+func startConnecting(verbose bool, options ...fn.Option) error {
+	success := false
+
+	defer func() {
+		time.Sleep(200 * time.Millisecond)
+		if !success {
+			_ = wg_vpn.StopService(verbose)
+		}
+	}()
+
 	configFolder, err := client.GetConfigFolder()
 	if err != nil {
 		return err
@@ -103,14 +125,28 @@ func startConnecting(verbose bool) error {
 		return err
 	}
 
-	if err := connect(verbose); err != nil {
+	if err := connect(verbose, options...); err != nil {
 		return err
 	}
 
+	success = true
 	return nil
 }
 
 func init() {
 	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
+
+	switch flags.CliName {
+	case constants.CoreCliName:
+		{
+			startCmd.Flags().StringP("project", "p", "", "project name")
+			startCmd.Flags().StringP("env", "e", "", "environment name")
+		}
+	case constants.InfraCliName:
+		{
+			startCmd.Flags().StringP("cluster", "c", "", "cluster name")
+		}
+	}
+
 }

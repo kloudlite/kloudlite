@@ -31,4 +31,5 @@ func init() {
 
 	InfraCmd.Aliases = append(InfraCmd.Aliases, "sw")
 	InfraCmd.AddCommand(accCmd)
+	InfraCmd.AddCommand(clusterCmd)
 }

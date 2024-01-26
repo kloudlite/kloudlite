@@ -1,11 +1,48 @@
 package server
 
 import (
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+)
+
+type DevicePort struct {
+	Port       int `json:"port"`
+	TargetPort int `json:"targetPort,omitempty"`
+}
+
+type Device struct {
+	Metadata    Metadata `json:"metadata"`
+	DisplayName string   `json:"displayName"`
+	Status      Status   `json:"status"`
+	EnvName     string   `json:"environmentName"`
+	ProjectName string   `json:"projectName"`
+	ClusterName string   `json:"clusterName"`
+	Spec        struct {
+		CnameRecords []struct {
+			Host   string `json:"host"`
+			Target string `json:"target"`
+		} `json:"cnameRecords"`
+		ActiveNamespace string       `json:"activeNamespace"`
+		Ports           []DevicePort `json:"ports"`
+	} `json:"spec"`
+	WireguardConfig *struct {
+		Encoding string `json:"encoding"`
+		Value    string `json:"value"`
+	} `json:"wireguardConfig,omitempty"`
+}
+
+type CheckName struct {
+	Result         bool     `json:"result"`
+	SuggestedNames []string `json:"suggestedNames"`
+}
+
+const (
+	VPNDeviceType = "vpn_device"
 )
 
 func GetDevice(options ...fn.Option) (*Device, error) {
@@ -16,7 +53,7 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_getCoreDevice", map[string]any{
+	respData, err := klFetch("cli_getDevice", map[string]any{
 		"name": devName,
 	}, &cookie)
 	if err != nil {
@@ -41,7 +78,7 @@ func GetDeviceName(devName string) (*CheckName, error) {
 		return nil, err
 	}
 
-	respData, err := klFetch("cli_CoreCheckNameAvailability", map[string]any{
+	respData, err := klFetch("cli_coreCheckNameAvailability", map[string]any{
 		"resType": VPNDeviceType,
 		"name":    devName,
 	}, &cookie)
@@ -65,7 +102,7 @@ func CreateDevice(selectedDeviceName string, devName string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-	respData, err := klFetch("cli_createCoreDevice", map[string]any{
+	respData, err := klFetch("cli_createDevice", map[string]any{
 		"vpnDevice": map[string]any{
 			"displayName": devName,
 			"metadata": map[string]any{
@@ -119,7 +156,7 @@ func UpdateDevice(ports []DevicePort) error {
 		return err
 	}
 
-	respData, err := klFetch("cli_updateCoreDevicePorts", map[string]any{
+	respData, err := klFetch("cli_updateDevicePorts", map[string]any{
 		"deviceName": devName,
 		"ports":      device.Spec.Ports,
 	}, &cookie)
@@ -167,7 +204,7 @@ func DeleteDevicePort(ports []DevicePort) error {
 		return err
 	}
 
-	respData, err := klFetch("cli_CoreUpdateDevicePorts", map[string]any{
+	respData, err := klFetch("cli_updateDevicePorts", map[string]any{
 		"deviceName": devName,
 		"ports":      device.Spec.Ports,
 	}, &cookie)
@@ -195,6 +232,10 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 
 	if devName != "" {
 		dev, err := GetDevice(fn.MakeOption("deviceName", devName))
+
+		if err != nil {
+			return "", err
+		}
 
 		if err == nil {
 			return dev.Metadata.Name, nil
@@ -268,7 +309,8 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 	if err != nil {
 		return err
 	}
-	respData, err := klFetch("cli_CoreUpdateDeviceEnv", map[string]any{
+
+	respData, err := klFetch("cli_updateDeviceEnv", map[string]any{
 		"deviceName":  devName,
 		"envName":     env.Name,
 		"projectName": projectName,
@@ -282,4 +324,72 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 	}
 
 	return nil
+}
+
+func UpdateDeviceNS(namespace string) error {
+	devName, err := EnsureDevice()
+	if err != nil {
+		return err
+	}
+
+	cookie, err := getCookie()
+	if err != nil {
+		return err
+	}
+
+	respData, err := klFetch("cli_updateDeviceNs", map[string]any{
+		"deviceName": devName,
+		"ns":         namespace,
+	}, &cookie)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := GetFromResp[bool](respData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdateDeviceClusterName(clusterName string) error {
+
+	devName, err := client.CurrentDeviceName()
+	if err != nil || devName == "" {
+		devName, err = EnsureDevice()
+		if err != nil {
+			return err
+		}
+	}
+
+	cookie, err := getCookie()
+	if err != nil {
+		return err
+	}
+
+	respData, err := klFetch("cli_updateDeviceCluster", map[string]any{
+		"clusterName": clusterName,
+		"deviceName":  devName,
+	}, &cookie)
+
+	if err != nil {
+		return err
+	}
+
+	if _, err := GetFromResp[bool](respData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CheckDeviceStatus() bool {
+
+	httpClient := http.Client{Timeout: 200 * time.Millisecond}
+	if _, err := httpClient.Get("http://10.13.0.1:17171"); err != nil {
+		return false
+	}
+
+	return true
 }

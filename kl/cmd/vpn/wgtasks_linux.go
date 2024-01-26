@@ -1,13 +1,16 @@
 package vpn
 
 import (
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/flags"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
 
 	"github.com/kloudlite/kl/domain/client"
 )
 
-func connect(verbose bool) error {
+func connect(verbose bool, options ...fn.Option) error {
 	success := false
 	defer func() {
 		if !success {
@@ -15,9 +18,12 @@ func connect(verbose bool) error {
 		}
 	}()
 
-	_, err := server.EnsureProject()
-	if err != nil {
-		return err
+	switch flags.CliName {
+	case constants.CoreCliName:
+		_, err := server.EnsureProject()
+		if err != nil {
+			return err
+		}
 	}
 
 	devName, err := client.CurrentDeviceName()
@@ -28,7 +34,7 @@ func connect(verbose bool) error {
 	// TODO: handle this error later
 	_ = wg_vpn.StartService(devName, verbose)
 
-	if err := startConfiguration(verbose); err != nil {
+	if err := startConfiguration(verbose, options...); err != nil {
 		return err
 	}
 	success = true

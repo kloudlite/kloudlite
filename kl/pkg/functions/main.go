@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/martinlindhe/notify"
 	"github.com/spf13/cobra"
@@ -185,4 +186,8 @@ func Alert(str ...interface{}) {
 
 func Notify(str ...interface{}) {
 	notify.Notify("Kloudlite", "notice", fmt.Sprint(str...), "")
+}
+
+func Description(str string) string {
+	return strings.Replace(str, "{cmd}", flags.CliName, -1)
 }

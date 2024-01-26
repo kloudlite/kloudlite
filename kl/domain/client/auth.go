@@ -11,7 +11,7 @@ func Logout() error {
 	if err != nil {
 		return err
 	}
-	sessionFile, err := os.Stat(path.Join(configFolder, ConfigFileName))
+	sessionFile, err := os.Stat(path.Join(configFolder, SessionFileName))
 	if err != nil && os.IsNotExist(err) {
 		return errors.New("not logged in")
 	}
@@ -26,7 +26,7 @@ func Logout() error {
 		}
 	}
 
-	accountFile, _ := os.Stat(path.Join(configFolder, AccountContextsFileName))
+	accountFile, _ := os.Stat(path.Join(configFolder, MainCtxFileName))
 	if accountFile != nil {
 		if err := os.Remove(path.Join(configFolder, accountFile.Name())); err != nil {
 			return err

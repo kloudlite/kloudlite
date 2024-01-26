@@ -13,7 +13,7 @@ func connect(verbose bool) error {
 		}
 	}()
 
-	devName, err := server.EnsureInfraDevice()
+	devName, err := server.EnsureDevice()
 	if err != nil {
 		return err
 	}

@@ -5,10 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"time"
 
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
 )
 
@@ -16,10 +20,32 @@ const (
 	ifName string = "utun2464"
 )
 
-func startConfiguration(verbose bool) error {
+func startConfiguration(verbose bool, options ...fn.Option) error {
 	selectedDevice, err := client.GetDeviceContext()
 	if err != nil {
 		return err
+	}
+
+	switch flags.CliName {
+	case constants.CoreCliName:
+
+	case constants.InfraCliName:
+		clusterName := fn.GetOption(options, "clusterName")
+		if clusterName != "" {
+			if clusterName == "" {
+				var err error
+				clusterName, err = client.CurrentClusterName()
+				if err != nil {
+					return err
+				}
+			}
+
+			if err := server.UpdateDeviceClusterName(clusterName); err != nil {
+				return err
+			}
+
+			time.Sleep(2 * time.Second)
+		}
 	}
 
 	devName := selectedDevice.DeviceName
@@ -29,16 +55,39 @@ func startConfiguration(verbose bool) error {
 		return err
 	}
 
-	if device.Spec.ActiveNamespace == "" {
-		return errors.New(fmt.Sprintf("no environment selected for the device %s, please select a environment using 'kl env switch'\n", devName))
+	switch flags.CliName {
+	case constants.CoreCliName:
+		if device.Spec.ActiveNamespace == "" {
+			return errors.New(fmt.Sprintf("no environment selected for the device %s, please select a environment using '%s env switch'\n", devName, flags.CliName))
+		}
+
+	case constants.InfraCliName:
+		clusterName := fn.GetOption(options, "clusterName")
+		if clusterName != "" {
+			break
+		}
+
+		if s, err := client.CurrentClusterName(); err != nil {
+			return err
+		} else {
+			clusterName = s
+		}
+
+		if device.ClusterName == "" || (device.ClusterName != clusterName) {
+			if err := server.UpdateDeviceClusterName(clusterName); err != nil {
+				return err
+			}
+
+			time.Sleep(2 * time.Second)
+		}
 	}
 
 	if len(device.Spec.Ports) == 0 {
-		fn.Log(fmt.Sprintf("[#] no ports found for device %s, you can export ports using kl vpn expose\n", devName))
+		fn.Log(text.Yellow(fmt.Sprintf("[#] no ports found for device %s, you can export ports using kl vpn expose\n", devName)))
 	}
 
 	if device.WireguardConfig.Value == "" {
-		return errors.New("no wireguard config found")
+		return errors.New("no wireguard config found, please try again in few seconds")
 	}
 
 	configuration, err := base64.StdEncoding.DecodeString(device.WireguardConfig.Value)

@@ -17,7 +17,6 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 
 	accountName, err := EnsureAccount([]fn.Option{
 		fn.MakeOption("accountName", accountName),
-		fn.InfraMarkOption(),
 	}...)
 	if err != nil {
 		return nil, err
@@ -58,7 +57,6 @@ func getKubeConfig(options ...fn.Option) (*string, error) {
 
 	_, err := EnsureAccount([]fn.Option{
 		fn.MakeOption("accountName", accountName),
-		fn.InfraMarkOption(),
 	}...)
 	if err != nil {
 		return nil, err
@@ -69,7 +67,7 @@ func getKubeConfig(options ...fn.Option) (*string, error) {
 		return nil, err
 	}
 
-	cookie, err := getInfraCookie()
+	cookie, err := getCookie()
 	if err != nil {
 		return nil, err
 	}

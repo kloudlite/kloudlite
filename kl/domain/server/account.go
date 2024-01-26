@@ -79,25 +79,11 @@ func SelectAccount(accountName string) (*Account, error) {
 
 func EnsureAccount(options ...fn.Option) (string, error) {
 	accountName := fn.GetOption(options, "accountName")
-	isInfra := fn.IsInfraFlagAvailable(options...)
-
 	if accountName != "" {
 		return accountName, nil
 	}
 
 	var s string
-	if isInfra {
-		s, err := client.CurrentInfraAccountName()
-		if err != nil {
-			return "", err
-		}
-		if s == "" {
-			return "", errors.New("no account selected, please create and select an context using 'kl infra ctx'")
-		}
-
-		return s, nil
-	}
-
 	s, err := client.CurrentAccountName()
 	if err != nil {
 		return "", err
