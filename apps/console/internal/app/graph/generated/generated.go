@@ -165,6 +165,7 @@ type ComplexityRoot struct {
 	ConsoleVPNDevice struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
+		ClusterName       func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
@@ -632,6 +633,8 @@ type ComplexityRoot struct {
 		CoreUpdateVPNDevice             func(childComplexity int, vpnDevice entities.ConsoleVPNDevice) int
 		CoreUpdateVPNDeviceEnv          func(childComplexity int, deviceName string, projectName string, envName string) int
 		CoreUpdateVPNDevicePorts        func(childComplexity int, deviceName string, ports []*v11.Port) int
+		CoreUpdateVpnClusterName        func(childComplexity int, deviceName string, clusterName string) int
+		CoreUpdateVpnDeviceNs           func(childComplexity int, deviceName string, ns string) int
 	}
 
 	PageInfo struct {
@@ -938,6 +941,8 @@ type MutationResolver interface {
 	CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.ConsoleVPNDevice) (*entities.ConsoleVPNDevice, error)
 	CoreUpdateVPNDevicePorts(ctx context.Context, deviceName string, ports []*v11.Port) (bool, error)
 	CoreUpdateVPNDeviceEnv(ctx context.Context, deviceName string, projectName string, envName string) (bool, error)
+	CoreUpdateVpnDeviceNs(ctx context.Context, deviceName string, ns string) (bool, error)
+	CoreUpdateVpnClusterName(ctx context.Context, deviceName string, clusterName string) (bool, error)
 	CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error)
 }
 type ProjectResolver interface {
@@ -1468,6 +1473,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ConsoleVPNDevice.AccountName(childComplexity), true
+
+	case "ConsoleVPNDevice.clusterName":
+		if e.complexity.ConsoleVPNDevice.ClusterName == nil {
+			break
+		}
+
+		return e.complexity.ConsoleVPNDevice.ClusterName(childComplexity), true
 
 	case "ConsoleVPNDevice.createdBy":
 		if e.complexity.ConsoleVPNDevice.CreatedBy == nil {
@@ -3706,6 +3718,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CoreUpdateVPNDevicePorts(childComplexity, args["deviceName"].(string), args["ports"].([]*v11.Port)), true
 
+	case "Mutation.core_updateVpnClusterName":
+		if e.complexity.Mutation.CoreUpdateVpnClusterName == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_updateVpnClusterName_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreUpdateVpnClusterName(childComplexity, args["deviceName"].(string), args["clusterName"].(string)), true
+
+	case "Mutation.core_updateVpnDeviceNs":
+		if e.complexity.Mutation.CoreUpdateVpnDeviceNs == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_core_updateVpnDeviceNs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CoreUpdateVpnDeviceNs(childComplexity, args["deviceName"].(string), args["ns"].(string)), true
+
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
 			break
@@ -5170,6 +5206,8 @@ type Mutation {
 
     core_updateVPNDevicePorts(deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
     core_updateVPNDeviceEnv(deviceName: String!,projectName: String!, envName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_updateVpnDeviceNs(deviceName: String!,ns: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    core_updateVpnClusterName(deviceName: String!,clusterName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
     core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
@@ -5857,6 +5895,7 @@ input ConfigKeyValueRefIn {
 	{Name: "../struct-to-graphql/consolevpndevice.graphqls", Input: `type ConsoleVPNDevice @shareable {
   accountName: String!
   apiVersion: String
+  clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -5889,6 +5928,7 @@ type ConsoleVPNDevicePaginatedRecords @shareable {
 
 input ConsoleVPNDeviceIn {
   apiVersion: String
+  clusterName: String
   displayName: String!
   environmentName: String
   kind: String
@@ -7286,6 +7326,54 @@ func (ec *executionContext) field_Mutation_core_updateVPNDevice_args(ctx context
 		}
 	}
 	args["vpnDevice"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateVpnClusterName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_core_updateVpnDeviceNs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["ns"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ns"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ns"] = arg1
 	return args, nil
 }
 
@@ -11089,6 +11177,47 @@ func (ec *executionContext) fieldContext_ConsoleVPNDevice_apiVersion(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _ConsoleVPNDevice_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ConsoleVPNDevice_clusterName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ConsoleVPNDevice_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ConsoleVPNDevice",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ConsoleVPNDevice_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.ConsoleVPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ConsoleVPNDevice_createdBy(ctx, field)
 	if err != nil {
@@ -11977,6 +12106,8 @@ func (ec *executionContext) fieldContext_ConsoleVPNDeviceEdge_node(ctx context.C
 				return ec.fieldContext_ConsoleVPNDevice_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ConsoleVPNDevice_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_ConsoleVPNDevice_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ConsoleVPNDevice_createdBy(ctx, field)
 			case "creationTime":
@@ -25935,6 +26066,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ConsoleVPNDevice_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_ConsoleVPNDevice_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ConsoleVPNDevice_createdBy(ctx, field)
 			case "creationTime":
@@ -26053,6 +26186,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx conte
 				return ec.fieldContext_ConsoleVPNDevice_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ConsoleVPNDevice_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_ConsoleVPNDevice_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ConsoleVPNDevice_createdBy(ctx, field)
 			case "creationTime":
@@ -26261,6 +26396,168 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDeviceEnv(ctx co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_core_updateVPNDeviceEnv_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_updateVpnDeviceNs(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_updateVpnDeviceNs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreUpdateVpnDeviceNs(rctx, fc.Args["deviceName"].(string), fc.Args["ns"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_updateVpnDeviceNs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_updateVpnDeviceNs_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_core_updateVpnClusterName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_core_updateVpnClusterName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CoreUpdateVpnClusterName(rctx, fc.Args["deviceName"].(string), fc.Args["clusterName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_core_updateVpnClusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_core_updateVpnClusterName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -31916,6 +32213,8 @@ func (ec *executionContext) fieldContext_Query_core_listVPNDevicesForUser(ctx co
 				return ec.fieldContext_ConsoleVPNDevice_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ConsoleVPNDevice_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_ConsoleVPNDevice_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ConsoleVPNDevice_createdBy(ctx, field)
 			case "creationTime":
@@ -32023,6 +32322,8 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 				return ec.fieldContext_ConsoleVPNDevice_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_ConsoleVPNDevice_apiVersion(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_ConsoleVPNDevice_clusterName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_ConsoleVPNDevice_createdBy(ctx, field)
 			case "creationTime":
@@ -36794,7 +37095,7 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "environmentName", "kind", "metadata", "projectName", "spec"}
+	fieldsInOrder := [...]string{"apiVersion", "clusterName", "displayName", "environmentName", "kind", "metadata", "projectName", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -36806,6 +37107,14 @@ func (ec *executionContext) unmarshalInputConsoleVPNDeviceIn(ctx context.Context
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "clusterName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+			it.ClusterName, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -40546,6 +40855,10 @@ func (ec *executionContext) _ConsoleVPNDevice(ctx context.Context, sel ast.Selec
 
 			out.Values[i] = ec._ConsoleVPNDevice_apiVersion(ctx, field, obj)
 
+		case "clusterName":
+
+			out.Values[i] = ec._ConsoleVPNDevice_clusterName(ctx, field, obj)
+
 		case "createdBy":
 
 			out.Values[i] = ec._ConsoleVPNDevice_createdBy(ctx, field, obj)
@@ -43766,6 +44079,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_core_updateVPNDeviceEnv(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_updateVpnDeviceNs":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_updateVpnDeviceNs(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "core_updateVpnClusterName":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_core_updateVpnClusterName(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -47890,7 +48221,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -47898,7 +48229,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
