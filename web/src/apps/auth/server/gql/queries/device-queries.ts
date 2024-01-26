@@ -30,7 +30,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_coreUpdateDevicePorts: executor(
+  cli_updateDevicePorts: executor(
     gql`
       mutation Core_updateVPNDevicePorts(
         $deviceName: String!
@@ -44,7 +44,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_coreUpdateDeviceEnv: executor(
+  cli_updateDeviceEnv: executor(
     gql`
       mutation Core_updateVPNDeviceEnv(
         $deviceName: String!
@@ -64,7 +64,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     }
   ),
 
-  cli_listCoreDevices: executor(
+  cli_listDevices: executor(
     gql`
       query Core_listVPNDevicesForUser {
         core_listVPNDevicesForUser {
@@ -101,7 +101,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_getCoreDevice: executor(
+  cli_getDevice: executor(
     gql`
       query Core_getVPNDevice($name: String!) {
         core_getVPNDevice(name: $name) {
@@ -131,7 +131,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_createCoreDevice: executor(
+  cli_createDevice: executor(
     gql`
       mutation Core_createVPNDevice($vpnDevice: ConsoleVPNDeviceIn!) {
         core_createVPNDevice(vpnDevice: $vpnDevice) {
@@ -147,18 +147,6 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_createVPNDevice,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_updateCoreDevicePorts: executor(
-    gql`
-      mutation Mutation($deviceName: String!, $ports: [PortIn!]!) {
-        core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
-      }
-    `,
-    {
-      transformer: (data: any) => data.core_updateVPNDevicePorts,
       vars: (_: any) => {},
     }
   ),
