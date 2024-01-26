@@ -89,7 +89,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	}
 
 	switch msg.Action {
-	case "apply", "delete":
+	case t.ActionApply:
 		{
 			ann := obj.GetAnnotations()
 			if ann == nil {
@@ -105,31 +105,81 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 				return g.handleErrorOnApply(ctx, err, msg)
 			}
 
-			if msg.Action == "apply" {
-				if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
-					mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
-					mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
+				mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
+				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+				return g.handleErrorOnApply(ctx, err, msg)
+			}
+			mLogger.Infof("[%d] processed message", g.inMemCounter)
+		}
+	case t.ActionDelete:
+		{
+			if err := g.yamlClient.DeleteResource(ctx, &obj); err != nil {
+				mLogger.Infof("[%d] [error-on-delete]: %v", g.inMemCounter, err)
+				if apiErrors.IsNotFound(err) {
+					mLogger.Infof("[%d] processed message, resource does not exist, might already be deleted", g.inMemCounter)
 					return g.handleErrorOnApply(ctx, err, msg)
 				}
-				mLogger.Infof("[%d] processed message", g.inMemCounter)
-				return nil
+				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+			}
+			mLogger.Infof("[%d] processed message", g.inMemCounter)
+		}
+	case t.ActionRestart:
+		{
+			if err := g.yamlClient.RolloutRestart(ctx, kubectl.Deployment, obj.GetNamespace(), obj.GetLabels()); err != nil {
+				return err
+			}
+			mLogger.Infof("[%d] rolled out deployments", g.inMemCounter)
+
+			if err := g.yamlClient.RolloutRestart(ctx, kubectl.StatefulSet, obj.GetNamespace(), obj.GetLabels()); err != nil {
+				return err
 			}
 
-			if msg.Action == "delete" {
-				err := g.yamlClient.DeleteYAML(ctx, b)
-				if err != nil {
-					mLogger.Infof("[%d] [error-on-delete]: %v", g.inMemCounter, err)
-					if apiErrors.IsNotFound(err) {
-						mLogger.Infof("[%d] process message", g.inMemCounter)
-						return g.handleErrorOnApply(ctx, err, msg)
-					}
-					mLogger.Infof("[%d] failed to process message", g.inMemCounter)
-				}
-				mLogger.Infof("[%d] processed message", g.inMemCounter)
-				return nil
-			}
-			return nil
+			mLogger.Infof("[%d] rolled out statefulsets", g.inMemCounter)
+			mLogger.Infof("[%d] processed message", g.inMemCounter)
 		}
+
+	// case t.ActionApply, t.ActionDelete:
+	// 	{
+	// 		ann := obj.GetAnnotations()
+	// 		if ann == nil {
+	// 			ann = make(map[string]string, 2)
+	// 		}
+	//
+	// 		ann[constants.ObservabilityAccountNameKey] = g.ev.AccountName
+	// 		ann[constants.ObservabilityClusterNameKey] = g.ev.ClusterName
+	// 		obj.SetAnnotations(ann)
+	//
+	// 		b, err := yaml.Marshal(msg.Object)
+	// 		if err != nil {
+	// 			return g.handleErrorOnApply(ctx, err, msg)
+	// 		}
+	//
+	// 		if msg.Action == "apply" {
+	// 			if _, err := g.yamlClient.ApplyYAML(ctx, b); err != nil {
+	// 				mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
+	// 				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+	// 				return g.handleErrorOnApply(ctx, err, msg)
+	// 			}
+	// 			mLogger.Infof("[%d] processed message", g.inMemCounter)
+	// 			return nil
+	// 		}
+	//
+	// 		if msg.Action == "delete" {
+	// 			err := g.yamlClient.DeleteYAML(ctx, b)
+	// 			if err != nil {
+	// 				mLogger.Infof("[%d] [error-on-delete]: %v", g.inMemCounter, err)
+	// 				if apiErrors.IsNotFound(err) {
+	// 					mLogger.Infof("[%d] process message", g.inMemCounter)
+	// 					return g.handleErrorOnApply(ctx, err, msg)
+	// 				}
+	// 				mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+	// 			}
+	// 			mLogger.Infof("[%d] processed message", g.inMemCounter)
+	// 			return nil
+	// 		}
+	// 		return nil
+	// 	}
 	default:
 		{
 			err := errors.Newf("invalid action (%s)", msg.Action)
@@ -138,6 +188,8 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			return g.handleErrorOnApply(ctx, err, msg)
 		}
 	}
+
+	return nil
 }
 
 func (g *grpcHandler) ensureAccessToken() error {

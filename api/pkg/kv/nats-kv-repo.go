@@ -15,7 +15,6 @@ import (
 type natsKVRepo[T any] struct {
 	keyValue jetstream.KeyValue
 }
-
 type Value[T any] struct {
 	Data      T
 	ExpiresAt time.Time
@@ -61,6 +60,10 @@ func (r *natsKVRepo[T]) Get(c context.Context, _key string) (T, error) {
 		return value.Data, errors.New("Key is expired")
 	}
 	return value.Data, errors.NewE(err)
+}
+
+func (r *natsKVRepo[T]) ErrKeyNotFound(err error) bool {
+	return errors.Is(err, jetstream.ErrKeyNotFound)
 }
 
 func sanitiseKey(key string) string {
