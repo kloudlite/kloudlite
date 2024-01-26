@@ -376,16 +376,9 @@ func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Clust
 		return errors.NewE(err)
 	}
 
-	if xCluster == nil {
-		return errors.Newf("no cluster found")
-	}
-
-	if _, err := d.matchRecordVersion(cluster.Annotations, xCluster.RecordVersion); err != nil {
-		return nil
-	}
 	recordVersion, err := d.matchRecordVersion(cluster.Annotations, xCluster.RecordVersion)
 	if err != nil {
-		return errors.NewE(err)
+		return nil
 	}
 
 	uCluster, err := d.clusterRepo.PatchById(

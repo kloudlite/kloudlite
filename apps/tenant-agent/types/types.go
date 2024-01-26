@@ -3,8 +3,9 @@ package types
 type Action string
 
 const (
-	ActionApply  Action = "apply"
-	ActionDelete Action = "delete"
+	ActionApply   Action = "apply"
+	ActionDelete  Action = "delete"
+	ActionRestart Action = "restart"
 )
 
 type AgentMessage struct {

@@ -23,6 +23,8 @@ type ConsoleVPNDevice struct {
 
 	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput" struct-json-path:",ignore-nesting"`
 
+	WireguardConfigs map[string]t.EncodedString `json:"wireguardConfigs,omitempty" graphql:"ignore" struct-json-path:",ignore-nesting"`
+
 	LinkedClusters []string     `json:"linkedClusters,omitempty" graphql:"noinput"`
 	SyncStatus     t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }

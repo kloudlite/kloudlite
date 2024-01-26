@@ -17,6 +17,7 @@ import (
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/api/pkg/types"
+
 	// "github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/api/constants"
 
@@ -32,6 +33,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/repos"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type MessageDispatcher messaging.Producer
@@ -134,8 +136,45 @@ func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client
 	return errors.NewE(err)
 }
 
-func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, obj client.Object) error {
+func (d *domain) restartK8sResource(ctx K8sContext, projectName string, namespace string, labels map[string]string) error {
+	clusterName, err := d.getClusterAttachedToProject(ctx, projectName)
+	if err != nil {
+		return errors.NewE(err)
+	}
 
+	if clusterName == nil || *clusterName == "" {
+		return nil
+	}
+
+	obj := unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"namespace": namespace,
+				"labels":    labels,
+			},
+		},
+	}
+
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.GetAccountName(),
+		ClusterName: *clusterName,
+		Action:      t.ActionRestart,
+		Object:      obj.Object,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), *clusterName)
+
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: subject,
+		Payload: b,
+	})
+	return errors.NewE(err)
+}
+
+func (d *domain) deleteK8sResourceOfCluster(ctx K8sContext, clusterName string, obj client.Object) error {
 	if obj.GetObjectKind().GroupVersionKind().Empty() {
 		return errors.Newf("object GVK is not set, can not apply")
 	}

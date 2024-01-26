@@ -575,6 +575,18 @@ func (r *queryResolver) CoreResyncApp(ctx context.Context, projectName string, e
 	return true, nil
 }
 
+// CoreRestartApp is the resolver for the core_restartApp field.
+func (r *queryResolver) CoreRestartApp(ctx context.Context, projectName string, envName string, appName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.RestartApp(newResourceContext(cc, projectName, envName), appName); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreGetConfigValues is the resolver for the core_getConfigValues field.
 func (r *queryResolver) CoreGetConfigValues(ctx context.Context, projectName string, envName string, queries []*domain.ConfigKeyRef) ([]*domain.ConfigKeyValueRef, error) {
 	cc, err := toConsoleContext(ctx)
@@ -881,6 +893,19 @@ func (r *queryResolver) CoreResyncProjectManagedService(ctx context.Context, pro
 	return true, nil
 }
 
+// CoreRestartProjectManagedService is the resolver for the core_restartProjectManagedService field.
+func (r *queryResolver) CoreRestartProjectManagedService(ctx context.Context, projectName string, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.RestartProjectManagedService(cc, projectName, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListVPNDevices is the resolver for the core_listVPNDevices field.
 func (r *queryResolver) CoreListVPNDevices(ctx context.Context, search *model.CoreSearchVPNDevices, pq *repos.CursorPagination) (*model.ConsoleVPNDevicePaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
@@ -935,3 +960,13 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) CoreRestartApp(ctx context.Context, projectName string, envName string, appName string) (bool, error) {
+	panic(fmt.Errorf("not implemented: CoreRestartApp - core_restartApp"))
+}

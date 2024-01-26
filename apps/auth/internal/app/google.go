@@ -23,7 +23,8 @@ type googleI struct {
 
 func (g *googleI) Authorize(ctx context.Context, state string) (string, error) {
 	if !g.enabled {
-		return "", errors.Newf("google oauth is disabled")
+		fmt.Println("google oAuth is disabled")
+		return "", nil
 	}
 
 	return g.cfg.AuthCodeURL(state), nil

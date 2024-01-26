@@ -1,3 +1,0 @@
-- [x] Helm Updates from BYOC Deployments from remote BYOC cluster
-- [] Creation of container registry protect and user (pull/push) on creation of account  (finance -> apply to k8s new Account)
-- [] Protected access needs to be changed to websockets (from remote cluster => kloudlite cluster)
