@@ -152,6 +152,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.IncrementRecordVersion()
 
+	// TODO: check if provided cluster is exists in account
+
 	project.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,

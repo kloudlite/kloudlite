@@ -18,7 +18,6 @@ import (
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/api/pkg/types"
 
-	// "github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/api/constants"
 
 	t "github.com/kloudlite/api/apps/tenant-agent/types"
@@ -89,6 +88,47 @@ func addTrackingId(obj client.Object, id repos.ID) {
 type K8sContext interface {
 	context.Context
 	GetAccountName() string
+}
+
+func (d *domain) applyK8sResourceOnCluster(ctx K8sContext, clusterName string, obj client.Object, recordVersion int) error {
+
+	if clusterName == "" {
+		d.logger.Infof("skipping apply of k8s resource %s/%s, cluster name not provided", obj.GetNamespace(), obj.GetName())
+		return nil
+	}
+
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		return errors.Newf("object GVK is not set, can not apply")
+	}
+
+	ann := obj.GetAnnotations()
+	if ann == nil {
+		ann = make(map[string]string, 1)
+	}
+	ann[constants.RecordVersionKey] = fmt.Sprintf("%d", recordVersion)
+	obj.SetAnnotations(ann)
+
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.GetAccountName(),
+		ClusterName: clusterName,
+		Action:      t.ActionApply,
+		Object:      m,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	subject := common.GetTenantClusterMessagingTopic(ctx.GetAccountName(), clusterName)
+
+	err = d.producer.Produce(ctx, msgTypes.ProduceMsg{
+		Subject: subject,
+		Payload: b,
+	})
+	return errors.NewE(err)
 }
 
 func (d *domain) applyK8sResource(ctx K8sContext, projectName string, obj client.Object, recordVersion int) error {
@@ -440,6 +480,7 @@ func cloneResource[T repos.Entity](ctx ResourceContext, d *domain, repoName repo
 			return errors.NewE(err)
 		}
 	}
+
 	if err := d.applyK8sResource(ctx, ctx.ProjectName, obj, 0); err != nil {
 		return errors.NewE(err)
 	}

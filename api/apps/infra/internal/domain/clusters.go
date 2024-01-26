@@ -64,6 +64,10 @@ func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderS
 }
 
 func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCluster); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	cluster, err := d.findCluster(ctx, clusterName)
 	if err != nil {
 		return nil, errors.NewE(err)

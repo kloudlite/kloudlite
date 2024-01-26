@@ -256,6 +256,9 @@ type Domain interface {
 	OnVPNDeviceApplyError(ctx ConsoleContext, errMsg string, name string, opts UpdateAndDeleteOpts) error
 	OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice) error
 	OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.ConsoleVPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts, clusterName string) error
+
+	UpdateVpnDeviceCluster(ctx ConsoleContext, devName string, clusterName string) error
+	UpdateVpnDeviceNs(ctx ConsoleContext, devName string, namespace string) error
 }
 
 type PublishMsg string
