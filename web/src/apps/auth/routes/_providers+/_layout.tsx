@@ -25,7 +25,8 @@ export const restActions = async (ctx: IRemixCtx) => {
   ).checkOauthEnabled({});
 
   if (checkError) {
-    logger.error(checkError);
+    // logger.error(checkError);
+    console.log(checkError);
   }
 
   const { data, errors } = await GQLServerHandler(
