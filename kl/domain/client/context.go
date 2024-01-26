@@ -364,7 +364,10 @@ func GetExtraData() (*ExtraData, error) {
 	return &extraData, nil
 }
 
-func GetCookieString() (string, error) {
+func GetCookieString(options ...fn.Option) (string, error) {
+
+	accName := fn.GetOption(options, "accountName")
+
 	session, err := GetAuthSession()
 	if err != nil {
 		return "", err
@@ -372,6 +375,10 @@ func GetCookieString() (string, error) {
 
 	if session == "" {
 		return "", fmt.Errorf("no session found")
+	}
+
+	if accName != "" {
+		return fmt.Sprintf("kloudlite-account=%s;hotspot-session=%s", accName, session), nil
 	}
 
 	c, err := GetMainCtx()

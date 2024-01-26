@@ -21,23 +21,12 @@ Examples:
 
 	# status vpn
 	sudo kl infra vpn status
-
-	# list all vpn
-	kl infra vpn list
-
-	# switch to vpn
-	kl infra vpn switch
-
 	`,
 }
 
 func init() {
 	Cmd.Aliases = append(Cmd.Aliases, "dev")
 
-	Cmd.AddCommand(newCmd)
-	Cmd.AddCommand(exposeCmd)
-	Cmd.AddCommand(listCmd)
-	Cmd.AddCommand(switchCmd)
 	Cmd.AddCommand(restartCmd)
 	Cmd.AddCommand(startCmd)
 	Cmd.AddCommand(stopCmd)

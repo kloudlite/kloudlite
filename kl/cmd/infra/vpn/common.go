@@ -23,7 +23,7 @@ func startConfiguration(verbose bool) error {
 		return err
 	}
 
-	device, err := server.GetInfraDevice(fn.MakeOption("deviceName", devName))
+	device, err := server.GetDevice(fn.MakeOption("deviceName", devName))
 
 	if device.Spec.ActiveNamespace == "" {
 		fn.Log(fmt.Sprintf("[#] no namespace selected for the device %s, you can select namespace using 'kl infra vpn activate -n <namespace>'\n", devName))

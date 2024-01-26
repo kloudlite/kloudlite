@@ -44,5 +44,6 @@ var (
 )
 
 var (
-	Version = "development"
+	InfraCliName = "kli"
+	CoreCliName  = "kl"
 )

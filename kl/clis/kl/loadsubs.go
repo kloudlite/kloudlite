@@ -3,6 +3,9 @@ package kl
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/get"
+	"github.com/kloudlite/kl/cmd/status"
+	"github.com/spf13/cobra"
+
 	// "github.com/kloudlite/kl/cmd/infra"
 	sw "github.com/kloudlite/kl/cmd/switch"
 	"github.com/kloudlite/kl/cmd/vpn"
@@ -14,6 +17,9 @@ import (
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
+	rootCmd.SetHelpCommand(&cobra.Command{
+		Hidden: true,
+	})
 
 	rootCmd.AddCommand(DocsCmd)
 	rootCmd.AddCommand(UpdateCmd)
@@ -30,4 +36,6 @@ func init() {
 	rootCmd.AddCommand(runner.InitCommand)
 
 	rootCmd.AddCommand(add.Command)
+
+	rootCmd.AddCommand(status.Cmd)
 }

@@ -2,6 +2,7 @@ package vpn
 
 import (
 	"github.com/kloudlite/kl/domain/client"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
 	"github.com/miekg/dns"
 )
@@ -16,7 +17,7 @@ func getCurrentDns() ([]string, error) {
 	return config.Servers, nil
 }
 
-func connect(verbose bool) error {
+func connect(verbose bool, options ...fn.Option) error {
 	success := false
 	defer func() {
 		if !success {
@@ -33,7 +34,7 @@ func connect(verbose bool) error {
 		return err
 	}
 
-	if err := startConfiguration(connectVerbose); err != nil {
+	if err := startConfiguration(connectVerbose, options...); err != nil {
 		return err
 	}
 

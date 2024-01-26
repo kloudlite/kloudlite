@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 
 	nanoid "github.com/matoous/go-nanoid/v2"
@@ -87,12 +88,8 @@ func Login(loginId string) error {
 	}
 }
 
-func getCookie() (string, error) {
-	return client.GetCookieString()
-}
-
-func getInfraCookie() (string, error) {
-	return client.GetInfraCookieString()
+func getCookie(options ...functions.Option) (string, error) {
+	return client.GetCookieString(options...)
 }
 
 type Response[T any] struct {
@@ -145,7 +142,6 @@ type ItemList[T any] struct {
 }
 
 func GetFromRespForEdge[T any](respData []byte) ([]T, error) {
-
 	resp, err := GetFromResp[ItemList[T]](respData)
 	if err != nil {
 		return nil, err

@@ -5,16 +5,16 @@ import (
 	"path"
 
 	"github.com/kloudlite/kl/cmd/runner/mounter"
-	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:                "kl",
+	Use:                flags.CliName,
 	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 || args[0] != "--" {
@@ -82,5 +82,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Version = constants.Version
+	rootCmd.Version = flags.Version
 }

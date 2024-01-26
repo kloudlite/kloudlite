@@ -15,11 +15,8 @@ Example:
   kl infra vpn activate -n <namespace>
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		ns := ""
+		ns := fn.ParseStringFlag(cmd, "namespace")
 
-		if cmd.Flags().Changed("name") {
-			ns, _ = cmd.Flags().GetString("name")
-		}
 		if ns == "" {
 			fn.Log("namespace is missing, please provide using kl infra vpn activate -n <namespace>")
 			return

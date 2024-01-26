@@ -7,13 +7,11 @@ Copyright © 2022 Kloudlite <support@kloudlite.io>
 import (
 	"github.com/kloudlite/kl/clis/kl"
 	"github.com/kloudlite/kl/clis/kli"
+	"github.com/kloudlite/kl/flags"
 )
 
-var Cli string = "kl"
-var Version = "development"
-
 func main() {
-	if Cli == "kl" {
+	if flags.CliName == "kl" {
 		kl.Execute()
 		return
 	}

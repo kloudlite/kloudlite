@@ -40,6 +40,8 @@ Example:
 			return
 		}
 
+		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")), text.Red(s), "\n")
+
 		dev, err := server.GetDevice([]fn.Option{
 			fn.MakeOption("deviceName", s),
 		}...)
@@ -47,10 +49,6 @@ Example:
 			fn.PrintError(err)
 			return
 		}
-
-		fn.Log(text.Bold(text.Green("\n[#]Selected Device: ")),
-			text.Red(s),
-		)
 
 		if len(dev.Spec.Ports) != 0 {
 			fn.Log(text.Bold(text.Green("\n[#]Exposed Ports: ")))
