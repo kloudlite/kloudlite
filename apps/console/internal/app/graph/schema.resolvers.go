@@ -352,6 +352,36 @@ func (r *mutationResolver) CoreUpdateVPNDeviceEnv(ctx context.Context, deviceNam
 	return true, nil
 }
 
+// CoreUpdateVpnDeviceNs is the resolver for the core_updateVpnDeviceNs field.
+func (r *mutationResolver) CoreUpdateVpnDeviceNs(ctx context.Context, deviceName string, ns string) (bool, error) {
+
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.UpdateVpnDeviceNs(cc, deviceName, ns); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
+}
+
+// CoreUpdateVpnClusterName is the resolver for the core_updateVpnClusterName field.
+func (r *mutationResolver) CoreUpdateVpnClusterName(ctx context.Context, deviceName string, clusterName string) (bool, error) {
+
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.UpdateVpnDeviceCluster(cc, deviceName, clusterName); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
+}
+
 // CoreDeleteVPNDevice is the resolver for the core_deleteVPNDevice field.
 func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error) {
 	cc, err := toConsoleContext(ctx)
@@ -960,13 +990,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *mutationResolver) CoreRestartApp(ctx context.Context, projectName string, envName string, appName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: CoreRestartApp - core_restartApp"))
-}

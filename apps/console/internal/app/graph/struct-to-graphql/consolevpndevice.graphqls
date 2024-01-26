@@ -1,6 +1,7 @@
 type ConsoleVPNDevice @shareable {
   accountName: String!
   apiVersion: String
+  clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -33,6 +34,7 @@ type ConsoleVPNDevicePaginatedRecords @shareable {
 
 input ConsoleVPNDeviceIn {
   apiVersion: String
+  clusterName: String
   displayName: String!
   environmentName: String
   kind: String
