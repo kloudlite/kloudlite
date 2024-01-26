@@ -54,7 +54,7 @@ func (h *handler) StartListener() {
 
 				case ns.OpenAccountSettings:
 					{
-						ac, err := client.GetAccountContext()
+						ac, err := client.GetMainCtx()
 						if err != nil {
 							fn.Println(err)
 							fn.Alert("Open account settings failed", err.Error())

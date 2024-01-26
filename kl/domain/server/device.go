@@ -268,6 +268,7 @@ func UpdateDeviceEnv(options ...fn.Option) error {
 	if err != nil {
 		return err
 	}
+
 	respData, err := klFetch("cli_CoreUpdateDeviceEnv", map[string]any{
 		"deviceName":  devName,
 		"envName":     env.Name,

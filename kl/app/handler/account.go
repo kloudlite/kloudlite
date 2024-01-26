@@ -23,7 +23,7 @@ func (h *handler) ReconAccount() {
 		h.AddItem(ns.AccountTitle, accountTitle)
 	}
 
-	ac, err := client.GetAccountContext()
+	ac, err := client.GetMainCtx()
 	if err != nil {
 		fn.PrintError(err)
 		fn.Notify("Error", err.Error())

@@ -5,10 +5,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/kloudlite/kl/cmd/infra/cluster"
 	"github.com/kloudlite/kl/cmd/infra/vpn"
 
-	"github.com/kloudlite/kl/cmd/infra/context"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -110,6 +108,5 @@ func init() {
 	Cmd.Flags().StringP("cluster", "o", "", "cluster name")
 	Cmd.Flags().StringP("account", "a", "", "account name")
 
-	Cmd.AddCommand(context.Cmd)
 	Cmd.AddCommand(vpn.Cmd)
 }

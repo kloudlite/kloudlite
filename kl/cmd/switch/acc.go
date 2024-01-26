@@ -24,7 +24,7 @@ Example:
 			return
 		}
 
-		if err := client.WriteAccountContext(acc.Metadata.Name); err != nil {
+		if err := client.SetAccountToMainCtx(acc.Metadata.Name); err != nil {
 			fn.PrintError(err)
 			return
 		}
