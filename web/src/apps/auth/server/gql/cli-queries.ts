@@ -1,12 +1,29 @@
 /* eslint-disable camelcase */
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { infraQueries } from './queries/infra-queries';
 import { vpnQueries } from './queries/device-queries';
 
 export const cliQueries = (executor: IExecutor) => ({
   ...vpnQueries(executor),
-  ...infraQueries(executor),
+
+  cli_coreCheckNameAvailability: executor(
+    gql`
+      query Core_checkNameAvailability(
+        $resType: ConsoleResType!
+        $name: String!
+      ) {
+        core_checkNameAvailability(resType: $resType, name: $name) {
+          result
+          suggestedNames
+        }
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_checkNameAvailability,
+      vars: (_: any) => {},
+    }
+  ),
+
   cli_getMresKeys: executor(
     gql`
       query Core_getManagedResouceOutputKeyValues(
@@ -251,35 +268,17 @@ export const cliQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
-              createdBy {
-                userEmail
-                userId
-                userName
-              }
-              creationTime
               displayName
-              enabled
               environmentName
-              kind
-              lastUpdatedBy {
-                userEmail
-                userId
-                userName
-              }
               markedForDeletion
               metadata {
                 annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
                 name
                 namespace
               }
               projectName
               spec {
                 displayName
-                freeze
                 containers {
                   args
                   command
@@ -296,62 +295,13 @@ export const cliQueries = (executor: IExecutor) => ({
                     type
                   }
                   image
-                  imagePullPolicy
-                  livenessProbe {
-                    failureThreshold
-                    httpGet {
-                      httpHeaders
-                      path
-                      port
-                    }
-                    initialDelay
-                    interval
-                    shell {
-                      command
-                    }
-                    tcp {
-                      port
-                    }
-                    type
-                  }
                   name
-                  readinessProbe {
-                    failureThreshold
-                    initialDelay
-                    interval
-                    type
-                  }
-                  resourceCpu {
-                    max
-                    min
-                  }
-                  resourceMemory {
-                    max
-                    min
-                  }
-                  volumes {
-                    items {
-                      fileName
-                      key
-                    }
-                    mountPath
-                    refName
-                    type
-                  }
-                }
-                hpa {
-                  enabled
-                  maxReplicas
-                  minReplicas
-                  thresholdCpu
-                  thresholdMemory
                 }
                 intercept {
                   enabled
                   toDevice
                 }
                 nodeSelector
-                region
                 replicas
                 serviceAccount
                 services {
@@ -360,39 +310,16 @@ export const cliQueries = (executor: IExecutor) => ({
                   targetPort
                   type
                 }
-                tolerations {
-                  effect
-                  key
-                  operator
-                  tolerationSeconds
-                  value
-                }
               }
               status {
                 checks
                 isReady
-                lastReadyGeneration
-                lastReconcileTime
                 message {
                   RawMessage
                 }
-                resources {
-                  apiVersion
-                  kind
-                  name
-                  namespace
-                }
               }
-              updateTime
             }
           }
-          pageInfo {
-            endCursor
-            hasNextPage
-            hasPreviousPage
-            startCursor
-          }
-          totalCount
         }
       }
     `,

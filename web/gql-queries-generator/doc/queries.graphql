@@ -3878,6 +3878,14 @@ query consoleListImagePullSecrets($projectName: String!, $envName: String!, $sea
   }
 }
 
+mutation authCli_updateDeviceCluster($deviceName: String!, $clusterName: String!) {
+  core_updateVpnClusterName(deviceName: $deviceName, clusterName: $clusterName)
+}
+
+mutation authCli_UpdateDeviceNs($deviceName: String!, $ns: String!) {
+  core_updateVpnDeviceNs(deviceName: $deviceName, ns: $ns)
+}
+
 mutation authCli_CoreUpdateDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
   core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
 }
@@ -3955,120 +3963,6 @@ mutation authCli_createCoreDevice($vpnDevice: ConsoleVPNDeviceIn!) {
 
 mutation authCli_updateCoreDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
   core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
-}
-
-query authCli_getDevice($clusterName: String!, $name: String!) {
-  infra_getVPNDevice(clusterName: $clusterName, name: $name) {
-    displayName
-    markedForDeletion
-    metadata {
-      name
-      namespace
-    }
-    spec {
-      cnameRecords {
-        host
-        target
-      }
-      activeNamespace
-      nodeSelector
-      ports {
-        port
-        targetPort
-      }
-    }
-    status {
-      isReady
-      message {
-        RawMessage
-      }
-    }
-    wireguardConfig {
-      encoding
-      value
-    }
-  }
-}
-
-query authCli_listDevices($pq: CursorPaginationIn, $clusterName: String) {
-  infra_listVPNDevices(clusterName: $clusterName, pq: $pq) {
-    edges {
-      node {
-        displayName
-        metadata {
-          name
-        }
-        spec {
-          activeNamespace
-          disabled
-          nodeSelector
-          ports {
-            port
-            targetPort
-          }
-        }
-        status {
-          isReady
-          message {
-            RawMessage
-          }
-        }
-        wireguardConfig {
-          encoding
-          value
-        }
-      }
-    }
-  }
-}
-
-mutation authCli_updateDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  infra_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    metadata {
-      name
-    }
-    spec {
-      activeNamespace
-      cnameRecords {
-        target
-        host
-      }
-      ports {
-        targetPort
-        port
-      }
-    }
-    status {
-      message {
-        RawMessage
-      }
-      isReady
-    }
-  }
-}
-
-mutation authCli_updateDevicePort($clusterName: String!, $deviceName: String!, $ports: [PortIn!]!) {
-  infra_updateVPNDevicePorts(
-    clusterName: $clusterName
-    deviceName: $deviceName
-    ports: $ports
-  )
-}
-
-mutation authCli_updateDeviceNs($clusterName: String!, $deviceName: String!, $namespace: String!) {
-  infra_updateVPNDeviceNs(
-    clusterName: $clusterName
-    deviceName: $deviceName
-    namespace: $namespace
-  )
-}
-
-mutation authCli_createDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    metadata {
-      name
-    }
-  }
 }
 
 query authCli_CoreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
