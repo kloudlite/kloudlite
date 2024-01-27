@@ -166,60 +166,76 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	return nenv, nil
 }
 
-func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, destinationEnvName string, displayName string, environmentRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
+func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, destinationEnvName string, displayName string, envRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
 	if err := d.canMutateResourcesInProject(ctx, projectName); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	env, err := d.findEnvironment(ctx, projectName, sourceEnvName)
+	sourceEnv, err := d.findEnvironment(ctx, projectName, sourceEnvName)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	env.ProjectName = projectName
-	env.DisplayName = destinationEnvName
-	env.Name = destinationEnvName
-	env.Id = d.environmentRepo.NewId()
-	env.PrimitiveId = ""
-	env.DisplayName = displayName
-
-	if env.Spec.Routing == nil {
-		env.Spec.Routing = &crdsv1.EnvironmentRouting{}
+	destEnv := &entities.Environment{
+		Environment: crdsv1.Environment{
+			TypeMeta: sourceEnv.TypeMeta,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      destinationEnvName,
+				Namespace: sourceEnv.Namespace,
+			},
+			Spec: crdsv1.EnvironmentSpec{
+				ProjectName:     projectName,
+				TargetNamespace: fmt.Sprintf("env-%s", destinationEnvName),
+				Routing: &crdsv1.EnvironmentRouting{
+					Mode: envRoutingMode,
+				},
+			},
+		},
+		AccountName: ctx.AccountName,
+		ProjectName: projectName,
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName: displayName,
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+		},
+		SyncStatus: t.GenSyncStatus(t.SyncActionApply, 0),
 	}
-	env.Spec.Routing.Mode = environmentRoutingMode
 
-	env.EnsureGVK()
-	if err := d.k8sClient.ValidateObject(ctx, &env.Environment); err != nil {
+	if err := d.k8sClient.ValidateObject(ctx, &destEnv.Environment); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	env.IncrementRecordVersion()
-
-	env.Spec.TargetNamespace = fmt.Sprintf("env-%s", destinationEnvName)
-
-	env.SyncStatus = t.GenSyncStatus(t.SyncActionApply, env.RecordVersion)
-
-	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: env.ProjectName, EnvironmentName: env.Name}, env); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	nenv, err := d.environmentRepo.Create(ctx, env)
+	destEnv, err = d.environmentRepo.Create(ctx, destEnv)
 	if err != nil {
-		if d.environmentRepo.ErrAlreadyExists(err) {
-			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, errors.NewE(err)
-		}
 		return nil, errors.NewE(err)
 	}
-	resContext := ResourceContext{
+
+	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: sourceEnv.ProjectName, EnvironmentName: sourceEnv.Name}, sourceEnv); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.applyK8sResource(ctx, sourceEnv.ProjectName, &destEnv.Environment, destEnv.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	resCtx := ResourceContext{
 		ConsoleContext:  ctx,
-		ProjectName:     env.ProjectName,
-		EnvironmentName: nenv.Name,
+		ProjectName:     sourceEnv.ProjectName,
+		EnvironmentName: destEnv.Name,
 	}
+
 	filters := repos.Filter{
-		fields.AccountName:            resContext.AccountName,
-		fc.EnvironmentSpecProjectName: resContext.ProjectName,
-		fields.EnvironmentName:        sourceEnvName,
+		fields.AccountName:     resCtx.AccountName,
+		fields.ProjectName:     resCtx.ProjectName,
+		fields.EnvironmentName: sourceEnvName,
 	}
 
 	apps, err := d.appRepo.Find(ctx, repos.Query{
@@ -259,73 +275,125 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		return nil, errors.NewE(err)
 	}
 
-	for _, app := range apps {
-		app.Namespace = env.Spec.TargetNamespace
-		app.EnvironmentName = destinationEnvName
-		app.Id = d.appRepo.NewId()
-		app.PrimitiveId = ""
-		app.Spec.Intercept = nil
-		err := cloneResource(resContext, d, d.appRepo, app, &app.App)
-		if err != nil {
-			return nil, errors.NewE(err)
+	resourceMetadata := func(dn string) common.ResourceMetadata {
+		return common.ResourceMetadata{
+			DisplayName: fmt.Sprintf("clone of %s", dn),
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    ctx.UserId,
+				UserName:  ctx.UserName,
+				UserEmail: ctx.UserEmail,
+			},
 		}
 	}
-	for _, secret := range secrets {
-		secret.Namespace = env.Spec.TargetNamespace
-		secret.EnvironmentName = destinationEnvName
-		secret.Id = d.secretRepo.NewId()
-		secret.PrimitiveId = ""
-		err := cloneResource(resContext, d, d.secretRepo, secret, &secret.Secret)
-		if err != nil {
-			return nil, errors.NewE(err)
+
+	objectMeta := func(sourceMeta metav1.ObjectMeta, namespace string) metav1.ObjectMeta {
+		sourceMeta.Namespace = namespace
+		return sourceMeta
+	}
+
+	for i := range apps {
+		if _, err := d.createAndApplyApp(resCtx, &entities.App{
+			App: crdsv1.App{
+				TypeMeta:   apps[i].TypeMeta,
+				ObjectMeta: objectMeta(apps[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Spec:       apps[i].Spec,
+			},
+			AccountName:      ctx.AccountName,
+			ProjectName:      projectName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(apps[i].DisplayName),
+			SyncStatus:       t.GenSyncStatus(t.SyncActionApply, 0),
+		}); err != nil {
+			return nil, err
 		}
 	}
-	for _, config := range configs {
-		config.Namespace = env.Spec.TargetNamespace
-		config.EnvironmentName = destinationEnvName
-		config.Id = d.configRepo.NewId()
-		config.PrimitiveId = ""
-		err := cloneResource(resContext, d, d.configRepo, config, &config.ConfigMap)
-		if err != nil {
-			return nil, errors.NewE(err)
+
+	for i := range secrets {
+		if _, err := d.createAndApplySecret(resCtx, &entities.Secret{
+			Secret: corev1.Secret{
+				TypeMeta:   secrets[i].TypeMeta,
+				ObjectMeta: objectMeta(secrets[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Immutable:  secrets[i].Immutable,
+				Data:       secrets[i].Data,
+				StringData: secrets[i].StringData,
+				Type:       secrets[i].Type,
+			},
+			AccountName:      ctx.AccountName,
+			ProjectName:      projectName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(secrets[i].DisplayName),
+		}); err != nil {
+			return nil, err
 		}
 	}
-	for _, router := range routers {
-		router.Namespace = env.Spec.TargetNamespace
-		router.EnvironmentName = destinationEnvName
-		router.Id = d.routerRepo.NewId()
-		router.PrimitiveId = ""
-		err := cloneResource(resContext, d, d.routerRepo, router, &router.Router)
-		if err != nil {
-			return nil, errors.NewE(err)
+
+	for i := range configs {
+		if _, err := d.createAndApplyConfig(resCtx, &entities.Config{
+			ConfigMap: corev1.ConfigMap{
+				TypeMeta:   configs[i].TypeMeta,
+				ObjectMeta: objectMeta(configs[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Immutable:  configs[i].Immutable,
+				Data:       configs[i].Data,
+				BinaryData: configs[i].BinaryData,
+			},
+			AccountName:      ctx.AccountName,
+			ProjectName:      projectName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(configs[i].DisplayName),
+		}); err != nil {
+			return nil, err
 		}
 	}
-	for _, managedResource := range managedResources {
-		managedResource.Namespace = env.Spec.TargetNamespace
-		managedResource.EnvironmentName = destinationEnvName
-		managedResource.Id = d.mresRepo.NewId()
-		managedResource.PrimitiveId = ""
-		managedResource.Spec.ResourceName = fmt.Sprintf("env-%s-%s", destinationEnvName, managedResource.Name)
-		err := cloneResource(resContext, d, d.mresRepo, managedResource, &managedResource.ManagedResource)
-		if err != nil {
-			return nil, errors.NewE(err)
+
+	for i := range routers {
+		if _, err := d.createAndApplyRouter(resCtx, &entities.Router{
+			Router: crdsv1.Router{
+				TypeMeta:   routers[i].TypeMeta,
+				ObjectMeta: objectMeta(routers[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Spec:       routers[i].Spec,
+				Enabled:    routers[i].Enabled,
+			},
+			AccountName:      ctx.AccountName,
+			ProjectName:      projectName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(routers[i].DisplayName),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	for i := range managedResources {
+		if _, err := d.createAndApplyManagedResource(resCtx, &entities.ManagedResource{
+			ManagedResource: crdsv1.ManagedResource{
+				TypeMeta:   managedResources[i].TypeMeta,
+				ObjectMeta: objectMeta(managedResources[i].ObjectMeta, destEnv.Spec.TargetNamespace),
+				Spec:       managedResources[i].Spec,
+				Enabled:    managedResources[i].Enabled,
+			},
+			AccountName:      ctx.AccountName,
+			ProjectName:      projectName,
+			EnvironmentName:  destEnv.Name,
+			ResourceMetadata: resourceMetadata(managedResources[i].DisplayName),
+		}); err != nil {
+			return nil, err
 		}
 	}
 
 	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
 		UserId:       string(ctx.UserId),
 		ResourceType: string(iamT.ResourceEnvironment),
-		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, nenv.Name),
+		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, destEnv.Spec.TargetNamespace),
 		Role:         string(iamT.RoleResourceOwner),
 	}); err != nil {
 		d.logger.Errorf(err, "error while adding membership")
 	}
 
-	if err := d.applyK8sResource(ctx, env.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return nenv, nil
+	return destEnv, nil
 }
 
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error) {
