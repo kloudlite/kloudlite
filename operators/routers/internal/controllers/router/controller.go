@@ -327,9 +327,10 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		return req.CheckFailed(IngressReady, check, err.Error())
 	}
 
-	annotations := make(map[string]string, 5)
+	annotations := make(map[string]string)
 	annotations["nginx.ingress.kubernetes.io/preserve-trailing-slash"] = "true"
 	annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
+	annotations["nginx.ingress.kubernetes.io/from-to-www-redirect"] = "true"
 
 	if obj.Spec.MaxBodySizeInMB != nil {
 		annotations["nginx.ingress.kubernetes.io/proxy-body-size"] = fmt.Sprintf("%vm", *obj.Spec.MaxBodySizeInMB)
