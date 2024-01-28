@@ -78,11 +78,15 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 	app.EnvironmentName = ctx.EnvironmentName
 	app.SyncStatus = t.GenSyncStatus(t.SyncActionApply, app.RecordVersion)
 
-	if _, err := d.upsertEnvironmentResourceMapping(ctx, &app); err != nil {
+	return d.createAndApplyApp(ctx, &app)
+}
+
+func (d *domain) createAndApplyApp(ctx ResourceContext, app *entities.App) (*entities.App, error) {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, app); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	napp, err := d.appRepo.Create(ctx, &app)
+	napp, err := d.appRepo.Create(ctx, app)
 	if err != nil {
 		if d.appRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -96,7 +100,6 @@ func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App
 	if err := d.applyApp(ctx, napp); err != nil {
 		return nil, errors.NewE(err)
 	}
-
 	return napp, nil
 }
 

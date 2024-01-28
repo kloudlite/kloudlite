@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"maps"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -10,7 +12,6 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"maps"
 )
 
 func (d *domain) ListConfigs(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
@@ -106,13 +107,17 @@ func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*ent
 		maps.Copy(config.Annotations, types.ConfigWatchingAnnotation)
 	}
 
-	config.SyncStatus = t.GenSyncStatus(t.SyncActionApply, config.RecordVersion)
+	return d.createAndApplyConfig(ctx, &config)
+}
 
-	if _, err := d.upsertEnvironmentResourceMapping(ctx, &config); err != nil {
+func (d *domain) createAndApplyConfig(ctx ResourceContext, config *entities.Config) (*entities.Config, error) {
+	config.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
+
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, config); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	cfg, err := d.configRepo.Create(ctx, &config)
+	cfg, err := d.configRepo.Create(ctx, config)
 	if err != nil {
 		if d.configRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -171,7 +176,6 @@ func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
 		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}

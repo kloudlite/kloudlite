@@ -128,5 +128,24 @@ query: |+
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName}}"
+  envName: "{{.clonedEnvName}}"
+---
+
+---
+label: Clone Environment
+query: |+ #graphql
+  mutation Core_cloneEnvironment($projectName: String!, $sourceEnvName: String!, $destinationEnvName: String!, $displayName: String!, $environmentRoutingMode: Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode!) {
+    core_cloneEnvironment(projectName: $projectName, sourceEnvName: $sourceEnvName, destinationEnvName: $destinationEnvName, displayName: $displayName, environmentRoutingMode: $environmentRoutingMode) {
+      metadata {
+        name
+      }
+    }
+  }
+
+variables:
+  projectName: "{{.projectName}}"
+  sourceEnvName: "{{.envName}}"
+  destinationEnvName: "{{.clonedEnvName}}"
+  displayName: "clone of {{.envName}}"
+  environmentRoutingMode: "private"
 ---

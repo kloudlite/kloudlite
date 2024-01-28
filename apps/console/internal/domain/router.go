@@ -82,11 +82,16 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 		ForceRedirect: true,
 	}
 
-	if _, err := d.upsertEnvironmentResourceMapping(ctx, &router); err != nil {
+	return d.createAndApplyRouter(ctx, &router)
+}
+
+func (d *domain) createAndApplyRouter(ctx ResourceContext, router *entities.Router) (*entities.Router, error) {
+	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, router); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	nrouter, err := d.routerRepo.Create(ctx, &router)
+	nrouter, err := d.routerRepo.Create(ctx, router)
 	if err != nil {
 		if d.routerRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -156,7 +161,6 @@ func (d *domain) DeleteRouter(ctx ResourceContext, name string) error {
 		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -177,7 +181,6 @@ func (d *domain) OnRouterDeleteMessage(ctx ResourceContext, router entities.Rout
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, router.Name),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -207,7 +210,6 @@ func (d *domain) OnRouterUpdateMessage(ctx ResourceContext, router entities.Rout
 		common.PatchForSyncFromAgent(&router, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -227,7 +229,6 @@ func (d *domain) OnRouterApplyError(ctx ResourceContext, errMsg string, name str
 			},
 		),
 	)
-
 	if err != nil {
 		return err
 	}
