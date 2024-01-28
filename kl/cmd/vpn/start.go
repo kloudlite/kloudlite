@@ -16,7 +16,6 @@ import (
 
 // not required in linux
 
-var foreground bool
 var connectVerbose bool
 
 var startCmd = &cobra.Command{
@@ -33,6 +32,11 @@ sudo {cmd} vpn start`),
 		}
 
 		options := []fn.Option{}
+
+		if b := cmd.Flags().Changed("no-dns"); b {
+			options = append(options, fn.MakeOption("noDns", "yes"))
+		}
+
 		switch flags.CliName {
 		case constants.CoreCliName:
 			envName := fn.ParseStringFlag(cmd, "env")
@@ -135,6 +139,8 @@ func startConnecting(verbose bool, options ...fn.Option) error {
 
 func init() {
 	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
+	startCmd.Flags().BoolP("no-dns", "n", false, "do not update dns")
+
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
 
 	switch flags.CliName {

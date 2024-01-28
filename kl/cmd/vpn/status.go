@@ -6,6 +6,7 @@ import (
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -56,7 +57,7 @@ Example:
 				fn.Log(text.Blue(fmt.Sprintf("%d:%d\t", v.Port, v.TargetPort)))
 			}
 		} else {
-			fn.Warn("No ports exposed, you can expose ports using `kl vpn expose` command")
+			fn.Warn(fmt.Sprintf("no ports exposed, you can expose ports using `%s vpn expose` command", flags.CliName))
 		}
 
 	},
