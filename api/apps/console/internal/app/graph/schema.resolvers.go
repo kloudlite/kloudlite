@@ -345,7 +345,7 @@ func (r *mutationResolver) CoreUpdateVPNDeviceEnv(ctx context.Context, deviceNam
 		return false, errors.NewE(err)
 	}
 
-	if err := r.Domain.UpdateVpnDeviceEnvironment(cc, deviceName, projectName, envName); err != nil {
+	if err := r.Domain.ActivateVpnDeviceOnEnvironment(cc, deviceName, projectName, envName); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -360,7 +360,7 @@ func (r *mutationResolver) CoreUpdateVpnDeviceNs(ctx context.Context, deviceName
 		return false, errors.NewE(err)
 	}
 
-	if err := r.Domain.UpdateVpnDeviceNs(cc, deviceName, ns); err != nil {
+	if err := r.Domain.ActivateVPNDeviceOnNamespace(cc, deviceName, ns); err != nil {
 		return false, errors.NewE(err)
 	}
 
@@ -375,7 +375,7 @@ func (r *mutationResolver) CoreUpdateVpnClusterName(ctx context.Context, deviceN
 		return false, errors.NewE(err)
 	}
 
-	if err := r.Domain.UpdateVpnDeviceCluster(cc, deviceName, clusterName); err != nil {
+	if err := r.Domain.ActivateVpnDeviceOnCluster(cc, deviceName, clusterName); err != nil {
 		return false, errors.NewE(err)
 	}
 
