@@ -14,9 +14,6 @@ import (
 	t "github.com/kloudlite/api/pkg/types"
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
-	"github.com/kloudlite/operator/pkg/constants"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -129,21 +126,6 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.Consol
 }
 
 func (d *domain) applyVPNDevice(ctx ConsoleContext, device *entities.ConsoleVPNDevice) error {
-	if err := d.applyK8sResource(ctx, *device.ProjectName, &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Namespace",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: d.envVars.DeviceNamespace,
-			Annotations: map[string]string{
-				constants.DescriptionKey: "namespace created by kloudlite platform to manage infra level VPN Devices",
-			},
-		},
-	}, device.RecordVersion); err != nil {
-		return errors.NewE(err)
-	}
-
 	if device.ProjectName != nil {
 		if err := d.applyK8sResource(ctx, *device.ProjectName, &device.Device, device.RecordVersion); err != nil {
 			return errors.NewE(err)
@@ -232,7 +214,7 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 	return nDevice, nil
 }
 
-func (d *domain) UpdateVpnDeviceNs(ctx ConsoleContext, devName string, namespace string) (device error) {
+func (d *domain) ActivateVPNDeviceOnNamespace(ctx ConsoleContext, devName string, namespace string) (device error) {
 	if err := d.canPerformActionInDevice(ctx, iamT.UpdateVPNDevice, devName); err != nil {
 		return errors.NewE(err)
 	}
@@ -409,7 +391,7 @@ func (d *domain) UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports 
 	return nil
 }
 
-func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, projectName string, envName string) error {
+func (d *domain) ActivateVpnDeviceOnEnvironment(ctx ConsoleContext, devName string, projectName string, envName string) error {
 	xdevice, err := d.findVPNDevice(ctx, devName)
 	if err != nil {
 		return errors.NewE(err)
@@ -425,8 +407,10 @@ func (d *domain) UpdateVpnDeviceEnvironment(ctx ConsoleContext, devName string, 
 	return nil
 }
 
-func (d *domain) UpdateVpnDeviceCluster(ctx ConsoleContext, devName string, clusterName string) error {
-	d.canPerformActionInAccount(ctx, iamT.GetCluster)
+func (d *domain) ActivateVpnDeviceOnCluster(ctx ConsoleContext, devName string, clusterName string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.GetCluster); err != nil {
+		return errors.NewE(err)
+	}
 
 	xdevice, err := d.findVPNDevice(ctx, devName)
 	if err != nil {

@@ -118,11 +118,15 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	secret.EnvironmentName = ctx.EnvironmentName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
 
-	if _, err := d.upsertEnvironmentResourceMapping(ctx, &secret); err != nil {
+	return d.createAndApplySecret(ctx, &secret)
+}
+
+func (d *domain) createAndApplySecret(ctx ResourceContext, secret *entities.Secret) (*entities.Secret, error) {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, secret); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	nsecret, err := d.secretRepo.Create(ctx, &secret)
+	nsecret, err := d.secretRepo.Create(ctx, secret)
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -166,7 +170,6 @@ func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 		ctx.DBFilters().Add(fields.MetadataName, secret.Name),
 		patchForUpdate,
 	)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -198,7 +201,6 @@ func (d *domain) DeleteSecret(ctx ResourceContext, name string) error {
 		ctx.DBFilters().Add(fields.MetadataName, name),
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -219,7 +221,6 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, secret.Name),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -231,7 +232,6 @@ func (d *domain) OnSecretDeleteMessage(ctx ResourceContext, secret entities.Secr
 
 func (d *domain) OnSecretUpdateMessage(ctx ResourceContext, secretIn entities.Secret, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
 	xSecret, err := d.findSecret(ctx, secretIn.Name)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -264,7 +264,6 @@ func (d *domain) OnSecretApplyError(ctx ResourceContext, errMsg, name string, op
 			},
 		),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
