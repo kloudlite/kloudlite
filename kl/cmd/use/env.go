@@ -1,4 +1,4 @@
-package sw
+package use
 
 import (
 	"fmt"
@@ -13,11 +13,6 @@ import (
 var switchCmd = &cobra.Command{
 	Use:   "env",
 	Short: "switch to a different environment",
-	Long: `Switch Environment
-Examples:
-  # switch to a different environment
-  kl env switch
-	`,
 
 	Run: func(cmd *cobra.Command, _ []string) {
 

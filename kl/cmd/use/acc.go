@@ -1,4 +1,4 @@
-package sw
+package use
 
 import (
 	"github.com/kloudlite/kl/domain/client"
@@ -9,12 +9,7 @@ import (
 
 var accCmd = &cobra.Command{
 	Use:   "account",
-	Short: "Switch account",
-	Long: `Use this command to switch account
-Example:
-  # switch to a different account
-  kl switch account
-	`,
+	Short: "switch account",
 	Run: func(cmd *cobra.Command, _ []string) {
 		accountName := fn.ParseStringFlag(cmd, "account")
 

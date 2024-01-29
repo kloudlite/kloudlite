@@ -6,8 +6,7 @@ import (
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/spf13/cobra"
 
-	// "github.com/kloudlite/kl/cmd/infra"
-	sw "github.com/kloudlite/kl/cmd/switch"
+	"github.com/kloudlite/kl/cmd/use"
 	"github.com/kloudlite/kl/cmd/vpn"
 
 	"github.com/kloudlite/kl/cmd/list"
@@ -32,7 +31,7 @@ func init() {
 	// rootCmd.AddCommand(infra.Cmd)
 	rootCmd.AddCommand(vpn.Cmd)
 
-	rootCmd.AddCommand(sw.Cmd)
+	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(runner.InitCommand)
 
 	rootCmd.AddCommand(add.Command)

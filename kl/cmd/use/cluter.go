@@ -1,4 +1,4 @@
-package sw
+package use
 
 import (
 	"github.com/kloudlite/kl/domain/client"
