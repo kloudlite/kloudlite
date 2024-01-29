@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/kloudlite/api/apps/console/internal/entities"
@@ -71,10 +73,12 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
-	service.Namespace = d.getProjectNamespace(projectName)
+	service.Namespace = d.getProjectTargetNamespace(projectName)
 	service.IncrementRecordVersion()
 
-	service.Spec.TargetNamespace = fmt.Sprintf("%s-pmsvc-%s", projectName, service.Name)
+	if service.Spec.TargetNamespace == "" {
+		service.Spec.TargetNamespace = d.getPMSTargetNamespace(projectName, service.Name, entities.ResourceTypeProjectManagedService)
+	}
 
 	service.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -123,6 +127,12 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, pms.Name, PublishAdd)
 
 	return pms, nil
+}
+
+func (d *domain) getPMSTargetNamespace(projectName string, msvcName string, msvcType entities.ResourceType) string {
+	msvcNamespace := fmt.Sprintf("pmsvc-%s-%s-%s", projectName, msvcName, msvcType)
+	hash := md5.Sum([]byte(msvcNamespace))
+	return fmt.Sprintf("pmsvc-%s", hex.EncodeToString(hash[:]))
 }
 
 func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName string, service entities.ProjectManagedService) (*entities.ProjectManagedService, error) {
