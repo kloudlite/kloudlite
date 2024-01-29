@@ -3,3 +3,4 @@
 !terraform/bundles
 !build-scripts
 !infrastructure-templates
+!.ci

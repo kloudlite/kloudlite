@@ -70,19 +70,30 @@ module "cloudflare-dns" {
   source = "../../modules/cloudflare/dns"
 
   cloudflare_api_token = var.cloudflare.api_token
-  cloudflare_domain    = var.cloudflare.domain
+  # cloudflare_domain    = var.cloudflare.domain
   cloudflare_zone_id   = var.cloudflare.zone_id
 
-  public_ips         = [for name, cfg in var.master_nodes : cfg.public_ip]
-  set_wildcard_cname = true
+  #  public_ips         = [for name, cfg in var.master_nodes : cfg.public_ip]
+  #  set_wildcard_cname = true
+
+  A_records = {
+    for name, cfg in var.master_nodes : cfg.public_ip => { value = var.cloudflare.domain }
+  }
+  CNAME_records = {
+    "*.${var.cloudflare.domain}" : {
+      value = var.cloudflare.domain
+    }
+  }
 }
 
 module "kloudlite-crds" {
   count             = var.kloudlite_params.install_crds ? 1 : 0
   source            = "../../modules/kloudlite/crds"
   kloudlite_release = var.kloudlite_params.release
-  depends_on        = [module.k3s-masters.kubeconfig_with_public_host]
-  ssh_params        = {
+  depends_on        = [
+    module.k3s-masters.kubeconfig_with_public_host
+  ]
+  ssh_params = {
     public_ip   = module.k3s-masters.k3s_primary_public_ip
     username    = var.ssh_username
     private_key = var.ssh_private_key
@@ -95,7 +106,9 @@ locals {
 
 module "kloudlite-namespace" {
   source     = "../../modules/kloudlite/execute_command_over_ssh"
-  depends_on = [module.k3s-masters.kubeconfig_with_public_host]
+  depends_on = [
+    module.k3s-masters.kubeconfig_with_public_host
+  ]
   command    = <<EOF
 kubectl apply -f - <<EOF2
 apiVersion: v1
@@ -113,7 +126,9 @@ EOF
 
 module "kloudlite-k3s-params" {
   source     = "../../modules/kloudlite/execute_command_over_ssh"
-  depends_on = [module.k3s-masters.kubeconfig_with_public_host]
+  depends_on = [
+    module.k3s-masters.kubeconfig_with_public_host
+  ]
   command    = <<EOF
 kubectl apply -f - <<EOF2
 apiVersion: v1
@@ -135,9 +150,11 @@ EOF
 }
 
 module "nvidia-container-runtime" {
-  count             = var.enable_nvidia_gpu_support ? 1 : 0
-  source            = "../../modules/nvidia-container-runtime"
-  depends_on        = [module.kloudlite-crds, module.kloudlite-namespace]
+  count      = var.enable_nvidia_gpu_support ? 1 : 0
+  source     = "../../modules/nvidia-container-runtime"
+  depends_on = [
+    module.kloudlite-crds, module.kloudlite-namespace
+  ]
   ssh_params        = local.master_ssh_params
   gpu_node_selector = {
     (module.constants.node_labels.node_has_gpu) : "true"

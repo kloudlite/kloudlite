@@ -23,7 +23,10 @@ var logger = log.New(os.Stdout, "k3s-runner", log.LstdFlags)
 
 func execK3s(ctx context.Context, args ...string) error {
 	cmd := exec.CommandContext(ctx, "k3s", args...)
-	logger.Printf("executing shell cmd: %s\n", cmd.String())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	logger.Printf("STARTING k3s @ timestamp: %s, with cmd: %s\n", time.Now().Format(time.RFC3339), cmd.String())
 
 	if err := cmd.Run(); err != nil {
 		logger.Printf("encountered error: %v\n", err)
@@ -53,10 +56,14 @@ func getPublicIPv4() (string, error) {
 	return string(b), nil
 }
 
+var BuiltAt string
+
 func main() {
 	var runnerCfgFile string
-	flag.StringVar(&runnerCfgFile, "config", "", "--config runner-config-file")
+	flag.StringVar(&runnerCfgFile, "config", "./runner-config.yml", "--config runner-config-file")
 	flag.Parse()
+
+	fmt.Printf("kloudlite k3s runner BUILT At: %s\n", BuiltAt)
 
 	logger.Printf("specified configuration file: %s\n", runnerCfgFile)
 

@@ -124,7 +124,6 @@ variable "save_kubeconfig_to_path" {
   type        = string
 }
 
-
 variable "cloudprovider_name" {
   type = string
 }
@@ -132,4 +131,3 @@ variable "cloudprovider_name" {
 variable "cloudprovider_region" {
   type = string
 }
-
