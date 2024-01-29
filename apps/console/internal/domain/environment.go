@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/kloudlite/api/common/fields"
@@ -116,7 +118,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 	env.IncrementRecordVersion()
 
 	if env.Spec.TargetNamespace == "" {
-		env.Spec.TargetNamespace = fmt.Sprintf("env-%s", env.Name)
+		env.Spec.TargetNamespace = d.getEnvironmentTargetNamespace(projectName, env.Name)
 	}
 
 	if env.Spec.Routing == nil {
@@ -394,6 +396,12 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 	}
 
 	return destEnv, nil
+}
+
+func (d *domain) getEnvironmentTargetNamespace(projectName string, envName string) string {
+	envNamespace := fmt.Sprintf("env-%s-%s", projectName, envName)
+	hash := md5.Sum([]byte(envNamespace))
+	return fmt.Sprintf("env-%s", hex.EncodeToString(hash[:]))
 }
 
 func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env entities.Environment) (*entities.Environment, error) {
