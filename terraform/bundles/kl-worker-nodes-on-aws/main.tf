@@ -102,7 +102,7 @@ module "aws-ec2-nodepool" {
   nodes                = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
-        tf_public_ip            = "not-known"
+        tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
         tf_node_taints          = concat([],
@@ -148,7 +148,7 @@ module "aws-spot-nodepool" {
   nodes                        = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
-        tf_public_ip            = "not-known"
+        tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
         tf_node_taints          = concat([],

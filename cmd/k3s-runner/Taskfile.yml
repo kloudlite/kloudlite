@@ -6,9 +6,12 @@ tasks:
       CGO_ENABLED: 0
       GOOS: linux
       GOARCH: amd64
+    vars:
+      builtAt:
+        sh: date | sed 's/\s/_/g'
     cmds:
-      - mkdir -p ./bin
-      - go build -ldflags="-s -w" -o ./bin/runner .
+      - go build -ldflags="-s -w -X main.BuiltAt={{.builtAt}}" -o ./bin/runner .
+      - upx bin/runner
 
   help:
     summary: |+
