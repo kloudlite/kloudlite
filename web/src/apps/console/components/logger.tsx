@@ -14,7 +14,6 @@ import {
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
-import logger from '~/root/lib/client/helpers/log';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
 import { generatePlainColor } from './color-generator';
 import Pulsable from './pulsable';
@@ -403,13 +402,19 @@ const LogBlock = ({
   );
 
   const [showAll, setShowAll] = useState(true);
+
   const ref = useRef(null);
+  // const listRef = useRef(null);
 
   useEffect(() => {
+    console.log('data', ref.current);
+
     (async () => {
       if (follow && ref.current) {
         // @ts-ignore
-        ref.current.scrollTo(0, ref.current.scrollHeight);
+        ref.current.scrollToIndex({
+          index: data.length - 1,
+        });
       }
     })();
   }, [data, maxLines]);
@@ -470,11 +475,15 @@ const LogBlock = ({
       >
         <div className="flex flex-1 h-full">
           <div
-            className="flex-1 flex flex-col pb-8"
+            className="flex-1 flex flex-col pb-8 scroll-container"
             style={{ lineHeight: `${fontSize * 1.5}px` }}
             ref={ref}
           >
-            <ViewportList items={showAll ? data : searchResult}>
+            <ViewportList
+              items={showAll ? data : searchResult}
+              ref={ref}
+              // viewportRef={listRef}
+            >
               {(log, index) => {
                 return (
                   <LogLine

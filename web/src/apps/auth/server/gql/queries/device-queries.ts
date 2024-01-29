@@ -2,7 +2,35 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 
 export const vpnQueries = (executor: IExecutor) => ({
-  cli_CoreUpdateDevicePorts: executor(
+  cli_updateDeviceCluster: executor(
+    gql`
+      mutation Core_updateVpnClusterName(
+        $deviceName: String!
+        $clusterName: String!
+      ) {
+        core_updateVpnClusterName(
+          deviceName: $deviceName
+          clusterName: $clusterName
+        )
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_updateVpnClusterName,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_updateDeviceNs: executor(
+    gql`
+      mutation Core_updateVpnDeviceNs($deviceName: String!, $ns: String!) {
+        core_updateVpnDeviceNs(deviceName: $deviceName, ns: $ns)
+      }
+    `,
+    {
+      transformer: (data: any) => data.core_updateVpnDeviceNs,
+      vars: (_: any) => {},
+    }
+  ),
+  cli_updateDevicePorts: executor(
     gql`
       mutation Core_updateVPNDevicePorts(
         $deviceName: String!
@@ -16,7 +44,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_CoreUpdateDeviceEnv: executor(
+  cli_updateDeviceEnv: executor(
     gql`
       mutation Core_updateVPNDeviceEnv(
         $deviceName: String!
@@ -36,7 +64,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     }
   ),
 
-  cli_listCoreDevices: executor(
+  cli_listDevices: executor(
     gql`
       query Core_listVPNDevicesForUser {
         core_listVPNDevicesForUser {
@@ -46,6 +74,7 @@ export const vpnQueries = (executor: IExecutor) => ({
             name
           }
           projectName
+          clusterName
           status {
             isReady
             message {
@@ -72,7 +101,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_getCoreDevice: executor(
+  cli_getDevice: executor(
     gql`
       query Core_getVPNDevice($name: String!) {
         core_getVPNDevice(name: $name) {
@@ -80,6 +109,7 @@ export const vpnQueries = (executor: IExecutor) => ({
           metadata {
             name
           }
+          clusterName
           projectName
           spec {
             activeNamespace
@@ -101,7 +131,7 @@ export const vpnQueries = (executor: IExecutor) => ({
       vars: (_: any) => {},
     }
   ),
-  cli_createCoreDevice: executor(
+  cli_createDevice: executor(
     gql`
       mutation Core_createVPNDevice($vpnDevice: ConsoleVPNDeviceIn!) {
         core_createVPNDevice(vpnDevice: $vpnDevice) {
@@ -117,198 +147,6 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: any) => data.core_createVPNDevice,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_updateCoreDevicePorts: executor(
-    gql`
-      mutation Mutation($deviceName: String!, $ports: [PortIn!]!) {
-        core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
-      }
-    `,
-    {
-      transformer: (data: any) => data.core_updateVPNDevicePorts,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_getDevice: executor(
-    gql`
-      query Infra_getVPNDevice($clusterName: String!, $name: String!) {
-        infra_getVPNDevice(clusterName: $clusterName, name: $name) {
-          displayName
-          markedForDeletion
-          metadata {
-            name
-            namespace
-          }
-          spec {
-            cnameRecords {
-              host
-              target
-            }
-            activeNamespace
-            nodeSelector
-            ports {
-              port
-              targetPort
-            }
-          }
-          status {
-            isReady
-            message {
-              RawMessage
-            }
-          }
-          wireguardConfig {
-            encoding
-            value
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => data.infra_getVPNDevice,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_listDevices: executor(
-    gql`
-      query Infra_listVPNDevices(
-        $pq: CursorPaginationIn
-        $clusterName: String
-      ) {
-        infra_listVPNDevices(clusterName: $clusterName, pq: $pq) {
-          edges {
-            node {
-              displayName
-              metadata {
-                name
-              }
-              spec {
-                activeNamespace
-                disabled
-                nodeSelector
-                ports {
-                  port
-                  targetPort
-                }
-              }
-              status {
-                isReady
-                message {
-                  RawMessage
-                }
-              }
-              wireguardConfig {
-                encoding
-                value
-              }
-            }
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => data.infra_listVPNDevices,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_updateDevice: executor(
-    gql`
-      mutation Mutation($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-        infra_updateVPNDevice(
-          clusterName: $clusterName
-          vpnDevice: $vpnDevice
-        ) {
-          metadata {
-            name
-          }
-          spec {
-            activeNamespace
-            cnameRecords {
-              target
-              host
-            }
-            ports {
-              targetPort
-              port
-            }
-          }
-          status {
-            message {
-              RawMessage
-            }
-            isReady
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => data.infra_updateVPNDevice,
-      vars: (_: any) => {},
-    }
-  ),
-
-  cli_updateDevicePort: executor(
-    gql`
-      mutation Mutation(
-        $clusterName: String!
-        $deviceName: String!
-        $ports: [PortIn!]!
-      ) {
-        infra_updateVPNDevicePorts(
-          clusterName: $clusterName
-          deviceName: $deviceName
-          ports: $ports
-        )
-      }
-    `,
-    {
-      transformer: (data: any) => data.infra_updateVPNDevicePorts,
-      vars: (_: any) => {},
-    }
-  ),
-  cli_updateDeviceNs: executor(
-    gql`
-      mutation Infra_updateVPNDeviceNs(
-        $clusterName: String!
-        $deviceName: String!
-        $namespace: String!
-      ) {
-        infra_updateVPNDeviceNs(
-          clusterName: $clusterName
-          deviceName: $deviceName
-          namespace: $namespace
-        )
-      }
-    `,
-    {
-      transformer: (data: any) => data.infra_updateVPNDeviceNs,
-      vars: (_: any) => {},
-    }
-  ),
-  cli_createDevice: executor(
-    gql`
-      mutation Infra_createVPNDevice(
-        $clusterName: String!
-        $vpnDevice: VPNDeviceIn!
-      ) {
-        infra_createVPNDevice(
-          clusterName: $clusterName
-          vpnDevice: $vpnDevice
-        ) {
-          metadata {
-            name
-          }
-        }
-      }
-    `,
-    {
-      transformer: (data: any) => data.infra_createVPNDevice,
       vars: (_: any) => {},
     }
   ),

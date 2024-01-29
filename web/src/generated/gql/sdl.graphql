@@ -387,6 +387,7 @@ enum ConsoleResType {
 type ConsoleVPNDevice {
   accountName: String!
   apiVersion: String
+  clusterName: String
   createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
@@ -394,6 +395,7 @@ type ConsoleVPNDevice {
   id: String!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  linkedClusters: [String!]
   markedForDeletion: Boolean
   metadata: Metadata
   projectName: String
@@ -412,6 +414,7 @@ type ConsoleVPNDeviceEdge {
 
 input ConsoleVPNDeviceIn {
   apiVersion: String
+  clusterName: String
   displayName: String!
   environmentName: String
   kind: String
@@ -2889,8 +2892,10 @@ type Mutation {
   core_updateProjectManagedService(pmsvc: ProjectManagedServiceIn!, projectName: String!): ProjectManagedService
   core_updateRouter(envName: String!, projectName: String!, router: RouterIn!): Router
   core_updateSecret(envName: String!, projectName: String!, secret: SecretIn!): Secret
+  core_updateVpnClusterName(clusterName: String!, deviceName: String!): Boolean!
   core_updateVPNDevice(vpnDevice: ConsoleVPNDeviceIn!): ConsoleVPNDevice
   core_updateVPNDeviceEnv(deviceName: String!, envName: String!, projectName: String!): Boolean!
+  core_updateVpnDeviceNs(deviceName: String!, ns: String!): Boolean!
   core_updateVPNDevicePorts(deviceName: String!, ports: [PortIn!]!): Boolean!
   cr_addBuild(build: BuildIn!): Build
   cr_addBuildCacheKey(buildCacheKey: BuildCacheKeyIn!): BuildCacheKey
@@ -3262,6 +3267,8 @@ type Query {
   core_listSecrets(envName: String!, pq: CursorPaginationIn, projectName: String!, search: SearchSecrets): SecretPaginatedRecords
   core_listVPNDevices(pq: CursorPaginationIn, search: CoreSearchVPNDevices): ConsoleVPNDevicePaginatedRecords
   core_listVPNDevicesForUser: [ConsoleVPNDevice!]
+  core_restartApp(appName: String!, envName: String!, projectName: String!): Boolean!
+  core_restartProjectManagedService(name: String!, projectName: String!): Boolean!
   core_resyncApp(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncConfig(envName: String!, name: String!, projectName: String!): Boolean!
   core_resyncEnvironment(name: String!, projectName: String!): Boolean!

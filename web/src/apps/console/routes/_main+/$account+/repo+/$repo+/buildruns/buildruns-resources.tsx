@@ -9,7 +9,6 @@ import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
@@ -47,34 +46,11 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-interface IExtraButton {
-  onDelete: () => void;
-}
-const ExtraButton = ({ onDelete }: IExtraButton) => {
-  return (
-    <ResourceExtraAction
-      options={
-        [
-          // {
-          //   label: 'Delete',
-          //   icon: <Trash size={16} />,
-          //   type: 'item',
-          //   onClick: onDelete,
-          //   key: 'delete',
-          //   className: '!text-text-critical',
-          // },
-        ]
-      }
-    />
-  );
-};
-
 interface IResource {
   items: BaseType[];
-  onDelete: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete }: IResource) => {
+const GridView = ({ items }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -169,31 +145,29 @@ const ListItem = ({ item }: { item: BaseType }) => {
                 </div>
               }
               subtitle={
-                <div className="flex items-center gap-md">
-                  {`#${commitHash.substring(
-                    commitHash.length - 7,
-                    commitHash.length
-                  )}`}
-                  <GitBranch size={12} />
-                  {item.metadata?.annotations['github.com/branch']}{' '}
+                <div className="flex items-center gap-xl pt-md">
+                  <div>
+                    {`#${commitHash.substring(
+                      commitHash.length - 7,
+                      commitHash.length
+                    )}`}
+                  </div>
+                  <div className="flex items-center gap-md">
+                    <GitBranch size={12} />
+                    {item.metadata?.annotations['github.com/branch']}{' '}
+                  </div>
+
+                  <div className="flex items-center gap-md">
+                    {item.spec?.registry.repo.tags.map((tag) => (
+                      <div className="flex items-center gap-md" key={tag}>
+                        <Tag size={12} />
+                        {tag}{' '}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               }
             />
-          </div>
-
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-row items-center gap-lg mb-md">
-              {item.spec?.registry.repo.tags.map((tag) => (
-                <button
-                  key={tag}
-                  className="rounded-full outline-none ring-offset-1 focus-visible:ring-2 focus-visible:ring-border-focus hover:underline text-text-primary"
-                >
-                  <Badge type="info" icon={<Tag />}>
-                    {tag}
-                  </Badge>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -231,7 +205,7 @@ const ListItem = ({ item }: { item: BaseType }) => {
     </div>
   );
 };
-const ListView = ({ items, onDelete }: IResource) => {
+const ListView = ({ items }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -265,9 +239,9 @@ const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
 
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
+    // onDelete: (item) => {
+    //   setShowDeleteDialog(item);
+    // },
   };
 
   const params = useParams();
