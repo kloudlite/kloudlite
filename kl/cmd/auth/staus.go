@@ -12,12 +12,11 @@ import (
 var authStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "user logged in to kloudlite",
-	Long: `This command provides details of the user logged in to kloudlite.
-Example:
-  # Login to kloudlite
-  kl auth status 
+	Long:  `This command provides details of the user logged in to kloudlite.`,
+	Example: `# Login to kloudlite
+{cmd} auth status 
 
-  when you execute the above command it will print the user name associated with the current effective user ID.
+when you execute the above command it will print the user name associated with the current effective user ID.
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 		if u, err := server.GetCurrentUser(); err != nil {

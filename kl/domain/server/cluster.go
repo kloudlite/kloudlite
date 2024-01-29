@@ -93,7 +93,7 @@ func SelectCluster(clusterName string) (*Cluster, error) {
 		return nil, err
 	}
 
-	if err := client.SelectCluster(c.Metadata.Name); err != nil {
+	if err := client.SetClusterToMainCtx(c.Metadata.Name); err != nil {
 		return nil, err
 	}
 

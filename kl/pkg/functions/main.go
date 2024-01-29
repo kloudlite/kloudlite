@@ -188,6 +188,6 @@ func Notify(str ...interface{}) {
 	notify.Notify("Kloudlite", "notice", fmt.Sprint(str...), "")
 }
 
-func Description(str string) string {
+func Desc(str string) string {
 	return strings.Replace(str, "{cmd}", flags.CliName, -1)
 }

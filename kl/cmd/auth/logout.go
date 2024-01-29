@@ -10,11 +10,8 @@ import (
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
 	Short: "logout from kloudlite",
-	Long: `This command will logout your session from the cli
-Example:
-  # Logout from kloudlite
-  kl auth logout
-	`,
+	Example: `# Logout from kloudlite
+{cmd} auth logout`,
 	Run: func(_ *cobra.Command, _ []string) {
 		err := client.Logout()
 		if err != nil {

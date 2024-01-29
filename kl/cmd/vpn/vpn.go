@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Example = functions.Description(`# expose port of selected device
+var Example = functions.Desc(`# expose port of selected device
 {cmd} vpn expose port -p <port>:<your_local_port>
 
 # delete exposed port of selected device

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/table"
 
@@ -15,17 +16,15 @@ import (
 var secretCmd = &cobra.Command{
 	Use:   "secret",
 	Short: "get secret entries",
-	Long: `get secret entries for the selected project
-Examples:
-  # get secret entries in table
-  kl get secret <secretname>
+	Long:  `get secret entries for the selected project`,
+	Example: functions.Desc(`# get secret entries in table
+{cmd} get secret <secretname>
 
-  # get secret entries in json format
-  kl get secret <secretname> -o json
+# get secret entries in json format
+{cmd} get secret <secretname> -o json
 
-  # get secret entries in yaml format
-  kl get secret <secretname> -o yaml
-`,
+# get secret entries in yaml format
+{cmd} get secret <secretname> -o yaml`),
 	Run: func(cmd *cobra.Command, args []string) {
 		secName := ""
 

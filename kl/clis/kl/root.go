@@ -18,12 +18,12 @@ var rootCmd = &cobra.Command{
 	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 2 || args[0] != "--" {
-			fn.Log(GetRootHelp(cmd))
+			// fn.Log(GetRootHelp(cmd))
 
-			// if err := cmd.Help(); err != nil {
-			// 	fn.Log(err)
-			// 	os.Exit(1)
-			// }
+			if err := cmd.Help(); err != nil {
+				fn.Log(err)
+				os.Exit(1)
+			}
 			return
 		}
 

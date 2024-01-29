@@ -1,30 +1,19 @@
 package client
 
-import "errors"
+import (
+	"errors"
+)
 
 func CurrentClusterName() (string, error) {
-	file, err := GetActiveInfraContext()
+
+	mc, err := GetMainCtx()
 	if err != nil {
 		return "", err
 	}
-	if file.ClusterName == "" {
-		return "", errors.New("noSelectedCluster")
-	}
-	if file.ClusterName == "" {
-		return "",
-			errors.New("no clusters is selected yet. please select one using \"kl use cluster\"")
-	}
-	return file.ClusterName, nil
-}
 
-func SelectCluster(clusterName string) error {
-	file, err := GetActiveInfraContext()
-	if err != nil {
-		return err
+	if mc.ClusterName == "" {
+		return "", errors.New("please select a cluster using \"kl use cluster\"")
 	}
 
-	file.ClusterName = clusterName
-
-	err = WriteInfraContextFile(*file)
-	return err
+	return mc.ClusterName, nil
 }

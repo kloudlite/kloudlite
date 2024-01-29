@@ -1,23 +1,21 @@
 package auth
 
 import (
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/spf13/cobra"
 )
 
 var Cmd = &cobra.Command{
 	Use:   "auth",
 	Short: "login,logout and status",
-	Long: `Login, logout and status
-Examples:
-  # login to kloudlite
-  kl auth login
+	Example: fn.Desc(`# login to kloudlite
+{cmd} auth login
 
-  # logout from kloudlite
-  kl auth logout
+# logout from kloudlite
+{cmd} auth logout
 
-  # get auth status
-  kl auth status
-	`,
+# get auth status
+{cmd} auth status`),
 }
 
 func init() {

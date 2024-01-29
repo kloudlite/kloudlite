@@ -21,7 +21,7 @@ var connectVerbose bool
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start vpn device",
-	Example: fn.Description(`# start vpn device
+	Example: fn.Desc(`# start vpn device
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {

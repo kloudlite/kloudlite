@@ -19,13 +19,6 @@ func Logout() error {
 		return err
 	}
 
-	infraContextFile, _ := os.Stat(path.Join(configFolder, InfraContextsFileName))
-	if infraContextFile != nil {
-		if err := os.Remove(path.Join(configFolder, infraContextFile.Name())); err != nil {
-			return err
-		}
-	}
-
 	accountFile, _ := os.Stat(path.Join(configFolder, MainCtxFileName))
 	if accountFile != nil {
 		if err := os.Remove(path.Join(configFolder, accountFile.Name())); err != nil {
