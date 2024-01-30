@@ -77,10 +77,12 @@ spec:
             {{- /* for: resource watcher */}}
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
+
             - name: INFRA_DEVICE_NAMESPACE
-              value: {{.Values.operators.wgOperator.configuration.infraDeviceNamespace}}
+              value: {{.Values.operators.agentOperator.configuration.wireguard.infraDeviceNamespace}}
+
             - name: CONSOLE_DEVICE_NAMESPACE
-              value: {{.Values.operators.wgOperator.configuration.consoleDeviceNamespace}}
+              value: {{.Values.operators.agentOperator.configuration.wireguard.consoleDeviceNamespace}}
 
             - name: CLUSTER_NAME
               valueFrom:
@@ -111,23 +113,44 @@ spec:
                   optional: true
 
             {{- /* for: nodepool operator */}}
-            - name: KLOUDLITE_ACCOUNT_NAME
-              value: {{.Values.accountName}}
+            {{- /* - name: KLOUDLITE_ACCOUNT_NAME */}}
+            {{- /*   value: {{.Values.accountName}} */}}
+            {{- /**/}}
+            {{- /* - name: KLOUDLITE_CLUSTER_NAME */}}
+            {{- /*   value: {{.Values.clusterName}} */}}
 
-            - name: KLOUDLITE_CLUSTER_NAME
-              value: {{.Values.clusterName}}
+            - name: "IAC_JOB_IMAGE"
+              value: {{.Values.operators.agentOperator.configuration.iacJobImage}}
 
             - name: "K3S_JOIN_TOKEN"
-              value: {{.Values.operators.agentOperator.configuration.k3sJoinToken}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: k3s_agent_join_token
+                  namespace: kloudlite
 
             - name: "K3S_SERVER_PUBLIC_HOST"
-              value: {{.Values.operators.agentOperator.configuration.k3sServerPublicHost}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: k3s_agent_join_token
+                  namespace: kloudlite
 
             - name: CLOUD_PROVIDER_NAME
-              value: {{.Values.operators.agentOperator.configuration.cloudProvider.name}}
+              {{- /* value: {{.Values.operators.agentOperator.configuration.cloudProvider.name}} */}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: cloudprovider_name
+                  namespace: kloudlite
 
             - name: CLOUD_PROVIDER_REGION
-              value: {{.Values.operators.agentOperator.configuration.cloudProvider.region}}
+              {{- /* value: {{.Values.operators.agentOperator.configuration.cloudProvider.region}} */}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: cloudprovider_region
+                  namespace: kloudlite
 
             {{- /* for: routers */}}
             - name: ACME_EMAIL
@@ -145,13 +168,17 @@ spec:
 
             {{- /* for wireguard controller */}}
             - name: CLUSTER_POD_CIDR
-              value: {{.Values.operators.wgOperator.configuration.podCIDR}}
+              value: {{.Values.operators.agentOperator.configuration.wireguard.podCIDR}}
 
             - name: CLUSTER_SVC_CIDR
-              value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
+              value: {{.Values.operators.agentOperator.configuration.wireguard.svcCIDR}}
 
             - name: DNS_HOSTED_ZONE
-              value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  namespace: kloudlite
+                  key: k3s_masters_public_dns_host
 
           image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
           imagePullPolicy: {{.Values.operators.agentOperator.image.pullPolicy | default .Values.imagePullPolicy}}
