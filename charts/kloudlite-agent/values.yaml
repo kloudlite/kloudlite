@@ -67,47 +67,15 @@ operators:
     nodeSelector: {}
 
     configuration:
-      cloudProvider:
-        # could be aws, do, azure etc.
-        name: ""
-        # -- cloud provider region
-        region: ""
-      k3sJoinToken: ""
-      k3sServerPublicHost: ""
       letsEncryptSupportEmail: "support@kloudlite.io"
+      iacJobImage: "ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-k8s-backend"
 
-  wgOperator:
-    # -- whether to enable wg operator
-    enabled: true
-    # -- wg operator workload name
-    # @ignored
-    name: kl-wg-operator
-    # -- wg operator image and tag
-    image:
-      repository: ghcr.io/kloudlite/operator/wireguard
-      # -- image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion
-      tag: ""
-      # -- image pull policy for kloudlite wireguard operator, default is .imagePullPolicy
-      pullPolicy: ""
+      wireguard:
+        podCIDR: 10.42.0.0/16
+        svcCIDR: 10.43.0.0/16
 
-    tolerations: []
-    nodeSelector: {}
-
-    # -- wireguard configuration options
-    configuration:
-      # -- cluster pods CIDR range
-      podCIDR: 10.42.0.0/16
-      # -- cluster services CIDR range
-      svcCIDR: 10.43.0.0/16
-      # -- dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com'
-      dnsHostedZone: ""
-
-      # @ignored
-      # -- enabled example wireguard server, and device
-      enableExamples: false
-
-      infraDeviceNamespace: "kloudlite-infra-devices"
-      consoleDeviceNamespace: "kloudlite-console-devices"
+        infraDeviceNamespace: "kloudlite-infra-devices"
+        consoleDeviceNamespace: "kloudlite-console-devices"
 
 helmCharts:
   ingressNginx:
