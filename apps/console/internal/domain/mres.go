@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -155,13 +156,17 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 
 	mres.Spec.ResourceName = fmt.Sprintf("env-%s-%s", ctx.EnvironmentName, mres.Name)
 
-	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, mres.RecordVersion)
+	return d.createAndApplyManagedResource(ctx, &mres)
+}
 
-	if _, err := d.upsertEnvironmentResourceMapping(ctx, &mres); err != nil {
+func (d *domain) createAndApplyManagedResource(ctx ResourceContext, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
+	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
+
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, mres); err != nil {
 		return nil, errors.NewE(err)
 	}
 
-	m, err := d.mresRepo.Create(ctx, &mres)
+	m, err := d.mresRepo.Create(ctx, mres)
 	if err != nil {
 		if d.mresRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
@@ -274,7 +279,6 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 				fc.ManagedResourceSyncedOutputSecretRef: mres.SyncedOutputSecretRef,
 			},
 		}))
-
 	if err != nil {
 		return err
 	}
