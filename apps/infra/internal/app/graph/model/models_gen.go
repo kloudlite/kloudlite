@@ -113,11 +113,6 @@ type GithubComKloudliteAPIAppsInfraInternalEntitiesOutputField struct {
 	Name        string `json:"name"`
 }
 
-type GithubComKloudliteAPIPkgTypesEncodedString struct {
-	Encoding string `json:"encoding"`
-	Value    string `json:"value"`
-}
-
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfig struct {
 	K3sMasters    *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 	NodePools     map[string]interface{}                                       `json:"nodePools,omitempty"`
@@ -277,7 +272,6 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
 	MinCount      int                                                          `json:"minCount"`
 	NodeLabels    map[string]interface{}                                       `json:"nodeLabels,omitempty"`
 	NodeTaints    []*K8sIoAPICoreV1Taint                                       `json:"nodeTaints,omitempty"`
-	TargetCount   int                                                          `json:"targetCount"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn struct {
@@ -287,7 +281,6 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn struct {
 	MinCount      int                                                          `json:"minCount"`
 	NodeLabels    map[string]interface{}                                       `json:"nodeLabels,omitempty"`
 	NodeTaints    []*K8sIoAPICoreV1TaintIn                                     `json:"nodeTaints,omitempty"`
-	TargetCount   int                                                          `json:"targetCount"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodeProps struct {
@@ -409,41 +402,6 @@ type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
 	APIVersion string                 `json:"apiVersion"`
 	Kind       string                 `json:"kind"`
 	Spec       map[string]interface{} `json:"spec"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1CNameRecord struct {
-	Host   *string `json:"host,omitempty"`
-	Target *string `json:"target,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1CNameRecordIn struct {
-	Host   *string `json:"host,omitempty"`
-	Target *string `json:"target,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	ActiveNamespace   *string                                                 `json:"activeNamespace,omitempty"`
-	CnameRecords      []*GithubComKloudliteOperatorApisWireguardV1CNameRecord `json:"cnameRecords,omitempty"`
-	Disabled          *bool                                                   `json:"disabled,omitempty"`
-	NodeSelector      map[string]interface{}                                  `json:"nodeSelector,omitempty"`
-	NoExternalService *bool                                                   `json:"noExternalService,omitempty"`
-	Ports             []*GithubComKloudliteOperatorApisWireguardV1Port        `json:"ports,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
-	ActiveNamespace *string                                                   `json:"activeNamespace,omitempty"`
-	CnameRecords    []*GithubComKloudliteOperatorApisWireguardV1CNameRecordIn `json:"cnameRecords,omitempty"`
-	Ports           []*GithubComKloudliteOperatorApisWireguardV1PortIn        `json:"ports,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1Port struct {
-	Port       *int `json:"port,omitempty"`
-	TargetPort *int `json:"targetPort,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1PortIn struct {
-	Port       *int `json:"port,omitempty"`
-	TargetPort *int `json:"targetPort,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
@@ -1350,11 +1308,6 @@ type PersistentVolumePaginatedRecords struct {
 	TotalCount int                     `json:"totalCount"`
 }
 
-type Port struct {
-	Port       *int `json:"port,omitempty"`
-	TargetPort *int `json:"targetPort,omitempty"`
-}
-
 type SearchCluster struct {
 	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -1398,25 +1351,8 @@ type SearchProviderSecret struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type SearchVPNDevices struct {
-	Text              *repos.MatchFilter `json:"text,omitempty"`
-	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
-	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
-}
-
 type SearchVolumeAttachments struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
-}
-
-type VPNDeviceEdge struct {
-	Cursor string              `json:"cursor"`
-	Node   *entities.VPNDevice `json:"node"`
-}
-
-type VPNDevicePaginatedRecords struct {
-	Edges      []*VPNDeviceEdge `json:"edges"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount int              `json:"totalCount"`
 }
 
 type VolumeAttachmentEdge struct {

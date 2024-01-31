@@ -7,7 +7,6 @@ import (
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
-	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
@@ -43,7 +42,6 @@ const (
 	ResourceTypeDomainEntries         ResourceType = "domain_entries"
 	ResourceTypeHelmRelease           ResourceType = "helm_release"
 	ResourceTypeNodePool              ResourceType = "nodepool"
-	ResourceTypeVpnDevice             ResourceType = "vpn_device"
 	ResourceTypePVC                   ResourceType = "persistance_volume_claim"
 	ResourceTypePV                    ResourceType = "persistance_volume"
 	ResourceTypeVolumeAttachment      ResourceType = "volume_attachment"
@@ -96,20 +94,6 @@ type Domain interface {
 
 	OnNodeUpdateMessage(ctx InfraContext, clusterName string, node entities.Node) error
 	OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error
-
-	ListVPNDevices(ctx InfraContext, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
-	GetVPNDevice(ctx InfraContext, clusterName string, deviceName string) (*entities.VPNDevice, error)
-
-	CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
-	UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
-	UpdateVpnDevicePorts(ctx InfraContext, clusterName string, devName string, ports []*wgv1.Port) error
-	UpdateVpnDeviceNs(ctx InfraContext, clusterName string, devName string, namespace string) error
-
-	DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error
-
-	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
-	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
-	OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
 	ListClusterManagedServices(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
 	GetClusterManagedService(ctx InfraContext, clusterName string, serviceName string) (*entities.ClusterManagedService, error)

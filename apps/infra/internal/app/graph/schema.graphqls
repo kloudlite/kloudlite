@@ -8,7 +8,6 @@ enum ResType {
     providersecret
     # edge
     nodepool
-    vpn_device
     helm_release
 }
 
@@ -46,12 +45,6 @@ input SearchProviderSecret {
 input SearchDomainEntry {
     clusterName: MatchFilterIn
     text: MatchFilterIn
-}
-
-input SearchVPNDevices {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
 }
 
 input SearchPersistentVolumeClaims {
@@ -95,9 +88,6 @@ type Query {
 
     infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
-    infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
-
     infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getClusterManagedService(clusterName: String!, name: String!): ClusterManagedService @isLoggedInAndVerified @hasAccount
 
@@ -140,14 +130,6 @@ type Mutation {
     infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
     infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-    infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-
-    infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!,ports: [PortIn!]!): Boolean! @isLoggedInAndVerified @hasAccount
-    infra_updateVPNDeviceNs(clusterName: String!, deviceName: String!, namespace: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
-    infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
-
     infra_createClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
     infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService @isLoggedInAndVerified @hasAccount
     infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
@@ -156,10 +138,6 @@ type Mutation {
     infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
-
-# extend type VPNDevice {
-#   wgConfig: String
-# }
 
 type EncodedValue {
   value: String!
