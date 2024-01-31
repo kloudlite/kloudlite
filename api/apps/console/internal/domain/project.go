@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/kloudlite/api/common/fields"
@@ -152,6 +154,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.IncrementRecordVersion()
 
+	// TODO: check if provided cluster is exists in account
+
 	project.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
@@ -164,7 +168,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.AccountName = ctx.AccountName
 	if project.Spec.TargetNamespace == "" {
-		project.Spec.TargetNamespace = d.getProjectNamespace(project.Name)
+		project.Spec.TargetNamespace = d.getProjectTargetNamespace(project.Name)
 	}
 
 	prj, err := d.projectRepo.Create(ctx, &project)
@@ -200,8 +204,9 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	return prj, nil
 }
 
-func (d *domain) getProjectNamespace(projectName string) string {
-	return fmt.Sprintf("prj-%s", projectName)
+func (d *domain) getProjectTargetNamespace(projectName string) string {
+	hash := md5.Sum([]byte(projectName))
+	return fmt.Sprintf("prj-%s", hex.EncodeToString(hash[:]))
 }
 
 func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {

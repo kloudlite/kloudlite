@@ -241,7 +241,7 @@ query: |
     auth_resetPassword(token: $token, password: $password)
   }
 variables:
-  token: "reset-**************"
+  token: "{{.reset_token}}"
   password: "{{.password}}"
 
 ---
