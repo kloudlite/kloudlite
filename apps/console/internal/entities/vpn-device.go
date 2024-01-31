@@ -20,6 +20,7 @@ type ConsoleVPNDevice struct {
 	AccountName     string  `json:"accountName" graphql:"noinput"`
 	ProjectName     *string `json:"projectName,omitempty"`
 	EnvironmentName *string `json:"environmentName,omitempty"`
+	ClusterName     *string `json:"clusterName,omitempty"`
 
 	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput" struct-json-path:",ignore-nesting"`
 
