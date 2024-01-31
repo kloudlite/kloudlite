@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"encoding/base64"
+
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -14,7 +15,6 @@ import (
 	"github.com/kloudlite/api/pkg/errors"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
-	"github.com/kloudlite/operator/apis/wireguard/v1"
 )
 
 // AdminKubeconfig is the resolver for the adminKubeconfig field.
@@ -160,65 +160,6 @@ func (r *mutationResolver) InfraDeleteNodePool(ctx context.Context, clusterName 
 	}
 
 	if err := r.Domain.DeleteNodePool(ictx, clusterName, poolName); err != nil {
-		return false, errors.NewE(err)
-	}
-	return true, nil
-}
-
-// InfraCreateVPNDevice is the resolver for the infra_createVPNDevice field.
-func (r *mutationResolver) InfraCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return r.Domain.CreateVPNDevice(cc, clusterName, vpnDevice)
-}
-
-// InfraUpdateVPNDevice is the resolver for the infra_updateVPNDevice field.
-func (r *mutationResolver) InfraUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.UpdateVPNDevice(cc, clusterName, vpnDevice)
-}
-
-// InfraUpdateVPNDevicePorts is the resolver for the infra_updateVPNDevicePorts field.
-func (r *mutationResolver) InfraUpdateVPNDevicePorts(ctx context.Context, clusterName string, deviceName string, ports []*v1.Port) (bool, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.UpdateVpnDevicePorts(cc, clusterName, deviceName, ports); err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-// InfraUpdateVPNDeviceNs is the resolver for the infra_updateVPNDeviceNs field.
-func (r *mutationResolver) InfraUpdateVPNDeviceNs(ctx context.Context, clusterName string, deviceName string, namespace string) (bool, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-
-	if err := r.Domain.UpdateVpnDeviceNs(cc, clusterName, deviceName, namespace); err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
-// InfraDeleteVPNDevice is the resolver for the infra_deleteVPNDevice field.
-func (r *mutationResolver) InfraDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return false, errors.NewE(err)
-	}
-	if err := r.Domain.DeleteVPNDevice(cc, clusterName, deviceName); err != nil {
 		return false, errors.NewE(err)
 	}
 	return true, nil
@@ -551,64 +492,6 @@ func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, cloudproviderNa
 		Result:          output.Result,
 		InstallationURL: output.InstallationURL,
 	}, nil
-}
-
-// InfraListVPNDevices is the resolver for the infra_listVPNDevices field.
-func (r *queryResolver) InfraListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error) {
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-		if search.MarkedForDeletion != nil {
-			filter["markedForDeletion"] = *search.MarkedForDeletion
-		}
-	}
-
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		if cc.AccountName == "" {
-			return nil, errors.NewE(err)
-		}
-	}
-
-	devices, err := r.Domain.ListVPNDevices(cc, cc.AccountName, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	ve := make([]*model.VPNDeviceEdge, len(devices.Edges))
-	for i := range devices.Edges {
-		ve[i] = &model.VPNDeviceEdge{
-			Node:   devices.Edges[i].Node,
-			Cursor: devices.Edges[i].Cursor,
-		}
-	}
-
-	m := model.VPNDevicePaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &devices.PageInfo.EndCursor,
-			HasNextPage:     devices.PageInfo.HasNextPage,
-			HasPreviousPage: devices.PageInfo.HasPrevPage,
-			StartCursor:     &devices.PageInfo.StartCursor,
-		},
-		TotalCount: int(devices.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// InfraGetVPNDevice is the resolver for the infra_getVPNDevice field.
-func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error) {
-	cc, err := toInfraContext(ctx)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
 
 // InfraListClusterManagedServices is the resolver for the infra_listClusterManagedServices field.

@@ -18,7 +18,6 @@ import (
 
 	"github.com/kloudlite/api/pkg/messaging"
 	msgTypes "github.com/kloudlite/api/pkg/messaging/types"
-	t "github.com/kloudlite/api/pkg/types"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -36,7 +35,6 @@ var (
 	clusterGVK          = fn.GVK("clusters.kloudlite.io/v1", "Cluster")
 	nodepoolGVK         = fn.GVK("clusters.kloudlite.io/v1", "NodePool")
 	helmreleaseGVK      = fn.GVK("crds.kloudlite.io/v1", "HelmChart")
-	deviceGVK           = fn.GVK("wireguard.kloudlite.io/v1", "Device")
 	pvcGVK              = fn.GVK("v1", "PersistentVolumeClaim")
 	pvGVK               = fn.GVK("v1", "PersistentVolume")
 	volumeAttachmentGVK = fn.GVK("storage.k8s.io/v1", "VolumeAttachment")
@@ -122,30 +120,6 @@ func processResourceUpdates(consumer ReceiveResourceUpdatesConsumer, d domain.Do
 					return d.OnNodePoolDeleteMessage(dctx, su.ClusterName, np)
 				}
 				return d.OnNodePoolUpdateMessage(dctx, su.ClusterName, np, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
-			}
-		case deviceGVK.String():
-			{
-				var device entities.VPNDevice
-				if err := fn.JsonConversion(su.Object, &device); err != nil {
-					return errors.NewE(err)
-				}
-
-				if v, ok := su.Object[types.KeyVPNDeviceConfig]; ok {
-					b, err := json.Marshal(v)
-					if err != nil {
-						return errors.NewE(err)
-					}
-					var encodedStr t.EncodedString
-					if err := json.Unmarshal(b, &encodedStr); err != nil {
-						return errors.NewE(err)
-					}
-					device.WireguardConfig = encodedStr
-				}
-
-				if resStatus == types.ResourceStatusDeleted {
-					return d.OnVPNDeviceDeleteMessage(dctx, su.ClusterName, device)
-				}
-				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device, resStatus, domain.UpdateAndDeleteOpts{MessageTimestamp: msg.Timestamp})
 			}
 		case pvcGVK.String():
 			{
