@@ -186,14 +186,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 			}
 
 			switch obj.GetNamespace() {
-			case r.Env.InfraDeviceNamespace:
-				err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Object:      obj.Object,
-				})
-				return ctrl.Result{}, err
-			case r.Env.ConsoleDeviceNamespace:
+			case r.Env.DeviceNamespace:
 				err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 					ClusterName: r.Env.ClusterName,
 					AccountName: r.Env.AccountName,
