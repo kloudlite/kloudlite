@@ -17,8 +17,7 @@ type Env struct {
 	ClusterIdentitySecretName      string `env:"CLUSTER_IDENTITY_SECRET_NAME" required:"true"`
 	ClusterIdentitySecretNamespace string `env:"CLUSTER_IDENTITY_SECRET_NAMESPACE" required:"true"`
 
-	InfraDeviceNamespace   string `env:"INFRA_DEVICE_NAMESPACE" required:"true"`
-	ConsoleDeviceNamespace string `env:"CONSOLE_DEVICE_NAMESPACE" required:"true"`
+	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
 }
 
 func GetEnv() (*Env, error) {
