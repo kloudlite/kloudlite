@@ -20,7 +20,6 @@ const (
 	ResTypeProviderSecret        ResType = "providersecret"
 	ResTypeNodePool              ResType = "nodepool"
 	ResTypeHelmRelease           ResType = "helm_release"
-	ResTypeVPNDevice             ResType = "vpn_device"
 )
 
 type CheckNameAvailabilityOutput struct {
@@ -97,18 +96,6 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				fields.ClusterName:  clusterName,
 				fields.MetadataName: name,
 			}, d.clusterManagedServiceRepo)
-		}
-	case ResTypeVPNDevice:
-		{
-			if clusterName == nil || *clusterName == "" {
-				return nil, errors.Newf("clusterName is required for checking name availability for %s", ResTypeVPNDevice)
-			}
-
-			return checkResourceName(ctx, repos.Filter{
-				fields.AccountName:  ctx.AccountName,
-				fields.ClusterName:  clusterName,
-				fields.MetadataName: name,
-			}, d.vpnDeviceRepo)
 		}
 	default:
 		{

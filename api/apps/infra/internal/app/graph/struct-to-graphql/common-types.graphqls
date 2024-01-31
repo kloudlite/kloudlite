@@ -57,11 +57,6 @@ type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
   userName: String!
 }
 
-type Github__com___kloudlite___api___pkg___types__EncodedString @shareable {
-  encoding: String!
-  value: String!
-}
-
 type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
   action: Github__com___kloudlite___api___pkg___types__SyncAction!
   error: String
@@ -184,7 +179,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @sh
   minCount: Int!
   nodeLabels: Map
   nodeTaints: [K8s__io___api___core___v1__Taint!]
-  targetCount: Int!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps @shareable {
@@ -254,25 +248,6 @@ type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @sha
   apiVersion: String!
   kind: String!
   spec: Map!
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord @shareable {
-  host: String
-  target: String
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
-  activeNamespace: String
-  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecord!]
-  disabled: Boolean
-  nodeSelector: Map
-  noExternalService: Boolean
-  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
-}
-
-type Github__com___kloudlite___operator___apis___wireguard___v1__Port @shareable {
-  port: Int
-  targetPort: Int
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
@@ -787,7 +762,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn 
   minCount: Int!
   nodeLabels: Map
   nodeTaints: [K8s__io___api___core___v1__TaintIn!]
-  targetCount: Int!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__NodePropsIn {
@@ -840,22 +814,6 @@ input Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn {
   apiVersion: String!
   kind: String!
   spec: Map!
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn {
-  host: String
-  target: String
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  activeNamespace: String
-  cnameRecords: [Github__com___kloudlite___operator___apis___wireguard___v1__CNameRecordIn!]
-  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
-}
-
-input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
-  port: Int
-  targetPort: Int
 }
 
 input K8s__io___api___core___v1__AWSElasticBlockStoreVolumeSourceIn {

@@ -64,19 +64,6 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, logger logging.Logger, d
 				}
 				return d.OnNodePoolDeleteMessage(dctx, errObj.ClusterName, nodepool)
 			}
-		case deviceGVK.String():
-			{
-				device, err := fn.JsonConvert[entities.VPNDevice](obj.Object)
-				if err != nil {
-					return err
-				}
-
-				if errObj.Action == t.ActionApply {
-					return d.OnVPNDeviceApplyError(dctx, errObj.ClusterName, obj.GetName(), errObj.Error, opts)
-				}
-				return d.OnVPNDeviceDeleteMessage(dctx, errObj.ClusterName, device)
-
-			}
 		case clusterMsvcGVK.String():
 			{
 				cmsvc, err := fn.JsonConvert[entities.ClusterManagedService](obj.Object)
