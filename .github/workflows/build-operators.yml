@@ -24,8 +24,9 @@ jobs:
       matrix:
         name:
           - platform
-          # - resource-watcher
           - agent
+          - wireguard
+          # - resource-watcher
           # - account
           # - app
           # - clusters
@@ -44,12 +45,14 @@ jobs:
           # - project
           # - resource-watcher
           # - routers
-          # - wireguard
+          
         include:
           - name: platform
             buildDir: cmd/platform-operator
           - name: agent
             buildDir: cmd/agent-operator
+          - name: wireguard
+            buildDir: operators/wireguard
           # - name: resource-watcher
           #   buildDir: operators/resource-watcher
           # - name: account
@@ -88,8 +91,7 @@ jobs:
           #   buildDir: operators/resource-watcher
           # - name: routers
           #   buildDir: operators/routers
-          # - name: wireguard
-          #   buildDir: operators/wireguard
+          
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
