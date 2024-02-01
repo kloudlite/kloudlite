@@ -23,6 +23,7 @@ type Env struct {
 	AccountsGrpcAddr string `env:"ACCOUNTS_GRPC_ADDR" required:"true"`
 
 	MessageOfficeInternalGrpcAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
+	MessageOfficeExternalGrpcAddr string `env:"MESSAGE_OFFICE_EXTERNAL_GRPC_ADDR" required:"true"`
 
 	AWSCfParamTrustedARN           string `env:"AWS_CF_PARAM_TRUSTED_ARN" required:"true"`
 	AWSCfStackNamePrefix           string `env:"AWS_CF_STACK_NAME_PREFIX" required:"true"`
@@ -43,6 +44,8 @@ type Env struct {
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 
 	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
+
+  KloudliteRelease string `env:"KLOUDLITE_RELEASE" required:"true" default="v1.0.5-nightly"`
 }
 
 func LoadEnv() (*Env, error) {
