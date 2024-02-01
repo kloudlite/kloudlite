@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"fmt"
-
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -13,14 +11,9 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-const tenantControllerNamespace = "kloudlite"
 
 func (d *domain) applyNodePool(ctx InfraContext, np *entities.NodePool) error {
 	addTrackingId(&np.NodePool, np.Id)
@@ -40,55 +33,9 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	}
 	nodepool.LastUpdatedBy = nodepool.CreatedBy
 
-	out, err := d.accountsSvc.GetAccount(ctx, string(ctx.UserId), ctx.AccountName)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	cluster, err := d.findCluster(ctx, clusterName)
 	if err != nil {
 		return nil, errors.NewE(err)
-	}
-
-	// fetch cloud provider credentials, access key, and ps key
-	credsSecret := &corev1.Secret{}
-	if err := d.k8sClient.Get(ctx, fn.NN(cluster.Spec.CredentialsRef.Namespace, cluster.Spec.CredentialsRef.Name), credsSecret); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	providerSecret := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "provider-creds",
-			Namespace: tenantControllerNamespace,
-		},
-		Data: map[string][]byte{
-			"access_key": credsSecret.Data[cluster.Spec.CredentialKeys.KeyAccessKey],
-			"secret_key": credsSecret.Data[cluster.Spec.CredentialKeys.KeySecretKey],
-		},
-	}
-
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, providerSecret, 1); err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	nodepool.Spec.IAC = clustersv1.InfrastuctureAsCode{
-		StateS3BucketName:     fmt.Sprintf("kl-%s", out.AccountId),
-		StateS3BucketRegion:   "ap-south-1",
-		StateS3BucketFilePath: fmt.Sprintf("iac/kl-account-%s/cluster-%s/nodepool-%s.tfstate", ctx.AccountName, clusterName, nodepool.Name),
-		CloudProviderAccessKey: ct.SecretKeyRef{
-			Name:      providerSecret.Name,
-			Namespace: providerSecret.Namespace,
-			Key:       "access_key",
-		},
-		CloudProviderSecretKey: ct.SecretKeyRef{
-			Name:      providerSecret.Name,
-			Namespace: providerSecret.Namespace,
-			Key:       "secret_key",
-		},
 	}
 
 	ps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
@@ -126,6 +73,10 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 					}
 				}(),
 			}
+		}
+	default:
+		{
+			return nil, errors.Newf("cloudprovider: %s, currently not supported", nodepool.Spec.CloudProvider)
 		}
 	}
 

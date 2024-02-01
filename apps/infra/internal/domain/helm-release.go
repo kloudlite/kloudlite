@@ -30,6 +30,22 @@ func (d *domain) findHelmRelease(ctx InfraContext, clusterName string, hrName st
 	return cluster, nil
 }
 
+func (d *domain) upsertHelmRelease(ctx InfraContext, clusterName string, hr *entities.HelmRelease) (*entities.HelmRelease, error) {
+	cluster, err := d.helmReleaseRepo.Upsert(ctx, repos.Filter{
+		fields.ClusterName:  clusterName,
+		fields.AccountName:  ctx.AccountName,
+		fields.MetadataName: hr.Name,
+	}, hr)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if cluster == nil {
+		return nil, errors.Newf("could not upsert helm release %s", hr.Name)
+	}
+	return cluster, nil
+}
+
 func (d *domain) ListHelmReleases(ctx InfraContext, clusterName string, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmRelease], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListHelmReleases); err != nil {
 		return nil, errors.NewE(err)

@@ -1,10 +1,9 @@
 ---
 global:
-  accountName: kloudlite-dev
-  clusterName: sample-cluster
+  clusterName: sample-cluster2
 
-  providerSecretName: "aws-creds"
-  providerSecretNamespace: "kl-account-kloudlite-dev"
+  providerSecretName: "aws-283277"
+  providerSecretNamespace: "kl-account-new-prod-team"
 ---
 
 label: Create Cluster
