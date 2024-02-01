@@ -989,6 +989,8 @@ spec:
                 type: string
               preUninstall:
                 type: string
+              releaseName:
+                type: string
               values:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
@@ -1009,6 +1011,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
