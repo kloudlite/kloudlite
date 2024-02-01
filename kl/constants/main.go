@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	prefix = "devc."
+	prefix = "dev."
 
 	LoginUrl = func() string {
 		if os.Getenv("BASE_URL") == "" {

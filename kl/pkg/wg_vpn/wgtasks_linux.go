@@ -11,11 +11,6 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func configureDarwin(_ string, _ bool) error {
-	// not required to implement
-	return nil
-}
-
 func getCurrentDns() ([]string, error) {
 	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 
@@ -95,16 +90,22 @@ func StopService(verbose bool) error {
 		if strings.TrimSpace(v) == "" {
 			continue
 		}
+
 		link, err := netlink.LinkByName(strings.TrimSpace(v))
 		if err != nil {
 			return fmt.Errorf("failed to find the interface %s: %v", wgInterface, err)
 		}
+
 		if err := netlink.LinkDel(link); err != nil {
 			return fmt.Errorf("failed to delete the interface %s: %v", wgInterface, err)
 		}
 	}
 
 	return nil
+}
+
+func setDnsServer(dnsServer net.IP, deviceName string, verbose bool) error {
+	return ExecCmd(fmt.Sprintf("resolvectl dns %s %s", deviceName, dnsServer.String()), verbose)
 }
 
 func SetDeviceIp(ip net.IPNet, deviceName string, _ bool) error {

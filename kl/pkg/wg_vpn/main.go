@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -15,18 +16,32 @@ import (
 	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
-func execCmd(cmdString string, verbose bool) error {
+func IsSystemdReslov() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
+	if err := ExecCmd("systemctl status systemd-resolved", false); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func ExecCmd(cmdString string, verbose bool) error {
 	r := csv.NewReader(strings.NewReader(cmdString))
 	r.Comma = ' '
 	cmdArr, err := r.Read()
 	if err != nil {
 		return err
 	}
+
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	if verbose {
 		fn.Log("[#] " + strings.Join(cmdArr, " "))
 		cmd.Stdout = os.Stdout
 	}
+
 	cmd.Stderr = os.Stderr
 	// s.Start()
 	err = cmd.Run()
@@ -48,7 +63,7 @@ func StartServiceInBg(devName string, configFolder string) error {
 	}
 
 	if usr, ok := os.LookupEnv("SUDO_USER"); ok {
-		if err = execCmd(fmt.Sprintf("chown %s %s", usr, configFolder+"/wgpid"),
+		if err = ExecCmd(fmt.Sprintf("chown %s %s", usr, configFolder+"/wgpid"),
 			false); err != nil {
 			fn.PrintError(err)
 			return err
@@ -75,6 +90,7 @@ func Configure(
 	if e := cfg.UnmarshalText(configuration); e != nil {
 		return e
 	}
+
 	s.Stop()
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
@@ -91,36 +107,54 @@ func Configure(
 		fn.Log("[#] setting up connection")
 	}
 
-	dServers, err := getCurrentDns()
-	if err != nil {
+	dnsServers := make([]net.IPNet, 0)
+	isSystemdReslov := IsSystemdReslov()
+
+	if err := func() error {
+		if isSystemdReslov {
+			return nil
+		}
+
+		dServers, err := getCurrentDns()
+		if err != nil {
+			return err
+		}
+
+		dnsServers = func() []net.IPNet {
+			var ipNet []net.IPNet
+			for _, v := range dServers {
+				ip := net.ParseIP(v)
+				if ip == nil {
+					continue
+				}
+				in := net.IPNet{
+					IP: ip,
+					Mask: func() net.IPMask {
+						if ip.To4() != nil {
+							return net.CIDRMask(32, 32)
+						}
+						return net.CIDRMask(128, 128)
+					}(),
+				}
+				ipNet = append(ipNet, in)
+			}
+
+			return ipNet
+		}()
+
+		emptydns := []net.IP{}
+		cfg.DNS = emptydns
+
+		return nil
+	}(); err != nil {
 		return err
 	}
 
-	dnsServers := func() []net.IPNet {
-
-		var ipNet []net.IPNet
-		for _, v := range dServers {
-			ip := net.ParseIP(v)
-			if ip == nil {
-				continue
-			}
-			in := net.IPNet{
-				IP: ip,
-				Mask: func() net.IPMask {
-					if ip.To4() != nil {
-						return net.CIDRMask(32, 32)
-					}
-					return net.CIDRMask(128, 128)
-				}(),
-			}
-			ipNet = append(ipNet, in)
+	if isSystemdReslov || runtime.GOOS == "darwin" {
+		if err := setDnsServer(cfg.DNS[0], interfaceName, verbose); err != nil {
+			return err
 		}
-
-		return ipNet
-	}()
-
-	emptydns := []net.IP{}
-	cfg.DNS = emptydns
+	}
 
 	cfg.Peers[0].AllowedIPs = append(cfg.Peers[0].AllowedIPs, dnsServers...)
 

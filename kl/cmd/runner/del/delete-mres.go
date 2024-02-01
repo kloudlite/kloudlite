@@ -2,8 +2,9 @@ package del
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
@@ -21,7 +22,7 @@ Examples:
 	Run: func(_ *cobra.Command, _ []string) {
 		err := removeMreses()
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -29,10 +30,10 @@ Examples:
 
 func removeMreses() error {
 
-	klFile, err := client.GetKlFile(nil)
+	klFile, err := client.GetKlFile("")
 
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 		es := "please run 'kl init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
@@ -70,7 +71,7 @@ func removeMreses() error {
 		return err
 	}
 
-	common_util.Log("removed mres %s from kl-file\n", selectedMres.Name)
+	fn.Logf("removed mres %s from kl-file\n", selectedMres.Name)
 
 	return nil
 }

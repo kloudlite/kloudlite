@@ -14,6 +14,7 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
+	wg_svc "github.com/kloudlite/kl/pkg/wg_vpn/wg_service"
 )
 
 const (
@@ -95,10 +96,34 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		return err
 	}
 
-	return wg_vpn.Configure(configuration, devName, func() string {
+	if runtime.GOOS != "linux" {
+
+		if err := wg_svc.StartVpn(configuration); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if err := wg_vpn.Configure(configuration, devName, func() string {
 		if runtime.GOOS == "darwin" {
 			return ifName
 		}
 		return devName
-	}(), verbose)
+	}(), verbose); err != nil {
+		return err
+	}
+
+	if wg_vpn.IsSystemdReslov() {
+		if err := wg_vpn.ExecCmd(fmt.Sprintf("resolvectl domain %s %s", device.Metadata.Name, func() string {
+			if device.Spec.ActiveNamespace != "" {
+				return fmt.Sprintf("%s.svc.cluster.local", device.Spec.ActiveNamespace)
+			}
+
+			return "~."
+		}()), false); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -21,6 +21,10 @@ func ExecCmd(cmdString string, env map[string]string, verbose bool) error {
 		cmd.Stdout = os.Stdout
 	}
 
+	if env == nil {
+		env = map[string]string{}
+	}
+
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}

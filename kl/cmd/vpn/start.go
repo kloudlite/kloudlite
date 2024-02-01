@@ -2,14 +2,13 @@ package vpn
 
 import (
 	"os"
-	"time"
+	"runtime"
 
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
-	"github.com/kloudlite/kl/pkg/wg_vpn"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +23,15 @@ var startCmd = &cobra.Command{
 	Example: fn.Desc(`# start vpn device
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
+
+		if runtime.GOOS != "linux" {
+			if err := connect(connectVerbose); err != nil {
+				fn.Notify("Error:", err.Error())
+				fn.PrintError(err)
+			}
+			return
+		}
+
 		if euid := os.Geteuid(); euid != 0 {
 			fn.Log(
 				text.Colored("make sure you are running command with sudo", 209),
@@ -106,40 +114,30 @@ sudo {cmd} vpn start`),
 }
 
 func startConnecting(verbose bool, options ...fn.Option) error {
-	success := false
+	// success := false
 
-	defer func() {
-		time.Sleep(200 * time.Millisecond)
-		if !success {
-			_ = wg_vpn.StopService(verbose)
-		}
-	}()
+	// defer func() {
+	// 	time.Sleep(200 * time.Millisecond)
+	// 	if !success {
+	// 		_ = wg_vpn.StopService(verbose)
+	// 	}
+	// }()
 
-	configFolder, err := client.GetConfigFolder()
-	if err != nil {
-		return err
-	}
-
-	devName, err := client.CurrentDeviceName()
-	if err != nil {
-		return err
-	}
-
-	if err := wg_vpn.StartServiceInBg(devName, configFolder); err != nil {
-		return err
-	}
+	// if err := wg_vpn.StartServiceInBg(devName, configFolder); err != nil {
+	// 	return err
+	// }
 
 	if err := connect(verbose, options...); err != nil {
 		return err
 	}
 
-	success = true
+	// success = true
 	return nil
 }
 
 func init() {
 	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
-	startCmd.Flags().BoolP("no-dns", "n", false, "do not update dns")
+	startCmd.Flags().BoolP("skip-dns", "s", false, "do not update dns")
 
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
 

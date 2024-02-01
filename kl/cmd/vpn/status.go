@@ -21,7 +21,7 @@ Example:
   # show vpn status
   sudo kl vpn status
 	`,
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		if euid := os.Geteuid(); euid != 0 {
 			fn.Log(
 				text.Colored("make sure you are running command with sudo", 209),

@@ -1,13 +1,13 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
 
 type DevicePort struct {
@@ -233,12 +233,12 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 	if devName != "" {
 		dev, err := GetDevice(fn.MakeOption("deviceName", devName))
 
-		if err != nil {
-			return "", err
-		}
-
 		if err == nil {
 			return dev.Metadata.Name, nil
+		}
+
+		if err != nil {
+			devName = ""
 		}
 	}
 
@@ -257,18 +257,11 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 	if devResult.Result == true {
 		selectedDeviceName = devName
 	} else {
-		deviceName, err := fzf.FindOne(
-			devResult.SuggestedNames,
-			func(deviceName string) string {
-				return deviceName
-			},
-			fzf.WithPrompt("Select Device Name > "),
-		)
-		if err != nil {
-			return "", err
+		if len(devResult.SuggestedNames) == 0 {
+			return "", fmt.Errorf("no suggested names found")
 		}
 
-		selectedDeviceName = *deviceName
+		selectedDeviceName = devResult.SuggestedNames[0]
 	}
 
 	dev, err := CreateDevice(selectedDeviceName, devName)

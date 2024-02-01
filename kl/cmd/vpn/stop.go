@@ -2,6 +2,7 @@ package vpn
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -21,6 +22,14 @@ Example:
   sudo kl vpn stop
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
+
+		if runtime.GOOS != "linux" {
+			if err := disconnect(connectVerbose); err != nil {
+				fn.Notify("Error:", err.Error())
+				fn.PrintError(err)
+			}
+			return
+		}
 
 		if euid := os.Geteuid(); euid != 0 {
 			fn.Log(

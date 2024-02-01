@@ -2,6 +2,7 @@ package del
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	common_util "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
@@ -21,7 +22,7 @@ and usage of using your command.`,
 
 func removeConfigMount() {
 
-	klFile, err := client.GetKlFile(nil)
+	klFile, err := client.GetKlFile("")
 
 	if err != nil {
 		common_util.PrintError(err)

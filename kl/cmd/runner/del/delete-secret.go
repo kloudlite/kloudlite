@@ -2,8 +2,9 @@ package del
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
-	common_util "github.com/kloudlite/kl/pkg/functions"
+	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ Examples:
 		err := removeSecret()
 
 		if err != nil {
-			common_util.PrintError(err)
+			fn.PrintError(err)
 			return
 		}
 	},
@@ -30,9 +31,9 @@ Examples:
 
 func removeSecret() error {
 
-	klFile, err := client.GetKlFile(nil)
+	klFile, err := client.GetKlFile("")
 	if err != nil {
-		common_util.PrintError(err)
+		fn.PrintError(err)
 		es := "please run 'kl init' if you are not initialized the file already"
 		return fmt.Errorf(es)
 	}
@@ -65,7 +66,7 @@ func removeSecret() error {
 
 		klFile.Secrets = newSecrets
 
-		common_util.Log("removed secret %s form your kl-file\n", selectedSecret.Name)
+		fn.Logf("removed secret %s form your kl-file\n", selectedSecret.Name)
 
 	} else {
 
@@ -91,7 +92,7 @@ func removeSecret() error {
 
 		selectedSecret.Env = newEnvs
 
-		common_util.Log("removed key %s/%s form your kl-file\n", selectedSecret.Name, selectedSecret.Name)
+		fn.Logf("removed key %s/%s form your kl-file\n", selectedSecret.Name, selectedSecret.Name)
 	}
 
 	err = client.WriteKLFile(*klFile)

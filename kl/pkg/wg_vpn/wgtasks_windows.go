@@ -24,3 +24,7 @@ func ipRouteAdd(ip string, interfaceIp string, devName string, verbose bool) err
 func StopService(verbose bool) error {
 	return errors.New("This command is not available for windows, will be available soon")
 }
+
+func setDnsServer(dnsServer net.IP, deviceName string, verbose bool) error {
+	return errors.New("This command is not available for windows, will be available soon")
+}

@@ -35,7 +35,7 @@ func getCurrentDns() ([]string, error) {
 }
 
 func ipRouteAdd(ip string, interfaceIp string, deviceName string, verbose bool) error {
-	return execCmd(fmt.Sprintf("route -n add -net %s %s", ip, interfaceIp), verbose)
+	return ExecCmd(fmt.Sprintf("route -n add -net %s %s", ip, interfaceIp), verbose)
 }
 
 func getNetworkServices(verbose bool) ([]string, error) {
@@ -80,7 +80,7 @@ func getDNSServers(networkService string, verbose bool) ([]string, error) {
 }
 
 func SetDeviceIp(deviceIp net.IPNet, _ string, verbose bool) error {
-	return execCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
+	return ExecCmd(fmt.Sprintf("ifconfig %s %s %s", ifName, deviceIp.IP.String(), deviceIp.IP.String()), verbose)
 }
 
 func StartService(_ string, verbose bool) error {
@@ -165,4 +165,8 @@ func StopService(verbose bool) error {
 		return err
 	}
 	return nil
+}
+
+func setDnsServer(dnsServer net.IP, _ string, verbose bool) error {
+	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", ifName, dnsServer.String()), verbose)
 }

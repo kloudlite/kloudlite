@@ -151,6 +151,15 @@ func ParseStringFlag(cmd *cobra.Command, flag string) string {
 	return ""
 }
 
+func ParseBoolFlag(cmd *cobra.Command, flag string) bool {
+	if cmd.Flags().Changed(flag) {
+		v, _ := cmd.Flags().GetBool(flag)
+		return v
+	}
+
+	return false
+}
+
 func WithOutputVariant(cmd *cobra.Command) {
 	cmd.Flags().StringP("output", "o", "table", "output format [table | json | yaml]")
 }
@@ -180,12 +189,12 @@ func IsInfraFlagAvailable(options ...Option) bool {
 	return false
 }
 
-func Alert(str ...interface{}) {
-	notify.Alert("Kloudlite", "alert", fmt.Sprint(str...), "")
+func Alert(name string, str ...interface{}) {
+	notify.Alert("Kloudlite", name, fmt.Sprint(str...), "")
 }
 
-func Notify(str ...interface{}) {
-	notify.Notify("Kloudlite", "notice", fmt.Sprint(str...), "")
+func Notify(name string, str ...interface{}) {
+	notify.Notify("Kloudlite", name, fmt.Sprint(str...), "")
 }
 
 func Desc(str string) string {

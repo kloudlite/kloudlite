@@ -1,38 +1,26 @@
 package vpn
 
 import (
-	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/wg_vpn"
-	"github.com/miekg/dns"
+	wg_svc "github.com/kloudlite/kl/pkg/wg_vpn/wg_service"
 )
 
-func getCurrentDns() ([]string, error) {
-	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+func connect(verbose bool, options ...fn.Option) error {
 
-	if err != nil {
-		return nil, err
+	// if err := wg_svc.EnsureInstalled(); err != nil {
+	// 	return err
+	// }
+
+	if err := wg_svc.EnsureAppRunning(); err != nil {
+		return err
 	}
 
-	return config.Servers, nil
-}
-
-func connect(verbose bool, options ...fn.Option) error {
 	success := false
 	defer func() {
 		if !success {
-			_ = wg_vpn.StopService(verbose)
+			_ = wg_svc.StopVpn(verbose)
 		}
 	}()
-
-	configFolder, err := client.GetConfigFolder()
-	if err != nil {
-		return err
-	}
-
-	if err := wg_vpn.StartServiceInBg(ifName, configFolder); err != nil {
-		return err
-	}
 
 	if err := startConfiguration(connectVerbose, options...); err != nil {
 		return err
@@ -43,5 +31,13 @@ func connect(verbose bool, options ...fn.Option) error {
 }
 
 func disconnect(verbose bool) error {
-	return wg_vpn.StopService(verbose)
+	// if err := wg_svc.EnsureInstalled(); err != nil {
+	// 	return err
+	// }
+
+	if err := wg_svc.EnsureAppRunning(); err != nil {
+		return err
+	}
+
+	return wg_svc.StopVpn(verbose)
 }
