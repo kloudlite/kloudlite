@@ -1,20 +1,16 @@
 {{- $jobName := get . "job-name" }} 
 {{- $jobNamespace := get . "job-namespace" }} 
 
+{{- $iacJobImage := get . "iac-job-image" }}
+
 {{- $labels := get . "labels" | default dict }} 
 {{- $annotations := get . "annotations" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $jobNodeSelector := get . "job-node-selector" }} 
 
-{{- /* {{- $serviceAccountName := get . "service-account-name" }}  */}}
-
-{{- $awsS3BucketName := get . "aws-s3-bucket-name" }} 
-{{- $awsS3BucketFilepath := get . "aws-s3-bucket-filepath" }}
-{{- $awsS3BucketRegion := get . "aws-s3-bucket-region" }} 
-
-{{- $awsS3AccessKey := get . "aws-s3-access-key" }} 
-{{- $awsS3SecretKey := get . "aws-s3-secret-key" }} 
+{{- $nodepoolName := get . "nodepool-name" }}
+{{- $tfStateSecretNamespace := get . "tfstate-secret-namespace" }}
 
 {{- $action := get . "action" }} 
 {{- if (not (or (eq $action "apply") (eq $action "delete"))) }}
@@ -44,26 +40,18 @@ spec:
           operator: Exists
 
       nodeSelector: {{$jobNodeSelector | toYAML | nindent 10}}
+      serviceAccountName: "kloudlite-jobs"
 
       containers:
       - name: main
-        image: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-dev
+        image: {{$iacJobImage}}
         imagePullPolicy: Always
         env:
-          - name: AWS_S3_BUCKET_NAME
-            value: {{$awsS3BucketName}}
-          - name: AWS_S3_BUCKET_FILEPATH
-            value: {{$awsS3BucketFilepath}}
-          - name: AWS_S3_BUCKET_REGION
-            value: {{$awsS3BucketRegion}}
-          {{- if $awsS3AccessKey }}
-          - name: AWS_ACCESS_KEY
-            value: {{$awsS3AccessKey}}
-          {{- end }}
-          {{- if $awsS3SecretKey }}
-          - name: AWS_SECRET_KEY
-            value: {{$awsS3SecretKey}}
-          {{- end }}
+          - name: KUBE_IN_CLUSTER_CONFIG
+            value: "true"
+
+          - name: KUBE_NAMESPACE
+            value: {{$tfStateSecretNamespace | squote}}
         command:
           - bash
           - -c
@@ -76,6 +64,9 @@ spec:
             pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-workers"
 
             envsubst < state-backend.tf.tpl > state-backend.tf
+
+            terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
+            terraform workspace select --or-create {{$nodepoolName}} 
             
             cat > values.json <<EOF
             {{$valuesJson}}
