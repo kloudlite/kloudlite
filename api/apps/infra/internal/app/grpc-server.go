@@ -81,8 +81,8 @@ func (g *grpcServer) GetNodepool(ctx context.Context, in *infra.GetNodepoolIn) (
 	}
 
 	return &infra.GetNodepoolOut{
-		IACJobName:      np.Spec.IAC.JobName,
-		IACJobNamespace: np.Spec.IAC.JobNamespace,
+		// IACJobName:      np.Spec.IAC.JobName,
+		// IACJobNamespace: np.Spec.IAC.JobNamespace,
 	}, nil
 }
 

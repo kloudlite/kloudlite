@@ -5,7 +5,7 @@ global:
   providerNamespace: s1
   providerSecretName: provider-sample
 
-  clusterName: sample-cluster
+  clusterName: sample-cluster2
   # clusterName: teshdhr-797053
 ---
 

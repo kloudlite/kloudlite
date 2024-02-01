@@ -16,9 +16,6 @@ query: |+
         # labels
         name
       }
-      spec {
-        targetNamespace
-      }
     }
   }
 
