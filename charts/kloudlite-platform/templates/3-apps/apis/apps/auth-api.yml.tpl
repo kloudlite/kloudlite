@@ -3,9 +3,10 @@ kind: App
 metadata:
   name: auth-api
   namespace: {{.Release.Namespace}}
+  annotations:
+    kloudlite.io/checksum.oauth-secrets: {{ include (print $.Template.BasePath "/3-apps/apis/secrets/oauth-secrets.yml.tpl") . | sha256sum }}
 spec:
   serviceAccount: {{ .Values.global.clusterSvcAccount }}
-
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
   services:
@@ -17,6 +18,7 @@ spec:
       targetPort: 3001
       name: grpc
       type: tcp
+
   containers:
     - name: main
       image: {{.Values.apps.authApi.image}}
@@ -32,7 +34,6 @@ spec:
         min: "80Mi"
         max: "120Mi"
       env:
-
         - key: MONGO_URI
           type: secret
           refName: mres-auth-db-creds

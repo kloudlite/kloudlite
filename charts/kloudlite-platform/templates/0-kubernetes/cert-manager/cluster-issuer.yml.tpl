@@ -25,6 +25,7 @@ spec:
             {{- end }}
             {{- if .Values.global.routerDomain }}
             - "*.{{.Values.global.routerDomain}}"
+            - "{{.Values.global.routerDomain}}"
             {{- end }}
       {{- end}}
       {{- $ingClass := .Values.global.ingressClassName }}

@@ -74,6 +74,12 @@ spec:
         - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
           value: "message-office:3002"
 
+        - key: MESSAGE_OFFICE_EXTERNAL_GRPC_ADDR
+          value: message-office.{{include "router-domain" . }}:443
+
+        - key: KLOUDLITE_RELEASE
+          value: {{.Values.global.kloudlite_release}}
+
         - key: AWS_ACCESS_KEY
           value: {{.Values.aws.accessKey}}
 
