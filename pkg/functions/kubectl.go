@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"os/exec"
+	"strings"
 
 	"github.com/kloudlite/operator/pkg/logging"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,8 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kloudlite/operator/pkg/errors"
-
-	"strings"
 
 	"github.com/gobuffalo/flect"
 )
@@ -180,7 +179,7 @@ func AsOwner(r client.Object, controller ...bool) metav1.OwnerReference {
 		Name:       r.GetName(),
 		UID:        r.GetUID(),
 		Controller: &ctrler,
-		//BlockOwnerDeletion: New(false),
+		// BlockOwnerDeletion: New(false),
 		BlockOwnerDeletion: &ctrler,
 	}
 }
@@ -195,6 +194,10 @@ func IsOwner(obj client.Object, ownerRef metav1.OwnerReference) bool {
 		}
 	}
 	return false
+}
+
+func HasOwner(obj client.Object) bool {
+	return len(obj.GetOwnerReferences()) > 0
 }
 
 func ParseGVK(apiVersion string, kind string) schema.GroupVersionKind {

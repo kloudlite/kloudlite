@@ -455,7 +455,9 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 
 	resources := r.Object.GetStatus().Resources
 
-	deletionStatus := make(map[string]bool)
+	// deletionStatus := make(map[string]bool)
+
+	objects := make([]client.Object, 0, len(resources))
 
 	for i := range resources {
 		res := &unstructured.Unstructured{Object: map[string]any{
@@ -467,47 +469,55 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 			},
 		}}
 
-		resLabel := fmt.Sprintf("apiVersion: %s, kind: %s, name: %s, namespace: %s", resources[i].APIVersion, resources[i].Kind, resources[i].Name, resources[i].Namespace)
-
-		deletionStatus[resLabel] = false
-		// allRemovedFromK8s = false
-		if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
-			if apiErrors.IsNotFound(err) {
-				deletionStatus[resLabel] = true
-				continue
-			}
-			return r.CheckFailed(checkName, check, err.Error())
-		}
-
-		if err := r.client.Update(ctx, res); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return r.CheckFailed(checkName, check, err.Error())
-			}
-		}
-
-		r.Logger.Infof("deleting resource (%s), as its parent is finalizing", resLabel)
-
-		if err := r.client.Delete(ctx, res, &client.DeleteOptions{
-			GracePeriodSeconds: fn.New(int64(30)),
-			PropagationPolicy:  fn.New(metav1.DeletePropagationForeground),
-		}); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return r.CheckFailed(checkName, check, err.Error())
-			}
-			return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for deletion of resource %s", resLabel)).Err(nil)
-		}
-
-		if res.GetDeletionTimestamp() == nil {
-			if err := r.client.Delete(ctx, res); err != nil {
-				return r.CheckFailed(checkName, check, err.Error())
-			}
-		}
+		objects = append(objects, res)
 	}
 
-	for k, v := range deletionStatus {
-		if !v {
-			return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for all owned resource (%s) to be removed from k8s", k))
-		}
+	// 	resLabel := fmt.Sprintf("apiVersion: %s, kind: %s, name: %s, namespace: %s", resources[i].APIVersion, resources[i].Kind, resources[i].Name, resources[i].Namespace)
+	//
+	// 	deletionStatus[resLabel] = false
+	//
+	// 	if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
+	// 		if !apiErrors.IsNotFound(err) {
+	// 			return r.CheckFailed(checkName, check, err.Error())
+	// 		}
+	//
+	// 		deletionStatus[resLabel] = true
+	// 		continue
+	// 	}
+	//
+	// 	if err := r.client.Update(ctx, res); err != nil {
+	// 		if !apiErrors.IsNotFound(err) {
+	// 			return r.CheckFailed(checkName, check, err.Error())
+	// 		}
+	// 	}
+	//
+	// 	r.Logger.Infof("deleting resource (%s), as its parent is finalizing", resLabel)
+	//
+	// 	if err := r.client.Delete(ctx, res, &client.DeleteOptions{
+	// 		GracePeriodSeconds: fn.New(int64(30)),
+	// 		PropagationPolicy:  fn.New(metav1.DeletePropagationForeground),
+	// 	}); err != nil {
+	// 		if !apiErrors.IsNotFound(err) {
+	// 			return r.CheckFailed(checkName, check, err.Error())
+	// 		}
+	// 		return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for deletion of resource %s", resLabel)).Err(nil)
+	// 	}
+	//
+	// 	if res.GetDeletionTimestamp() == nil {
+	// 		if err := r.client.Delete(ctx, res); err != nil {
+	// 			return r.CheckFailed(checkName, check, err.Error())
+	// 		}
+	// 	}
+	// }
+	//
+	// for k, v := range deletionStatus {
+	// 	if !v {
+	// 		return r.CheckFailed(checkName, check, fmt.Sprintf("waiting for all owned resource (%s) to be removed from k8s", k))
+	// 	}
+	// }
+
+	if err := fn.DeleteAndWait(ctx, r.Logger, r.client, objects...); err != nil {
+		return r.CheckFailed(checkName, check, err.Error())
 	}
 
 	check.Status = true
