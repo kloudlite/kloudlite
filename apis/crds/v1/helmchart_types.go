@@ -24,6 +24,8 @@ type HelmChartSpec struct {
 
 	ChartName string `json:"chartName"`
 
+	ReleaseName string `json:"releaseName,omitempty" graphql:"noinput"`
+
 	JobVars JobVars `json:"jobVars,omitempty"`
 
 	PreInstall  string `json:"preInstall,omitempty"`

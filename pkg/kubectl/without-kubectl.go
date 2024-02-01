@@ -102,6 +102,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		ann := obj.GetAnnotations()
 		delete(ann, constants.LastAppliedKey)
 		obj.SetAnnotations(ann)
+
 		if ann == nil {
 			ann = make(map[string]string)
 		}
@@ -168,6 +169,7 @@ func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 
 		obj.SetAnnotations(ann)
 		obj.SetLabels(labels)
+
 		// If exists, update it
 		if _, err = resourceClient.Update(ctx, &obj, metav1.UpdateOptions{}); err != nil {
 			return resources, err
