@@ -1,5 +1,19 @@
 {{ if .Values.operators.agentOperator.enabled }}
 {{ $name := .Values.operators.agentOperator.name }}
+
+---
+{{- $k3sParams := (lookup "v1" "Secret" "kube-system" "k3s-params") -}}
+
+{{- if not $k3sParams }}
+{{ fail "secret k3s-params is not present in namespace kube-system, could not proceed with helm installation" }}
+{{- end }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k3s-params
+  namespace: {{.Release.Namespace}}
+data: {{ $k3sParams.data }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -113,12 +127,6 @@ spec:
                   optional: true
 
             {{- /* for: nodepool operator */}}
-            {{- /* - name: KLOUDLITE_ACCOUNT_NAME */}}
-            {{- /*   value: {{.Values.accountName}} */}}
-            {{- /**/}}
-            {{- /* - name: KLOUDLITE_CLUSTER_NAME */}}
-            {{- /*   value: {{.Values.clusterName}} */}}
-
             - name: "IAC_JOB_IMAGE"
               value: {{.Values.operators.agentOperator.configuration.iacJobImage}}
 
@@ -127,14 +135,12 @@ spec:
                 secretKeyRef:
                   name: k3s-params
                   key: k3s_agent_join_token
-                  namespace: kloudlite
 
             - name: "K3S_SERVER_PUBLIC_HOST"
               valueFrom:
                 secretKeyRef:
                   name: k3s-params
                   key: k3s_agent_join_token
-                  namespace: kloudlite
 
             - name: CLOUD_PROVIDER_NAME
               {{- /* value: {{.Values.operators.agentOperator.configuration.cloudProvider.name}} */}}
@@ -142,7 +148,6 @@ spec:
                 secretKeyRef:
                   name: k3s-params
                   key: cloudprovider_name
-                  namespace: kloudlite
 
             - name: CLOUD_PROVIDER_REGION
               {{- /* value: {{.Values.operators.agentOperator.configuration.cloudProvider.region}} */}}
@@ -150,7 +155,6 @@ spec:
                 secretKeyRef:
                   name: k3s-params
                   key: cloudprovider_region
-                  namespace: kloudlite
 
             {{- /* for: routers */}}
             - name: ACME_EMAIL

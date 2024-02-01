@@ -10,17 +10,13 @@ spec:
 
   cloudProvider: aws
   iac:
-    stateS3BucketName: {{.Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketName}}
-    stateS3BucketRegion: {{.Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketRegion}}
-    stateS3BucketFilePath: terraform-states/account-{{.Values.global.accountName}}/cluster-{{.Values.global.clusterName}}-{{.Values.global.baseDomain}}/nodepool-{{$nodepoolName}}.tfstate
-
     cloudProviderAccessKey:
       name: k3s-params
-      namespace: kloudlite
+      namespace: {{.Release.Namespace}}
       key: accessKey
     cloudProviderSecretKey:
       name: k3s-params
-      namespace: kloudlite
+      namespace: {{.Release.Namespace}}
       key: secretKey
   aws:
     imageId: "ami-0ec149e1e8b76e957"
