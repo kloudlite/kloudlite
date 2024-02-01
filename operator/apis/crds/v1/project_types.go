@@ -15,10 +15,9 @@ type ProjectSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".spec.accountName",name=AccountName,type=string
-// +kubebuilder:printcolumn:JSONPath=".spec.clusterName",name=ClusterName,type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-namespace",type=string
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Project is the Schema for the projects API
