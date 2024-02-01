@@ -1,5 +1,8 @@
 {{- $name := get . "name" }} 
 {{- $namespace := get . "namespace" }} 
+
+{{- $releaseName := get . "release-name" }}
+
 {{- $labels := get . "labels" | default dict }} 
 {{- $annotations := get . "annotations" | default dict}}
 {{- $ownerRefs := get . "owner-refs" | default list }}
@@ -29,7 +32,11 @@ metadata:
 spec:
   chartRepoURL: https://charts.bitnami.com/bitnami
   chartName: mongodb
-  chartVersion: 14.3.1
+  chartVersion: 14.3.0
+
+  {{- if $releaseName }}
+  releaseName: {{$releaseName}}
+  {{- end }}
 
   values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
@@ -47,6 +54,8 @@ spec:
     replicaCount: {{ $replicaCount | int64 }}
     replicaSetName: rs
     replicaSetHostnames: true
+
+    commonLabels: {{$labels | toYAML | nindent 6}}
     podLabels: {{$labels | toYAML | nindent 6}}
 
     directoryPerDB: true
