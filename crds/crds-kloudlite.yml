@@ -2681,7 +2681,6 @@ spec:
             - chartName
             - chartRepoURL
             - chartVersion
-            - releaseName
             - values
             type: object
           status:
