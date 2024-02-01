@@ -85,6 +85,9 @@ ingressController:
 descheduler:
   enabled: true
 
+clusterAutoscaler:
+  enabled: true
+
 vectorAgent:
   enabled: true
   name: vector-agent
@@ -141,12 +144,19 @@ victoriaMetrics:
   enabled: true
   name: victoria-metrics
   configuration:
-    volumeSize: 2Gi
-    nodeSelector: {}
+    vmselect:
+      volumeSize: 2Gi
+    vmcluster:
+      volumeSize: 10Gi
 
 nats:
   runAsCluster: false
   replicas: 3
+  configuration:
+    user: "sample"
+    password: "sample"
+
+    volumeSize: 10Gi
 
 distribution:
   domain: cr.khost.dev
@@ -164,13 +174,14 @@ distribution:
 
 mongo:
   # rootPassword: <mongo-root-password>
-  size: 2Gi
-  nodeSelector: {}
+  runAsCluster: false
+  replicas: 1
+  configuration:
+    volumeSize: 2Gi
+    nodeSelector: {}
   externalDB:
     dbURL: ""
     authDBName: ""
-  runAsCluster: false
-  replicas: 1
 
 # Storage
 persistence:
@@ -332,10 +343,15 @@ apps:
     enabled: true
     # -- image (with tag) for console web
     image: ghcr.io/kloudlite/web/console:v1.0.5-nightly
+
   authWeb:
     enabled: true
     # -- image (with tag) for auth web
     image: ghcr.io/kloudlite/web/auth:v1.0.5-nightly
+
+  kloudliteWebsite:
+    enabled: true
+    image: ghcr.io/kloudlite/web/website:v1.0.5-nightly
 
 operators:
   preferOperatorsOnMasterNodes: true
@@ -347,6 +363,9 @@ operators:
 
     configuration:
       nodepool:
+        extractFromCluster: true
+
+        # if extractFromCluster is true, the following values are ignored, as these values are referred from `kube-system/k3s-params` namespace
         cloudProviderName: "aws"
         cloudProviderRegion: "ap-south-1"
 
@@ -356,18 +375,26 @@ operators:
         # -- k3s masters public DNS Host
         k3sServerPublicHost: ""
 
+      wireguard:
+        # -- cluster pods CIDR range
+        podCIDR: 10.42.0.0/16
+        # -- cluster services CIDR range
+        svcCIDR: 10.43.0.0/16
+
+        enableExamples: true
+
       cluster:
         jobImage: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly
 
-        IACStateStore:
-          # -- s3 bucket name, to store kloudlite's infrastructure-as-code remote state
-          s3BucketName: "kloudlite-dev-tf"
-          # -- s3 bucket region, to store kloudlite's infrastructure-as-code remote state
-          s3BucketRegion: "ap-south-1"
-          s3BucketDir: "terraform-states"
-
-          accessKey: ""
-          secretKey: ""
+        # IACStateStore:
+        #   # -- s3 bucket name, to store kloudlite's infrastructure-as-code remote state
+        #   s3BucketName: "kloudlite-dev-tf"
+        #   # -- s3 bucket region, to store kloudlite's infrastructure-as-code remote state
+        #   s3BucketRegion: "ap-south-1"
+        #   s3BucketDir: "terraform-states"
+        #
+        #   accessKey: ""
+        #   secretKey: ""
 
         cloudflare:
           # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
@@ -375,19 +402,19 @@ operators:
           # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created, defaults to `global.baseDomain`
           baseDomain: ""
 
-  wgOperator:
-    enabled: false
-    # -- wg operator image and tag
-    image: ghcr.io/kloudlite/operator/wireguard:v1.0.5-nightly
-    # -- wireguard configuration options
-    configuration:
-      # -- cluster pods CIDR range
-      podCIDR: 10.42.0.0/16
-      # -- cluster services CIDR range
-      svcCIDR: 10.43.0.0/16
-      # # -- dns hosted zone, i.e., dns pointing to this cluster, defaults to `global.baseDomain`
-      # dnsHostedZone: ""
-      enableExamples: false
+  # wgOperator:
+  #   enabled: false
+  #   # -- wg operator image and tag
+  #   image: ghcr.io/kloudlite/operator/wireguard:v1.0.5-nightly
+  #   # -- wireguard configuration options
+  #   configuration:
+  #     # -- cluster pods CIDR range
+  #     podCIDR: 10.42.0.0/16
+  #     # -- cluster services CIDR range
+  #     svcCIDR: 10.43.0.0/16
+  #     # # -- dns hosted zone, i.e., dns pointing to this cluster, defaults to `global.baseDomain`
+  #     # dnsHostedZone: ""
+  #     enableExamples: false
 
 envVars:
   db:

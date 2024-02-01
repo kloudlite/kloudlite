@@ -40,18 +40,6 @@ data:
     {{fail ".Values.operators.platformOperator.configuration.cluster.cloudflare.baseDomain must be set"}}
   {{- end}}
 
-- name: KL_S3_IAC_BUCKET_NAME
-  {{- if not $clusterOperatorVars.IACStateStore.s3BucketName}}}
-  {{ fail ".operators.platformOperator.configuration.cluster.IACStateStore.s3BucketName is required" }}
-  {{- end }}
-  value: {{$clusterOperatorVars.IACStateStore.s3BucketName}}
-
-- name: KL_S3_IAC_BUCKET_REGION
-  value: {{ required ".Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketRegion must be set" .Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketRegion }}
-
-- name: KL_S3_IAC_DIRECTORY
-  value: {{ required ".Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketDir must be set" .Values.operators.platformOperator.configuration.cluster.IACStateStore.s3BucketDir }} 
-
 - name: MESSAGE_OFFICE_GRPC_ADDR
   value: message-office.{{include "router-domain" .}}:443
 

@@ -93,6 +93,8 @@ helm show values kloudlite/kloudlite-platform
 | apps.infraApi.configuration.infraVPNDeviceNamespace | string | `"kloudlite-infra-devices"` |  |
 | apps.infraApi.image | string | `"ghcr.io/kloudlite/api/infra:v1.0.5-nightly"` | image (with tag) for infra api |
 | apps.klInstaller.image | string | `"ghcr.io/kloudlite/kl/installer:v1.0.5-nightly"` | image (with tag) for comms api |
+| apps.kloudliteWebsite.enabled | bool | `true` |  |
+| apps.kloudliteWebsite.image | string | `"ghcr.io/kloudlite/web/website:v1.0.5-nightly"` |  |
 | apps.messageOfficeApi.configuration.platformAccessToken | string | `"sample"` |  |
 | apps.messageOfficeApi.configuration.tokenHashingSecret | string | `""` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
 | apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/api/message-office:v1.0.5-nightly"` | image (with tag) for message office api |
@@ -119,6 +121,7 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains[0] | string | `"*.platform.kloudlite.io"` | should default to basedomain |
 | cloudflareWildCardCert.enabled | bool | `true` |  |
 | cloudflareWildCardCert.tlsSecretName | string | `"kl-cert-wildcard-tls"` |  |
+| clusterAutoscaler.enabled | bool | `true` |  |
 | descheduler.enabled | bool | `true` |  |
 | distribution.domain | string | `"cr.khost.dev"` |  |
 | distribution.s3.accessKey | string | `""` |  |
@@ -146,14 +149,15 @@ helm show values kloudlite/kloudlite-platform
 | envVars.nats.buckets.sessionKVBucket.storage | string | `"file"` |  |
 | envVars.nats.buckets.verifyTokenBucket.name | string | `"verify-token"` |  |
 | envVars.nats.buckets.verifyTokenBucket.storage | string | `"file"` |  |
-| envVars.nats.streams.events.maxMsgBytes | string | `"2MB"` |  |
+| envVars.nats.streams.events.maxMsgBytes | string | `"500kB"` |  |
+| envVars.nats.streams.events.maxMsgsPerSubject | int | `2` |  |
 | envVars.nats.streams.events.name | string | `"events"` |  |
 | envVars.nats.streams.events.subjects | string | `"events.>"` |  |
 | envVars.nats.streams.logs.maxAge | string | `"3h"` |  |
 | envVars.nats.streams.logs.maxMsgBytes | string | `"2MB"` |  |
 | envVars.nats.streams.logs.name | string | `"logs"` |  |
 | envVars.nats.streams.logs.subjects | string | `"logs.>"` |  |
-| envVars.nats.streams.resourceSync.maxMsgBytes | string | `"2MB"` |  |
+| envVars.nats.streams.resourceSync.maxMsgBytes | string | `"500kB"` |  |
 | envVars.nats.streams.resourceSync.name | string | `"resource-sync"` |  |
 | envVars.nats.streams.resourceSync.subjects | string | `"resource-sync.>"` |  |
 | envVars.nats.url | string | `"nats://nats:4222"` |  |
@@ -191,12 +195,15 @@ helm show values kloudlite/kloudlite-platform
 | loki.configuration.s3credentials.region | string | `""` |  |
 | loki.enabled | bool | `false` |  |
 | loki.name | string | `"loki-stack"` |  |
+| mongo.configuration.nodeSelector | object | `{}` |  |
+| mongo.configuration.volumeSize | string | `"2Gi"` |  |
 | mongo.externalDB.authDBName | string | `""` |  |
 | mongo.externalDB.dbURL | string | `""` |  |
-| mongo.nodeSelector | object | `{}` |  |
 | mongo.replicas | int | `1` |  |
 | mongo.runAsCluster | bool | `false` |  |
-| mongo.size | string | `"2Gi"` |  |
+| nats.configuration.password | string | `"sample"` |  |
+| nats.configuration.user | string | `"sample"` |  |
+| nats.configuration.volumeSize | string | `"10Gi"` |  |
 | nats.replicas | int | `3` |  |
 | nats.runAsCluster | bool | `false` |  |
 | oAuth.enabled | bool | `true` |  |
@@ -216,26 +223,20 @@ helm show values kloudlite/kloudlite-platform
 | oAuth.providers.google.clientSecret | string | `""` | google oAuth2 Client Secret |
 | oAuth.providers.google.enabled | bool | `true` | whether to enable google oAuth2 |
 | oAuth.secretName | string | `"oauth-secrets"` | secret where all oauth credentials should be |
-| operators.platformOperator.configuration.cluster.IACStateStore.accessKey | string | `""` |  |
-| operators.platformOperator.configuration.cluster.IACStateStore.s3BucketDir | string | `"terraform-states"` |  |
-| operators.platformOperator.configuration.cluster.IACStateStore.s3BucketName | string | `"kloudlite-dev-tf"` | s3 bucket name, to store kloudlite's infrastructure-as-code remote state |
-| operators.platformOperator.configuration.cluster.IACStateStore.s3BucketRegion | string | `"ap-south-1"` | s3 bucket region, to store kloudlite's infrastructure-as-code remote state |
-| operators.platformOperator.configuration.cluster.IACStateStore.secretKey | string | `""` |  |
 | operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created, defaults to `global.baseDomain` |
 | operators.platformOperator.configuration.cluster.cloudflare.zoneId | string | `""` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
 | operators.platformOperator.configuration.cluster.jobImage | string | `"ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly"` |  |
 | operators.platformOperator.configuration.nodepool.cloudProviderName | string | `"aws"` |  |
 | operators.platformOperator.configuration.nodepool.cloudProviderRegion | string | `"ap-south-1"` |  |
+| operators.platformOperator.configuration.nodepool.extractFromCluster | bool | `true` |  |
 | operators.platformOperator.configuration.nodepool.k3sAgentJoinToken | string | `""` | k3s agent join token, as nodepools are effectively agent nodes |
 | operators.platformOperator.configuration.nodepool.k3sServerPublicHost | string | `""` | k3s masters public DNS Host |
+| operators.platformOperator.configuration.wireguard.enableExamples | bool | `true` |  |
+| operators.platformOperator.configuration.wireguard.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
+| operators.platformOperator.configuration.wireguard.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.platformOperator.enabled | bool | `true` | whether to enable platform operator |
 | operators.platformOperator.image | string | `"ghcr.io/kloudlite/operator/platform:v1.0.5-nightly"` | image (with tag) for platform operator |
 | operators.preferOperatorsOnMasterNodes | bool | `true` |  |
-| operators.wgOperator.configuration | object | `{"enableExamples":false,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
-| operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
-| operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
-| operators.wgOperator.enabled | bool | `false` |  |
-| operators.wgOperator.image | string | `"ghcr.io/kloudlite/operator/wireguard:v1.0.5-nightly"` | wg operator image and tag |
 | persistence.storageClasses.ext4 | string | `"sc-ext4"` | ext4 storage class name |
 | persistence.storageClasses.xfs | string | `"sc-xfs"` | xfs storage class name |
 | prometheus.configuration.alertmanager.volumeSize | string | `"2Gi"` |  |
@@ -250,8 +251,8 @@ helm show values kloudlite/kloudlite-platform
 | vectorAgent.description | string | `"vector agent for shipping logs to centralized vector aggregator"` |  |
 | vectorAgent.enabled | bool | `true` |  |
 | vectorAgent.name | string | `"vector-agent"` |  |
-| victoriaMetrics.configuration.nodeSelector | object | `{}` |  |
-| victoriaMetrics.configuration.volumeSize | string | `"2Gi"` |  |
+| victoriaMetrics.configuration.vmcluster.volumeSize | string | `"10Gi"` |  |
+| victoriaMetrics.configuration.vmselect.volumeSize | string | `"2Gi"` |  |
 | victoriaMetrics.enabled | bool | `true` |  |
 | victoriaMetrics.name | string | `"victoria-metrics"` |  |
 | webhookSecrets.authzSecret | string | `""` |  |
