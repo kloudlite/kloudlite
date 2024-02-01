@@ -13,7 +13,6 @@ on:
       - ".github/workflows/**"
       - "apis/**/*.go"
 
-
 permissions:
   contents: read
   packages: write
@@ -26,12 +25,12 @@ jobs:
           - platform
           - agent
           - wireguard
+          - helm-charts
           # - resource-watcher
           # - account
           # - app
           # - clusters
           # - distribution
-          # - helm-charts
           # - msvc-elasticsearch
           # - msvc-influx
           # - msvc-mongo
@@ -45,7 +44,7 @@ jobs:
           # - project
           # - resource-watcher
           # - routers
-          
+
         include:
           - name: platform
             buildDir: cmd/platform-operator
@@ -53,6 +52,8 @@ jobs:
             buildDir: cmd/agent-operator
           - name: wireguard
             buildDir: operators/wireguard
+          - name: helm-charts
+            buildDir: operators/helm-charts
           # - name: resource-watcher
           #   buildDir: operators/resource-watcher
           # - name: account
@@ -63,8 +64,6 @@ jobs:
           #   buildDir: operators/clusters
           # - name: distribution
           #   buildDir: operators/distribution
-          # - name: helm-charts
-          #   buildDir: operators/helm-charts
           # - name: msvc-elasticsearch
           #   buildDir: operators/msvc-elasticsearch
           # - name: msvc-influx
@@ -91,7 +90,6 @@ jobs:
           #   buildDir: operators/resource-watcher
           # - name: routers
           #   buildDir: operators/routers
-          
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:

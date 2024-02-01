@@ -360,9 +360,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.Database{})
-	builder.WithOptions(controller.Options{
-		MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles,
-	})
 	builder.Owns(&corev1.Secret{})
 
 	watchList := []client.Object{
