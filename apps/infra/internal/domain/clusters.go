@@ -4,12 +4,14 @@ import (
 	"fmt"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/apps/infra/internal/domain/templates"
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	message_office_internal "github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
+	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -18,6 +20,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
 	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,8 +59,8 @@ func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderS
 		return nil, errors.NewE(err)
 	}
 
-	secret.StringData = map[string]string{
-		keyClusterToken: tout.ClusterToken,
+	secret.Data = map[string][]byte{
+		keyClusterToken: []byte(tout.ClusterToken),
 	}
 
 	return secret, nil
@@ -256,7 +259,73 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
 
+	if err := d.applyHelmKloudliteAgent(ctx, nCluster, string(tokenScrt.Data[keyClusterToken])); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	return nCluster, nil
+}
+
+func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, cluster *entities.Cluster, clusterToken string) error {
+	b, err := templates.Read(templates.HelmKloudliteAgent)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	b2, err := templates.ParseBytes(b, map[string]any{
+		"account-name":  ctx.AccountName,
+		"cluster-name":  cluster.Name,
+		"cluster-token": clusterToken,
+
+		"kloudlite-release":        d.env.KloudliteRelease,
+		"message-office-grpc-addr": d.env.MessageOfficeExternalGrpcAddr,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	var m map[string]any
+	if err := yaml.Unmarshal(b2, &m); err != nil {
+		return errors.NewE(err)
+	}
+
+	helmChart, err := fn.JsonConvert[crdsv1.HelmChart](m)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	hr := entities.HelmRelease{
+		HelmChart: helmChart,
+		ResourceMetadata: common.ResourceMetadata{
+			DisplayName: fmt.Sprintf("kloudlite agent %s", d.env.KloudliteRelease),
+			CreatedBy: common.CreatedOrUpdatedBy{
+				UserId:    "kloudlite-platform",
+				UserName:  "kloudlite-platform",
+				UserEmail: "kloudlite-platform",
+			},
+			LastUpdatedBy: common.CreatedOrUpdatedBy{
+				UserId:    "kloudlite-platform",
+				UserName:  "kloudlite-platform",
+				UserEmail: "kloudlite-platform",
+			},
+		},
+		AccountName: ctx.AccountName,
+		ClusterName: cluster.Name,
+		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, 0),
+	}
+
+	hr.IncrementRecordVersion()
+
+	uhr, err := d.upsertHelmRelease(ctx, cluster.Name, &hr)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, cluster.Name, &uhr.HelmChart, uhr.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
 }
 
 func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error) {
