@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
-	redpandav1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
@@ -28,7 +26,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -49,10 +46,6 @@ type ClusterReconciler struct {
 
 func (r *ClusterReconciler) GetName() string {
 	return r.Name
-}
-
-func getBucketFilePath(baseDir string, accountName string, clusterName string) string {
-	return filepath.Join(baseDir, "account-"+accountName, "cluster-"+clusterName+".tfstate")
 }
 
 const (
@@ -219,48 +212,6 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 	return req.Done()
 }
 
-func (r *ClusterReconciler) ensureMessageQueueTopic(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(messageQueueTopic)
-	defer req.LogPostCheck(messageQueueTopic)
-
-	qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.MessageQueueTopicName}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, qtopic, func() error {
-		if qtopic.Labels == nil {
-			qtopic.Labels = make(map[string]string, 2)
-		}
-		qtopic.Labels[constants.AccountNameKey] = obj.Spec.AccountName
-		qtopic.Labels[constants.ClusterNameKey] = obj.Name
-		qtopic.Labels[constants.ClusterNamespaceKey] = obj.Namespace
-
-		if qtopic.Annotations == nil {
-			qtopic.Annotations = make(map[string]string, 1)
-		}
-		qtopic.Annotations[constants.DescriptionKey] = "kloudlite cluster incoming message queue topic"
-		qtopic.Spec.PartitionCount = 3
-		return nil
-	}); err != nil {
-		return req.CheckFailed(messageQueueTopic, check, err.Error())
-	}
-
-	req.AddToOwnedResources(rApi.ParseResourceRef(qtopic))
-
-	check.Status = qtopic.Status.IsReady
-	if check != obj.Status.Checks[messageQueueTopic] {
-		obj.Status.Checks[messageQueueTopic] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	if !check.Status {
-		return req.CheckFailed(messageQueueTopic, check, "waiting for message queue topic to be ready").Err(nil)
-	}
-	return req.Next()
-}
-
 func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
@@ -400,59 +351,12 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 	}
 }
 
-func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *clustersv1.Cluster) (*clustersv1.AccountS3Bucket, error) {
-	var bucketList clustersv1.AccountS3BucketList
-	if err := r.List(ctx, &bucketList, client.InNamespace(obj.Namespace)); err != nil {
-		return nil, err
-	}
-
-	if len(bucketList.Items) == 0 {
-		// TODO: create account-s3-bucket
-		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", obj.Spec.AccountId), Namespace: obj.Namespace}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, s3Bucket, func() error {
-			if s3Bucket.Labels == nil {
-				s3Bucket.Labels = make(map[string]string, 1)
-			}
-
-			s3Bucket.Labels[constants.AccountNameKey] = obj.Spec.AccountName
-
-			s3Bucket.Spec = clustersv1.AccountS3BucketSpec{
-				AccountName:    obj.Spec.AccountName,
-				BucketRegion:   r.Env.KlS3BucketRegion,
-				CredentialsRef: obj.Spec.CredentialsRef,
-				CredentialKeys: obj.Spec.CredentialKeys,
-			}
-			return nil
-		}); err != nil {
-			return nil, err
-		}
-		return nil, fmt.Errorf("waiting for account-s3-bucket to reconcile")
-	}
-
-	if len(bucketList.Items) != 1 {
-		return nil, fmt.Errorf("multiple account-s3-bucket found in namespace %s", obj.Namespace)
-	}
-
-	if !bucketList.Items[0].Status.IsReady {
-		return nil, fmt.Errorf("bucket %s (in region: %s), is not ready yet", bucketList.Items[0].Name, bucketList.Items[0].Spec.BucketRegion)
-	}
-
-	return &bucketList.Items[0], nil
-}
-
 func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(clusterApplyJob)
 	defer req.LogPostCheck(clusterApplyJob)
-
-	bucket, err := r.findAccountS3Bucket(ctx, obj)
-	if err != nil {
-		return req.CheckFailed(clusterApplyJob, check, err.Error())
-	}
-
-	_ = bucket
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
@@ -488,10 +392,8 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
 			},
 
-			"aws-s3-bucket-name":   r.Env.KlS3BucketName,
-			"aws-s3-bucket-region": r.Env.KlS3BucketRegion,
-			// "aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
-			"aws-s3-bucket-filepath": getBucketFilePath(r.Env.KlS3BucketDirectory, obj.Spec.AccountName, obj.Name),
+			"cluster-name":              obj.Name,
+			"tf-state-secret-namespace": obj.Namespace,
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
@@ -585,9 +487,8 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			"kubeconfig-secret-name":      fmt.Sprintf("cluster-%s-kubeconfig", obj.Name),
 			"kubeconfig-secret-namespace": obj.Namespace,
 
-			"aws-s3-bucket-name":     r.Env.KlS3BucketName,
-			"aws-s3-bucket-region":   r.Env.KlS3BucketRegion,
-			"aws-s3-bucket-filepath": getBucketFilePath(r.Env.KlS3BucketDirectory, obj.Spec.AccountName, obj.Name),
+			"cluster-name":              obj.Name,
+			"tf-state-secret-namespace": obj.Namespace,
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,

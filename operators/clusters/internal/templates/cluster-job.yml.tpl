@@ -9,9 +9,8 @@
 {{- $kubeconfigSecretNamespace := get . "kubeconfig-secret-namespace" }}
 {{- $kubeconfigSecreAnnotations := get . "kubeconfig-secret-annotations" }}
 
-{{- $awsS3BucketName := get . "aws-s3-bucket-name" }} 
-{{- $awsS3BucketFilepath := get . "aws-s3-bucket-filepath" }}
-{{- $awsS3BucketRegion := get . "aws-s3-bucket-region" }} 
+{{- $clusterName := get . "cluster-name" }}
+{{- $tfStateSecretNamespace := get . "tf-state-secret-namespace" }}
 
 {{- $awsAccessKeyId := get . "aws-access-key-id" }}
 {{- $awsSecretAccessKey := get . "aws-secret-access-key" }}
@@ -46,16 +45,17 @@ spec:
 
         imagePullPolicy: Always
         env:
-          - name: AWS_S3_BUCKET_NAME
-            value: {{$awsS3BucketName}}
-          - name: AWS_S3_BUCKET_FILEPATH
-            value: {{$awsS3BucketFilepath}}
-          - name: AWS_S3_BUCKET_REGION
-            value: {{$awsS3BucketRegion}}
+          - name: KUBE_IN_CLUSTER_CONFIG
+            value: "true"
+
+          - name: KUBE_NAMESPACE
+            value: {{$tfStateSecretNamespace | squote}}
+
           - name: AWS_ACCESS_KEY_ID
             value: {{$awsAccessKeyId}}
           - name: AWS_SECRET_ACCESS_KEY
             value: {{$awsSecretAccessKey}}
+
         command:
           - bash
           - -c
@@ -68,12 +68,14 @@ spec:
             pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-masters"
 
             envsubst < state-backend.tf.tpl > state-backend.tf
+
+            terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
+            terraform workspace select --or-create {{$clusterName}} 
             
             cat > values.json <<EOF
             {{$valuesJson}}
             EOF
 
-            terraform init -no-color 2>&1 | tee /dev/termination-log
             
             if [ "{{$action}}" = "delete" ]; then
               terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log
@@ -81,7 +83,9 @@ spec:
             else
               terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+
               terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
+              terraform state pull | jq '.outputs.."kloudlite-k3s-params".value' -r > k3s-params
 
               kubectl apply -f - <<EOF
               apiVersion: v1
@@ -93,6 +97,7 @@ spec:
               data:
                 kubeconfig: $(cat kubeconfig)
                 k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
+                k3s_params: $(cat k3s-params)
             EOF
             fi
             exit 0

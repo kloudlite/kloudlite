@@ -3,7 +3,6 @@ package helm_controller
 import (
 	"context"
 	"fmt"
-	"os"
 	"slices"
 	"time"
 
@@ -77,6 +76,8 @@ func getJobSvcAccountName() string {
 // +kubebuilder:rbac:groups=helm.kloudlite.io,resources=helmcharts/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	// return ctrl.Result{}, nil
+
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.HelmChart{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -84,6 +85,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.PreReconcile()
 	defer req.PostReconcile()
+
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -114,6 +119,42 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "patch-defaults"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	hasPatched := false
+	if obj.Spec.ReleaseName == "" {
+		hasPatched = true
+		obj.Spec.ReleaseName = obj.Name
+	}
+
+	if hasPatched {
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.HelmChart]) stepResult.Result {
@@ -250,7 +291,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			"chart-name":    obj.Spec.ChartName,
 			"chart-version": obj.Spec.ChartVersion,
 
-			"release-name":      obj.Name,
+			"release-name":      obj.Spec.ReleaseName,
 			"release-namespace": obj.Namespace,
 
 			"pre-install":  obj.Spec.PreInstall,
@@ -258,11 +299,6 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			"values-yaml":  values,
 		})
 		if err != nil {
-			return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
-		}
-
-		if err := os.WriteFile("/tmp/helm-job.yml", b, 0o666); err != nil {
-			req.Logger.Errorf(err, "could not write file")
 			return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
 		}
 
@@ -337,7 +373,7 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			"affinity":             obj.Spec.JobVars.Affinity,
 			"node-selector":        obj.Spec.JobVars.NodeSelector,
 
-			"release-name":      obj.Name,
+			"release-name":      obj.Spec.ReleaseName,
 			"release-namespace": obj.Namespace,
 
 			"pre-uninstall":  obj.Spec.PreUninstall,
@@ -438,7 +474,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			}),
 	)
 
-	// builder.Owns(&batchv1.Job{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
