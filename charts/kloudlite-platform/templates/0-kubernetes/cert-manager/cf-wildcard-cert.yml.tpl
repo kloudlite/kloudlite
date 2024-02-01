@@ -21,6 +21,7 @@ spec:
     {{end}}
     {{ if .Values.global.routerDomain }}
     - '*.{{include "router-domain" .}}'
+    - '{{include "router-domain" .}}'
     {{ end }}
   secretName: kl-cert-wildcard-tls
   issuerRef:

@@ -21,15 +21,30 @@ spec:
     prometheus-node-exporter:
       enabled: true
 
+    vmsingle:
+      enabled: false
+
     vmcluster:
+      enabled: true
       spec:
         vmstorage:
           storage:
             volumeClaimTemplate:
               spec:
+                storageClassName: "{{.Values.persistence.storageClasses.ext4}}"
                 resources:
                   requests:
-                    storage: {{.Values.victoriaMetrics.configuration.volumeSize}}
+                    storage: {{.Values.victoriaMetrics.configuration.vmcluster.volumeSize}}
+
+        vmselect:
+          storage:
+            volumeClaimTemplate:
+              spec:
+                storageClassName: "{{.Values.persistence.storageClasses.ext4}}"
+                resources:
+                  requests:
+                    storage: {{.Values.victoriaMetrics.configuration.vmselect.volumeSize}}
+
 
     nameOverride: {{.Values.victoriaMetrics.name}}
     fullnameOverride: {{.Values.victoriaMetrics.name}}
