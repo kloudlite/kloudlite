@@ -3,7 +3,7 @@ version: '3'
 dotenv: [".secrets/oauth.env", ".secrets/env"]
 
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+  ImagePrefix: "ghcr.io/kloudlite/api"
 
 tasks:
   run:
@@ -32,7 +32,7 @@ tasks:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -v -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - go build -v -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   local-build:
