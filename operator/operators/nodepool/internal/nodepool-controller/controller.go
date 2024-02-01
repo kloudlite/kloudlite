@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -56,6 +57,10 @@ const (
 	nodeFinalizer string = "kloudlite.io/nodepool-node-finalizer"
 )
 
+const (
+	annNodepoolJobRef = "kloudlite.io/nodepool.job-ref"
+)
+
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
 	if err != nil {
@@ -66,6 +71,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	defer req.PostReconcile()
 
 	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -80,15 +89,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureJobNamespaceExists(req); !step.ShouldProceed() {
+	if step := r.ensureJobNamespaceRBACs(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -144,14 +149,14 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 
 	hasUpdated := false
 
-	if obj.Spec.IAC.JobName == "" {
+	if v, ok := obj.Annotations[annNodepoolJobRef]; v != fmt.Sprintf("%s/kloudlite-nodepool-%s", r.Env.JobsNamespace, obj.Name) || !ok {
 		hasUpdated = true
-		obj.Spec.IAC.JobName = fmt.Sprintf("kloudlite-nodepool-job-%s", obj.Name)
-	}
-
-	if obj.Spec.IAC.JobNamespace == "" {
-		hasUpdated = true
-		obj.Spec.IAC.JobNamespace = "kloudlite-jobs"
+		ann := obj.Annotations
+		if ann == nil {
+			ann = make(map[string]string, 1)
+		}
+		ann[annNodepoolJobRef] = fmt.Sprintf("%s/kloudlite-nodepool-%s", r.Env.JobsNamespace, obj.Name)
+		obj.SetAnnotations(ann)
 	}
 
 	if hasUpdated {
@@ -172,7 +177,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 	return req.Next()
 }
 
-func (r *Reconciler) ensureJobNamespaceExists(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -186,7 +191,7 @@ func (r *Reconciler) ensureJobNamespaceExists(req *rApi.Request[*clustersv1.Node
 	}
 
 	b, err := templates.ParseBytes(r.templateNamespaceRBAC, map[string]any{
-		"namespace": obj.Spec.IAC.JobNamespace,
+		"namespace": r.Env.JobsNamespace,
 	})
 	if err != nil {
 		return fail(err).Err(nil)
@@ -271,8 +276,10 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 		return fail(err).Err(nil)
 	}
 
-	jobName := obj.Spec.IAC.JobName
-	jobNamespace := obj.Spec.IAC.JobNamespace
+	jobRef := strings.Split(obj.Annotations[annNodepoolJobRef], "/")
+
+	jobNamespace := jobRef[0]
+	jobName := jobRef[1]
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(jobNamespace, jobName), job); err != nil {
@@ -298,12 +305,15 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 			"job-node-selector": constants.K8sMasterNodeSelector,
 
-			"service-account-name": "",
-
-			"aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
-			"aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
+			// "aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
+			// "aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
 			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
-			"aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
+			// "aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
+
+			"nodepool-name":            obj.Name,
+			"tfstate-secret-namespace": r.Env.TFStateSecretNamespace,
+
+			"iac-job-image": r.Env.IACJobImage,
 
 			"aws-s3-access-key": accessKey,
 			"aws-s3-secret-key": secretKey,
@@ -443,13 +453,20 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 		// "aws_access_key":             nil,
 		// "aws_secret_key":             nil,
 		"aws_region":                 ev.CloudProviderRegion,
-		"tracker_id":                 fmt.Sprintf("nodepool-%s", obj.Name),
+		"tracker_id":                 fmt.Sprintf("cluster-%s", ev.ClusterName),
 		"k3s_join_token":             ev.K3sJoinToken,
 		"k3s_server_public_dns_host": ev.K3sServerPublicHost,
 		"ec2_nodepools":              ec2Nodepools,
 		"spot_nodepools":             spotNodepools,
-		"extra_agent_args":           []string{},
-		"save_ssh_key_to_path":       "",
+		"extra_agent_args": []string{
+			"--snapshotter",
+			"stargz",
+		},
+		"save_ssh_key_to_path": "",
+		"tags": map[string]string{
+			"kloudlite-account": ev.AccountName,
+			"kloudlite-cluster": ev.ClusterName,
+		},
 	}
 
 	if accessKey != "" {

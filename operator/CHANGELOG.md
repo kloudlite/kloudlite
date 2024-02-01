@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- router controller now adds annotation `nginx.ingress.kubernetes.io/from-to-www-redirect: "true"` to all the ingress resources, by default
+## [v1.0.5] - 2024-01-26
 
-## [1.0.5] - 2024-01-26
-- 
+### Added
+
+- router controller now adds annotation `nginx.ingress.kubernetes.io/from-to-www-redirect: "true"` to all the ingress resources, by default
+- helmchart CR, now has `.spec.releaseName` optional field to have a different release name than `.metadata.name`.
+
+[v1.0.5]: https://github.com/kloudlite/operator/compare/master...release-1.0.5

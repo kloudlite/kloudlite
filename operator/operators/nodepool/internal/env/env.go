@@ -10,11 +10,16 @@ type Env struct {
 	CloudProviderName   string `env:"CLOUD_PROVIDER_NAME" required:"true"`
 	CloudProviderRegion string `env:"CLOUD_PROVIDER_REGION" required:"true"`
 
+	JobsNamespace string `env:"JOBS_NAMESPACE" default:"kloudlite-jobs"`
+
+	AccountName string `env:"ACCOUNT_NAME" required:"true"` // required only for labelling nodepool nodes with it
+	ClusterName string `env:"CLUSTER_NAME" required:"true"` // required only for labelling nodepool nodes with it
+
 	K3sJoinToken        string `env:"K3S_JOIN_TOKEN" required:"true"`
 	K3sServerPublicHost string `env:"K3S_SERVER_PUBLIC_HOST" required:"true"`
 
-	KloudliteAccountName string `env:"KLOUDLITE_ACCOUNT_NAME" required:"true"`
-	KloudliteClusterName string `env:"KLOUDLITE_CLUSTER_NAME" required:"true"`
+	TFStateSecretNamespace string `env:"TF_STATE_SECRET_NAMESPACE" required:"true" default:"kloudlite"`
+	IACJobImage            string `env:"IAC_JOB_IMAGE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

@@ -49,15 +49,8 @@ type AWSNodePoolConfig struct {
 }
 
 type InfrastuctureAsCode struct {
-	StateS3BucketName     string `json:"stateS3BucketName"`
-	StateS3BucketRegion   string `json:"stateS3BucketRegion"`
-	StateS3BucketFilePath string `json:"stateS3BucketFilePath"`
-
 	CloudProviderAccessKey ct.SecretKeyRef `json:"cloudProviderAccessKey"`
 	CloudProviderSecretKey ct.SecretKeyRef `json:"cloudProviderSecretKey"`
-
-	JobName      string `json:"jobName,omitempty"`
-	JobNamespace string `json:"jobNamespace,omitempty"`
 }
 
 type OperatorVars struct {
@@ -85,6 +78,7 @@ type NodePoolSpec struct {
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.nodepool-min-max",name=Min/Max,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/nodepool\\.job-ref",name=JobRef,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
