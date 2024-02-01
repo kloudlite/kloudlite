@@ -38,7 +38,6 @@ type domain struct {
 	nodePoolRepo              repos.DbRepo[*entities.NodePool]
 	domainEntryRepo           repos.DbRepo[*entities.DomainEntry]
 	secretRepo                repos.DbRepo[*entities.CloudProviderSecret]
-	vpnDeviceRepo             repos.DbRepo[*entities.VPNDevice]
 	pvcRepo                   repos.DbRepo[*entities.PersistentVolumeClaim]
 	namespaceRepo             repos.DbRepo[*entities.Namespace]
 	pvRepo                    repos.DbRepo[*entities.PersistentVolume]
@@ -156,7 +155,6 @@ var Module = fx.Module("domain",
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
 			domainNameRepo repos.DbRepo[*entities.DomainEntry],
-			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 			resourceDispatcher ResourceDispatcher,
 			helmReleaseRepo repos.DbRepo[*entities.HelmRelease],
 
@@ -211,7 +209,6 @@ var Module = fx.Module("domain",
 				nodePoolRepo:                nodePoolRepo,
 				secretRepo:                  secretRepo,
 				domainEntryRepo:             domainNameRepo,
-				vpnDeviceRepo:               vpnDeviceRepo,
 				resDispatcher:               resourceDispatcher,
 				k8sClient:                   k8sClient,
 				iamClient:                   iamClient,
