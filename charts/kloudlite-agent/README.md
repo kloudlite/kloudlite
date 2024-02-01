@@ -115,11 +115,12 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.tolerations | list | `[]` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
-| operators.agentOperator.configuration.cloudProvider.name | string | `""` |  |
-| operators.agentOperator.configuration.cloudProvider.region | string | `""` | cloud provider region |
-| operators.agentOperator.configuration.k3sJoinToken | string | `""` |  |
-| operators.agentOperator.configuration.k3sServerPublicHost | string | `""` |  |
+| operators.agentOperator.configuration.iacJobImage | string | `"ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-k8s-backend"` |  |
 | operators.agentOperator.configuration.letsEncryptSupportEmail | string | `"support@kloudlite.io"` |  |
+| operators.agentOperator.configuration.wireguard.consoleDeviceNamespace | string | `"kloudlite-console-devices"` |  |
+| operators.agentOperator.configuration.wireguard.infraDeviceNamespace | string | `"kloudlite-infra-devices"` |  |
+| operators.agentOperator.configuration.wireguard.podCIDR | string | `"10.42.0.0/16"` |  |
+| operators.agentOperator.configuration.wireguard.svcCIDR | string | `"10.43.0.0/16"` |  |
 | operators.agentOperator.enabled | bool | `true` | enable/disable kloudlite agent operator |
 | operators.agentOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operator/agent","tag":""}` | kloudlite resource watcher image name and tag |
 | operators.agentOperator.image.pullPolicy | string | `""` | image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion |
@@ -127,15 +128,5 @@ helm show values kloudlite/kloudlite-agent
 | operators.agentOperator.name | string | `"kl-agent-operator"` | workload name for kloudlite agent operator |
 | operators.agentOperator.nodeSelector | object | `{}` |  |
 | operators.agentOperator.tolerations | list | `[]` |  |
-| operators.wgOperator.configuration | object | `{"consoleDeviceNamespace":"kloudlite-console-devices","dnsHostedZone":"","infraDeviceNamespace":"kloudlite-infra-devices","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
-| operators.wgOperator.configuration.dnsHostedZone | string | `""` | dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com' |
-| operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
-| operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
-| operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
-| operators.wgOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operator/wireguard","tag":""}` | wg operator image and tag |
-| operators.wgOperator.image.pullPolicy | string | `""` | image pull policy for kloudlite wireguard operator, default is .imagePullPolicy |
-| operators.wgOperator.image.tag | string | `""` | image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion |
-| operators.wgOperator.nodeSelector | object | `{}` |  |
-| operators.wgOperator.tolerations | list | `[]` |  |
 | preferOperatorsOnMasterNodes | boolean | `true` | configuration for different kloudlite operators used in this chart |
 | svcAccountName | string | `"sa"` | k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName> |
