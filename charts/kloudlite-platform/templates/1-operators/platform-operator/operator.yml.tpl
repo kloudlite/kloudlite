@@ -67,8 +67,8 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
-          image: {{.Values.operators.platformOperator.image}}
-          imagePullPolicy: {{.Values.global.imagePullPolicy }}
+          image: {{.Values.operators.platformOperator.image.repository}}:{{.Values.operators.platformOperator.image.tag | default (include "image-tag" .) }}
+          imagePullPolicy: {{ include "image-pull-policy" .}}
           env:
             - name: SVC_ACCOUNT_NAME
               value: "kloudlite-svc-account"
