@@ -12,8 +12,7 @@ import (
 
 var switchCmd = &cobra.Command{
 	Use:   "env",
-	Short: "switch to a different environment",
-
+	Short: "Switch to a different environment",
 	Run: func(cmd *cobra.Command, _ []string) {
 
 		envName := fn.ParseStringFlag(cmd, "envname")

@@ -3,6 +3,7 @@ package list
 import (
 	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -13,17 +14,7 @@ import (
 
 var configsCmd = &cobra.Command{
 	Use:   "configs",
-	Short: "list all the configs available in selected project",
-	Long: `List all the configs available in project.
-
-Examples:
-
-	# This command will provide the list of all the configs for the selected project.
-  kl list configs
-
-	# This command will provide the list of all the configs for the provided project name.
-  kl list configs <projectName>
-`,
+	Short: "Get list of configs in current project & selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 		pName := ""
 		if len(args) > 1 {

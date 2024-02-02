@@ -15,8 +15,9 @@ import (
 )
 
 var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "show vpn status",
+	Hidden: true,
+	Use:    "status",
+	Short:  "show vpn status",
 	Long: `This command let you show vpn status.
 Example:
   # show vpn status

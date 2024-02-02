@@ -7,19 +7,10 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "get",
-	Short: "get [ config | secret ] entries",
-	Long:  `get config/secret entries.`,
-	Example: functions.Desc(`# get config table
-{cmd} get config <configname>
-
-# get secret table
-{cmd} get secret <secretname>
-
-# get config/secret in yaml format
-{cmd} get [command] <name> -o yaml
-
-# get config/secret in json format
-{cmd} get [command] <name> -o json
+	Short: "Get config or secret entries of current environment",
+	Example: functions.Desc(`  {cmd} get config <configname>  		# get config entries
+  {cmd} get secret <secretname>		# get secret entries
+  {cmd} get [command] <name> -o <format>	# get config/secret in json/yaml format
 `),
 }
 

@@ -3,6 +3,7 @@ package list
 import (
 	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -14,18 +15,7 @@ import (
 
 var accCmd = &cobra.Command{
 	Use:   "accounts",
-	Short: "list all the accounts accessible to you",
-	Long: `List Accounts
-
-This command will provide the list of all the accounts that's accessible to you. 
-
-Examples:
-  # list accounts accessible to you
-  kl account list
-
-Note: selected account will be highlighted with green color.
-
-`,
+	Short: "Get list of accounts accessible to you",
 	Run: func(cmd *cobra.Command, _ []string) {
 		err := listAccounts(cmd)
 		if err != nil {

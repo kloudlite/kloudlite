@@ -14,16 +14,7 @@ import (
 
 var secretsCmd = &cobra.Command{
 	Use:   "secrets",
-	Short: "list all the secrets available in selected project",
-	Long: `List all the secrets available in project.
-Examples:
-	# list all the secrets with selected project
-  kl list secrets
-
-	# This command will provide the list of all the configs for the provided project name.
-  kl list configs <projectName>
-
-`,
+	Short: "Get list of secrets in current project & selected environment",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		pName := ""

@@ -12,17 +12,12 @@ import (
 
 var mresCmd = &cobra.Command{
 	Use:   "mres",
-	Short: "add mres to your kl-config file by selection from the all the mres available selected project",
-	Long: `Add env from managed resource
-
-Using this command you are able to add a environment from the managed resource present on your project
-Examples:
-  # add managed resource by selecting one
-  kl add mres
-
-  # add managed resource providing resourceid and serviceid 
-  kl add mres --resource=<resourceId> --service=<serviceId>
+	Short: "Add managed resource references to your kl-config",
+	Long: `
+This command will add secret entry references from current environement to your kl-config file.
 `,
+	Example: `  # add managed resource by selecting one
+  kl add mres`,
 	Run: func(cmd *cobra.Command, _ []string) {
 		mresName := fn.ParseStringFlag(cmd, "resource")
 

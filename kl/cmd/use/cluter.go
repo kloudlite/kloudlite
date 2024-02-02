@@ -9,9 +9,8 @@ import (
 )
 
 var clusterCmd = &cobra.Command{
-	Use:     "cluster",
-	Short:   "Switch cluster",
-	Example: `kl switch cluster`,
+	Use:   "cluster",
+	Short: "Switch cluster",
 	Run: func(cmd *cobra.Command, _ []string) {
 		accountName := fn.ParseStringFlag(cmd, "account")
 		clusterName := fn.ParseStringFlag(cmd, "cluster")

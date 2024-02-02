@@ -15,16 +15,10 @@ import (
 
 var secretCmd = &cobra.Command{
 	Use:   "secret",
-	Short: "get secret entries",
-	Long:  `get secret entries for the selected project`,
-	Example: functions.Desc(`# get secret entries in table
-{cmd} get secret <secretname>
-
-# get secret entries in json format
-{cmd} get secret <secretname> -o json
-
-# get secret entries in yaml format
-{cmd} get secret <secretname> -o yaml`),
+	Short: "Get secret entries",
+	Example: functions.Desc(`  {cmd} get secret <secretname> 		# list secret entries
+  {cmd}  get secret <secretname> -o <format>	# get secret entries in yaml/json format	
+	`),
 	Run: func(cmd *cobra.Command, args []string) {
 		secName := ""
 

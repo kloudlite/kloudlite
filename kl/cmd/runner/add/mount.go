@@ -12,17 +12,11 @@ import (
 )
 
 var mountCommand = &cobra.Command{
-	Use:   "mount",
-	Short: "add mount to your kl-config file by selection from the all the [ config | secret ] available selected project",
-	Long: `Add mount
-This command help you to add generated config so you can get your config or secret downloaded and dumped in a file.
-
-Examples:
-  # add config to download at the time of load
-  kl add mount --configName=<config_name>
-
-  # add secret to download at the time of load
-  kl add mount --secretName=<secret_name>
+	Use:   "config-mount",
+	Short: "Add mount to your kl-config file by selection from the all the [ config | secret ] available in current environemnt",
+	Long:  `This command help you to add generated config so you can get your config or secret downloaded and dumped in a file.`,
+	Example: `
+  kl add mount --configName=<config_name>	# add config to download at the time of load	
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := fn.ParseKlFile(cmd)

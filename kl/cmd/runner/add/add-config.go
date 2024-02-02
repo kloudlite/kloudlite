@@ -15,20 +15,17 @@ import (
 
 var confCmd = &cobra.Command{
 	Use:   "config",
-	Short: "add config to your kl-config file by selection from the all the config available in selected project",
-	Long: `Add env from managed resource
-
-Using this command you are able to add a environment from the config present on your project
-Examples:
-  # add config
-  kl add config
-
-	# add config by providing name of config
-	kl add config --name <name>
-	kl add config <name>
-
-	# add config by providing your key and refkey
-	kl add config <name> --map [ref_key]=[your_local_key]
+	Short: "Add config references to your kl-config",
+	Long: `
+This command will add config entry references from current environement to your kl-config file.
+	`,
+	Example: `
+  kl add config 		# add config and entry by selecting from list
+  kl add config --name <name> 	# add entry by providing config name
+  kl add config <name>		# add all entries of config by providing config name
+  
+  # Customise your mapping to local keys
+  kl add config <name> -m <ref_key>=<your_local_key>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := selectAndAddConfig(cmd, args)

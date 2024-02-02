@@ -9,7 +9,7 @@ import (
 
 var accCmd = &cobra.Command{
 	Use:   "account",
-	Short: "switch account",
+	Short: "Switch account",
 	Run: func(cmd *cobra.Command, _ []string) {
 		accountName := fn.ParseStringFlag(cmd, "account")
 

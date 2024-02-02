@@ -18,9 +18,6 @@ sudo {cmd} vpn start
 # stop vpn
 sudo {cmd} vpn stop
 
-# restart vpn
-sudo {cmd} vpn restart
-
 # status vpn
 sudo {cmd} vpn status
 	  `)
@@ -58,5 +55,5 @@ func init() {
 	InfraCmd.AddCommand(stopCmd)
 	InfraCmd.AddCommand(statusCmd)
 	InfraCmd.AddCommand(activateCmd)
-	InfraCmd.AddCommand(intercept.Cmd)
+	// InfraCmd.AddCommand(intercept.Cmd)
 }

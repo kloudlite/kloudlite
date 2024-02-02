@@ -3,6 +3,7 @@ package list
 import (
 	"errors"
 	"fmt"
+
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/pkg/functions"
@@ -15,14 +16,7 @@ import (
 
 var projectsCmd = &cobra.Command{
 	Use:   "projects",
-	Short: "list all the projects accessible to you in selected account",
-	Long: `list projects
-Examples:
-This command will provide the list of all the projects in selected account. 
-  kl list projects
-
-Note: selected project will be highlighted with green color.
-  `,
+	Short: "Get list of projects in selected account",
 	Run: func(cmd *cobra.Command, args []string) {
 		accountName := ""
 		if len(args) >= 1 {

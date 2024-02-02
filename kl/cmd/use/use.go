@@ -4,12 +4,12 @@ import "github.com/spf13/cobra"
 
 var Cmd = &cobra.Command{
 	Use:   "use",
-	Short: "select env and account",
+	Short: "Select env and account",
 }
 
 var InfraCmd = &cobra.Command{
 	Use:   "use",
-	Short: "select cluster and account",
+	Short: "Select cluster and account",
 }
 
 func init() {

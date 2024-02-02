@@ -18,6 +18,13 @@ var Cmd = &cobra.Command{
 	Example: fn.Desc("{cmd} status"),
 	Run: func(_ *cobra.Command, _ []string) {
 
+		if u, err := server.GetCurrentUser(); err == nil {
+			fn.Logf("\nLogged in as %s (%s)\n\n",
+				text.Blue(u.Name),
+				text.Blue(u.Email),
+			)
+		}
+
 		if s, err := client.CurrentAccountName(); err == nil {
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Account: ")), s))
 		}

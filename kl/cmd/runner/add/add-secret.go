@@ -15,20 +15,17 @@ import (
 
 var secCmd = &cobra.Command{
 	Use:   "secret",
-	Short: "add secret to your kl-config file by selection from the all the secrets available in selected project",
-	Long: `Add env from secret
-
-Using this command you are able to add a environment from the secret present on your project
-Examples:
-  # add secret
-  kl add secret
-
-	# add secret by providing name of secret
-	kl add secret --name <name>
-	kl add secret <name>
-
-	# add secret by providing your key and refkey
-	kl add secret <name> --map [ref_key]=[your_local_key]
+	Short: "Add secret references to your kl-config",
+	Long: `
+This command will add secret entry references from current environement to your kl-config file.
+	`,
+	Example: `
+  kl add secret 		# add secret and entry by selecting from list
+  kl add secret --name <name> 	# add entry by providing secret name
+  kl add secret <name>		# add all entries of config by providing secret name
+  
+  # Customise your mapping to local keys
+  kl add secret <name> -m <ref_key>=<your_local_key>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := selectAndAddSecret(cmd, args)
