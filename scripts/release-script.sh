@@ -74,7 +74,7 @@ if $helm_merge_with_existing_indexes; then
     .entries = (
       .entries | map_values([
                     .[] | select(
-                      (. != null) and (.version != env.RELEASE_TAG)
+                      (. != null) and (.version != env.CHART_VERSION)
                     )
                   ])
     )
