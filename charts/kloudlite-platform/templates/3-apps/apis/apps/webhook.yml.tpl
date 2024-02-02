@@ -15,8 +15,8 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{.Values.apps.webhooksApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.webhooksApi.image.repository}}:{{.Values.apps.webhooksApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev

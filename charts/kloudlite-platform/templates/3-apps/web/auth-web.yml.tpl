@@ -20,8 +20,9 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{.Values.apps.authWeb.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.authWeb.image.repository}}:{{.Values.apps.authWeb.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
+
       resourceCpu:
         min: "100m"
         max: "200m"

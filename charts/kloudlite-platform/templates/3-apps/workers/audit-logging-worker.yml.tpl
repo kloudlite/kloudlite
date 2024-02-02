@@ -10,8 +10,8 @@ spec:
   services: []
   containers:
     - name: main
-      image: {{.Values.apps.auditLoggingWorker.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy}}
+      image: {{.Values.apps.auditLoggingWorker.image.repository}}:{{.Values.apps.auditLoggingWorker.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "50m"
         max: "70m"

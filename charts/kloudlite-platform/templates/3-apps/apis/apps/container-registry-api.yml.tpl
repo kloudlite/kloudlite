@@ -21,8 +21,9 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.containerRegistryApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy}}
+      image: {{.Values.apps.containerRegistryApi.image.repository}}:{{.Values.apps.containerRegistryApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
+
       {{if .Values.global.isDev}}
       args:
        - --dev

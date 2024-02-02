@@ -1,15 +1,15 @@
 {{/* [common tpl helpers] */}}
 
 {{- define "pod-labels" -}}
-{{- (.Values.podLabels | default dict) | toYaml -}}
+{{- (.Values.global.podLabels | default dict) | toYaml -}}
 {{- end -}}
 
 {{- define "node-selector" -}}
-{{- (.Values.nodeSelector | default dict) | toYaml -}}
+{{- (.Values.global.nodeSelector | default dict) | toYaml -}}
 {{- end -}}
 
 {{- define "tolerations" -}}
-{{- (.Values.tolerations | default list) | toYaml -}}
+{{- (.Values.global.tolerations | default list) | toYaml -}}
 {{- end -}}
 
 {{- define "node-selector-and-tolerations" -}}
@@ -27,21 +27,22 @@ tolerations: {{ include "tolerations" . | nindent 2 }}
 {{- printf "%s-tls" .Values.cloudflareWildCardCert.name }}
 {{- end -}}
 
-{{- define "build-router-domain" -}}
-{{- $name := index . 0 -}}
-{{- $baseDomain := index . 1 -}}
-{{- printf "%s.%s" $name $baseDomain -}}
-{{- end -}}
+{{- /* {{- define "build-router-domain" -}} */}}
+{{- /* {{- $name := index . 0 -}} */}}
+{{- /* {{- $baseDomain := index . 1 -}} */}}
+{{- /* {{- printf "%s.%s" $name $baseDomain -}} */}}
+{{- /* {{- end -}} */}}
 
 {{/* [helm: redpanda-operator] */}}
-{{- define "redpanda-operator.name" -}}
-{{- printf "%s-redpanda-operator" .Release.Name -}}
-{{- end -}}
+{{- /* {{- define "redpanda-operator.name" -}} */}}
+{{- /* {{- printf "%s-redpanda-operator" .Release.Name -}} */}}
+{{- /* {{- end -}} */}}
 
 {{/* [helm: cert-manager] */}}
-{{- define "cert-manager.name" -}}
-{{- printf "%s-cert-manager" .Release.Name -}}
-{{- end -}}
+{{- /* {{- define "cert-manager.name" -}} */}}
+{{- /* {{- printf "%s-cert-manager" .Release.Name -}} */}}
+{{- /* {{- end -}} */}}
+{{- /**/}}
 
 {{/* helm: ingress-nginx */}}
 {{- define "ingress-nginx.name" -}}
@@ -99,29 +100,44 @@ requiredDuringSchedulingIgnoredDuringExecution:
             - "true"
 {{- end }}
 
-{{- define "observability-annotations-resource" -}}
+{{- /* {{- define "observability-annotations-resource" -}} */}}
+{{- /**/}}
+{{- /* {{- $resourceName := index . 0 }} */}}
+{{- /* {{- $resourceType := index . 1 }} */}}
+{{- /* {{- $resourceComponent := "" }} */}}
+{{- /* {{- if gt (len .) 2 }} */}}
+{{- /* {{- $resourceComponent := index . 2 }} */}}
+{{- /* {{- end }} */}}
+{{- /**/}}
+{{- /* kloudlite.io/resource_name: {{$resourceName}} */}}
+{{- /* kloudlite.io/resource_type: {{$resourceType}} */}}
+{{- /* {{- if $resourceComponent }} */}}
+{{- /* kloudlite.io/resource_component: {{$resourceComponent}} */}}
+{{- /* {{- end }} */}}
+{{- /**/}}
+{{- /* {{- end }} */}}
 
-{{- $resourceName := index . 0 }}
-{{- $resourceType := index . 1 }}
-{{- $resourceComponent := "" }}
-{{- if gt (len .) 2 }}
-{{- $resourceComponent := index . 2 }}
-{{- end }}
 
-kloudlite.io/resource_name: {{$resourceName}}
-kloudlite.io/resource_type: {{$resourceType}}
-{{- if $resourceComponent }}
-kloudlite.io/resource_component: {{$resourceComponent}}
-{{- end }}
-
-{{- end }}
-
-
-{{- define "msg-office-platform-access-token" -}}
-{{ printf "account=%s;cluster=%s;platform-token=%s" .Values.accountName .Values.clusterName .Values.apps.messageOfficeApi.configuration.platformAccessToken }}
-{{- end -}}
+{{- /* {{- define "msg-office-platform-access-token" -}} */}}
+{{- /* {{ printf "account=%s;cluster=%s;platform-token=%s" .Values.accountName .Values.clusterName .Values.apps.messageOfficeApi.configuration.platformAccessToken }} */}}
+{{- /* {{- end -}} */}}
 
 {{- define "router-domain" -}}
 {{ .Values.global.routerDomain | default .Values.global.baseDomain }}
 {{- end -}}
 
+{{- define "image-tag" -}}
+{{ .Values.global.kloudlite_release | default .Chart.AppVersion }}
+{{- end -}}
+
+{{- define "image-pull-policy" -}}
+{{- if .Values.global.imagePullPolicy -}}
+{{- .Values.global.imagePullPolicy}}
+{{- else -}}
+{{- if hasSuffix "-nightly" (include "image-tag" .) -}}
+{{- "Always" }}
+{{- else -}}
+{{- "IfNotPresent" }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
