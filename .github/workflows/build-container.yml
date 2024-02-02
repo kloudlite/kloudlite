@@ -117,4 +117,4 @@ jobs:
 
           cd .github/workflows/container-build
           task go-container-build Image="$image_name:$IMAGE_TAG"
-          task go-container-build Image="$image_name:commit-${GITHUB_SHA}"
+          # task go-container-build Image="$image_name:commit-${GITHUB_SHA}"
