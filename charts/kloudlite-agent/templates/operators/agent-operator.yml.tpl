@@ -13,8 +13,10 @@ kind: Secret
 metadata:
   name: k3s-params
   namespace: {{.Release.Namespace}}
-data: {{ $k3sParams.data }}
+data: {{ $k3sParams.data | toYaml | nindent 2 }}
+
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -92,11 +94,8 @@ spec:
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
 
-            - name: INFRA_DEVICE_NAMESPACE
-              value: {{.Values.operators.agentOperator.configuration.wireguard.infraDeviceNamespace}}
-
-            - name: CONSOLE_DEVICE_NAMESPACE
-              value: {{.Values.operators.agentOperator.configuration.wireguard.consoleDeviceNamespace}}
+            - name: DEVICE_NAMESPACE
+              value: {{.Values.operators.agentOperator.configuration.wireguard.deviceNamespace}}
 
             - name: CLUSTER_NAME
               valueFrom:
