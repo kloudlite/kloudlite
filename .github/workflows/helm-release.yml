@@ -108,8 +108,7 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CHART_VERSION: ${{github.event.inputs.chart_version}}
           PRE_RELEASE: ${{ github.event.inputs.prerelease }}
-          # OVERWRITE_RELEASE_ASSETS: ${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
-          OVERWRITE_RELEASE_ASSETS: ${{ endsWith(github.ref, "-nightly") }}
+          OVERWRITE_RELEASE_ASSETS: ${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
           HELM_MERGE_WITH_EXISTING_RELEASES: ${{ github.event.inputs.helm_merge_with_existing_indexes }}
           RELEASE_TITLE: "kloudlite-helm-charts"
 
