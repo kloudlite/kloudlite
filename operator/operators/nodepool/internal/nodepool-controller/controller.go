@@ -24,7 +24,6 @@ import (
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -247,31 +246,7 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 	checksum := nodesChecksum(nodesMap)
 
-	accessKey, err := func() (string, error) {
-		s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderAccessKey.Namespace, obj.Spec.IAC.CloudProviderAccessKey.Name), &corev1.Secret{})
-		if err2 != nil {
-			return "", err2
-		}
-
-		return string(s.Data[obj.Spec.IAC.CloudProviderAccessKey.Key]), nil
-	}()
-	if err != nil {
-		return fail(err)
-	}
-
-	secretKey, err := func() (string, error) {
-		s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderSecretKey.Namespace, obj.Spec.IAC.CloudProviderSecretKey.Name), &corev1.Secret{})
-		if err2 != nil {
-			return "", err2
-		}
-
-		return string(s.Data[obj.Spec.IAC.CloudProviderSecretKey.Key]), nil
-	}()
-	if err != nil {
-		return fail(err)
-	}
-
-	varfileJson, err := r.parseSpecToVarFileJson(ctx, obj, nodesMap, accessKey, secretKey)
+	varfileJson, err := r.parseSpecToVarFileJson(ctx, obj, nodesMap)
 	if err != nil {
 		return fail(err).Err(nil)
 	}
@@ -300,23 +275,15 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 				labelNodePoolApplyJob:     "true",
 				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
 			},
-			// "annotations": obj.Annotations,
+
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 			"job-node-selector": constants.K8sMasterNodeSelector,
-
-			// "aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
-			// "aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
-			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
-			// "aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
 
 			"nodepool-name":            obj.Name,
 			"tfstate-secret-namespace": r.Env.TFStateSecretNamespace,
 
 			"iac-job-image": r.Env.IACJobImage,
-
-			"aws-s3-access-key": accessKey,
-			"aws-s3-secret-key": secretKey,
 
 			"values.json": string(varfileJson),
 		})
@@ -382,7 +349,7 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	return req.Next()
 }
 
-func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string]clustersv1.NodeProps, accessKey, secretKey string) (string, error) {
+func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string]clustersv1.NodeProps) (string, error) {
 	if obj.Spec.AWS == nil {
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
@@ -450,6 +417,7 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 	}
 
 	variables := map[string]any{
+		// INFO: there will be no aws_access_key, aws_secret_key thing, as we expect this autoscaler to run on AWS instances configured with proper IAM instance profile
 		// "aws_access_key":             nil,
 		// "aws_secret_key":             nil,
 		"aws_region":                 ev.CloudProviderRegion,
@@ -469,14 +437,6 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 		},
 	}
 
-	if accessKey != "" {
-		variables["aws_access_key"] = accessKey
-	}
-
-	if secretKey != "" {
-		variables["aws_secret_key"] = secretKey
-	}
-
 	b, err := json.Marshal(variables)
 	if err != nil {
 		return "", err
@@ -485,7 +445,25 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 	return string(b), nil
 }
 
-func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps, accessKey, secretKey string) (string, error) {
+// func (r *Reconciler) getAccessAndSecretKey(ctx context.Context, obj *clustersv1.NodePool) (accessKey string, secretKey string, err error) {
+// 	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.AccessKey.Namespace, obj.Spec.IAC.AccessKey.Name), &corev1.Secret{})
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+//
+// 	accessKey = string(s.Data[obj.Spec.IAC.AccessKey.Key])
+//
+// 	s, err = rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.SecretKey.Namespace, obj.Spec.IAC.SecretKey.Name), &corev1.Secret{})
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+//
+// 	secretKey = string(s.Data[obj.Spec.IAC.SecretKey.Key])
+//
+// 	return accessKey, secretKey, nil
+// }
+
+func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps) (string, error) {
 	var poolList clustersv1.NodePoolList
 	if err := r.List(ctx, &poolList); err != nil {
 		return "", client.IgnoreNotFound(err)
@@ -493,8 +471,9 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
-		return toAWSVarfileJson(obj, r.Env, nodesMap, accessKey, secretKey)
+		return toAWSVarfileJson(obj, r.Env, nodesMap)
 	default:
+		// accessKey, secretKey, err := r.getAccessAndSecretKey(ctx, obj)
 		return "", fmt.Errorf("unsupported cloud provider: %s", obj.Spec.CloudProvider)
 	}
 }
