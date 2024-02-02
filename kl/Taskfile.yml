@@ -6,11 +6,11 @@ tasks:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kl-build && echo '# build success' || exit"
   kl-build:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.0-nightly -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
+      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
 
   kli-dev:
     cmds:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kli-build && echo '# build success' || exit"
   kli-build:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.0-nightly -X github.com/kloudlite/kl/flags.CliName=kli" -o ./bin/kli main.go 
+      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kli" -o ./bin/kli main.go 

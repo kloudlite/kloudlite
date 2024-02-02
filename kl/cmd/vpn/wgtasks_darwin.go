@@ -7,9 +7,9 @@ import (
 
 func connect(verbose bool, options ...fn.Option) error {
 
-	// if err := wg_svc.EnsureInstalled(); err != nil {
-	// 	return err
-	// }
+	if err := wg_svc.EnsureInstalled(); err != nil {
+		return err
+	}
 
 	if err := wg_svc.EnsureAppRunning(); err != nil {
 		return err
@@ -31,9 +31,9 @@ func connect(verbose bool, options ...fn.Option) error {
 }
 
 func disconnect(verbose bool) error {
-	// if err := wg_svc.EnsureInstalled(); err != nil {
-	// 	return err
-	// }
+	if err := wg_svc.EnsureInstalled(); err != nil {
+		return err
+	}
 
 	if err := wg_svc.EnsureAppRunning(); err != nil {
 		return err

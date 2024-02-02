@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
@@ -30,7 +31,7 @@ func ensureInstalled() error {
 		}
 	}
 
-	if _, err := os.Stat(path.Join(appPath, "kloudlite")); err != nil {
+	if _, err := os.Stat(path.Join(appPath, "kloudlite.app")); err != nil {
 		if os.IsNotExist(err) {
 			return installApp()
 		}
@@ -57,7 +58,8 @@ func installApp() error {
 		}
 	}()
 
-	specUrl := fmt.Sprint("https://github.com/kloudlite/vpn-app/release/", flags.Version, ".zip")
+	specUrl := fmt.Sprint("https://github.com/kloudlite/vpn-app/releases/download/", flags.Version, "/kloudlite_macos.zip")
+	fmt.Println(specUrl)
 	resp, err := http.Get(specUrl)
 	if err != nil {
 		return err
@@ -84,7 +86,7 @@ func installApp() error {
 		return err
 	}
 
-	if err := zip.Unzip(path.Join(configFolder, "app", "kloudlite.zip")); err != nil {
+	if err := zip.Unzip(path.Join(configFolder, "app", "kloudlite.zip"), path.Join(configFolder, "app")); err != nil {
 		return err
 	}
 
@@ -95,6 +97,17 @@ func installApp() error {
 }
 
 func startApp() error {
+
+	fn.Log("[#] starting app")
+	success := false
+	defer func() {
+		if success {
+			fn.Log("[#] app started successfully")
+		} else {
+			fn.Log("[#] failed to start app")
+		}
+	}()
+
 	configFolder, err := client.GetConfigFolder()
 	if err != nil {
 		return err
@@ -112,9 +125,16 @@ func startApp() error {
 		return err
 	}
 
-	if err := fn.ExecCmd(fmt.Sprintf("start %s", appPath), nil, false); err != nil {
+	if err := fn.ExecCmd(fmt.Sprintf("open %s", appPath), nil, false); err != nil {
 		return err
 	}
 
-	return nil
+	time.Sleep(5 * time.Second)
+
+	if isReady() {
+		success = true
+		return nil
+	}
+
+	return fmt.Errorf("app not started")
 }
