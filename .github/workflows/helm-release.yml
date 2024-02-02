@@ -14,7 +14,7 @@ on:
         type: string
         description: "helm chart appVersion for this release"
         required: true
-        default: "${{ github.ref }}"
+        default: "v1.0.5-nightly"
 
       overwrite_existing_release_assets_if_applicable:
         type: boolean
