@@ -48,9 +48,9 @@ type AWSNodePoolConfig struct {
 	SpotPool *AwsSpotPoolConfig `json:"spotPool,omitempty"`
 }
 
-type InfrastuctureAsCode struct {
-	CloudProviderAccessKey ct.SecretKeyRef `json:"cloudProviderAccessKey"`
-	CloudProviderSecretKey ct.SecretKeyRef `json:"cloudProviderSecretKey"`
+type Credentials struct {
+	AccessKey ct.SecretKeyRef `json:"accessKey"`
+	SecretKey ct.SecretKeyRef `json:"secretKey"`
 }
 
 type OperatorVars struct {
@@ -67,10 +67,12 @@ type NodePoolSpec struct {
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
 	NodeTaints []corev1.Taint    `json:"nodeTaints,omitempty"`
 
-	IAC InfrastuctureAsCode `json:"iac" graphql:"noinput"`
+	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
-	CloudProvider ct.CloudProvider   `json:"cloudProvider"`
-	AWS           *AWSNodePoolConfig `json:"aws,omitempty"`
+	AWS *AWSNodePoolConfig `json:"aws,omitempty"`
+	// GCP *GCPNodePoolConfig `json:"gcp,omitempty"`
+	// Azure *AzureNodePoolConfig `json:"azure,omitempty"`
+	// DigitalOcean *DigitalOceanNodePoolConfig `json:"digitalocean,omitempty"`
 }
 
 // +kubebuilder:object:root=true
