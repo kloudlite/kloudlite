@@ -39,7 +39,7 @@ jobs:
         goarch: ${{ matrix.goarch }}
         goversion: "https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz"
         project_path: "."
-        ldflags: "-X github.com/kloudlite/kl/constants.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ steps.determine_cli.outputs.CLI_TO_BUILD }}"
+        ldflags: "-X github.com/kloudlite/kl/constants.flags=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ steps.determine_cli.outputs.CLI_TO_BUILD }}"
         binary_name: ${{ steps.determine_cli.outputs.CLI_TO_BUILD }}
         extra_files: LICENSE README.md
 
