@@ -143,6 +143,7 @@ jobs:
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
+          set +e
           IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
 
           OVERRIDE_PUSHED_IMAGE=false
@@ -152,16 +153,23 @@ jobs:
             OVERRIDE_PUSHED_IMAGE=true
           fi
 
-          image_name="ghcr.io/kloudlite/operator/${{matrix.app}}"
+          image_name="ghcr.io/kloudlite/operator/${{matrix.name}}"
 
-          docker manifest inspect $image_name:$IMAGE_TAG
+          echo "PRE........."
+          docker manifest inspect "$image_name:$IMAGE_TAG"
+          echo "POST........."
           if [ $? -eq 0 ]; then
             [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
             echo "image exists, but override pushed image is set to true. proceeding with building image"
           fi
 
+          set -e
+
+          echo "proceeding to build image"
+
           cd .github/workflows/container-build
 
+          echo "inside directory"
           upx ./app
-          task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:$version_string"
-          # task go-container-build Image="ghcr.io/kloudlite/operator/${{matrix.name}}:commit-${GITHUB_SHA}"
+          task go-container-build Image="$image_name:$IMAGE_TAG"
+          # task go-container-build Image="$image_name:commit-${GITHUB_SHA}"
