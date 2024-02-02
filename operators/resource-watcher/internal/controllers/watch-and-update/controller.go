@@ -171,7 +171,6 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 	case DeviceGVK.String():
 		{
-			// dispatch to infra
 			deviceConfig := &corev1.Secret{}
 			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
 				r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
@@ -185,20 +184,17 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				}
 			}
 
-			switch obj.GetNamespace() {
-			case r.Env.DeviceNamespace:
-				err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Object:      obj.Object,
-				})
-				return ctrl.Result{}, err
-			default:
-				{
-					r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
-					return ctrl.Result{}, nil
-				}
+			if obj.GetNamespace() != r.Env.DeviceNamespace {
+				r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
+				return ctrl.Result{}, nil
 			}
+
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
 		}
 
 	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
