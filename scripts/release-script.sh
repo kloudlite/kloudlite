@@ -3,7 +3,7 @@
 # set -o errexit
 # set -o pipefail
 
-release_tag="${RELEASE_TAG}"
+chart_version="${CHART_VERSION}"
 pre_release=${PRE_RELEASE}
 overwrite_release_assets=${OVERWRITE_RELEASE_ASSETS}
 helm_merge_with_existing_indexes=${HELM_MERGE_WITH_EXISTING_INDEXES}
@@ -15,9 +15,14 @@ github_repository="${github_repo_owner}/${github_repo_name}"
 
 opts=("-R" "${github_repository}")
 
-release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$release_tag\s+" || echo -n "") | awk '{print $3}')
+echo "$chart_version" | grep -i '\-nightly$'
+if [ $? -eq 0 ]; then
+	overwrite_release_assets=true
+fi
+
+release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$chart_version\s+" || echo -n "") | awk '{print $3}')
 if [[ -z $release ]]; then
-	echo "going to create release, as RELEASE ($release_tag) does not exist"
+	echo "going to create release, as RELEASE ($chart_version) does not exist"
 	createOpts="${opts[@]}"
 	if $pre_release; then
 		createOpts+=("--prerelease")
@@ -27,8 +32,8 @@ if [[ -z $release ]]; then
 	fi
 	createOpts+=("--notes" "'$RELEASE_NOTES'")
 
-	echo "creating github release with cmd: \`gh release create $release_tag ${createOpts[@]}\` "
-	eval gh release create "$release_tag" ${createOpts[@]} --generate-notes
+	echo "creating github release with cmd: \`gh release create $chart_version ${createOpts[@]}\` "
+	eval gh release create "$chart_version" ${createOpts[@]} --generate-notes
 else
 	echo "release $release exists, going to build charts, now"
 fi
@@ -46,8 +51,8 @@ if $overwrite_release_assets; then
 	uploadOpts+=("--clobber")
 fi
 
-echo "uploading packaged helm-charts with cmd: \`gh release upload $release_tag ${uploadOpts[*]} $tar_dir/*.tgz\`"
-gh release upload "$release_tag" ${uploadOpts[@]} $tar_dir/*.tgz
+echo "uploading packaged helm-charts with cmd: \`gh release upload $chart_version ${uploadOpts[*]} $tar_dir/*.tgz\`"
+gh release upload "$chart_version" ${uploadOpts[@]} $tar_dir/*.tgz
 
 ## updating CRDs
 rm -rf crds/crds-all.yml
@@ -56,7 +61,7 @@ for file in crds/*; do
 	echo "---" >>crds/crds-all.yml
 done
 
-gh release upload "$release_tag" ${uploadOpts[@]} crds/*.yml
+gh release upload "$chart_version" ${uploadOpts[@]} crds/*.yml
 
 if $helm_merge_with_existing_indexes; then
 	# remove entries related to the current release_tag, for all the charts
@@ -69,7 +74,7 @@ if $helm_merge_with_existing_indexes; then
     .entries = (
       .entries | map_values([
                     .[] | select(
-                      (. != null) and (.appVersion != env.RELEASE_TAG)
+                      (. != null) and (.version != env.RELEASE_TAG)
                     )
                   ])
     )
@@ -77,7 +82,7 @@ if $helm_merge_with_existing_indexes; then
 fi
 
 # helm repo index --debug $tar_dir --url "https://github.com/${github_repository}/releases/download/${release_tag}" --merge $tar_dir/index.yaml
-helm repo index --debug $tar_dir --url "https://github.com/${github_repository}/releases/download/${release_tag}"
+helm repo index --debug $tar_dir --url "https://github.com/${github_repository}/releases/download/${chart_version}"
 
 cp $tar_dir/index.yaml $tar_dir/new-index.yaml
 keys=$(cat $tar_dir/index.yaml | yq '.entries | keys |.[]' -r)
@@ -94,7 +99,7 @@ cat $tar_dir/index.yaml
 
 mkdir -p .static-pages
 cp $tar_dir/index.yaml .static-pages/index.yaml
-gh release upload "$release_tag" ${uploadOpts[@]} .static-pages/index.yaml
+gh release upload "$chart_version" ${uploadOpts[@]} .static-pages/index.yaml
 
 cat >.static-pages/index.html <<EOF
 <html>
@@ -108,4 +113,4 @@ cat >.static-pages/index.html <<EOF
 </html>
 EOF
 
-gh release upload "$release_tag" ${uploadOpts[@]} .static-pages/index.html
+gh release upload "$chart_version" ${uploadOpts[@]} .static-pages/index.html
