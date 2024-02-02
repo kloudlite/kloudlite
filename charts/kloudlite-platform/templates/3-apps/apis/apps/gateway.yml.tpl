@@ -17,8 +17,8 @@ spec:
       name: http
   containers:
     - name: main
-      image: {{.Values.apps.gatewayApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.gatewayApi.image.repository}}:{{.Values.apps.gatewayApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev

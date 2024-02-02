@@ -21,8 +21,8 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.authApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.authApi.image.repository}}:{{.Values.apps.authApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev
@@ -36,12 +36,12 @@ spec:
       env:
         - key: MONGO_URI
           type: secret
-          refName: mres-auth-db-creds
+          refName: mres-{{.Values.envVars.db.authDB}}-creds
           refKey: URI
 
         - key: MONGO_DB_NAME
           type: secret
-          refName: mres-auth-db-creds
+          refName: mres-{{.Values.envVars.db.authDB}}-creds
           refKey: DB_NAME
 
         - key: COMMS_SERVICE
@@ -66,8 +66,7 @@ spec:
           value: {{.Values.envVars.nats.url}}
 
         - key: ORIGINS
-          {{/* value: "https://{{.AuthWebDomain}},http://localhost:4001,https://studio.apollographql.com" */}}
-          value: "https://kloudlite.io,http://localhost:4001,https://studio.apollographql.com"
+          value: "https://kloudlite.io,https://studio.apollographql.com"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"

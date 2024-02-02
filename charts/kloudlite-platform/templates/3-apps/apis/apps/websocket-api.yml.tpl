@@ -16,8 +16,8 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.websocketApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.websocketApi.image.repository}}:{{.Values.apps.websocketApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "50m"
         max: "80m"

@@ -19,12 +19,12 @@ spec:
       type: tcp
   containers:
     - name: main
+      image: {{.Values.apps.accountsApi.image.repository}}:{{.Values.apps.accountsApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev
       {{end}}
-      image: {{.Values.apps.accountsApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
       resourceCpu:
         min: "50m"
         max: "80m"
