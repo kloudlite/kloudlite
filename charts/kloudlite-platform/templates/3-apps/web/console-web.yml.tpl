@@ -16,8 +16,8 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{.Values.apps.consoleWeb.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.consoleWeb.image.repository}}:{{.Values.apps.consoleWeb.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       resourceCpu:
         min: "100m"
         max: "200m"

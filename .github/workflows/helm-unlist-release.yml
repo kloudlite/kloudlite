@@ -4,7 +4,7 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      release_tag:
+      chart_version:
         type: string
         description: "release tag that has to be unlisted"
         required: true
@@ -64,7 +64,7 @@ jobs:
           set -o pipefail
           set -o errexit
 
-          RELEASE_TAG=${{ github.event.inputs.release_tag }}
+          RELEASE_TAG=${{ github.event.inputs.chart_version }}
           DELETE_GITHUB_RELEASE=${{ github.event.inputs.delete_github_release }}
           DELETE_GITHUB_RELEASE_TAG=${{ github.event.inputs.delete_github_release_tag }}
 
@@ -81,7 +81,7 @@ jobs:
             .entries = (
               .entries | map_values([
                             .[] | select(
-                              (. != null) and (.appVersion != env.RELEASE_TAG)
+                              (. != null) and (.version != env.RELEASE_TAG)
                             )
                          ])
             )

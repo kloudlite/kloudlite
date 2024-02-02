@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added [charts/kloudlite-platform]
 
+- image tag, now uses `.Values.global.kloudlite_release` if present otherwise `.chart.AppVersion`.
+- imagePullPolicy is autoconfigured to `Always`, when image tag is like `-nightly$`, otherwise it is `IfNotPresent`.
+
 - nodepool CRD updates, and `stateful` nodepool CR updates (due to change in CRD)
 - cluster issuer, and cloudflare wildcard certificate, now honours `.Values.global.routerDomain`, when provided
 - [charts/kloudlite-autoscalers] has been included as a part of this release, as it is now critical for nodes provisioning via nodepool
@@ -22,4 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [helm/nats] jetstream volume size is now configurable via helm values.
 - [helm/mongodb] storage size is now configurable via helm values.
 
-[charts/kloudlite-agent](./charts/kloudlite-agent)
+[charts/kloudlite-agent]: ./charts/kloudlite-agent
+[charts/kloudlite-platform]: ./charts/kloudlite-platform
+[charts/kloudlite-autoscalers]: ./charts/kloudlite-autoscalers
+[crds]: ./crds

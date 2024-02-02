@@ -44,12 +44,12 @@ data:
   value: message-office.{{include "router-domain" .}}:443
 
 - name: KL_AWS_ACCESS_KEY
-  value: {{ required ".Values.aws.accessKey" .Values.aws.accessKey }} 
+  value: {{ required ".Values.aws.accessKey" .Values.aws.accessKey }}
 
 - name: KL_AWS_SECRET_KEY
-  value: {{ required ".Values.aws.secretKey" .Values.aws.secretKey }} 
+  value: {{ required ".Values.aws.secretKey" .Values.aws.secretKey }}
 
 - name: IAC_JOB_IMAGE
-  value: {{$clusterOperatorVars.jobImage }}
+  value: {{.Values.operators.platformOperator.configuration.cluster.jobImage.repository}}:{{.Values.operators.platformOperator.configuration.cluster.jobImage.tag | default (include "image-tag" .) }}
 
 {{- end -}}
