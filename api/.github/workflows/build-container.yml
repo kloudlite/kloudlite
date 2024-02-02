@@ -111,8 +111,8 @@ jobs:
 
           docker manifest inspect $image_name:$IMAGE_TAG
           if [ $? -eq 0 ]; then
-            echo "image already exists"
             [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
           fi
 
           cd .github/workflows/container-build
