@@ -155,36 +155,6 @@ spec:
                 - azure
                 - gcp
                 type: string
-              iac:
-                properties:
-                  cloudProviderAccessKey:
-                    properties:
-                      key:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - key
-                    - name
-                    type: object
-                  cloudProviderSecretKey:
-                    properties:
-                      key:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - key
-                    - name
-                    type: object
-                required:
-                - cloudProviderAccessKey
-                - cloudProviderSecretKey
-                type: object
               maxCount:
                 minimum: 0
                 type: integer
@@ -223,7 +193,6 @@ spec:
                 type: array
             required:
             - cloudProvider
-            - iac
             - maxCount
             - minCount
             type: object
