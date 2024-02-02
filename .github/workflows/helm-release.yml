@@ -34,6 +34,10 @@ on:
         required: false
         default: true
 
+  push:
+    branches:
+      - "release-**"
+
 permissions:
   contents: write
   id-token: write
@@ -88,20 +92,24 @@ jobs:
           curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
 
       - name: update version and appVersion in charts' Chart.yaml
+        env:
+          CHART_VERSION: ${{ github.event.inputs.chart_version }}
+          APP_VERSION: ${{ github.event.inputs.chart_app_version }}
         run: |+
           for dir in $(ls -d charts/*); do
             pushd $dir
-            sed -i "s/^version:.*/version: ${{ github.event.inputs.chart_version }}/g" Chart.yaml
-            sed -i "s/^appVersion:.*/appVersion: ${{ github.event.inputs.chart_app_version }}/g" Chart.yaml
+            sed -i "s/^version:.*/version: ${CHART_VERSION}/g" Chart.yaml
+            sed -i "s/^appVersion:.*/appVersion: ${APP_VERSION}/g" Chart.yaml
             popd
           done
 
       - name: Releasing Helm Charts
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          RELEASE_TAG: ${{github.event.inputs.chart_version}}
+          CHART_VERSION: ${{github.event.inputs.chart_version}}
           PRE_RELEASE: ${{ github.event.inputs.prerelease }}
-          OVERWRITE_RELEASE_ASSETS: ${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
+          # OVERWRITE_RELEASE_ASSETS: ${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
+          OVERWRITE_RELEASE_ASSETS: ${{ endsWith(github.ref, "-nightly") }}
           HELM_MERGE_WITH_EXISTING_RELEASES: ${{ github.event.inputs.helm_merge_with_existing_indexes }}
           RELEASE_TITLE: "kloudlite-helm-charts"
 
