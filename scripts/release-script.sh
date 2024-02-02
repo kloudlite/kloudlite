@@ -63,23 +63,21 @@ done
 
 gh release upload "$chart_version" ${uploadOpts[@]} crds/*.yml
 
-if $helm_merge_with_existing_indexes; then
-	# remove entries related to the current release_tag, for all the charts
-	index_file_url="https://${github_repo_owner}.github.io/${github_repo_name}/index.yaml"
-	curl -f -L0 "$index_file_url" >$tar_dir/index.yaml
-	echo "+++++++ current: index.yaml"
-	cat $tar_dir/index.yaml
+# remove entries related to the current release_tag, for all the charts
+index_file_url="https://${github_repo_owner}.github.io/${github_repo_name}/index.yaml"
+curl -f -L0 "$index_file_url" >$tar_dir/index.yaml
+echo "+++++++ current: index.yaml"
+cat $tar_dir/index.yaml
 
-	cat $tar_dir/index.yaml | yq '. | (
-    .entries = (
-      .entries | map_values([
-                    .[] | select(
-                      (. != null) and (.version != env.CHART_VERSION)
-                    )
-                  ])
-    )
-  )' -y >$tar_dir/old-index.yaml
-fi
+cat $tar_dir/index.yaml | yq '. | (
+  .entries = (
+    .entries | map_values([
+                  .[] | select(
+                    (. != null) and (.version != env.CHART_VERSION)
+                  )
+                ])
+  )
+)' -y >$tar_dir/old-index.yaml
 
 # helm repo index --debug $tar_dir --url "https://github.com/${github_repository}/releases/download/${release_tag}" --merge $tar_dir/index.yaml
 helm repo index --debug $tar_dir --url "https://github.com/${github_repository}/releases/download/${chart_version}"

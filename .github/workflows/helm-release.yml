@@ -22,12 +22,6 @@ on:
         required: false
         default: false
 
-      helm_merge_with_existing_indexes:
-        type: boolean
-        description: "Should Merge Helm Index with Existing Indexes from index.yaml, if applicable"
-        required: false
-        default: true
-
       prerelease:
         type: boolean
         description: "should this release be marked as pre-release"
