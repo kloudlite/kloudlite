@@ -1,14 +1,42 @@
 package vpn
 
 import (
-	"errors"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	wg_svc "github.com/kloudlite/kl/pkg/wg_vpn/wg_service"
 )
 
 func connect(verbose bool, options ...fn.Option) error {
-	return errors.New("This command is not available for windows, will be available soon")
+	if err := wg_svc.EnsureInstalled(); err != nil {
+		return err
+	}
+
+	if err := wg_svc.EnsureAppRunning(); err != nil {
+		return err
+	}
+
+	success := false
+	defer func() {
+		if !success {
+			_ = wg_svc.StopVpn(verbose)
+		}
+	}()
+
+	if err := startConfiguration(connectVerbose, options...); err != nil {
+		return err
+	}
+
+	success = true
+	return nil
 }
 
 func disconnect(verbose bool) error {
-	return errors.New("This command is not available for windows, will be available soon")
+	if err := wg_svc.EnsureInstalled(); err != nil {
+		return err
+	}
+
+	if err := wg_svc.EnsureAppRunning(); err != nil {
+		return err
+	}
+
+	return wg_svc.StopVpn(verbose)
 }

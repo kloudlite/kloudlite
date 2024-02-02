@@ -6,20 +6,25 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"syscall"
+	"time"
+	"unsafe"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
+	"github.com/kloudlite/kl/pkg/zip"
 )
 
 func ensureInstalled() error {
+
 	configFolder, err := client.GetConfigFolder()
 	if err != nil {
 		return err
 	}
 
-	appPath := path.Join(configFolder, "app")
+	appPath := path.Join(configFolder, "app", "kloudlite")
 
 	if _, err := os.Stat(appPath); err != nil {
 		if os.IsNotExist(err) {
@@ -29,7 +34,7 @@ func ensureInstalled() error {
 		}
 	}
 
-	if _, err := os.Stat(path.Join(appPath, "kloudlite")); err != nil {
+	if _, err := os.Stat(path.Join(appPath, "kloudlite_vpn.exe")); err != nil {
 		if os.IsNotExist(err) {
 			return installApp()
 		}
@@ -56,7 +61,8 @@ func installApp() error {
 		}
 	}()
 
-	specUrl := fmt.Sprint("https://github.com/kloudlite/vpn-app/release/", flags.Version, ".zip")
+	specUrl := fmt.Sprint("https://github.com/kloudlite/vpn-app/releases/download/", flags.Version, "/kloudlite_windows.zip")
+	fmt.Println(specUrl)
 	resp, err := http.Get(specUrl)
 	if err != nil {
 		return err
@@ -64,7 +70,8 @@ func installApp() error {
 
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("failed to download app")
+
+		return fmt.Errorf("failed to download app, status code: %d", resp.StatusCode)
 	}
 
 	configFolder, err := client.GetConfigFolder()
@@ -82,17 +89,34 @@ func installApp() error {
 		return err
 	}
 
+	if err := zip.Unzip(path.Join(configFolder, "app", "kloudlite.zip"), path.Join(configFolder, "app")); err != nil {
+		return err
+	}
+
+	_ = os.Remove(path.Join(configFolder, "app", "kloudlite.zip"))
+
 	success = true
 	return nil
 }
 
 func startApp() error {
+
+	fn.Log("[#] starting service")
+	success := false
+	defer func() {
+		if success {
+			fn.Log("[#] service started successfully")
+		} else {
+			fn.Log("[#] failed to start service")
+		}
+	}()
+
 	configFolder, err := client.GetConfigFolder()
 	if err != nil {
 		return err
 	}
 
-	appPath := path.Join(configFolder, "app", "kloudlite.app")
+	appPath := path.Join(configFolder, "app", "kloudlite", "kloudlite_vpn.exe")
 
 	if _, err := os.Stat(appPath); err != nil {
 		if os.IsNotExist(err) {
@@ -104,9 +128,71 @@ func startApp() error {
 		return err
 	}
 
-	if err := fn.ExecCmd(fmt.Sprintf("start %s", appPath), nil, false); err != nil {
+	if err := ShellExecute("runas", appPath, "", "", 1); err != nil {
 		return err
 	}
 
+	// if err := fn.ExecCmd(fmt.Sprintf("runas %s", appPath), nil, false); err != nil {
+	// 	return err
+	// }
+
+	count := 0
+	for {
+		if count == 5 || isReady() {
+			break
+		}
+		time.Sleep(1 * time.Second)
+		count += 1
+	}
+
+	if isReady() {
+		success = true
+		return nil
+	}
+
+	return fmt.Errorf("failed to start service")
+}
+
+var (
+	shell32           = syscall.NewLazyDLL("shell32.dll")
+	procShellExecuteW = shell32.NewProc("ShellExecuteW")
+)
+
+func ShellExecute(operation, file, parameters, directory string, showCmd int) error {
+	op, err := syscall.UTF16PtrFromString(operation)
+	if err != nil {
+		return err
+	}
+	f, err := syscall.UTF16PtrFromString(file)
+	if err != nil {
+		return err
+	}
+	p, err := syscall.UTF16PtrFromString(parameters)
+	if err != nil {
+		return err
+	}
+	d, err := syscall.UTF16PtrFromString(directory)
+	if err != nil {
+		return err
+	}
+	ret, _, _ := procShellExecuteW.Call(
+		0,
+		uintptr(unsafe.Pointer(op)),
+		uintptr(unsafe.Pointer(f)),
+		uintptr(unsafe.Pointer(p)),
+		uintptr(unsafe.Pointer(d)),
+		uintptr(showCmd),
+	)
+	if ret <= 32 {
+		return syscall.GetLastError()
+	}
 	return nil
+}
+
+func main() {
+	// Attempt to open Notepad as an Administrator.
+	err := ShellExecute("runas", "notepad.exe", "", "", 1)
+	if err != nil {
+		panic(err)
+	}
 }

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
+	"github.com/adrg/xdg"
 	fn "github.com/kloudlite/kl/pkg/functions"
 
 	"sigs.k8s.io/yaml"
@@ -59,16 +61,21 @@ func GetConfigFolder() (configFolder string, err error) {
 	homePath := ""
 
 	// fetching homePath
-	{
+	if err := func() error {
+		if runtime.GOOS == "windows" {
+			homePath = xdg.CacheHome
+			return nil
+		}
+
 		if euid := os.Geteuid(); euid == 0 {
 			username, ok := os.LookupEnv("SUDO_USER")
 			if !ok {
-				return "", errors.New("something went wrong")
+				return errors.New("something went wrong")
 			}
 
 			oldPwd, err := os.Getwd()
 			if err != nil {
-				return "", err
+				return err
 			}
 
 			sp := strings.Split(oldPwd, "/")
@@ -81,11 +88,15 @@ func GetConfigFolder() (configFolder string, err error) {
 		} else {
 			userHome, ok := os.LookupEnv("HOME")
 			if !ok {
-				return "", errors.New("something went wrong")
+				return errors.New("something went wrong")
 			}
 
 			homePath = userHome
 		}
+
+		return nil
+	}(); err != nil {
+		return "", err
 	}
 
 	configPath := path.Join(homePath, ".cache", ".kl")

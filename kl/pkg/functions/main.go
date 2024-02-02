@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/kloudlite/kl/flags"
@@ -190,11 +191,15 @@ func IsInfraFlagAvailable(options ...Option) bool {
 }
 
 func Alert(name string, str ...interface{}) {
-	notify.Alert("Kloudlite", name, fmt.Sprint(str...), "")
+	if runtime.GOOS != "windows" {
+		notify.Alert("Kloudlite", name, fmt.Sprint(str...), "")
+	}
 }
 
 func Notify(name string, str ...interface{}) {
-	notify.Notify("Kloudlite", name, fmt.Sprint(str...), "")
+	if runtime.GOOS != "windows" {
+		notify.Notify("Kloudlite", name, fmt.Sprint(str...), "")
+	}
 }
 
 func Desc(str string) string {

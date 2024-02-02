@@ -98,13 +98,13 @@ func installApp() error {
 
 func startApp() error {
 
-	fn.Log("[#] starting app")
+	fn.Log("[#] starting service")
 	success := false
 	defer func() {
 		if success {
-			fn.Log("[#] app started successfully")
+			fn.Log("[#] service started successfully")
 		} else {
-			fn.Log("[#] failed to start app")
+			fn.Log("[#] failed to start service")
 		}
 	}()
 
@@ -129,12 +129,19 @@ func startApp() error {
 		return err
 	}
 
-	time.Sleep(5 * time.Second)
+	count := 0
+	for {
+		if count == 5 || isReady() {
+			break
+		}
+		time.Sleep(1 * time.Second)
+		count += 1
+	}
 
 	if isReady() {
 		success = true
 		return nil
 	}
 
-	return fmt.Errorf("app not started")
+	return fmt.Errorf("failed to start service")
 }

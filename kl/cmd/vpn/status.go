@@ -3,6 +3,7 @@ package vpn
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
@@ -22,11 +23,14 @@ Example:
   sudo kl vpn status
 	`,
 	Run: func(cmd *cobra.Command, _ []string) {
-		if euid := os.Geteuid(); euid != 0 {
-			fn.Log(
-				text.Colored("make sure you are running command with sudo", 209),
-			)
-			return
+
+		if runtime.GOOS != "windows" {
+			if euid := os.Geteuid(); euid != 0 {
+				fn.Log(
+					text.Colored("make sure you are running command with sudo", 209),
+				)
+				return
+			}
 		}
 
 		_, err := wgc.Show(nil)
