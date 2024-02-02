@@ -28,10 +28,6 @@ on:
         required: false
         default: true
 
-  push:
-    branches:
-      - "release-**"
-
 permissions:
   contents: write
   id-token: write
