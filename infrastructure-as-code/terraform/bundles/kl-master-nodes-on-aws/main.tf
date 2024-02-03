@@ -73,6 +73,7 @@ module "k3s-master-instances" {
   last_recreated_at    = each.value.last_recreated_at
   ssh_key_name         = aws_key_pair.k3s_nodes_ssh_key.key_name
   tracker_id           = var.tracker_id
+  tags                 = var.tags
 }
 
 module "kloudlite-k3s-masters" {

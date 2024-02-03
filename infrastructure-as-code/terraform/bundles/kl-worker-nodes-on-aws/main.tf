@@ -99,6 +99,7 @@ module "aws-ec2-nodepool" {
   root_volume_type     = each.value.root_volume_type
   security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
+  tags                 = var.tags
   nodes                = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {

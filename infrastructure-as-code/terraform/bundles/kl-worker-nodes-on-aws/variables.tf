@@ -90,3 +90,9 @@ variable "save_ssh_key_to_path" {
   description = "save ssh key to this path"
   type        = string
 }
+
+variable "tags" {
+  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+  type        = map(string)
+  default     = {}
+}

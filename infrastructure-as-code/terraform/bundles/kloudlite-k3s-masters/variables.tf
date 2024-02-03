@@ -131,3 +131,9 @@ variable "cloudprovider_name" {
 variable "cloudprovider_region" {
   type = string
 }
+
+variable "force_apply_kloudlite_CRDs" {
+  description = "force apply kloudlite CRDs"
+  type        = bool
+  default     = false
+}

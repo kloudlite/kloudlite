@@ -14,32 +14,23 @@ variable "cloudflare_zone_id" {
   type        = string
 }
 
-variable "A_records" {
-  description = "DNS A records to add. It is a map of IP => { value: domain name }"
-  type        = map(object({
-    value = string
-    ttl   = optional(number, 120),
+variable "DNS_records" {
+  description = "DNS Records to add"
+  type = list(object({
+    record_type = string
+    domain      = string
+    value       = string
+    ttl         = optional(number, 120)
   }))
-}
 
-variable "TXT_records" {
-  description = "DNS TXT records to add, It is map of key => { value: answer }"
-  type        = map(object({
-    value = string
-    ttl   = optional(number, 120),
-  }))
-}
-
-variable "CNAME_records" {
-  description = "DNS CNAME records to add, it is a map of domain => { value: cname }"
-  type        = map(object({
-    value = string
-    ttl   = optional(number, 120),
-  }))
+  validation {
+    error_message = "record_type should be a valid DNS record type"
+    condition     = alltrue([for item in var.DNS_records : contains(["A", "MX", "CNAME", "TXT"], item.record_type)])
+  }
 }
 
 variable "use_cloudflare_proxy" {
   description = "should we use cloudflare proxy for provided domain"
   type        = bool
   default     = false
-g
+}

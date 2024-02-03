@@ -8,6 +8,7 @@ module "kl-master-nodes-on-aws" {
   save_kubeconfig_to_path   = var.save_kubeconfig_to_path
   save_ssh_key_to_path      = var.save_ssh_key_to_path
   extra_server_args         = var.extra_server_args
+  tags                      = var.tags
 }
 
 module "kl-worker-nodes-on-aws" {
@@ -22,4 +23,5 @@ module "kl-worker-nodes-on-aws" {
   tracker_id                 = "${var.tracker_id}-workers"
   save_ssh_key_to_path       = var.save_worker_ssh_key_to_path
   extra_agent_args           = var.extra_agent_args
+  tags                       = var.tags
 }

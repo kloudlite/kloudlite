@@ -25,3 +25,7 @@ output "kubeconfig" {
   sensitive = true
   value     = module.kloudlite-k3s-masters.kubeconfig
 }
+
+output "k3s-params" {
+  value = module.kloudlite-k3s-masters.k3s-params
+}

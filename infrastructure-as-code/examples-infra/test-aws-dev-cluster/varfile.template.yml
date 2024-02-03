@@ -8,7 +8,6 @@ aws_assume_role:
   enabled: true
   role_arn: "${AWS_ASSUME_ROLE_ARN}"
   external_id: "${AWS_ASSUME_ROLE_PARAM_EXTERNAL_ID}"
-#
 
 k3s_masters:
   image_id: ami-06d146e85d1709abb
@@ -99,6 +98,11 @@ kloudlite_params:
   install_crds: true
   install_csi_driver: true
   install_operators: true
+  agent_vars:
+    cluster_token: "asdfafa"
+    cluster_name: "tetaa"
+    account_name: "asdfasfasf"
+    message_office_grpc_addr: "message-office:443"
 
 extra_server_args:
   - --snapshotter

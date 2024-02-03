@@ -33,3 +33,7 @@ output "kubeconfig" {
 output "kloudlite_namespace" {
   value = local.kloudlite_namespace
 }
+
+output "k3s-params" {
+  value = module.kloudlite-k3s-params.result
+}

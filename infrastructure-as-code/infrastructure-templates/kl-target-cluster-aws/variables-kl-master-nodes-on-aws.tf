@@ -46,6 +46,8 @@ variable "k3s_masters" {
       api_token = optional(string)
       zone_id   = optional(string)
       domain    = optional(string)
+
+      extra_domains = optional(list(string))
     }))
 
     nodes = map(object({
@@ -120,3 +122,10 @@ variable "save_kubeconfig_to_path" {
   type        = string
   default     = ""
 }
+
+variable "tags" {
+  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+  type        = map(string)
+  default     = {}
+}
+

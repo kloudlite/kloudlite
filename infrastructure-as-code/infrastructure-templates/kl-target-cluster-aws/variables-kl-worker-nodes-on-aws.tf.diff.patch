@@ -1,5 +1,5 @@
---- ../../terraform/bundles/kl-worker-nodes-on-aws/variables.tf	2023-11-08 12:37:12.000916106 +0530
-+++ ./variables-kl-worker-nodes-on-aws.tf	2023-11-09 13:12:24.997345317 +0530
+--- ../../terraform/bundles/kl-worker-nodes-on-aws/variables.tf	2024-01-31 15:09:41.695071163 +0530
++++ ./variables-kl-worker-nodes-on-aws.tf	2024-01-31 15:27:50.846061434 +0530
 @@ -1,19 +1,8 @@
 -variable "aws_region" { type = string }
 -
@@ -25,7 +25,7 @@
  
  variable "ec2_nodepools" {
    type = map(object({
-@@ -86,7 +75,7 @@
+@@ -86,13 +75,7 @@
    type        = list(string)
  }
  
@@ -33,4 +33,12 @@
 +variable "save_worker_ssh_key_to_path" {
    description = "save ssh key to this path"
    type        = string
- }
+-}
+-
+-variable "tags" {
+-  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+-  type        = map(string)
+-  default     = {}
+-}
++}
+\ No newline at end of file
