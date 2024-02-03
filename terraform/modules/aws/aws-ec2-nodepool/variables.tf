@@ -57,3 +57,9 @@ variable "nodes" {
     last_recreated_at = optional(number)
   }))
 }
+
+variable "tags" {
+  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+  type        = map(string)
+  default     = {}
+}

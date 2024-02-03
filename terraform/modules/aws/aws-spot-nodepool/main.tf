@@ -15,4 +15,5 @@ module "spot-fleet-request" {
   ssh_key_name                 = var.ssh_key_name
   user_data_base64             = each.value.user_data_base64
   last_recreated_at            = each.value.last_recreated_at != null ? each.value.last_recreated_at : 0
+  tags                         = var.tags
 }

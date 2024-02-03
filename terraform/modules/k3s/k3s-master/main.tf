@@ -94,6 +94,7 @@ primaryMaster:
 EOF2
 
     sudo ln -sf $PWD/runner-config.yml /runner-config.yml
+    sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
 }
