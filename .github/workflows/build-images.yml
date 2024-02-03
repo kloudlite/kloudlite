@@ -10,6 +10,7 @@ on:
       - terraform/**
       - ".github/workflows/**"
       - Dockerfile
+      - .ci/**
 
 permissions:
   contents: read
@@ -25,11 +26,11 @@ jobs:
         include:
           - name: infrastructure-as-code
             buildDir: .
-            imageRepo: github.com/${{ github.event.repository.owner }}/${{ github.event.repository.name }}
+            imageRepo: ghcr.io/${{ github.repository }}/iac-job
 
           - name: aws-spot-k3s-terminator
             buildDir: cmd/aws-spot-k3s-terminator
-            imageRepo: github.com/${{ github.event.repository.owner }}/${{ github.event.repository.name }}/aws-spot-k3s-terminator
+            imageRepo: ghcr.io/${{ github.repository }}/aws-spot-k3s-terminator
 
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
@@ -53,7 +54,7 @@ jobs:
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
-          set -e
+          set +e
 
           IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
           OVERRIDE_PUSHED_IMAGE=false
@@ -66,6 +67,7 @@ jobs:
           pushd ${{matrix.buildDir}}
 
           image=${{matrix.imageRepo}}:$IMAGE_TAG
+          echo "building image: $image"
 
           docker manifest inspect $image
           exit_status=$?
@@ -74,6 +76,6 @@ jobs:
             echo "image exists, but override pushed image is set to true. proceeding with building image"
           fi
 
-          set +e
+          set -e
 
           docker buildx build -t $image . --push
