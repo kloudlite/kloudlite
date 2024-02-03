@@ -1,15 +1,13 @@
 #syntax=docker/dockerfile:1.4
 FROM alpine:3.16
-
 RUN apk add bash curl gettext zip
 RUN apk add terraform helm kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 RUN apk add jq
-
 RUN adduser --disabled-password --home="/app" --uid 1717 nonroot
 USER nonroot
 WORKDIR /app
 COPY --chown=nonroot ./terraform ./terraform
-RUN mkdir infrastructure-templates
+RUN mkdir -p infrastructure-templates
 COPY --chown=nonroot ./infrastructure-templates ./infrastructure-templates
 ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
 RUN mkdir -p $TF_PLUGIN_CACHE_DIR
