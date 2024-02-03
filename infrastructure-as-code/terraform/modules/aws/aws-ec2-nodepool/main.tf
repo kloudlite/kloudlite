@@ -14,4 +14,5 @@ module "ec2-nodes" {
   last_recreated_at    = each.value.last_recreated_at
   ssh_key_name         = var.ssh_key_name
   user_data_base64     = each.value.user_data_base64 != null ? each.value.user_data_base64 : ""
+  tags                 = var.tags
 }

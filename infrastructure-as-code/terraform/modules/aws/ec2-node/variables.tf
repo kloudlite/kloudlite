@@ -67,16 +67,8 @@ variable "last_recreated_at" {
   default     = 0
 }
 
-#variable "nodes_config" {
-#  type = map(object({
-#    ami                  = string
-#    instance_type        = string
-#    az                   = optional(string)
-#    root_volume_size     = number
-#    root_volume_type     = string // standard, gp2, io1, gp3 etc
-#    with_elastic_ip      = bool
-#    security_groups      = list(string)
-#    iam_instance_profile = optional(string)
-#    recreate             = optional(bool)
-#  }))
-#}
+variable "tags" {
+  description = "map of tags, that need to be attached to created resource on the cloudprovider"
+  type        = map(string)
+  default     = {}
+}

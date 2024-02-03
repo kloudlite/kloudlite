@@ -38,10 +38,10 @@ resource "aws_instance" "ec2_instance" {
 
   iam_instance_profile = var.iam_instance_profile != "" ? var.iam_instance_profile : null
 
-  tags = {
-    Name      = "${var.tracker_id}-${var.node_name}"
-    Terraform = true
-  }
+  tags = merge({
+    Name                               = "${var.tracker_id}-${var.node_name}"
+    "kloudlite-infrastructure-as-code" = true
+  }, var.tags)
 
   root_block_device {
     volume_size = var.root_volume_size

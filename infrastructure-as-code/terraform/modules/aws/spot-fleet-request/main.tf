@@ -57,11 +57,11 @@ resource "aws_launch_template" "spot_template" {
 
   tag_specifications {
     resource_type = "instance"
-    tags          = {
+    tags          = merge({
       Name        = "${var.tracker_id}-${var.node_name}"
       Terraform   = "true"
       ReferenceId = var.tracker_id
-    }
+    }, var.tags)
   }
 }
 

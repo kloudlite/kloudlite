@@ -84,3 +84,9 @@ variable "last_recreated_at" {
   type        = number
   default     = 0
 }
+
+variable "tags" {
+  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+  type = map(string)
+  default = {}
+}
