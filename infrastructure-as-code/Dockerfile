@@ -1,8 +1,9 @@
 #syntax=docker/dockerfile:1.4
 FROM alpine:3.16
-RUN apk add bash curl gettext zip
-RUN apk add terraform helm kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
-RUN apk add jq
+RUN apk add bash curl gettext zip jq
+# RUN apk add terraform helm kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+RUN apk add helm kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+RUN curl -L0 https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip > tf.zip && unzip tf.zip && mv terraform /usr/local/bin && rm tf.zip
 RUN adduser --disabled-password --home="/app" --uid 1717 nonroot
 USER nonroot
 WORKDIR /app
