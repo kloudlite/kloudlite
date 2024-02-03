@@ -8,6 +8,15 @@ resource "ssh_resource" "execute_command" {
 
   when = "create"
 
+  pre_commands = [
+    <<EOC
+function kubectl() {
+  command sudo k3s kubectl $@
+}
+${var.pre_command}
+EOC
+  ]
+
   commands = [
     <<EOC
 function kubectl() {
