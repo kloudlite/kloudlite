@@ -13,7 +13,13 @@ variable "timeout_in_minutes" {
   default     = 1
 }
 
+variable "pre_command" {
+  description = "pre command, it's output is not captured"
+  type        = string
+  default     = ""
+}
+
 variable "command" {
-  description = "command to be executed"
+  description = "command to be executed, it's stdout is returned as result"
   type        = string
 }

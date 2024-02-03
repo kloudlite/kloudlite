@@ -8,6 +8,10 @@ resource "ssh_resource" "apply_kloudlite_crds" {
 
   when = "create"
 
+  triggers = {
+    force_apply = var.force_apply ? timestamp() : 1
+  }
+
   commands = [
     <<EOC
 export KUBECTL="sudo k3s kubectl"
