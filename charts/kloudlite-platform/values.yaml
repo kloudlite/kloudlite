@@ -417,6 +417,11 @@ operators:
 
         enableExamples: true
 
+      helmCharts:
+        jobImage:
+          repository: ghcr.io/kloudlite/operator/workers/helm-runner
+          tag: ""
+
       cluster:
         jobImage:
           repository: ghcr.io/kloudlite/infrastructure-as-code

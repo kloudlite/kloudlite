@@ -100,28 +100,6 @@ requiredDuringSchedulingIgnoredDuringExecution:
             - "true"
 {{- end }}
 
-{{- /* {{- define "observability-annotations-resource" -}} */}}
-{{- /**/}}
-{{- /* {{- $resourceName := index . 0 }} */}}
-{{- /* {{- $resourceType := index . 1 }} */}}
-{{- /* {{- $resourceComponent := "" }} */}}
-{{- /* {{- if gt (len .) 2 }} */}}
-{{- /* {{- $resourceComponent := index . 2 }} */}}
-{{- /* {{- end }} */}}
-{{- /**/}}
-{{- /* kloudlite.io/resource_name: {{$resourceName}} */}}
-{{- /* kloudlite.io/resource_type: {{$resourceType}} */}}
-{{- /* {{- if $resourceComponent }} */}}
-{{- /* kloudlite.io/resource_component: {{$resourceComponent}} */}}
-{{- /* {{- end }} */}}
-{{- /**/}}
-{{- /* {{- end }} */}}
-
-
-{{- /* {{- define "msg-office-platform-access-token" -}} */}}
-{{- /* {{ printf "account=%s;cluster=%s;platform-token=%s" .Values.accountName .Values.clusterName .Values.apps.messageOfficeApi.configuration.platformAccessToken }} */}}
-{{- /* {{- end -}} */}}
-
 {{- define "router-domain" -}}
 {{ .Values.global.routerDomain | default .Values.global.baseDomain }}
 {{- end -}}
