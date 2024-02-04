@@ -40,8 +40,8 @@ spec:
             - {{.Values.clusterAutoscaler.configuration.scaleDownUnneededTime | squote}}
             - --enforce-node-group-min-size 
             - "true"
-          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag  | default .Chart.AppVersion }}
-          imagePullPolicy: {{.Values.clusterAutoscaler.image.pullPolicy | default .Values.defaults.imagePullPolicy }}
+          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default (include "image-tag" .) }}
+          imagePullPolicy: {{ include "image-pull-policy" . }}
           name: main
           securityContext:
             allowPrivilegeEscalation: false
