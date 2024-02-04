@@ -5,7 +5,7 @@ import (
 )
 
 type Env struct {
-	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
+	MaxConcurrentReconciles int    `env:"MAX_CONCURRENT_RECONCILES"`
 }
 
 func GetEnvOrDie() *Env {
