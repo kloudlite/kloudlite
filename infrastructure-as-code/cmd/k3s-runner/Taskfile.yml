@@ -8,19 +8,17 @@ tasks:
     vars:
       builtAt:
         sh: date | sed 's/\s/_/g'
-      GOARCH:
-        sh: go env GOARCH
     cmds:
-      - go build -ldflags="-s -w -X main.BuiltAt={{.builtAt}}" -o ./bin/runner-{{.GOARCH}} .
-      - upx bin/runner-{{.GOARCH}}
+      - go build -ldflags="-s -w -X main.BuiltAt={{.builtAt}}" -o ./bin/runner-${GOARCH:-$(go env GOARCH)} .
+      - upx bin/runner-${GOARCH:-$(go env GOARCH)}
 
   help:
     summary: |+
       to run as primaryMaster, create a `/runner-config.yml` file, with following contents:
-          ```
-            runAs: primaryMaster
-            primaryMaster:
-              publicIP: <ip-address>
-              token: sample
-              nodeName: k8s-master-1
-          ```
+      ```
+        runAs: primaryMaster
+        primaryMaster:
+          publicIP: <ip-address>
+          token: sample
+          nodeName: k8s-master-1
+      ```
