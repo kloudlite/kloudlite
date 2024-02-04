@@ -280,6 +280,8 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 			},
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
+			"job-image": r.Env.HelmJobRunnerImage,
+
 			"service-account-name": getJobSvcAccountName(),
 			"tolerations":          obj.Spec.JobVars.Tolerations,
 			"affinity":             obj.Spec.JobVars.Affinity,
@@ -368,6 +370,8 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
 			},
 			// "owner-refs":           []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"job-image": r.Env.HelmJobRunnerImage,
+
 			"service-account-name": getJobSvcAccountName(),
 			"tolerations":          obj.Spec.JobVars.Tolerations,
 			"affinity":             obj.Spec.JobVars.Affinity,
