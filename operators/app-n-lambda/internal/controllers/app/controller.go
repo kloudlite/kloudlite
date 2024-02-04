@@ -12,6 +12,7 @@ import (
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/app-n-lambda/internal/env"
+	"github.com/kloudlite/operator/operators/app-n-lambda/internal/templates"
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -19,13 +20,12 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -38,8 +38,10 @@ type Reconciler struct {
 	Logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	YamlClient *kubectl.YAMLClient
+	YamlClient kubectl.YAMLClient
 	recorder   record.EventRecorder
+
+	appDeploymentTemplate []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -63,8 +65,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -102,13 +104,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	req.Object.Status.Resources = req.GetOwnedResources()
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
@@ -145,13 +141,15 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(ImagesLabelled, check, err.Error())
 		}
-		return req.Done().RequeueAfter(200 * time.Millisecond)
+		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
 	if check != obj.Status.Checks[ImagesLabelled] {
 		obj.Status.Checks[ImagesLabelled] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -166,19 +164,20 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-	//isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
-	//isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
+	b, err := templates.ParseBytes(
+		r.appDeploymentTemplate, map[string]any{
+			"object": obj,
 
-	b, err := templates.Parse(
-		templates.CrdsV1.App, map[string]any{
-			"object":        obj,
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
+
+			"pod-annotations": fn.FilterObservabilityAnnotations(obj),
+
+			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
@@ -189,12 +188,13 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	}
 
 	req.AddToOwnedResources(resRefs...)
-	req.UpdateStatus()
 
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {
-		obj.Status.Checks[DeploymentSvcAndHpaCreated] = check
-		req.UpdateStatus()
+		fn.MapSet(&obj.Status.Checks, DeploymentSvcAndHpaCreated, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -223,7 +223,7 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		var podList corev1.PodList
 		if err := r.List(
 			ctx, &podList, &client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
+				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
 				Namespace:     obj.Namespace,
 			},
 		); err != nil {
@@ -233,11 +233,9 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		pMessages := rApi.GetMessagesFromPods(podList.Items...)
 		bMsg, err := json.Marshal(pMessages)
 		if err != nil {
-			check.Message = err.Error()
-		return req.CheckFailed(DeploymentReady, check, err.Error())
+			return req.CheckFailed(DeploymentReady, check, err.Error())
 		}
-		check.Message = string(bMsg)
-		return req.CheckFailed(DeploymentReady, check, "deployment is not ready")
+		return req.CheckFailed(DeploymentReady, check, string(bMsg))
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {
@@ -251,7 +249,9 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentReady] {
 		obj.Status.Checks[DeploymentReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -260,8 +260,14 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.Logger = logger.WithName(r.Name)
-	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.YamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
+
+	var err error
+	r.appDeploymentTemplate, err = templates.Read(templates.AppDeployment)
+	if err != nil {
+		return err
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
 	builder.Owns(&appsv1.Deployment{})

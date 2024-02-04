@@ -7,7 +7,7 @@ import (
 )
 
 type TopicSpec struct {
-	RedpandaAdmin string `json:"redpandaAdmin,omitempty"`
+	RedpandaAdmin *string `json:"redpandaAdmin,omitempty"`
 
 	// +kubebuilder:default=3
 	PartitionCount int `json:"partitionCount,omitempty"`
@@ -15,7 +15,8 @@ type TopicSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // +kubebuilder:resource:scope=Cluster
 
@@ -24,7 +25,7 @@ type Topic struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopicSpec   `json:"spec,omitempty"`
+	Spec   TopicSpec   `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

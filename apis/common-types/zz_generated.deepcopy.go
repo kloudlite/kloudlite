@@ -51,6 +51,7 @@ func (in *Output) DeepCopy() *Output {
 func (in *Resources) DeepCopyInto(out *Resources) {
 	*out = *in
 	out.Cpu = in.Cpu
+	out.Memory = in.Memory
 	if in.Storage != nil {
 		in, out := &in.Storage, &out.Storage
 		*out = new(Storage)

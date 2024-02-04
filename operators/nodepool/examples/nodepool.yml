@@ -1,0 +1,38 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: NodePool
+metadata:
+  name: np-1
+spec:
+  maxCount: 3
+  minCount: 2
+  targetCount: 1
+
+  cloudProvider: aws
+  iac:
+    stateS3BucketName: kloudlite-platform-production
+    stateS3BucketRegion: ap-south-1
+    stateS3BucketFilePath: terraform-states/account-kloudlite/cluster-platform/nodepool-np-1.tfstate
+
+    cloudProviderAccessKey:
+      name: k3s-params
+      namespace: kloudlite
+      key: accessKey
+    cloudProviderSecretKey:
+      name: k3s-params
+      namespace: kloudlite
+      key: secretKey
+    jobName: "kloudlite-platform-nodepool-np-1"
+    jobNamespace: "kloudlite"
+  aws:
+    imageId: "ami-06d146e85d1709abb"
+    imageSSHUsername: ubuntu
+    availabilityZone: ap-south-1a
+    nvidiaGpuEnabled: false
+    rootVolumeSize: 50
+    rootVolumeType: gp3
+
+    poolType: ec2
+    ec2Pool:
+      instanceType: c6a.large
+    # nodes:
+    #   node-1: {}

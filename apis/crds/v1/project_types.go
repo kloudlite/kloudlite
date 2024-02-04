@@ -9,20 +9,15 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountName     string `json:"accountName"`
-	ClusterName     string `json:"clusterName"`
-	DisplayName     string `json:"displayName,omitempty"`
 	TargetNamespace string `json:"targetNamespace"`
-	Logo            string `json:"logo,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".spec.accountName",name=AccountName,type=string
-// +kubebuilder:printcolumn:JSONPath=".spec.clusterName",name=ClusterName,type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-namespace",type=string
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Project is the Schema for the projects API
@@ -30,8 +25,8 @@ type Project struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ProjectSpec `json:"spec,omitempty"`
-	Status rApi.Status `json:"status,omitempty"`
+	Spec   ProjectSpec `json:"spec"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (p *Project) EnsureGVK() {
@@ -45,7 +40,11 @@ func (p *Project) GetStatus() *rApi.Status {
 }
 
 func (p *Project) GetEnsuredLabels() map[string]string {
-	return map[string]string{constants.ProjectNameKey: p.Name}
+	labels := map[string]string{
+		constants.ProjectNameKey:     p.Name,
+		constants.TargetNamespaceKey: p.Spec.TargetNamespace,
+	}
+	return labels
 }
 
 func (p *Project) GetEnsuredAnnotations() map[string]string {

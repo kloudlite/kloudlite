@@ -29,8 +29,15 @@ type Service struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ServiceSpec `json:"spec,omitempty"`
+	Spec   ServiceSpec `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
+}
+
+func (s *Service) EnsureGVK() {
+	if s != nil {
+		// TODO: Check with anshuman
+		s.SetGroupVersionKind(GroupVersion.WithKind("Service"))
+	}
 }
 
 func (s *Service) GetStatus() *rApi.Status {

@@ -1,0 +1,12 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: Node
+metadata:
+  labels:
+    app.kubernetes.io/name: node
+    app.kubernetes.io/instance: node-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: node-sample
+spec:
+  # TODO(user): Add fields here

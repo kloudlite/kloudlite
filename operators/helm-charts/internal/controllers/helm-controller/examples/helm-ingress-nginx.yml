@@ -1,0 +1,18 @@
+apiVersion: crds.kloudlite.io/v1
+kind: HelmChart
+metadata:
+  name: helm-ingress-nginx
+  namespace: kl-core
+spec:
+  chartRepo:
+    name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+  chartName: ingress-nginx/ingress-nginx
+  chartVersion: 4.7.2
+  valuesYaml: |+
+    controller:
+      service:
+        type: NodePort
+        nodePorts:
+          http: 30080
+          https: 30443

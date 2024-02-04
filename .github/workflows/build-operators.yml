@@ -1,0 +1,183 @@
+name: Build Operators
+
+on:
+  push:
+    paths:
+      - "operators/**"
+      - "operator/**"
+      - "cmd/agent-operator/**"
+      - "cmd/platform-operator/**"
+      - "pkg/**"
+      - "common/**"
+      - "go.*"
+      - ".github/workflows/**"
+      - "apis/**/*.go"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  operator-builds:
+    strategy:
+      matrix:
+        name:
+          - platform
+          - agent
+          - wireguard
+          - helm-charts
+          # - resource-watcher
+          # - account
+          # - app
+          # - clusters
+          # - distribution
+          # - msvc-elasticsearch
+          # - msvc-influx
+          # - msvc-mongo
+          # - msvc-mysql
+          # - msvc-n-mres
+          # - msvc-neo4j
+          # - msvc-redis
+          # - msvc-redpanda
+          # - msvc-zookeeper
+          # - nodepool
+          # - project
+          # - resource-watcher
+          # - routers
+
+        include:
+          - name: platform
+            buildDir: cmd/platform-operator
+          - name: agent
+            buildDir: cmd/agent-operator
+          - name: wireguard
+            buildDir: operators/wireguard
+          - name: helm-charts
+            buildDir: operators/helm-charts
+          # - name: resource-watcher
+          #   buildDir: operators/resource-watcher
+          # - name: account
+          #   buildDir: operators/account
+          # - name: app
+          #   buildDir: operators/app-n-lambda
+          # - name: clusters
+          #   buildDir: operators/clusters
+          # - name: distribution
+          #   buildDir: operators/distribution
+          # - name: msvc-elasticsearch
+          #   buildDir: operators/msvc-elasticsearch
+          # - name: msvc-influx
+          #   buildDir: operators/msvc-influx
+          # - name: msvc-mongo
+          #   buildDir: operators/msvc-mongo
+          # - name: msvc-mysql
+          #   buildDir: operators/msvc-mysql
+          # - name: msvc-n-mres
+          #   buildDir: operators/msvc-n-mres
+          # - name: msvc-neo4j
+          #   buildDir: operators/msvc-neo4j
+          # - name: msvc-redis
+          #   buildDir: operators/msvc-redis
+          # - name: msvc-redpanda
+          #   buildDir: operators/msvc-redpanda
+          # - name: msvc-zookeeper
+          #   buildDir: operators/msvc-zookeeper
+          # - name: nodepool
+          #   buildDir: operators/nodepool
+          # - name: project
+          #   buildDir: operators/project
+          # - name: resource-watcher
+          #   buildDir: operators/resource-watcher
+          # - name: routers
+          #   buildDir: operators/routers
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21.5
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install UPX
+        run: |
+          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+          tar -xf upx.tar.xz
+          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
+
+      - name: Build Binary
+        run: |
+          task build Out=$PWD/.github/workflows/container-build/app CWD=${{matrix.buildDir}}
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Image Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          set +e
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+          echo "$IMAGE_TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            IMAGE_TAG="$IMAGE_TAG-nightly"
+          fi
+          set -e
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+      - name: Create Image Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
+        run: |
+          set +e
+          image_name="ghcr.io/${{ github.repository }}/${{matrix.name}}"
+
+          docker manifest inspect "$image_name:$IMAGE_TAG"
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          cd .github/workflows/container-build
+          upx ./app
+          task go-container-build Image="$image_name:$IMAGE_TAG"
+          # task go-container-build Image="$image_name:commit-${GITHUB_SHA}"

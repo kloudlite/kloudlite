@@ -1,0 +1,11 @@
+apiVersion: mongodb.msvc.kloudlite.io/v1
+kind: Database
+metadata:
+  name: test-db
+  namespace: default
+spec:
+  msvcRef:
+    apiVersion: mongodb.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: mongodb-standalone
+  resourceName: test-db

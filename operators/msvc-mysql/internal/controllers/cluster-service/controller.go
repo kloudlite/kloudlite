@@ -30,7 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -38,7 +37,7 @@ type Reconciler struct {
 	Scheme     *runtime.Scheme
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 	Env        *env.Env
 }
 
@@ -169,7 +168,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mysqlMsvcv1.ClusterServ
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 		return req.Done().RequeueAfter(2 * time.Second)
 	}
@@ -322,7 +321,7 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mysqlMsvcv1.ClusterService]) st
 					),
 				},
 			); err != nil {
-				return req.FailWithOpError(err)
+				return req.CheckFailed(StsReady, check, err.Error())
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)
@@ -422,15 +421,15 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mysqlMsvcv1.ClusterService{})
 	builder.Owns(&corev1.Secret{})
 	builder.Owns(fn.NewUnstructured(constants.HelmMysqlType))
 
 	builder.Watches(
-		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				v, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {
 					return nil

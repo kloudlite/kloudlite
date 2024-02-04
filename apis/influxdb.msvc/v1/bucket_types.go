@@ -23,7 +23,7 @@ type Bucket struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BucketSpec  `json:"spec,omitempty"`
+	Spec   BucketSpec  `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 
@@ -39,7 +39,8 @@ func (b *Bucket) GetStatus() *rApi.Status {
 
 func (b *Bucket) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.MsvcNameKey: b.Spec.MsvcRef.Name,
+		constants.MsvcNameKey:      b.Spec.MsvcRef.Name,
+		constants.MsvcNamespaceKey: b.Spec.MsvcRef.Namespace,
 	}
 }
 

@@ -1,13 +1,10 @@
 package project
 
 import (
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
-	"testing"
-	"time"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/logging"
+	"testing"
 
 	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
@@ -22,7 +19,7 @@ func TestAPIs(t *testing.T) {
 var reconciler *Reconciler
 
 var _ = BeforeSuite(func() {
-	SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), DefaultEnvTest)
+	SetupKubernetes(AddToSchemes(crdsv1.AddToScheme), DefaultEnvTest)
 	reconciler = &Reconciler{
 		Client:     Suite.K8sClient,
 		Scheme:     Suite.Scheme,
@@ -30,10 +27,7 @@ var _ = BeforeSuite(func() {
 		Name:       "project",
 		yamlClient: Suite.K8sYamlClient,
 		Env: &env.Env{
-			ReconcilePeriod:         30 * time.Second,
 			MaxConcurrentReconciles: 10,
-			DockerSecretName:        "harbor-admin-creds",
-			AdminRoleName:           "harbor-admin-role",
 			SvcAccountName:          "kloudlite-svc-account",
 		},
 	}

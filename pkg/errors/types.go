@@ -7,7 +7,7 @@ import (
 )
 
 func NewEf(err error, msg string, a ...interface{}) error {
-	return yerrors.WrapFrame(yerrors.Errorf("%s while %s", fmt.Sprintf(msg, a...), err.Error()), 1)
+	return yerrors.WrapFrame(yerrors.Errorf("[while] %s [encountered] %s", fmt.Sprintf(msg, a...), err.Error()), 1)
 }
 
 func Newf(msg string, a ...interface{}) error {

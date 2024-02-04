@@ -7,22 +7,23 @@ import (
 )
 
 type AccountSpec struct {
-	HarborProjectName      string `json:"harborProjectName"`
-	HarborUsername         string `json:"harborUsername"`
-	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name=Target-Namespace,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Account is the Schema for the accounts API
 type Account struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AccountSpec `json:"spec,omitempty"`
-	Status rApi.Status `json:"status,omitempty"`
+	Spec   AccountSpec `json:"spec"`
+  Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (acc *Account) EnsureGVK() {
@@ -37,7 +38,7 @@ func (acc *Account) GetStatus() *rApi.Status {
 
 func (acc *Account) GetEnsuredLabels() map[string]string {
 	m := map[string]string{
-		"kloudlite.io/account.name": acc.Name,
+		constants.AccountNameKey: acc.Name,
 	}
 
 	return m
