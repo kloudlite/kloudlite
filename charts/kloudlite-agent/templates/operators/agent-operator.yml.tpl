@@ -40,8 +40,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-      nodeSelector: {{.Values.operators.agentOperator.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-      tolerations: {{.Values.operators.agentOperator.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+      nodeSelector: {{.Values.operators.agentOperator.nodeSelector | default .Values.nodeSelector | toYaml | nindent 8}}
+      tolerations: {{.Values.operators.agentOperator.tolerations | default .Values.tolerations | toYaml | nindent 8}}
 
       {{- if .Values.preferOperatorsOnMasterNodes }}
       affinity:
@@ -142,14 +142,12 @@ spec:
                   key: k3s_agent_join_token
 
             - name: CLOUD_PROVIDER_NAME
-              {{- /* value: {{.Values.operators.agentOperator.configuration.cloudProvider.name}} */}}
               valueFrom:
                 secretKeyRef:
                   name: k3s-params
                   key: cloudprovider_name
 
             - name: CLOUD_PROVIDER_REGION
-              {{- /* value: {{.Values.operators.agentOperator.configuration.cloudProvider.region}} */}}
               valueFrom:
                 secretKeyRef:
                   name: k3s-params
@@ -167,7 +165,7 @@ spec:
 
             {{- /* for buildrun */}}
             - name: BUILD_NAMESPACE
-              value: {{.Values.defaults.jobsNamespace}}
+              value: {{.Values.jobsNamespace}}
 
             {{- /* for wireguard controller */}}
             - name: CLUSTER_POD_CIDR
@@ -183,8 +181,10 @@ spec:
                   namespace: kloudlite
                   key: k3s_masters_public_dns_host
 
-          image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
-          imagePullPolicy: {{.Values.operators.agentOperator.image.pullPolicy | default .Values.imagePullPolicy}}
+            {{ include "helmchart-operator-env" . | nindent 12 }}
+
+          image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default (include "image-tag" .)}}
+          imagePullPolicy: {{ include "image-pull-policy" .}}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
