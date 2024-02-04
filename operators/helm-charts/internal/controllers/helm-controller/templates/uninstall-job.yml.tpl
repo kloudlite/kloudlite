@@ -3,6 +3,8 @@
 {{- $labels := get . "labels" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" | default list }} 
 
+{{- $jobImage := get . "job-image" }}
+
 {{- $serviceAccountName := get . "service-account-name" }} 
 {{- $tolerations := get . "tolerations"  | default list }} 
 {{- $affinity := get . "affinity" | default dict }}
@@ -41,8 +43,8 @@ spec:
       {{- end }}
       containers:
       - name: helm
-        {{- /* image: alpine/helm:3.12.3 */}}
-        image: ghcr.io/kloudlite/job-runners/helm:v1.0.5-nightly
+        image: {{$jobImage}}
+        imagePullPolicy: {{- if hasSuffix $jobImage "-nightly" }} "Always" {{- else }} "IfNotPresent" {{- end }}
         command:
           - bash
           - -c
