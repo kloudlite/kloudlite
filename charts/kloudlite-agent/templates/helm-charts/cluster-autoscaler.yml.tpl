@@ -13,18 +13,9 @@ spec:
     tolerations:
       - operator: Exists
   values:
-    defaults:
-      imagePullPolicy: {{ include "image-pull-policy" . }}
-
-    serviceAccount:
-      create: true
-      nameSuffix: "sa"
-
+    kloudliteRelease: {{ include "image-tag" .}}
     clusterAutoscaler:
       enabled: true
-      image:
-        repository: "ghcr.io/kloudlite/autoscaler/cluster-autoscaler"
-        tag: ""
       nodeSelector:
         node-role.kubernetes.io/master: "true"
       tolerations:
