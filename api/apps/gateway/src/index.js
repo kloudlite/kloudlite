@@ -1,8 +1,7 @@
-import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
-import { expressMiddleware } from '@apollo/server/express4';
+import {ApolloServer} from '@apollo/server';
+import {expressMiddleware} from '@apollo/server/express4';
 import express from 'express';
-import { ApolloGateway, RemoteGraphQLDataSource, IntrospectAndCompose } from '@apollo/gateway';
+import {ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource} from '@apollo/gateway';
 import fs from 'fs/promises';
 import yaml from 'js-yaml';
 import assert from 'assert';
@@ -13,21 +12,8 @@ const useEnv = (key) => {
   return v
 };
 
-// const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
-const cfgMap = {
-  serviceList: [
-    { name: 'auth-api', url: 'http://auth-api.kl-core.svc.cluster.local/query' },
-    { name: 'infra-api', url: 'http://infra-api.kl-core.svc.cluster.local/query' },
-    { name: 'console-api', url: 'http://console-api.kl-core.svc.cluster.local/query' },
-    { name: 'finance-api', url: 'http://finance-api.kl-core.svc.cluster.local/query' },
-    { name: 'message-office-api', url: 'http://message-office-api.kl-core.svc.cluster.local/query' },
-  ]
-}
+const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
 
-// const supergraphSdl = (
-//   await fs.readFile(useEnv('SUPERGRAPH_CONFIG'), 'utf8')
-// ).toString();
-//
 class CustomDataSource extends RemoteGraphQLDataSource {
   // eslint-disable-next-line class-methods-use-this
   willSendRequest({ request, context }) {
@@ -77,7 +63,7 @@ const server = new ApolloServer({
 const app = express()
 await server.start()
 
-app.get("/health", (req, res) => {
+app.get("/healthz", (req, res) => {
   return res.sendStatus(200);
 })
 
@@ -94,3 +80,25 @@ app.listen(port, (err) => {
   }
   console.log(`🚀 Federation Gateway ready at :${port}`);
 })
+
+console.log(String.raw`
+                    ,                       
+                  #####                 
+               ########                 
+             ########                   
+          ########        #####             
+        ########       *#########            ██╗  ██╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗     ██╗████████╗███████╗
+     ########        ###############         ██║ ██╔╝██║     ██╔═══██╗██║   ██║██╔══██╗██║     ██║╚══██╔══╝██╔════╝
+   ########       *###################       █████╔╝ ██║     ██║   ██║██║   ██║██║  ██║██║     ██║   ██║   █████╗  
+ #######/       ########################     ██╔═██╗ ██║     ██║   ██║██║   ██║██║  ██║██║     ██║   ██║   ██╔══╝  
+   #######(        ###################       ██║  ██╗███████╗╚██████╔╝╚██████╔╝██████╔╝███████╗██║   ██║   ███████╗
+     (#######.       ##############*         ╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝   ╚══════╝
+        ########        #(#######                              
+          (#######.       ####*               __   ___       __      
+             ########                        |__) |__   /\  |  \ \ / 
+               /######(.                     |  \ |___ /~~\ |__/  |  
+                  #####
+                    ,                       
+
+`)
+

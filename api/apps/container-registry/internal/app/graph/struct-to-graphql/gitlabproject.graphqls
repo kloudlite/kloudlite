@@ -1,0 +1,22 @@
+type GitlabProject @shareable {
+  archived: Boolean!
+  avatarUrl: String!
+  createdAt: Date
+  creatorId: Int!
+  defaultBranch: String!
+  description: String!
+  emptyRepo: Boolean!
+  httpUrlToRepo: String!
+  id: Int!
+  lastActivityAt: Date
+  name: String!
+  nameWithNamespace: String!
+  path: String!
+  pathWithNamespace: String!
+  public: Boolean!
+  sshUrlToRepo: String!
+  tagList: [String!]!
+  topics: [String!]!
+  webUrl: String!
+}
+

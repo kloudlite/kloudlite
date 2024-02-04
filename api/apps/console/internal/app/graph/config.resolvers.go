@@ -6,24 +6,90 @@ package graph
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
-	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/domain/entities"
-	fn "kloudlite.io/pkg/functions"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Data is the resolver for the data field.
-func (r *configResolver) Data(ctx context.Context, obj *entities.Config) (map[string]interface{}, error) {
-	m := make(map[string]any, len(obj.Data))
+// BinaryData is the resolver for the binaryData field.
+func (r *configResolver) BinaryData(ctx context.Context, obj *entities.Config) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, errNilConfig
+	}
+	var m map[string]any
 	if err := fn.JsonConversion(obj.Data, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return m, nil
 }
 
+// CreationTime is the resolver for the creationTime field.
+func (r *configResolver) CreationTime(ctx context.Context, obj *entities.Config) (string, error) {
+	if obj == nil {
+		return "", errNilConfig
+	}
+	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
+}
+
+// Data is the resolver for the data field.
+func (r *configResolver) Data(ctx context.Context, obj *entities.Config) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, errNilConfig
+	}
+	m := make(map[string]any, len(obj.Data))
+	if err := fn.JsonConversion(obj.Data, &m); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return m, nil
+}
+
+// ID is the resolver for the id field.
+func (r *configResolver) ID(ctx context.Context, obj *entities.Config) (string, error) {
+	if obj == nil {
+		return "", errNilConfig
+	}
+
+	return string(obj.Id), nil
+}
+
+// UpdateTime is the resolver for the updateTime field.
+func (r *configResolver) UpdateTime(ctx context.Context, obj *entities.Config) (string, error) {
+	if obj == nil {
+		return "", errNilConfig
+	}
+
+	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
+}
+
+// BinaryData is the resolver for the binaryData field.
+func (r *configInResolver) BinaryData(ctx context.Context, obj *entities.Config, data map[string]interface{}) error {
+	if obj == nil {
+		return errNilConfig
+	}
+	return fn.JsonConversion(data, &obj.BinaryData)
+}
+
 // Data is the resolver for the data field.
 func (r *configInResolver) Data(ctx context.Context, obj *entities.Config, data map[string]interface{}) error {
+	if obj == nil {
+		return errNilConfig
+	}
 	return fn.JsonConversion(data, &obj.Data)
+}
+
+// Metadata is the resolver for the metadata field.
+func (r *configInResolver) Metadata(ctx context.Context, obj *entities.Config, data *v1.ObjectMeta) error {
+	if obj == nil {
+		return errNilConfig
+	}
+	if data != nil {
+		obj.ObjectMeta = *data
+	}
+	return nil
 }
 
 // Config returns generated.ConfigResolver implementation.

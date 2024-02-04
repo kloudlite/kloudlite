@@ -23,8 +23,13 @@ const (
 )
 
 const (
-	CacheSessionPrefix = "redis-auth"
+	CacheSessionPrefix = "sessions"
 	CookieName         = "hotspot-session"
+)
+
+const (
+	// source: kubectl apply with an incorrect resource name
+	K8sNameValidatorRegex = `^[a-z0-9]([-a-z0-9]*[a-z0-9])?([.][a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
 )
 
 const (
@@ -118,11 +123,15 @@ var ActionMap = map[Action][]Role{
 	PayBill:             {AccountOwner, AccountAdmin, AccountBiller},
 
 	CreateProject: {AccountOwner, AccountAdmin},
-	ReadProject: {AccountOwner, AccountAdmin, AccountMember, ProjectAdmin,
-		ProjectMember, ProjectGuest},
+	ReadProject: {
+		AccountOwner, AccountAdmin, AccountMember, ProjectAdmin,
+		ProjectMember, ProjectGuest,
+	},
 
-	UpdateProject: {AccountOwner, AccountAdmin, ProjectAdmin,
-		ProjectMember},
+	UpdateProject: {
+		AccountOwner, AccountAdmin, ProjectAdmin,
+		ProjectMember,
+	},
 
 	DeleteProject:       {AccountOwner, AccountAdmin, ProjectAdmin},
 	InviteProjectMember: {AccountOwner, AccountAdmin, ProjectAdmin},
@@ -135,4 +144,15 @@ const (
 const (
 	ClusterNameKey string = "kloudlite.io/cluster.name"
 	EdgeNameKey    string = "kloudlite.io/edge.name"
+	AccountNameKey string = "kloudlite.io/account.name"
+
+	EnvNameKey string = "kloudlite.io/env.name"
+
+	RecordVersionKey string = "kloudlite.io/record-version"
+
+	ObservabilityTrackingKey    string = "kloudlite.io/observability.tracking.id"
+	ObservabilityAccountNameKey string = "kloudlite.io/observability.account.name"
+	ObservabilityClusterNameKey string = "kloudlite.io/observability.cluster.name"
+
+	ManagedByKloudlite string = "kloudlite.io/managed-by.kloudlite"
 )

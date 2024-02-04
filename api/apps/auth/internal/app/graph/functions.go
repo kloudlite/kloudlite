@@ -1,9 +1,9 @@
 package graph
 
 import (
-	"kloudlite.io/apps/auth/internal/app/graph/model"
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/common"
+	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/common"
 )
 
 func mapFromProviderDetail(detail *domain.ProviderDetail) map[string]any {

@@ -20,11 +20,9 @@ ENV CGO_ENABLED=1
 RUN GOOS=linux GOARCH=amd64 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-#FROM gcr.io/distroless/static:nonroot
-FROM golang:1.18.3-alpine3.16
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /tmp
 USER 1001:1001
 ARG APP
-#WORKDIR /comms
-COPY --from=base /tmp/app/email-templates /comms/email-templates
-COPY --from=base /tmp/bin/$APP /comms/comms
+COPY --from=base /tmp/bin/$APP ./comms
 CMD ["./comms"]

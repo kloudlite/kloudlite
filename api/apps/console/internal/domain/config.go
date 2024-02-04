@@ -1,174 +1,254 @@
 package domain
 
 import (
-	"fmt"
-	"time"
+	"maps"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
-func (d *domain) ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+func (d *domain) ListConfigs(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
 	}
-	return d.configRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}})
+	filter := ctx.DBFilters()
+	return d.configRepo.FindPaginated(ctx, d.configRepo.MergeMatchFilters(filter, search), pq)
 }
 
-func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
-	cfg, err := d.configRepo.FindOne(ctx, repos.Filter{
-		"clusterName":        ctx.ClusterName,
-		"accountName":        ctx.AccountName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
+func (d *domain) findConfig(ctx ResourceContext, name string) (*entities.Config, error) {
+	cfg, err := d.configRepo.FindOne(ctx, ctx.DBFilters().Add(fields.MetadataName, name))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if cfg == nil {
-		return nil, fmt.Errorf("no config with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no config with name (%q)", name)
 	}
 	return cfg, nil
 }
 
-func (d *domain) GetConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+func (d *domain) GetConfig(ctx ResourceContext, name string) (*entities.Config, error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
 	}
-	return d.findConfig(ctx, namespace, name)
+	return d.findConfig(ctx, name)
 }
 
-// mutations
+// GetConfigEntries implements Domain.
+func (d *domain) GetConfigEntries(ctx ResourceContext, keyrefs []ConfigKeyRef) ([]*ConfigKeyValueRef, error) {
+	filters := ctx.DBFilters()
+	names := make([]any, 0, len(keyrefs))
+	for i := range keyrefs {
+		names = append(names, keyrefs[i].ConfigName)
+	}
+	filters = d.configRepo.MergeMatchFilters(filters, map[string]repos.MatchFilter{
+		fields.MetadataName: {
+			MatchType: repos.MatchTypeArray,
+			Array:     names,
+		},
+	})
+	configs, err := d.configRepo.Find(ctx, repos.Query{Filter: filters})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
 
-func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
+	results := make([]*ConfigKeyValueRef, 0, len(configs))
+
+	data := make(map[string]map[string]string)
+
+	for i := range configs {
+		data[configs[i].Name] = configs[i].Data
+	}
+
+	for i := range keyrefs {
+		results = append(results, &ConfigKeyValueRef{
+			ConfigName: keyrefs[i].ConfigName,
+			Key:        keyrefs[i].Key,
+			Value:      data[keyrefs[i].ConfigName][keyrefs[i].Key],
+		})
+	}
+
+	return results, nil
+}
+
+func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
+
+	var err error
+	config.Namespace, err = d.envTargetNamespace(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
 		return nil, err
 	}
 
-	config.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &config.Config); err != nil {
-		return nil, err
+	config.IncrementRecordVersion()
+	config.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
 	}
+	config.LastUpdatedBy = config.CreatedBy
 
 	config.AccountName = ctx.AccountName
-	config.ClusterName = ctx.ClusterName
-	config.SetGeneration(1)
-	config.SyncStatus = t.GetSyncStatusForCreation()
-
-	c, err := d.configRepo.Create(ctx, &config)
-	if err != nil {
-		if d.configRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("config with name %q already exists", config.Name)
-		}
-		return nil, err
+	config.ProjectName = ctx.ProjectName
+	config.EnvironmentName = ctx.EnvironmentName
+	if config.Annotations == nil {
+		config.Annotations = types.ConfigWatchingAnnotation
+	} else {
+		maps.Copy(config.Annotations, types.ConfigWatchingAnnotation)
 	}
 
-	if err := d.applyK8sResource(ctx, &c.Config); err != nil {
-		return c, err
-	}
-
-	return c, nil
+	return d.createAndApplyConfig(ctx, &config)
 }
 
-func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
-		return nil, err
+func (d *domain) createAndApplyConfig(ctx ResourceContext, config *entities.Config) (*entities.Config, error) {
+	config.SyncStatus = t.GenSyncStatus(t.SyncActionApply, 0)
+
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, config); err != nil {
+		return nil, errors.NewE(err)
 	}
 
-	config.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &config.Config); err != nil {
-		return nil, err
-	}
-
-	c, err := d.findConfig(ctx, config.Namespace, config.Name)
+	cfg, err := d.configRepo.Create(ctx, config)
 	if err != nil {
-		return nil, err
+		if d.configRepo.ErrAlreadyExists(err) {
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, errors.NewE(err)
+		}
+		return nil, errors.NewE(err)
 	}
 
-	c.Config = config.Config
-	c.Generation += 1
-	c.SyncStatus = t.GetSyncStatusForUpdation(c.Generation)
+	if err := d.applyK8sResource(ctx, config.ProjectName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
+		return cfg, errors.NewE(err)
+	}
 
-	upConfig, err := d.configRepo.UpdateById(ctx, c.Id, c)
+	return cfg, nil
+}
+
+func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*entities.Config, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
+
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&config,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.ConfigData: config.Data,
+			},
+		})
+
+	upConfig, err := d.configRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, config.Name),
+		patchForUpdate,
+	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, upConfig.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, &upConfig.Config); err != nil {
-		return upConfig, err
+	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
+		return upConfig, errors.NewE(err)
 	}
 
 	return upConfig, nil
 }
 
-func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+func (d *domain) DeleteConfig(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return errors.NewE(err)
 	}
 
-	c, err := d.findConfig(ctx, namespace, name)
+	uc, err := d.configRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishUpdate)
 
-	c.SyncStatus = t.GetSyncStatusForDeletion(c.Generation)
-	if _, err := d.configRepo.UpdateById(ctx, c.Id, c); err != nil {
-		return err
+	if err := d.deleteK8sResource(ctx, uc.ProjectName, &uc.ConfigMap); err != nil {
+		if errors.Is(err, ErrNoClusterAttached) {
+			return d.configRepo.DeleteById(ctx, uc.Id)
+		}
+		return errors.NewE(err)
 	}
-
-	return d.deleteK8sResource(ctx, &c.Config)
+	return nil
 }
 
-func (d *domain) OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name string) error {
-	c, err2 := d.findConfig(ctx, namespace, name)
-	if err2 != nil {
-		return err2
+func (d *domain) OnConfigApplyError(ctx ResourceContext, errMsg, name string, opts UpdateAndDeleteOpts) error {
+	uc, err := d.configRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
+	if err != nil {
+		return errors.NewE(err)
 	}
 
-	c.SyncStatus.Error = &errMsg
-	_, err := d.configRepo.UpdateById(ctx, c.Id, c)
-	return err
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, uc.Name, PublishDelete)
+	return nil
 }
 
-func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error {
-	a, err := d.findConfig(ctx, config.Namespace, config.Name)
+func (d *domain) OnConfigDeleteMessage(ctx ResourceContext, config entities.Config) error {
+	err := d.configRepo.DeleteOne(ctx, ctx.DBFilters().Add(fields.MetadataName, config.Name))
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-
-	return d.configRepo.DeleteById(ctx, a.Id)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, config.Name, PublishDelete)
+	return nil
 }
 
-func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error {
-	c, err := d.findConfig(ctx, config.Namespace, config.Name)
+func (d *domain) OnConfigUpdateMessage(ctx ResourceContext, configIn entities.Config, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xconfig, err := d.findConfig(ctx, configIn.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
-	c.Status = config.Status
-	c.SyncStatus.Error = nil
-	c.SyncStatus.LastSyncedAt = time.Now()
-	c.SyncStatus.Generation = config.Generation
-	c.SyncStatus.State = t.ParseSyncState(config.Status.IsReady)
+	if xconfig == nil {
+		return errors.Newf("no config found")
+	}
 
-	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
-	return err
+	recordVersion, err := d.MatchRecordVersion(configIn.Annotations, xconfig.RecordVersion)
+	if err != nil {
+		return d.resyncK8sResource(ctx, xconfig.ProjectName, xconfig.SyncStatus.Action, &xconfig.ConfigMap, xconfig.RecordVersion)
+	}
+
+	uc, err := d.configRepo.PatchById(ctx, xconfig.Id, common.PatchForSyncFromAgent(&configIn, recordVersion, status, common.PatchOpts{
+		MessageTimestamp: opts.MessageTimestamp,
+	}))
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uc.GetResourceType(), uc.GetName(), PublishUpdate)
+	return errors.NewE(err)
 }
 
-func (d *domain) ResyncConfig(ctx ConsoleContext, namespace, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+func (d *domain) ResyncConfig(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return errors.NewE(err)
 	}
 
-	c, err := d.findConfig(ctx, namespace, name)
+	cfg, err := d.findConfig(ctx, name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
-	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config)
+	return d.resyncK8sResource(ctx, cfg.ProjectName, cfg.SyncStatus.Action, &cfg.ConfigMap, cfg.RecordVersion)
 }

@@ -23,8 +23,7 @@ ENV CGO_ENABLED=0
 RUN GOOS=linux GOARCH=amd64 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-#FROM gcr.io/distroless/static:nonroot
-FROM golang:1.18.3-alpine3.16
+FROM gcr.io/distroless/static:nonroot
 USER 1001:1001
 ARG APP
 COPY --from=base /tmp/bin/$APP /auth

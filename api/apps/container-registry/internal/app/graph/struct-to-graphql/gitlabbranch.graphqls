@@ -1,0 +1,11 @@
+type GitlabBranch @shareable {
+  canPush: Boolean!
+  default: Boolean!
+  developersCanMerge: Boolean!
+  developersCanPush: Boolean!
+  merged: Boolean!
+  name: String!
+  protected: Boolean!
+  webUrl: String!
+}
+

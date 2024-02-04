@@ -2,8 +2,8 @@ package domain
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/repos"
 )
 
 type domain struct {

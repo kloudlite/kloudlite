@@ -1,0 +1,22 @@
+type Invitation @shareable {
+  accepted: Boolean
+  accountName: String!
+  creationTime: Date!
+  id: String!
+  invitedBy: String!
+  inviteToken: String!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  rejected: Boolean
+  updateTime: Date!
+  userEmail: String
+  userName: String
+  userRole: Github__com___kloudlite___api___apps___iam___types__Role!
+}
+
+input InvitationIn {
+  userEmail: String
+  userName: String
+  userRole: Github__com___kloudlite___api___apps___iam___types__Role!
+}
+

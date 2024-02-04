@@ -1,0 +1,35 @@
+type Build @shareable {
+  buildClusterName: String!
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  credUser: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  errorMessages: Map!
+  id: String!
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSource!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec!
+  status: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__BuildStatus!
+  updateTime: Date!
+}
+
+type BuildEdge @shareable {
+  cursor: String!
+  node: Build!
+}
+
+type BuildPaginatedRecords @shareable {
+  edges: [BuildEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input BuildIn {
+  buildClusterName: String!
+  name: String!
+  source: Github__com___kloudlite___api___apps___container____registry___internal___domain___entities__GitSourceIn!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn!
+}
+

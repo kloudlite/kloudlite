@@ -1,20 +1,20 @@
 package framework
 
 import (
+	"context"
+	"fmt"
+	"github.com/kloudlite/api/apps/iam/internal/app"
+	"github.com/kloudlite/api/apps/iam/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/grpc"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/iam/internal/application"
-	"kloudlite.io/apps/iam/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 type fm struct {
 	*env.Env
-}
-
-func (f *fm) RedisOptions() (hosts, username, password, basePrefix string) {
-	return f.RedisHosts, f.RedisUsername, f.RedisPassword, f.RedisPrefix
 }
 
 func (f *fm) GetMongoConfig() (url, dbName string) {
@@ -31,7 +31,39 @@ var Module fx.Option = fx.Module(
 		return &fm{Env: ev}
 	}),
 	repos.NewMongoClientFx[*fm](),
-	cache.NewRedisFx[*fm](),
-	rpc.NewGrpcServerFx[*fm](),
-	application.Module,
+
+	fx.Provide(func(logger logging.Logger) (app.IAMGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logger,
+		})
+	}),
+
+	app.Module,
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.IAMGrpcServer, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				timeout, cf := context.WithTimeout(ctx, 2*time.Second)
+				defer cf()
+				errCh := make(chan error, 1)
+				go func() {
+					if err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort)); err != nil {
+						errCh <- err
+					}
+				}()
+
+				select {
+				case <-timeout.Done():
+				case err := <-errCh:
+					return errors.NewE(err)
+				}
+				return nil
+			},
+
+			OnStop: func(ctx context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
 )

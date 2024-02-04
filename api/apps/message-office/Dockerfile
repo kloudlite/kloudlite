@@ -16,7 +16,7 @@ COPY --chown=1001 ./  ./
 RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static-debian11:nonroot
 ARG APP
-COPY --from=base --chown=1001 /tmp/bin/$APP /message-office
-CMD ["/message-office"]
+COPY --from=base --chown=1001 /tmp/bin/$APP ./message-office
+CMD ["./message-office"]

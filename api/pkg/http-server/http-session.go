@@ -5,20 +5,22 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/gofiber/fiber/v2"
-	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 const userContextKey = "__local_user_context__"
 
-func NewSessionMiddleware[T repos.Entity](
-	cacheClient cache.Client,
+func NewSessionMiddleware(
+	repo kv.Repo[*common.AuthSession],
 	cookieName string,
 	cookieDomain string,
 	sessionKeyPrefix string,
 ) fiber.Handler {
-	repo := cache.NewRepo[T](cacheClient)
 	return func(ctx *fiber.Ctx) error {
 		cookies := map[string]string{}
 		ctx.Request().Header.VisitAllCookie(func(key, value []byte) {
@@ -29,14 +31,14 @@ func NewSessionMiddleware[T repos.Entity](
 
 		cookieValue := ctx.Cookies(cookieName)
 
-		if cookieValue != "" || false {
+		if cookieValue != "" {
 			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
 			var get any
 			get, err := repo.Get(ctx.Context(), key)
 			if err != nil {
-				if !repo.ErrNoRecord(err) {
-					return err
-				}
+			  if !repo.ErrKeyNotFound(err) {
+					return errors.NewE(err)
+			  }
 			}
 
 			if get != nil {
@@ -46,7 +48,7 @@ func NewSessionMiddleware[T repos.Entity](
 
 		ctx.SetUserContext(
 			context.WithValue(
-				ctx.UserContext(), "set-session", func(session T) {
+				ctx.UserContext(), "set-session", func(session *common.AuthSession) {
 					err := repo.Set(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, session.GetId()), session)
 					if err != nil {
 						fmt.Println("[ERROR]", err)
@@ -73,7 +75,9 @@ func NewSessionMiddleware[T repos.Entity](
 			context.WithValue(
 				ctx.UserContext(), "delete-session", func() {
 					if cookieValue != "" {
-						repo.Drop(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue))
+						if err := repo.Drop(ctx.Context(), fmt.Sprintf("%v:%v", sessionKeyPrefix, cookieValue)); err != nil {
+							fmt.Println("[ERROR]", err)
+						}
 					}
 				},
 			),

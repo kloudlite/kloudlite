@@ -1,11 +1,20 @@
 package repos
 
-import "time"
+import (
+	"time"
+)
 
 type BaseEntity struct {
-	Id           ID        `json:"id" bson:"id"`
-	CreationTime time.Time `json:"creation_time" bson:"creation_time"`
-	UpdateTime   time.Time `json:"update_time" bson:"update_time"`
+	PrimitiveId       ID        `json:"_id,omitempty" graphql:"ignore" struct-json-path:",ignore"`
+	Id                ID        `json:"id"`
+	CreationTime      time.Time `json:"creationTime"`
+	UpdateTime        time.Time `json:"updateTime"`
+	RecordVersion     int       `json:"recordVersion"`
+	MarkedForDeletion *bool     `json:"markedForDeletion,omitempty"`
+}
+
+func (c *BaseEntity) GetPrimitiveID() ID {
+	return c.PrimitiveId
 }
 
 func (c *BaseEntity) GetId() ID {
@@ -33,5 +42,20 @@ func (c *BaseEntity) SetUpdateTime(ut time.Time) {
 }
 
 func (c *BaseEntity) IsZero() bool {
-	return c.Id == ""
+	return c == nil || c.Id == ""
+}
+
+func (c *BaseEntity) IncrementRecordVersion() {
+	c.RecordVersion += 1
+}
+
+func (c *BaseEntity) GetRecordVersion() int {
+	return c.RecordVersion
+}
+
+func (c *BaseEntity) IsMarkedForDeletion() bool {
+	if c.MarkedForDeletion == nil {
+		return false
+	}
+	return *c.MarkedForDeletion
 }

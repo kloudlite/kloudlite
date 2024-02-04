@@ -1,26 +1,26 @@
 package env
 
-import "github.com/codingconcepts/env"
+import (
+	"github.com/codingconcepts/env"
+)
 
 type Env struct {
-	KafkaBrokers      string `env:"KAFKA_BROKERS"       required:"true"`
-	KafkaSaslUsername string `env:"KAFKA_SASL_USERNAME" required:"true"`
-	KafkaSaslPassword string `env:"KAFKA_SASL_PASSWORD" required:"true"`
+	NatsUrl    string `env:"NATS_URL" required:"true"`
+	NatsStream string `env:"NATS_STREAM" required:"true"`
 
-	// for consumers
-	KafkaConsumerGroup          string `env:"KAFKA_CONSUMER_GROUP"            required:"true"`
-	KafkaTopicStatusUpdates     string `env:"KAFKA_TOPIC_STATUS_UPDATES"      required:"true"`
-	KafkaTopicInfraUpdates      string `env:"KAFKA_TOPIC_INFRA_UPDATES"       required:"true"`
-	KafkaTopicErrorOnApply      string `env:"KAFKA_TOPIC_ERROR_ON_APPLY"      required:"true"`
-	KafkaTopicBYOCClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
+	PlatformAccessToken string `env:"PLATFORM_ACCESS_TOKEN" required:"true"`
 
-	DbName string `env:"DB_NAME" required:"true"`
-	DbUri  string `env:"DB_URI"  required:"true"`
+	DbName string `env:"MONGO_DB_NAME" required:"true"`
+	DbUri  string `env:"MONGO_URI"  required:"true"`
 
-	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
-	HttpPort uint16 `env:"HTTP_PORT" required:"true"`
+	ExternalGrpcPort uint16 `env:"EXTERNAL_GRPC_PORT" required:"true"`
+	InternalGrpcPort uint16 `env:"INTERNAL_GRPC_PORT" required:"true"`
+	HttpPort         uint16 `env:"HTTP_PORT" required:"true"`
 
-	// GrpcValidityHeader string `env:"GRPC_VALIDITY_HEADER" required:"true"`
+	VectorGrpcAddr string `env:"VECTOR_GRPC_ADDR" required:"true"`
+
+	TokenHashingSecret string `env:"TOKEN_HASHING_SECRET" required:"true"`
+	IsDev              bool
 }
 
 func LoadEnvOrDie() *Env {
