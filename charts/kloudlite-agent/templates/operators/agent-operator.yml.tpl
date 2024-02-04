@@ -127,7 +127,7 @@ spec:
 
             {{- /* for: nodepool operator */}}
             - name: "IAC_JOB_IMAGE"
-              value: {{.Values.operators.agentOperator.configuration.iacJobImage}}
+              value: {{.Values.operators.agentOperator.configuration.iacJobImage.repository}}:{{.Values.operators.agentOperator.configuration.iacJobImage.tag | default (include "image-tag" .)}}
 
             - name: "K3S_JOIN_TOKEN"
               valueFrom:
