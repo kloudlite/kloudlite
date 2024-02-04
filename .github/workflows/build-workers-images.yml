@@ -1,0 +1,81 @@
+name: Build Worker/Runner/Base Images
+
+on:
+  push:
+    paths:
+      - "operators/helm-charts/helm-job-runner.Containerfile"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  building-worker-images:
+    strategy:
+      matrix:
+        name:
+          - helm-runner
+
+        include:
+          - name: helm-runner
+            buildDir: operators/helm-charts
+            dockerfile: ./helm-job-runner.Containerfile
+
+    runs-on: ubuntu-latest
+    name: Build and push helm worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Image Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          set +e
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+          echo "$IMAGE_TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            IMAGE_TAG="$IMAGE_TAG-nightly"
+          fi
+          set -e
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+      - name: Create Image Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
+
+      - name: Build Helm Job Runner
+        run: |
+          set +e
+          image_name="ghcr.io/${{ github.repository }}/workers/${{ matrix.name }}"
+
+          docker manifest inspect "$image_name:$IMAGE_TAG"
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          pushd ${{ matrix.buildDir }}
+          docker buildx build -f ${{ matrix.dockerfile }} -t $image_name:$IMAGE_TAG . --push

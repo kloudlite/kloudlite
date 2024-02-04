@@ -76,7 +76,6 @@ spec:
             {{$valuesJson}}
             EOF
 
-            
             if [ "{{$action}}" = "delete" ]; then
               terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log
               kubectl delete secret -n {{$kubeconfigSecretNamespace}} {{$kubeconfigSecretName}} --ignore-not-found=true
@@ -85,7 +84,7 @@ spec:
               terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
 
               terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
-              terraform state pull | jq '.outputs.."kloudlite-k3s-params".value' -r > k3s-params
+              terraform state pull | jq '.outputs."kloudlite-k3s-params".value' -r > k3s-params
 
               kubectl apply -f - <<EOF
               apiVersion: v1
