@@ -1,0 +1,7 @@
+# syntax=docker/dockerfile:1.4
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /tmp
+USER 1001:1001
+ARG APP
+COPY --from=builder $APP ./websocket-server
+CMD ["./websocket-server"]

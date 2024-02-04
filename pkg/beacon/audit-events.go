@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/common"
-	"kloudlite.io/constants"
-	"kloudlite.io/pkg/errors"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/pkg/errors"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/messaging"
+	"github.com/kloudlite/api/pkg/messaging/types"
+	"github.com/kloudlite/api/pkg/repos"
 	"time"
 )
 
@@ -18,22 +19,22 @@ type EventTarget struct {
 	ResourceId   repos.ID               `json:"resourceId" bson:"resourceId"`
 }
 
-type status struct {
+type Status struct {
 	Value   string `json:"value" bson:"value"`
 	Message string `json:"message" bson:"message"`
 }
 
-func StatusOK() status {
-	return status{Value: "OK"}
+func StatusOK() Status {
+	return Status{Value: "OK"}
 }
 
-func StatusError(err error) status {
-	return status{Value: "ERROR", Message: err.Error()}
+func StatusError(err error) Status {
+	return Status{Value: "ERROR", Message: err.Error()}
 }
 
 type EventAction struct {
 	Action       constants.Action       `json:"action" bson:"action"`
-	Status       status                 `json:"status" bson:"status"`
+	Status       Status                 `json:"status" bson:"status"`
 	ResourceType constants.ResourceType `json:"resourceType" bson:"resourceType"`
 	ResourceId   repos.ID               `json:"resourceId" bson:"resourceId"`
 	Tags         map[string]string      `json:"tags" bson:"tags"`
@@ -51,7 +52,7 @@ type AuditLogEvent struct {
 }
 
 type beacon struct {
-	producer redpanda.Producer
+	producer messaging.Producer
 	topic    string
 }
 
@@ -67,7 +68,7 @@ func getSession(ctx context.Context) (*common.AuthSession, error) {
 func (b *beacon) TriggerEvent(ctx context.Context, accountId repos.ID, event *AuditLogEvent) error {
 	eventB, err := json.Marshal(event)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
 	if event.Tags == nil {
@@ -81,9 +82,11 @@ func (b *beacon) TriggerEvent(ctx context.Context, accountId repos.ID, event *Au
 			event.Tags["user-agent"] = ua
 		}
 	}
-	_, err = b.producer.Produce(ctx, b.topic, string(accountId), eventB)
-	if err != nil {
-		return err
+	if err := b.producer.Produce(ctx, types.ProduceMsg{
+		Subject: b.topic,
+		Payload: eventB,
+	}); err != nil {
+		return errors.NewE(err)
 	}
 	return nil
 }
@@ -92,10 +95,10 @@ func defaultDesc(action, resType, resId string) string {
 	return fmt.Sprintf("performed [action=%s] on target [type=%s, id=%s]", action, resType, resId)
 }
 
-func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction) {
+func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act EventAction) error {
 	session, err := getSession(ctx)
 	if err != nil {
-		return
+		return errors.NewE(err)
 	}
 
 	ale := AuditLogEvent{
@@ -127,15 +130,18 @@ func (b *beacon) TriggerWithUserCtx(ctx context.Context, accountId repos.ID, act
 
 	eventB, err := json.Marshal(ale)
 	if err != nil {
-		return
+		return errors.NewE(err)
 	}
-	_, err = b.producer.Produce(ctx, b.topic, string(accountId), eventB)
-	if err != nil {
-		return
+	if err := b.producer.Produce(ctx, types.ProduceMsg{
+		Subject: b.topic,
+		Payload: eventB,
+	}); err != nil {
+		return errors.NewE(err)
 	}
-	return
+
+	return nil
 }
 
-func NewBeacon(producer redpanda.Producer, topic string) Beacon {
+func NewBeacon(producer messaging.Producer, topic string) Beacon {
 	return &beacon{producer: producer, topic: topic}
 }

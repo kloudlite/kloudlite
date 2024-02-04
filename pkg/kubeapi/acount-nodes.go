@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"os/exec"
@@ -57,7 +58,7 @@ func (c *Client) GetAccountNodes(ctx context.Context, edgeId string) (*AccountNo
 
 	var nodeList AccountNodeList
 	if err := json.Unmarshal(stdout.Bytes(), &nodeList); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 
 	return &nodeList, nil

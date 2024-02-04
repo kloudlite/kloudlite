@@ -1,0 +1,39 @@
+type Github__com___kloudlite___api___common__CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
+type Metadata @shareable {
+  annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
+  generation: Int!
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+type PageInfo @shareable {
+  endCursor: String
+  hasNextPage: Boolean
+  hasPreviousPage: Boolean
+  startCursor: String
+}
+
+input MetadataIn {
+  annotations: Map
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+enum Github__com___kloudlite___api___apps___iam___types__Role {
+  account_admin
+  account_member
+  account_owner
+  project_admin
+  project_member
+  resource_owner
+}
+

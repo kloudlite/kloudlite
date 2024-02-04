@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"kloudlite.io/pkg/beacon"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/beacon"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type EventLog struct {

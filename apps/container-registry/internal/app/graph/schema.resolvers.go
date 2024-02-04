@@ -6,92 +6,553 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"time"
-
-	harbor1 "github.com/kloudlite/operator/pkg/harbor"
-	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/harbor"
+	generated1 "github.com/kloudlite/api/apps/container-registry/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/container-registry/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/api/pkg/types"
 )
 
-// PushedAt is the resolver for the pushedAt field.
-func (r *imageTagResolver) PushedAt(ctx context.Context, obj *harbor.ImageTag) (string, error) {
-	if obj == nil {
-		return "", nil
-	}
-	return obj.PushTime.Format(time.RFC3339), nil
-}
-
-// CrCreateRobot is the resolver for the cr_createRobot field.
-func (r *mutationResolver) CrCreateRobot(ctx context.Context, robotUser entities.HarborRobotUser) (*entities.HarborRobotUser, error) {
-	return r.Domain.CreateHarborRobot(toRegistryContext(ctx), &robotUser)
-}
-
-// CrUpdateRobot is the resolver for the cr_updateRobot field.
-func (r *mutationResolver) CrUpdateRobot(ctx context.Context, name string, permissions []harbor1.Permission) (*entities.HarborRobotUser, error) {
-	panic(fmt.Errorf("not implemented: CrUpdateRobot - cr_updateRobot"))
-}
-
-// CrDeleteRobot is the resolver for the cr_deleteRobot field.
-func (r *mutationResolver) CrDeleteRobot(ctx context.Context, robotID int) (bool, error) {
-	err := r.Domain.DeleteHarborRobot(toRegistryContext(ctx), robotID)
+// CrCreateRepo is the resolver for the cr_createRepo field.
+func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities.Repository) (*entities.Repository, error) {
+	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.CreateRepository(cc, repository.Name)
+}
+
+// CrCreateCred is the resolver for the cr_createCred field.
+func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities.Credential) (*entities.Credential, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.CreateCredential(cc, credential)
+}
+
+// CrDeleteRepo is the resolver for the cr_deleteRepo field.
+func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteRepository(cc, name); err != nil {
+		return false, errors.NewE(err)
+	}
+
+	return true, nil
+}
+
+// CrDeleteCred is the resolver for the cr_deleteCred field.
+func (r *mutationResolver) CrDeleteCred(ctx context.Context, username string) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteCredential(cc, username); err != nil {
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
 
-// CrResyncRobot is the resolver for the cr_resyncRobot field.
-func (r *mutationResolver) CrResyncRobot(ctx context.Context, name string) (bool, error) {
-	panic(fmt.Errorf("not implemented: CrResyncRobot - cr_resyncRobot"))
+// CrDeleteDigest is the resolver for the cr_deleteDigest field.
+func (r *mutationResolver) CrDeleteDigest(ctx context.Context, repoName string, digest string) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := r.Domain.DeleteRepositoryDigest(cc, repoName, digest); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
 }
 
-// CrDeleteRepo is the resolver for the cr_deleteRepo field.
-func (r *mutationResolver) CrDeleteRepo(ctx context.Context, repoID int) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+// CrAddBuild is the resolver for the cr_addBuild field.
+func (r *mutationResolver) CrAddBuild(ctx context.Context, build entities.Build) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.AddBuild(cc, build)
+}
+
+// CrUpdateBuild is the resolver for the cr_updateBuild field.
+func (r *mutationResolver) CrUpdateBuild(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.UpdateBuild(cc, id, build)
+}
+
+// CrDeleteBuild is the resolver for the cr_deleteBuild field.
+func (r *mutationResolver) CrDeleteBuild(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.DeleteBuild(cc, id); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CrTriggerBuild is the resolver for the cr_triggerBuild field.
+func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.TriggerBuild(cc, id); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CrAddBuildCacheKey is the resolver for the cr_addBuildCacheKey field.
+func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.AddBuildCache(cc, buildCacheKey)
+}
+
+// CrDeleteBuildCacheKey is the resolver for the cr_deleteBuildCacheKey field.
+func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+// CrUpdateBuildCacheKey is the resolver for the cr_updateBuildCacheKey field.
+func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
+}
+
+// CrListBuildsByBuildCacheID is the resolver for the cr_listBuildsByBuildCacheId field.
+func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.BuildEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+	}
+
+	return m, nil
 }
 
 // CrListRepos is the resolver for the cr_listRepos field.
-func (r *queryResolver) CrListRepos(ctx context.Context) ([]*harbor.Repository, error) {
-	images, err := r.Domain.GetHarborImages(toRegistryContext(ctx))
+func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.RepositoryPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
-	repositories := make([]*harbor.Repository, len(images))
-	for i := range images {
-		repositories[i] = &images[i]
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
 	}
-	return repositories, nil
+
+	rr, err := r.Domain.ListRepositories(cc, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.RepositoryEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.RepositoryEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.RepositoryPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+		TotalCount: int(rr.TotalCount),
+	}
+
+	return m, nil
 }
 
-// CrListArtifacts is the resolver for the cr_listArtifacts field.
-func (r *queryResolver) CrListArtifacts(ctx context.Context, repoName string) ([]*harbor.Artifact, error) {
-	artifacts, err := r.Domain.GetRepoArtifacts(toRegistryContext(ctx), repoName)
+// CrListCreds is the resolver for the cr_listCreds field.
+func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCreds, pagination *repos.CursorPagination) (*model.CredentialPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
-	artifactsReturn := make([]*harbor.Artifact, len(artifacts))
-	for i := range artifacts {
-		artifactsReturn[i] = &artifacts[i]
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
 	}
-	return artifactsReturn, nil
+
+	rr, err := r.Domain.ListCredentials(cc, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.CredentialEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.CredentialEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.CredentialPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+		TotalCount: int(rr.TotalCount),
+	}
+
+	return m, nil
 }
 
-// CrListRobots is the resolver for the cr_listRobots field.
-func (r *queryResolver) CrListRobots(ctx context.Context) ([]*entities.HarborRobotUser, error) {
-	robots, err := r.Domain.ListHarborRobots(toRegistryContext(ctx))
+// CrListDigests is the resolver for the cr_listDigests field.
+func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.DigestPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
-	if robots == nil {
-		return make([]*entities.HarborRobotUser, 0), nil
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
 	}
-	return robots, nil
+
+	rr, err := r.Domain.ListRepositoryDigests(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.DigestEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.DigestEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+	m := &model.DigestPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+		TotalCount: int(rr.TotalCount),
+	}
+
+	return m, nil
 }
 
-// ImageTag returns generated1.ImageTagResolver implementation.
-func (r *Resolver) ImageTag() generated1.ImageTagResolver { return &imageTagResolver{r} }
+// CrGetCredToken is the resolver for the cr_getCredToken field.
+func (r *queryResolver) CrGetCredToken(ctx context.Context, username string) (string, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return "", errors.NewE(err)
+	}
+
+	token, err := r.Domain.GetToken(cc, username)
+	if err != nil {
+		return "", errors.NewE(err)
+	}
+
+	return token, nil
+}
+
+// CrCheckUserNameAvailability is the resolver for the cr_checkUserNameAvailability field.
+func (r *queryResolver) CrCheckUserNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.CheckUserNameAvailability(cc, name)
+}
+
+// CrGetBuild is the resolver for the cr_getBuild field.
+func (r *queryResolver) CrGetBuild(ctx context.Context, id repos.ID) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetBuild(cc, id)
+}
+
+// CrListBuilds is the resolver for the cr_listBuilds field.
+func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, search *model.SearchBuilds, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
+	}
+
+	rr, err := r.Domain.ListBuilds(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.BuildEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+		TotalCount: int(rr.TotalCount),
+	}
+
+	return m, nil
+}
+
+// CrListGithubInstallations is the resolver for the cr_listGithubInstallations field.
+func (r *queryResolver) CrListGithubInstallations(ctx context.Context, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GithubListInstallations(ctx, userId, pagination)
+}
+
+// CrListGithubRepos is the resolver for the cr_listGithubRepos field.
+func (r *queryResolver) CrListGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (*entities.GithubListRepository, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GithubListRepos(ctx, userId, int64(installationID), pagination)
+}
+
+// CrSearchGithubRepos is the resolver for the cr_searchGithubRepos field.
+func (r *queryResolver) CrSearchGithubRepos(ctx context.Context, organization string, search string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GithubSearchRepos(ctx, userId, search, organization, pagination)
+}
+
+// CrListGithubBranches is the resolver for the cr_listGithubBranches field.
+func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GithubListBranches(ctx, userId, repoURL, pagination)
+}
+
+// CrListGitlabGroups is the resolver for the cr_listGitlabGroups field.
+func (r *queryResolver) CrListGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GitlabListGroups(ctx, userId, query, pagination)
+}
+
+// CrListGitlabRepositories is the resolver for the cr_listGitlabRepositories field.
+func (r *queryResolver) CrListGitlabRepositories(ctx context.Context, groupID string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	return r.Domain.GitlabListRepos(ctx, userId, groupID, query, pagination)
+}
+
+// CrListGitlabBranches is the resolver for the cr_listGitlabBranches field.
+func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string, query *string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
+}
+
+// CrListBuildCacheKeys is the resolver for the cr_listBuildCacheKeys field.
+func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
+	}
+
+	rr, err := r.Domain.ListBuildCaches(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	records := make([]*model.BuildCacheKeyEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildCacheKeyEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildCacheKeyPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+	}
+
+	return m, nil
+}
+
+// CrListBuildRuns is the resolver for the cr_listBuildRuns field.
+func (r *queryResolver) CrListBuildRuns(ctx context.Context, repoName string, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	buildRuns, err := r.Domain.ListBuildRuns(cc, repoName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	ve := make([]*model.BuildRunEdge, len(buildRuns.Edges))
+	for i := range buildRuns.Edges {
+		ve[i] = &model.BuildRunEdge{
+			Node:   buildRuns.Edges[i].Node,
+			Cursor: buildRuns.Edges[i].Cursor,
+		}
+	}
+
+	m := model.BuildRunPaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &buildRuns.PageInfo.EndCursor,
+			HasNextPage:     buildRuns.PageInfo.HasNextPage,
+			HasPreviousPage: buildRuns.PageInfo.HasPrevPage,
+			StartCursor:     &buildRuns.PageInfo.StartCursor,
+		},
+		TotalCount: int(buildRuns.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// CrGetBuildRun is the resolver for the cr_getBuildRun field.
+func (r *queryResolver) CrGetBuildRun(ctx context.Context, repoName string, buildRunName string) (*entities.BuildRun, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return r.Domain.GetBuildRun(cc, repoName, buildRunName)
+}
 
 // Mutation returns generated1.MutationResolver implementation.
 func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationResolver{r} }
@@ -99,6 +560,5 @@ func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationReso
 // Query returns generated1.QueryResolver implementation.
 func (r *Resolver) Query() generated1.QueryResolver { return &queryResolver{r} }
 
-type imageTagResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/message-office-internal";
+
+service MessageOfficeInternal {
+  rpc GenerateClusterToken(GenerateClusterTokenIn) returns (GenerateClusterTokenOut);
+}
+
+message GenerateClusterTokenIn {
+  string accountName = 1;
+  string clusterName = 2;
+}
+
+message GenerateClusterTokenOut {
+  string clusterToken = 1;
+}

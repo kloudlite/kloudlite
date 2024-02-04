@@ -4,15 +4,17 @@ import (
 	"time"
 )
 
-type SyncState string
-type SyncAction string
+type (
+	SyncState  string
+	SyncAction string
+)
 
 type SyncStatus struct {
 	SyncScheduledAt time.Time  `json:"syncScheduledAt,omitempty"`
 	LastSyncedAt    time.Time  `json:"lastSyncedAt,omitempty"`
-	Action          SyncAction `json:"action,omitempty"`
-	Generation      int64      `json:"generation,omitempty"`
-	State           SyncState  `json:"state,omitempty"`
+	Action          SyncAction `json:"action"`
+	RecordVersion   int        `json:"recordVersion"`
+	State           SyncState  `json:"state"`
 	Error           *string    `json:"error,omitempty"`
 }
 
@@ -22,36 +24,21 @@ const (
 )
 
 const (
-	SyncStateIdle       SyncState = "IDLE"
-	SyncStateInProgress SyncState = "IN_PROGRESS"
-	SyncStateReady      SyncState = "READY"
-	SyncStateNotReady   SyncState = "NOT_READY"
+	SyncStateIdle            SyncState = "IDLE"
+	SyncStateInQueue         SyncState = "IN_QUEUE"
+	SyncStateAppliedAtAgent  SyncState = "APPLIED_AT_AGENT"
+	SyncStateErroredAtAgent  SyncState = "ERRORED_AT_AGENT"
+	SyncStateUpdatedAtAgent  SyncState = "UPDATED_AT_AGENT"
+	SyncStateDeletingAtAgent SyncState = "DELETING_AT_AGENT"
+	SyncStateDeletedAtAgent  SyncState = "DELETED_AT_AGENT"
 )
 
-func GenSyncStatus(action SyncAction, generation int64) SyncStatus {
+func GenSyncStatus(action SyncAction, recordVersion int) SyncStatus {
 	return SyncStatus{
 		SyncScheduledAt: time.Now(),
 		Action:          action,
-		Generation:      generation,
-		State:           SyncStateIdle,
-	}
-}
-
-func GetSyncStatusForCreation() SyncStatus {
-	return SyncStatus{
-		SyncScheduledAt: time.Now(),
-		Action:          SyncActionApply,
-		Generation:      1,
-		State:           SyncStateIdle,
-	}
-}
-
-func GetSyncStatusForUpdation(generation int64) SyncStatus {
-	return SyncStatus{
-		SyncScheduledAt: time.Now(),
-		Action:          SyncActionApply,
-		Generation:      generation,
-		State:           SyncStateIdle,
+		RecordVersion:   recordVersion,
+		State:           SyncStateInQueue,
 	}
 }
 
@@ -59,14 +46,7 @@ func GetSyncStatusForDeletion(generation int64) SyncStatus {
 	return SyncStatus{
 		SyncScheduledAt: time.Now(),
 		Action:          SyncActionDelete,
-		Generation:      generation,
-		State:           SyncStateIdle,
+		RecordVersion:   int(generation),
+		State:           SyncStateInQueue,
 	}
-}
-
-func ParseSyncState(isReady bool) SyncState {
-	if isReady {
-		return SyncStateReady
-	}
-	return SyncStateNotReady
 }

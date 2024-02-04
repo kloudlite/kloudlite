@@ -1,6 +1,6 @@
 schema:
   - graph/*.graphqls
-  - graph/crd-to-gql/*.graphqls
+  - graph/struct-to-graphql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -27,6 +27,8 @@ resolver:
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
 struct_tag: json
 
+skip_mod_tidy: true
+
 # Optional: turn on to use []Thing instead of []*Thing
 # omit_slice_element_pointers: false
 
@@ -36,8 +38,7 @@ struct_tag: json
 # gqlgen will search for any type names in the schema in these go packages
 # if they match it will use them, otherwise it will generate them.
 autobind:
-  - "kloudlite.io/pkg/errors"
-  # - "kloudlite.io/apps/infra/internal/domain/entities"
+  - "github.com/kloudlite/api/pkg/errors"
 
 # This section declares type mapping between the GraphQL and go type systems
 #
@@ -46,21 +47,16 @@ autobind:
 # your liking
 skip_validation: true
 models:
-  # KLFile:
-  #   model:
-  #     - kloudlite.io/apps/consolev2/internal/domain/entities/localenv.KLFile
-
   ID:
     model:
-      - kloudlite.io/pkg/repos.ID
+      - github.com/kloudlite/api/pkg/repos.ID
 
-  Metadata:
-    model:
-      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+  Metadata: &metadata-model
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+  MetadataIn: *metadata-model
 
-  MetadataIn:
-    model:
-      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+  MsvcTemplate:
+    model: github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
 
   Int:
     model:
@@ -71,108 +67,103 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
-  Account:
-    model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
-  AccountIn:
-    model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
+  Cluster: &cluster-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Cluster
+    fields:
+      adminKubeconfig:
+        resolver: true
+  ClusterIn: *cluster-model
 
-  CloudProvider:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+  HelmRelease: &helmrelease-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.HelmRelease
+  HelmReleaseIn: *helmrelease-model
 
-  CloudProviderIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+  CloudProviderSecret: &provider-secret-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
+  CloudProviderSecretIn: *provider-secret-model
 
-  BYOCCluster:
-    model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
-  BYOCClusterIn:
-    model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+  NodePool: &nodepool-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.NodePool
+    fields:
+      nodes:
+        resolver: true
 
-  Cluster:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Cluster
-  ClusterIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Cluster
+  NodePoolIn: *nodepool-model
 
-  Edge:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Edge
-  EdgeIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Edge
+  DomainEntry: &domain-entry-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
+  DomainEntryIn: *domain-entry-model
 
-  ProviderSecret:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Secret
+  ClusterManagedService: &cluster-managed-service
+    model: github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService
+  ClusterManagedServiceIn: *cluster-managed-service
 
-  ProviderSecretIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Secret
+  PersistentVolumeClaim: &pvc-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
+  PersistentVolumeClaimIn: *pvc-model
 
-  MasterNode:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-  MasterNodeIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+  Namespace: &namespace-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Namespace
+  NamespaceIn: *namespace-model
 
-  WorkerNode:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-  WorkerNodeIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+  PersistentVolume: &pv-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolume
+  PersistentVolumeIn: *pv-model
 
-  NodePool:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.NodePool
-  NodePoolIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.NodePool
+  VolumeAttachment: &volume-attachment-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
+  VolumeAttachmentIn: *volume-attachment-model
 
-  Secret:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Secret
-  SecretIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.Secret
-
-  Overrides:
-    model:
-      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
-
-  OverridesIn:
-    model:
-      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
-
-  Status:
-    model: github.com/kloudlite/operator/pkg/operator.Status
-
-  Patch:
-    model:
-      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
-
-  PatchIn:
-    model:
-      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
-
-  Check:
-    model:
-      - github.com/kloudlite/operator/pkg/operator.Check
-
-  SyncStatus:
-    model: kloudlite.io/pkg/types.SyncStatus
-
-  SyncState:
-    model: kloudlite.io/pkg/types.SyncState
-
-  SyncAction:
-    model: kloudlite.io/pkg/types.SyncAction
-
+  Node: &node-model
+    model: github.com/kloudlite/api/apps/infra/internal/entities.Node
   ResType:
-    model: kloudlite.io/apps/infra/internal/domain.ResType
+    model: github.com/kloudlite/api/apps/infra/internal/domain.ResType
+
+  Github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntry:
+    model: github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplateEntry
 
   CheckNameAvailabilityOutput:
-    model: kloudlite.io/apps/infra/internal/domain.CheckNameAvailabilityOutput
+    model: github.com/kloudlite/api/apps/infra/internal/domain.CheckNameAvailabilityOutput
+  
+  MatchFilter: &match-filter-model
+    model: github.com/kloudlite/api/pkg/repos.MatchFilter
+  MatchFilterIn: *match-filter-model
+
+  MatchFilterMatchType:
+    model: github.com/kloudlite/api/pkg/repos.MatchType
+
+  CursorPagination: &cursor-pagination-model
+    model: github.com/kloudlite/api/pkg/repos.CursorPagination
+  CursorPaginationIn: *cursor-pagination-model
+
+  CursorPaginationSortDirection: &cursor-pagination-sort-direction-model
+    model: github.com/kloudlite/api/pkg/repos.SortDirection
+  CursorPaginationSortDirectionIn: *cursor-pagination-sort-direction-model
+
+  Github__com___kloudlite___api___common__CreatedOrUpdatedBy:
+    model: github.com/kloudlite/api/common.CreatedOrUpdatedBy
+
+  Github__com___kloudlite___api___apps___infra___internal___entities__CloudProviderName: &cloudprovider-name
+    model: github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderName
+  Github__com___kloudlite___api___apps___infra___internal___entities__CloudProviderNameIn: *cloudprovider-name
+
+  Github__com___kloudlite___operator___pkg___operator__Status:
+    model: github.com/kloudlite/operator/pkg/operator.Status
+
+  Github__com___kloudlite___operator___pkg___operator__Check:
+    model: github.com/kloudlite/operator/pkg/operator.Check
+  Github__com___kloudlite___operator___pkg___operator__ResourceRef:
+    model: github.com/kloudlite/operator/pkg/operator.ResourceRef
+
+  Github__com___kloudlite___api___pkg___types__SyncStatus: &sync-status-model
+    model: github.com/kloudlite/api/pkg/types.SyncStatus
+
+  Github__com___kloudlite___api___pkg___types__SyncAction:
+    model: github.com/kloudlite/api/pkg/types.SyncAction
+
+  Github__com___kloudlite___api___pkg___types__SyncState:
+    model: github.com/kloudlite/api/pkg/types.SyncState
+
+
+  # CheckAwsAccessOutput:
+  #   model: github.com/kloudlite/api/apps/infra/internal/domain.AWSAccessValidationOutput

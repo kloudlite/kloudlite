@@ -2,63 +2,143 @@ package domain
 
 import (
 	"context"
+	networkingv1 "k8s.io/api/networking/v1"
+	"time"
 
-	"kloudlite.io/apps/infra/internal/domain/entities"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/pkg/repos"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 type InfraContext struct {
 	context.Context
+	UserId      repos.ID
+	UserEmail   string
+	UserName    string
 	AccountName string
 }
 
+func (i InfraContext) GetUserId() repos.ID {
+	return i.UserId
+}
+
+func (i InfraContext) GetUserEmail() string {
+	return i.UserEmail
+}
+
+func (i InfraContext) GetUserName() string {
+	return i.UserName
+}
+
+type UpdateAndDeleteOpts struct {
+	MessageTimestamp time.Time
+}
+
+type ResourceType string
+
+const (
+	ResourceTypeClusterManagedService ResourceType = "cluster_managed_service"
+	ResourceTypeCluster               ResourceType = "cluster"
+	ResourceTypeDomainEntries         ResourceType = "domain_entries"
+	ResourceTypeHelmRelease           ResourceType = "helm_release"
+	ResourceTypeNodePool              ResourceType = "nodepool"
+	ResourceTypePVC                   ResourceType = "persistance_volume_claim"
+	ResourceTypePV                    ResourceType = "persistance_volume"
+	ResourceTypeVolumeAttachment      ResourceType = "volume_attachment"
+)
+
 type Domain interface {
-	CheckNameAvailability(ctx InfraContext, typeArg ResType, name string) (*CheckNameAvailabilityOutput, error)
-
-	ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error)
-	GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error)
-
-	CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
-	UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
-	DeleteBYOCCluster(ctx InfraContext, name string) error
-
-	OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
-	OnBYOCClusterHelmUpdates(ctx InfraContext, cluster entities.BYOCCluster) error
+	CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error)
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
-	ListClusters(ctx InfraContext) ([]*entities.Cluster, error)
-	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
-
 	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	DeleteCluster(ctx InfraContext, name string) error
 
-	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
-	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error
+	ListClusters(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error)
+	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
 
-	GetProviderSecret(ctx InfraContext, name string) (*entities.Secret, error)
+	GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error)
 
-	CreateCloudProvider(ctx InfraContext, cloudProvider entities.CloudProvider, providerSecret entities.Secret) (*entities.CloudProvider, error)
-	ListCloudProviders(ctx InfraContext) ([]*entities.CloudProvider, error)
-	GetCloudProvider(ctx InfraContext, name string) (*entities.CloudProvider, error)
-	UpdateCloudProvider(ctx InfraContext, cloudProvider entities.CloudProvider, providerSecret *entities.Secret) (*entities.CloudProvider, error)
-	DeleteCloudProvider(ctx InfraContext, name string) error
-	OnDeleteCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error
-	OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error
+	OnClusterDeleteMessage(ctx InfraContext, cluster entities.Cluster) error
+	OnClusterUpdateMessage(ctx InfraContext, cluster entities.Cluster, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 
-	ListEdges(ctx InfraContext, clusterName string, providerName *string) ([]*entities.Edge, error)
-	GetEdge(ctx InfraContext, clusterName string, name string) (*entities.Edge, error)
+	CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
+	UpdateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error)
+	DeleteProviderSecret(ctx InfraContext, secretName string) error
 
-	CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
-	UpdateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
-	DeleteEdge(ctx InfraContext, clusterName string, name string) error
+	ListProviderSecrets(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error)
+	GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error)
 
-	OnDeleteEdgeMessage(ctx InfraContext, edge entities.Edge) error
-	OnUpdateEdgeMessage(ctx InfraContext, edge entities.Edge) error
+	ValidateProviderSecretAWSAccess(ctx InfraContext, name string) (*AWSAccessValidationOutput, error)
 
-	GetNodePools(ctx InfraContext, clusterName string, edgeName string) ([]*entities.NodePool, error)
-	GetMasterNodes(ctx InfraContext, clusterName string) ([]*entities.MasterNode, error)
-	GetWorkerNodes(ctx InfraContext, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
-	DeleteWorkerNode(ctx InfraContext, clusterName string, edgeName string, name string) (bool, error)
+	ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error)
+	GetDomainEntry(ctx InfraContext, name string) (*entities.DomainEntry, error)
 
-	OnDeleteWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error
-	OnUpdateWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error
+	CreateDomainEntry(ctx InfraContext, domainName entities.DomainEntry) (*entities.DomainEntry, error)
+	UpdateDomainEntry(ctx InfraContext, domainName entities.DomainEntry) (*entities.DomainEntry, error)
+	DeleteDomainEntry(ctx InfraContext, name string) error
+
+	CreateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error)
+	UpdateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error)
+	DeleteNodePool(ctx InfraContext, clusterName string, poolName string) error
+
+	ListNodePools(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.NodePool], error)
+	GetNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error)
+
+	OnNodePoolDeleteMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool) error
+	OnNodePoolUpdateMessage(ctx InfraContext, clusterName string, nodePool entities.NodePool, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnNodepoolApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
+
+	ListNodes(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error)
+	GetNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error)
+
+	OnNodeUpdateMessage(ctx InfraContext, clusterName string, node entities.Node) error
+	OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error
+
+	ListClusterManagedServices(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ClusterManagedService], error)
+	GetClusterManagedService(ctx InfraContext, clusterName string, serviceName string) (*entities.ClusterManagedService, error)
+	CreateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	UpdateClusterManagedService(ctx InfraContext, clusterName string, service entities.ClusterManagedService) (*entities.ClusterManagedService, error)
+	DeleteClusterManagedService(ctx InfraContext, clusterName string, name string) error
+
+	OnClusterManagedServiceApplyError(ctx InfraContext, clusterName, name, errMsg string, opts UpdateAndDeleteOpts) error
+	OnClusterManagedServiceDeleteMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService) error
+	OnClusterManagedServiceUpdateMessage(ctx InfraContext, clusterName string, service entities.ClusterManagedService, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+
+	ListHelmReleases(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.HelmRelease], error)
+	GetHelmRelease(ctx InfraContext, clusterName string, serviceName string) (*entities.HelmRelease, error)
+	CreateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
+	UpdateHelmRelease(ctx InfraContext, clusterName string, service entities.HelmRelease) (*entities.HelmRelease, error)
+
+	DeleteHelmRelease(ctx InfraContext, clusterName string, name string) error
+	OnHelmReleaseApplyError(ctx InfraContext, clusterName string, name string, errMsg string, opts UpdateAndDeleteOpts) error
+	OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string, service entities.HelmRelease) error
+	OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string, service entities.HelmRelease, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+
+	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
+	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
+
+	// kubernetes native resources
+	ListPVCs(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolumeClaim], error)
+	GetPVC(ctx InfraContext, clusterName string, pvcName string) (*entities.PersistentVolumeClaim, error)
+	OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnPVCDeleteMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim) error
+
+	ListNamespaces(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Namespace], error)
+	GetNamespace(ctx InfraContext, clusterName string, namespace string) (*entities.Namespace, error)
+	OnNamespaceUpdateMessage(ctx InfraContext, clusterName string, namespace entities.Namespace, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnNamespaceDeleteMessage(ctx InfraContext, clusterName string, namespace entities.Namespace) error
+
+	ListPVs(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolume], error)
+	GetPV(ctx InfraContext, clusterName string, pvName string) (*entities.PersistentVolume, error)
+	OnPVUpdateMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnPVDeleteMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume) error
+
+	OnIngressUpdateMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnIngressDeleteMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress) error
+
+	ListVolumeAttachments(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VolumeAttachment], error)
+	GetVolumeAttachment(ctx InfraContext, clusterName string, volAttachmentName string) (*entities.VolumeAttachment, error)
+	OnVolumeAttachmentUpdateMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
+	OnVolumeAttachmentDeleteMessage(ctx InfraContext, clusterName string, volumeAttachment entities.VolumeAttachment) error
 }

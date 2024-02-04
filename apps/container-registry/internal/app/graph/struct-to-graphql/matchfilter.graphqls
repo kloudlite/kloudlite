@@ -1,0 +1,20 @@
+type MatchFilter @shareable {
+  array: [Any!]
+  exact: Any
+  matchType: MatchFilterMatchType!
+  regex: String
+}
+
+input MatchFilterIn {
+  array: [Any!]
+  exact: Any
+  matchType: MatchFilterMatchType!
+  regex: String
+}
+
+enum MatchFilterMatchType {
+  array
+  exact
+  regex
+}
+

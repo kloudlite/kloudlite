@@ -2,10 +2,14 @@ version: '3'
 
 dotenv: [".secrets/oauth.env", ".secrets/env"]
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/api"
+
 tasks:
   run:
     cmds:
-      - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
+      - go run main.go --dev
+
   gql:
     sources:
       - graph/schema.graphqls
@@ -13,55 +17,36 @@ tasks:
     dir: internal/app
     cmds:
       - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
 
-  docker-build:
-    vars:
-#       IMAGE: registry.kloudlite.io/kloudlite/auth:v2
-      APP: auth
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    preconditions:
-      - sh: '[[ -n "{{.Tag}}" ]]'
-        msg: 'var Tag must have a value'
 
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
-    cmds:
-      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
-      - docker push {{.IMAGE}}
-
-  local-build:
-    preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      APP: auth
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+  build:
     env:
       CGO_ENABLED: 0
       GOOS: linux
       GOARCH: amd64
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -v -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - upx {{.Out}}
+
+  local-build:
+    vars:
+      APP: auth
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
     silent: true
     cmds:
-      - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
-        tDir=$(mktemp -d)
-
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
-
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
-        docker push {{.IMAGE}}
-        rm -rf $tDir
-
+      - |
+        tdir=$(mktemp -d)
+        task build Out=$tdir/{{.APP}}
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}" 
+        podman push {{.IMAGE}} 
+        rm -rf $tdir

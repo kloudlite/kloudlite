@@ -2,25 +2,20 @@ package repos
 
 import (
 	"context"
-	"fmt"
+	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/errors"
 )
 
-func NewMongoDatabase(url string, dbName string) (db *mongo.Database, e error) {
-	defer errors.HandleErr(&e)
-
-	//structcodec, _ := bsoncodec.NewStructCodec(bsoncodec.JSONFallbackStructTagParser)
-	//rb := bson.NewRegistryBuilder()
-	//// register struct codec
-	//rb.RegisterDefaultEncoder(reflect.Struct, structcodec)
-	//
-	//client, e := mongo.NewClient(options.Client().SetRegistry(rb.Build()).ApplyURI(url))
-
-	client, e := mongo.NewClient(options.Client().ApplyURI(url))
-	errors.AssertNoError(e, fmt.Errorf("could not create mongo client"))
+func NewMongoDatabase(ctx context.Context, uri string, dbName string) (db *mongo.Database, e error) {
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	if err != nil {
+		return nil, errors.NewEf(err, "could not connect to mongodb servers")
+	}
 	return client.Database(dbName), nil
 }
 
@@ -31,17 +26,22 @@ type MongoConfig interface {
 func NewMongoClientFx[T MongoConfig]() fx.Option {
 	return fx.Module("db",
 		fx.Provide(func(env T) (*mongo.Database, error) {
-			return NewMongoDatabase(env.GetMongoConfig())
+			url, dbName := env.GetMongoConfig()
+			ctx, cf := context.WithTimeout(context.TODO(), 10*time.Second)
+			defer cf()
+			return NewMongoDatabase(ctx, url, dbName)
 		}),
-		fx.Invoke(func(db *mongo.Database, lifecycle fx.Lifecycle) {
+
+		fx.Invoke(func(db *mongo.Database, logger logging.Logger, lifecycle fx.Lifecycle) {
 			lifecycle.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
-					err := db.Client().Connect(ctx)
-					if err != nil {
-						return errors.NewEf(err, "coult not connect to Mongo")
+					if err := db.Client().Ping(ctx, nil); err != nil {
+						return errors.NewEf(err, "could not ping Mongo")
 					}
-					return db.Client().Ping(ctx, nil)
+					logger.Infof("connected to mongodb database: %s", db.Name())
+					return nil
 				},
+
 				OnStop: func(ctx context.Context) error {
 					return db.Client().Disconnect(ctx)
 				},

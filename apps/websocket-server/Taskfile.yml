@@ -1,0 +1,61 @@
+version: "3"
+
+dotenv:
+  - .secrets/env
+
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+
+tasks:
+  build:
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - upx {{.Out}}
+
+  run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go run main.go --dev
+
+  docker-build:
+    vars:
+      APP: finance
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+
+      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
+        msg: 'var EnvName must have one of [development, staging, production] as its value'
+    cmds:
+      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
+      - docker push {{.IMAGE}}
+
+  local-build:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Dockerfile: "./Containerfile.local"
+      APP: websocket-server
+      Image: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    cmds:
+      - |+
+        dir=$(mktemp -d)
+        task build Out=$dir/{{.APP}}
+
+        podman buildx build -t {{.Image}} -f {{.Dockerfile}} . --build-context builder=$dir --build-arg APP={{.APP}}
+        podman push {{.Image}}
+        rm -rf $dir
+

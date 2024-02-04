@@ -1,0 +1,10 @@
+type Port @shareable {
+  port: Int
+  targetPort: Int
+}
+
+input PortIn {
+  port: Int
+  targetPort: Int
+}
+
