@@ -98,7 +98,7 @@ jobs:
           fi
 
           uploadOpts="${opts[@]}"
-          if [ "$OVERRIDE_RLEASE" = "true" ]; then
+          if [ "$OVERRIDE_RELEASE" = "true" ]; then
             uploadOpts+=("--clobber")
           fi
 
