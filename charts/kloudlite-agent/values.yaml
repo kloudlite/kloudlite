@@ -30,13 +30,6 @@ kloudliteRelease: ""
 
 jobsNamespace: "kloudlite-jobs"
 
-# defaults:
-#   imageTag: ""
-#   imagePullPolicy: "Always"
-#   tolerations: []
-#   nodeSelector: {}
-#   jobsNamespace: "kloudlite-jobs"
-
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -73,7 +66,9 @@ operators:
 
     configuration:
       letsEncryptSupportEmail: "support@kloudlite.io"
-      iacJobImage: "ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-k8s-backend"
+      iacJobImage: 
+        repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
+        tag: ""
 
       helmCharts:
         jobImage:
@@ -117,3 +112,6 @@ helmCharts:
     debugOnStdout: false
     nodeSelector: {}
     tolerations: []
+
+  clusterAutoscaler:
+    enabled: true

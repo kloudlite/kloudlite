@@ -70,36 +70,38 @@ helm show values kloudlite/kloudlite-platform
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| apps.accountsApi.image | string | `"ghcr.io/kloudlite/api/accounts:v1.0.5-nightly"` | image (with tag) for accounts api |
-| apps.auditLoggingWorker.image | string | `"ghcr.io/kloudlite/api/worker-audit-logging:v1.0.5-nightly"` | image (with tag) for audit logging worker |
-| apps.authApi.image | string | `"ghcr.io/kloudlite/api/auth:v1.0.5-nightly"` | image (with tag) for auth api |
+| apps.accountsApi.image | object | `{"repository":"ghcr.io/kloudlite/api/accounts","tag":""}` | image (with tag) for accounts api |
+| apps.auditLoggingWorker.image.repository | string | `"ghcr.io/kloudlite/api/worker-audit-logging"` |  |
+| apps.auditLoggingWorker.image.tag | string | `""` |  |
+| apps.authApi.image | object | `{"repository":"ghcr.io/kloudlite/api/auth","tag":""}` | image (with tag) for auth api |
 | apps.authWeb.enabled | bool | `true` |  |
-| apps.authWeb.image | string | `"ghcr.io/kloudlite/web/auth:v1.0.5-nightly"` | image (with tag) for auth web |
-| apps.commsApi.image | string | `"ghcr.io/kloudlite/api/comms:v1.0.5-nightly"` | image (with tag) for comms api |
+| apps.authWeb.image | object | `{"repository":"ghcr.io/kloudlite/web/auth","tag":""}` | image (with tag) for auth web |
+| apps.commsApi.image | object | `{"repository":"ghcr.io/kloudlite/api/comms","tag":""}` | image (with tag) for comms api |
 | apps.consoleApi.configuration.consoleVPNDeviceNamespace | string | `"kloudlite-console-devices"` |  |
 | apps.consoleApi.configuration.logsAndMetricsHttpPort | int | `9100` |  |
-| apps.consoleApi.image | string | `"ghcr.io/kloudlite/api/console:v1.0.5-nightly"` | image (with tag) for console api |
+| apps.consoleApi.image | object | `{"repository":"ghcr.io/kloudlite/api/console","tag":""}` | image (with tag) for console api |
 | apps.consoleWeb.enabled | bool | `true` |  |
-| apps.consoleWeb.image | string | `"ghcr.io/kloudlite/web/console:v1.0.5-nightly"` | image (with tag) for console web |
+| apps.consoleWeb.image | object | `{"repository":"ghcr.io/kloudlite/web/console","tag":""}` | image (with tag) for console web |
 | apps.containerRegistryApi.configuration.authorizerPort | int | `4000` |  |
 | apps.containerRegistryApi.configuration.buildClusterAccountName | string | `""` |  |
 | apps.containerRegistryApi.configuration.buildClusterName | string | `""` |  |
 | apps.containerRegistryApi.configuration.eventListenerPort | number | `4001` | port on which container registry event listener should listen |
 | apps.containerRegistryApi.configuration.jobBuildNamespace | string | `"kloudlite"` | namespace, in which build runs should be created |
 | apps.containerRegistryApi.configuration.registrySecret | string | `""` |  |
-| apps.containerRegistryApi.image | string | `"ghcr.io/kloudlite/api/container-registry:v1.0.5-nightly"` | image (with tag) for container registry api |
-| apps.gatewayApi.image | string | `"ghcr.io/kloudlite/api/gateway:v1.0.5-nightly"` |  |
-| apps.iamApi.image | string | `"ghcr.io/kloudlite/api/iam:v1.0.5-nightly"` | image (with tag) for iam api |
+| apps.containerRegistryApi.image | object | `{"repository":"ghcr.io/kloudlite/api/container-registry","tag":""}` | image (with tag) for container registry api |
+| apps.gatewayApi.image.repository | string | `"ghcr.io/kloudlite/api/gateway"` |  |
+| apps.gatewayApi.image.tag | string | `""` |  |
+| apps.iamApi.image.repository | string | `"ghcr.io/kloudlite/api/iam"` |  |
+| apps.iamApi.image.tag | string | `""` |  |
 | apps.infraApi.configuration.infraVPNDeviceNamespace | string | `"kloudlite-infra-devices"` |  |
-| apps.infraApi.image | string | `"ghcr.io/kloudlite/api/infra:v1.0.5-nightly"` | image (with tag) for infra api |
-| apps.klInstaller.image | string | `"ghcr.io/kloudlite/kl/installer:v1.0.5-nightly"` | image (with tag) for comms api |
-| apps.kloudliteWebsite.enabled | bool | `true` |  |
-| apps.kloudliteWebsite.image | string | `"ghcr.io/kloudlite/web/website:v1.0.5-nightly"` |  |
+| apps.infraApi.image | object | `{"repository":"ghcr.io/kloudlite/api/infra","tag":""}` | image (with tag) for infra api |
+| apps.klInstaller.image.repository | string | `"ghcr.io/kloudlite/kl/installer"` |  |
+| apps.klInstaller.image.tag | string | `""` |  |
 | apps.messageOfficeApi.configuration.platformAccessToken | string | `"sample"` |  |
 | apps.messageOfficeApi.configuration.tokenHashingSecret | string | `""` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
-| apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/api/message-office:v1.0.5-nightly"` | image (with tag) for message office api |
-| apps.webhooksApi.image | string | `"ghcr.io/kloudlite/api/webhook:v1.0.5-nightly"` | image (with tag) for webhooks api |
-| apps.websocketApi.image | string | `"ghcr.io/kloudlite/api/websocket-server:v1.0.5-nightly"` | image (with tag) for websocket-server api |
+| apps.messageOfficeApi.image | object | `{"repository":"ghcr.io/kloudlite/api/message-office","tag":""}` | image (with tag) for message office api |
+| apps.webhooksApi.image | object | `{"repository":"ghcr.io/kloudlite/api/webhook","tag":""}` | image (with tag) for webhooks api |
+| apps.websocketApi.image | object | `{"repository":"ghcr.io/kloudlite/api/websocket-server","tag":""}` | image (with tag) for websocket-server api |
 | aws.accessKey | string | `""` |  |
 | aws.cloudformation.instanceProfileNamePrefix | string | `"kloudlite-instance-profile"` |  |
 | aws.cloudformation.params.trustedARN | string | `"arn:aws:iam::855999427630:root"` |  |
@@ -168,10 +170,10 @@ helm show values kloudlite/kloudlite-platform
 | global.clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | global.cookieDomain | string | `".kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | global.defaultProjectWorkspaceName | string | `"default"` | default project workspace name, the one that should be auto created, whenever you create a project |
-| global.imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chart |
+| global.imagePullPolicy | string | `""` | image pull policies for kloudlite pods, belonging to this chart, could be Always | IfNotPresent |
 | global.ingressClassName | string | `"ingress-nginx"` |  |
 | global.isDev | bool | `false` |  |
-| global.kloudlite_release | string | `"v1.0.5-nightly"` |  |
+| global.kloudlite_release | string | `""` | if not set, defaults to .Chart.AppVersion |
 | global.nodeSelector | object | `{}` |  |
 | global.normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
 | global.podLabels | object | `{}` | podlabels for pods belonging to this release |
@@ -223,9 +225,12 @@ helm show values kloudlite/kloudlite-platform
 | oAuth.providers.google.clientSecret | string | `""` | google oAuth2 Client Secret |
 | oAuth.providers.google.enabled | bool | `true` | whether to enable google oAuth2 |
 | oAuth.secretName | string | `"oauth-secrets"` | secret where all oauth credentials should be |
-| operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created, defaults to `global.baseDomain` |
+| operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created |
 | operators.platformOperator.configuration.cluster.cloudflare.zoneId | string | `""` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
-| operators.platformOperator.configuration.cluster.jobImage | string | `"ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly"` |  |
+| operators.platformOperator.configuration.cluster.jobImage.repository | string | `"ghcr.io/kloudlite/infrastructure-as-code"` |  |
+| operators.platformOperator.configuration.cluster.jobImage.tag | string | `""` |  |
+| operators.platformOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/operator/workers/helm-runner"` |  |
+| operators.platformOperator.configuration.helmCharts.jobImage.tag | string | `""` |  |
 | operators.platformOperator.configuration.nodepool.cloudProviderName | string | `"aws"` |  |
 | operators.platformOperator.configuration.nodepool.cloudProviderRegion | string | `"ap-south-1"` |  |
 | operators.platformOperator.configuration.nodepool.extractFromCluster | bool | `true` |  |
@@ -235,7 +240,7 @@ helm show values kloudlite/kloudlite-platform
 | operators.platformOperator.configuration.wireguard.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.platformOperator.configuration.wireguard.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.platformOperator.enabled | bool | `true` | whether to enable platform operator |
-| operators.platformOperator.image | string | `"ghcr.io/kloudlite/operator/platform:v1.0.5-nightly"` | image (with tag) for platform operator |
+| operators.platformOperator.image | object | `{"repository":"ghcr.io/kloudlite/operator/platform","tag":""}` | image (with tag) for platform operator |
 | operators.preferOperatorsOnMasterNodes | bool | `true` |  |
 | persistence.storageClasses.ext4 | string | `"sc-ext4"` | ext4 storage class name |
 | persistence.storageClasses.xfs | string | `"sc-xfs"` | xfs storage class name |
