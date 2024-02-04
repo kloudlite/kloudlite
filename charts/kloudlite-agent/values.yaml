@@ -25,12 +25,17 @@ svcAccountName: sa
 # -- cluster internal DNS, like 'cluster.local'
 clusterInternalDNS: "cluster.local"
 
-defaults:
-  imageTag: ""
-  imagePullPolicy: "Always"
-  tolerations: []
-  nodeSelector: {}
-  jobsNamespace: "kloudlite-jobs"
+# -- kloudlite release version
+kloudliteRelease: ""
+
+jobsNamespace: "kloudlite-jobs"
+
+# defaults:
+#   imageTag: ""
+#   imagePullPolicy: "Always"
+#   tolerations: []
+#   nodeSelector: {}
+#   jobsNamespace: "kloudlite-jobs"
 
 agent:
   # -- enable/disable kloudlite agent
@@ -69,6 +74,11 @@ operators:
     configuration:
       letsEncryptSupportEmail: "support@kloudlite.io"
       iacJobImage: "ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-k8s-backend"
+
+      helmCharts:
+        jobImage:
+          repository: ghcr.io/kloudlite/operator/workers/helm-runner
+          tag: ""
 
       wireguard:
         podCIDR: 10.42.0.0/16
