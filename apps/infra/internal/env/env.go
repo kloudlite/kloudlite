@@ -45,7 +45,7 @@ type Env struct {
 
 	DeviceNamespace string `env:"DEVICE_NAMESPACE" required:"true"`
 
-  KloudliteRelease string `env:"KLOUDLITE_RELEASE" required:"true" default="v1.0.5-nightly"`
+	KloudliteRelease string `env:"KLOUDLITE_RELEASE" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
