@@ -6,6 +6,7 @@ import (
 
 type Env struct {
 	MaxConcurrentReconciles int    `env:"MAX_CONCURRENT_RECONCILES"`
+	HelmJobRunnerImage      string `env:"HELM_JOB_RUNNER_IMAGE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
