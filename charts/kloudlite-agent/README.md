@@ -87,11 +87,6 @@ helm show values kloudlite/kloudlite-agent
 | clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS, like 'cluster.local' |
 | clusterName | string REQUIRED | `""` | kloudlite cluster name |
 | clusterToken | string REQUIRED | `""` | kloudlite issued cluster token |
-| defaults.imagePullPolicy | string | `"Always"` |  |
-| defaults.imageTag | string | `""` |  |
-| defaults.jobsNamespace | string | `"kloudlite-jobs"` |  |
-| defaults.nodeSelector | object | `{}` |  |
-| defaults.tolerations | list | `[]` |  |
 | helmCharts.certManager.affinity | object | `{}` |  |
 | helmCharts.certManager.configuration.clusterIssuers[0].acme.email | string | `"support@kloudlite.io"` |  |
 | helmCharts.certManager.configuration.clusterIssuers[0].acme.server | string | `"https://acme-v02.api.letsencrypt.org/directory"` |  |
@@ -102,6 +97,7 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.certManager.name | string | `"cert-manager"` |  |
 | helmCharts.certManager.nodeSelector | object | `{}` |  |
 | helmCharts.certManager.tolerations | list | `[]` |  |
+| helmCharts.clusterAutoscaler.enabled | bool | `true` |  |
 | helmCharts.ingressNginx.configuration.controllerKind | string | `"DaemonSet"` |  |
 | helmCharts.ingressNginx.configuration.ingressClassName | string | `"nginx"` |  |
 | helmCharts.ingressNginx.enabled | bool | `true` |  |
@@ -114,11 +110,15 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.nodeSelector | object | `{}` |  |
 | helmCharts.vector.tolerations | list | `[]` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
+| jobsNamespace | string | `"kloudlite-jobs"` |  |
+| kloudliteRelease | string | `""` | kloudlite release version |
 | messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
-| operators.agentOperator.configuration.iacJobImage | string | `"ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-k8s-backend"` |  |
+| operators.agentOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/operator/workers/helm-runner"` |  |
+| operators.agentOperator.configuration.helmCharts.jobImage.tag | string | `""` |  |
+| operators.agentOperator.configuration.iacJobImage.repository | string | `"ghcr.io/kloudlite/infrastructure-as-code/iac-job"` |  |
+| operators.agentOperator.configuration.iacJobImage.tag | string | `""` |  |
 | operators.agentOperator.configuration.letsEncryptSupportEmail | string | `"support@kloudlite.io"` |  |
-| operators.agentOperator.configuration.wireguard.consoleDeviceNamespace | string | `"kloudlite-console-devices"` |  |
-| operators.agentOperator.configuration.wireguard.infraDeviceNamespace | string | `"kloudlite-infra-devices"` |  |
+| operators.agentOperator.configuration.wireguard.deviceNamespace | string | `"kl-vpn-devices"` |  |
 | operators.agentOperator.configuration.wireguard.podCIDR | string | `"10.42.0.0/16"` |  |
 | operators.agentOperator.configuration.wireguard.svcCIDR | string | `"10.43.0.0/16"` |  |
 | operators.agentOperator.enabled | bool | `true` | enable/disable kloudlite agent operator |
