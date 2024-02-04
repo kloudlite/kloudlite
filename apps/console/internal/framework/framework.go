@@ -1,50 +1,32 @@
 package framework
 
 import (
-	"github.com/kloudlite/operator/pkg/kubectl"
+	"context"
+	"fmt"
+
+	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
+
+	app "github.com/kloudlite/api/apps/console/internal/app"
+	"github.com/kloudlite/api/apps/console/internal/env"
+	rpc "github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/nats"
+	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
-	app "kloudlite.io/apps/console/internal/app"
-	"kloudlite.io/apps/console/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/redpanda"
-	mongoDb "kloudlite.io/pkg/repos"
 )
 
 type fm struct {
 	ev *env.Env
 }
 
-func (fm *fm) GetBrokers() (brokers string) {
-	return fm.ev.KafkaBrokers
-}
-
-func (fm *fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
-	// return &redpanda.KafkaSASLAuth{
-	// 	SASLMechanism: redpanda.ScramSHA256,
-	// 	User:          fm.ev.KafkaUsername,
-	// 	Password:      fm.ev.KafkaPassword,
-	// }
-}
-
 func (fm *fm) GetMongoConfig() (url string, dbName string) {
 	return fm.ev.ConsoleDBUri, fm.ev.ConsoleDBName
-}
-
-func (fm *fm) RedisOptions() (hosts, username, password, basePrefix string) {
-	return fm.ev.AuthRedisHosts, fm.ev.AuthRedisUserName, fm.ev.AuthRedisPassword, fm.ev.AuthRedisPrefix
-}
-
-func (fm *fm) GetHttpPort() uint16 {
-	return fm.ev.Port
-}
-
-func (fm *fm) GetHttpCors() string {
-	return "*"
 }
 
 var Module = fx.Module("framework",
@@ -54,26 +36,86 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
-		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   "console",
+			Logger: logger,
+		})
 	}),
 
-	cache.FxLifeCycle[app.AuthCacheClient](),
-
-	fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
-		return kubectl.NewYAMLClient(restCfg)
+	fx.Provide(func(c *nats.Client) (*nats.JetstreamClient, error) {
+		return nats.NewJetstreamClient(c)
 	}),
 
-	fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
-		return k8s.NewExtendedK8sClient(restCfg)
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return kv.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+		},
+	),
+
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (domain.ConsoleCacheStore, error) {
+			return kv.NewNatsKVBinaryRepo(context.TODO(), ev.ConsoleCacheKVBucket, jc)
+		},
+	),
+
+	fx.Provide(func(restCfg *rest.Config) (k8s.Client, error) {
+		return k8s.NewClient(restCfg, nil)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient[app.IAMGrpcClient](ev.IAMGrpcAddr)
+		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
-	redpanda.NewClientFx[*fm](),
+	fx.Provide(func(ev *env.Env) (app.InfraClient, error) {
+		return rpc.NewGrpcClient(ev.InfraGrpcAddr)
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient, c2 app.InfraClient) {
+		lf.Append(fx.Hook{
+			OnStop: func(context.Context) error {
+				if err := c1.Close(); err != nil {
+					return errors.NewE(err)
+				}
+				if err := c2.Close(); err != nil {
+					return errors.NewE(err)
+				}
+				return nil
+			},
+		})
+	}),
 
 	app.Module,
-	httpServer.NewHttpServerFx[*fm](),
+
+	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.Port))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
+
+	fx.Provide(func(logger logging.Logger) app.LogsAndMetricsHttpServer {
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.LogsAndMetricsHttpServer) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.LogsAndMetricsHttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )

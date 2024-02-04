@@ -3,37 +3,56 @@ version: "3"
 dotenv:
   - .secrets/env
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+
 tasks:
   gql:
     dir: ./internal/app
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
-      - rm "./graph/scalars.resolvers.go"
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
 
   build:
     env:
       CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
+      - go build -v -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   k8s-schema:
     cmds:
-      - mkdir -p "./internal/app/graph/crd-to-gql"
-      - go run ../../cmd/crd-to-gql --dev
-          --output "./internal/app/graph/crd-to-gql"
-          --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
-          # --crd Project=projects.crds.kloudlite.io
-          # --crd App=apps.crds.kloudlite.io
-          # --crd Secret=secrets.crds.kloudlite.io
-          # --crd Config=configs.crds.kloudlite.io
-          # --crd Secret=secrets.crds.kloudlite.io
-          # --crd Router=routers.crds.kloudlite.io
-          # --crd ManagedService=managedservices.crds.kloudlite.io
-          # --crd ManagedResource=managedresources.crds.kloudlite.io
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubInstallation
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabProject
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitlabGroup
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubListRepository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GithubSearchRepository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.GitBranch
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildRun          
+          --struct github.com/kloudlite/api/pkg/types.Pagination
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Credential
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Repository
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Digest
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.Build
+          --struct github.com/kloudlite/api/apps/container-registry/internal/domain/entities.BuildCacheKey
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,BuildRun,Repository,Digest,Build,BuildCacheKey
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
 
   docker-build:
     vars:
@@ -52,39 +71,22 @@ tasks:
 
   local-build:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: container-registry
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      BUILDER: podman
     silent: true
     cmds:
       - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
         tDir=$(mktemp -d)
 
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
         echo "building application ..."
-
-        # CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
         task build Out=$tDir/{{.APP}}
 
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
-        docker push {{.IMAGE}}
+        {{.BUILDER}} buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
+        {{.BUILDER}} push {{.IMAGE}}
         rm -rf $tDir
 
   run:
@@ -95,6 +97,4 @@ tasks:
     env:
       CGO_ENABLED: 0
     cmds:
-      - go build -o /tmp/{{.Name}} ./main.go
-      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
-      - /tmp/{{.Name}} --dev
+      - go run ./main.go --dev

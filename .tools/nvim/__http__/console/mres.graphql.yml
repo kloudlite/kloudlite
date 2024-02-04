@@ -1,0 +1,172 @@
+---
+global:
+  namespace: kl-core
+  # name: s1
+  name: test-db
+---
+
+label: List Managed Resources
+query: |+ #graphql
+  query Core_listManagedResources($projectName: String!, $envName: String!) {
+    core_listManagedResources(projectName: $projectName, envName: $envName) {
+      edges {
+        node {
+          accountName
+          spec {
+            resourceName
+            resourceTemplate {
+              msvcRef {
+                apiVersion
+                kind
+                name
+                namespace
+              }
+            }
+          }
+          syncStatus {
+            state
+            recordVersion
+          }
+        }
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+---
+
+label: Create Managed Resource
+query: |+ #graphql
+  mutation Core_createManagedResource($projectName: String!, $envName: String!, $mres: ManagedResourceIn!) {
+    core_createManagedResource(projectName: $projectName, envName: $envName, mres: $mres) {
+      spec {
+        resourceName
+        resourceTemplate {
+          apiVersion
+          kind
+          msvcRef {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+          spec
+        }
+      }
+    }
+  }
+variables:
+  projectName: "{{.projectName}}"
+  envName: "{{.envName}}"
+  mres:
+    displayName: "Test Managed Resource"
+    metadata:
+      name: "{{.name}}"
+    spec:
+      resourceTemplate:
+        apiVersion: mongodb.msvc.kloudlite.io/v1
+        kind: Database
+        msvcRef:
+          apiVersion: mongodb.msvc.kloudlite.io/v1
+          kind: StandaloneService
+          name: mongodb
+          namespace: pmsvc-mongodb
+        spec:
+          resourceName: "sample"
+
+---
+
+label: Get ManagedService
+query: |+
+  query Core_getManagedResource($namespace: String!, $name: String!) {
+    core_getManagedResource(namespace: $namespace, name: $name) {
+      metadata {
+        name
+      }
+      kind
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  name: '{{.name}}'
+  namespace: '{{.namespace}}'
+
+---
+
+label: Update ManagedService
+query: |+
+  mutation Core_updateManagedResource($mres: ManagedResourceIn!) {
+    core_updateManagedResource(mres: $mres) {
+      spec {
+        inputs
+      }
+    }
+  }
+variables:
+  mres:
+    metadata:
+      name: '{{.name}}'
+      namespace: '{{.namespace}}'
+    spec:
+      inputs:
+        k1: v1
+      msvcRef:
+        apiVersion: "###"
+        kind: StandaloneDatabase
+        name: s1
+      mresKind:
+        kind: Database
+---
+
+label: Delete ManagedService
+query: |+
+  mutation Core_deleteManagedResource($namespace: String!, $name: String!) {
+    core_deleteManagedResource(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+
+---
+
+label: Get Managed Resource Output Keys
+query: |+ #graphql
+  query Query($projectName: String!, $envName: String!, $name: String!) {
+    core_getManagedResouceOutputKeys(projectName: $projectName, envName: $envName, name: $name)
+  }
+variables:
+  # projectName: "{{.projectName}}"
+  # envName: "{{.envName}}"
+  # envName: "public-environment"
+  projectName: "demo-project"
+  envName: "private-environment"
+  # name: "{{.name}}"
+  name: "test-sample-db"
+
+---
+
+label: Get Managed Resource Output Key Values
+query: |+ #graphql
+  query Core_getManagedResouceOutputKeyValues($projectName: String!, $envName: String!, $keyrefs: [ManagedResourceKeyRefIn]) {
+    core_getManagedResouceOutputKeyValues(projectName: $projectName, envName: $envName, keyrefs: $keyrefs) {
+      key
+      mresName
+      value
+    }
+  }
+variables:
+  # projectName: "{{.projectName}}"
+  # envName: "{{.envName}}"
+  projectName: "demo-project"
+  # envName: "public-environment"
+  projectName: "demo-project"
+  envName: "private-environment"
+  keyrefs:
+    - key: URI
+      # mresName: "{{.name}}"
+      mresName: "test-sample-db"
+
+---

@@ -1,208 +1,245 @@
 package domain
 
 import (
+	"context"
 	"fmt"
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
+	"regexp"
+	"strings"
 
-	"encoding/json"
+	"github.com/kloudlite/api/pkg/errors"
 
-	opHarbor "github.com/kloudlite/operator/pkg/harbor"
-	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/apps/container-registry/internal/env"
-	"kloudlite.io/constants"
-	"kloudlite.io/pkg/harbor"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
+	"k8s.io/utils/strings/slices"
 )
 
 type Impl struct {
-	harborCli            *harbor.Client
-	k8sExtendedClient    k8s.ExtendedK8sClient
-	harborProjectRepo    repos.DbRepo[*entities.HarborProject]
-	harborRobotUsersRepo repos.DbRepo[*entities.HarborRobotUser]
-	k8sYamlCli           *kubectl.YAMLClient
+	repositoryRepo repos.DbRepo[*entities.Repository]
+	credentialRepo repos.DbRepo[*entities.Credential]
+	buildRepo      repos.DbRepo[*entities.Build]
+	buildCacheRepo repos.DbRepo[*entities.BuildCacheKey]
+	digestRepo     repos.DbRepo[*entities.Digest]
+	buildRunRepo   repos.DbRepo[*entities.BuildRun]
+	iamClient      iam.IAMClient
+	envs           *env.Env
+	logger         logging.Logger
+	cacheClient    kv.BinaryDataRepo
+
+	authClient auth.AuthClient
+
+	github                 Github
+	gitlab                 Gitlab
+	resourceEventPublisher ResourceEventPublisher
+	dispatcher             ResourceDispatcher
 }
 
-func (i *Impl) findHarborRobot(ctx RegistryContext, name string) (*entities.HarborRobotUser, error) {
-	hru, err := i.harborRobotUsersRepo.FindOne(ctx, repos.Filter{"metadata.name": name, "spec.accountName": ctx.accountName})
+func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
+	l := logger.WithName("registry-event")
+
+	pattern := `.*[^\/].*\/.*$`
+
+	re, err := regexp.Compile(pattern)
 	if err != nil {
-		return nil, err
-	}
-	if hru == nil {
-		return nil, fmt.Errorf("no robot user account found for (name: %q, accountName: %q)", name, ctx.accountName)
+		l.Errorf(err)
+		return errors.NewE(err)
 	}
 
-	return hru, nil
-}
+	for _, e := range events {
 
-// ReSyncHarborRobot implements Domain
-func (d *Impl) ReSyncHarborRobot(ctx RegistryContext, name string) error {
-	hru, err := d.findHarborRobot(ctx, name)
-	if err != nil {
-		return err
-	}
+		r := e.Target.Repository
 
-	b, err := json.Marshal(hru.HarborUserAccount)
-	if err != nil {
-		return err
-	}
-
-	_, err = d.k8sYamlCli.ApplyYAML(ctx, b)
-	return err
-}
-
-// UpdateHarborRobot implements Domain
-func (d *Impl) UpdateHarborRobot(ctx RegistryContext, name string, permissions []opHarbor.Permission) (*entities.HarborRobotUser, error) {
-	hru, err := d.findHarborRobot(ctx, name)
-	if err != nil {
-		return nil, err
-	}
-
-	hru.Spec.Permissions = permissions
-	upHru, err := d.harborRobotUsersRepo.UpdateById(ctx, hru.Id, hru)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := json.Marshal(hru.HarborUserAccount)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = d.k8sYamlCli.ApplyYAML(ctx, b)
-	if err != nil {
-		return nil, err
-	}
-
-	return upHru, nil
-}
-
-func (d *Impl) GetHarborCredentials(ctx RegistryContext) (*entities.HarborCredentials, error) {
-	one, err := d.harborProjectRepo.FindOne(ctx, repos.Filter{"account_name": ctx.GetAccountName()})
-	if err != nil {
-		return nil, err
-	}
-	if one == nil {
-		return nil, nil
-	}
-	return &one.Credentials, nil
-}
-
-// func (d *Impl) CreateHarborProject(ctx RegistryContext) (*entities.HarborProject, error) {
-// 	project, err := d.harborCli.CreateProject(ctx, ctx.GetAccountName())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	robot, err := d.harborCli.CreateRobot(ctx, ctx.GetAccountName(), "svc-account", func() *string {
-// 		s := "Service account for kloudlite"
-// 		return &s
-// 	}(), true)
-// 	create, err := d.harborProjectRepo.Create(ctx, &entities.HarborProject{
-// 		AccountName: ctx.GetAccountName(),
-// 		ProjectId:   project.ProjectId,
-// 		Credentials: entities.HarborCredentials{
-// 			Username: robot.Name,
-// 			Password: robot.Secret,
-// 		},
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return create, nil
-// }
-
-func (d *Impl) GetRepoArtifacts(ctx RegistryContext, repoName string) ([]harbor.Artifact, error) {
-	return d.harborCli.ListArtifacts(ctx, ctx.GetAccountName(), repoName, harbor.ListTagsOpts{
-		WithImmutable: false,
-		WithSignature: false,
-		ListOptions: harbor.ListOptions{
-			Page:     1,
-			PageSize: 100,
-		},
-	})
-}
-
-func (d *Impl) CreateHarborRobot(ctx RegistryContext, hru *entities.HarborRobotUser) (*entities.HarborRobotUser, error) {
-	hru.EnsureGVK()
-	hru.Namespace = constants.NamespaceCore
-	hru.Spec.AccountName = ctx.accountName
-
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &hru.HarborUserAccount); err != nil {
-		return nil, err
-	}
-
-	hru.SyncStatus = t.GetSyncStatusForCreation()
-	nHru, err := d.harborRobotUsersRepo.Create(ctx, hru)
-	if err != nil {
-		if d.harborRobotUsersRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("harbor robot user with name %q, already exists", hru.Name)
+		if !re.MatchString(r) {
+			l.Warnf("invalid repository name %s\n, ignoring", r)
+			return nil
 		}
-		return nil, err
+
+		rArray := strings.Split(r, "/")
+
+		accountName := rArray[0]
+		repoName := strings.Join(rArray[1:], "/")
+		tag := e.Target.Tag
+
+		switch e.Request.Method {
+		case "PUT":
+
+			if tag == "" {
+				fmt.Println("tag is empty with digest", e.Target.Digest)
+				return nil
+			}
+
+			digest, err := d.digestRepo.FindOne(ctx, repos.Filter{
+				fc.DigestTags: map[string]any{
+					"$in": []string{tag},
+				},
+				fc.DigestRepository: repoName,
+				fields.AccountName:  accountName,
+			})
+			if err != nil {
+				return errors.NewE(err)
+			}
+
+			if digest == nil {
+			} else {
+				digest.Tags = func() []string {
+					tags := []string{}
+
+					for _, v := range digest.Tags {
+						if v != tag {
+							tags = append(tags, v)
+						}
+					}
+
+					return tags
+				}()
+
+				if len(digest.Tags) == 0 {
+					if err := d.digestRepo.DeleteById(ctx, digest.Id); err != nil {
+						d.logger.Errorf(err)
+					}
+				} else {
+					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
+					if err != nil {
+						return errors.NewE(err)
+					}
+				}
+
+			}
+
+			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
+				fc.DigestDigest:     e.Target.Digest,
+				fc.DigestRepository: repoName,
+				fields.AccountName:  accountName,
+			})
+
+			if err != nil {
+				return errors.NewE(err)
+			}
+
+			if digest == nil {
+				if _, err := d.digestRepo.Create(ctx, &entities.Digest{
+					Tags: func() []string {
+						if tag != "" {
+							return []string{tag}
+						}
+						return []string{}
+					}(),
+					AccountName: accountName,
+					Repository:  repoName,
+					Actor:       e.Actor.Name,
+					Digest:      e.Target.Digest,
+					Size:        e.Target.Size,
+					Length:      e.Target.Length,
+					MediaType:   e.Target.MediaType,
+					URL:         e.Target.URL,
+				}); err != nil {
+					return errors.NewE(err)
+				}
+			} else {
+				if b := slices.Contains(digest.Tags, tag); !b {
+					digest.Tags = append(digest.Tags, tag)
+					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
+					if err != nil {
+						return errors.NewE(err)
+					}
+				}
+			}
+
+			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
+				fields.AccountName: accountName,
+				fc.RepositoryName:  repoName,
+			})
+			if err != nil {
+				return errors.NewE(err)
+			}
+
+			if ee == nil {
+				_, err := d.repositoryRepo.Create(ctx, &entities.Repository{})
+				if err != nil {
+					return errors.NewE(err)
+				}
+				return nil
+			}
+
+			ee.LastUpdatedBy = common.CreatedOrUpdatedBy{
+				UserName: e.Actor.Name,
+			}
+
+			if _, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee); err != nil {
+				d.logger.Errorf(err)
+			}
+
+		case "DELETE":
+
+			l.Infof("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
+
+			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
+				fc.DigestDigest:     e.Target.Digest,
+				fc.DigestRepository: repoName,
+				fields.AccountName:  accountName,
+			}); err != nil {
+				d.logger.Errorf(err)
+				return errors.NewE(err)
+			}
+
+		case "HEAD":
+			l.Infof("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
+
+		case "GET":
+			l.Infof("GET %s:%s", e.Target.Repository, e.Target.Tag)
+
+		default:
+			l.Infof("unhandled method", e.Request.Method)
+			return errors.Newf("unhandled method %s", e.Request.Method)
+		}
+
 	}
-
-	b, err := json.Marshal(nHru.HarborUserAccount)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := d.k8sYamlCli.ApplyYAML(ctx, b); err != nil {
-		return nil, err
-	}
-
-	return nHru, nil
-}
-
-func (d *Impl) GetHarborImages(ctx RegistryContext) ([]harbor.Repository, error) {
-	return d.harborCli.SearchRepositories(ctx, ctx.GetAccountName(), "", harbor.ListOptions{
-		PageSize: 100,
-		Page:     1,
-	})
-}
-
-func (d *Impl) ListHarborRobots(ctx RegistryContext) ([]*entities.HarborRobotUser, error) {
-	return d.harborRobotUsersRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{"spec.accountName": ctx.accountName},
-	})
-
-	// if one == nil {
-	// 	return nil, errors.New(fmt.Sprintf("project for account %s not found", accountName))
-	// }
-
-	// return d.harborCli.GetRobots(ctx, one.ProjectId, harbor.ListOptions{
-	// 	PageSize: 100,
-	// 	Page:     1,
-	// })
-}
-
-func (d *Impl) DeleteHarborRobot(ctx RegistryContext, robotId int) error {
-	return d.harborCli.DeleteRobot(ctx, ctx.GetAccountName(), robotId)
+	return nil
 }
 
 var Module = fx.Module(
 	"domain",
 	fx.Provide(
 		func(e *env.Env,
-			projectRepo repos.DbRepo[*entities.HarborProject],
-			hruRepo repos.DbRepo[*entities.HarborRobotUser],
-			k8sYamlCli *kubectl.YAMLClient,
-			k8sExtendedClient k8s.ExtendedK8sClient,
+			logger logging.Logger,
+			repositoryRepo repos.DbRepo[*entities.Repository],
+			credentialRepo repos.DbRepo[*entities.Credential],
+			buildRepo repos.DbRepo[*entities.Build],
+			buildCacheRepo repos.DbRepo[*entities.BuildCacheKey],
+			tagRepo repos.DbRepo[*entities.Digest],
+			buildRunRepo repos.DbRepo[*entities.BuildRun],
+			iamClient iam.IAMClient,
+			cacheClient kv.BinaryDataRepo,
+			authClient auth.AuthClient,
+			github Github,
+			gitlab Gitlab,
+			resourceEventPublisher ResourceEventPublisher,
+			dispatcher ResourceDispatcher,
 		) (Domain, error) {
-			client, err := harbor.NewClient(harbor.Args{
-				HarborAdminUsername: e.HarborAdminUsername,
-				HarborAdminPassword: e.HarborAdminPassword,
-				HarborRegistryHost:  e.HarborRegistryHost,
-			})
-			if err != nil {
-				return nil, err
-			}
 			return &Impl{
-				harborCli:            client,
-				harborProjectRepo:    projectRepo,
-				harborRobotUsersRepo: hruRepo,
-				k8sYamlCli:           k8sYamlCli,
-				k8sExtendedClient:    k8sExtendedClient,
+				repositoryRepo:         repositoryRepo,
+				credentialRepo:         credentialRepo,
+				iamClient:              iamClient,
+				envs:                   e,
+				digestRepo:             tagRepo,
+				logger:                 logger,
+				cacheClient:            cacheClient,
+				buildRepo:              buildRepo,
+				buildCacheRepo:         buildCacheRepo,
+				buildRunRepo:           buildRunRepo,
+				authClient:             authClient,
+				github:                 github,
+				gitlab:                 gitlab,
+				resourceEventPublisher: resourceEventPublisher,
+				dispatcher:             dispatcher,
 			}, nil
 		}),
 )

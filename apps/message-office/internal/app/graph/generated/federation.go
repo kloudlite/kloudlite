@@ -104,6 +104,30 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 				list[idx[i]] = entity
 				return nil
 			}
+		case "Cluster":
+			resolverName, err := entityResolverNameForCluster(ctx, rep)
+			if err != nil {
+				return fmt.Errorf(`finding resolver for Entity "Cluster": %w`, err)
+			}
+			switch resolverName {
+
+			case "findClusterByMetadataNameAndSpecAccountName":
+				id0, err := ec.unmarshalNString2string(ctx, rep["metadata"].(map[string]interface{})["name"])
+				if err != nil {
+					return fmt.Errorf(`unmarshalling param 0 for findClusterByMetadataNameAndSpecAccountName(): %w`, err)
+				}
+				id1, err := ec.unmarshalNString2string(ctx, rep["spec"].(map[string]interface{})["accountName"])
+				if err != nil {
+					return fmt.Errorf(`unmarshalling param 1 for findClusterByMetadataNameAndSpecAccountName(): %w`, err)
+				}
+				entity, err := ec.resolvers.Entity().FindClusterByMetadataNameAndSpecAccountName(ctx, id0, id1)
+				if err != nil {
+					return fmt.Errorf(`resolving Entity "Cluster": %w`, err)
+				}
+
+				list[idx[i]] = entity
+				return nil
+			}
 
 		}
 		return fmt.Errorf("%w: %s", ErrUnknownType, typeName)
@@ -204,4 +228,37 @@ func entityResolverNameForBYOCCluster(ctx context.Context, rep map[string]interf
 		return "findBYOCClusterByMetadataNameAndSpecAccountName", nil
 	}
 	return "", fmt.Errorf("%w for BYOCCluster", ErrTypeNotFound)
+}
+
+func entityResolverNameForCluster(ctx context.Context, rep map[string]interface{}) (string, error) {
+	for {
+		var (
+			m   map[string]interface{}
+			val interface{}
+			ok  bool
+		)
+		_ = val
+		m = rep
+		if val, ok = m["metadata"]; !ok {
+			break
+		}
+		if m, ok = val.(map[string]interface{}); !ok {
+			break
+		}
+		if _, ok = m["name"]; !ok {
+			break
+		}
+		m = rep
+		if val, ok = m["spec"]; !ok {
+			break
+		}
+		if m, ok = val.(map[string]interface{}); !ok {
+			break
+		}
+		if _, ok = m["accountName"]; !ok {
+			break
+		}
+		return "findClusterByMetadataNameAndSpecAccountName", nil
+	}
+	return "", fmt.Errorf("%w for Cluster", ErrTypeNotFound)
 }

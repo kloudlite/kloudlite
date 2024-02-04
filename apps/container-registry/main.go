@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	"runtime/trace"
 
-	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
+
+	"github.com/kloudlite/api/apps/container-registry/internal/framework"
+	"github.com/kloudlite/api/common"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"k8s.io/client-go/rest"
-	"kloudlite.io/apps/container-registry/internal/env"
-	"kloudlite.io/apps/container-registry/internal/framework"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/logging"
 )
 
 func main() {
@@ -21,49 +21,30 @@ func main() {
 	flag.Parse()
 
 	app := fx.New(
-		fx.Provide(env.LoadEnv),
+		fx.Provide(func() (*env.Env, error) {
+			if e, err := env.LoadEnv(); err != nil {
+				return nil, errors.NewE(err)
+			} else {
+				e.IsDev = isDev
+				return e, nil
+			}
+		}),
 		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "console", Dev: isDev})
+				return logging.New(&logging.Options{Name: "container-registry", Dev: isDev})
 			},
 		),
-		fx.Provide(func() (*rest.Config, error) {
-			if isDev {
-				return &rest.Config{
-					Host: "localhost:8080",
-				}, nil
-			}
-			return k8s.RestInclusterConfig()
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
-			return kubectl.NewYAMLClient(restCfg)
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
-			return k8s.NewExtendedK8sClient(restCfg)
-		}),
 
 		fn.FxErrorHandler(),
 		framework.Module,
 	)
 
-	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	// defer cancel()
 	if err := app.Start(context.TODO()); err != nil {
+		trace.Log(context.TODO(), "app.Start", err.Error())
 		panic(err)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }

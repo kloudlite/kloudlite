@@ -3,25 +3,22 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
-	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	wgV1 "github.com/kloudlite/wg-operator/apis/wg/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
-	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/k8s"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"os"
 	"time"
 
-	"go.uber.org/fx"
-	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/apps/infra/internal/framework"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
+	"github.com/kloudlite/api/pkg/errors"
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 
+	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/apps/infra/internal/framework"
+	"github.com/kloudlite/api/common"
+	"k8s.io/client-go/rest"
+
+	"github.com/kloudlite/api/pkg/k8s"
+	"github.com/kloudlite/api/pkg/logging"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"go.uber.org/fx"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sScheme "k8s.io/client-go/kubernetes/scheme"
 )
@@ -31,76 +28,62 @@ func main() {
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
-	app := fx.New(
-		// fx.NopLogger,
-		fx.Provide(
-			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "infra", Dev: isDev})
-			},
-		),
+	logger, err := logging.New(&logging.Options{Name: "infra", Dev: isDev})
+	if err != nil {
+		panic(err)
+	}
 
-		fx.Provide(func() (*env.Env, error) {
-			ev, err := config.LoadEnv[env.Env]()()
-			if err != nil {
-				return nil, err
-			}
-			return ev, nil
+	app := fx.New(
+		fx.NopLogger,
+
+		fx.Provide(func() logging.Logger {
+			return logger
 		}),
 
-		fx.Provide(func() (*rest.Config, error) {
-			if isDev {
+		fx.Provide(func() (*env.Env, error) {
+			e, err := env.LoadEnv()
+			if err != nil {
+				return nil, errors.NewE(err)
+			}
+
+			e.IsDev = isDev
+			return e, nil
+		}),
+
+		fx.Provide(func(e *env.Env) (*rest.Config, error) {
+			if e.KubernetesApiProxy != "" {
 				return &rest.Config{
-					Host: "localhost:8080",
+					Host: e.KubernetesApiProxy,
 				}, nil
 			}
 			return k8s.RestInclusterConfig()
 		}),
 
-		fx.Provide(func(restCfg *rest.Config) (client.Client, error) {
+		fx.Provide(func(restCfg *rest.Config) (k8s.Client, error) {
 			scheme := runtime.NewScheme()
 			utilruntime.Must(k8sScheme.AddToScheme(scheme))
 			utilruntime.Must(crdsv1.AddToScheme(scheme))
-			utilruntime.Must(infraV1.AddToScheme(scheme))
-			utilruntime.Must(cmgrV1.AddToScheme(scheme))
-			utilruntime.Must(wgV1.AddToScheme(scheme))
+			utilruntime.Must(clustersv1.AddToScheme(scheme))
 
-			return client.New(restCfg, client.Options{
-				Scheme: scheme,
-				Mapper: nil,
-				Opts: client.WarningHandlerOptions{
-					SuppressWarnings: true,
-				},
-			})
+			return k8s.NewClient(restCfg, scheme)
 		}),
 
-		fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
-			return kubectl.NewYAMLClient(restCfg)
-		}),
-
-		fx.Provide(func(restCfg *rest.Config) (k8s.ExtendedK8sClient, error) {
-			return k8s.NewExtendedK8sClient(restCfg)
-		}),
-
-		fn.FxErrorHandler(),
 		framework.Module,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
+	ctx, cancel := func() (context.Context, context.CancelFunc) {
+		if isDev {
+			return context.WithTimeout(context.TODO(), 10*time.Second)
+		}
+		return context.WithTimeout(context.Background(), 2*time.Second)
+	}()
 	defer cancel()
+
 	if err := app.Start(ctx); err != nil {
-		panic(err)
+		logger.Errorf(err, "failed to start app")
+		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }

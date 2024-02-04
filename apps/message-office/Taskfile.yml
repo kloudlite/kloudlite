@@ -1,5 +1,8 @@
 version: 3
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/api"
+
 tasks:
   run:
     dotenv:
@@ -7,14 +10,24 @@ tasks:
     cmds:
       - go run ./main.go
 
+  vector:proto:
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./internal/app/proto/*.proto
+
+
   build:
     env:
       CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
+      - go build -ldflags="-s -w -X 'kloudlite.io/common.BuiltAt={{.BuiltAt}}'" -o {{.Out}}
       - upx {{.Out}}
 
   gql:
@@ -24,36 +37,19 @@ tasks:
 
   local-build:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: message-office
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     silent: true
     cmds:
       - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
         tDir=$(mktemp -d)
+        binpath="{{.APP}}"
+        task build Out=$tDir/$binpath
 
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-        echo "building application ..."
-
-        task build Out=$tDir/{{.APP}}
-
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
-        docker push {{.IMAGE}}
-        rm -rf $tDir
+        echo "[#] building container image"
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-arg binpath="$binpath" --build-context local-builder=${tDir}
+        echo "[#] pushing container image"
+        podman push {{.IMAGE}}

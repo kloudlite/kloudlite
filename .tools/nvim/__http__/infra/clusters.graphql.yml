@@ -1,0 +1,153 @@
+---
+global:
+  clusterName: sample-cluster2
+
+  providerSecretName: "aws-283277"
+  providerSecretNamespace: "kl-account-new-prod-team"
+---
+
+label: Create Cluster
+query: |+
+  mutation Infra_createCluster($cluster: ClusterIn!) {
+    infra_createCluster(cluster: $cluster) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+      }
+    }
+  }
+variables:
+  cluster:
+    displayName: "Sample Cluster"
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      cloudflareEnabled: true
+      availabilityMode: dev
+      credentialsRef:
+        name: "{{.providerSecretName}}"
+        namespace: "{{.providerSecretNamespace}}"
+      cloudProvider: aws
+      aws:
+        region: ap-south-1
+        k3sMasters:
+          instanceType: c6a.large
+          nvidiaGpuEnabled: false
+
+---
+
+label: List Clusters
+query: |+
+  query Infra_listClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
+    infra_listClusters(search: $search, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          id
+          kind
+          metadata {
+            name
+            namespace
+          }
+          status {
+            checks
+          }
+          spec {
+            messageQueueTopicName
+          }
+          # clusterToken
+          markedForDeletion
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            state
+            syncScheduledAt
+            recordVersion
+          }
+          adminKubeconfig {
+            value
+            encoding
+          }
+        }
+      }
+    }
+  }
+variables:
+  search:
+    text:
+      matchType: regex
+      regex: ""
+  pagination:
+    first: 10
+
+---
+
+label: Get Cluster
+query: |+
+  query Query($name: String!) {
+    infra_getCluster(name: $name) {
+      kind
+      metadata {
+        name
+      }
+      recordVersion
+      markedForDeletion
+      spec {
+        cloudProvider
+        credentialsRef {
+          name
+          namespace
+        }
+      }
+    }
+  }
+variables:
+  name: "{{.clusterName}}"
+
+---
+
+label: Update Cluster
+query: |+
+  mutation Infra_updateCluster($cluster: ClusterIn!) {
+    infra_updateCluster(cluster: $cluster) {
+      metadata {
+        name
+      }
+      spec {
+        accountName
+      }
+    }
+  }
+variables:
+  cluster:
+    displayName: "Sample Cluster"
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      cloudflareEnabled: true
+      availabilityMode: dev
+      credentialsRef:
+        name: "{{.providerSecretName}}"
+        namespace: "{{.providerSecretNamespace}}"
+      cloudProvider: aws
+      aws:
+        region: ap-south-1
+        k3sMasters:
+          instanceType: c6a.large
+          iamInstanceProfileRole: "EC2StorageAccess"
+
+---
+
+label: Delete Cluster
+query: |+
+  mutation Infra_deleteCluster($name: String!) {
+    infra_deleteCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+
+---
+

@@ -3,7 +3,7 @@ name: "🐛 Bug Report"
 about: Create a bug report to help us improve
 title: "🐛 "
 labels: bug
-assignees: karthik1729
+assignees: nxtcoder17
 projects: kloudlite
 
 ---
@@ -11,8 +11,7 @@ projects: kloudlite
 ### Describe the Bug
 ...
 
-### To Reproduce
-Steps to reproduce the behavior:
+### How To Reproduce
 1. ...
 2. ...
 

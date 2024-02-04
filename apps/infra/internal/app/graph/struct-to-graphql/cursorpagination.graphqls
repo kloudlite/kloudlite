@@ -1,0 +1,23 @@
+type CursorPagination @shareable {
+  after: String
+  before: String
+  first: Int
+  last: Int
+  orderBy: String
+  sortDirection: CursorPaginationSortDirection
+}
+
+input CursorPaginationIn {
+  after: String
+  before: String
+  first: Int
+  last: Int
+  orderBy: String = "_id"
+  sortDirection: CursorPaginationSortDirection = "ASC"
+}
+
+enum CursorPaginationSortDirection {
+  ASC
+  DESC
+}
+

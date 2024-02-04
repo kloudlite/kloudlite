@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/kloudlite/api/apps/worker-audit-logging/internal/env"
+	"github.com/kloudlite/api/apps/worker-audit-logging/internal/framework"
+	"github.com/kloudlite/api/pkg/config"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/logging"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/worker-audit-logging/internal/env"
-	"kloudlite.io/apps/worker-audit-logging/internal/framework"
-	"kloudlite.io/pkg/config"
-	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
 	"time"
 )
 

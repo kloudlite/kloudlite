@@ -6,37 +6,59 @@ package graph
 
 import (
 	"context"
+	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
-	"github.com/kloudlite/operator/pkg/operator"
-	"kloudlite.io/apps/infra/internal/app/graph/generated"
-	"kloudlite.io/apps/infra/internal/app/graph/model"
-	"kloudlite.io/apps/infra/internal/domain/entities"
-	fn "kloudlite.io/pkg/functions"
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// CreationTime is the resolver for the creationTime field.
+func (r *nodePoolResolver) CreationTime(ctx context.Context, obj *entities.NodePool) (string, error) {
+	if obj == nil || obj.CreationTime.IsZero() {
+		return "", errors.Newf("nodepool is nil")
+	}
+	return obj.CreationTime.Format(time.RFC3339), nil
+}
+
+// ID is the resolver for the id field.
+func (r *nodePoolResolver) ID(ctx context.Context, obj *entities.NodePool) (string, error) {
+	if obj == nil {
+		return "", errors.Newf("nodepool is nil")
+	}
+	return string(obj.Id), nil
+}
+
 // Spec is the resolver for the spec field.
-func (r *nodePoolResolver) Spec(ctx context.Context, obj *entities.NodePool) (*model.NodePoolSpec, error) {
-	var m model.NodePoolSpec
+func (r *nodePoolResolver) Spec(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec, error) {
+	var m model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	return &m, nil
 }
 
-// Status is the resolver for the status field.
-func (r *nodePoolResolver) Status(ctx context.Context, obj *entities.NodePool) (*operator.Status, error) {
+// UpdateTime is the resolver for the updateTime field.
+func (r *nodePoolResolver) UpdateTime(ctx context.Context, obj *entities.NodePool) (string, error) {
+	if obj == nil || obj.UpdateTime.IsZero() {
+		return "", errors.Newf("nodepool is nil")
+	}
+	return obj.UpdateTime.Format(time.RFC3339), nil
+}
+
+// Metadata is the resolver for the metadata field.
+func (r *nodePoolInResolver) Metadata(ctx context.Context, obj *entities.NodePool, data *v1.ObjectMeta) error {
 	if obj == nil {
-		return nil, nil
+		return errors.Newf("nodepool is nil")
 	}
-	var op operator.Status
-	if err := fn.JsonConversion(obj.Status, &op); err != nil {
-		return nil, err
-	}
-	return &op, nil
+	return fn.JsonConversion(data, &obj.ObjectMeta)
 }
 
 // Spec is the resolver for the spec field.
-func (r *nodePoolInResolver) Spec(ctx context.Context, obj *entities.NodePool, data *model.NodePoolSpecIn) error {
+func (r *nodePoolInResolver) Spec(ctx context.Context, obj *entities.NodePool, data *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn) error {
 	if obj == nil {
 		return nil
 	}
