@@ -5,11 +5,17 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 const MsvcApiVersion = "msvc.kloudlite.io/v1"
 
 const (
-	CommonFinalizer        string = "finalizers.kloudlite.io"
+	BuildRunNameKey string = "kloudlite.io/build-run.name"
+)
+
+const (
+	CommonFinalizer        string = "finalizers.kloudlite.io/watch"
 	CommonFinalizer2       string = "kloudlite.io/finalizer"
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
+
+	GenericFinalizer string = "kloudlite.io/finalizer"
 )
 
 var LabelKeys = struct {
@@ -53,9 +59,11 @@ var AnnotationKeys = struct {
 	Restart: "kloudlite.io/do-restart",
 }
 
+// wireguard secrets
 const (
-	AccountNameKey string = "kloudlite.io/account.name"
-	ClusterNameKey string = "kloudlite.io/cluster.name"
+	WGDeviceSeceret string = "kloudlite.io/wg-device-sec"
+	WGServerNameKey string = "kloudlite.io/wg-server.name"
+	WGDeviceNameKey string = "kloudlite.io/wg-device.name"
 )
 
 const (
@@ -66,24 +74,38 @@ const (
 	ResourceRef     string = "kloudlite.io/resource-ref"
 	ShouldReconcile string = "kloudlite.io/should-reconcile"
 
-	ProjectNameKey       string = "kloudlite.io/project.name"
-	BlueprintNameKey     string = "kloudlite.io/blueprint.name"
-	MsvcNameKey          string = "kloudlite.io/msvc.name"
-	IsMresOutput         string = "kloudlite.io/is-mres-output"
-	MresNameKey          string = "kloudlite.io/mres.name"
-	AppNameKey           string = "kloudlite.io/app.name"
-	RouterNameKey        string = "kloudlite.io/router.name"
-	LambdaNameKey        string = "kloudlite.io/lambda.name"
-	AccountRouterNameKey string = "kloudlite.io/account-router.name"
-	EdgeNameKey          string = "kloudlite.io/edge.name"
-	EdgeRouterNameKey    string = "kloudlite.io/edge-router.name"
-	EnvNameKey           string = "kloudlite.io/env.name"
-	CsiDriverNameKey     string = "kloudlite.io/csi-driver.name"
+	DescriptionKey string = "kloudlite.io/description"
 
+	KloudliteManagedNamespace string = "kloudlite.io/managed-namespace"
+
+	ProjectNameKey               string = "kloudlite.io/project.name"
+	BlueprintNameKey             string = "kloudlite.io/blueprint.name"
+	MsvcNameKey                  string = "kloudlite.io/msvc.name"
+	MsvcNamespaceKey             string = "kloudlite.io/msvc.namespace"
+	IsMresOutput                 string = "kloudlite.io/is-mres-output"
+	MresNameKey                  string = "kloudlite.io/mres.name"
+	AppNameKey                   string = "kloudlite.io/app.name"
+	RouterNameKey                string = "kloudlite.io/router.name"
+	LambdaNameKey                string = "kloudlite.io/lambda.name"
+	AccountRouterNameKey         string = "kloudlite.io/account-router.name"
+	EdgeNameKey                  string = "kloudlite.io/edge.name"
+	EdgeRouterNameKey            string = "kloudlite.io/edge-router.name"
+	EnvironmentNameKey           string = "kloudlite.io/environment.name"
+	TargetNamespaceKey           string = "kloudlite.io/target-namespace"
+	ImagePullSecretNameKey       string = "kloudlite.io/image-pull-secret.name"
+	CsiDriverNameKey             string = "kloudlite.io/csi-driver.name"
+	ClusterManagedServiceNameKey string = "kloudlite.io/cluster-msvc.name"
+
+	ProjectManagedServiceNameKey string = "kloudlite.io/project-msvc.name"
+	ProjectManagedServiceRefKey  string = "kloudlite.io/project-msvc-ref"
+
+	RecordVersionKey string = "kloudlite.io/record-version"
+
+	// changes controller behaviour
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	ResetCheckKey  string = "kloudlite.io/reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
-	RegionKey      string = "kloudlite.io/region"
+	DoHelmUpgrade  string = "kloudlite.io/do-helm-upgrade"
 
 	IsBluePrintKey    string = "kloudlite.io/is-blueprint"
 	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"
@@ -93,7 +115,41 @@ const (
 	GVKKey string = "kloudlite.io/group-version-kind"
 
 	ClusterSetupType string = "kloudlite.io/cluster.setup-type"
+
+	ObservabilityAccountNameKey string = "kloudlite.io/observability.account.name"
+	ObservabilityClusterNameKey string = "kloudlite.io/observability.cluster.name"
 )
+
+// distribution constants
+const (
+	CacheNameKey                      string = "kloudlite.io/cache-key"
+	BuildNameKey                      string = "kloudlite.io/build.name"
+	AnnotationResourceReady           string = "kloudlite.io/resource.ready"
+	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
+)
+
+// cluster management label constants
+const (
+	ClusterNameKey      string = "kloudlite.io/cluster.name"
+	ClusterNamespaceKey string = "kloudlite.io/cluster.namespace"
+	AccountNameKey      string = "kloudlite.io/account.name"
+
+	RegionKey string = "kloudlite.io/region"
+
+	NodePoolNameKey string = "kloudlite.io/nodepool.name"
+	NodeNameKey     string = "kloudlite.io/node.name"
+
+	IsNodeControllerJob string = "kloudlite.io/is-nodectrl-job"
+	ForceDeleteKey      string = "kloudlite.io/force-delete"
+	RecheckClusterKey   string = "kloudlite.io/recheck-cluster"
+	PublicIpKey         string = "kloudlite.io/public-ip"
+
+	NodesInfosKey string = "kloudlite.io/nodes-info"
+)
+
+var K8sMasterNodeSelector = map[string]string{
+	"node-role.kubernetes.io/master": "true",
+}
 
 // ClusterSetupTypes
 const (
@@ -222,12 +278,10 @@ var (
 	}
 )
 
-var (
-	KloudliteAccountType = metav1.TypeMeta{
-		Kind:       "Account",
-		APIVersion: "management.kloudlite.io/v1",
-	}
-)
+var KloudliteAccountType = metav1.TypeMeta{
+	Kind:       "Account",
+	APIVersion: "management.kloudlite.io/v1",
+}
 
 var (
 	KnativeServiceType = metav1.TypeMeta{
@@ -250,4 +304,3 @@ const (
 	DefaultIngressClass  = "nginx"
 	DefaultClusterIssuer = "kl-cert-issuer"
 )
-

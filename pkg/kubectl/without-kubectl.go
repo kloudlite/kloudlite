@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
+
+	"github.com/kloudlite/operator/pkg/logging"
 
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	myaml "sigs.k8s.io/yaml"
 
 	fn "github.com/kloudlite/operator/pkg/functions"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,15 +31,157 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-type YAMLClient struct {
-	K8sClient     *kubernetes.Clientset
-	dynamicClient dynamic.Interface
-	restMapper    meta.RESTMapper
+type YAMLClient interface {
+	Apply(ctx context.Context, obj client.Object) ([]rApi.ResourceRef, error)
+	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error)
+	DeleteResource(ctx context.Context, obj client.Object) error
+	DeleteYAML(ctx context.Context, yamls ...[]byte) error
+	RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error
+
+	Client() *kubernetes.Clientset
 }
 
-func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
-	jYamls := bytes.Join(yamls, []byte("\n---\n"))
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
+type yamlClient struct {
+	k8sClient     *kubernetes.Clientset
+	dynamicClient dynamic.Interface
+	mapper        meta.RESTMapper
+	logger        logging.Logger
+}
+
+func (yc *yamlClient) Client() *kubernetes.Clientset {
+	return yc.k8sClient
+}
+
+func (yc *yamlClient) Apply(ctx context.Context, obj client.Object) ([]rApi.ResourceRef, error) {
+	b, err := myaml.Marshal(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	return yc.ApplyYAML(ctx, b)
+}
+
+func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
+	b := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(b), 100)
+
+	var resources []rApi.ResourceRef
+
+	for {
+		var obj unstructured.Unstructured
+		if err := decoder.Decode(&obj); err != nil {
+			if err != io.EOF {
+				return nil, err
+			}
+			break
+		}
+
+		if obj.Object == nil {
+			continue
+		}
+
+		resources = append(resources, rApi.ParseResourceRef(&obj))
+
+		gvk := obj.GroupVersionKind()
+		mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		if err != nil {
+			return nil, err
+		}
+
+		resourceClient := func() dynamic.ResourceInterface {
+			if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+				ns := obj.GetNamespace()
+				if ns == "" {
+					ns = "default"
+				}
+				return yc.dynamicClient.Resource(mapping.Resource).Namespace(ns)
+			}
+			return yc.dynamicClient.Resource(mapping.Resource)
+		}()
+
+		ann := obj.GetAnnotations()
+		delete(ann, constants.LastAppliedKey)
+		obj.SetAnnotations(ann)
+
+		if ann == nil {
+			ann = make(map[string]string)
+		}
+
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+
+		delete(obj.Object, "status")
+
+		b, err := json.Marshal(obj.Object)
+		if err != nil {
+			return resources, err
+		}
+
+		ann[constants.LastAppliedKey] = string(b)
+
+		// Check if the resource exists
+		cobj, err := resourceClient.Get(ctx, obj.GetName(), metav1.GetOptions{})
+		if err != nil && apiErrors.IsNotFound(err) {
+			// If not exists, create it
+			obj.SetAnnotations(ann)
+			obj.SetLabels(labels)
+			_, err = resourceClient.Create(ctx, &obj, metav1.CreateOptions{})
+			if err != nil {
+				return resources, err
+			}
+			yc.logger.Infof("created resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+			continue
+		}
+
+		if cobj != nil {
+			prevLastApplied, ok := cobj.GetAnnotations()[constants.LastAppliedKey]
+			if ok {
+				if prevLastApplied == ann[constants.LastAppliedKey] {
+					yc.logger.Infof("No changes for resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+					continue
+				}
+
+				var prevAppliedObj unstructured.Unstructured
+				if err := json.Unmarshal([]byte(prevLastApplied), &prevAppliedObj); err != nil {
+					return nil, err
+				}
+
+				prevAnn := prevAppliedObj.GetAnnotations()
+
+				for k, v := range cobj.GetAnnotations() {
+					if !fn.MapHasKey(ann, k) && !fn.MapHasKey(prevAnn, k) {
+						ann[k] = v
+					}
+				}
+
+				prevLabels := prevAppliedObj.GetLabels()
+
+				for k, v := range cobj.GetLabels() {
+					if !fn.MapHasKey(labels, k) && !fn.MapHasKey(prevLabels, k) {
+						labels[k] = v
+					}
+				}
+			}
+			obj.Object["metadata"] = cobj.Object["metadata"]
+		}
+
+		obj.SetAnnotations(ann)
+		obj.SetLabels(labels)
+
+		// If exists, update it
+		if _, err = resourceClient.Update(ctx, &obj, metav1.UpdateOptions{}); err != nil {
+			return resources, err
+		}
+		yc.logger.Infof("updated resource (gvk: %s) (%s/%s)", gvk.String(), obj.GetNamespace(), obj.GetName())
+	}
+	return resources, nil
+}
+
+func (yc *yamlClient) ApplyYAMLOld(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
+	b := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(b), 100)
 
 	var resources []rApi.ResourceRef
 
@@ -56,6 +202,7 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		if err != nil {
 			return nil, err
 		}
+
 		unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 		if err != nil {
 			return nil, err
@@ -71,12 +218,28 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		}
 
 		ann[constants.GVKKey] = gvk.String()
-		ann[constants.LastAppliedKey] = string(rawObj.Raw)
+		metadata, ok := unstructuredMap["metadata"].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("invalid object format")
+		}
+		if metadata["annotations"] != nil {
+			delete(metadata["annotations"].(map[string]any), constants.LastAppliedKey)
+		}
+
+		delete(unstructuredMap, "status")
+
+		b, err := json.Marshal(unstructuredMap)
+		if err != nil {
+			return nil, err
+		}
+
+		ann[constants.LastAppliedKey] = string(b)
+
 		unstructuredObj.SetAnnotations(ann)
 
 		var dri dynamic.ResourceInterface
 
-		mapping, err := yc.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
 			// log.Fatal(err)
 			return nil, err
@@ -98,7 +261,7 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		}
 
 		// TODO (nxtcoder17): delete, and recreate deployment if service account has been changed
-		if resource != nil && resource.GetAnnotations()[constants.LastAppliedKey] == string(rawObj.Raw) {
+		if resource != nil && resource.GetAnnotations()[constants.LastAppliedKey] == string(b) {
 			continue
 		}
 
@@ -128,13 +291,13 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 	return resources, nil
 }
 
-func (yc *YAMLClient) DeleteResource(ctx context.Context, obj client.Object) error {
+func (yc *yamlClient) DeleteResource(ctx context.Context, obj client.Object) error {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gvr := gvk.GroupVersion().WithResource(fn.RegularPlural(gvk.Kind))
 	return yc.dynamicClient.Resource(gvr).Namespace(obj.GetNamespace()).Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
 }
 
-func (yc *YAMLClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
+func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 	jYamls := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
 	for {
@@ -164,9 +327,8 @@ func (yc *YAMLClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 
 		var dri dynamic.ResourceInterface
 
-		mapping, err := yc.restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+		mapping, err := yc.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			// log.Fatal(err)
 			return err
 		}
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
@@ -179,9 +341,9 @@ func (yc *YAMLClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 		}
 
 		if err := dri.Delete(ctx, unstructuredObj.GetName(), metav1.DeleteOptions{}); err != nil {
-			if apiErrors.IsNotFound(err) {
-				return nil
-			}
+			// if apiErrors.IsNotFound(err) {
+			// 	return nil
+			// }
 			return err
 		}
 	}
@@ -196,11 +358,15 @@ const (
 	StatefulSet Restartable = "statefulset"
 )
 
-func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error {
+func (r Restartable) String() string {
+	return string(r)
+}
+
+func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error {
 	switch kind {
 	case Deployment:
 		{
-			dl, err := yc.K8sClient.AppsV1().Deployments(namespace).List(
+			dl, err := yc.k8sClient.AppsV1().Deployments(namespace).List(
 				ctx, metav1.ListOptions{
 					LabelSelector: apiLabels.FormatLabels(labels),
 				},
@@ -212,13 +378,15 @@ func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, name
 				if d.Annotations == nil {
 					d.Annotations = map[string]string{}
 				}
-				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
-				yc.K8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{})
+				d.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				if _, err := yc.k8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
+					return err
+				}
 			}
 		}
 	case StatefulSet:
 		{
-			sl, err := yc.K8sClient.AppsV1().StatefulSets(namespace).List(
+			sl, err := yc.k8sClient.AppsV1().StatefulSets(namespace).List(
 				ctx, metav1.ListOptions{
 					LabelSelector: apiLabels.FormatLabels(labels),
 				},
@@ -230,8 +398,10 @@ func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, name
 				if d.Annotations == nil {
 					d.Annotations = map[string]string{}
 				}
-				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
-				yc.K8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{})
+				d.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+				if _, err := yc.k8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -239,7 +409,11 @@ func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, name
 	return nil
 }
 
-func NewYAMLClient(config *rest.Config) (*YAMLClient, error) {
+type YAMLClientOpts struct {
+	Logger logging.Logger
+}
+
+func NewYAMLClient(config *rest.Config, opts YAMLClientOpts) (YAMLClient, error) {
 	c, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -252,23 +426,33 @@ func NewYAMLClient(config *rest.Config) (*YAMLClient, error) {
 
 	gr, err := restmapper.GetAPIGroupResources(c.Discovery())
 	if err != nil {
-		// log.Fatal(err)
 		return nil, err
 	}
 
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
-	return &YAMLClient{
-		K8sClient:     c,
+	if opts.Logger == nil {
+		opts.Logger, err = logging.New(&logging.Options{
+			Name:        "k8s-yaml-client",
+			CallerTrace: true,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &yamlClient{
+		k8sClient:     c,
 		dynamicClient: dc,
-		restMapper:    mapper,
+		mapper:        mapper,
+		logger:        opts.Logger,
 	}, nil
 }
 
-func NewYAMLClientOrDie(config *rest.Config) *YAMLClient {
-	client, err := NewYAMLClient(config)
+func NewYAMLClientOrDie(config *rest.Config, opts YAMLClientOpts) YAMLClient {
+	cli, err := NewYAMLClient(config, opts)
 	if err != nil {
 		panic(err)
 	}
-	return client
+	return cli
 }

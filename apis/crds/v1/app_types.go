@@ -2,9 +2,11 @@ package v1
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/operator/pkg/constants"
 	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,28 +17,27 @@ type ContainerResource struct {
 }
 
 type ContainerEnv struct {
-	Key      string `json:"key" validate:"required"`
-	Value    string `json:"value,omitempty"`
-	Type     string `json:"type,omitempty" validate:"omitempty,oneof=config secret"`
-	RefName  string `json:"refName,omitempty"`
-	RefKey   string `json:"refKey,omitempty"`
-	Optional *bool  `json:"optional,omitempty"`
+	Key      string         `json:"key"`
+	Value    string         `json:"value,omitempty"`
+	Type     ConfigOrSecret `json:"type,omitempty"`
+	RefName  string         `json:"refName,omitempty"`
+	RefKey   string         `json:"refKey,omitempty"`
+	Optional *bool          `json:"optional,omitempty"`
 }
 
 type ContainerVolumeItem struct {
-	Key      string `json:"key" validate:"required"`
+	Key      string `json:"key"`
 	FileName string `json:"fileName,omitempty"`
 }
 
 type EnvFrom struct {
-	// must be one of config, secret
-	Type    string `json:"type" validate:"required,oneof=config secret"`
-	RefName string `json:"refName"`
+	Type    ConfigOrSecret `json:"type"`
+	RefName string         `json:"refName"`
 }
 
 type ContainerVolume struct {
 	MountPath string                `json:"mountPath"`
-	Type      ResourceType          `json:"type" validate:"required,oneof=config secret"`
+	Type      ConfigOrSecret        `json:"type"`
 	RefName   string                `json:"refName"`
 	Items     []ContainerVolumeItem `json:"items,omitempty"`
 	// SubPath   string                `json:"subPath,omitempty"`
@@ -47,8 +48,8 @@ type ShellProbe struct {
 }
 
 type HttpGetProbe struct {
-	Path        string            `json:"path" validate:"required"`
-	Port        uint              `json:"port" validate:"required"`
+	Path        string            `json:"path"`
+	Port        uint              `json:"port"`
 	HttpHeaders map[string]string `json:"httpHeaders,omitempty"`
 }
 
@@ -85,6 +86,105 @@ type AppContainer struct {
 	Volumes         []ContainerVolume `json:"volumes,omitempty"`
 	LivenessProbe   *Probe            `json:"livenessProbe,omitempty"`
 	ReadinessProbe  *Probe            `json:"readinessProbe,omitempty"`
+}
+
+func (ac AppContainer) ToYAML() []byte {
+	b, err := templates.ParseBytes([]byte(`
+- name: {{.Name}}
+  image: {{.Image}}
+  imagePullPolicy: {{.ImagePullPolicy}}
+
+  {{- if .Command }}
+  command: {{.Command | toYAML | nindent 4 }}
+  {{- end}}
+
+  {{- if .Args }}
+  args: {{.Args | toYAML | nindent 4}}
+  {{- end }}
+
+  {{- if .EnvFrom }}
+  envFrom:
+  {{- range .EnvFrom }}
+    {{call .ToYAML }}
+  {{- end }}
+  {{- end }}
+
+  {{- if .Env }}
+  env:
+    {{- range .Env }}
+    {{call .ToYAML}}
+    {{- end }}
+  {{- end }}
+
+  {{- if or .ResourceCpu .ResourceMemory }}
+  resources:
+  {{- if and .ResourceCpu.Min .ResourceMemory.Min }}
+    requests:
+      cpu: {{ .ResourceCpu.Min }}
+      memory: {{ .ResourceMemory.Min }}
+  {{- end }}
+  {{- if and .ResourceCpu.Max .ResourceMemory.Max }}
+    limits:
+      cpu: {{ .ResourceCpu.Max }}
+      memory: {{ .ResourceMemory.Max }}
+  {{- end }}
+  {{- end }}
+
+  {{- if $volumeMounts }}
+  {{- $vMounts := index $volumeMounts $idx }}
+  {{- if $vMounts }}
+  volumeMounts: {{- $vMounts | toYAML | nindent 4 }}
+  {{- end}}
+  {{- end }}
+
+  {{- if .LivenessProbe }}
+  {{- with .LivenessProbe}}
+  livenessProbe:
+    failureThreshold: {{.FailureThreshold | default 3}}
+    initialDelaySeconds: {{.InitialDelay | default 2}}
+    periodSeconds: {{.Interval | default 10 }}
+
+    {{- if eq .Type "shell"}}
+    exec:
+      command: {{ .Shell | toYAML | nindent 8 }}
+    {{- end }}
+
+    {{- if eq .Type "httpGet"}}
+    httpGet: {{.HttpGet | toYAML | nindent 6}}
+    {{- end }}
+
+    {{- if eq .Type "httpHeaders"}}
+    tcpProbe: {{.Tcp | toYAML | nindent 6}}
+    {{- end}}
+  {{- end }}
+  {{- end}}
+
+  {{- if .ReadinessProbe }}
+  {{- with .ReadinessProbe}}
+  readinessProbe:
+    failureThreshold: {{.FailureThreshold | default 3}}
+    initialDelaySeconds: {{.InitialDelay | default 2}}
+    periodSeconds: {{.Interval | default 10 }}
+
+    {{- if eq .Type "shell"}}
+    exec:
+      command: {{ .Shell | toYAML | nindent 8 }}
+    {{- end }}
+
+    {{- if eq .Type "httpGet"}}
+    httpGet: {{.HttpGet | toYAML | nindent 6}}
+    {{- end }}
+
+    {{- if eq .Type "httpHeaders"}}
+    tcpProbe: {{.Tcp | toYAML | nindent 6}}
+    {{- end}}
+  {{- end }}
+  {{- end}}
+`), ac)
+	if err != nil {
+		return nil
+	}
+	return b
 }
 
 type AppSvc struct {
@@ -145,9 +245,9 @@ type JsonPatch struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".spec.region",name=Region,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
-// +kubebuilder:printcolumn:JSONPath=".status.displayVars.intercepted",name=Intercepted,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/intercept\\.toDevice",name=Intercepted,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.displayVars.frozen",name=Frozen,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
@@ -156,14 +256,11 @@ type App struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec AppSpec `json:"spec,omitempty"`
-	// +kubebuilder:default=false
-	Restart *bool `json:"restart,omitempty"`
+	Spec AppSpec `json:"spec"`
 	// +kubebuilder:default=true
-	Enabled   *bool      `json:"enabled,omitempty"`
-	Overrides *JsonPatch `json:"overrides,omitempty"`
+	Enabled *bool `json:"enabled,omitempty"`
 
-	Status rApi.Status `json:"status,omitempty"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (app *App) EnsureGVK() {
@@ -187,6 +284,12 @@ func (app *App) GetEnsuredLabels() map[string]string {
 func (app *App) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("App").String(),
+		"kloudlite.io/intercept.toDevice": func() string {
+			if app.Spec.Intercept != nil && app.Spec.Intercept.Enabled {
+				return app.Spec.Intercept.ToDevice
+			}
+			return ""
+		}(),
 	}
 }
 

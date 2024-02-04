@@ -8,24 +8,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type StandaloneServiceOutput struct {
+	Credentials ct.SecretRef `json:"credentials,omitempty"`
+	HelmSecret  ct.SecretRef `json:"helmSecret,omitempty"`
+}
+
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
 	Region       string              `json:"region,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:default=1
-	ReplicaCount int `json:"replicaCount,omitempty"`
 	// Storage      ct.Storage   `json:"storage"`
 	Resources ct.Resources `json:"resources"`
+
+	Output StandaloneServiceOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Region",type="string",JSONPath=".spec.region"
-// +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // StandaloneService is the Schema for the standaloneservices API
@@ -33,7 +36,7 @@ type StandaloneService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   StandaloneServiceSpec `json:"spec,omitempty"`
+	Spec   StandaloneServiceSpec `json:"spec"`
 	Status rApi.Status           `json:"status,omitempty"`
 }
 

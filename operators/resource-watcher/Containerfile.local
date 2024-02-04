@@ -1,0 +1,5 @@
+#syntax=docker/dockerfile:1.4
+FROM gcr.io/distroless/static:nonroot
+ARG binpath
+COPY --from=local-builder ${binpath} /manager
+ENTRYPOINT ["/manager"]

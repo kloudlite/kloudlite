@@ -23,7 +23,7 @@ type Database struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DatabaseSpec `json:"spec,omitempty"`
+	Spec   DatabaseSpec `json:"spec"`
 	Status rApi.Status  `json:"status,omitempty"`
 }
 
@@ -39,7 +39,8 @@ func (db *Database) GetStatus() *rApi.Status {
 
 func (db *Database) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.MsvcNameKey: db.Spec.MsvcRef.Name,
+		constants.MsvcNameKey:      db.Spec.MsvcRef.Name,
+		constants.MsvcNamespaceKey: db.Spec.MsvcRef.Namespace,
 	}
 }
 

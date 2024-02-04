@@ -3,11 +3,18 @@ package functions
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/kloudlite/operator/pkg/logging"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 func ContainsFinalizers(obj client.Object, finalizers ...string) bool {
@@ -47,6 +54,9 @@ func IntoMap(value any, targetMap any) error {
 }
 
 func ParseFromSecret[T any](secret *corev1.Secret) (*T, error) {
+	if secret == nil {
+		return nil, nil
+	}
 	x := make(map[string]string, len(secret.Data))
 	for k, v := range secret.Data {
 		x[k] = string(v)
@@ -123,6 +133,56 @@ func RolloutRestart(c client.Client, kind Restartable, namespace string, labels 
 					return err
 				}
 			}
+		}
+	}
+
+	return nil
+}
+
+func FilterObservabilityAnnotations(obj client.Object) map[string]string {
+	m := make(map[string]string, len(obj.GetAnnotations()))
+	for k, v := range obj.GetAnnotations() {
+		if strings.HasPrefix(k, "kloudlite.io/observability") {
+			m[k] = v
+		}
+	}
+	return m
+}
+
+func DeleteAndWait(ctx context.Context, logger logging.Logger, kcli client.Client, resources ...client.Object) error {
+	deletionStatus := make(map[string]bool)
+
+	for i := range resources {
+		resourceRef := fmt.Sprintf("resource (%s/%s) (gvk: %s)", resources[i].GetNamespace(), resources[i].GetName(), resources[i].GetObjectKind().GroupVersionKind().String())
+
+		deletionStatus[resourceRef] = false
+
+		if err := kcli.Get(ctx, client.ObjectKeyFromObject(resources[i]), resources[i]); err != nil {
+			if apiErrors.IsNotFound(err) {
+				deletionStatus[resourceRef] = true
+				continue
+			}
+			return err
+		}
+
+		if resources[i].GetDeletionTimestamp() == nil {
+			logger.Infof("deleting %s", resourceRef)
+
+			if err := kcli.Delete(ctx, resources[i], &client.DeleteOptions{
+				GracePeriodSeconds: New(int64(30)),
+				PropagationPolicy:  New(metav1.DeletePropagationForeground),
+			}); err != nil {
+				if !apiErrors.IsNotFound(err) {
+					return err
+				}
+				return fmt.Errorf("waiting for deletion for %s", resourceRef)
+			}
+		}
+	}
+
+	for k, v := range deletionStatus {
+		if !v {
+			return fmt.Errorf("waiting for (%s) to be removed from k8s", k)
 		}
 	}
 

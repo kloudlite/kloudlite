@@ -7,18 +7,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type DatabaseOutput struct {
+	Credentials ct.SecretRef `json:"credentials"`
+}
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	MsvcRef      ct.MsvcRef `json:"msvcRef"`
-	ResourceName string     `json:"resourceName"`
+	MsvcRef      ct.MsvcRef     `json:"msvcRef"`
+	ResourceName string         `json:"resourceName,omitempty"`
+	Output       DatabaseOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/msvc-gvk",name=Msvc GVK,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Database is the Schema for the databases API
@@ -26,7 +30,7 @@ type Database struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DatabaseSpec `json:"spec,omitempty"`
+	Spec   DatabaseSpec `json:"spec"`
 	Status rApi.Status  `json:"status,omitempty"`
 }
 
@@ -42,13 +46,15 @@ func (d *Database) GetStatus() *rApi.Status {
 
 func (d *Database) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.MsvcNameKey: d.Spec.MsvcRef.Name,
+		constants.MsvcNameKey:      d.Spec.MsvcRef.Name,
+		constants.MsvcNamespaceKey: d.Spec.MsvcRef.Namespace,
 	}
 }
 
 func (d *Database) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Database").String(),
+		"kloudlite.io/msvc-gvk":                   d.Spec.MsvcRef.GroupVersionKind().String(),
 	}
 }
 

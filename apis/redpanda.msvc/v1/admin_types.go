@@ -19,17 +19,18 @@ type AuthFlags struct {
 // AdminSpec defines the desired state of Admin
 type AdminSpec struct {
 	AuthFlags *AuthFlags `json:"authFlags,omitempty"`
-	//AuthEnabled   bool       `json:"authEnabled,omitempty"`
+	// AuthEnabled   bool       `json:"authEnabled,omitempty"`
 	AdminEndpoint string `json:"adminEndpoint"`
 	KafkaBrokers  string `json:"kafkaBrokers"`
 
 	// Output       *ct.Output   `json:"output,omitempty"`
-	//TargetSecret *TargetSecret `json:"targetSecret,omitempty"`
+	// TargetSecret *TargetSecret `json:"targetSecret,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 // +kubebuilder:resource:scope=Cluster
 
@@ -38,7 +39,7 @@ type Admin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AdminSpec   `json:"spec,omitempty"`
+	Spec   AdminSpec   `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

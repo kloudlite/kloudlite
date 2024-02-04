@@ -2,8 +2,9 @@ package common_types
 
 import (
 	"fmt"
-	"github.com/kloudlite/operator/pkg/errors"
+
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Storage struct {
@@ -36,12 +37,18 @@ type CpuT struct {
 	Max string `json:"max"`
 }
 
+type MemoryT struct {
+	// +kubebuilder:validation:Pattern=[\d]+Mi$
+	Min string `json:"min"`
+	// +kubebuilder:validation:Pattern=[\d]+Mi$
+	Max string `json:"max"`
+}
+
 // +kubebuilder:object:generate=true
 
 type Resources struct {
-	Cpu CpuT `json:"cpu"`
-	// +kubebuilder:validation:Pattern=[\d]+Mi$
-	Memory string `json:"memory"`
+	Cpu    CpuT    `json:"cpu"`
+	Memory MemoryT `json:"memory"`
 
 	Storage *Storage `json:"storage,omitempty"`
 }
@@ -52,31 +59,6 @@ const (
 	Ext4 FsType = "ext4"
 	Xfs  FsType = "xfs"
 )
-
-type CloudProvider struct {
-	// +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
-	Cloud  string `json:"cloud"`
-	Region string `json:"region"`
-	// +kubebuilder:validation:Optional
-	Account string `json:"account,omitempty"`
-}
-
-func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
-	// return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
-	switch c.Cloud {
-	case "k3s-local":
-		return "local-path", nil
-	case "do":
-		{
-			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
-		}
-	case "azure":
-		{
-			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
-		}
-	}
-	return "", errors.Newf("no storage class found, unknown pair (provider=%s, fstype=%s)", c, fsType)
-}
 
 // func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) { // 	switch c {
 // 	case Digitalocean:
@@ -98,14 +80,19 @@ func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
 // }
 
 type MsvcRef struct {
-	APIVersion string `json:"apiVersion"`
-	Kind       string `json:"kind"`
-	Name       string `json:"name"`
+	metav1.TypeMeta `json:",inline"`
+	Name            string `json:"name"`
+	Namespace       string `json:"namespace"`
 }
 
 type SecretRef struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace,omitempty"`
+}
+
+type ConfigMapRef struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 type SecretKeyRef struct {
@@ -125,3 +112,27 @@ type Output struct {
 	SecretRef *SecretRef `json:"secretRef,omitempty"`
 	ConfigRef *ConfigRef `json:"configRef,omitempty"`
 }
+
+type MinMaxFloat struct {
+	// +kubebuilder:validation:Pattern="^[0-9]+([.][0-9]{1,2})?$"
+	Min string `json:"min"`
+	// +kubebuilder:validation:Pattern="^[0-9]+([.][0-9]{1,2})?$"
+	Max string `json:"max"`
+}
+
+type MinMaxInt struct {
+	// +kubebuilder:validation:Minimum=0
+	Min int `json:"min"`
+	// +kubebuilder:validation:Minimum=0
+	Max int `json:"max"`
+}
+
+// +kubebuilder:validation:Enum=aws;do;azure;gcp
+type CloudProvider string
+
+const (
+	CloudProviderAWS          CloudProvider = "aws"
+	CloudProviderDigitalOcean CloudProvider = "digitalocean"
+	CloudProviderAzure        CloudProvider = "azure"
+	CloudProviderGCP          CloudProvider = "gcp"
+)

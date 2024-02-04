@@ -6,9 +6,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - artifacts.kloudlite.io
+  - clusters.kloudlite.io
   resources:
-  - harborprojects
+  - clusters
   verbs:
   - create
   - delete
@@ -18,93 +18,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - artifacts.kloudlite.io
+  - clusters.kloudlite.io
   resources:
-  - harborprojects/finalizers
+  - clusters/finalizers
   verbs:
   - update
 - apiGroups:
-  - artifacts.kloudlite.io
+  - clusters.kloudlite.io
   resources:
-  - harborprojects/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - artifacts.kloudlite.io
-  resources:
-  - harboruseraccounts
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - artifacts.kloudlite.io
-  resources:
-  - harboruseraccounts/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - artifacts.kloudlite.io
-  resources:
-  - harboruseraccounts/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster-setup.kloudlite.io
-  resources:
-  - primaryclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster-setup.kloudlite.io
-  resources:
-  - primaryclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster-setup.kloudlite.io
-  resources:
-  - primaryclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cluster-setup.kloudlite.io
-  resources:
-  - secondaryclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster-setup.kloudlite.io
-  resources:
-  - secondaryclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cluster-setup.kloudlite.io
-  resources:
-  - secondaryclusters/status
+  - clusters/status
   verbs:
   - get
   - patch
@@ -164,32 +86,6 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
-  - configs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - configs/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - configs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
   - crds
   verbs:
   - create
@@ -209,32 +105,6 @@ rules:
   - crds.kloudlite.io
   resources:
   - crds/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - edges
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - edges/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - crds.kloudlite.io
-  resources:
-  - edges/status
   verbs:
   - get
   - patch
@@ -318,9 +188,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - crds.kloudlite.io
+  - distribution.kloudlite.io
   resources:
-  - secrets
+  - devices
   verbs:
   - create
   - delete
@@ -330,41 +200,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - crds.kloudlite.io
+  - distribution.kloudlite.io
   resources:
-  - secrets/finalizers
+  - devices/finalizers
   verbs:
   - update
 - apiGroups:
-  - crds.kloudlite.io
+  - distribution.kloudlite.io
   resources:
-  - secrets/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - csi.kloudlite.io
-  resources:
-  - drivers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - csi.kloudlite.io
-  resources:
-  - drivers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - csi.kloudlite.io
-  resources:
-  - drivers/status
+  - devices/status
   verbs:
   - get
   - patch
@@ -422,9 +266,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - extensions.kloudlite.io
+  - helm.kloudlite.io
   resources:
-  - Clusters
+  - helmcharts
   verbs:
   - create
   - delete
@@ -434,41 +278,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - extensions.kloudlite.io
+  - helm.kloudlite.io
   resources:
-  - Clusters/finalizers
+  - helmcharts/finalizers
   verbs:
   - update
 - apiGroups:
-  - extensions.kloudlite.io
+  - helm.kloudlite.io
   resources:
-  - Clusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - extensions.kloudlite.io
-  resources:
-  - edgeworkers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - extensions.kloudlite.io
-  resources:
-  - edgeworkers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - extensions.kloudlite.io
-  resources:
-  - edgeworkers/status
+  - helmcharts/status
   verbs:
   - get
   - patch
@@ -838,9 +656,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - watcher.kloudlite.io
+  - wireguard.kloudlite.io
   resources:
-  - statuswatchers
+  - devices
   verbs:
   - create
   - delete
@@ -850,15 +668,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - watcher.kloudlite.io
+  - wireguard.kloudlite.io
   resources:
-  - statuswatchers/finalizers
+  - devices/finalizers
   verbs:
   - update
 - apiGroups:
-  - watcher.kloudlite.io
+  - wireguard.kloudlite.io
   resources:
-  - statuswatchers/status
+  - devices/status
   verbs:
   - get
   - patch

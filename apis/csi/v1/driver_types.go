@@ -25,8 +25,14 @@ type Driver struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DriverSpec  `json:"spec,omitempty"`
+	Spec   DriverSpec  `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
+}
+
+func (d *Driver) EnsureGVK() {
+	if d != nil {
+		d.SetGroupVersionKind(GroupVersion.WithKind("Driver"))
+	}
 }
 
 func (d *Driver) GetStatus() *rApi.Status {

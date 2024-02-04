@@ -30,7 +30,7 @@ type ClusterService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterServiceSpec `json:"spec,omitempty"`
+	Spec   ClusterServiceSpec `json:"spec"`
 	Status rApi.Status        `json:"status,omitempty"`
 }
 

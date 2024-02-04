@@ -1,22 +1,40 @@
+# apiVersion: crds.kloudlite.io/v1
+# kind: ManagedService
+# metadata:
+#   name: {{.Name}}
+#   namespace: {{.Namespace}}
+# #   labels: {{ .Labels | toYAML | nindent 4 }}
+# #   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
+# spec:
+#   region: reg-9tco8kqki8hsw8dcwftdtkesxhqa
+#   region: {{$region}
+#   inputs:
+#     replicaCount: 1
+#     resources:
+#       cpu:
+#         max: 500m
+#         min: 500m
+#       memory: 500Mi
+#       storage:
+#         size: 1Gi
+#     msvcKind:
+#       apiVersion: mongodb.msvc.kloudlite.io/v1
+      # kind: StandaloneService
+---
 apiVersion: crds.kloudlite.io/v1
 kind: ManagedService
 metadata:
-  name: {{.Name}}
-  namespace: {{.Namespace}}
-#   labels: {{ .Labels | toYAML | nindent 4 }}
-#   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
+  name: sample
+  namespace: examples
 spec:
-  region: reg-9tco8kqki8hsw8dcwftdtkesxhqa
-  region: {{$region}
-  inputs:
-    replicaCount: 1
-    resources:
-      cpu:
-        max: 500m
-        min: 500m
-      memory: 500Mi
-      storage:
-        size: 1Gi
-    msvcKind:
-      apiVersion: mongodb.msvc.kloudlite.io/v1
-      kind: StandaloneService
+  yaml: |+
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: sample
+    spec:
+      containers:
+      - name: sample
+        image: nginx
+        ports:
+        - containerPort: 80

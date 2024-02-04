@@ -2,8 +2,9 @@ package topic
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/types"
-	"time"
 
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/env"
@@ -16,10 +17,10 @@ import (
 	"github.com/kloudlite/operator/pkg/redpanda"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 type Reconciler struct {
@@ -28,7 +29,7 @@ type Reconciler struct {
 	Logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -49,8 +50,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -76,8 +77,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
@@ -103,7 +103,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 	check.Status = true
 	if check != checks[topicDeleted] {
 		checks[topicDeleted] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Finalize()
 }
@@ -111,29 +113,53 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 func (r *Reconciler) getAdminClient(req *rApi.Request[*redpandaMsvcv1.Topic]) (redpanda.AdminClient, error) {
 	ctx, obj := req.Context(), req.Object
 
-	var rpkAdmin redpandaMsvcv1.Admin
-	if err := r.Get(ctx, fn.NN("", obj.Spec.RedpandaAdmin), &rpkAdmin); err != nil {
-		return nil, err
-	}
+	admin, err := func() (*redpandaMsvcv1.Admin, error) {
+		if obj.Spec.RedpandaAdmin == nil {
+			var rpAdminList redpandaMsvcv1.AdminList
+			if err := r.List(ctx, &rpAdminList); err != nil {
+				return nil, err
+			}
 
-	if rpkAdmin.Spec.AuthFlags == nil || !rpkAdmin.Spec.AuthFlags.Enabled {
-		return redpanda.NewAdminClient(rpkAdmin.Spec.AdminEndpoint, rpkAdmin.Spec.KafkaBrokers, nil), nil
-	}
+			if len(rpAdminList.Items) != 1 {
+				return nil, fmt.Errorf("multiple redpanda admins found, must specify which one to use by setting .spec.redpandaAdmin")
+			}
 
-	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(rpkAdmin.Spec.AuthFlags.TargetSecret.Namespace, rpkAdmin.Spec.AuthFlags.TargetSecret.Name), &corev1.Secret{})
+			return &rpAdminList.Items[0], nil
+		}
+
+		var rpkAdmin redpandaMsvcv1.Admin
+		if err := r.Get(ctx, fn.NN("", *obj.Spec.RedpandaAdmin), &rpkAdmin); err != nil {
+			return nil, err
+		}
+
+		return &rpkAdmin, nil
+	}()
 	if err != nil {
 		return nil, err
 	}
 
-	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
-	if err != nil {
-		return nil, err
-	}
+	adminCli, err := func() (redpanda.AdminClient, error) {
+		if admin.Spec.AuthFlags == nil || !admin.Spec.AuthFlags.Enabled {
+			return redpanda.NewAdminClient(admin.Spec.AdminEndpoint, admin.Spec.KafkaBrokers, nil), nil
+		}
 
-	return redpanda.NewAdminClient(rpkAdmin.Spec.AdminEndpoint, rpkAdmin.Spec.KafkaBrokers, &redpanda.AdminAuthOpts{
-		Username: adminCreds.Username,
-		Password: adminCreds.Password,
-	}), nil
+		adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(admin.Spec.AuthFlags.TargetSecret.Namespace, admin.Spec.AuthFlags.TargetSecret.Name), &corev1.Secret{})
+		if err != nil {
+			return nil, err
+		}
+
+		adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
+		if err != nil {
+			return nil, err
+		}
+
+		return redpanda.NewAdminClient(admin.Spec.AdminEndpoint, admin.Spec.KafkaBrokers, &redpanda.AdminAuthOpts{
+			Username: adminCreds.Username,
+			Password: adminCreds.Password,
+		}), nil
+	}()
+
+	return adminCli, err
 }
 
 func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
@@ -158,14 +184,14 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 		if err := adminCli.CreateTopic(obj.Name, obj.Spec.PartitionCount); err != nil {
 			return req.CheckFailed(RedpandaTopicReady, check, err.Error())
 		}
-		checks[RedpandaTopicReady] = check
-		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
 	if check != checks[RedpandaTopicReady] {
 		checks[RedpandaTopicReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -175,9 +201,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.Logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.Logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.Topic{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())

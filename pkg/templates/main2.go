@@ -201,9 +201,9 @@ package templates
 // }
 //
 // const (
-// 	MongoDBStandalone templateFile = "./msvc/mongodb/helm-standalone.yml.tpl"
-// 	MySqlStandalone   templateFile = "./msvc/mysql/helm-standalone.yml.tpl"
-// 	RedisStandalone   templateFile = "./msvc/redis/helm-standalone.yml.tpl"
+// 	MongoDBStandalone templateFile = "./msvc/mongodb/helm-mongodb-standalone.yml.tpl"
+// 	MySqlStandalone   templateFile = "./msvc/mysql/helm-mongodb-standalone.yml.tpl"
+// 	RedisStandalone   templateFile = "./msvc/redis/helm-mongodb-standalone.yml.tpl"
 //
 // 	// ---
 //
