@@ -5,85 +5,69 @@
 {{- $priorityClassName := get . "priority-class-name"  | default "stateful" -}}
 {{- $existingSecret := get . "existing-secret" -}}
 
+{{- $labels := get . "labels" | default dict }}
+
 {{- with $obj }}
 {{- /* gotype: github.com/kloudlite/operator/apis/mongodb.msvc/v1.StandaloneService*/ -}}
-{{$labels := .Labels | default dict}}
-apiVersion: msvc.kloudlite.io/v1
-kind: HelmMongoDB
+apiVersion: crds.kloudlite.io/v1
+kind: HelmChart
 metadata:
-  name: {{.Name}}
-  namespace: {{.Namespace}}
-  labels: {{ $labels | toYAML | nindent 4 }}
-  ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
+	name: {{.Name}}
+	namespace: {{.Namespace}}
+	labels: {{ $labels | toYAML | nindent 4 }}
+	ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 spec:
-  global:
-    storageClass: {{$storageClass}}
-  fullnameOverride: {{.Name}}
-  image:
-    tag: 5.0.8-debian-10-r20
+	chartRepo:
+		url: https://charts.bitnami.com/bitnami
+		name: bitnami
+	chartVersion: 13.18.1
+	chartName: bitnami/mongodb
 
-  architecture: standalone
-  useStatefulSet: true
+	valuesYaml: |+
+		# source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
+		global:
+			storageClass: {{$storageClass}}
+		fullnameOverride: {{.Name}}
+		image:
+			tag: 5.0.8-debian-10-r20
 
-  replicaCount: {{ if $freeze}}0{{else}}{{.Spec.ReplicaCount}}{{end}}
+		architecture: standalone
+		useStatefulSet: true
 
-  commonLabels: {{$labels | toYAML | nindent 4}}
+		replicaCount: {{ if $freeze}}0{{else}}{{.Spec.ReplicaCount}}{{end}}
 
-  podLabels:
-    {{$labels | toYAML | nindent 4}}
-    {{- if .Spec.Region}}
-    kloudlite.io/region: {{.Spec.Region}}
-    {{- end}}
-    kloudlite.io/stateful-node: "true"
+		commonLabels: {{$labels | toYAML | nindent 6}}
+		podLabels: {{$labels | toYAML | nindent 6}}
 
-  auth:
-    enabled: true
-    existingSecret: {{$existingSecret}}
+		auth:
+		  enabled: true
+		  existingSecret: {{$existingSecret}}
 
-  persistence:
-    enabled: true
-    size: {{.Spec.Resources.Storage.Size}}
+		persistence:
+		  enabled: true
+		  size: {{.Spec.Resources.Storage.Size}}
 
-  volumePermissions:
-    enabled: true
+		volumePermissions:
+		  enabled: true
 
-  metrics:
-    enabled: true
+		metrics:
+		  enabled: true
 
-  livenessProbe:
-    enabled: true
-    timeoutSeconds: 15
+		livenessProbe:
+		  enabled: true
+		  timeoutSeconds: 15
 
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 10
-    periodSeconds: 30
-    timeoutSeconds: 20
+		readinessProbe:
+		  enabled: true
+		  initialDelaySeconds: 10
+		  periodSeconds: 30
+		  timeoutSeconds: 20
 
-  priorityClassName: {{$priorityClassName}}
-  {{- if .Spec.Region}}
-  affinity: {{include "NodeAffinity" (dict) | nindent 4 }}
-  {{- end }}
-  tolerations:
-    {{- if .Spec.Region}}
-    {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 4}}
-    {{- end }}
-    {{ if .Spec.Tolerations }}
-    {{.Spec.Tolerations | toYAML | nindent 4}}
-    {{ end }}
-  nodeSelector:
-    {{- if .Spec.Region}}
-    {{ include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 4 }}
-    {{- end}}
-    {{ if .Spec.NodeSelector }}
-    {{.Spec.NodeSelector | toYAML | nindent 4}}
-    {{ end }}
-
-  resources:
-    requests:
-      cpu: {{.Spec.Resources.Cpu.Min}}
-      memory: {{ .Spec.Resources.Memory }}
-    limits:
-      cpu: {{.Spec.Resources.Cpu.Max}}
-      memory: {{.Spec.Resources.Memory}}
-{{- end }}
+		resources:
+			requests:
+				cpu: {{.Spec.Resources.Cpu.Min}}
+				memory: {{.Spec.Resources.Memory}}
+			limits:
+				cpu: {{.Spec.Resources.Cpu.Max}}
+				memory: {{.Spec.Resources.Memory}}
+{{- end}}

@@ -33,7 +33,7 @@ type Kibana struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KibanaSpec  `json:"spec,omitempty"`
+	Spec   KibanaSpec  `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

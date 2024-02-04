@@ -24,7 +24,7 @@ type ACLConfigMap struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ACLConfigMapSpec `json:"spec,omitempty"`
+	Spec   ACLConfigMapSpec `json:"spec"`
 	Status rApi.Status      `json:"status,omitempty"`
 }
 

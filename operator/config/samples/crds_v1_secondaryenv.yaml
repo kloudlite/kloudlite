@@ -1,6 +1,0 @@
-apiVersion: crds.kloudlite.io/v1
-kind: SecondaryEnv
-metadata:
-  name: secondaryenv-sample
-spec:
-  # TODO(user): Add fields here

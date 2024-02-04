@@ -27,7 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -36,7 +35,7 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -62,7 +61,6 @@ const (
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &redisMsvcv1.ACLAccount{})
-
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -74,8 +72,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -106,11 +104,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
@@ -118,7 +112,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepRe
 	check := rApi.Check{Generation: obj.Generation}
 
 	// msvc output ref
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		req.Logger.Infof("msvc output does not exist, i.e. msvc does not exist, so no need keeping mres, so finalizing it")
 		return req.Finalize()
@@ -135,7 +129,8 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepRe
 	}
 	defer redisCli.Close()
 
-	tctx, _ := context.WithTimeout(context.TODO(), 3*time.Second)
+	tctx, cf := context.WithTimeout(context.TODO(), 3*time.Second)
+	defer cf()
 	if err := redisCli.DeleteUser(tctx, obj.Name); err != nil {
 		return req.CheckFailed(ACLUserDeleted, check, err.Error())
 	}
@@ -164,14 +159,13 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) 
 	defer req.LogPostCheck(IsOwnedByMsvc)
 
 	msvc, err := rApi.Get(
-		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
+		ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, obj.Spec.MsvcRef.Name), fn.NewUnstructured(
 			metav1.TypeMeta{
 				Kind:       obj.Spec.MsvcRef.Kind,
 				APIVersion: obj.Spec.MsvcRef.APIVersion,
 			},
 		),
 	)
-
 	if err != nil {
 		return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 	}
@@ -179,7 +173,7 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) 
 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 		}
 		return req.Done().RequeueAfter(100 * time.Second)
 	}
@@ -208,7 +202,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 	}
 
 	// msvc output ref
-	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
+	msvcSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.MsvcRef.Namespace, "msvc-"+obj.Spec.MsvcRef.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, errors.NewEf(err, "msvc output does not exist").Error()).Err(nil)
 	}
@@ -226,8 +220,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 				"namespace":  obj.Namespace,
 				"owner-refs": obj.GetOwnerReferences(),
 				"labels": map[string]string{
-					constants.MsvcNameKey:  obj.Spec.MsvcRef.Name,
-					constants.IsMresOutput: "true",
+					constants.MsvcNamespaceKey: obj.Spec.MsvcRef.Namespace,
+					constants.MsvcNameKey:      obj.Spec.MsvcRef.Name,
+					constants.IsMresOutput:     "true",
 				},
 				"string-data": types.MresOutput{
 					Hosts:    msvcOutput.Hosts,
@@ -251,7 +246,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 	check.Status = true
 	if check != obj.Status.Checks[AccessCredsReady] {
 		obj.Status.Checks[AccessCredsReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	mresOutput, err := fn.ParseFromSecret[types.MresOutput](scrt)
@@ -313,7 +310,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLAccount{})
 	builder.Owns(&corev1.Secret{})
@@ -323,10 +320,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&redisMsvcv1.ClusterService{},
 	}
 
-	for i := range watchList {
+	for _, obj := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+			obj, handler.EnqueueRequestsFromMapFunc(
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil

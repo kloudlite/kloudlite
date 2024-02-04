@@ -4,27 +4,22 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"log"
-	"strings"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	types2 "k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
-	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -32,112 +27,242 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme                    *runtime.Scheme
-	logger                    logging.Logger
-	Name                      string
-	Env                       *env.Env
-	GetGrpcConnection         func() (*grpc.ClientConn, error)
-	dispatchResourceUpdates   func(ctx context.Context, stu t.ResourceUpdate) error
-	dispatchInfraUpdates      func(ctx context.Context, stu t.ResourceUpdate) error
-	dispatchBYOCClientUpdates func(ctx context.Context, stu t.ResourceUpdate) error
+	Scheme      *runtime.Scheme
+	logger      logging.Logger
+	Name        string
+	Env         *env.Env
+	accessToken string
+	MsgSender   MessageSender
 }
 
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
-	obj.SetManagedFields(nil)
-
-	b, err := json.Marshal(obj)
+func unmarshalUnstructured(obj *unstructured.Unstructured, resource client.Object) error {
+	b, err := json.Marshal(obj.Object)
 	if err != nil {
-		return ctrl.Result{}, nil
+		return err
 	}
 
-	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
-		return ctrl.Result{}, err
+	return json.Unmarshal(b, resource)
+}
+
+func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) (ctrl.Result, error) {
+	mctx, cf := func() (context.Context, context.CancelFunc) {
+		if r.Env.IsDev {
+			return context.WithCancel(context.TODO())
+		}
+		return context.WithTimeout(ctx, 2*time.Second)
+	}()
+	defer cf()
+
+	if r.MsgSender == nil {
+		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
 	}
 
-	switch {
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
+	ann := obj.GetAnnotations()
+	delete(ann, constants.LastAppliedKey)
+	obj.SetAnnotations(ann)
+
+	gvk := newGVK(obj.GetAPIVersion(), obj.GetKind())
+
+	switch gvk.String() {
+	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
 		{
-			if err := r.dispatchInfraUpdates(ctx, t.ResourceUpdate{
-				ClusterName: obj.GetLabels()[constants.ClusterNameKey],
-				AccountName: obj.GetLabels()[constants.AccountNameKey],
-				Object:      m,
-			}); err != nil {
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case ManagedResourceGVK.String():
+		{
+			mr, err := fn.JsonConvert[crdsv1.ManagedResource](obj.Object)
+			if err != nil {
 				return ctrl.Result{}, err
 			}
-		}
 
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
-		{
-			if obj.GetObjectKind().GroupVersionKind().Kind == "BYOC" {
-				var byoc clustersv1.BYOC
-				if err := json.Unmarshal(b, &byoc); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				if err := r.dispatchBYOCClientUpdates(ctx, t.ResourceUpdate{
-					ClusterName: byoc.Name,
-					AccountName: byoc.Spec.AccountName,
-					Object:      m,
-				}); err != nil {
-					return ctrl.Result{}, err
-				}
+			mresSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("mres-%s-creds", mr.Spec.ResourceName)), mresSecret); err != nil {
+				r.logger.Infof("mres secret for resource (%s), not found", obj.GetName())
+				mresSecret = nil
 			}
+
+			if mresSecret != nil {
+				obj.Object[t.KeyManagedResSecret] = mresSecret
+			}
+
+			err = r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
 		}
 
-	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
+	case ProjectManageServiceGVK.String():
 		{
-			if err := r.dispatchResourceUpdates(ctx, t.ResourceUpdate{
-				ClusterName: obj.GetLabels()[constants.ClusterNameKey],
-				AccountName: obj.GetLabels()[constants.AccountNameKey],
-				Object:      m,
-			}); err != nil {
+			var pmsvc crdsv1.ProjectManagedService
+			if err := unmarshalUnstructured(obj, &pmsvc); err != nil {
 				return ctrl.Result{}, err
 			}
+
+			pmsvcSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(pmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), pmsvcSecret); err != nil {
+				r.logger.Infof("pmsvc secret for service (%s), not found", obj.GetName())
+				pmsvcSecret = nil
+			}
+
+			if pmsvcSecret != nil {
+				obj.Object[t.KeyProjectManagedSvcSecret] = pmsvcSecret
+			}
+
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
 		}
+
+	case ClusterManagedServiceGVK.String():
+		{
+			var cmsvc crdsv1.ClusterManagedService
+			if err := unmarshalUnstructured(obj, &cmsvc); err != nil {
+				return ctrl.Result{}, err
+			}
+
+			cmsvcSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(cmsvc.Spec.TargetNamespace, fmt.Sprintf("msvc-%s-creds", obj.GetName())), cmsvcSecret); err != nil {
+				r.logger.Infof("cmsvc secret for service (%s), not found", obj.GetName())
+				cmsvcSecret = nil
+			}
+
+			if cmsvcSecret != nil {
+				obj.Object[t.KeyClusterManagedSvcSecret] = cmsvcSecret
+			}
+
+			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case BuildRunGVK.String():
+		{
+			err := r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case DeviceGVK.String():
+		{
+			deviceConfig := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
+				r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
+				deviceConfig = nil
+			}
+
+			if deviceConfig != nil {
+				obj.Object[t.KeyVPNDeviceConfig] = map[string]any{
+					"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
+					"encoding": "base64",
+				}
+			}
+
+			if obj.GetNamespace() != r.Env.DeviceNamespace {
+				r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
+				return ctrl.Result{}, nil
+			}
+
+			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
+	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
+		{
+			// dispatch to infra
+			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			})
+			return ctrl.Result{}, err
+		}
+
 	default:
 		{
-			logger.Infof("ignoring resource status update, as it does not belong to group kloudlite.io")
+			r.logger.Infof("message sender is not configured for resource (%s) of gvk(%s). Ignoring resource update", fmt.Sprintf(obj.GetNamespace(), obj.GetName()), obj.GetObjectKind().GroupVersionKind().String())
 			return ctrl.Result{}, nil
 		}
 	}
+}
 
-	logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
+func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
+	obj.SetManagedFields(nil)
 
 	if obj.GetDeletionTimestamp() != nil {
-		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-			return r.RemoveWatcherFinalizer(ctx, obj)
+		// resource is about to be deleted
+		if t.HasOtherKloudliteFinalizers(obj) {
+			// 1. send deleting event
+			obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleting
+			return r.dispatchEvent(ctx, obj)
 		}
-		return ctrl.Result{}, nil
+
+		// 2. send deleted event
+		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
+			if rr, err := r.RemoveWatcherFinalizer(ctx, obj); err != nil {
+				return rr, err
+			}
+		}
+		obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
+		return r.dispatchEvent(ctx, obj)
 	}
 
 	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-		return r.AddWatcherFinalizer(ctx, obj)
+		if rr, err := r.AddWatcherFinalizer(ctx, obj); err != nil {
+			return rr, err
+		}
 	}
 
-	return ctrl.Result{}, nil
+	obj.Object[t.ResourceStatusKey] = t.ResourceStatusUpdated
+	return r.dispatchEvent(ctx, obj)
 }
 
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update
-
 func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
+	if r.MsgSender == nil {
+		r.logger.Infof("message-sender is nil")
+		return ctrl.Result{}, errors.New("waiting for message sender to be initialized")
+	}
+
 	var wName types.WrappedName
 	if err := json.Unmarshal([]byte(oReq.Name), &wName); err != nil {
 		return ctrl.Result{}, nil
 	}
 
 	gvk, err := wName.ParseGroup()
+	fmt.Println(gvk.Group)
 	if err != nil {
 		r.logger.Errorf(err, "badly formatted group-version-kind (%s) received, aborting ...", wName.Group)
 		return ctrl.Result{}, nil
@@ -147,10 +272,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, nil
 	}
 
-	logger := r.logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("gvk", gvk.String())
-	logger.Infof("request received")
+	logger := r.logger.WithKV("NN", fn.NN(oReq.Namespace, wName.Name).String()).WithKV("gvk", gvk.String())
+	logger.Infof("resource update received")
 	defer func() {
-		logger.Infof("request processed")
+		logger.Infof("resource update processed")
 	}()
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
@@ -173,153 +298,93 @@ func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Obje
 	return ctrl.Result{}, r.Update(ctx, obj)
 }
 
+type GVK struct {
+	schema.GroupVersionKind
+}
+
+func newGVK(apiVersion, kind string) GVK {
+	return GVK{
+		GroupVersionKind: fn.ParseGVK(apiVersion, kind),
+	}
+}
+
+var (
+	ProjectGVK = newGVK("crds.kloudlite.io/v1", "Project")
+	AppGVK     = newGVK("crds.kloudlite.io/v1", "App")
+
+	// ManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ManagedService")
+	ManagedResourceGVK       = newGVK("crds.kloudlite.io/v1", "ManagedResource")
+	EnvironmentGVK           = newGVK("crds.kloudlite.io/v1", "Environment")
+	RouterGVK                = newGVK("crds.kloudlite.io/v1", "Router")
+	NodePoolGVK              = newGVK("clusters.kloudlite.io/v1", "NodePool")
+	DeviceGVK                = newGVK("wireguard.kloudlite.io/v1", "Device")
+	BuildRunGVK              = newGVK("distribution.kloudlite.io/v1", "BuildRun")
+	ClusterManagedServiceGVK = newGVK("crds.kloudlite.io/v1", "ClusterManagedService")
+	HelmChartGVK             = newGVK("crds.kloudlite.io/v1", "HelmChart")
+	ProjectManageServiceGVK  = newGVK("crds.kloudlite.io/v1", "ProjectManagedService")
+
+	// native resources
+	PersistentVolumeClaimGVK = newGVK("v1", "PersistentVolumeClaim")
+	PersistentVolumeGVK      = newGVK("v1", "PersistentVolume")
+	VolumeAttachmentGVK      = newGVK("storage.k8s.io/v1", "VolumeAttachment")
+	IngressGVK               = newGVK("networking.k8s.io/v1", "Ingress")
+	SecretGVK                = newGVK("v1", "Secret")
+	ConfigmapGVK             = newGVK("v1", "ConfigMap")
+)
+
 // SetupWithManager sets up the controllers with the Manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-
-	r.dispatchResourceUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
-		return fmt.Errorf("grpc connection not established yet")
-	}
-
-	r.dispatchInfraUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
-		return fmt.Errorf("grpc connection not established yet")
-	}
-
-	r.dispatchBYOCClientUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
-		return fmt.Errorf("grpc connection not established yet")
-	}
-
-	go func() {
-		handlerCh := make(chan error, 1)
-		for {
-			logger.Infof("Waiting for grpc connection to setup")
-			cc, err := r.GetGrpcConnection()
-			if err != nil {
-				log.Fatalf("Failed to connect after retries: %v", err)
-			}
-
-			logger.Infof("GRPC connection successful")
-
-			msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
-
-			mds, err := msgDispatchCli.ReceiveResourceUpdates(context.Background())
-			if err != nil {
-				logger.Errorf(err, "ReceiveStatusMessages")
-			}
-
-			r.dispatchResourceUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
-				b, err := json.Marshal(ru)
-				if err != nil {
-					return err
-				}
-				if err = mds.Send(&messages.ResourceUpdate{
-					AccessToken: r.Env.AccessToken,
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Message:     b,
-				}); err != nil {
-					handlerCh <- err
-					return err
-				}
-				return nil
-			}
-
-			infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(context.Background())
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-
-			r.dispatchInfraUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
-				b, err := json.Marshal(ru)
-				if err != nil {
-					return err
-				}
-
-				if err = infraMessagesCli.Send(&messages.InfraUpdate{
-					AccessToken: r.Env.AccessToken,
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Message:     b,
-				}); err != nil {
-					handlerCh <- err
-					return err
-				}
-				return nil
-			}
-
-			byocClientUpdatesCli, err := msgDispatchCli.ReceiveBYOCClientUpdates(context.Background())
-			if err != nil {
-				logger.Errorf(err, "ReceiveBYOCClientUpdates")
-			}
-
-			r.dispatchBYOCClientUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
-				b, err := json.Marshal(ru)
-				if err != nil {
-					return err
-				}
-
-				if err = byocClientUpdatesCli.Send(&messages.BYOCClientUpdate{
-					AccessToken: r.Env.AccessToken,
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Message:     b,
-				}); err != nil {
-					handlerCh <- err
-					return err
-				}
-				return nil
-			}
-
-			connState := cc.GetState()
-			go func(cs connectivity.State) {
-				for cs != connectivity.Ready && connState != connectivity.Shutdown {
-					handlerCh <- fmt.Errorf("connection lost")
-				}
-			}(connState)
-			<-handlerCh
-			cc.Close()
-		}
-	}()
+	r.logger = logger.WithName(r.Name).WithKV("accountName", r.Env.AccountName).WithKV("clusterName", r.Env.ClusterName)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
-	builder.For(&crdsv1.Project{})
+	builder.For(&corev1.Node{})
 
-	watchList := []client.Object{
-		&crdsv1.Project{},
-		&crdsv1.App{},
-		&serverlessv1.Lambda{},
-		&crdsv1.ManagedService{},
-		&crdsv1.ManagedResource{},
-		&crdsv1.Router{},
-		&crdsv1.Env{},
-		&crdsv1.Config{},
-		&crdsv1.Secret{},
+	watchList := []GVK{
+		ProjectGVK,
+		AppGVK,
+		ManagedResourceGVK,
+		EnvironmentGVK,
+		RouterGVK,
 
-		&clustersv1.BYOC{},
+		BuildRunGVK,
 
-		fn.NewUnstructured(constants.EdgeInfraType),
-		fn.NewUnstructured(constants.CloudProviderType),
-		fn.NewUnstructured(constants.WorkerNodeType),
-		fn.NewUnstructured(constants.NodePoolType),
+		DeviceGVK,
 
-		fn.NewUnstructured(constants.ClusterType),
-		fn.NewUnstructured(constants.MasterNodeType),
-		// fn.NewUnstructured(constants.DeviceType),
+		ClusterManagedServiceGVK,
+		ProjectManageServiceGVK,
+		NodePoolGVK,
+		HelmChartGVK,
+
+		// native resources
+		PersistentVolumeClaimGVK,
+		PersistentVolumeGVK,
+		VolumeAttachmentGVK,
+		IngressGVK,
+
+		// filtered watch
+		SecretGVK,
+		ConfigmapGVK,
 	}
 
-	for _, object := range watchList {
+	for i := range watchList {
+		restype := fn.NewUnstructured(metav1.TypeMeta{Kind: watchList[i].Kind, APIVersion: watchList[i].GroupVersion().String()})
 		builder.Watches(
-			&source.Kind{Type: object},
+			restype,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
-					v, ok := obj.GetAnnotations()[constants.GVKKey]
-					if !ok {
+				func(_ context.Context, obj client.Object) []reconcile.Request {
+					gvk := obj.GetObjectKind().GroupVersionKind().String()
+
+					if (gvk == SecretGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.SecretWatchingAnnotation) {
 						return nil
 					}
 
-					b64Group := base64.StdEncoding.EncodeToString([]byte(v))
+					if (gvk == ConfigmapGVK.String()) && !fn.MapContains(obj.GetAnnotations(), t.ConfigWatchingAnnotation) {
+						return nil
+					}
+
+					b64Group := base64.StdEncoding.EncodeToString([]byte(gvk))
 					if len(b64Group) == 0 {
 						return nil
 					}
@@ -328,14 +393,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					if err != nil {
 						return nil
 					}
+
 					return []reconcile.Request{
-						{NamespacedName: types2.NamespacedName{Namespace: obj.GetNamespace(), Name: wName}},
+						{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
 					}
 				},
 			),
 		)
 	}
 
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

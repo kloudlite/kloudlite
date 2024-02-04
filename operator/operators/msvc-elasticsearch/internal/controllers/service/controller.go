@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"time"
+
+	"github.com/kloudlite/operator/pkg/kubectl"
 
 	"github.com/goombaio/namegenerator"
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -31,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type Reconciler struct {
@@ -40,7 +40,7 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -63,7 +63,7 @@ const (
 // +kubebuilder:rbac:groups=elasticsearc.msvc.kloudlite.io,resources=services/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &elasticsearchMsvcv1.Service{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &elasticsearchMsvcv1.Service{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -75,16 +75,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-	defer func() {
-		req.Logger.Infof("RECONCILATION COMPLETE (isReady=%v)", req.Object.Status.IsReady)
-	}()
+	req.PreReconcile()
+	defer req.PostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -118,8 +112,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*elasticsearchMsvcv1.Service]) stepResult.Result {
@@ -155,7 +148,6 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsvcv1.Ser
 			},
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(AccessCredsReady, check, err.Error())
 	}
@@ -167,7 +159,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*elasticsearchMsvcv1.Ser
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 		return req.Done().RequeueAfter(2 * time.Second)
 	}
@@ -221,7 +213,6 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*elasticsearchMsvcv1.Service]) 
 			},
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
@@ -293,7 +284,7 @@ func (r *Reconciler) reconSts(req *rApi.Request[*elasticsearchMsvcv1.Service]) s
 					),
 				},
 			); err != nil {
-				return req.FailWithOpError(err)
+				return req.CheckFailed(StsReady, check, err.Error())
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)
@@ -361,7 +352,10 @@ func (r *Reconciler) reconKibana(req *rApi.Request[*elasticsearchMsvcv1.Service]
 								Min: "200m",
 								Max: "400m",
 							},
-							Memory: "800Mi",
+							Memory: ct.MemoryT{
+								Min: "800Mi",
+								Max: "800Mi",
+							},
 						},
 						ElasticUrl: msvcOutput.Uri,
 						Expose: elasticsearchMsvcv1.Expose{
@@ -422,7 +416,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
-	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig(), kubectl.YAMLClientOpts{Logger: r.logger})
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&elasticsearchMsvcv1.Service{})
 	builder.Owns(fn.NewUnstructured(constants.HelmElasticType))
@@ -430,8 +424,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&corev1.Secret{})
 
 	builder.Watches(
-		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(
+			func(ctx context.Context, obj client.Object) []reconcile.Request {
 				value, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {
 					return nil

@@ -4,12 +4,21 @@
 {{- $ownerRefs := get . "owner-refs" | default list  }}
 {{- $accountName := get . "account-name"}} 
 
-{{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "svc.cluster.local"}}
+{{- $podAnnotations := get . "pod-annotations" }}
+
+{{/* for observability */}}
+{{- $workspaceName := get . "workspace-name" }} 
+{{- $workspaceTargetNs := get . "workspace-target-ns" }} 
+{{- $projectName := get . "project-name" }} 
+{{- $projectTargetNs := get . "project-target-ns" }} 
+
+{{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "cluster.local"}}
 
 {{- with $obj }}
 
 {{- $isIntercepted := (and .Spec.Intercept .Spec.Intercept.Enabled) }}
 {{- $isHpaEnabled := (and .Spec.Hpa .Spec.Hpa.Enabled) }}
+
 {{- /* gotype: github.com/kloudlite/operator/apis/crds/v1.App */ -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -32,6 +41,17 @@ spec:
         {{- if .Spec.Region}}
         kloudlite.io/region: {{.Spec.Region}}
         {{- end}}
+      {{- $props := dict 
+            "resource-type" "App"
+            "resource-name" .Name 
+            "resource-component" "Deployment" 
+            "workspace-name" $workspaceName 
+            "workspace-target-ns" $workspaceTargetNs 
+            "project-name" $projectName 
+            "project-target-ns" $projectTargetNs 
+      }}
+
+      annotations: {{ include "observability-annotations" $props | nindent 8}}
     spec:
       serviceAccount: {{.Spec.ServiceAccount}}
       nodeSelector: {{if .Spec.NodeSelector}}{{ .Spec.NodeSelector | toYAML | nindent 8 }}{{end}}
@@ -49,19 +69,19 @@ spec:
 
       dnsPolicy: ClusterFirst
 
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            {{- $nWeight := 30 -}}
-            {{- range $weight := Iterate $nWeight }}
-            - weight: {{ sub $nWeight $weight }}
-              preference:
-                matchExpressions:
-                  - key: kloudlite.io/node-index
-                    operator: In
-                    values:
-                      - {{$weight | squote}}
-            {{- end }}
+      {{- /* affinity: */ -}}
+      {{- /*   nodeAffinity: */ -}}
+      {{- /*     preferredDuringSchedulingIgnoredDuringExecution: */ -}}
+      {{- /*       {{- $nWeight := 30 -}} */ -}}
+      {{- /*       {{- range $weight := Iterate $nWeight }} */ -}}
+      {{- /*       - weight: {{ sub $nWeight $weight }} */ -}}
+      {{- /*         preference: */ -}}
+      {{- /*           matchExpressions: */ -}}
+      {{- /*             - key: kloudlite.io/node-index */ -}}
+      {{- /*               operator: In */ -}}
+      {{- /*               values: */ -}}
+      {{- /*                 - {{$weight | squote}} */ -}}
+      {{- /*       {{- end }} */ -}}
 
       {{- if .Spec.Containers }}
       {{- $myDict := dict "containers" .Spec.Containers "volumeMounts" $vMounts }}
@@ -82,9 +102,9 @@ metadata:
 spec:
   type: ExternalName
   {{- if $isIntercepted }}
-  externalName: {{.Spec.Intercept.ToDevice}}.wg-{{$accountName}}.{{$clusterDnsSuffix}}
+  externalName: {{.Spec.Intercept.ToDevice}}.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
   {{- else}}
-  externalName: {{.Name}}-internal.{{.Namespace}}.{{$clusterDnsSuffix}}
+  externalName: {{.Name}}-internal.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
   {{- end }}
 ---
 apiVersion: v1

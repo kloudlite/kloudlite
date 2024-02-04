@@ -1,0 +1,29 @@
+## blueprint
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: nginx-app
+  namespace: sample-24826-blueprint
+  labels:
+    kloudlite.io/project.name: sample
+spec:
+  region: master
+  containers:
+    - name: main
+      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
+
+---
+## override
+#apiVersion: crds.kloudlite.io/v1
+#kind: App
+#metadata:
+#  name: sample-app
+#  namespace: sample-default
+#spec:
+#  region: master
+#  containers:
+#    - name: main
+#      image: nginx
+#overrides:
+#  patches: >-
+#    ICAgIFsKICAgICAgewogICAgICAgICJvcCI7ICJyZXBsYWNlIiwKICAgICAgICAicGF0aCI6ICIvc3BlYy9jb250YWluZXJzLzAvaW1hZ2UiLAogICAgICAgICJ2YWx1ZSI6ICJub3RuZ2lueCIKICAgICAgfSwKICAgICAgewogICAgICAgICJvcCI6ICJyZXBsYWNlIiwKICAgICAgICAicGF0aCI6ICIvc3BlYy9jb250YWluZXJzLzAvbmFtZSIsCiAgICAgICAgInZhbHVlIjogIm1haW4yIgogICAgICB9CiAgICBdCgo=

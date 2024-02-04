@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -26,8 +28,8 @@ type RateLimit struct {
 type Https struct {
 	// +kubebuilder:default=true
 	Enabled       bool   `json:"enabled"`
-	ClusterIssuer string `json:"clusterIssuer,omitempty"`
 	ForceRedirect bool   `json:"forceRedirect,omitempty"`
+	ClusterIssuer string `json:"clusterIssuer,omitempty"`
 }
 
 type BasicAuth struct {
@@ -45,13 +47,12 @@ type Cors struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Region          string  `json:"region,omitempty"`
 	IngressClass    string  `json:"ingressClass,omitempty"`
 	BackendProtocol *string `json:"backendProtocol,omitempty"`
 	Https           *Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional
 
-	RateLimit       *RateLimit  `json:"rateLimit,omitempty"`
+	RateLimit       *RateLimit `json:"rateLimit,omitempty"`
 	MaxBodySizeInMB *int       `json:"maxBodySizeInMB,omitempty"`
 	Domains         []string   `json:"domains"`
 	Routes          []Route    `json:"routes,omitempty"`
@@ -61,7 +62,10 @@ type RouterSpec struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.ingress-class",name=Class,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.domains",name=domains,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Router is the Schema for the routers API
@@ -69,9 +73,10 @@ type Router struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec      RouterSpec  `json:"spec,omitempty"`
-	Overrides *JsonPatch  `json:"overrides,omitempty"`
-	Status    rApi.Status `json:"status,omitempty"`
+	Spec RouterSpec `json:"spec"`
+	// +kubebuilder:default=true
+	Enabled bool        `json:"enabled,omitempty"`
+	Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (r *Router) EnsureGVK() {
@@ -92,7 +97,8 @@ func (r *Router) GetEnsuredLabels() map[string]string {
 
 func (m *Router) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Router").String(),
+		"kloudlite.io/router.domains":       strings.Join(m.Spec.Domains, ","),
+		"kloudlite.io/router.ingress-class": m.Spec.IngressClass,
 	}
 }
 

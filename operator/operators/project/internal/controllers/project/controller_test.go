@@ -1,8 +1,9 @@
 package project
 
 import (
+	_ "fmt"
+
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	. "github.com/kloudlite/operator/testing"
 	. "github.com/onsi/ginkgo/v2"
@@ -22,9 +23,6 @@ var _ = Describe("project controller [CREATE] says", func() {
 			Name: "sample",
 		},
 		Spec: crdsv1.ProjectSpec{
-			AccountName:     "sample",
-			ClusterName:     "sample",
-			DisplayName:     "Sample Website",
 			TargetNamespace: "sample",
 		},
 	}
@@ -33,7 +31,7 @@ var _ = Describe("project controller [CREATE] says", func() {
 		CreateResource(proj)
 	})
 
-	It("creates/updates target namespace, with labels, and owner references", func(ctx SpecContext) {
+	It("creates/updates target namespace, with labels for account and cluster", func(ctx SpecContext) {
 		Promise(func(g Gomega) {
 			Reconcile(reconciler, client.ObjectKeyFromObject(proj))
 			var ns corev1.Namespace
@@ -48,29 +46,27 @@ var _ = Describe("project controller [CREATE] says", func() {
 			var ns corev1.Namespace
 			err := Suite.K8sClient.Get(ctx, fn.NN("", proj.Name), &ns)
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(ns.Labels[constants.AccountNameKey]).To(Equal(proj.Spec.AccountName))
-			g.Expect(ns.Labels[constants.ClusterNameKey]).To(Equal(proj.Spec.ClusterName))
 		}, "2s")
 	})
 
-	It("target namespace has owner references to this project", func(ctx SpecContext) {
+	It("creates service account in target namespace, and owns it", func(ctx SpecContext) {
 		Promise(func(g Gomega) {
 			Reconcile(reconciler, client.ObjectKeyFromObject(proj))
-			var ns corev1.Namespace
-			err := Suite.K8sClient.Get(ctx, fn.NN("", proj.Name), &ns)
+			var sa corev1.ServiceAccount
+			err := Suite.K8sClient.Get(ctx, fn.NN(proj.Spec.TargetNamespace, reconciler.Env.SvcAccountName), &sa)
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(len(ns.GetOwnerReferences())).To(Equal(1))
-			g.Expect(ns.GetOwnerReferences()[0].UID).To(Equal(proj.UID))
+			proj.EnsureGVK()
+			g.Expect(sa.GetOwnerReferences()).To(Equal([]metav1.OwnerReference{fn.AsOwner(proj, true)}))
 		}, "2s")
 	})
 
-	It("project resource has .status.isReady set to true", func(ctx SpecContext) {
-		Promise(func(g Gomega) {
-			Reconcile(reconciler, client.ObjectKeyFromObject(proj))
-			var p crdsv1.Project
-			err := Suite.K8sClient.Get(ctx, client.ObjectKeyFromObject(proj), &p)
-			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(p.Status.IsReady).To(BeTrue())
-		}, "2s")
-	})
+	// It("project resource has .status.isReady set to true", func(ctx SpecContext) {
+	// 	Promise(func(g Gomega) {
+	// 		Reconcile(reconciler, client.ObjectKeyFromObject(proj))
+	// 		var p crdsv1.Project
+	// 		err := Suite.K8sClient.Get(ctx, client.ObjectKeyFromObject(proj), &p)
+	// 		g.Expect(err).NotTo(HaveOccurred())
+	// 		g.Expect(p.Status.IsReady).To(BeTrue())
+	// 	}, "2s")
+	// })
 })

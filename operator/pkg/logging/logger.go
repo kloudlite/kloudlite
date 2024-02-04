@@ -1,7 +1,8 @@
 package logging
 
 import (
-	"fmt"
+	"os"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/kloudlite/operator/pkg/errors"
@@ -18,17 +19,11 @@ type Logger interface {
 	WithKV(key string, value any) Logger
 	WithName(name string) Logger
 	WithOptions(options ...zap.Option) Logger
-	SetLevel(level zapcore.Level)
 }
 
 type customLogger struct {
-	opts      Options
-	logger    *zap.SugaredLogger
-	atomLevel zap.AtomicLevel
-}
-
-func (c customLogger) SetLevel(level zapcore.Level) {
-	c.atomLevel.SetLevel(level)
+	opts   Options
+	logger *zap.SugaredLogger
 }
 
 func (c customLogger) WithOptions(options ...zap.Option) Logger {
@@ -45,11 +40,11 @@ func (c customLogger) Infof(msg string, args ...any) {
 }
 
 func (c customLogger) Errorf(err error, msg string, args ...any) {
-	c.logger.Errorf(errors.NewEf(err, msg, args...).Error())
+	c.logger.WithOptions(zap.AddCaller(), zap.AddCallerSkip(1)).Errorf(errors.NewEf(err, msg, args...).Error())
 }
 
 func (c customLogger) Error(err error) {
-	c.logger.Errorf(err.Error())
+	c.logger.WithOptions(zap.AddCaller(), zap.AddCallerSkip(1)).Errorf(err.Error())
 }
 
 func (c customLogger) Warnf(msg string, args ...any) {
@@ -69,14 +64,13 @@ func (c customLogger) WithName(name string) Logger {
 }
 
 type Options struct {
-	Name string
-	Dev  bool
+	Name        string
+	Dev         bool
+	CallerTrace bool
 }
 
-var magenta = color.New(color.FgCyan).SprintFunc()
-
 func decorateName(name string) string {
-	return fmt.Sprintf("(%s)", magenta(name))
+	return color.New(color.FgHiCyan, color.Bold).SprintFunc()(name)
 }
 
 func New(options *Options) (Logger, error) {
@@ -85,33 +79,41 @@ func New(options *Options) (Logger, error) {
 		opts = *options
 	}
 
-	cfg := func() zap.Config {
+	cfg := func() zapcore.EncoderConfig {
 		if opts.Dev {
-			cfg := zap.NewDevelopmentConfig()
-			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-			cfg.EncoderConfig.LineEnding = "\n"
-			cfg.EncoderConfig.TimeKey = ""
+			cfg := zap.NewDevelopmentEncoderConfig()
+			cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.LineEnding = "\n"
+			cfg.TimeKey = ""
 
 			if len(opts.Name) > 0 {
 				opts.Name = decorateName(opts.Name)
 			}
 			return cfg
 		}
-		return zap.NewProductionConfig()
+		return zap.NewProductionEncoderConfig()
 	}()
 
-	atomicLevel := zap.NewAtomicLevel()
-	cfg.Level = atomicLevel
+	if !opts.Dev {
+		cfg.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+			encoder.AppendString(ts.UTC().Format(time.RFC3339))
+		}
+	}
 
+	loglevel := zapcore.InfoLevel
 	if opts.Dev {
-		cfg.Level.SetLevel(zapcore.DebugLevel)
+		loglevel = zapcore.DebugLevel
 	}
 
-	logger, err := cfg.Build(zap.AddCallerSkip(1))
-	if err != nil {
-		return nil, err
+	zapOpts := make([]zap.Option, 0, 3)
+	zapOpts = append(zapOpts, zap.AddStacktrace(zap.DPanicLevel))
+	if opts.CallerTrace {
+		zapOpts = append(zapOpts, zap.AddCaller(), zap.AddCallerSkip(1))
 	}
-	cLogger := &customLogger{logger: logger.Sugar(), opts: opts, atomLevel: atomicLevel}
+
+	logger := zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(cfg), os.Stdout, loglevel), zapOpts...)
+
+	cLogger := &customLogger{logger: logger.Sugar(), opts: opts}
 	if opts.Name != "" {
 		cLogger.logger = cLogger.logger.Named(opts.Name)
 	}
