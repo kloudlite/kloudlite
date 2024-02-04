@@ -4,7 +4,7 @@ package graph
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 import (
-	"kloudlite.io/apps/message-office/internal/domain"
+	"github.com/kloudlite/api/apps/message-office/internal/domain"
 )
 
 type Resolver struct {

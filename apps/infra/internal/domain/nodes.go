@@ -1,117 +1,62 @@
 package domain
 
 import (
-	"fmt"
-
-	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
-	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"kloudlite.io/apps/infra/internal/domain/entities"
-	"kloudlite.io/constants"
-	"kloudlite.io/pkg/repos"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
-func (d *domain) GetNodePools(ctx InfraContext, clusterName string, edgeName string) ([]*entities.NodePool, error) {
-	_, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return nil, err
+func (d *domain) ListNodes(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error) {
+	filter := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
 	}
 
-	var nodePools infraV1.NodePoolList
-	if err := d.k8sClient.List(ctx, &nodePools, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
-			//constants.ClusterNameKey: cluster.Name,
-			constants.EdgeNameKey: edgeName,
-		}),
-	}); err != nil {
-		return nil, err
-	}
-
-	results := make([]*entities.NodePool, len(nodePools.Items))
-	for i := range nodePools.Items {
-		results[i] = &entities.NodePool{
-			NodePool: nodePools.Items[i],
-		}
-	}
-	return results, nil
+	return d.nodeRepo.FindPaginated(ctx, d.nodeRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
 
-func (d *domain) GetMasterNodes(ctx InfraContext, clusterName string) ([]*entities.MasterNode, error) {
-	cluster, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return nil, err
-	}
+//TODO (nxtcoder17): Deleting node should also be available
 
-	var mNodesList cmgrV1.MasterNodeList
-	if err := d.k8sClient.List(ctx, &mNodesList, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.ClusterNameKey: cluster.Name}),
-	}); err != nil {
-		return nil, err
-	}
-
-	results := make([]*entities.MasterNode, len(mNodesList.Items))
-	for i := range mNodesList.Items {
-		results[i] = &entities.MasterNode{
-			MasterNode: mNodesList.Items[i],
-		}
-	}
-	return results, nil
+func (d *domain) GetNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error) {
+	return d.findNode(ctx, clusterName, nodeName)
 }
 
-func (d *domain) GetWorkerNodes(ctx InfraContext, clusterName string, edgeName string) ([]*entities.WorkerNode, error) {
-	cluster, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return nil, err
-	}
-
-	var wNodes infraV1.WorkerNodeList
-	if err := d.k8sClient.List(ctx, &wNodes, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
-			constants.ClusterNameKey: cluster.Name,
-			constants.EdgeNameKey:    edgeName,
-		}),
-	}); err != nil {
-		return nil, err
-	}
-
-	results := make([]*entities.WorkerNode, len(wNodes.Items))
-	for i := range wNodes.Items {
-		results[i] = &entities.WorkerNode{
-			WorkerNode: wNodes.Items[i],
-		}
-	}
-	return results, nil
-}
-
-func (d *domain) DeleteWorkerNode(ctx InfraContext, clusterName string, edgeName string, name string) (bool, error) {
-	cluster, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return false, err
-	}
-
-	if err := d.deleteK8sResource(ctx, &cluster.Cluster); err != nil {
-		return false, err
-	}
-	return true, err
-}
-
-func (d *domain) OnDeleteWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error {
-	return d.workerNodeRepo.DeleteOne(ctx, repos.Filter{"metadata.name": workerNode.Name, "spec.edgeName": workerNode.Spec.EdgeName})
-}
-
-func (d *domain) OnUpdateWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error {
-	wn, err := d.workerNodeRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"metadata.name": workerNode.Name,
+func (d *domain) findNode(ctx InfraContext, clusterName string, nodeName string) (*entities.Node, error) {
+	node, err := d.nodeRepo.FindOne(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: nodeName,
 	})
 	if err != nil {
-		return err
+		return nil, errors.NewE(err)
 	}
-	if wn == nil {
-		return fmt.Errorf("worker node %q not found", workerNode.Name)
+
+	if node == nil {
+		return nil, errors.Newf("no node with name %q found in cluster %q", nodeName, clusterName)
 	}
-	wn.WorkerNode = workerNode.WorkerNode
-	_, err = d.workerNodeRepo.UpdateById(ctx, wn.Id, wn)
-	return err
+
+	return node, nil
+}
+
+func (d *domain) OnNodeUpdateMessage(ctx InfraContext, clusterName string, node entities.Node) error {
+	if _, err := d.nodeRepo.Upsert(ctx, repos.Filter{
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+		fields.MetadataName: node.Name,
+	}, &node); err != nil {
+		return errors.NewE(err)
+	}
+	return nil
+}
+
+func (d *domain) OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error {
+	if err := d.namespaceRepo.DeleteOne(ctx, repos.Filter{
+		fields.MetadataName: node.Name,
+		fields.AccountName:  ctx.AccountName,
+		fields.ClusterName:  clusterName,
+	}); err != nil {
+		return errors.NewE(err)
+	}
+	return nil
 }

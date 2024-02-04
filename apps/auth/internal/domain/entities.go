@@ -3,8 +3,8 @@ package domain
 import (
 	"time"
 
+	"github.com/kloudlite/api/pkg/repos"
 	"golang.org/x/oauth2"
-	"kloudlite.io/pkg/repos"
 )
 
 type InvitationStatus string
@@ -86,11 +86,6 @@ var AccessTokenIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
-}
-
-type InviteToken struct {
-	Token  string   `json:"token"`
-	UserId repos.ID `json:"user_id"`
 }
 
 type VerifyToken struct {

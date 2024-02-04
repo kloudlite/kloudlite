@@ -1,13 +1,19 @@
 package framework
 
 import (
+	"context"
+	"fmt"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/nats"
+
+	app "github.com/kloudlite/api/apps/container-registry/internal/app"
+	"github.com/kloudlite/api/apps/container-registry/internal/env"
+	rpc "github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
+	mongoDb "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	app "kloudlite.io/apps/container-registry/internal/app"
-	"kloudlite.io/apps/container-registry/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	mongoDb "kloudlite.io/pkg/repos"
 )
 
 type fm struct {
@@ -26,24 +32,74 @@ func (fm *fm) GetMongoConfig() (url string, dbName string) {
 	return fm.ev.DBUri, fm.ev.DBName
 }
 
-func (fm *fm) GetGRPCPort() uint16 {
-	return fm.ev.GRPCPort
-}
-
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
 	}),
 
+	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
+		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.AuthGrpcClient, error) {
+		return rpc.NewGrpcClient(ev.AuthGrpcAddr)
+	}),
+
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
-		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
+	fx.Provide(func(logger logging.Logger, ev *env.Env) (*nats.Client, error) {
+		name := "cr"
+		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   name,
+			Logger: logger,
+		})
 	}),
-	cache.FxLifeCycle[app.AuthCacheClient](),
 
-	rpc.NewGrpcServerFx[*fm](),
+	fx.Provide(func(client *nats.Client) (*nats.JetstreamClient, error) {
+		return nats.NewJetstreamClient(client)
+	}),
+
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return kv.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
+		},
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.BinaryDataRepo, error) {
+			cxt := context.TODO()
+			return kv.NewNatsKVBinaryRepo(cxt, ev.SessionKVBucket, jc)
+		},
+	),
 
 	app.Module,
-	httpServer.NewHttpServerFx[*fm](),
+
+	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.Port))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
+
+	fx.Provide(func(logger logging.Logger) app.AuthorizerHttpServer {
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.AuthorizerHttpServer, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.RegistryAuthorizerPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )

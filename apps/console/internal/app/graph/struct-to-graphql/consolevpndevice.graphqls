@@ -1,0 +1,45 @@
+type ConsoleVPNDevice @shareable {
+  accountName: String!
+  apiVersion: String
+  clusterName: String
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  environmentName: String
+  id: String!
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  linkedClusters: [String!]
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  projectName: String
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+  wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
+}
+
+type ConsoleVPNDeviceEdge @shareable {
+  cursor: String!
+  node: ConsoleVPNDevice!
+}
+
+type ConsoleVPNDevicePaginatedRecords @shareable {
+  edges: [ConsoleVPNDeviceEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ConsoleVPNDeviceIn {
+  apiVersion: String
+  clusterName: String
+  displayName: String!
+  environmentName: String
+  kind: String
+  metadata: MetadataIn
+  projectName: String
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
+}
+

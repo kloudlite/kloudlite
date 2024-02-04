@@ -30,17 +30,18 @@ message PasswordResetEmailInput{
 message AccountMemberInviteEmailInput{
   string accountName = 1;
   string invitationToken = 2;
-  string email = 3;
-  string name = 4;
+  string invitedBy = 3;
+  string email = 4;
+  string name = 5;
 }
 
 message ProjectMemberInviteEmailInput{
   string projectName = 1;
   string invitationToken = 2;
-  string email = 3;
-  string name = 4;
+  string invitedBy = 3;
+  string email = 4;
+  string name = 5;
 }
 
 message Void{
-
 }

@@ -2,22 +2,25 @@ package app
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v43/github"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"golang.org/x/oauth2"
 	oauthGithub "golang.org/x/oauth2/github"
-	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/pkg/errors"
-	fn "kloudlite.io/pkg/functions"
 )
 
 type githubI struct {
+	enabled      bool
 	cfg          *oauth2.Config
 	ghCli        *github.Client
 	ghCliForUser func(ctx context.Context, token *oauth2.Token) *github.Client
@@ -25,12 +28,19 @@ type githubI struct {
 }
 
 func (gh *githubI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
+	if !gh.enabled {
+		return nil, errors.Newf("github oauth is disabled")
+	}
 	return gh.cfg.TokenSource(ctx, token).Token()
 }
 
 func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
+	if !gh.enabled {
+		fmt.Println("github oauth is disabled")
+		return "", nil
+	}
 	csrfToken := fn.Must(fn.CleanerNanoid(32))
-	b64state, err := fn.Json.ToB64Url(map[string]string{"csrf": csrfToken, "state": state})
+	b64state, err := fn.ToBase64UrlFromJson(map[string]string{"csrf": csrfToken, "state": state})
 	if err != nil {
 		return "", errors.NewEf(err, "could not JSON marshal oauth State into []byte")
 	}
@@ -41,6 +51,10 @@ func (gh *githubI) Authorize(_ context.Context, state string) (string, error) {
 }
 
 func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error) {
+	if !gh.enabled {
+		return nil, nil, errors.Newf("github oauth is disabled")
+	}
+
 	token, err := gh.cfg.Exchange(ctx, code)
 	if err != nil {
 		return nil, nil, errors.NewEf(err, "could not exchange the token")
@@ -55,6 +69,10 @@ func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.Us
 }
 
 func (gh *githubI) GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (string, error) {
+	if !gh.enabled {
+		return "", errors.Newf("github oauth is disabled")
+	}
+
 	emails, _, err := gh.ghCliForUser(ctx, token).Users.ListEmails(
 		ctx, &github.ListOptions{
 			Page:    1,
@@ -62,7 +80,7 @@ func (gh *githubI) GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (st
 		},
 	)
 	if err != nil {
-		return "", err
+		return "", errors.NewE(err)
 	}
 
 	for i := range emails {
@@ -74,25 +92,24 @@ func (gh *githubI) GetPrimaryEmail(ctx context.Context, token *oauth2.Token) (st
 	return "", errors.Newf("no primary email could be found for this user, among first 100 emails provided by github")
 }
 
-type GithubOAuth interface {
-	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
-}
-
-func fxGithub(env *Env) domain.Github {
-	clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
-	cfg := oauth2.Config{
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
-		Endpoint:     oauthGithub.Endpoint,
-		RedirectURL:  callbackUrl,
-		Scopes:       strings.Split(env.GithubScopes, ","),
+func fxGithub(ev *env.Env) domain.Github {
+	if !ev.OAuth2Enabled || !ev.OAuth2GithubEnabled {
+		return &githubI{enabled: false}
 	}
-	privatePem, err := ioutil.ReadFile(ghAppPKFile)
+
+	cfg := oauth2.Config{
+		ClientID:     ev.GithubClientId,
+		ClientSecret: ev.GithubClientSecret,
+		Endpoint:     oauthGithub.Endpoint,
+		RedirectURL:  ev.GithubCallbackUrl,
+		Scopes:       strings.Split(ev.GithubScopes, ","),
+	}
+	privatePem, err := os.ReadFile(ev.GithubAppPKFile)
 	if err != nil {
 		panic(errors.NewEf(err, "reading github app PK file"))
 	}
 
-	appId, _ := strconv.ParseInt(ghAppId, 10, 64)
+	appId, _ := strconv.ParseInt(ev.GithubAppId, 10, 64)
 	itr, err := ghinstallation.NewAppsTransport(http.DefaultTransport, appId, privatePem)
 	if err != nil {
 		panic(errors.NewEf(err, "creating app transport"))
@@ -106,9 +123,10 @@ func fxGithub(env *Env) domain.Github {
 	ghCli := github.NewClient(&http.Client{Transport: itr, Timeout: time.Second * 30})
 
 	return &githubI{
+		enabled:      true,
 		cfg:          &cfg,
 		ghCli:        ghCli,
 		ghCliForUser: ghCliForUser,
-		webhookUrl:   env.GithubWebhookUrl,
+		webhookUrl:   ev.GithubWebhookUrl,
 	}
 }

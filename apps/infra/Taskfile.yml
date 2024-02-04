@@ -3,51 +3,60 @@ version: "3"
 dotenv:
   - .secrets/env
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/api"
+
 tasks:
   gql:
     dir: ./internal/app
     cmds:
-      - go run -tags dynamic github.com/99designs/gqlgen generate
-      - rm ./graph/scalars.resolvers.go
+      - go run github.com/99designs/gqlgen generate
+      - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
 
   build:
     env:
       CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
+      - go build -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   k8s-schema:
     cmds:
-      - mkdir -p "./internal/app/graph/crd-to-gql"
-      - go run ../../cmd/crd-to-gql --dev
-          --output "./internal/app/graph/crd-to-gql"
-          --crd CloudProvider=cloudproviders.infra.kloudlite.io
-          --crd Edge=edges.infra.kloudlite.io
-          --crd NodePool=nodepools.infra.kloudlite.io
-          --crd WorkerNode=workernodes.infra.kloudlite.io
-          --crd NodePool=nodepools.infra.kloudlite.io
-          --crd MasterNode=masternodes.cmgr.kloudlite.io
-          --crd Secret=secrets.crds.kloudlite.io
-          --crd Cluster=clusters.cmgr.kloudlite.io
-          --crd BYOCCluster=byocs.clusters.kloudlite.io
-          # --crd Account=accounts.wg.kloudlite.io
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Cluster
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.MsvcTemplate
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Node
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.NodePool
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.CloudProviderSecret
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.DomainEntry
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.HelmRelease
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.ClusterManagedService
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolumeClaim
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.PersistentVolume
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.Namespace
+          --struct github.com/kloudlite/api/apps/infra/internal/entities.VolumeAttachment
+          --struct github.com/kloudlite/api/pkg/repos.MatchFilter
+          --struct github.com/kloudlite/api/pkg/repos.CursorPagination
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,Node,NodePool,CloudProviderSecret,DomainEntry,PersistentVolumeClaim,ClusterManagedService,HelmRelease,Namespace,VolumeAttachment,PersistentVolume
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
 
   run:
-    # sources:
-    #   - ./internal/**/*.go
-    #   - ./main.go
-    interactive: true
     cmds:
-      # - go run -tags dynamic main.go --dev
-      - nodemon -e go --signal SIGKILL --exec 'go run main.go --dev || exit 1'
-      # - CGO_BUILD=0 go build -o /tmp/infra
-      # - /tmp/infra --dev
-
-
+      - go run main.go --dev
+      # - go build  -o bin/infra . && ./bin/infra --dev
   docker-build:
     vars:
       APP: infra
@@ -55,9 +64,6 @@ tasks:
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
@@ -65,36 +71,21 @@ tasks:
 
   local-build:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
-      APP: infra-api
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
+      APP: infra
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     silent: true
     cmds:
       - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+        tdir=$(mktemp -d)
+        task build Out=$tdir/{{.APP}}
 
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
+        podman push {{.IMAGE}}
+        rm -rf $tdir
 
-        tDir=$(mktemp -d)
-
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-        
-        echo "building application ..."
-        task build Out=$tDir/{{.APP}}
-
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
-        docker push {{.IMAGE}}
-        rm -rf $tDir
+  test:
+    cmds:
+      - go test -v ./internal/domain

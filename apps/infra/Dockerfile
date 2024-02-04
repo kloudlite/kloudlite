@@ -16,8 +16,8 @@ COPY --chown=1001 ./  ./
 RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-#FROM gcr.io/distroless/static-debian11
-FROM alpine
-WORKDIR /tmp/app
-COPY --from=base --chown=1001 /tmp/bin/{APP} ./infra-api
-CMD ["./infra-api"]
+FROM gcr.io/distroless/static-debian11:nonroot
+LABEL org.opencontainers.image.source=https://github.com/kloudlite/api
+ARG APP
+COPY --from=base /tmp/bin/${APP} ./infra
+CMD ["./infra"]

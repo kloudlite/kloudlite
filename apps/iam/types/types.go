@@ -7,17 +7,23 @@ type ResourceType string
 const (
 	ResourceAccount ResourceType = "account"
 	ResourceProject ResourceType = "project"
+
+	ResourceEnvironment      ResourceType = "environment"
+	ResourceConsoleVPNDevice ResourceType = "console_vpn_device"
+	ResourceInfraVPNDevice   ResourceType = "infra_vpn_device"
 )
 
 type Role string
 
 const (
-	RoleAccountOwner  Role = "account-owner"
-	RoleAccountAdmin  Role = "account-admin"
-	RoleAccountMember Role = "account-member"
+	RoleResourceOwner Role = "resource_owner"
 
-	RoleProjectAdmin  Role = "project-admin"
-	RoleProjectMember Role = "project-member"
+	RoleAccountOwner  Role = "account_owner"
+	RoleAccountAdmin  Role = "account_admin"
+	RoleAccountMember Role = "account_member"
+
+	RoleProjectAdmin  Role = "project_admin"
+	RoleProjectMember Role = "project_member"
 )
 
 type Action string
@@ -29,13 +35,70 @@ const (
 	UpdateAccount Action = "update-account"
 	DeleteAccount Action = "delete-account"
 
+	CreateSecretsInAccount Action = "create-secrets-in-account"
+	ReadSecretsFromAccount Action = "read-secrets-from-account"
+
 	InviteAccountMember Action = "invite-account-member"
 	InviteAccountAdmin  Action = "invite-account-admin"
 
-	UpdateAccountMember Action = "update-account-member"
+	ListAccountInvitations Action = "list-account-invitations"
+	GetAccountInvitation   Action = "get-account-invitation"
+
+	ListProjectInvitations Action = "list-project-invitations"
+	GetProjectInvitation   Action = "get-project-invitation"
+
+	DeleteAccountInvitation Action = "delete-account-invitation"
+	DeleteProjectInvitation Action = "delete-project-invitation"
+
+	ListMembershipsForAccount Action = "list-memberships-for-account"
+
+	RemoveAccountMembership Action = "remove-account-membership"
+	UpdateAccountMembership Action = "update-account-membership"
 
 	ActivateAccount   Action = "activate-account"
 	DeactivateAccount Action = "deactivate-account"
+
+	// clusters
+	CreateCluster Action = "create-cluster"
+	DeleteCluster Action = "delete-cluster"
+	ListClusters  Action = "list-clusters"
+	GetCluster    Action = "get-cluster"
+	UpdateCluster Action = "update-cluster"
+
+	// cluster managed services
+	CreateClusterManagedService Action = "create-cluster-managed-service"
+	DeleteClusterManagedService Action = "delete-cluster-managed-service"
+	ListClusterManagedServices  Action = "list-cluster-managed-services"
+	GetClusterManagedService    Action = "get-cluster-managed-service"
+	UpdateClusterManagedService Action = "update-cluster-managed-service"
+
+	// project managed services
+	CreateProjectManagedService Action = "create-project-managed-service"
+	DeleteProjectManagedService Action = "delete-project-managed-service"
+	ListProjectManagedServices  Action = "list-project-managed-services"
+	GetProjectManagedService    Action = "get-project-managed-service"
+	UpdateProjectManagedService Action = "update-project-managed-service"
+
+	// helm releases
+	CreateHelmRelease Action = "create-helm-release"
+	DeleteHelmRelease Action = "delete-helm-release"
+	ListHelmReleases  Action = "list-helm-releases"
+	GetHelmRelease    Action = "get-helm-release"
+	UpdateHelmRelease Action = "update-helm-release"
+
+	// nodepools
+	CreateNodepool Action = "create-nodepool"
+	DeleteNodepool Action = "delete-nodepool"
+	ListNodepools  Action = "list-nodepools"
+	GetNodepool    Action = "get-nodepool"
+	UpdateNodepool Action = "update-nodepool"
+
+	CreateCloudProviderSecret Action = "create-cloud-provider-secret"
+	UpdateCloudProviderSecret Action = "update-cloud-provider-secret"
+	DeleteCloudProviderSecret Action = "delete-cloud-provider-secret"
+
+	ListCloudProviderSecrets Action = "list-cloud-provider-secrets"
+	GetCloudProviderSecret   Action = "get-cloud-provider-secret"
 
 	CreateProject Action = "create-project"
 	ListProjects  Action = "list-projects"
@@ -43,18 +106,43 @@ const (
 	UpdateProject Action = "update-project"
 	DeleteProject Action = "delete-project"
 
-	// environments
+	// invite
+	InviteProjectAdmin  Action = "invite-project-admin"
+	InviteProjectMember Action = "invite-project-member"
+
+	MutateResourcesInProject Action = "mutate-resources-in-project"
+
+	ListMembershipsForProject Action = "list-memberships-for-project"
+	UpdateProjectMembership   Action = "update-project-membership"
+	RemoveProjectMembership   Action = "remove-project-membership"
+
 	CreateEnvironment Action = "create-environment"
 	UpdateEnvironment Action = "update-environment"
 	DeleteEnvironment Action = "delete-environment"
 	GetEnvironment    Action = "get-environment"
 	ListEnvironments  Action = "list-environments"
 
-	// invite
-	InviteProjectAdmin  Action = "invite-project-admin"
-	InviteProjectMember Action = "invite-project-member"
+	MutateResourcesInEnvironment Action = "mutate-resources-in-environment"
+	ReadResourcesInEnvironment   Action = "read-resources-in-environment"
 
-	MutateResourcesInProject Action = "mutate-resources-in-project"
+	ListVPNDevices Action = "list-vpn-devices"
+	GetVPNDevice   Action = "get-vpn-device"
+
+	GetVPNDeviceConnectConfig Action = "get-vpn-device-connect-config"
+
+	CreateVPNDevice Action = "create-vpn-device"
+	UpdateVPNDevice Action = "update-vpn-device"
+	DeleteVPNDevice Action = "delete-vpn-device"
+
+	CreateDomainEntry Action = "create-domain-entry"
+	UpdateDomainEntry Action = "update-domain-entry"
+	DeleteDomainEntry Action = "delete-domain-entry"
+
+	ListDomainEntries Action = "list-domain-entries"
+	GetDomainEntry    Action = "get-domain-entry"
+
+	ReadLogs    Action = "read-logs"
+	ReadMetrics Action = "read-metrics"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {

@@ -1,0 +1,42 @@
+type Config @shareable {
+  accountName: String!
+  apiVersion: String
+  binaryData: Map
+  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  creationTime: Date!
+  data: Map
+  displayName: String!
+  environmentName: String!
+  id: String!
+  immutable: Boolean
+  kind: String
+  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  projectName: String!
+  recordVersion: Int!
+  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
+  updateTime: Date!
+}
+
+type ConfigEdge @shareable {
+  cursor: String!
+  node: Config!
+}
+
+type ConfigPaginatedRecords @shareable {
+  edges: [ConfigEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ConfigIn {
+  apiVersion: String
+  binaryData: Map
+  data: Map
+  displayName: String!
+  immutable: Boolean
+  kind: String
+  metadata: MetadataIn
+}
+

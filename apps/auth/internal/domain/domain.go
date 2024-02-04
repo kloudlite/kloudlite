@@ -2,9 +2,8 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/messaging"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type Domain interface {
@@ -28,12 +27,11 @@ type Domain interface {
 	GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*AccessToken, error)
 	GetLoginDetails(ctx context.Context, provider string, state *string) (string, error)
 	InviteUser(ctx context.Context, email string, name string) (repos.ID, error)
-	LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error)
 	OauthRequestLogin(ctx context.Context, provider string, state string) (string, error)
 	OauthLogin(ctx context.Context, provider string, state string, code string) (*common.AuthSession, error)
 	OauthAddLogin(ctx context.Context, userId repos.ID, provider string, state string, code string) (bool, error)
 }
 
 type Messenger interface {
-	SendEmail(ctx context.Context, template string, payload messaging.Json) error
+	SendEmail(ctx context.Context, template string, payload map[string]any) error
 }

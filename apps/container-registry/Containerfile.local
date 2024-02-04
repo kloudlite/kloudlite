@@ -1,0 +1,5 @@
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG binpath
+COPY --from=local-builder ${binpath} /container-registry
+COPY templates /templates
+CMD ["/container-registry"]

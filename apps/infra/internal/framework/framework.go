@@ -1,35 +1,25 @@
 package framework
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/kloudlite/api/apps/infra/internal/app"
+	"github.com/kloudlite/api/apps/infra/internal/env"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
+	"github.com/kloudlite/api/pkg/nats"
+
+	mongoRepo "github.com/kloudlite/api/pkg/repos"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/infra/internal/app"
-	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
-	mongoRepo "kloudlite.io/pkg/repos"
 )
 
 type framework struct {
 	*env.Env
-}
-
-func (f *framework) GetBrokers() (brokers string) {
-	return f.Env.KafkaBrokers
-}
-
-func (f *framework) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
-	// return &redpanda.KafkaSASLAuth{
-	// 	SASLMechanism: redpanda.ScramSHA256,
-	// 	User:          f.Env.KafkaUsername,
-	// 	Password:      f.Env.KafkaPassword,
-	// }
-}
-
-func (f *framework) GetGRPCServerURL() string {
-	return f.FinanceGrpcAddr
 }
 
 func (f *framework) GetHttpCors() string {
@@ -50,16 +40,86 @@ var Module = fx.Module("framework",
 	}),
 
 	mongoRepo.NewMongoClientFx[*framework](),
-	httpServer.NewHttpServerFx[*framework](),
 
-	redpanda.NewClientFx[*framework](),
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (*nats.Client, error) {
+		return nats.NewClient(ev.NatsURL, nats.ClientOpts{
+			Name:   "infra",
+			Logger: logger,
+		})
+	}),
+
+	fx.Provide(func(c *nats.Client) (*nats.JetstreamClient, error) {
+		return nats.NewJetstreamClient(c)
+	}),
 
 	fx.Provide(
-		func(f *framework) app.AuthCacheClient {
-			return cache.NewRedisClient(f.AuthRedisHosts, f.AuthRedisUserName, f.AuthRedisPassword, f.AuthRedisPrefix)
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*common.AuthSession], error) {
+			cxt := context.TODO()
+			return kv.NewNatsKVRepo[*common.AuthSession](cxt, ev.SessionKVBucket, jc)
 		},
 	),
-	rpc.NewGrpcClientFx[*framework, app.FinanceClientConnection](),
-	cache.FxLifeCycle[app.AuthCacheClient](),
+
+	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
+		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.AccountGrpcClient, error) {
+		return grpc.NewGrpcClient(ev.AccountsGrpcAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.MessageOfficeInternalGrpcClient, error) {
+		return grpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
+		lf.Append(fx.Hook{
+			OnStop: func(context.Context) error {
+				if err := c1.Close(); err != nil {
+					return errors.NewE(err)
+				}
+				return nil
+			},
+		})
+	}),
+
 	app.Module,
+
+	fx.Provide(func(logr logging.Logger) (app.InfraGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr,
+		})
+	}),
+
+	fx.Invoke(func(ev *env.Env, server app.InfraGrpcServer, lf fx.Lifecycle, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go func() {
+					if err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort)); err != nil {
+						logger.Errorf(err, "while starting grpc server")
+					}
+				}()
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
+
+	fx.Provide(func(logger logging.Logger, e *env.Env) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins, IsDev: e.IsDev})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )

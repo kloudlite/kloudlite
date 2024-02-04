@@ -5,6 +5,7 @@ option go_package = "kloudlite.io/rpc/auth";
 service Auth {
   rpc GetAccessToken(GetAccessTokenRequest) returns (AccessTokenOut);
   rpc EnsureUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailOut);
+  rpc GetUser(GetUserIn) returns (GetUserOut);
 }
 
 message GetUserByEmailRequest {
@@ -37,3 +38,12 @@ message OauthToken {
   string raw=5;
 }
 
+message GetUserIn {
+  string userId = 1;
+}
+
+message GetUserOut {
+  string id = 1;
+  string email = 2;
+  string name = 3;
+}

@@ -2,15 +2,17 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
 type RegistryContext struct {
 	context.Context
-	userId      repos.ID
-	accountName string
+	UserId      repos.ID
+	UserName    string
+	AccountName string
+	UserEmail   string
 }
 
 func (c *RegistryContext) GetAccountName() string {
-	return c.accountName
+	return c.AccountName
 }

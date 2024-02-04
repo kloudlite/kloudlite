@@ -1,180 +1,265 @@
 package domain
 
 import (
-	"fmt"
-	"time"
-
-	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/common/fields"
+	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/repos"
+	t "github.com/kloudlite/api/pkg/types"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
-// query
-
-func (d *domain) ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+func (d *domain) ListApps(ctx ResourceContext, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
 	}
 
-	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}})
+	filters := ctx.DBFilters()
+
+	return d.appRepo.FindPaginated(ctx, d.appRepo.MergeMatchFilters(filters, search), pq)
 }
 
-func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
-	app, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
+func (d *domain) findApp(ctx ResourceContext, name string) (*entities.App, error) {
+	app, err := d.appRepo.FindOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
 	if app == nil {
-		return nil, fmt.Errorf("no app with name=%q,namespace=%q found", name, namespace)
+		return nil, errors.Newf("no app with name (%s), found in resource context (%s)", name, ctx)
 	}
 	return app, nil
 }
 
-func (d *domain) GetApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
-	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
-		return nil, err
+func (d *domain) GetApp(ctx ResourceContext, name string) (*entities.App, error) {
+	if err := d.canReadResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
 	}
-
-	return d.findApp(ctx, namespace, name)
+	return d.findApp(ctx, name)
 }
 
-// mutations
+func (d *domain) applyApp(ctx ResourceContext, app *entities.App) error {
+	addTrackingId(&app.App, app.Id)
+	return d.applyK8sResource(ctx, app.ProjectName, &app.App, app.RecordVersion)
+}
 
-func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, app.Namespace); err != nil {
-		return nil, err
+func (d *domain) CreateApp(ctx ResourceContext, app entities.App) (*entities.App, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
 	}
 
+	env, err := d.findEnvironment(ctx.ConsoleContext, ctx.ProjectName, ctx.EnvironmentName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	app.Namespace = env.Spec.TargetNamespace
 	app.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
-		return nil, err
+	if err := d.k8sClient.ValidateObject(ctx, &app.App); err != nil {
+		return nil, errors.NewE(err)
 	}
+
+	app.IncrementRecordVersion()
+
+	app.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	app.LastUpdatedBy = app.CreatedBy
 
 	app.AccountName = ctx.AccountName
-	app.ClusterName = ctx.ClusterName
-	app.Generation = 1
-	app.SyncStatus = t.GenSyncStatus(t.SyncActionApply, app.Generation)
+	app.ProjectName = ctx.ProjectName
+	app.EnvironmentName = ctx.EnvironmentName
+	app.SyncStatus = t.GenSyncStatus(t.SyncActionApply, app.RecordVersion)
 
-	nApp, err := d.appRepo.Create(ctx, &app)
+	return d.createAndApplyApp(ctx, &app)
+}
+
+func (d *domain) createAndApplyApp(ctx ResourceContext, app *entities.App) (*entities.App, error) {
+	if _, err := d.upsertEnvironmentResourceMapping(ctx, app); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	napp, err := d.appRepo.Create(ctx, app)
 	if err != nil {
 		if d.appRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("app with name=%q, namespace=%q already exists", app.Name, app.Namespace)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, errors.NewE(err)
 		}
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &nApp.App); err != nil {
-		return nil, err
-	}
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, napp.Name, PublishAdd)
 
-	return nApp, nil
+	if err := d.applyApp(ctx, napp); err != nil {
+		return nil, errors.NewE(err)
+	}
+	return napp, nil
 }
 
-func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
+func (d *domain) DeleteApp(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return errors.NewE(err)
 	}
-
-	app, err := d.findApp(ctx, namespace, name)
+	uapp, err := d.appRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForMarkDeletion(),
+	)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-
-	app.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, app.Generation)
-
-	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
-		return err
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishUpdate)
+	if err := d.deleteK8sResource(ctx, uapp.ProjectName, &uapp.App); err != nil {
+		if errors.Is(err, ErrNoClusterAttached) {
+			return d.appRepo.DeleteById(ctx, uapp.Id)
+		}
+		return errors.NewE(err)
 	}
-
-	return d.deleteK8sResource(ctx, &app.App)
+	return nil
 }
 
-func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
-	if err := d.canMutateResourcesInWorkspace(ctx, app.Namespace); err != nil {
-		return nil, err
+func (d *domain) UpdateApp(ctx ResourceContext, appIn entities.App) (*entities.App, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return nil, errors.NewE(err)
 	}
 
-	app.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
-		return nil, err
+	appIn.Namespace = "trest"
+	appIn.EnsureGVK()
+	if err := d.k8sClient.ValidateObject(ctx, &appIn.App); err != nil {
+		return nil, errors.NewE(err)
 	}
 
-	exApp, err := d.findApp(ctx, app.Namespace, app.Name)
+	patchForUpdate := common.PatchForUpdate(
+		ctx,
+		&appIn,
+		common.PatchOpts{
+			XPatch: repos.Document{
+				fc.AppSpec: appIn.Spec,
+			},
+		})
+
+	upApp, err := d.appRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, appIn.Name),
+		patchForUpdate,
+	)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewE(err)
 	}
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, upApp.Name, PublishUpdate)
 
-	exApp.Labels = app.Labels
-	exApp.Annotations = app.Annotations
-	exApp.Spec = app.Spec
-	exApp.Generation += 1
-	exApp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exApp.Generation)
-
-	upApp, err := d.appRepo.UpdateById(ctx, exApp.Id, exApp)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := d.applyK8sResource(ctx, &upApp.App); err != nil {
-		return nil, err
+	if err := d.applyApp(ctx, upApp); err != nil {
+		return nil, errors.NewE(err)
 	}
 
 	return upApp, nil
 }
 
-func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error {
-	a, err := d.findApp(ctx, app.Namespace, app.Name)
+// InterceptApp implements Domain.
+func (d *domain) InterceptApp(ctx ResourceContext, appName string, deviceName string, intercept bool) (bool, error) {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return false, errors.NewE(err)
+	}
+	uApp, err := d.appRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, appName), repos.Document{
+		fc.AppSpecIntercept: crdsv1.Intercept{
+			Enabled:  intercept,
+			ToDevice: deviceName,
+		},
+	})
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+	if err := d.applyApp(ctx, uApp); err != nil {
+		return false, errors.NewE(err)
+	}
+	return true, nil
+}
+
+func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return errors.NewE(err)
+	}
+
+	app, err := d.findApp(ctx, appName)
 	if err != nil {
 		return err
 	}
 
-	a.Status = app.Status
-	a.SyncStatus.Error = nil
-	a.SyncStatus.LastSyncedAt = time.Now()
-	a.SyncStatus.Generation = app.Generation
-	a.SyncStatus.State = t.ParseSyncState(app.Status.IsReady)
+	if err := d.restartK8sResource(ctx, ctx.ProjectName, app.Namespace, app.GetEnsuredLabels()); err != nil {
+		return err
+	}
 
-	_, err = d.appRepo.UpdateById(ctx, a.Id, a)
-	return err
+	return nil
 }
 
-func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error {
-	a, err := d.findApp(ctx, app.Namespace, app.Name)
+func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	xApp, err := d.findApp(ctx, app.Name)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
 
-	return d.appRepo.DeleteById(ctx, a.Id)
-}
-
-func (d *domain) OnApplyAppError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
-	a, err2 := d.findApp(ctx, namespace, name)
-	if err2 != nil {
-		return err2
+	if xApp == nil {
+		return errors.Newf("no apps found")
 	}
-
-	a.SyncStatus.Error = &errMsg
-	_, err := d.appRepo.UpdateById(ctx, a.Id, a)
-	return err
-}
-
-func (d *domain) ResyncApp(ctx ConsoleContext, namespace, name string) error {
-	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
-		return err
-	}
-
-	a, err := d.findApp(ctx, namespace, name)
+	recordVersion, err := d.MatchRecordVersion(app.Annotations, xApp.RecordVersion)
 	if err != nil {
-		return err
+		return errors.NewE(err)
 	}
-	return d.resyncK8sResource(ctx, a.SyncStatus.Action, &a.App)
+
+	uapp, err := d.appRepo.PatchById(
+		ctx,
+		xApp.Id,
+		common.PatchForSyncFromAgent(&app, recordVersion, status, common.PatchOpts{
+			MessageTimestamp: opts.MessageTimestamp,
+		}))
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uapp.GetResourceType(), uapp.GetName(), PublishUpdate)
+	return errors.NewE(err)
+}
+
+func (d *domain) OnAppDeleteMessage(ctx ResourceContext, app entities.App) error {
+	err := d.appRepo.DeleteOne(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, app.Name),
+	)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, app.Name, PublishDelete)
+	return nil
+}
+
+func (d *domain) OnAppApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {
+	uapp, err := d.appRepo.Patch(
+		ctx,
+		ctx.DBFilters().Add(fields.MetadataName, name),
+		common.PatchForErrorFromAgent(
+			errMsg,
+			common.PatchOpts{
+				MessageTimestamp: opts.MessageTimestamp,
+			},
+		),
+	)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeApp, uapp.Name, PublishDelete)
+	return errors.NewE(err)
+}
+
+func (d *domain) ResyncApp(ctx ResourceContext, name string) error {
+	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
+		return errors.NewE(err)
+	}
+	a, err := d.findApp(ctx, name)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	return d.resyncK8sResource(ctx, a.ProjectName, a.SyncStatus.Action, &a.App, a.RecordVersion)
 }

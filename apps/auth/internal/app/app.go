@@ -1,0 +1,83 @@
+package app
+
+import (
+	"context"
+	"github.com/kloudlite/api/pkg/nats"
+	"go.uber.org/fx"
+	"google.golang.org/grpc"
+
+	"github.com/kloudlite/api/apps/auth/internal/app/graph"
+	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/auth/internal/domain"
+	"github.com/kloudlite/api/apps/auth/internal/env"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/repos"
+)
+
+type CommsClientConnection *grpc.ClientConn
+
+var Module = fx.Module(
+	"app",
+	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
+	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
+	repos.NewFxMongoRepo[*domain.RemoteLogin]("remote_logins", "rlgn", domain.RemoteTokenIndexes),
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*domain.VerifyToken], error) {
+			cxt := context.TODO()
+			return kv.NewNatsKVRepo[*domain.VerifyToken](cxt, ev.VerifyTokenKVBucket, jc)
+		},
+	),
+	fx.Provide(
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*domain.ResetPasswordToken], error) {
+			cxt := context.TODO()
+			return kv.NewNatsKVRepo[*domain.ResetPasswordToken](cxt, ev.ResetPasswordTokenKVBucket, jc)
+		},
+	),
+
+	fx.Provide(
+		func(conn CommsClientConnection) comms.CommsClient {
+			return comms.NewCommsClient((*grpc.ClientConn)(conn))
+		},
+	),
+
+	fx.Provide(fxGithub),
+	fx.Provide(fxGitlab),
+	fx.Provide(fxGoogle),
+
+	fx.Provide(fxRPCServer),
+	fx.Invoke(
+		func(server *grpc.Server, authServer auth.AuthServer) {
+			auth.RegisterAuthServer(server, authServer)
+		},
+	),
+
+	fx.Invoke(
+		func(
+			server httpServer.Server,
+			d domain.Domain,
+			ev *env.Env,
+			repo kv.Repo[*common.AuthSession],
+		) {
+			schema := generated.NewExecutableSchema(
+				generated.Config{Resolvers: graph.NewResolver(d, ev)},
+			)
+
+			server.SetupGraphqlServer(
+				schema,
+				httpServer.NewSessionMiddleware(
+					repo,
+					constants.CookieName,
+					ev.CookieDomain,
+					constants.CacheSessionPrefix,
+				),
+			)
+		},
+	),
+
+	domain.Module,
+)

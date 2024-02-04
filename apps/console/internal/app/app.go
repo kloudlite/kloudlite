@@ -2,77 +2,181 @@ package app
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
-	"google.golang.org/grpc"
 
-	"kloudlite.io/apps/console/internal/app/graph"
-	"kloudlite.io/apps/console/internal/app/graph/generated"
-	domain "kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/apps/console/internal/domain/entities"
-	"kloudlite.io/apps/console/internal/env"
-	"kloudlite.io/common"
-	"kloudlite.io/constants"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/cache"
-	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/repos"
+	"github.com/kloudlite/api/apps/console/internal/app/graph"
+	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
+	"github.com/kloudlite/api/apps/console/internal/domain"
+	"github.com/kloudlite/api/apps/console/internal/entities"
+	"github.com/kloudlite/api/apps/console/internal/env"
+	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
+	fn "github.com/kloudlite/api/pkg/functions"
+	"github.com/kloudlite/api/pkg/grpc"
+	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/kv"
+	"github.com/kloudlite/api/pkg/logging"
+	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
+	"github.com/kloudlite/api/pkg/nats"
+	"github.com/kloudlite/api/pkg/repos"
 )
 
-type AuthCacheClient cache.Client
+type (
+	IAMGrpcClient            grpc.Client
+	InfraClient              grpc.Client
+	LogsAndMetricsHttpServer httpServer.Server
+)
 
-type IAMGrpcClient *grpc.ClientConn
+func toConsoleContext(requestCtx context.Context, accountCookieName string) (domain.ConsoleContext, error) {
+	sess := httpServer.GetSession[*common.AuthSession](requestCtx)
+	if sess == nil {
+		return domain.ConsoleContext{}, fiber.ErrUnauthorized
+	}
+	m := httpServer.GetHttpCookies(requestCtx)
+	klAccount := m[accountCookieName]
+	if klAccount == "" {
+		return domain.ConsoleContext{}, errors.Newf("no cookie named '%s' present in request", accountCookieName)
+	}
+
+	return domain.NewConsoleContext(requestCtx, sess.UserId, klAccount), nil
+}
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
-	repos.NewFxMongoRepo[*entities.Workspace]("workspaces", "ws", entities.WorkspaceIndexes),
+	repos.NewFxMongoRepo[*entities.ProjectManagedService]("project_managed_service", "pmsvc", entities.ProjectManagedServiceIndices),
+	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
-	repos.NewFxMongoRepo[*entities.MRes]("managed_resources", "mres", entities.MresIndexes),
-	repos.NewFxMongoRepo[*entities.MSvc]("managed_services", "msvc", entities.MsvcIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mres", entities.MresIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
+	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
+	repos.NewFxMongoRepo[*entities.ResourceMapping]("resource_mappings", "rmap", entities.ResourceMappingIndices),
+	repos.NewFxMongoRepo[*entities.ConsoleVPNDevice]("vpn_devices", "devs", entities.VPNDeviceIndexes),
+
+	fx.Provide(
+		func(conn IAMGrpcClient) iam.IAMClient {
+			return iam.NewIAMClient(conn)
+		},
+	),
+
+	// streaming logs
+	fx.Invoke(
+		func(logAndMetricsServer LogsAndMetricsHttpServer, ev *env.Env, sessionRepo kv.Repo[*common.AuthSession], iamCli iam.IAMClient,
+		) {
+			a := logAndMetricsServer.Raw()
+
+			a.Use(
+				httpServer.NewSessionMiddleware(
+					sessionRepo,
+					constants.CookieName,
+					ev.CookieDomain,
+					constants.CacheSessionPrefix,
+				),
+			)
+
+			a.Get("/observability/metrics/:metric_type", func(c *fiber.Ctx) error {
+				cc, err := toConsoleContext(c.Context(), ev.AccountCookieName)
+				if err != nil {
+					return errors.NewE(err)
+				}
+
+				clusterName := c.Query("cluster_name")
+				if clusterName == "" {
+					return errors.New("query param (cluster_name) must be provided")
+				}
+
+				trackingId := c.Query("tracking_id")
+				if trackingId == "" {
+					return errors.New("query param (tracking_id) must be provided")
+				}
+
+				can, err := iamCli.Can(c.Context(), &iam.CanIn{
+					UserId: string(cc.UserId),
+					ResourceRefs: []string{
+						iamT.NewResourceRef(cc.AccountName, iamT.ResourceAccount, cc.AccountName),
+					},
+					Action: string(iamT.ReadMetrics),
+				})
+				if err != nil {
+					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName).Error()}
+				}
+
+				if !can.Status {
+					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName).Error()}
+				}
+
+				metricType := c.Params("metric_type")
+
+				st := c.Query("start_time")
+				et := c.Query("end_time")
+
+				var startTime *time.Time
+				var endTime *time.Time
+
+				if st != "" {
+					st, err := strconv.ParseInt(st, 10, 64)
+					if err != nil {
+						return errors.NewE(err)
+					}
+					startTime = fn.New(time.Unix(st, 0))
+				}
+
+				if et != "" {
+					et, err := strconv.ParseInt(et, 10, 64)
+					if err != nil {
+						return errors.NewE(err)
+					}
+					endTime = fn.New(time.Unix(et, 0))
+				}
+
+				return queryProm(ev.PromHttpAddr, PromMetricsType(metricType), map[string]string{
+					"kl_account_name": cc.AccountName,
+					"kl_cluster_name": clusterName,
+					"kl_tracking_id":  trackingId,
+				}, startTime, endTime, c.Response().BodyWriter())
+			})
+		},
+	),
 
 	fx.Invoke(
-		func(
-			server *fiber.App,
-			d domain.Domain,
-			cacheClient AuthCacheClient,
-			ev *env.Env,
-		) {
+		func(server httpServer.Server, d domain.Domain, sessionRepo kv.Repo[*common.AuthSession], ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
 				}
 
-				return next(ctx)
+				return next(context.WithValue(ctx, "user-session", sess))
 			}
 
-			gqlConfig.Directives.HasAccountAndCluster = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
 				}
 
-				m := httpServer.GetHttpCookies(ctx)
-				klAccount := m["kloudlite-account"]
-				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-account")
-				}
-				klCluster := m["kloudlite-cluster"]
-				if klCluster == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
+				if !sess.UserVerified {
+					return nil, &fiber.Error{
+						Code:    fiber.StatusForbidden,
+						Message: "user's email is not verified",
+					}
 				}
 
-				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, klCluster)
-				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
+				return next(context.WithValue(ctx, "user-session", sess))
 			}
 
 			gqlConfig.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -81,21 +185,20 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrUnauthorized
 				}
 				m := httpServer.GetHttpCookies(ctx)
-				klAccount := m["kloudlite-account"]
+				klAccount := m[ev.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named %q present in request", "kloudlite-account")
+					return nil, errors.Newf("no cookie named %q present in request", ev.AccountCookieName)
 				}
 
-				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, "")
-				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
+				nctx := context.WithValue(ctx, "user-session", sess)
+				nctx = context.WithValue(nctx, "account-name", klAccount)
+				return next(nctx)
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
-			httpServer.SetupGQLServer(
-				server,
-				schema,
-				httpServer.NewSessionMiddleware[*common.AuthSession](
-					cacheClient,
+			server.SetupGraphqlServer(schema,
+				httpServer.NewSessionMiddleware(
+					sessionRepo,
 					constants.CookieName,
 					ev.CookieDomain,
 					constants.CacheSessionPrefix,
@@ -103,30 +206,80 @@ var Module = fx.Module("app",
 			)
 		},
 	),
-	redpanda.NewProducerFx[redpanda.Client](),
 
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger,
-		}, []string{ev.KafkaErrorOnApplyTopic})
-	}),
-	fx.Invoke(ProcessErrorOnApply),
-
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger,
-		}, []string{ev.KafkaStatusUpdatesTopic})
+	fx.Provide(func(jc *nats.JetstreamClient, logger logging.Logger) domain.MessageDispatcher {
+		return msg_nats.NewJetstreamProducer(jc)
 	}),
 
-	fx.Invoke(ProcessResourceUpdates),
+	fx.Invoke(func(lf fx.Lifecycle, producer domain.MessageDispatcher) {
+		lf.Append(fx.Hook{
+			OnStop: func(ctx context.Context) error {
+				return producer.Stop(ctx)
+			},
+		})
+	}),
 
 	fx.Provide(
-		func(clientConn IAMGrpcClient) iam.IAMClient {
-			return iam.NewIAMClient((*grpc.ClientConn)(clientConn))
+		func(conn InfraClient) infra.InfraClient {
+			return infra.NewInfraClient(conn)
 		},
 	),
 
+	fx.Provide(func(cli *nats.Client, logger logging.Logger) domain.ResourceEventPublisher {
+		return NewResourceEventPublisher(cli, logger)
+	}),
+
 	domain.Module,
+
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventErrorOnApply)
+		consumerName := "console:error-on-apply"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.NatsResourceSyncStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to errors, that occurred when the resource was applied at the agent",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go ProcessErrorOnApply(consumer, d, logger)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(jc *nats.JetstreamClient, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
+		topic := common.GetPlatformClusterMessagingTopic("*", "*", common.ConsoleReceiver, common.EventResourceUpdate)
+
+		consumerName := "console:resource-updates"
+		return msg_nats.NewJetstreamConsumer(context.TODO(), jc, msg_nats.JetstreamConsumerArgs{
+			Stream: ev.NatsResourceSyncStream,
+			ConsumerConfig: msg_nats.ConsumerConfig{
+				Name:           consumerName,
+				Durable:        consumerName,
+				Description:    "this consumer reads message from a subject dedicated to console resource updates from tenant clusters",
+				FilterSubjects: []string{topic},
+			},
+		})
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go ProcessResourceUpdates(consumer, d, logger)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.Stop(ctx)
+			},
+		})
+	}),
 )
