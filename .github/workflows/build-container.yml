@@ -92,6 +92,7 @@ jobs:
 
       - name: Create Image Tags
         run: |
+          set +e
           IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
 
           OVERRIDE_PUSHED_IMAGE=false
@@ -100,6 +101,7 @@ jobs:
           if [ $? -eq 0 ]; then
             OVERRIDE_PUSHED_IMAGE=true
           fi
+          set -e
 
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "OVERRIDE_PUSHED_IMAGE=$OVERRIDE_PUSHED_IMAGE" >> $GITHUB_ENV
@@ -107,7 +109,7 @@ jobs:
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
-          set -e
+          set +e
           image_name="ghcr.io/kloudlite/api/${{matrix.app}}"
 
           docker manifest inspect $image_name:$IMAGE_TAG
@@ -117,7 +119,7 @@ jobs:
             echo "image exists, but override pushed image is set to true. proceeding with building image"
           fi
 
-          set +e
+          set -e
 
           cd .github/workflows/container-build
           task go-container-build Image="$image_name:$IMAGE_TAG"
