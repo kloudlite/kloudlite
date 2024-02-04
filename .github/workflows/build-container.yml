@@ -110,7 +110,7 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
           set +e
-          image_name="ghcr.io/kloudlite/api/${{matrix.app}}"
+          image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
 
           docker manifest inspect $image_name:$IMAGE_TAG
           exit_status=$?

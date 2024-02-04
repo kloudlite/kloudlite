@@ -37,8 +37,23 @@ jobs:
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
-          branch_name=${GITHUB_REF#refs/heads/}
-          version_string="v${branch_name#release-}-nightly"
+          set +e
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+
+          OVERRIDE_PUSHED_IMAGE=false
+
+          echo "$IMAGE_TAG" | grep -i '\-nightly$'
+          if [ $? -eq 0 ]; then
+            OVERRIDE_PUSHED_IMAGE=true
+          fi
+
+          docker manifest inspect $image_name:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+          set -e
           
           cd apps/gateway
-          docker buildx build -t "ghcr.io/kloudlite/api/gateway:$version_string" -t "ghcr.io/kloudlite/api/gateway:commit-${GITHUB_SHA}" . --push
+          docker buildx build -t "ghcr.io/${{ github.repository }}/gateway:$IMAGE_TAG" . --push
