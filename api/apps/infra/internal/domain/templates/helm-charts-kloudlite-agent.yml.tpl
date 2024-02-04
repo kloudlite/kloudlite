@@ -21,7 +21,7 @@ spec:
     tolerations:
       - operator: Exists
     
-  preInstall: |+
+  postInstall: |+
     if kubectl get ns kloudlite-tmp;
     then
       kubectl delete ns kloudlite-tmp
@@ -43,15 +43,14 @@ spec:
 
     clusterInternalDNS: "cluster.local"
 
-    defaults:
-      imageTag: {{$kloudliteRelease}}
-      imagePullPolicy: "Always"
-      nodeSelector:
-        node-role.kubernetes.io/master: "true"
-      tolerations:
-        - key: "node-role.kubernetes.io/master"
-          operator: "Exists"
-          effect: "NoSchedule"
+    {{- /* kloudliteRelease: {{$kloudliteRelease}} */}}
+
+    nodeSelector:
+      node-role.kubernetes.io/master: "true"
+    tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
 
     agent:
       enabled: true
@@ -79,27 +78,11 @@ spec:
         configuration:
           letsEncryptSupportEmail: "support@kloudlite.io"
 
-      wgOperator:
-        enabled: true
-        name: kl-wg-operator
-        # -- wg operator image and tag
-        image:
-          repository: ghcr.io/kloudlite/operator/wireguard
-          tag: ""
-          pullPolicy: ""
-
-        tolerations: []
-        nodeSelector: {}
-
-        # -- wireguard configuration options
-        configuration:
-          # -- cluster pods CIDR range
+        wireguard:
           podCIDR: 10.42.0.0/16
-          # -- cluster services CIDR range
           svcCIDR: 10.43.0.0/16
-          # -- dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com'
 
-          enableExamples: false
+          deviceNamespace: kl-vpn-devices
 
     helmCharts:
       ingressNginx:

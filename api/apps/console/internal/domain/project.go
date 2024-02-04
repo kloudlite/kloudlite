@@ -165,8 +165,6 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.AccountName = ctx.AccountName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
-
-	project.AccountName = ctx.AccountName
 	if project.Spec.TargetNamespace == "" {
 		project.Spec.TargetNamespace = d.getProjectTargetNamespace(project.Name)
 	}
@@ -233,7 +231,6 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		},
 		common.PatchForMarkDeletion(),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -282,7 +279,6 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		},
 		patchForUpdate,
 	)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -335,7 +331,6 @@ func (d *domain) OnProjectUpdateMessage(ctx ConsoleContext, project entities.Pro
 			common.PatchOpts{
 				MessageTimestamp: opts.MessageTimestamp,
 			}))
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -359,7 +354,6 @@ func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name str
 			},
 		),
 	)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
