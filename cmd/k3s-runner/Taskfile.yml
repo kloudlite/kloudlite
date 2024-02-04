@@ -8,9 +8,11 @@ tasks:
     vars:
       builtAt:
         sh: date | sed 's/\s/_/g'
+      GOARCH:
+        sh: go env GOARCH
     cmds:
-      - go build -ldflags="-s -w -X main.BuiltAt={{.builtAt}}" -o ./bin/runner .
-      - upx bin/runner
+      - go build -ldflags="-s -w -X main.BuiltAt={{.builtAt}}" -o ./bin/runner-{{.GOARCH}} .
+      - upx bin/runner-{{.GOARCH}}
 
   help:
     summary: |+
