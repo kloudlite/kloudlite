@@ -139,7 +139,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: k3s-params
-                  key: k3s_agent_join_token
+                  key: k3s_masters_public_dns_host
 
             - name: CLOUD_PROVIDER_NAME
               valueFrom:
