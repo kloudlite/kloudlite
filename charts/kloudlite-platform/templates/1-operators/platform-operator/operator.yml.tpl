@@ -81,6 +81,7 @@ spec:
             {{ include "router-operator-env" . | nindent 12 }}
             {{ include "nodepool-operator-env" . | nindent 12 }}
             {{ include "wg-operator-env" . | nindent 12 }}
+            {{ include "helmchart-operator-env" . | nindent 12 }}
 
           livenessProbe:
             httpGet:
