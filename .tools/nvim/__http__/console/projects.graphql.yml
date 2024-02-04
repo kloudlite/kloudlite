@@ -92,6 +92,7 @@ query: |+
   }
 variables:
   project:
+    clusterName: "sample-cluster2"
     displayName: "Sample Project"
     metadata:
       name: "{{.projectName}}"

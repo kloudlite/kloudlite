@@ -151,13 +151,12 @@ query: |+
 variables:
   clusterName: "{{.clusterName}}"
   pool:
-    displayName: "hello world"
+    displayName: "sample nodepool"
     metadata:
       name: first
     spec:
       minCount: 1
       maxCount: 1
-      targetCount: 1
       cloudProvider: "aws"
 
 ---
@@ -186,7 +185,7 @@ query: |+
           spec {
             minCount
             maxCount
-            targetCount
+            # targetCount
           }
           syncStatus {
             syncScheduledAt

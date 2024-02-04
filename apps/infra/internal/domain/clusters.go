@@ -229,7 +229,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		}(),
 		// MessageQueueTopicName: fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name),
 		MessageQueueTopicName: common.GetTenantClusterMessagingTopic(ctx.AccountName, cluster.Name),
-		KloudliteRelease:      "v1.0.5-nightly",
+		KloudliteRelease:      d.env.KloudliteRelease,
 		Output:                nil,
 	}
 
