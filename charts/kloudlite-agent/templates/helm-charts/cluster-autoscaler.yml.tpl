@@ -1,4 +1,4 @@
-{{- $chartOpts := index .Values.clusterAutoscaler }}
+{{- $chartOpts := index .Values.helmCharts.clusterAutoscaler }}
 {{- if $chartOpts.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
