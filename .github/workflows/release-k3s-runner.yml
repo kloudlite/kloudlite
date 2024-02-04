@@ -21,9 +21,8 @@ jobs:
     strategy:
       matrix:
         target_arch:
-          - x86_64
-          - arm
-          - aarch64
+          - amd64
+          - arm64
 
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
@@ -48,7 +47,7 @@ jobs:
           tar -xf upx.tar.xz
           sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
 
-      - name: Build k3s runner
+      - name: Create Release Tag
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
           set +e
@@ -64,13 +63,13 @@ jobs:
           echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
           echo "OVERRIDE_RELEASE=$OVERRIDE_RELEASE" >> $GITHUB_ENV
 
-      - name: Github Releases
+      - name: Build And Release
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           RELEASE_TITLE: "kloudlite-k3s-runner"
           RELEASE_NOTES: "kloudlite k3s runner"
+          GOARCH: ${{matrix.target_arch}}
         run: |
-          GOARCH=${{ matrix.target_arch }}
           pushd cmd/k3s-runner
 
           task build
