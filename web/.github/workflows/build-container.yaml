@@ -87,7 +87,7 @@ jobs:
 
           set -e
           
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:$version_string --push
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:$IMAGE_TAG" --push
 
 
 #      - name: Build & Push Image
