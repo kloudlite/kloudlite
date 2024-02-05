@@ -155,11 +155,15 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 		MessageTypeInfo   MessageType = "info"
 		MessageTypeLog    MessageType = "log"
 	)
+	type MsgSpec struct {
+		PodName       string `json:"podName"`
+		ContainerName string `json:"containerName"`
+	}
 
 	type MessageResponse struct {
 		Timestamp time.Time   `json:"timestamp"`
 		Message   string      `json:"message"`
-		Container *string     `json:"container,omitempty"`
+		Spec      *MsgSpec    `json:"spec,omitempty"`
 		Type      MessageType `json:"type"`
 	}
 
@@ -249,7 +253,10 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 						}
 						resp.Type = MessageTypeLog
 						sp := strings.Split(msg.Subject, ".")
-						resp.Container = &sp[len(sp)-1]
+						resp.Spec = &MsgSpec{
+							PodName:       sp[len(sp)-1],
+							ContainerName: sp[len(sp)-2],
+						}
 						if err := c.WriteJSON(resp); err != nil {
 							log.Warnf("websocket write: %w", err)
 						}
