@@ -1,6 +1,7 @@
 package flags
 
 var (
-	Version = "development"
-	CliName = "kl"
+	Version    = "development"
+	CliName    = "kl"
+	BasePrefix = ""
 )

@@ -3,10 +3,12 @@ package constants
 import (
 	"fmt"
 	"os"
+
+	"github.com/kloudlite/kl/flags"
 )
 
 var (
-	prefix = "dev."
+	prefix = flags.BasePrefix
 
 	LoginUrl = func() string {
 		if os.Getenv("BASE_URL") == "" {
