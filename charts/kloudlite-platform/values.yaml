@@ -297,7 +297,7 @@ apps:
       tag: ""
     configuration:
       logsAndMetricsHttpPort: 9100
-      consoleVPNDeviceNamespace: "kloudlite-console-devices"
+      vpnDeviceNamespace: "kl-vpn-devices"
         
   accountsApi:
     # -- image (with tag) for accounts api
@@ -315,9 +315,6 @@ apps:
     image:
       repository: ghcr.io/kloudlite/api/infra
       tag: ""
-
-    configuration:
-      infraVPNDeviceNamespace: "kloudlite-infra-devices"
 
   gatewayApi:
     image:
@@ -424,7 +421,7 @@ operators:
 
       cluster:
         jobImage:
-          repository: ghcr.io/kloudlite/infrastructure-as-code
+          repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
           tag: ""
         cloudflare:
           # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
