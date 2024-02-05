@@ -62,7 +62,6 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
               displayName: val.displayName,
               spec: {
                 projectName: projectName || '',
-                targetNamespace: `${projectName}-${val.name}`,
                 routing: {
                   mode: val.environmentRoutingMode ? 'public' : 'private',
                 },
