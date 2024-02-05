@@ -8,15 +8,10 @@ const App = () => {
     useEffect(() => {
         (async()=>{
             try{
-                // var axios1 =await axios({
-                //     url:'http://10.13.0.1:17171',
-                //
-                // });
-                const axios1 = await axios.get("http://10.13.0.1:17171/healthy", {
-                    httpAgent: new https.Agent({
-                        rejectUnauthorized: false
-                    })
-                })
+                var axios1 =await axios({
+                    url:'http://10.13.0.1:17171',
+
+                });
 
                 console.log((axios1))
             }catch(err){
