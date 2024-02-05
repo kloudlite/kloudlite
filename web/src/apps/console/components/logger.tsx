@@ -568,6 +568,10 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
               const m: {
                 timestamp: string;
                 message: string;
+                spec: {
+                  podName: string;
+                  containerName: string;
+                };
                 type: 'update' | 'error' | 'info';
               } = JSON.parse(msg.data as string);
 
@@ -592,7 +596,7 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
                 setLogs((s) => [
                   ...s,
                   {
-                    pod_name: 'main',
+                    pod_name: `${m.spec.podName}:${m.spec.containerName}`,
                     message: m.message,
                     timestamp: m.timestamp,
                   },

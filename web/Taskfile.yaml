@@ -8,7 +8,7 @@ tasks:
     interactive: true
     cmds:
       - |
-        BASE_URL=devc.kloudlite.io
+        BASE_URL=dev.kloudlite.io
         COOKIE_DOMAIN=".kloudlite.io"
         GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local"
         case {{.app}} in
@@ -48,7 +48,7 @@ tasks:
 
         esac
 
-        REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.devc.kloudlite.io"
+        REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.dev.kloudlite.io"
  
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
@@ -121,12 +121,12 @@ tasks:
 
         case $(whoami) in
           "bikash")
-            BASE_URL=devc.kloudlite.io
+            BASE_URL=dev.kloudlite.io
             URL_SUFFIX=1
             ;;
 
           "vision")
-            BASE_URL=devc.kloudlite.io
+            BASE_URL=dev.kloudlite.io
             URL_SUFFIX="-vision"
             ;;
 
