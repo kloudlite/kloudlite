@@ -91,7 +91,7 @@ spec:
           value: http://{{ .Values.prometheus.name }}-prometheus.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:9090
 
         - key: DEVICE_NAMESPACE
-          value: {{.Values.apps.consoleApi.configuration.consoleVPNDeviceNamespace}}
+          value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}
 
       volumes:
         - mountPath: /console.d/templates

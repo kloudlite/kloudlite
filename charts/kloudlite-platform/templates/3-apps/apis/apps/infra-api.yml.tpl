@@ -107,9 +107,6 @@ spec:
         - key: MSVC_TEMPLATE_FILE_PATH
           value: /infra.d/templates/managed-svc-templates.yml
 
-        - key: DEVICE_NAMESPACE
-          value: {{.Values.apps.infraApi.configuration.infraVPNDeviceNamespace}}
-
       volumes:
         - mountPath: /infra.d/templates
           type: config
