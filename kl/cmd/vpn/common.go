@@ -53,7 +53,14 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 
 	device, err := server.GetDevice(fn.MakeOption("deviceName", devName))
 	if err != nil {
-		return err
+		switch flags.CliName {
+		case constants.CoreCliName:
+			return fmt.Errorf("error getting device vpn config, please ensure environment is selected and try again")
+		case constants.InfraCliName:
+			return fmt.Errorf("error getting device vpn config, please ensure cluster is selected and try again")
+		default:
+			return err
+		}
 	}
 
 	switch flags.CliName {
