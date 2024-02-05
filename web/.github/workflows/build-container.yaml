@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - release-*
+    tags:
+      - '*'
     paths:
       - "lib/**/**"
       - "src/**"
