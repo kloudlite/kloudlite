@@ -79,7 +79,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
             cloudProvider
             maxCount
             minCount
-            targetCount
           }
           status {
             checks
@@ -200,7 +199,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                 cloudProvider
                 maxCount
                 minCount
-                targetCount
               }
               status {
                 checks

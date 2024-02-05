@@ -616,7 +616,6 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
       cloudProvider
       maxCount
       minCount
-      targetCount
     }
     status {
       checks
@@ -708,7 +707,6 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
           cloudProvider
           maxCount
           minCount
-          targetCount
         }
         status {
           checks
@@ -1565,154 +1563,6 @@ mutation consoleDeleteSecret($projectName: String!, $envName: String!, $secretNa
     envName: $envName
     secretName: $secretName
   )
-}
-
-mutation consoleCreateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    id
-  }
-}
-
-mutation consoleUpdateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  infra_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    id
-  }
-}
-
-query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq: CursorPaginationIn) {
-  infra_listVPNDevices(clusterName: $clusterName, search: $search, pq: $pq) {
-    edges {
-      cursor
-      node {
-        clusterName
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
-        metadata {
-          annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
-          name
-          namespace
-        }
-        spec {
-          ports {
-            port
-            targetPort
-          }
-        }
-        status {
-          checks
-          isReady
-          lastReadyGeneration
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
-        }
-        updateTime
-      }
-    }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
-  }
-}
-
-query consoleGetVpnDevice($clusterName: String!, $name: String!) {
-  infra_getVPNDevice(clusterName: $clusterName, name: $name) {
-    clusterName
-    createdBy {
-      userEmail
-      userId
-      userName
-    }
-    creationTime
-    displayName
-    lastUpdatedBy {
-      userEmail
-      userId
-      userName
-    }
-    markedForDeletion
-    metadata {
-      annotations
-      creationTimestamp
-      deletionTimestamp
-      generation
-      labels
-      name
-      namespace
-    }
-    spec {
-      ports {
-        port
-        targetPort
-      }
-    }
-    status {
-      checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
-        name
-        namespace
-      }
-    }
-    syncStatus {
-      action
-      error
-      lastSyncedAt
-      recordVersion
-      state
-      syncScheduledAt
-    }
-    updateTime
-    wireguardConfig {
-      value
-      encoding
-    }
-  }
-}
-
-mutation consoleDeleteVpnDevice($clusterName: String!, $deviceName: String!) {
-  infra_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
 }
 
 query consoleListInvitationsForAccount($accountName: String!) {
@@ -3882,15 +3732,15 @@ mutation authCli_updateDeviceCluster($deviceName: String!, $clusterName: String!
   core_updateVpnClusterName(deviceName: $deviceName, clusterName: $clusterName)
 }
 
-mutation authCli_UpdateDeviceNs($deviceName: String!, $ns: String!) {
+mutation authCli_updateDeviceNs($deviceName: String!, $ns: String!) {
   core_updateVpnDeviceNs(deviceName: $deviceName, ns: $ns)
 }
 
-mutation authCli_CoreUpdateDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
+mutation authCli_updateDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
   core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
 }
 
-mutation authCli_CoreUpdateDeviceEnv($deviceName: String!, $projectName: String!, $envName: String!) {
+mutation authCli_updateDeviceEnv($deviceName: String!, $projectName: String!, $envName: String!) {
   core_updateVPNDeviceEnv(
     deviceName: $deviceName
     projectName: $projectName
@@ -3898,7 +3748,7 @@ mutation authCli_CoreUpdateDeviceEnv($deviceName: String!, $projectName: String!
   )
 }
 
-query authCli_listCoreDevices {
+query authCli_listDevices {
   core_listVPNDevicesForUser {
     displayName
     environmentName
@@ -3906,6 +3756,7 @@ query authCli_listCoreDevices {
       name
     }
     projectName
+    clusterName
     status {
       isReady
       message {
@@ -3927,12 +3778,13 @@ query authCli_listCoreDevices {
   }
 }
 
-query authCli_getCoreDevice($name: String!) {
+query authCli_getDevice($name: String!) {
   core_getVPNDevice(name: $name) {
     displayName
     metadata {
       name
     }
+    clusterName
     projectName
     spec {
       activeNamespace
@@ -3949,7 +3801,7 @@ query authCli_getCoreDevice($name: String!) {
   }
 }
 
-mutation authCli_createCoreDevice($vpnDevice: ConsoleVPNDeviceIn!) {
+mutation authCli_createDevice($vpnDevice: ConsoleVPNDeviceIn!) {
   core_createVPNDevice(vpnDevice: $vpnDevice) {
     metadata {
       name
@@ -3961,11 +3813,7 @@ mutation authCli_createCoreDevice($vpnDevice: ConsoleVPNDeviceIn!) {
   }
 }
 
-mutation authCli_updateCoreDevicePorts($deviceName: String!, $ports: [PortIn!]!) {
-  core_updateVPNDevicePorts(deviceName: $deviceName, ports: $ports)
-}
-
-query authCli_CoreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
+query authCli_coreCheckNameAvailability($resType: ConsoleResType!, $name: String!) {
   core_checkNameAvailability(resType: $resType, name: $name) {
     result
     suggestedNames
@@ -4092,35 +3940,17 @@ query authCli_listApps($projectName: String!, $envName: String!) {
     edges {
       cursor
       node {
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
         displayName
-        enabled
         environmentName
-        kind
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
         markedForDeletion
         metadata {
           annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
           name
           namespace
         }
         projectName
         spec {
           displayName
-          freeze
           containers {
             args
             command
@@ -4137,62 +3967,13 @@ query authCli_listApps($projectName: String!, $envName: String!) {
               type
             }
             image
-            imagePullPolicy
-            livenessProbe {
-              failureThreshold
-              httpGet {
-                httpHeaders
-                path
-                port
-              }
-              initialDelay
-              interval
-              shell {
-                command
-              }
-              tcp {
-                port
-              }
-              type
-            }
             name
-            readinessProbe {
-              failureThreshold
-              initialDelay
-              interval
-              type
-            }
-            resourceCpu {
-              max
-              min
-            }
-            resourceMemory {
-              max
-              min
-            }
-            volumes {
-              items {
-                fileName
-                key
-              }
-              mountPath
-              refName
-              type
-            }
-          }
-          hpa {
-            enabled
-            maxReplicas
-            minReplicas
-            thresholdCpu
-            thresholdMemory
           }
           intercept {
             enabled
             toDevice
           }
           nodeSelector
-          region
           replicas
           serviceAccount
           services {
@@ -4201,39 +3982,16 @@ query authCli_listApps($projectName: String!, $envName: String!) {
             targetPort
             type
           }
-          tolerations {
-            effect
-            key
-            operator
-            tolerationSeconds
-            value
-          }
         }
         status {
           checks
           isReady
-          lastReadyGeneration
-          lastReconcileTime
           message {
             RawMessage
           }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
         }
-        updateTime
       }
     }
-    pageInfo {
-      endCursor
-      hasNextPage
-      hasPreviousPage
-      startCursor
-    }
-    totalCount
   }
 }
 

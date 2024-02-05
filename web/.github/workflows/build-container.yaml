@@ -1,9 +1,12 @@
 name: build-docker-images
 
 on:
+  pull_request:
   push:
     branches:
-      - release*
+      - release-*
+    tags:
+      - '*'
     paths:
       - "lib/**/**"
       - "src/**"
@@ -29,6 +32,7 @@ jobs:
             dockerFile: Dockerfile
           - app: website
             dockerFile: Dockerfile.devdoc
+
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
@@ -48,12 +52,51 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Push Image
-        if: startsWith(github.ref, 'refs/heads/release')
+      - name: Create Image Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release-')
         run: |
+          set +e
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/release-})
+          echo "$IMAGE_TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            IMAGE_TAG="$IMAGE_TAG-nightly"
+          fi
+          set -e
 
-          branch_name=${GITHUB_REF#refs/heads/}
-          version_string="v${branch_name#release-}-nightly"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+      - name: Create Image Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+        run: |
+          set +e
+          image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
+
+          docker manifest inspect $image_name:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
           
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:$version_string --push
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:commit-${GITHUB_SHA} --push
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:$IMAGE_TAG" --push
+
+
+#      - name: Build & Push Image
+#        if: startsWith(github.ref, 'refs/heads/release')
+#        run: |
+#          branch_name=${GITHUB_REF#refs/heads/}
+#          version_string="v${branch_name#release-}-nightly"
+#
+#          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:$version_string --push
+#          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:commit-${GITHUB_SHA} --push

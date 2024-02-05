@@ -1,6 +1,7 @@
 import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
+  listFlex,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
@@ -128,7 +129,6 @@ const ListView = ({ items = [], onAction }: IResource) => {
         const statusRender = listStatus({
           key: `${keyPrefix}status`,
           item,
-          className: 'flex-grow',
         });
         return (
           <List.Row
@@ -141,6 +141,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
               statusRender,
+              listFlex({key:"flex-1"}),
               {
                 key: generateKey(keyPrefix, 'author'),
                 className: 'w-[180px]',

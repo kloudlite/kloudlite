@@ -257,21 +257,21 @@ const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteVpnDevice({
-              deviceName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
-            setShowDeleteDialog(null);
-          } catch (err) {
-            handleError(err);
-          }
+          // try {
+          //   const { errors } = await api.deleteVpnDevice({
+          //     deviceName: parseName(showDeleteDialog),
+          //     clusterName: params.cluster || '',
+          //   });
+          //
+          //   if (errors) {
+          //     throw errors[0];
+          //   }
+          //   reloadPage();
+          //   toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+          //   setShowDeleteDialog(null);
+          // } catch (err) {
+          //   handleError(err);
+          // }
         }}
       />
     </>

@@ -10,7 +10,7 @@ tasks:
       - |
         BASE_URL=devc.kloudlite.io
         COOKIE_DOMAIN=".kloudlite.io"
-        GATEWAY_URL="http://gateway.karthik-testing.svc.cluster.local"
+        GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local"
         case {{.app}} in
           "auth")
             PORT=4000
@@ -49,7 +49,7 @@ tasks:
         esac
 
         REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.devc.kloudlite.io"
-
+ 
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
 
@@ -94,7 +94,7 @@ tasks:
         BASE_URL=kloudlite.io
         URL_SUFFIX=""
         COOKIE_DOMAIN=".kloudlite.io"
-        GATEWAY_URL="http://gateway.karthik-testing.svc.cluster.local"
+        GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local"
 
         case {{.app}} in
           "auth")
