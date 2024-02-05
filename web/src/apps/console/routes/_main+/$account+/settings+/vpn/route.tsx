@@ -7,25 +7,22 @@ import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import logger from '~/lib/client/helpers/log';
+import { IRemixCtx } from '~/lib/types/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import logger from '~/root/lib/client/helpers/log';
-import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
-import DeviceResources from './devices-resources';
-import HandleDevices from './handle-devices';
+import HandleConsoleDevices from '~/console/page-components/handle-console-devices';
 import Tools from './tools';
+import ConsoleDeviceResources from './console-devices-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { cluster } = ctx.params;
-    const { data, errors } = await GQLServerHandler(ctx.request).listVpnDevices(
-      {
-        clusterName: cluster,
-        pq: getPagination(ctx),
-        search: getSearch(ctx),
-      }
-    );
+    const { data, errors } = await GQLServerHandler(
+      ctx.request
+    ).listConsoleVpnDevices({
+      pq: getPagination(ctx),
+      search: getSearch(ctx),
+    });
     if (errors) {
       logger.error(errors[0]);
       throw errors[0];
@@ -38,7 +35,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
   return defer({ promise });
 };
-const VPN = () => {
+const ConsoleVPN = () => {
   const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
 
@@ -46,17 +43,22 @@ const VPN = () => {
     <>
       <LoadingComp
         data={promise}
-        skeletonData={{
-          devicesData: fake.ConsoleListVpnDevicesQuery
-            .infra_listVPNDevices as any,
-        }}
+        // skeletonData={{
+        //   devicesData: fake.vp
+        //     .core_listVPNDevicesForUser as any,
+        // }}
       >
         {({ devicesData }) => {
-          const devices = devicesData.edges?.map(({ node }) => node);
+          const devices = devicesData?.edges?.map(({ node }) => node);
+          console.log('devices', devicesData);
+
+          if (!devices) {
+            return null;
+          }
           return (
             <Wrapper
               header={{
-                title: 'Wireguard devices',
+                title: 'VPN devices',
                 action: devices.length > 0 && (
                   <Button
                     content="Create Device"
@@ -89,12 +91,12 @@ const VPN = () => {
               }}
               tools={<Tools />}
             >
-              <DeviceResources items={devices} />
+              <ConsoleDeviceResources items={devices} />
             </Wrapper>
           );
         }}
       </LoadingComp>
-      <HandleDevices
+      <HandleConsoleDevices
         {...{
           isUpdate: false,
           visible,
@@ -105,4 +107,4 @@ const VPN = () => {
   );
 };
 
-export default VPN;
+export default ConsoleVPN;

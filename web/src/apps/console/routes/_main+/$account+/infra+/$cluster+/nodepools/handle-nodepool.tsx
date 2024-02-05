@@ -148,7 +148,6 @@ const Root = (props: IDialog) => {
                 spec: {
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
-                  targetCount: Number.parseInt(val.minimum, 10),
                   cloudProvider: 'aws',
                   ...getNodeConf(),
                 },
@@ -169,7 +168,6 @@ const Root = (props: IDialog) => {
                   ...props.data.spec,
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
-                  targetCount: Number.parseInt(val.minimum, 10),
                   ...getNodeConf(),
                 },
               },

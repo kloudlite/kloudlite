@@ -103,7 +103,7 @@ const ListDetail = (
 ) => {
   const { item, open, onDelete, onEdit } = props;
   const { name, id } = parseItem(item);
-  const { minCount, maxCount, cloudProvider, aws, targetCount } = item.spec;
+  const { minCount, maxCount, cloudProvider, aws } = item.spec;
   const keyPrefix = `${RESOURCE_NAME}-${id}`;
   const lR = listRender({ keyPrefix, resource: item });
 
@@ -173,8 +173,8 @@ const ListDetail = (
             subtitle={
               <div className="flex flex-row items-center gap-md">
                 {id}
-                <CircleFill size={7} />
-                <span>Running {targetCount} nodes</span>
+                {/*<CircleFill size={7} />*/}
+                {/*<span>Running {targetCount} nodes</span>*/}
               </div>
             }
             avatar={<NodePoolAvatar title={id} />}

@@ -82,16 +82,6 @@ const ClusterTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
-              <WireGuardlogo size={iconSize} />
-              VPN
-            </span>
-          ),
-          to: '/network/vpn',
-          value: '/network',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
               <Crosshair size={iconSize} />
               Helm charts
             </span>

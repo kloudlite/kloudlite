@@ -102,16 +102,6 @@ const AccountTabs = () => {
         {
           label: (
             <span className="flex flex-row items-center gap-lg">
-              <WireGuardlogo size={iconSize} />
-              VPN
-            </span>
-          ),
-          to: '/vpn',
-          value: '/vpn',
-        },
-        {
-          label: (
-            <span className="flex flex-row items-center gap-lg">
               <GearSix size={iconSize} />
               Settings
             </span>
@@ -246,7 +236,7 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {!!devicesMenu && devicesMenu()}
+            {/*{!!devicesMenu && devicesMenu()}*/}
             {!!headerExtra && headerExtra()}
             <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
           </div>

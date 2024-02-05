@@ -12,20 +12,21 @@ import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IDevices } from '~/console/server/gql/queries/vpn-queries';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { handleError } from '~/root/lib/utils/common';
-import { useParams } from '@remix-run/react';
-import HandleDevices, { ShowWireguardConfig } from './handle-devices';
+import { useReload } from '~/lib/client/helpers/reloader';
+import { handleError } from '~/lib/utils/common';
+import { IConsoleDevices } from '~/console/server/gql/queries/console-vpn-queries';
+import HandleConsoleDevices, {
+  ShowWireguardConfig,
+} from '~/console/page-components/handle-console-devices';
 
 const RESOURCE_NAME = 'device';
-type BaseType = ExtractNodeType<IDevices>;
+type BaseType = ExtractNodeType<IConsoleDevices>;
 
 const parseItem = (item: BaseType) => {
   return {
@@ -102,7 +103,7 @@ interface IResource {
 const GridView = ({ items, onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
-      {items.map((item, index) => {
+      {items?.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
@@ -139,7 +140,7 @@ const GridView = ({ items, onAction }: IResource) => {
 const ListView = ({ items, onAction }: IResource) => {
   return (
     <List.Root>
-      {items.map((item, index) => {
+      {items?.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
@@ -174,7 +175,7 @@ const ListView = ({ items, onAction }: IResource) => {
   );
 };
 
-const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
+const ConsoleDeviceResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showHandleDevice, setShowHandleDevice] = useState<BaseType | null>(
     null
   );
@@ -210,7 +211,6 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
     },
   };
 
-  const params = useParams();
   return (
     <>
       <ListGridView
@@ -224,9 +224,8 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteVpnDevice({
+            const { errors } = await api.deleteConsoleVpnDevice({
               deviceName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
             });
 
             if (errors) {
@@ -248,7 +247,7 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
           mode: showWireguardConfig?.mode || 'config',
         }}
       />
-      <HandleDevices
+      <HandleConsoleDevices
         {...{
           isUpdate: true,
           data: showHandleDevice!,
@@ -260,4 +259,4 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default DeviceResources;
+export default ConsoleDeviceResources;

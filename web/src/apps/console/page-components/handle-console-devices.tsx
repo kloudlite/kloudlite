@@ -21,7 +21,6 @@ import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import QRCode from '~/console/components/qr-code';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IDevices } from '~/console/server/gql/queries/vpn-queries';
 import {
   ExtractNodeType,
   ensureResource,

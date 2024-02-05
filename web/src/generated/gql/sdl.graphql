@@ -978,7 +978,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
   minCount: Int!
   nodeLabels: Map
   nodeTaints: [K8s__io___api___core___v1__Taint!]
-  targetCount: Int!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
@@ -988,7 +987,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn 
   minCount: Int!
   nodeLabels: Map
   nodeTaints: [K8s__io___api___core___v1__TaintIn!]
-  targetCount: Int!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps {
@@ -2916,23 +2914,18 @@ type Mutation {
   infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
-  infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   infra_deleteCluster(name: String!): Boolean!
   infra_deleteClusterManagedService(clusterName: String!, serviceName: String!): Boolean!
   infra_deleteDomainEntry(domainName: String!): Boolean!
   infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean!
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
-  infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean!
   infra_updateCluster(cluster: ClusterIn!): Cluster
   infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
-  infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
-  infra_updateVPNDeviceNs(clusterName: String!, deviceName: String!, namespace: String!): Boolean!
-  infra_updateVPNDevicePorts(clusterName: String!, deviceName: String!, ports: [PortIn!]!): Boolean!
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
 }
@@ -3308,7 +3301,6 @@ type Query {
   infra_getPV(clusterName: String!, name: String!): PersistentVolume
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVolumeAttachment(clusterName: String!, name: String!): VolumeAttachment
-  infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice
   infra_listClusterManagedServices(clusterName: String!, pagination: CursorPaginationIn, search: SearchClusterManagedService): ClusterManagedServicePaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
@@ -3320,7 +3312,6 @@ type Query {
   infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listPVs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumes): PersistentVolumePaginatedRecords
   infra_listVolumeAttachments(clusterName: String!, pq: CursorPaginationIn, search: SearchVolumeAttachments): VolumeAttachmentPaginatedRecords
-  infra_listVPNDevices(clusterName: String, pq: CursorPaginationIn, search: SearchVPNDevices): VPNDevicePaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
 }
 
@@ -3361,7 +3352,6 @@ enum ResType {
   helm_release
   nodepool
   providersecret
-  vpn_device
 }
 
 type Router {
@@ -3529,12 +3519,6 @@ input SearchVolumeAttachments {
   text: MatchFilterIn
 }
 
-input SearchVPNDevices {
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
-  text: MatchFilterIn
-}
-
 type Secret {
   accountName: String!
   apiVersion: String
@@ -3661,45 +3645,6 @@ input VolumeAttachmentIn {
 
 type VolumeAttachmentPaginatedRecords {
   edges: [VolumeAttachmentEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type VPNDevice {
-  accountName: String!
-  apiVersion: String
-  clusterName: String!
-  createdBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  creationTime: Date!
-  displayName: String!
-  id: String!
-  kind: String
-  lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
-  markedForDeletion: Boolean
-  metadata: Metadata
-  recordVersion: Int!
-  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
-  status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
-  updateTime: Date!
-  wireguardConfig: Github__com___kloudlite___api___pkg___types__EncodedString
-}
-
-type VPNDeviceEdge {
-  cursor: String!
-  node: VPNDevice!
-}
-
-input VPNDeviceIn {
-  apiVersion: String
-  displayName: String!
-  kind: String
-  metadata: MetadataIn
-  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
-}
-
-type VPNDevicePaginatedRecords {
-  edges: [VPNDeviceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }

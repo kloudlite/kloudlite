@@ -1,21 +1,33 @@
 import LogComp from '~/console/components/logger';
+import axios from "axios";
+import {useEffect} from "react";
+import https from "https";
 
 const App = () => {
+
+    useEffect(() => {
+        (async()=>{
+            try{
+                // var axios1 =await axios({
+                //     url:'http://10.13.0.1:17171',
+                //
+                // });
+                const axios1 = await axios.get("http://10.13.0.1:17171/healthy", {
+                    httpAgent: new https.Agent({
+                        rejectUnauthorized: false
+                    })
+                })
+
+                console.log((axios1))
+            }catch(err){
+                // console.log(err.message)
+            }
+
+        })()
+    }, []);
   return (
     <div className="flex items-center justify-center h-screen w-screen">
-      <LogComp
-        {...{
-          dark: true,
-          width: '80vw',
-          height: '80vh',
-          title: 'Logs',
-          websocket: {
-            account: 'kloudlite-dev',
-            cluster: 'sample-cluster',
-            trackingId: 'app-k-zmtg0km7epjj-fq89uvao14-3-l',
-          },
-        }}
-      />
+     kk
     </div>
   );
 };
