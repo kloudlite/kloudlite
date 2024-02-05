@@ -254,8 +254,8 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 						resp.Type = MessageTypeLog
 						sp := strings.Split(msg.Subject, ".")
 						resp.Spec = &MsgSpec{
-							PodName:       sp[len(sp)-1],
-							ContainerName: sp[len(sp)-2],
+							PodName:       sp[len(sp)-2],
+							ContainerName: sp[len(sp)-1],
 						}
 						if err := c.WriteJSON(resp); err != nil {
 							log.Warnf("websocket write: %w", err)
