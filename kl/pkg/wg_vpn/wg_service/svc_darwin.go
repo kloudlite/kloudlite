@@ -66,8 +66,19 @@ func installApp() error {
 	}
 
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
 
+	if resp.StatusCode == 404 {
+		// using fallback url
+
+		specUrl = fmt.Sprint("https://github.com/kloudlite/vpn-app/releases/download/v1.0.5-nightly/kloudlite_windows.zip")
+		var err2 error
+		resp, err2 = http.Get(specUrl)
+		if err2 != nil {
+			return err2
+		}
+	}
+
+	if resp.StatusCode != 200 {
 		return fmt.Errorf("failed to download app, status code: %d", resp.StatusCode)
 	}
 
