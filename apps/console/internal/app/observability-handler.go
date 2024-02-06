@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
-	fn "github.com/kloudlite/api/pkg/functions"
 )
 
 type ObservabilityArgs struct {
@@ -109,10 +108,9 @@ func buildPromQuery(resType PromMetricsType, filters map[string]string) (string,
 	default:
 		return "", errors.New("unknown prom metrics type provided")
 	}
-
 }
 
-func queryProm(promAddr string, resType PromMetricsType, filters map[string]string, startTime *time.Time, endTime *time.Time, writer io.Writer) error {
+func queryProm(promAddr string, resType PromMetricsType, filters map[string]string, startTime string, endTime string, step string, writer io.Writer) error {
 	promQuery, err := buildPromQuery(resType, filters)
 	if err != nil {
 		return errors.NewE(err)
@@ -128,18 +126,9 @@ func queryProm(promAddr string, resType PromMetricsType, filters map[string]stri
 	qp := u.Query()
 	qp.Add("query", promQuery)
 
-	t := time.Now()
-	if startTime == nil {
-		startTime = fn.New(t.Add(-2 * 24 * time.Hour))
-	}
-	if endTime == nil {
-		endTime = &t
-	}
-
-	qp.Add("start", fmt.Sprintf("%d", startTime.Unix()))
-	qp.Add("end", fmt.Sprintf("%d", endTime.Unix()))
-	// qp.Add("step", "700") // 15 minute
-	qp.Add("step", "345") // 15 minute
+	qp.Add("start", startTime)
+	qp.Add("end", endTime)
+	qp.Add("step", step)
 
 	u.RawQuery = qp.Encode()
 
@@ -148,7 +137,7 @@ func queryProm(promAddr string, resType PromMetricsType, filters map[string]stri
 		return errors.NewE(err)
 	}
 
-	// fmt.Printf("[DEBUG]: prometheus actual request: %s\n", req.URL.String())
+	fmt.Printf("[DEBUG]: prometheus actual request: %s\n", req.URL.String())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

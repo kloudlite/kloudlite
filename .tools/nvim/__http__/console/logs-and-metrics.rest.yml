@@ -7,8 +7,8 @@ global:
   clusterName: "nova-303453"
   clusterNamespace: "kl-account-nova"
 
-  endTime:   '1700803914'
-  startTime: '1700717575'
+  endTime:   '1707205625'
+  startTime: '1707119214'
 ---
 
 label: Get Logs for App
@@ -27,8 +27,7 @@ query:
 label: Get Memory Metrics for App
 query:
   method: GET
-  # url: 'http://console-api.kl-core.svc.cluster.local:9100/observability/metrics/memory?workspace_name={{.workspaceName}}&start_time={{.startTime}}&end_time={{.endTime}}'
-  url: 'http://console-api.karthik-testing.svc.cluster.local:9100/observability/metrics/memory?cluster_name=sample-cluster&tracking_id=app-k-zmtg0km7epjj-fq89uvao14-3-l'
+  url: 'http://console-api.kloudlite.svc.cluster.local:9100/observability/metrics/memory?cluster_name=ab-cluster-3&tracking_id=app-3ez2fpr-3oc8gqjib-ii5-pbat6d&step=5m'
 
 ---
 
