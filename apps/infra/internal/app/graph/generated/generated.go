@@ -969,6 +969,7 @@ type ComplexityRoot struct {
 		InfraDeleteHelmRelease           func(childComplexity int, clusterName string, releaseName string) int
 		InfraDeleteNodePool              func(childComplexity int, clusterName string, poolName string) int
 		InfraDeleteProviderSecret        func(childComplexity int, secretName string) int
+		InfraDeletePv                    func(childComplexity int, clusterName string, pvName string) int
 		InfraUpdateCluster               func(childComplexity int, cluster entities.Cluster) int
 		InfraUpdateClusterManagedService func(childComplexity int, clusterName string, service entities.ClusterManagedService) int
 		InfraUpdateDomainEntry           func(childComplexity int, domainEntry entities.DomainEntry) int
@@ -1286,6 +1287,7 @@ type MutationResolver interface {
 	InfraCreateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraUpdateHelmRelease(ctx context.Context, clusterName string, release entities.HelmRelease) (*entities.HelmRelease, error)
 	InfraDeleteHelmRelease(ctx context.Context, clusterName string, releaseName string) (bool, error)
+	InfraDeletePv(ctx context.Context, clusterName string, pvName string) (bool, error)
 }
 type NamespaceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Namespace) (string, error)
@@ -5331,6 +5333,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraDeleteProviderSecret(childComplexity, args["secretName"].(string)), true
 
+	case "Mutation.infra_deletePV":
+		if e.complexity.Mutation.InfraDeletePv == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deletePV_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeletePv(childComplexity, args["clusterName"].(string), args["pvName"].(string)), true
+
 	case "Mutation.infra_updateCluster":
 		if e.complexity.Mutation.InfraUpdateCluster == nil {
 			break
@@ -6894,6 +6908,8 @@ type Mutation {
     infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_deletePV(clusterName: String!, pvName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type EncodedValue {
@@ -8965,6 +8981,30 @@ func (ec *executionContext) field_Mutation_infra_deleteNodePool_args(ctx context
 		}
 	}
 	args["poolName"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_deletePV_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["pvName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pvName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pvName"] = arg1
 	return args, nil
 }
 
@@ -35802,6 +35842,87 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteHelmRelease(ctx co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_infra_deletePV(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_deletePV(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().InfraDeletePv(rctx, fc.Args["clusterName"].(string), fc.Args["pvName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_infra_deletePV(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_infra_deletePV_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Namespace_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.Namespace) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Namespace_accountName(ctx, field)
 	if err != nil {
@@ -57157,6 +57278,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "infra_deletePV":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_infra_deletePV(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -61628,7 +61758,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -61636,7 +61766,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

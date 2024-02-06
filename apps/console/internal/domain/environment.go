@@ -187,7 +187,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 			},
 			Spec: crdsv1.EnvironmentSpec{
 				ProjectName:     projectName,
-				TargetNamespace: fmt.Sprintf("env-%s", destinationEnvName),
+				TargetNamespace: d.getEnvironmentTargetNamespace(projectName, destinationEnvName),
 				Routing: &crdsv1.EnvironmentRouting{
 					Mode: envRoutingMode,
 				},
@@ -279,7 +279,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 
 	resourceMetadata := func(dn string) common.ResourceMetadata {
 		return common.ResourceMetadata{
-			DisplayName: fmt.Sprintf("clone of %s", dn),
+			DisplayName: dn,
 			CreatedBy: common.CreatedOrUpdatedBy{
 				UserId:    ctx.UserId,
 				UserName:  ctx.UserName,
