@@ -222,13 +222,14 @@ func DeleteDevicePort(ports []DevicePort) error {
 
 func EnsureDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
-
+	fmt.Println("devName: ", devName)
 	if devName == "" {
 		currDevName, _ := client.CurrentDeviceName()
 		if currDevName != "" {
 			devName = currDevName
 		}
 	}
+	fmt.Println("devName: ", devName)
 
 	if devName != "" {
 		dev, err := GetDevice(fn.MakeOption("deviceName", devName))
@@ -241,7 +242,7 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 			devName = ""
 		}
 	}
-
+	fmt.Println("devName: ", devName)
 	var err error
 	devName, err = os.Hostname()
 	if err != nil {

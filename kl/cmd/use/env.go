@@ -2,6 +2,7 @@ package use
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/domain/client"
 
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -56,6 +57,19 @@ var switchCmd = &cobra.Command{
 		}...); err != nil {
 			fn.PrintError(err)
 			return
+		}
+
+		klFile, err := client.GetKlFile("")
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		if klFile.DefaultEnv == "" {
+			klFile.DefaultEnv = env.Metadata.Name
+			if err := client.WriteKLFile(*klFile); err != nil {
+				fn.PrintError(err)
+				return
+			}
 		}
 
 		fn.Log(text.Bold(text.Green("\nSelected Environment and Project:")),

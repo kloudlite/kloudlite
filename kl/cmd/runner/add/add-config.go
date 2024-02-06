@@ -17,7 +17,7 @@ var confCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Add config references to your kl-config",
 	Long: `
-This command will add config entry references from current environement to your kl-config file.
+This command will add config entry references from current environment to your kl-config file.
 	`,
 	Example: `
   kl add config 		# add config and entry by selecting from list

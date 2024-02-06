@@ -24,7 +24,7 @@ func CurrentAccountName() (string, error) {
 		return "", err
 	}
 	if file.AccountName == "" {
-		return "", errors.New("no account selected, please select one using \"kl switch account\"")
+		return "", errors.New("no account selected, please select one using \"kl use account\"")
 	}
 	if file.AccountName == "" {
 		return "",

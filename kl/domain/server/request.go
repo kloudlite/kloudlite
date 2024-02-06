@@ -15,7 +15,6 @@ import (
 
 func klFetch(method string, variables map[string]any, cookie *string) ([]byte, error) {
 	url := constants.ServerURL
-	reqMethod := "POST"
 
 	marshal, err := json.Marshal(map[string]any{
 		"method": method,
@@ -28,7 +27,7 @@ func klFetch(method string, variables map[string]any, cookie *string) ([]byte, e
 	payload := strings.NewReader(string(marshal))
 
 	client := &http.Client{}
-	req, err := http.NewRequest(reqMethod, url, payload)
+	req, err := http.NewRequest(http.MethodPost, url, payload)
 
 	if err != nil {
 		return nil, err

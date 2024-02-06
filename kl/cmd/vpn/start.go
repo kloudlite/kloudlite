@@ -48,9 +48,20 @@ sudo {cmd} vpn start`),
 		switch flags.CliName {
 		case constants.CoreCliName:
 			envName := fn.ParseStringFlag(cmd, "env")
+			if envName == "" {
+				klFile, err := client.GetKlFile("")
+				if err != nil && !os.IsNotExist(err) {
+					fn.PrintError(err)
+					return
+				}
+				if !os.IsNotExist(err) {
+					envName = klFile.DefaultEnv
+				}
+
+			}
 			projectName := fn.ParseStringFlag(cmd, "project")
 			options = append(options, fn.MakeOption("projectName", projectName))
-			options = append(options, fn.MakeOption("environmentName", envName))
+			options = append(options, fn.MakeOption("envName", envName))
 
 		case constants.InfraCliName:
 			clusterName := fn.ParseStringFlag(cmd, "cluster")

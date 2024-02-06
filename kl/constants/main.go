@@ -26,8 +26,6 @@ var (
 		return os.Getenv("BASE_URL") + "/api/"
 	}()
 
-	ConsoleUrl = fmt.Sprint("https://console.", prefix, "kloudlite.io")
-
 	ServerURL = func() string {
 		if os.Getenv("BASE_URL") == "" {
 			return fmt.Sprint("https://auth.", prefix, "kloudlite.io/api/")

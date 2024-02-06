@@ -2,6 +2,7 @@ package vpn
 
 import (
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -16,12 +17,17 @@ var reconnectVerbose bool
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "restart vpn device",
-	Long: `This command let you restart vpn device.
-Example:
-  # restart vpn device
-  sudo kl vpn restart
-	`,
+	Long: fn.Desc(`# restart vpn device
+sudo {cmd} vpn start`),
 	Run: func(_ *cobra.Command, _ []string) {
+
+		if runtime.GOOS != "linux" {
+			if err := connect(connectVerbose); err != nil {
+				fn.Notify("Error:", err.Error())
+				fn.PrintError(err)
+			}
+			return
+		}
 
 		if euid := os.Geteuid(); euid != 0 {
 			fn.Log(
@@ -49,7 +55,7 @@ Example:
 			fn.Log("[#] disconnected")
 		}
 		fn.Log("[#] connecting")
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Second * 2)
 
 		if err := startConnecting(reconnectVerbose); err != nil {
 			fn.PrintError(err)

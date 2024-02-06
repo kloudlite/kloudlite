@@ -156,7 +156,7 @@ func EnsureEnv(env *client.Env, options ...fn.Option) (*client.Env, error) {
 		return env, nil
 	}
 
-	return nil, errors.New("please select an environment using 'kl switch env'")
+	return nil, errors.New("please select an environment using 'kl use env'")
 
 	// mEnv, err := SelectEnv(func() string {
 	// 	if env != nil {
