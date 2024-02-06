@@ -154,9 +154,13 @@ func (d *domain) CreateManagedResource(ctx ResourceContext, mres entities.Manage
 	mres.ProjectName = ctx.ProjectName
 	mres.EnvironmentName = ctx.EnvironmentName
 
-	mres.Spec.ResourceName = fmt.Sprintf("env-%s-%s", ctx.EnvironmentName, mres.Name)
+	mres.Spec.ResourceName = genMresResourceName(ctx.EnvironmentName, mres.Name)
 
 	return d.createAndApplyManagedResource(ctx, &mres)
+}
+
+func genMresResourceName(envName string, mresName string) string {
+	return fmt.Sprintf("env-%s-%s", envName, mresName)
 }
 
 func (d *domain) createAndApplyManagedResource(ctx ResourceContext, mres *entities.ManagedResource) (*entities.ManagedResource, error) {
