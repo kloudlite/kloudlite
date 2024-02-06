@@ -52,6 +52,7 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
+	BaseUrl      string          `json:"baseUrl"`
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
@@ -244,6 +245,30 @@ func GetDeviceContext() (*DeviceContext, error) {
 	return &contexts, nil
 }
 
+func SaveBaseURL(url string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.BaseUrl = url
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
+}
+
+func GetBaseURL() (string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return "", err
+	}
+
+	return extraData.BaseUrl, nil
+}
+
 func SaveExtraData(extraData *ExtraData) error {
 	file, err := yaml.Marshal(extraData)
 	if err != nil {
@@ -391,24 +416,4 @@ func ReadFile(name string) ([]byte, error) {
 	}
 
 	return file, nil
-}
-
-func IsLoading() (bool, error) {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return false, err
-	}
-
-	return extraData.Loading, nil
-}
-
-func SetLoading(loading bool) error {
-	extraData, err := GetExtraData()
-	if err != nil {
-		return err
-	}
-
-	extraData.Loading = loading
-
-	return SaveExtraData(extraData)
 }

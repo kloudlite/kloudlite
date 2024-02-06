@@ -89,7 +89,7 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return "", err
 	}
 	if s == "" {
-		return "", errors.New("no account selected, please select an account using 'kl switch account'")
+		return "", errors.New("no account selected, please select an account using 'kl use account'")
 	}
 
 	return s, nil

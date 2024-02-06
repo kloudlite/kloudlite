@@ -1,30 +1,55 @@
-# Kloudlite CLI `kl`
+# Kloudlite CLI `kl` & `kli`
 
-This CLI help you to work with kloudlite using your terminal.
+kl and kli are the cli for kloudlite. where kl is the cli for the developers to work with environments and kli is the cli for the infrastructure team to work with kloudlite.
 
 ### Installation
 
 To install the latest version in Linux or Mac you can run the following command on terminal.
 
-##### Install latest with curl
+#### Installation of kl
+
+###### Install latest with curl
 ```sh
-curl https://i.jpillora.com/kloudlite/kl! | bash
+curl https://kl.kloudlite.io/kloudlite/kl! | bash
 ```
 
-##### Install latest with wget
+###### Install latest with wget
 
 ```sh
-wget -qO- https://i.jpillora.com/kloudlite/kl! | bash
+wget -qO- https://kl.kloudlite.io/kloudlite/kl! | bash
 ```
 
-##### Install specific version
+###### Install specific version
 ```sh
-curl https://i.jpillora.com/kloudlite/kl@v1.0.0! | bash
+curl https://kl.kloudlite.io/kloudlite/kl@v1.0.0! | bash
 ```
 
-##### download but don't install
+###### download but don't install
 ```sh
-curl https://i.jpillora.com/kloudlite/kl | bash
+curl https://kl.kloudlite.io/kloudlite/kl | bash
+```
+
+#### Installation of kli
+
+###### Install latest with curl
+```sh
+curl 'https://kl.kloudlite.io/kloudlite/kl!?source=kli' | bash
+```
+
+###### Install latest with wget
+
+```sh
+wget -qO- 'https://kl.kloudlite.io/kloudlite/kl!?source=kli' | bash
+```
+
+###### Install specific version
+```sh
+curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?source=kli' | bash
+```
+
+###### download but don't install
+```sh
+curl 'https://kl.kloudlite.io/kloudlite/kl?source=kli' | bash
 ```
 
 ### Authentication
@@ -163,6 +188,9 @@ kl -- printenv # will print all the environments
 ```
 
 
+## Working with kli
+kli is the cli for the infrastructure team to work with kloudlite.
+visit [kli](./docs/kli.md) for more details.
 
 > This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the CLI will be updated to this doc.
 

@@ -29,20 +29,30 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 
 	switch flags.CliName {
 	case constants.CoreCliName:
+		envName := fn.GetOption(options, "envName")
+		if envName != "" {
+			en, err := client.CurrentEnv()
+			if err == nil {
+				if en.Name != "" && en.Name != envName {
+					if err := server.UpdateDeviceEnv(options...); err != nil {
+						return err
+					}
+				}
+			}
+		}
 
 	case constants.InfraCliName:
 		clusterName := fn.GetOption(options, "clusterName")
 		if clusterName != "" {
-			if clusterName == "" {
-				var err error
-				clusterName, err = client.CurrentClusterName()
-				if err != nil {
+
+			cn, err := client.CurrentClusterName()
+			if err != nil {
+				return err
+			}
+			if cn != "" && cn != clusterName {
+				if err := server.UpdateDeviceClusterName(clusterName); err != nil {
 					return err
 				}
-			}
-
-			if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-				return err
 			}
 
 			time.Sleep(2 * time.Second)
@@ -65,20 +75,40 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 
 	switch flags.CliName {
 	case constants.CoreCliName:
-		if device.Spec.ActiveNamespace == "" {
-			return errors.New(fmt.Sprintf("no environment selected for the device %s, please select a environment using '%s env switch'\n", devName, flags.CliName))
+		envName := fn.GetOption(options, "envName")
+		projectName := fn.GetOption(options, "projectName")
+
+		if envName != "" {
+			if envName != "" {
+				en, err := client.CurrentEnv()
+				if err == nil {
+					envName = en.Name
+				}
+			}
+
+			opt := []fn.Option{}
+			if projectName != "" {
+				opt = append(opt, fn.MakeOption("projectName", projectName))
+			}
+			opt = append(opt, fn.MakeOption("envName", envName))
+
+			if device.EnvName == "" || device.EnvName != envName {
+				if err := server.UpdateDeviceEnv(opt...); err != nil {
+					return err
+				}
+				time.Sleep(2 * time.Second)
+			}
 		}
 
 	case constants.InfraCliName:
 		clusterName := fn.GetOption(options, "clusterName")
-		if clusterName != "" {
-			break
-		}
 
-		if s, err := client.CurrentClusterName(); err != nil {
-			return err
-		} else {
-			clusterName = s
+		if clusterName == "" {
+			if s, err := client.CurrentClusterName(); err != nil {
+				return err
+			} else {
+				clusterName = s
+			}
 		}
 
 		if device.ClusterName == "" || (device.ClusterName != clusterName) {
