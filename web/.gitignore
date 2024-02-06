@@ -27,6 +27,9 @@ public/**
 !public/package.json
 .tmp
 
+out
+.firebase
+
 storybook-dist
 
 tsconfig-compile.tsbuildinfo
