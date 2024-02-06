@@ -137,6 +137,8 @@ type Mutation {
     infra_createHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease @isLoggedInAndVerified @hasAccount
     infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_deletePV(clusterName: String!, pvName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 type EncodedValue {
