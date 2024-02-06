@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/kloudlite/api/pkg/errors"
@@ -22,7 +22,6 @@ import (
 	"github.com/kloudlite/api/constants"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
-	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
@@ -94,12 +93,12 @@ var Module = fx.Module("app",
 
 				clusterName := c.Query("cluster_name")
 				if clusterName == "" {
-					return errors.New("query param (cluster_name) must be provided")
+					return c.Status(http.StatusBadRequest).JSON(map[string]any{"error": "query param (cluster_name) must be provided"})
 				}
 
 				trackingId := c.Query("tracking_id")
 				if trackingId == "" {
-					return errors.New("query param (tracking_id) must be provided")
+					return c.Status(http.StatusBadRequest).JSON(map[string]any{"error": "query param (tracking_id) must be provided"})
 				}
 
 				can, err := iamCli.Can(c.Context(), &iam.CanIn{
@@ -114,38 +113,20 @@ var Module = fx.Module("app",
 				}
 
 				if !can.Status {
-					return &fiber.Error{Code: http.StatusUnauthorized, Message: errors.NewEf(err, "unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName).Error()}
+					return &fiber.Error{Code: http.StatusUnauthorized, Message: fmt.Sprintf("unauthorized to view metrics for resources belonging to account (%s)", cc.AccountName)}
 				}
 
 				metricType := c.Params("metric_type")
 
-				st := c.Query("start_time")
-				et := c.Query("end_time")
-
-				var startTime *time.Time
-				var endTime *time.Time
-
-				if st != "" {
-					st, err := strconv.ParseInt(st, 10, 64)
-					if err != nil {
-						return errors.NewE(err)
-					}
-					startTime = fn.New(time.Unix(st, 0))
-				}
-
-				if et != "" {
-					et, err := strconv.ParseInt(et, 10, 64)
-					if err != nil {
-						return errors.NewE(err)
-					}
-					endTime = fn.New(time.Unix(et, 0))
-				}
+				st := c.Query("start_time", fmt.Sprintf("%d", time.Now().Add(-3*time.Hour).Unix()))
+				et := c.Query("end_time", fmt.Sprintf("%d", time.Now().Unix()))
+				step := c.Query("step", "5m")
 
 				return queryProm(ev.PromHttpAddr, PromMetricsType(metricType), map[string]string{
 					"kl_account_name": cc.AccountName,
 					"kl_cluster_name": clusterName,
 					"kl_tracking_id":  trackingId,
-				}, startTime, endTime, c.Response().BodyWriter())
+				}, st, et, step, c.Response().BodyWriter())
 			})
 		},
 	),
