@@ -418,12 +418,12 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.Newf("delete nodepool first, aborting cluster deletion")
 	}
 
-	pvCount, err := d.nodePoolRepo.Count(ctx, filter)
+	pvCount, err := d.pvRepo.Count(ctx, filter)
 	if err != nil {
 		return errors.NewE(err)
 	}
 	if pvCount != 0 {
-		return errors.Newf("delete nodepool first, aborting cluster deletion")
+		return errors.Newf("delete pvs first, aborting cluster deletion")
 	}
 
 	ucluster, err := d.clusterRepo.Patch(
