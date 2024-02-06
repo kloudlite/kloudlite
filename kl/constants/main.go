@@ -2,46 +2,36 @@ package constants
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/kloudlite/kl/flags"
+	"github.com/kloudlite/kl/domain/client"
+)
+
+const (
+	DefaultBaseURL = "https://auth.kloudlite.io"
 )
 
 var (
-	prefix = flags.BasePrefix
+	BaseURL = func() string {
+		baseUrl := DefaultBaseURL
+
+		s, err := client.GetBaseURL()
+		if err == nil && s != "" {
+			baseUrl = s
+		}
+
+		return baseUrl
+	}()
 
 	LoginUrl = func() string {
-		if os.Getenv("BASE_URL") == "" {
-			return fmt.Sprint("https://auth.", prefix, "kloudlite.io/cli-login")
-		}
-
-		return os.Getenv("BASE_URL") + "/cli-login"
+		return fmt.Sprintf("%s/cli-login", BaseURL)
 	}()
-
-	BaseURL = func() string {
-		if os.Getenv("BASE_URL") == "" {
-			return fmt.Sprint("https://auth.", prefix, "kloudlite.io")
-		}
-
-		return os.Getenv("BASE_URL") + "/api/"
-	}()
-
-	ConsoleUrl = fmt.Sprint("https://console.", prefix, "kloudlite.io")
 
 	ServerURL = func() string {
-		if os.Getenv("BASE_URL") == "" {
-			return fmt.Sprint("https://auth.", prefix, "kloudlite.io/api/")
-		}
-
-		return os.Getenv("BASE_URL") + "/api/"
+		return fmt.Sprintf("%s/api/", BaseURL)
 	}()
 
 	UpdateURL = func() string {
-		if os.Getenv("Update_URL") == "" {
-			return "https://i.jpillora.com/kloudlite/kl"
-		}
-
-		return os.Getenv("Update_URL")
+		return "https://kl.kloudlite.io/kloudlite/kl"
 	}()
 )
 

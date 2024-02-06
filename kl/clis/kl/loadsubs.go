@@ -3,6 +3,7 @@ package kl
 import (
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/get"
+	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
 	"github.com/kloudlite/kl/cmd/status"
 	"github.com/spf13/cobra"
 
@@ -33,6 +34,7 @@ func init() {
 
 	rootCmd.AddCommand(use.Cmd)
 	rootCmd.AddCommand(runner.InitCommand)
+	rootCmd.AddCommand(set_base_url.Cmd)
 
 	rootCmd.AddCommand(add.Command)
 
