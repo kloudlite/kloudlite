@@ -11,6 +11,7 @@ jobs:
         # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
         goos: [linux, windows, darwin]
         goarch: ["386", amd64, arm64]
+        binary_name: ["kl", "kli"]
         exclude:
           - goarch: "386"
             goos: darwin
@@ -21,17 +22,6 @@ jobs:
     - name: Extract tag name
       id: tag_name
       run: echo "::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}"
-    - name: Determine CLI to Build
-      id: determine_cli
-      run: |
-        if [[ "${{ github.repository }}" == "kloudlite/kl" ]]; then
-          echo "::set-output name=CLI_TO_BUILD::kl"
-        elif [[ "${{ github.repository }}" == "kloudlite/kli" ]]; then
-          echo "::set-output name=CLI_TO_BUILD::kli"
-        else
-          echo "Repo name does not match expected values."
-          exit 1
-        fi
     - uses: wangyoucao577/go-release-action@v1.30
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -39,7 +29,6 @@ jobs:
         goarch: ${{ matrix.goarch }}
         goversion: "https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz"
         project_path: "."
-        ldflags: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ steps.determine_cli.outputs.CLI_TO_BUILD }}"
-        binary_name: ${{ steps.determine_cli.outputs.CLI_TO_BUILD }}
+        ldflags: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.binary_name }}"
+        binary_name: ${{ matrix.binary_name }}
         extra_files: LICENSE README.md
-
