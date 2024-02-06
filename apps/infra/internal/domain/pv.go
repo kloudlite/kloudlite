@@ -38,6 +38,7 @@ func (d *domain) ListPVs(ctx InfraContext, clusterName string, search map[string
 }
 
 func (d *domain) DeletePV(ctx InfraContext, clusterName string, pvName string) error {
+	// FIXME: (IAM role binding for DeletePV)
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteNodepool); err != nil {
 		return errors.NewE(err)
 	}
