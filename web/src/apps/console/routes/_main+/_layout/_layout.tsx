@@ -38,7 +38,6 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
-  WireGuardlogo,
 } from '@jengaicons/react';
 import HandleProfile from './handle-profile';
 
@@ -200,7 +199,7 @@ const Console = () => {
 
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
-  const devicesMenu = useHandleFromMatches('devicesMenu', null);
+  const _devicesMenu = useHandleFromMatches('devicesMenu', null);
 
   const headerExtra = useHandleFromMatches('headerExtra', null);
 
@@ -236,7 +235,7 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {/*{!!devicesMenu && devicesMenu()}*/}
+            {/* {!!devicesMenu && devicesMenu()} */}
             {!!headerExtra && headerExtra()}
             <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
           </div>
