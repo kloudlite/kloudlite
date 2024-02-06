@@ -45,6 +45,12 @@ Examples:
 				return
 			}
 
+			envs, err := server.ListEnvs(fn.MakeOption("projectName", p.Metadata.Name))
+			if err != nil {
+				fn.PrintError(err)
+				return
+			}
+
 			// prj, err := server.EnsureProject(
 			// 	[]fn.Option{
 			// 		fn.MakeOption("accountName", aName),
@@ -55,19 +61,29 @@ Examples:
 			// 	fn.PrintError(err)
 			// 	return
 			// }
-
+			defEnv := ""
+			if len(envs) != 0 {
+				defEnv = envs[0].Metadata.Name
+			}
 			initFile = &client.KLFileType{
-				Version: "v1",
-				Project: fmt.Sprintf("%s/%s", acc, p.Metadata.Name),
-				Mres:    make([]client.ResType, 0),
-				Configs: make([]client.ResType, 0),
-				Secrets: make([]client.ResType, 0),
-				Env:     []client.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
+				Version:    "v1",
+				Project:    fmt.Sprintf("%s/%s", acc, p.Metadata.Name),
+				DefaultEnv: defEnv,
+				Mres:       make([]client.ResType, 0),
+				Configs:    make([]client.ResType, 0),
+				Secrets:    make([]client.ResType, 0),
+				Env:        []client.EnvType{{Key: "SAMPLE_ENV", Value: "sample_value"}},
 				FileMount: client.MountType{
 					MountBasePath: "./.mounts",
 					Mounts:        make([]client.FileEntry, 0),
 				},
 			}
+			if defEnv == "" {
+				fn.Warn("No environment found for the project, Please create environments from dashboard\n")
+			} else {
+				fn.Log("Default env set to: ", defEnv)
+			}
+
 		} else {
 			fn.Log("file already present \n")
 		}

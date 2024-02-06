@@ -25,7 +25,6 @@ var (
 	LoginUrl = func() string {
 		return fmt.Sprintf("%s/cli-login", BaseURL)
 	}()
-
 	ServerURL = func() string {
 		return fmt.Sprintf("%s/api/", BaseURL)
 	}()

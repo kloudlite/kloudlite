@@ -54,18 +54,18 @@ func (h *handler) StartListener() {
 
 				case ns.OpenAccountSettings:
 					{
-						ac, err := client.GetMainCtx()
-						if err != nil {
-							fn.Println(err)
-							fn.Alert("Open account settings failed", err.Error())
-						}
+						//ac, err := client.GetMainCtx()
+						//if err != nil {
+						//	fn.Println(err)
+						//	fn.Alert("Open account settings failed", err.Error())
+						//}
 
-						if err := open.Run(fmt.Sprintf("%s/%s/%s",
-							constants.ConsoleUrl, ac.AccountName, "settings"),
-						); err != nil {
-							fn.Println(err)
-							fn.Alert("Open account settings failed", err.Error())
-						}
+						//if err := open.Run(fmt.Sprintf("%s/%s/%s",
+						//	constants.ConsoleUrl, ac.AccountName, "settings"),
+						//); err != nil {
+						//	fn.Println(err)
+						//	fn.Alert("Open account settings failed", err.Error())
+						//}
 
 					}
 

@@ -14,7 +14,7 @@ func connect(verbose bool, options ...fn.Option) error {
 	success := false
 	defer func() {
 		if !success {
-			wg_vpn.StopService(verbose)
+			_ = wg_vpn.StopService(verbose)
 		}
 	}()
 

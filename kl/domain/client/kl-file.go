@@ -43,13 +43,14 @@ type MountType struct {
 }
 
 type KLFileType struct {
-	Version   string    `json:"version"`
-	Project   string    `json:"project"`
-	Mres      []ResType `json:"mres"`
-	Configs   []ResType `json:"configs"`
-	Secrets   []ResType `json:"secrets"`
-	Env       []EnvType `json:"env"`
-	FileMount MountType `json:"fileMount"`
+	Version    string    `json:"version"`
+	DefaultEnv string    `json:"defaultEnv"`
+	Project    string    `json:"project"`
+	Mres       []ResType `json:"mres"`
+	Configs    []ResType `json:"configs"`
+	Secrets    []ResType `json:"secrets"`
+	Env        []EnvType `json:"env"`
+	FileMount  MountType `json:"fileMount"`
 }
 
 const (
