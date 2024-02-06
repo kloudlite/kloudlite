@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"encoding/base64"
-
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/domain"
@@ -222,6 +221,19 @@ func (r *mutationResolver) InfraDeleteHelmRelease(ctx context.Context, clusterNa
 	}
 	if err := r.Domain.DeleteHelmRelease(ictx, clusterName, releaseName); err != nil {
 		return false, err
+	}
+	return true, nil
+}
+
+// InfraDeletePv is the resolver for the infra_deletePV field.
+func (r *mutationResolver) InfraDeletePv(ctx context.Context, clusterName string, pvName string) (bool, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.Domain.DeletePV(ictx, clusterName, pvName); err != nil {
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }

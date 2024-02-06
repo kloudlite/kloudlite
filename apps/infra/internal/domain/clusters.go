@@ -405,6 +405,27 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 		return errors.NewE(err)
 	}
 
+	filter := repos.Filter{
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: name,
+	}
+
+	npCount, err := d.nodePoolRepo.Count(ctx, filter)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	if npCount != 0 {
+		return errors.Newf("delete nodepool first, aborting cluster deletion")
+	}
+
+	pvCount, err := d.pvRepo.Count(ctx, filter)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	if pvCount != 0 {
+		return errors.Newf("delete pvs first, aborting cluster deletion")
+	}
+
 	ucluster, err := d.clusterRepo.Patch(
 		ctx,
 		repos.Filter{
