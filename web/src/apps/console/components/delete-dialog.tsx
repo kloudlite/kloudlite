@@ -59,6 +59,7 @@ const DeleteDialog = ({
                 setInputName(target.value);
               }}
               disabled={loading}
+              autoComplete="off"
             />
           </div>
         </div>
