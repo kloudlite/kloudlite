@@ -39,9 +39,9 @@ func ExecUpdateCmd(version string) error {
 	curlAvailable := isCommandAvailable("curl")
 	wgetAvailable := isCommandAvailable("wget")
 	if curlAvailable {
-		cmd = exec.Command("bash", "-c", fmt.Sprintf("curl %s%s! | bash", constants.UpdateURL, version))
+		cmd = exec.Command("bash", "-c", fmt.Sprintf("curl '%s%s!?source=%s' | bash", constants.UpdateURL, version, constants.InfraCliName))
 	} else if wgetAvailable {
-		cmd = exec.Command("bash", "-c", fmt.Sprintf("wget -qO - %s%s! | bash", constants.UpdateURL, version))
+		cmd = exec.Command("bash", "-c", fmt.Sprintf("wget -qO - '%s%s!?source=%s' | bash", constants.UpdateURL, version, constants.InfraCliName))
 	} else {
 		return fmt.Errorf("curl and wget not found")
 	}
