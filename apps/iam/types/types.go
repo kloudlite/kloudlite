@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type ResourceType string
 
@@ -147,4 +150,13 @@ const (
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {
 	return fmt.Sprintf("%s/%s/%s", accountName, resourceType, resourceName)
+}
+
+func ParseResourceRef(rref string) (accountName, resourceType, resourceName string, err error) {
+	sp := strings.SplitN(rref, "/", 3)
+	if len(sp) != 3 {
+		return "", "", "", fmt.Errorf("invalid resource ref %s", rref)
+	}
+
+	return sp[0], sp[1], sp[2], nil
 }
