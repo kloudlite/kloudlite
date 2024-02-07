@@ -29,6 +29,7 @@ import { TopBar } from '~/components/organisms/top-bar';
 import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
+import tailwindBase from '~/design-system/tailwind-base.js';
 import { isDev } from '../client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
 
@@ -171,15 +172,20 @@ const Root = ({
         <div
           id="loadOverlay"
           style={{
-            backgroundColor: '#777',
+            backgroundColor: tailwindBase.theme.colors.surface.basic.default,
             position: 'absolute',
             top: '0px',
             left: '0px',
             width: '100vw',
             height: '100vh',
             zIndex: '2000',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
-        />
+        >
+          Loading...
+        </div>
 
         {/* <Loading progress={transition} /> */}
         <script

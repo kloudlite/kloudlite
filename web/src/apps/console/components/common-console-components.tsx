@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
+import { cn } from '~/components/utils';
 
 interface IDeleteContainer {
   title: ReactNode;
@@ -34,13 +35,19 @@ export const BoxPrimitive = ({ children }: IBoxPrimitive) => {
 
 interface IBox extends IBoxPrimitive {
   title: ReactNode;
+  className?: string;
 }
 
-export const Box = ({ children, title }: IBox) => {
+export const Box = ({ children, title, className }: IBox) => {
   return (
-    <div className="rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ">
+    <div
+      className={cn(
+        'rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ',
+        className
+      )}
+    >
       <div className="text-text-strong headingLg">{title}</div>
-      <div className="flex flex-col gap-3xl">{children}</div>
+      <div className="flex flex-col gap-3xl flex-1">{children}</div>
     </div>
   );
 };
