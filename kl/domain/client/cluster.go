@@ -12,7 +12,7 @@ func CurrentClusterName() (string, error) {
 	}
 
 	if mc.ClusterName == "" {
-		return "", errors.New("please select a cluster using \"kl use cluster\"")
+		return "", errors.New("please select a cluster using \"kli use cluster\"")
 	}
 
 	return mc.ClusterName, nil
