@@ -113,11 +113,11 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, name string) (*entities.Consol
 
 	clusterName, err := d.getClusterFromDevice(ctx, device)
 	if err != nil {
-		return nil, errors.NewE(err)
+		return device, nil
 	}
 
 	if device.WireguardConfigs == nil || device.WireguardConfigs[clusterName].Value == "" {
-		return nil, errors.Newf("no wireguard configs found")
+		return device, nil
 	}
 
 	device.WireguardConfig = device.WireguardConfigs[clusterName]
