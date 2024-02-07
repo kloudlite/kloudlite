@@ -15,6 +15,7 @@ import {
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { generatePlainColor } from './color-generator';
 import Pulsable from './pulsable';
 import { logsMockData } from '../dummy/data';
@@ -404,13 +405,15 @@ const LogBlock = ({
   const [showAll, setShowAll] = useState(true);
 
   const ref = useRef(null);
-  // const listRef = useRef(null);
 
   useEffect(() => {
-    console.log('data', ref.current);
-
     (async () => {
-      if (follow && ref.current) {
+      if (
+        follow &&
+        ref.current &&
+        // @ts-ignore
+        typeof ref.current.scrollToIndex === 'function'
+      ) {
         // @ts-ignore
         ref.current.scrollToIndex({
           index: data.length - 1,
@@ -550,10 +553,12 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
   let wsclient: Promise<sock.w3cwebsocket>;
 
   const [socState, setSocState] = useState<sock.w3cwebsocket | null>(null);
+  const [subscribed, setSubscribed] = useState(false);
 
   if (typeof window !== 'undefined') {
     try {
       wsclient = new Promise<sock.w3cwebsocket>((res, rej) => {
+        let rejected = false;
         try {
           // eslint-disable-next-line new-cap
           const w = new sock.w3cwebsocket(
@@ -582,6 +587,9 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
               }
 
               if (m.type === 'info') {
+                if (m.message === 'subscribed to logs') {
+                  setSubscribed(true);
+                }
                 console.log(m.message);
                 return;
               }
@@ -611,19 +619,18 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
           };
 
           w.onopen = () => {
-            // console.log('socket connected');
             res(w);
           };
 
           w.onerror = (e) => {
             console.error(e);
-            rej(e);
+            if (!rejected) {
+              rejected = true;
+              rej(e);
+            }
           };
 
-          w.onclose = () => {
-            // wsclient.send(newMessage({ event: 'unsubscribe', data: 'test' }));
-            // logger.log('socket disconnected');
-          };
+          w.onclose = () => {};
         } catch (e) {
           rej(e);
         }
@@ -633,49 +640,26 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
     }
   }
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // const client = await wsclient.;
-        // 'wss://auth-vision.devc.kloudlite.io/logs'
+  useDebounce(
+    () => {
+      (async () => {
+        try {
+          if (account === '' || cluster === '' || trackingId === '') {
+            return () => {};
+          }
 
-        if (account === '' || cluster === '' || trackingId === '') {
-          return () => {};
-        }
+          if (logs.length) {
+            setLogs([]);
+          }
+          setIsLoading(true);
 
-        if (logs.length) {
-          setLogs([]);
-        }
-        setIsLoading(true);
+          const client = await wsclient;
 
-        const client = await wsclient;
-        console.log('client', client);
+          setSocState(client);
 
-        setSocState(client);
-
-        client.send(
-          JSON.stringify({
-            event: 'subscribe',
-            data: {
-              account,
-              cluster,
-              trackingId,
-            },
-          })
-        );
-      } catch (e) {
-        console.error(e);
-        setLogs([]);
-        setError((e as Error).message);
-      }
-
-      return () => {
-        (async () => {
-          if (!socState) return;
-
-          socState.send(
+          client.send(
             JSON.stringify({
-              event: 'unsubscribe',
+              event: 'subscribe',
               data: {
                 account,
                 cluster,
@@ -683,19 +667,43 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
               },
             })
           );
-
-          // client.close();
-
+        } catch (e) {
+          console.error(e);
           setLogs([]);
-        })();
-      };
-    })();
-  }, [account, cluster, trackingId, url]);
+          setError((e as Error).message);
+        }
+
+        return () => {
+          (async () => {
+            if (!socState) return;
+
+            socState.send(
+              JSON.stringify({
+                event: 'unsubscribe',
+                data: {
+                  account,
+                  cluster,
+                  trackingId,
+                },
+              })
+            );
+
+            // client.close();
+
+            setLogs([]);
+          })();
+        };
+      })();
+    },
+    1000,
+    [account, cluster, trackingId, url]
+  );
 
   return {
     logs,
     error,
     isLoading,
+    subscribed,
   };
 };
 
@@ -744,7 +752,7 @@ const LogComp = ({
     }
   }, [fullScreen]);
 
-  const { logs, error, isLoading } = useSocketLogs(websocket);
+  const { logs, error, isLoading, subscribed } = useSocketLogs(websocket);
 
   const [isClientSide, setIsClientSide] = useState(false);
 
@@ -759,12 +767,22 @@ const LogComp = ({
       <div
         className={classNames(className, {
           'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
+          relative: !fullScreen,
         })}
         style={{
           width: fullScreen ? '100%' : width,
           height: fullScreen ? '100vh' : height,
         }}
       >
+        {subscribed && logs.length === 0 && (
+          <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex justify-center items-center inset-0 rounded-md">
+            <div className="text-text-on-primary bodyXl-medium">
+              Connected to logs stream, and waiting for the logs to be
+              generated.
+            </div>
+          </div>
+        )}
+
         {error ? (
           <pre>{error}</pre>
         ) : (

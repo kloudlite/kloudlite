@@ -1,38 +1,9 @@
 /* eslint-disable react/no-unused-prop-types */
 import ApexCharts from 'apexcharts';
+import { type ApexOptions } from 'apexcharts';
 import { useEffect, useRef } from 'react';
 
-export interface ChartProps {
-  height?: string;
-  width?: string;
-  options: {
-    chart: {
-      height: number;
-      type: string;
-    };
-    series: {
-      name: string;
-      data: number[];
-    }[];
-    dataLabels: {
-      enabled: boolean;
-    };
-    stroke: {
-      curve: string;
-    };
-    tooltip: {
-      x: {
-        format: string;
-      };
-    };
-    xaxis: {
-      type: 'category' | 'numeric' | 'logarithmic' | 'datetime';
-      categories: (number | string)[];
-    };
-  };
-}
-
-const ChartServer = ({ options }: ChartProps) => {
+const ChartServer = ({ options }: { options: ApexOptions }) => {
   const ref = useRef(null);
 
   useEffect(() => {

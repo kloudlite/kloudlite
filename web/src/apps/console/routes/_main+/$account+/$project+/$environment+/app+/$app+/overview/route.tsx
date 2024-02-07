@@ -1,110 +1,151 @@
 import { useOutletContext } from '@remix-run/react';
 import axios from 'axios';
-import { useEffect } from 'react';
 import Chart from '~/console/components/charts/charts-client';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import { useState } from 'react';
+import { dayjs } from '~/components/molecule/dayjs';
+import { parseValue } from '~/console/page-components/util';
+import { ApexOptions } from 'apexcharts';
 import { IAppContext } from '../route';
 
 const Overview = () => {
   const { app, project } = useOutletContext<IAppContext>();
-  useEffect(() => {
-    (async () => {
-      try {
-        const resp = await axios({
-          url: `https://observe.dev.kloudlite.io/observability/metrics/memory?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
-          method: 'GET',
-          withCredentials: true,
-        });
+  const [cpuData, setCpuData] = useState<number[]>([]);
+  const [memoryData, setMemoryData] = useState<number[]>([]);
 
-        console.log(resp);
-      } catch (err) {
-        console.error(err);
-      }
-    })();
-  }, []);
+  useDebounce(
+    () => {
+      (async () => {
+        try {
+          const resp = await axios({
+            url: `https://observe.dev.kloudlite.io/observability/metrics/cpu?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
+            method: 'GET',
+            withCredentials: true,
+          });
+
+          setCpuData(resp?.data?.data?.result[0]?.values || []);
+        } catch (err) {
+          console.error(err);
+        }
+      })();
+      (async () => {
+        try {
+          const resp = await axios({
+            url: `https://observe.dev.kloudlite.io/observability/metrics/memory?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
+            method: 'GET',
+            withCredentials: true,
+          });
+
+          setMemoryData(resp?.data?.data?.result[0]?.values || []);
+        } catch (err) {
+          console.error(err);
+        }
+      })();
+    },
+    1000,
+    []
+  );
+
+  const chartOptions: ApexOptions = {
+    chart: {
+      type: 'area',
+      zoom: {
+        enabled: false,
+      },
+      toolbar: {
+        show: false,
+      },
+      redrawOnWindowResize: true,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      curve: 'smooth',
+    },
+  };
 
   return (
-    <div className="flex gap-6xl items-center h-[30rem]">
-      <div className="flex-1">
+    <div className="flex gap-6xl items-center h-[30rem] my-6xl">
+      <div className="flex-1 h-full">
         <Chart
+          title="CPU Usage"
           options={{
+            ...chartOptions,
             series: [
               {
-                name: 'series1',
-                data: [31, 40, 28, 51, 42, 109, 100],
-              },
-              {
-                name: 'series2',
-                data: [11, 32, 45, 32, 34, 52, 41],
+                color: '#1D4ED8',
+                name: 'CPU',
+                data: cpuData,
               },
             ],
-            chart: {
-              height: 350,
-              type: 'area',
+            tooltip: {
+              x: {
+                formatter: (val) => dayjs(val * 1000).format('dd/MM/yy HH:mm'),
+              },
+              y: {
+                formatter(val) {
+                  return `${val.toFixed(2)} m`;
+                },
+              },
             },
-            dataLabels: {
-              enabled: false,
-            },
-            stroke: {
-              curve: 'smooth',
+            yaxis: {
+              min: 0,
+              max: parseValue(app.spec.containers[0].resourceCpu?.max, 0),
+
+              floating: false,
+              labels: {
+                formatter: (val) => `${val} m`,
+              },
             },
             xaxis: {
               type: 'datetime',
-              categories: [
-                '2018-09-19T00:00:00.000Z',
-                '2018-09-19T01:30:00.000Z',
-                '2018-09-19T02:30:00.000Z',
-                '2018-09-19T03:30:00.000Z',
-                '2018-09-19T04:30:00.000Z',
-                '2018-09-19T05:30:00.000Z',
-                '2018-09-19T06:30:00.000Z',
-              ],
-            },
-            tooltip: {
-              x: {
-                format: 'dd/MM/yy HH:mm',
+              labels: {
+                formatter(_, timestamp) {
+                  return dayjs((timestamp || 0) * 1000).format('hh:mm A');
+                },
               },
             },
           }}
         />
       </div>
-      <div className="flex-1">
+      <div className="flex-1 h-full">
         <Chart
+          title="Memory Usage"
           options={{
+            ...chartOptions,
             series: [
               {
-                name: 'series1',
-                data: [31, 40, 28, 51, 42, 109, 100],
-              },
-              {
-                name: 'series2',
-                data: [11, 32, 45, 32, 34, 52, 41],
+                color: '#1D4ED8',
+                name: 'Memory',
+                data: memoryData,
               },
             ],
-            chart: {
-              height: 350,
-              type: 'area',
-            },
-            dataLabels: {
-              enabled: false,
-            },
-            stroke: {
-              curve: 'smooth',
-            },
-            xaxis: {
-              type: 'datetime',
-              categories: [
-                '2018-09-19T00:00:00.000Z',
-                '2018-09-19T01:30:00.000Z',
-                '2018-09-19T02:30:00.000Z',
-                '2018-09-19T03:30:00.000Z',
-                '2018-09-19T04:30:00.000Z',
-                '2018-09-19T05:30:00.000Z',
-                '2018-09-19T06:30:00.000Z',
-              ],
+            yaxis: {
+              min: 0,
+              max: parseValue(app.spec.containers[0].resourceMemory?.max, 0),
+
+              floating: false,
+              labels: {
+                formatter: (val) => `${val} MB`,
+              },
             },
             tooltip: {
               x: {
-                format: 'dd/MM/yy HH:mm',
+                formatter: (val) => dayjs(val * 1000).format('dd/MM/yy HH:mm'),
+              },
+              y: {
+                formatter(val) {
+                  return `${val.toFixed(2)} MB`;
+                },
+              },
+            },
+            xaxis: {
+              type: 'datetime',
+              labels: {
+                formatter(_, timestamp) {
+                  return dayjs((timestamp || 0) * 1000).format('hh:mm A');
+                },
               },
             },
           }}
