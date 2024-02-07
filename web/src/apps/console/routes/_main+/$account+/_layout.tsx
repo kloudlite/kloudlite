@@ -1,7 +1,5 @@
 import {
-  ArrowCounterClockwise,
   ArrowsCounterClockwise,
-  CaretDownFill,
   ChevronUpDown,
   Copy,
   GearSix,
@@ -18,7 +16,7 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
@@ -29,25 +27,23 @@ import {
   IAccount,
   IAccounts,
 } from '~/console/server/gql/queries/account-queries';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 
 import {
   ensureAccountClientSide,
   ensureAccountSet,
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import MenuSelect from '~/console/components/menu-select';
+import MenuSelect, { SelectItem } from '~/console/components/menu-select';
 import { BreadcrumButtonContent } from '~/console/utils/commons';
 import OptionList from '~/components/atoms/option-list';
 import { IConsoleDevicesForUser } from '~/console/server/gql/queries/console-vpn-queries';
 import { Button, IconButton } from '~/components/atoms/button';
 import HandleConsoleDevices, {
-  QRCodeView,
   ShowWireguardConfig,
   decodeConfig,
   switchEnvironment,
 } from '~/console/page-components/handle-console-devices';
-import Profile from '~/components/molecule/profile';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
@@ -59,14 +55,42 @@ const AccountMenu = ({ account }: { account: IAccount }) => {
   const accounts = useDataFromMatches<IAccounts>('accounts', {});
   const { account: accountName } = useParams();
   const navigate = useNavigate();
+  const [acc, setAcc] = useState<
+    { label: string; value: string; render?: () => ReactNode }[]
+  >([]);
+
+  useEffect(() => {
+    setAcc([
+      ...accounts.map((acc) => ({
+        label: acc.displayName,
+        value: parseName(acc),
+      })),
+      {
+        label: 'create new team',
+        value: 'newteam',
+        render: () => (
+          <SelectItem
+            className="!flex-row items-center !text-text-primary border-t border-border-default"
+            value="newteam"
+          >
+            <div className="flex flex-row items-center gap-xl">
+              <Plus size={16} /> create new team
+            </div>{' '}
+          </SelectItem>
+        ),
+      },
+    ]);
+  }, [accounts]);
+
   return (
     <MenuSelect
       value={accountName}
-      items={accounts.map((acc) => ({
-        label: acc.displayName,
-        value: parseName(acc),
-      }))}
+      items={acc}
       onChange={(value) => {
+        if (value === 'newteam') {
+          navigate('/new-team');
+          return;
+        }
         navigate(`/${value}/projects`);
       }}
       trigger={

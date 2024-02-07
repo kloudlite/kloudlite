@@ -11,13 +11,10 @@ interface ISelectItem {
   active?: boolean;
 }
 
-const SelectItem = React.forwardRef<HTMLDivElement, ISelectItem>(
+export const SelectItem = React.forwardRef<HTMLDivElement, ISelectItem>(
   ({ children, className, ...props }, forwardedRef) => {
     return (
       <Select.Item
-        onClick={(e) => {
-          console.log(e);
-        }}
         className={cn(
           'group relative flex flex-row gap-xl items-center bodyMd gap cursor-pointer select-none py-lg px-xl text-text-default outline-none transition-colors focus:bg-surface-basic-hovered hover:bg-surface-basic-hovered data-[disabled]:pointer-events-none data-[disabled]:text-text-disabled data-[state=checked]:bg-surface-basic-active',
           className
@@ -37,6 +34,7 @@ interface IMenuSelect {
   items: {
     label: ReactNode;
     value: string;
+    render?: () => ReactNode;
   }[];
   onChange?: (value: string) => void;
   onClick?: (value: string) => void;
@@ -83,15 +81,13 @@ const MenuSelect = ({
                 >
                   {items.map((item) => (
                     <div key={item.value} onClick={() => onClick?.(item.value)}>
-                      <SelectItem key={item.value} value={item.value}>
-                        <div
-                          onClick={() => {
-                            console.log('clicked');
-                          }}
-                        >
-                          {item.label}
-                        </div>
-                      </SelectItem>
+                      {item.render ? (
+                        item.render()
+                      ) : (
+                        <SelectItem key={item.value} value={item.value}>
+                          <div>{item.label}</div>
+                        </SelectItem>
+                      )}
                     </div>
                   ))}
                 </Select.Viewport>
