@@ -41,10 +41,6 @@ sudo {cmd} vpn start`),
 
 		options := []fn.Option{}
 
-		if b := cmd.Flags().Changed("no-dns"); b {
-			options = append(options, fn.MakeOption("noDns", "yes"))
-		}
-
 		switch flags.CliName {
 		case constants.CoreCliName:
 			envName := fn.ParseStringFlag(cmd, "env")
@@ -124,31 +120,16 @@ sudo {cmd} vpn start`),
 }
 
 func startConnecting(verbose bool, options ...fn.Option) error {
-	// success := false
-
-	// defer func() {
-	// 	time.Sleep(200 * time.Millisecond)
-	// 	if !success {
-	// 		_ = wg_vpn.StopService(verbose)
-	// 	}
-	// }()
-
-	// if err := wg_vpn.StartServiceInBg(devName, configFolder); err != nil {
-	// 	return err
-	// }
 
 	if err := connect(verbose, options...); err != nil {
 		return err
 	}
 
-	// success = true
 	return nil
 }
 
 func init() {
 	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
-	startCmd.Flags().BoolP("skip-dns", "s", false, "do not update dns")
-
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
 
 	switch flags.CliName {
