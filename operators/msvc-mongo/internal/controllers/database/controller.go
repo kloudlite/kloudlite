@@ -114,17 +114,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-// type MsvcMeta struct {
-// 	Name      string
-// 	Namespace string
-// }
-//
-// func getMsvcMeta(res *crdsv1.ManagedResource) MsvcMeta {
-// 	return MsvcMeta{
-// 		Name:      res.Spec.ResourceTemplate.MsvcRef.Namespace,
-// 		Namespace: res.Spec.ResourceTemplate.MsvcRef.Name,
-// 	}
-// }
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
@@ -307,11 +296,11 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			},
 		)
 		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
+			return req.CheckFailed(DBUserReady, check, err.Error())
 		}
 
 		if _, err := r.yamlClient.ApplyYAML(ctx, b2); err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error())
+			return req.CheckFailed(DBUserReady, check, err.Error())
 		}
 
 		mctx, cancel := r.newMongoContext(ctx)
@@ -320,6 +309,11 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		if err != nil {
 			return req.CheckFailed(DBUserReady, check, err.Error())
 		}
+
+		if err := mongoCli.Ping(mctx); err != nil {
+			return req.CheckFailed(DBUserReady, check, err.Error())
+		}
+
 		defer mongoCli.Close()
 
 		exists, err := mongoCli.UserExists(ctx, mresOutput.DbName, obj.Name)
