@@ -19,7 +19,7 @@ var Cmd = &cobra.Command{
 	Run: func(_ *cobra.Command, _ []string) {
 
 		if u, err := server.GetCurrentUser(); err == nil {
-			fn.Logf("\nLogged in as %s (%s)\n\n",
+			fn.Logf("\nLogged in as %s (%s)\n",
 				text.Blue(u.Name),
 				text.Blue(u.Email),
 			)

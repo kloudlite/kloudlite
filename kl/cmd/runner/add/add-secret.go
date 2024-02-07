@@ -160,13 +160,13 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 
 		if matchedKeyIndex == -1 {
 			klFile.Secrets[matchedGroupIndex].Env = append(klFile.Secrets[matchedGroupIndex].Env, client.ResEnvType{
-				Key: func() string {
+				Key: RenameKey(func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
 						return kk[1]
 					}
 					return selectedSecretKey.Key
-				}(),
+				}()),
 				RefKey: selectedSecretKey.Key,
 			})
 		}
@@ -175,13 +175,13 @@ func selectAndAddSecret(cmd *cobra.Command, args []string) error {
 			Name: selectedSecretGroup.Metadata.Name,
 			Env: []client.ResEnvType{
 				{
-					Key: func() string {
+					Key: RenameKey(func() string {
 						if m != "" {
 							kk := strings.Split(m, "=")
 							return kk[1]
 						}
 						return selectedSecretKey.Key
-					}(),
+					}()),
 					RefKey: selectedSecretKey.Key,
 				},
 			},

@@ -57,7 +57,6 @@ sudo {cmd} vpn start`),
 				if !os.IsNotExist(err) {
 					envName = klFile.DefaultEnv
 				}
-
 			}
 			projectName := fn.ParseStringFlag(cmd, "project")
 			options = append(options, fn.MakeOption("projectName", projectName))

@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 type DevicePort struct {
@@ -47,8 +48,9 @@ const (
 
 func GetDevice(options ...fn.Option) (*Device, error) {
 	devName := fn.GetOption(options, "deviceName")
+	accountName := fn.GetOption(options, "accountName")
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(fn.MakeOption("accountName", accountName))
 	if err != nil {
 		return nil, err
 	}
@@ -67,13 +69,13 @@ func GetDevice(options ...fn.Option) (*Device, error) {
 	}
 }
 
-func GetDeviceName(devName string) (*CheckName, error) {
+func GetDeviceName(devName string, accName string) (*CheckName, error) {
 	_, err := EnsureAccount()
 	if err != nil {
 		return nil, err
 	}
 
-	cookie, err := getCookie()
+	cookie, err := getCookie(fn.MakeOption("accountName", accName))
 	if err != nil {
 		return nil, err
 	}
@@ -222,34 +224,37 @@ func DeleteDevicePort(ports []DevicePort) error {
 
 func EnsureDevice(options ...fn.Option) (string, error) {
 	devName := fn.GetOption(options, "deviceName")
-	fmt.Println("devName: ", devName)
+	accName := fn.GetOption(options, "accountName")
 	if devName == "" {
 		currDevName, _ := client.CurrentDeviceName()
 		if currDevName != "" {
 			devName = currDevName
 		}
 	}
-	fmt.Println("devName: ", devName)
 
 	if devName != "" {
-		dev, err := GetDevice(fn.MakeOption("deviceName", devName))
+
+		dev, err := GetDevice([]fn.Option{
+			fn.MakeOption("deviceName", devName),
+			fn.MakeOption("accountName", accName),
+		}...)
 
 		if err == nil {
 			return dev.Metadata.Name, nil
 		}
-
-		if err != nil {
-			devName = ""
-		}
 	}
-	fmt.Println("devName: ", devName)
-	var err error
-	devName, err = os.Hostname()
+
+	deviceDisplayName, err := os.Hostname()
 	if err != nil {
 		return "", err
 	}
 
-	devResult, err := GetDeviceName(devName)
+	devResult, err := GetDeviceName(func() string {
+		if devName != "" {
+			return devName
+		}
+		return deviceDisplayName
+	}(), accName)
 	if err != nil {
 		return "", err
 	}
@@ -270,7 +275,7 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 		return "", err
 	}
 
-	fn.Logf("Device created: %s", dev.Metadata.Name)
+	fn.Logf(text.Yellow("[#] device created: %s"), dev.Metadata.Name)
 	client.WriteDeviceContext(dev.Metadata.Name)
 
 	return dev.Metadata.Name, nil

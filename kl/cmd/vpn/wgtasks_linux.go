@@ -1,10 +1,13 @@
 package vpn
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/kloudlite/kl/pkg/wg_vpn"
 
 	"github.com/kloudlite/kl/domain/client"
@@ -32,7 +35,11 @@ func connect(verbose bool, options ...fn.Option) error {
 	}
 
 	// TODO: handle this error later
-	_ = wg_vpn.StartService(devName, verbose)
+	if err = wg_vpn.StartService(devName, verbose); err != nil {
+		if verbose {
+			fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
+		}
+	}
 
 	if err := startConfiguration(verbose, options...); err != nil {
 		return err

@@ -52,7 +52,7 @@ This command will add secret entry references from current environement to your 
 					Name: mres.Metadata.Name,
 					Env: []client.ResEnvType{
 						{
-							Key:    fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey),
+							Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
 							RefKey: *mresKey,
 						},
 					},
@@ -65,7 +65,7 @@ This command will add secret entry references from current environement to your 
 			for i, rt := range kt.Mres {
 				if rt.Name == mres.Metadata.Name {
 					kt.Mres[i].Env = append(kt.Mres[i].Env, client.ResEnvType{
-						Key:    fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey),
+						Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
 						RefKey: *mresKey,
 					})
 					matchedMres = true
@@ -78,7 +78,7 @@ This command will add secret entry references from current environement to your 
 					Name: mres.Metadata.Name,
 					Env: []client.ResEnvType{
 						{
-							Key:    fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey),
+							Key:    RenameKey(fmt.Sprintf("%s_%s", mres.Metadata.Name, *mresKey)),
 							RefKey: *mresKey,
 						},
 					},
