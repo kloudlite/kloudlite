@@ -88,6 +88,8 @@ descheduler:
 
 clusterAutoscaler:
   enabled: true
+  configuration:
+    chartVersion: ""
 
 vectorAgent:
   enabled: true

@@ -8,7 +8,7 @@ metadata:
 spec:
   chartRepoURL: https://kloudlite.github.io/helm-charts
   chartName: "kloudlite-autoscalers"
-  chartVersion: {{ include "image-tag" .}}
+  chartVersion: {{ .Values.clusterAutoscaler.configuration.chartVersion | default ( include "image-tag" .)}}
   jobVars:
     tolerations:
       - operator: Exists
