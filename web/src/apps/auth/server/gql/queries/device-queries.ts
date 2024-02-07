@@ -111,6 +111,7 @@ export const vpnQueries = (executor: IExecutor) => ({
           }
           clusterName
           projectName
+          environmentName
           spec {
             activeNamespace
             disabled
