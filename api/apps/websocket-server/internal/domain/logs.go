@@ -242,54 +242,56 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 				continue
 			}
 
-			if err := jc.Consume(
-				func(msg *types.ConsumeMsg) error {
-					if c != nil {
-						var resp MessageResponse
-						if err := json.Unmarshal(msg.Payload, &resp); err != nil {
-							if err := writeError(c, err); err != nil {
-								log.Warnf("websocket write: %w", err)
-							}
-						}
-						resp.Type = MessageTypeLog
-						sp := strings.Split(msg.Subject, ".")
-						resp.Spec = &MsgSpec{
-							PodName:       sp[len(sp)-2],
-							ContainerName: sp[len(sp)-1],
-						}
-						if err := c.WriteJSON(resp); err != nil {
-							log.Warnf("websocket write: %w", err)
-						}
-					}
-
-					return nil
-				},
-				types.ConsumeOpts{
-					OnError: func(err error) error {
-						if err := writeError(c, err); err != nil {
-							log.Warnf("websocket write: %w", err)
-						}
-
-						return err
-					},
-				},
-			); err != nil {
-				if err := writeError(c, err); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-
-				continue
-			}
-
-			if err := writeInfo(c, "subscribed to logs"); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
-
 			resources[hash] = &Subscription{
 				resource: msg.Data,
 				jc:       jc,
 				open:     true,
 			}
+
+			go func() {
+
+				if err := writeInfo(c, "subscribed to logs"); err != nil {
+					log.Warnf("websocket write: %w", err)
+				}
+
+				if err := jc.Consume(
+					func(msg *types.ConsumeMsg) error {
+						if c != nil {
+							var resp MessageResponse
+							if err := json.Unmarshal(msg.Payload, &resp); err != nil {
+								if err := writeError(c, err); err != nil {
+									log.Warnf("websocket write: %w", err)
+								}
+							}
+							resp.Type = MessageTypeLog
+							sp := strings.Split(msg.Subject, ".")
+							resp.Spec = &MsgSpec{
+								PodName:       sp[len(sp)-2],
+								ContainerName: sp[len(sp)-1],
+							}
+							if err := c.WriteJSON(resp); err != nil {
+								log.Warnf("websocket write: %w", err)
+							}
+						}
+
+						return nil
+					},
+					types.ConsumeOpts{
+						OnError: func(err error) error {
+							if err := writeError(c, err); err != nil {
+								log.Warnf("websocket write: %w", err)
+							}
+
+							return err
+						},
+					},
+				); err != nil {
+					if err := writeError(c, err); err != nil {
+						log.Warnf("websocket write: %w", err)
+					}
+				}
+
+			}()
 
 		case "unsubscribe":
 			if _, ok := resources[hash]; !ok {
