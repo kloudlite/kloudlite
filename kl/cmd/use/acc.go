@@ -4,6 +4,7 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +38,8 @@ var accCmd = &cobra.Command{
 			fn.PrintError(err)
 			return
 		}
+
+		fn.Logf("%s %s", text.Blue(text.Bold("\nSelected Account:")), acc.Metadata.Name)
 	},
 }
 

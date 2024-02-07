@@ -108,7 +108,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 	}
 
 	if len(items) == 0 {
-		return fmt.Errorf("no %ss created yet on server", cOrs)
+		return fmt.Errorf("no %ss created yet on server ", cOrs)
 	}
 
 	selectedItem := server.ConfigORSecret{}
@@ -186,7 +186,7 @@ func selectConfigMount(path string, klFile client.KLFileType, cmd *cobra.Command
 		return err
 	}
 
-	fn.Log("Mount added to config")
+	fn.Log("added mount to your kl-file")
 	return nil
 }
 

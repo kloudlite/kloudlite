@@ -32,11 +32,10 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		envName := fn.GetOption(options, "envName")
 		if envName != "" {
 			en, err := client.CurrentEnv()
-			if err == nil {
-				if en.Name != "" && en.Name != envName {
-					if err := server.UpdateDeviceEnv(options...); err != nil {
-						return err
-					}
+
+			if (err == nil && en.Name != envName) || (err != nil && envName != "") {
+				if err := server.UpdateDeviceEnv(options...); err != nil {
+					return err
 				}
 			}
 		}
@@ -44,7 +43,6 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 	case constants.InfraCliName:
 		clusterName := fn.GetOption(options, "clusterName")
 		if clusterName != "" {
-
 			cn, err := client.CurrentClusterName()
 			if err != nil {
 				return err
@@ -78,26 +76,28 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		envName := fn.GetOption(options, "envName")
 		projectName := fn.GetOption(options, "projectName")
 
-		if envName != "" {
-			if envName != "" {
-				en, err := client.CurrentEnv()
-				if err == nil {
-					envName = en.Name
-				}
+		if envName == "" {
+			en, err := client.CurrentEnv()
+			if err == nil && en.Name != "" {
+				envName = en.Name
 			}
+		}
 
-			opt := []fn.Option{}
-			if projectName != "" {
-				opt = append(opt, fn.MakeOption("projectName", projectName))
+		if projectName == "" {
+			pn, err := client.CurrentProjectName()
+			if err == nil && pn != "" {
+				projectName = pn
 			}
-			opt = append(opt, fn.MakeOption("envName", envName))
+		}
 
-			if device.EnvName == "" || device.EnvName != envName {
-				if err := server.UpdateDeviceEnv(opt...); err != nil {
-					return err
-				}
-				time.Sleep(2 * time.Second)
+		if (envName != "" && device.EnvName != envName) || (projectName != "" && device.ProjectName != projectName) {
+			if err := server.UpdateDeviceEnv([]fn.Option{
+				fn.MakeOption("envName", envName),
+				fn.MakeOption("projectName", projectName),
+			}...); err != nil {
+				return err
 			}
+			time.Sleep(2 * time.Second)
 		}
 
 	case constants.InfraCliName:

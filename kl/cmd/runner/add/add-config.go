@@ -3,15 +3,31 @@ package add
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
+	"github.com/kloudlite/kl/pkg/ui/text"
 
 	"github.com/spf13/cobra"
 )
+
+func RenameKey(key string) string {
+	regexPattern := `[^a-zA-Z0-9]`
+
+	regexpCompiled, err := regexp.Compile(regexPattern)
+	if err != nil {
+		fn.Log(text.Yellow(fmt.Sprintf("[#] error compiling regex pattern: %s", regexPattern)))
+		return key
+	}
+
+	resultString := regexpCompiled.ReplaceAllString(key, "_")
+
+	return strings.ToUpper(resultString)
+}
 
 var confCmd = &cobra.Command{
 	Use:   "config",
@@ -161,13 +177,13 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 
 		if matchedKeyIndex == -1 {
 			klFile.Configs[matchedGroupIndex].Env = append(klFile.Configs[matchedGroupIndex].Env, client.ResEnvType{
-				Key: func() string {
+				Key: RenameKey(func() string {
 					if m != "" {
 						kk := strings.Split(m, "=")
 						return kk[1]
 					}
 					return selectedConfigKey.Key
-				}(),
+				}()),
 				RefKey: selectedConfigKey.Key,
 			})
 		}
@@ -176,13 +192,13 @@ func selectAndAddConfig(cmd *cobra.Command, args []string) error {
 			Name: selectedConfigGroup.Metadata.Name,
 			Env: []client.ResEnvType{
 				{
-					Key: func() string {
+					Key: RenameKey(func() string {
 						if m != "" {
 							kk := strings.Split(m, "=")
 							return kk[1]
 						}
 						return selectedConfigKey.Key
-					}(),
+					}()),
 					RefKey: selectedConfigKey.Key,
 				},
 			},

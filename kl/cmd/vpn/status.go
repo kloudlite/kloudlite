@@ -62,7 +62,7 @@ Example:
 				fn.Log(text.Blue(fmt.Sprintf("%d:%d\t", v.Port, v.TargetPort)))
 			}
 		} else {
-			fn.Warn(fmt.Sprintf("no ports exposed, you can expose ports using `%s vpn expose` command", flags.CliName))
+			fn.Warn(fmt.Sprintf("[#] no ports exposed, you can expose ports using `%s vpn expose` command", flags.CliName))
 		}
 
 	},
