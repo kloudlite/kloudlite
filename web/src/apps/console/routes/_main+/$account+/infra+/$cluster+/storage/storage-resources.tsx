@@ -16,7 +16,6 @@ import { IPvs } from '~/console/server/gql/queries/pv-queries';
 import { CircleFill, Database, Trash } from '@jengaicons/react';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useState } from 'react';
-import DeleteDialog from '~/console/components/delete-dialog';
 
 const RESOURCE_NAME = 'storage';
 type BaseType = ExtractNodeType<IPvs>;

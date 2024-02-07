@@ -10,8 +10,8 @@ import { handleError } from '~/root/lib/utils/common';
 import { useState } from 'react';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { validateCloudProvider } from '~/console/server/r-utils/common';
-import { IdSelector } from '~/console/components/id-selector';
 import ProgressWrapper from '~/console/components/progress-wrapper';
+import { NameIdView } from '~/console/components/name-id-view';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -27,6 +27,7 @@ const NewCloudProvider = () => {
       name: '',
       provider: providers[0],
       awsAccountId: '',
+      isNameError: false,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
@@ -35,6 +36,7 @@ const NewCloudProvider = () => {
         label: Yup.string().required(),
         value: Yup.string().required(),
       }).required(),
+      awsAccountId: Yup.string().required('AccountId is required.'),
     }),
     onSubmit: async (val) => {
       const addProvider = async () => {
@@ -95,24 +97,16 @@ const NewCloudProvider = () => {
             the internet.
           </div>
           <div className="flex flex-col">
-            <TextInput
-              label="Name"
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              value={values.displayName}
-              name="provider-secret-name"
-              size="lg"
-            />
-            <IdSelector
-              name={values.displayName}
+            <NameIdView
+              nameErrorLabel="isNameError"
               resType="providersecret"
-              onChange={(id) => {
-                handleChange('name')({ target: { value: id } });
-              }}
-              className="pt-xl"
+              displayName={values.displayName}
+              name={values.name}
+              label="Name"
+              placeholder="Enter provider name"
+              errors={errors.name}
+              handleChange={handleChange}
             />
-
             <div className="flex flex-col gap-3xl pt-3xl">
               <Select
                 error={!!errors.provider}

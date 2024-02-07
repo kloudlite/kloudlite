@@ -7,6 +7,7 @@ import {
   ListBody,
   ListItem,
   ListTitle,
+  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -157,7 +158,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
         const tempStatus = listStatus({
           key: keyPrefix,
           item,
-          className: 'basis-full text-center',
+          className: 'text-center',
         });
 
         return (
@@ -190,6 +191,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                 ),
               },
               tempStatus,
+              listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, `${provider}`),
                 className: 'min-w-[150px] text-start',
