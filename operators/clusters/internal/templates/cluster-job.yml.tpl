@@ -78,7 +78,7 @@ spec:
 
             if [ "{{$action}}" = "delete" ]; then
               terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log
-              kubectl delete secret -n {{$kubeconfigSecretNamespace}} {{$kubeconfigSecretName}} --ignore-not-found=true
+              kubectl delete secret/{{$kubeconfigSecretName}} -n {{$kubeconfigSecretNamespace}} --ignore-not-found=true
             else
               terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
