@@ -5,7 +5,7 @@ import Anser from 'anser';
 import classNames from 'classnames';
 import Fuse from 'fuse.js';
 import hljs from 'highlight.js';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, memo, useEffect, useRef, useState } from 'react';
 import { ViewportList } from 'react-viewport-list';
 import * as sock from 'websocket';
 import { dayjs } from '~/components/molecule/dayjs';
@@ -25,6 +25,7 @@ const hoverClassDark = `hover:bg-[#333]`;
 
 type ILog = {
   pod_name: string;
+  container_name: string;
   message: string;
   timestamp: string;
 };
@@ -46,6 +47,48 @@ interface IHighlightIt {
   className?: string;
   enableHL?: boolean;
 }
+
+const LoadingComp = memo(() => (
+  <Pulsable isLoading>
+    <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md">
+      <div className="flex flex-col w-full">
+        <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
+          <div>Logs</div>
+
+          <div className="flex items-center gap-xl">
+            <div className="flex gap-xl items-center text-sm">
+              <div className="pulsable">
+                <input
+                  className="bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
+                  placeholder="Search"
+                />
+              </div>
+              <div className="cursor-pointer active:translate-y-[1px] transition-all">
+                <span className={classNames('font-medium pulsable', {})}>
+                  <List color="currentColor" size={16} />
+                </span>
+              </div>
+              <code className={classNames('text-xs font-bold pulsable', {})}>
+                00 matches
+              </code>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col p-3xl gap-md">
+          {Array.from({ length: 20 }).map((_, i) => {
+            const log = logsMockData[Math.floor(Math.random() * 10)];
+            return (
+              <div className="flex gap-3xl" key={`${i + log}`}>
+                <div className="w-xl pulsable" />
+                <div className="pulsable">{log}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  </Pulsable>
+));
 
 const getHashId = (str: string) => {
   let hash = 0;
@@ -286,7 +329,8 @@ interface ILogLine {
   searchText: string;
   language: string;
   lines: number;
-  hideLines?: boolean;
+  hideLineNumber?: boolean;
+  hideTimestamp?: boolean;
   log: ILogWithLineNumber & {
     searchInf?: ISearchInfProps['searchInf'];
   };
@@ -301,12 +345,15 @@ const LogLine = ({
   searchText,
   language,
   lines,
-  hideLines,
+  hideLineNumber,
+  hideTimestamp,
   dark,
 }: ILogLine) => {
   return (
     <code
-      title={`pod: ${log.pod_name}`}
+      title={`pod: ${log.pod_name} | container: ${log.container_name} | line: ${
+        log.lineNumber
+      } | timestamp: ${dayjs(`${log.timestamp}`).format('lll')}`}
       className={classNames(
         'flex py-xs items-center whitespace-pre border-b border-transparent transition-all',
         {
@@ -321,7 +368,7 @@ const LogLine = ({
         paddingRight: fontSize / 2,
       }}
     >
-      {!hideLines && (
+      {!hideLineNumber && (
         <LineNumber
           lineNumber={log.lineNumber}
           lines={lines}
@@ -335,14 +382,16 @@ const LogLine = ({
       />
 
       <div className="inline-flex gap-xl pulsable">
-        <HighlightIt
-          {...{
-            className: 'select-none',
-            inlineData: `${dayjs(log.timestamp).format('lll')} |`,
-            language: 'apache',
-            enableHL: true,
-          }}
-        />
+        {!hideTimestamp && (
+          <HighlightIt
+            {...{
+              className: 'select-none',
+              inlineData: `${dayjs(log.timestamp).format('lll')} |`,
+              language: 'apache',
+              enableHL: true,
+            }}
+          />
+        )}
 
         <FilterdHighlightIt
           {...{
@@ -368,7 +417,8 @@ interface ILogBlock {
   noScrollBar: boolean;
   fontSize: number;
   actionComponent: ReactNode;
-  hideLines: boolean;
+  hideLineNumber: boolean;
+  hideTimestamp: boolean;
   language: string;
   solid: boolean;
   dark: boolean;
@@ -384,10 +434,11 @@ const LogBlock = ({
   maxLines,
   fontSize,
   actionComponent,
-  hideLines,
+  hideLineNumber,
   language,
   solid,
   dark,
+  hideTimestamp,
 }: ILogBlock) => {
   const [searchText, setSearchText] = useState('');
 
@@ -429,7 +480,7 @@ const LogBlock = ({
       })}
     >
       <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
-        <div className="">{data ? title : 'No logs found'}</div>
+        <div>{data ? title : 'No logs found'}</div>
 
         <div className="flex items-center gap-xl">
           {actionComponent}
@@ -490,6 +541,7 @@ const LogBlock = ({
               {(log, index) => {
                 return (
                   <LogLine
+                    hideTimestamp={hideTimestamp}
                     dark={dark}
                     log={{
                       ...log,
@@ -503,7 +555,7 @@ const LogBlock = ({
                     key={getHashId(
                       `${log.message}${log.timestamp}${log.pod_name}${index}`
                     )}
-                    hideLines={hideLines}
+                    hideLineNumber={hideLineNumber}
                     selectableLines={selectableLines}
                   />
                 );
@@ -538,7 +590,8 @@ export interface IHighlightJsLog {
   fontSize?: number;
   loadingComponent?: ReactNode;
   actionComponent?: ReactNode;
-  hideLines?: boolean;
+  hideLineNumber?: boolean;
+  hideTimestamp?: boolean;
   language?: string;
   solid?: boolean;
   className?: string;
@@ -604,7 +657,8 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
                 setLogs((s) => [
                   ...s,
                   {
-                    pod_name: `${m.spec.podName}:${m.spec.containerName}`,
+                    pod_name: m.spec.podName,
+                    container_name: m.spec.containerName,
                     message: m.message,
                     timestamp: m.timestamp,
                   },
@@ -699,6 +753,22 @@ const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
     [account, cluster, trackingId, url]
   );
 
+  useEffect(() => {
+    const sorted = logs.sort((a, b) => {
+      const resp = a.pod_name.localeCompare(b.pod_name);
+
+      if (resp === 0) {
+        return dayjs(a.timestamp).unix() - dayjs(b.timestamp).unix();
+      }
+
+      return resp;
+    });
+
+    if (JSON.stringify(sorted) !== JSON.stringify(logs)) {
+      setLogs(sorted);
+    }
+  }, [logs]);
+
   return {
     logs,
     error,
@@ -719,7 +789,8 @@ const LogComp = ({
   maxLines,
   fontSize = 14,
   actionComponent = null,
-  hideLines = false,
+  hideLineNumber = false,
+  hideTimestamp = false,
   language = 'accesslog',
   solid = false,
   className = '',
@@ -752,7 +823,7 @@ const LogComp = ({
     }
   }, [fullScreen]);
 
-  const { logs, error, isLoading, subscribed } = useSocketLogs(websocket);
+  const { logs, error, subscribed } = useSocketLogs(websocket);
 
   const [isClientSide, setIsClientSide] = useState(false);
 
@@ -763,32 +834,33 @@ const LogComp = ({
   }, []);
 
   return isClientSide ? (
-    <Pulsable isLoading={isLoading}>
-      <div
-        className={classNames(className, {
-          'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
-          relative: !fullScreen,
-        })}
-        style={{
-          width: fullScreen ? '100%' : width,
-          height: fullScreen ? '100vh' : height,
-        }}
-      >
-        {subscribed && logs.length === 0 && (
-          <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex justify-center items-center inset-0 rounded-md">
-            <div className="text-text-on-primary bodyXl-medium">
-              Connected to logs stream, and waiting for the logs to be
-              generated.
-            </div>
+    <div
+      className={classNames(className, {
+        'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
+        relative: !fullScreen,
+      })}
+      style={{
+        width: fullScreen ? '100%' : width,
+        height: fullScreen ? '100vh' : height,
+      }}
+    >
+      {subscribed && logs.length === 0 && (
+        <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex justify-center items-center inset-0 rounded-md">
+          <div className="text-text-on-primary bodyXl-medium p-3xl">
+            Connected to logs stream, and waiting for the logs to be generated.
           </div>
-        )}
+        </div>
+      )}
 
-        {error ? (
-          <pre>{error}</pre>
-        ) : (
+      {!subscribed && logs.length === 0 && <LoadingComp />}
+
+      {error ? (
+        <pre>{error}</pre>
+      ) : (
+        logs.length > 0 && (
           <LogBlock
             {...{
-              data: isLoading ? logsMockData : logs,
+              data: logs,
               follow,
               dark,
               enableSearch,
@@ -822,13 +894,14 @@ const LogComp = ({
               ),
               width: fullScreen ? '100vw' : width,
               height: fullScreen ? '100vh' : height,
-              hideLines,
+              hideLineNumber,
+              hideTimestamp,
               language,
             }}
           />
-        )}
-      </div>
-    </Pulsable>
+        )
+      )}
+    </div>
   ) : (
     <div
       className={classNames(className, {

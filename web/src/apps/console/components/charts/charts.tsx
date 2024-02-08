@@ -19,7 +19,7 @@ const ChartServer = ({ options }: { options: ApexOptions }) => {
     };
   }, [ref.current, options]);
 
-  return <div ref={ref} />;
+  return <div ref={ref} className="flex items-center justify-center" />;
 };
 
 export default ChartServer;

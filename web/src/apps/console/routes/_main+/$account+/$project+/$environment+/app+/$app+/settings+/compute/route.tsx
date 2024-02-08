@@ -1,18 +1,13 @@
 import { useEffect } from 'react';
-import {
-  NumberInput,
-  PasswordInput,
-  TextInput,
-} from '~/components/atoms/input';
+import { NumberInput, TextInput } from '~/components/atoms/input';
 import Slider from '~/components/atoms/slider';
-import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 
 import { InfoLabel } from '~/console/components/commons';
-import { FadeIn, parseValue } from '~/console/page-components/util';
+import { parseValue } from '~/console/page-components/util';
 import Select from '~/components/atoms/select';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import Wrapper from '~/console/components/wrapper';

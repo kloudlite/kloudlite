@@ -193,7 +193,7 @@ const ListItem = ({ item }: { item: BaseType }) => {
             width: '100%',
             height: '40rem',
             title: 'Logs',
-            hideLines: true,
+            hideLineNumber: true,
             websocket: {
               account: parseName(account),
               cluster: item.clusterName,

@@ -11,6 +11,7 @@ const Chart = (
   props: {
     options: ApexOptions;
   } & {
+    disabled?: boolean;
     title?: string;
     height?: string;
     width?: string;
@@ -43,9 +44,19 @@ const Chart = (
           width: width || '100%',
         }}
       >
-        <Box title={title}>
-          <ChartsMain {...props} />
-        </Box>
+        <div
+          className={cn(
+            'rounded border border-border-default bg-surface-basic-default shadow-button flex flex-col',
+            className
+          )}
+        >
+          <div className="text-text-strong headingMd px-2xl pt-2xl">
+            {title}
+          </div>
+          <div className="relative">
+            <ChartsMain {...props} />
+          </div>
+        </div>
       </div>
     </Suspense>
   );

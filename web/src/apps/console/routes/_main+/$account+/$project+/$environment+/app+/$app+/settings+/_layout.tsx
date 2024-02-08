@@ -19,7 +19,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { IAppContext } from '../route';
+import { IAppContext } from '../_layout';
 
 const navItems = [
   { label: 'General', value: 'general' },

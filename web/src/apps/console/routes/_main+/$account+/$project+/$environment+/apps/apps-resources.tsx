@@ -1,14 +1,6 @@
-import {
-  DotsThreeVerticalFill,
-  GearSix,
-  LinkBreak,
-  Trash,
-  Link as LinkIcon,
-} from '@jengaicons/react';
+import { GearSix, LinkBreak, Link as LinkIcon } from '@jengaicons/react';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { IconButton } from '~/components/atoms/button';
-import { cn, generateKey, titleCase } from '~/components/utils';
-import { listRender } from '~/console/components/commons';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListSecondary,
@@ -34,7 +26,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { listStatus } from '~/console/components/sync-status';
-import { IAppContext } from '../app+/$app+/route';
+import { IAppContext } from '../app+/$app+/_layout';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;

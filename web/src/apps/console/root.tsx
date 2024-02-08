@@ -3,6 +3,7 @@ import Root, { links as baseLinks } from '~/lib/app-setup/root';
 import { ChildrenProps } from '~/components/types';
 import authStylesUrl from './styles/index.css';
 import highlightCss from './styles/hljs/tokyo-night-dark.min.css';
+import { DataContextProvider } from './page-components/common-state';
 
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';
@@ -23,7 +24,11 @@ const Layout = ({ children }: ChildrenProps) => {
 };
 
 const _Root = ({ ...props }) => {
-  return <Root {...props} Wrapper={Layout} />;
+  return (
+    <DataContextProvider>
+      <Root {...props} Wrapper={Layout} />
+    </DataContextProvider>
+  );
 };
 
 export default _Root;
