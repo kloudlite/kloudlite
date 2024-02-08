@@ -283,7 +283,7 @@ apps:
 
   klInstaller:
     image:
-      repository: ghcr.io/kloudlite/kl/installer
+      repository: ghcr.io/kloudlite/bin-installer
       tag: ""
 
   commsApi:
