@@ -267,14 +267,18 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 			"job-name":      jobName,
 			"job-namespace": jobNamespace,
-			"annotations": map[string]string{
-				annotationNodesChecksum: checksum,
-			},
 			"labels": map[string]string{
 				constants.NodePoolNameKey: obj.Name,
 				labelNodePoolApplyJob:     "true",
 				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
 			},
+			"annotations": map[string]string{
+				annotationNodesChecksum: checksum,
+			},
+			"pod-annotations": fn.MapMerge(fn.FilterObservabilityAnnotations(obj.GetAnnotations()), map[string]string{
+				constants.ObservabilityAccountNameKey: r.Env.AccountName,
+				constants.ObservabilityClusterNameKey: r.Env.ClusterName,
+			}),
 
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
