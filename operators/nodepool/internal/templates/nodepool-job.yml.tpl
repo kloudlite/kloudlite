@@ -4,7 +4,10 @@
 {{- $iacJobImage := get . "iac-job-image" }}
 
 {{- $labels := get . "labels" | default dict }} 
-{{- $annotations := get . "annotations" | default dict }} 
+{{- $annotations := get . "annotations" | default dict }}
+
+{{- $podAnnotations := get . "pod-annotations" | default dict }}
+
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $jobNodeSelector := get . "job-node-selector" }} 
@@ -25,14 +28,12 @@ metadata:
   name: {{$jobName}}
   namespace: {{$jobNamespace}}
   labels: {{$labels | toYAML | nindent 4}}
-  annotations: {{$annotations | toYAML | nindent 4}}
+  annotations: {{$annotations | toYAML | nindent 4 }}
   ownerReferences: {{$ownerRefs | toYAML| nindent 4}}
 spec:
   template:
     metadata:
-      annotations:
-        kloudlite.io/job_name: {{$jobName}}
-        kloudlite.io/job_type: nodepool-{{$action}}
+      annotations: {{$podAnnotations | toYAML | nindent 8 }}
     spec:
       tolerations:
         - effect: NoSchedule
