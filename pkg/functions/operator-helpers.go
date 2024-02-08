@@ -139,9 +139,9 @@ func RolloutRestart(c client.Client, kind Restartable, namespace string, labels 
 	return nil
 }
 
-func FilterObservabilityAnnotations(obj client.Object) map[string]string {
-	m := make(map[string]string, len(obj.GetAnnotations()))
-	for k, v := range obj.GetAnnotations() {
+func FilterObservabilityAnnotations(ann map[string]string) map[string]string {
+	m := make(map[string]string, len(ann))
+	for k, v := range ann {
 		if strings.HasPrefix(k, "kloudlite.io/observability") {
 			m[k] = v
 		}
