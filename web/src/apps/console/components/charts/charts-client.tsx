@@ -18,7 +18,7 @@ const Chart = (
     className?: string;
   }
 ) => {
-  const { height, width, className, title } = props;
+  const { height, width, className, title, disabled } = props;
   return (
     <Suspense
       fallback={
@@ -54,6 +54,12 @@ const Chart = (
             {title}
           </div>
           <div className="relative">
+            {disabled && (
+              <div className="flex absolute inset-0 justify-center items-center bg-surface-basic-default z-10 headingSm">
+                Not Available
+              </div>
+            )}
+
             <ChartsMain {...props} />
           </div>
         </div>

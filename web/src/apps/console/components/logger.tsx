@@ -845,11 +845,41 @@ const LogComp = ({
       }}
     >
       {subscribed && logs.length === 0 && (
-        <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex justify-center items-center inset-0 rounded-md">
-          <div className="text-text-on-primary bodyXl-medium p-3xl">
-            Connected to logs stream, and waiting for the logs to be generated.
+        <Pulsable isLoading>
+          <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md">
+            <div className="flex flex-col w-full">
+              <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
+                <div>Logs</div>
+
+                <div className="flex items-center gap-xl">
+                  <div className="flex gap-xl items-center text-sm">
+                    <div className="pulsable">
+                      <input
+                        className="bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
+                        placeholder="Search"
+                      />
+                    </div>
+                    <div className="cursor-pointer active:translate-y-[1px] transition-all">
+                      <span className={classNames('font-medium pulsable', {})}>
+                        <List color="currentColor" size={16} />
+                      </span>
+                    </div>
+                    <code
+                      className={classNames('text-xs font-bold pulsable', {})}
+                    >
+                      00 matches
+                    </code>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center flex-1">
+                <div className="headingMd">
+                  No logs produced in the last 3 hours.
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </Pulsable>
       )}
 
       {!subscribed && logs.length === 0 && <LoadingComp />}
