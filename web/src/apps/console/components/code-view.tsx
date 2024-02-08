@@ -9,7 +9,7 @@ interface ICodeView {
   copy: boolean;
   showShellPrompt?: boolean;
   language?: string;
-  title: string;
+  title?: string;
 }
 const CodeView = ({
   data,
@@ -45,7 +45,9 @@ const CodeView = ({
 
   return (
     <div className="flex flex-col gap-lg flex-1 min-w-[45%]">
-      <div className="bodyMd-medium text-text-default">{title}</div>
+      {!!title && (
+        <div className="bodyMd-medium text-text-default">{title}</div>
+      )}
       <div className="bodyMd text-text-strong">
         <div
           onClick={() => {
