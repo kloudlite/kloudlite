@@ -334,7 +334,7 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 
 	if pod != nil {
 		for _, v := range pod.Status.ContainerStatuses {
-			if (v.State.Waiting.Reason == "ImagePullBackOff") || (v.State.Waiting.Reason == "ErrImagePull") {
+			if (v.State.Waiting != nil && v.State.Waiting.Reason == "ImagePullBackOff") || (v.State.Waiting != nil && v.State.Waiting.Reason == "ErrImagePull") {
 				if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
 					return req.CheckFailed(installOrUpgradeJob, check, err.Error())
 				}
