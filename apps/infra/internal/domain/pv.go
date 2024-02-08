@@ -1,7 +1,9 @@
 package domain
 
 import (
+	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
+	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
@@ -33,6 +35,29 @@ func (d *domain) ListPVs(ctx InfraContext, clusterName string, search map[string
 		fields.ClusterName: clusterName,
 	}
 	return d.pvRepo.FindPaginated(ctx, d.nodePoolRepo.MergeMatchFilters(filter, search), pagination)
+}
+
+func (d *domain) DeletePV(ctx InfraContext, clusterName string, pvName string) error {
+	// FIXME: (IAM role binding for DeletePV)
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteNodepool); err != nil {
+		return errors.NewE(err)
+	}
+
+	upv, err := d.pvRepo.Patch(
+		ctx,
+		repos.Filter{
+			fields.ClusterName:  clusterName,
+			fields.AccountName:  ctx.AccountName,
+			fields.MetadataName: pvName,
+		},
+		common.PatchForMarkDeletion(),
+	)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeNodePool, upv.Name, PublishUpdate)
+	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &upv.PersistentVolume)
 }
 
 // OnPVDeleteMessage implements Domain.

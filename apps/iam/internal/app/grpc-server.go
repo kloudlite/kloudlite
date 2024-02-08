@@ -10,6 +10,7 @@ import (
 	t "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/errors"
+	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 )
@@ -42,7 +43,7 @@ func (s *GrpcService) UpdateMembership(ctx context.Context, in *iam.UpdateMember
 	rb.Role = t.Role(in.Role)
 
 	if _, err = s.rbRepo.UpdateById(ctx, rb.Id, rb); err != nil {
-	return nil, errors.NewE(err)
+		return nil, errors.NewE(err)
 	}
 
 	return &iam.UpdateMembershipOut{
@@ -111,14 +112,48 @@ func (s *GrpcService) ListMembershipsForResource(ctx context.Context, in *iam.Me
 
 func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error) {
 	if strings.HasPrefix(in.UserId, "sys-user") {
-	return &iam.CanOut{Status: true}, nil
+		return &iam.CanOut{Status: true}, nil
+	}
+
+	rb, ok := s.roleBindingMap[t.Action(in.Action)]
+	if !ok {
+		return &iam.CanOut{Status: false}, nil
+	}
+
+	var hasAccountMemberRole bool
+
+	canFilter := repos.Filter{
+		"resource_ref": map[string]any{"$in": in.ResourceRefs},
+		"user_id":      in.UserId,
+	}
+
+	for i := range rb {
+		if rb[i] == t.RoleAccountMember {
+			hasAccountMemberRole = true
+
+			rr := make([]map[string]any, 0, len(in.ResourceRefs))
+
+			for i := range in.ResourceRefs {
+				accountName, _, _, err := t.ParseResourceRef(in.ResourceRefs[i])
+				if err != nil {
+					return nil, err
+				}
+				nf := s.rbRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
+					"resource_ref": {
+						MatchType: repos.MatchTypeRegex,
+						Regex:     fn.New(t.NewResourceRef(accountName, "*", "*")),
+					},
+				})
+				rr = append(rr, map[string]any{"resource_ref": nf["resource_ref"]})
+			}
+
+			delete(canFilter, "resource_ref")
+			canFilter["$or"] = rr
+		}
 	}
 
 	rbs, err := s.rbRepo.Find(
-		ctx, repos.Query{Filter: repos.Filter{
-			"resource_ref": map[string]any{"$in": in.ResourceRefs},
-			"user_id":      in.UserId,
-		}},
+		ctx, repos.Query{Filter: canFilter},
 	)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find rolebindings for (resourceRefs=%s)", strings.Join(in.ResourceRefs, ","))
@@ -126,6 +161,10 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 
 	if rbs == nil {
 		return nil, errors.Newf("no rolebinding found for (userId=%s, resourceRefs=%s)", in.UserId, strings.Join(in.ResourceRefs, ","))
+	}
+
+	if hasAccountMemberRole && len(rbs) > 0 {
+		return &iam.CanOut{Status: true}, nil
 	}
 
 	for i := range rbs {
