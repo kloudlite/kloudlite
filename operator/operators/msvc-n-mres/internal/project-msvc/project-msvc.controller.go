@@ -191,7 +191,7 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 
 	msvc := &crdsv1.ManagedService{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Spec.TargetNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, msvc, func() error {
-		m := fn.FilterObservabilityAnnotations(obj)
+		m := fn.FilterObservabilityAnnotations(obj.GetAnnotations())
 		for k, v := range m {
 			fn.MapSet(&msvc.Annotations, k, v)
 		}
