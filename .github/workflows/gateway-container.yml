@@ -1,6 +1,11 @@
 name: build-gateway-image
 
 on:
+  workflow_run:
+    workflows: ["build-docker-images"]
+    types:
+      - completed
+
   repository_dispatch:
     types:
       - webhook
