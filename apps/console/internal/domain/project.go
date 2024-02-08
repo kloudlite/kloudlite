@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/infra"
 
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
@@ -57,6 +58,26 @@ func (d *domain) getClusterAttachedToProject(ctx K8sContext, projectName string)
 	}
 
 	return fn.New(string(clusterName)), nil
+}
+
+func (d *domain) clusterStatus(ctx ConsoleContext, projectName string) (*infra.ClusterExistsOut, error) {
+	prj, err := d.findProject(ctx, projectName)
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	clusterExistStatus, err := d.infraClient.ClusterExists(ctx, &infra.ClusterExistsIn{
+		UserId:      string(ctx.UserId),
+		UserName:    ctx.UserName,
+		UserEmail:   ctx.UserEmail,
+		AccountName: ctx.AccountName,
+		ClusterName: *prj.ClusterName,
+	})
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	return clusterExistStatus, nil
 }
 
 func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error) {
@@ -223,6 +244,26 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		return errors.Newf("unauthorized to delete project")
 	}
 
+	cluster, err := d.clusterStatus(ctx, name)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if !cluster.Exists {
+		err := d.projectRepo.DeleteOne(
+			ctx,
+			repos.Filter{
+				fields.AccountName:  ctx.AccountName,
+				fields.MetadataName: name,
+			},
+		)
+		if err != nil {
+			return errors.NewE(err)
+		}
+		d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, name, PublishDelete)
+		return nil
+	}
+
 	uproj, err := d.projectRepo.Patch(
 		ctx,
 		repos.Filter{
@@ -302,7 +343,7 @@ func (d *domain) OnProjectDeleteMessage(ctx ConsoleContext, project entities.Pro
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeApp, project.Name, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, project.Name, PublishDelete)
 	return nil
 }
 
@@ -358,7 +399,7 @@ func (d *domain) OnProjectApplyError(ctx ConsoleContext, errMsg string, name str
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeApp, uproject.Name, PublishDelete)
+	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProject, uproject.Name, PublishDelete)
 
 	return errors.NewE(err)
 }
