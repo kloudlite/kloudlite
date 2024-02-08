@@ -53,11 +53,6 @@ export const LogsProvider = ({
   url?: string;
 }) => {
   const [logs, setLogs] = useState<ISocketMessage[]>([]);
-  const [subscription, setSubscription] = useState<{
-    account: string;
-    cluster: string;
-    trackingId: string;
-  } | null>(null);
 
   const [sock, setSock] = useState<wsock.w3cwebsocket | null>(null);
   const sockPromise = useRef<Promise<wsock.w3cwebsocket> | null>(null);
@@ -185,12 +180,10 @@ export const LogsProvider = ({
           resetLogs: () => {
             setLogs([]);
           },
-          subscription,
-          setSubscription,
           subscribed,
           setSubscribed,
         };
-      }, [sock, logs])}
+      }, [sock, logs, subscribed])}
     >
       {children}
     </LogsContext.Provider>
