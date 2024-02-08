@@ -111,7 +111,6 @@ helmCharts:
     name: "vector"
     debugOnStdout: false
     nodeSelector: {}
-    tolerations: []
 
   clusterAutoscaler:
     enabled: true
