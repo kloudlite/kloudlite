@@ -20,12 +20,15 @@ func (rb *RoleBinding) Validate() error {
 	if rb.UserId == "" {
 		verr.Errors = append(verr.Errors, "user_id is required")
 	}
+
 	if rb.ResourceType == "" {
 		verr.Errors = append(verr.Errors, "resource_type is required")
 	}
+
 	if rb.ResourceRef == "" {
 		verr.Errors = append(verr.Errors, "resource_ref is required")
 	}
+
 	if rb.Role == "" {
 		verr.Errors = append(verr.Errors, "role is required")
 	}

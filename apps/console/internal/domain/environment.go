@@ -187,7 +187,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 			},
 			Spec: crdsv1.EnvironmentSpec{
 				ProjectName:     projectName,
-				TargetNamespace: fmt.Sprintf("env-%s", destinationEnvName),
+				TargetNamespace: d.getEnvironmentTargetNamespace(projectName, destinationEnvName),
 				Routing: &crdsv1.EnvironmentRouting{
 					Mode: envRoutingMode,
 				},
@@ -215,12 +215,30 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		return nil, errors.NewE(err)
 	}
 
+	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
+		UserId:       string(ctx.UserId),
+		ResourceType: string(iamT.ResourceEnvironment),
+		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, destEnv.Spec.TargetNamespace),
+		Role:         string(iamT.RoleResourceOwner),
+	}); err != nil {
+		d.logger.Errorf(err, "error while adding membership")
+	}
+
 	destEnv, err = d.environmentRepo.Create(ctx, destEnv)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	if _, err := d.upsertEnvironmentResourceMapping(ResourceContext{ConsoleContext: ctx, ProjectName: sourceEnv.ProjectName, EnvironmentName: sourceEnv.Name}, sourceEnv); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.applyK8sResource(ctx, sourceEnv.ProjectName, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: destEnv.Spec.TargetNamespace,
+		},
+	}, destEnv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -279,7 +297,7 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 
 	resourceMetadata := func(dn string) common.ResourceMetadata {
 		return common.ResourceMetadata{
-			DisplayName: fmt.Sprintf("clone of %s", dn),
+			DisplayName: dn,
 			CreatedBy: common.CreatedOrUpdatedBy{
 				UserId:    ctx.UserId,
 				UserName:  ctx.UserName,
@@ -370,11 +388,13 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 	}
 
 	for i := range managedResources {
+		spec := managedResources[i].Spec
+		spec.ResourceName = genMresResourceName(destEnv.Name, managedResources[i].Name)
 		if _, err := d.createAndApplyManagedResource(resCtx, &entities.ManagedResource{
 			ManagedResource: crdsv1.ManagedResource{
 				TypeMeta:   managedResources[i].TypeMeta,
 				ObjectMeta: objectMeta(managedResources[i].ObjectMeta, destEnv.Spec.TargetNamespace),
-				Spec:       managedResources[i].Spec,
+				Spec:       spec,
 				Enabled:    managedResources[i].Enabled,
 			},
 			AccountName:      ctx.AccountName,
@@ -384,15 +404,6 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 		}); err != nil {
 			return nil, err
 		}
-	}
-
-	if _, err := d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
-		UserId:       string(ctx.UserId),
-		ResourceType: string(iamT.ResourceEnvironment),
-		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, destEnv.Spec.TargetNamespace),
-		Role:         string(iamT.RoleResourceOwner),
-	}); err != nil {
-		d.logger.Errorf(err, "error while adding membership")
 	}
 
 	return destEnv, nil
