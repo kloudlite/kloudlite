@@ -63,7 +63,8 @@ spec:
   
   jobVars:
     backOffLimit: 1
-    tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toJson }}
+    tolerations:
+      - operator: Exists
     nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toJson }}
 
   values:
