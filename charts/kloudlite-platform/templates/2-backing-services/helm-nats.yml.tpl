@@ -29,10 +29,10 @@ spec:
         {{- end}}
 
         routeURLs:
-          user: sample
-          password: sample
+          user: {{.Values.nats.configuration.user}}
+          password: {{.Values.nats.configuration.password}}
           useFQDN: true
-          k8sClusterDomain: cluster.local
+          k8sClusterDomain: {{.Values.clusterInternalDNS}}
 
       jetstream:
         enabled: true
@@ -41,7 +41,7 @@ spec:
           dir: /data
           pvc:
             enabled: true
-            size: 10Gi
+            size: {{.Values.nats.configuration.volumeSize}}
             storageClassName: {{.Values.persistence.storageClasses.xfs}}
             name: {{$chartName}}-jetstream-pvc
 

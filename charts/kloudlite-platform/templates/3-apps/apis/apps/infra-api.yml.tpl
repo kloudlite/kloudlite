@@ -16,8 +16,8 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.infraApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.infraApi.image.repository}}:{{.Values.apps.infraApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev
@@ -73,6 +73,12 @@ spec:
 
         - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
           value: "message-office:3002"
+
+        - key: MESSAGE_OFFICE_EXTERNAL_GRPC_ADDR
+          value: message-office.{{include "router-domain" . }}:443
+
+        - key: KLOUDLITE_RELEASE
+          value: {{.Values.global.kloudlite_release}}
 
         - key: AWS_ACCESS_KEY
           value: {{.Values.aws.accessKey}}

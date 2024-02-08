@@ -1,18 +1,48 @@
 {{- define "nodepool-operator-env" -}}
 - name: CLOUD_PROVIDER_NAME
+  {{- if .Values.operators.platformOperator.configuration.nodepool.extractFromCluster }}
+  valueFrom:
+    secretKeyRef:
+      name: k3s-params
+      key: cloudprovider_name
+  {{- else }}
   value: {{ required ".Values.operators.platformOperator.configuration.nodepool.cloudProviderName must be set" .Values.operators.platformOperator.configuration.nodepool.cloudProviderName }} 
+  {{- end }}
+
 - name: CLOUD_PROVIDER_REGION
+  {{- if .Values.operators.platformOperator.configuration.nodepool.extractFromCluster }}
+  valueFrom:
+    secretKeyRef:
+      name: k3s-params
+      key: cloudprovider_region
+  {{- else }}
   value: {{ required ".Values.operators.platformOperator.configuration.nodepool.cloudProviderRegion must be set" .Values.operators.platformOperator.configuration.nodepool.cloudProviderRegion }} 
+  {{- end }}
 
 - name: "K3S_JOIN_TOKEN"
-  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.k3sJoinToken must be set" .Values.operators.platformOperator.configuration.nodepool.k3sJoinToken }} 
+  {{- if .Values.operators.platformOperator.configuration.nodepool.extractFromCluster }}
+  valueFrom:
+    secretKeyRef:
+      name: k3s-params
+      key: k3s_agent_join_token
+  {{- else }}
+  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.k3sAgentJoinToken must be set" .Values.operators.platformOperator.configuration.nodepool.k3sAgentJoinToken }} 
+  {{- end }}
 
 - name: "K3S_SERVER_PUBLIC_HOST"
-  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.k3sServerPublicHost must be set" .Values.operators.platformOperator.configuration.nodepool.k3sServerPublicHost }} 
+  {{- if .Values.operators.platformOperator.configuration.nodepool.extractFromCluster }}
+  valueFrom:
+    secretKeyRef:
+      name: k3s-params
+      key: k3s_masters_public_dns_host
+  {{- else }}
+  value: {{ required ".Values.operators.platformOperator.configuration.nodepool.k3sServerPublicHost must be set" .Values.operators.platformOperator.configuration.nodepool.k3sServerPublicHost }}
+  {{- end }}
 
-- name: "KLOUDLITE_ACCOUNT_NAME"
+
+- name: ACCOUNT_NAME
   value: {{.Values.global.accountName}}
 
-- name: KLOUDLITE_CLUSTER_NAME
+- name: CLUSTER_NAME
   value: {{.Values.global.clusterName}}
 {{- end}}

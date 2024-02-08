@@ -63,8 +63,8 @@ spec:
   
   jobVars:
     backOffLimit: 1
-    tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toJson }}
-    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.defaults.nodeSelector | toJson }}
+    tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toJson }}
+    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toJson }}
 
   values:
     role: Agent

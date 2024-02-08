@@ -1,6 +1,22 @@
 {{ if .Values.operators.agentOperator.enabled }}
 {{ $name := .Values.operators.agentOperator.name }}
+
 ---
+{{- $k3sParams := (lookup "v1" "Secret" "kube-system" "k3s-params") -}}
+
+{{- if not $k3sParams }}
+{{ fail "secret k3s-params is not present in namespace kube-system, could not proceed with helm installation" }}
+{{- end }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k3s-params
+  namespace: {{.Release.Namespace}}
+data: {{ $k3sParams.data | toYaml | nindent 2 }}
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,8 +40,8 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-      nodeSelector: {{.Values.operators.agentOperator.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-      tolerations: {{.Values.operators.agentOperator.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+      nodeSelector: {{.Values.operators.agentOperator.nodeSelector | default .Values.nodeSelector | toYaml | nindent 8}}
+      tolerations: {{.Values.operators.agentOperator.tolerations | default .Values.tolerations | toYaml | nindent 8}}
 
       {{- if .Values.preferOperatorsOnMasterNodes }}
       affinity:
@@ -78,6 +94,9 @@ spec:
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
 
+            - name: DEVICE_NAMESPACE
+              value: {{.Values.operators.agentOperator.configuration.wireguard.deviceNamespace}}
+
             - name: CLUSTER_NAME
               valueFrom:
                 secretKeyRef:
@@ -107,23 +126,32 @@ spec:
                   optional: true
 
             {{- /* for: nodepool operator */}}
-            - name: KLOUDLITE_ACCOUNT_NAME
-              value: {{.Values.accountName}}
-
-            - name: KLOUDLITE_CLUSTER_NAME
-              value: {{.Values.clusterName}}
+            - name: "IAC_JOB_IMAGE"
+              value: {{.Values.operators.agentOperator.configuration.iacJobImage.repository}}:{{.Values.operators.agentOperator.configuration.iacJobImage.tag | default (include "image-tag" .)}}
 
             - name: "K3S_JOIN_TOKEN"
-              value: {{.Values.operators.agentOperator.configuration.k3sJoinToken}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: k3s_agent_join_token
 
             - name: "K3S_SERVER_PUBLIC_HOST"
-              value: {{.Values.operators.agentOperator.configuration.k3sServerPublicHost}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: k3s_masters_public_dns_host
 
             - name: CLOUD_PROVIDER_NAME
-              value: {{.Values.operators.agentOperator.configuration.cloudProvider.name}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: cloudprovider_name
 
             - name: CLOUD_PROVIDER_REGION
-              value: {{.Values.operators.agentOperator.configuration.cloudProvider.region}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  key: cloudprovider_region
 
             {{- /* for: routers */}}
             - name: ACME_EMAIL
@@ -137,20 +165,26 @@ spec:
 
             {{- /* for buildrun */}}
             - name: BUILD_NAMESPACE
-              value: {{.Release.Namespace}}
+              value: {{.Values.jobsNamespace}}
 
             {{- /* for wireguard controller */}}
             - name: CLUSTER_POD_CIDR
-              value: {{.Values.operators.wgOperator.configuration.podCIDR}}
+              value: {{.Values.operators.agentOperator.configuration.wireguard.podCIDR}}
 
             - name: CLUSTER_SVC_CIDR
-              value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
+              value: {{.Values.operators.agentOperator.configuration.wireguard.svcCIDR}}
 
             - name: DNS_HOSTED_ZONE
-              value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
+              valueFrom:
+                secretKeyRef:
+                  name: k3s-params
+                  namespace: kloudlite
+                  key: k3s_masters_public_dns_host
 
-          image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
-          imagePullPolicy: {{.Values.operators.agentOperator.image.pullPolicy | default .Values.imagePullPolicy}}
+            {{ include "helmchart-operator-env" . | nindent 12 }}
+
+          image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default (include "image-tag" .)}}
+          imagePullPolicy: {{ include "image-pull-policy" .}}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

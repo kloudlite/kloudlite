@@ -19,16 +19,16 @@ spec:
         app: {{.Values.agent.name}}
         vector.dev/exclude: "true" # to exclude pods from being monitored by vector
     spec:
-      nodeSelector: {{.Values.agent.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-      tolerations: {{.Values.agent.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+      nodeSelector: {{.Values.agent.nodeSelector | default .Values.nodeSelector | toYaml | nindent 8}}
+      tolerations: {{.Values.agent.tolerations | default .Values.tolerations | toYaml | nindent 8}}
 
       serviceAccountName: {{include "serviceAccountName" . | quote}}
       priorityClassName: kloudlite-critical
 
       containers:
       - name: main
-        image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
-        imagePullPolicy: {{.Values.agent.image.pullPolicy | default .Values.imagePullPolicy }}
+        image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default (include "image-tag" .) }}
+        imagePullPolicy: {{ include "image-pull-policy" . }}
         env:
           - name: GRPC_ADDR
             value: {{.Values.messageOfficeGRPCAddr}}

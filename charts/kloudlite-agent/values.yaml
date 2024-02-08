@@ -25,11 +25,10 @@ svcAccountName: sa
 # -- cluster internal DNS, like 'cluster.local'
 clusterInternalDNS: "cluster.local"
 
-defaults:
-  imageTag: ""
-  imagePullPolicy: "Always"
-  tolerations: []
-  nodeSelector: {}
+# -- kloudlite release version
+kloudliteRelease: ""
+
+jobsNamespace: "kloudlite-jobs"
 
 agent:
   # -- enable/disable kloudlite agent
@@ -66,44 +65,21 @@ operators:
     nodeSelector: {}
 
     configuration:
-      cloudProvider:
-        # could be aws, do, azure etc.
-        name: ""
-        # -- cloud provider region
-        region: ""
-      k3sJoinToken: ""
-      k3sServerPublicHost: ""
       letsEncryptSupportEmail: "support@kloudlite.io"
+      iacJobImage: 
+        repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
+        tag: ""
 
-  wgOperator:
-    # -- whether to enable wg operator
-    enabled: true
-    # -- wg operator workload name
-    # @ignored
-    name: kl-wg-operator
-    # -- wg operator image and tag
-    image:
-      repository: ghcr.io/kloudlite/operator/wireguard
-      # -- image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion
-      tag: ""
-      # -- image pull policy for kloudlite wireguard operator, default is .imagePullPolicy
-      pullPolicy: ""
+      helmCharts:
+        jobImage:
+          repository: ghcr.io/kloudlite/operator/workers/helm-runner
+          tag: ""
 
-    tolerations: []
-    nodeSelector: {}
+      wireguard:
+        podCIDR: 10.42.0.0/16
+        svcCIDR: 10.43.0.0/16
 
-    # -- wireguard configuration options
-    configuration:
-      # -- cluster pods CIDR range
-      podCIDR: 10.42.0.0/16
-      # -- cluster services CIDR range
-      svcCIDR: 10.43.0.0/16
-      # -- dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com'
-      dnsHostedZone: ""
-
-      # @ignored
-      # -- enabled example wireguard server, and device
-      enableExamples: false
+        deviceNamespace: kl-vpn-devices
 
 helmCharts:
   ingressNginx:
@@ -136,3 +112,6 @@ helmCharts:
     debugOnStdout: false
     nodeSelector: {}
     tolerations: []
+
+  clusterAutoscaler:
+    enabled: true

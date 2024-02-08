@@ -94,6 +94,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -442,6 +443,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -511,12 +513,15 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .metadata.annotations.nodepool-min-target-max
-      name: Min/Target/Max
+    - jsonPath: .metadata.annotations.nodepool-min-max
+      name: Min/Max
       type: string
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled_At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/nodepool\.job-ref
+      name: JobRef
+      type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
       type: string
@@ -647,49 +652,6 @@ spec:
                 - azure
                 - gcp
                 type: string
-              iac:
-                properties:
-                  cloudProviderAccessKey:
-                    properties:
-                      key:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - key
-                    - name
-                    type: object
-                  cloudProviderSecretKey:
-                    properties:
-                      key:
-                        type: string
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - key
-                    - name
-                    type: object
-                  jobName:
-                    type: string
-                  jobNamespace:
-                    type: string
-                  stateS3BucketFilePath:
-                    type: string
-                  stateS3BucketName:
-                    type: string
-                  stateS3BucketRegion:
-                    type: string
-                required:
-                - cloudProviderAccessKey
-                - cloudProviderSecretKey
-                - stateS3BucketFilePath
-                - stateS3BucketName
-                - stateS3BucketRegion
-                type: object
               maxCount:
                 minimum: 0
                 type: integer
@@ -726,15 +688,10 @@ spec:
                   - key
                   type: object
                 type: array
-              targetCount:
-                minimum: 0
-                type: integer
             required:
             - cloudProvider
-            - iac
             - maxCount
             - minCount
-            - targetCount
             type: object
           status:
             properties:
@@ -745,6 +702,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -855,6 +813,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -963,6 +922,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -1372,6 +1332,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -1509,6 +1470,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -1638,6 +1600,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -2677,6 +2640,8 @@ spec:
                 type: string
               preUninstall:
                 type: string
+              releaseName:
+                type: string
               values:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
@@ -2697,6 +2662,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -2805,6 +2771,8 @@ spec:
           spec:
             description: ManagedResourceSpec defines the desired state of ManagedResource
             properties:
+              resourceName:
+                type: string
               resourceTemplate:
                 properties:
                   apiVersion:
@@ -2855,6 +2823,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -2985,6 +2954,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3122,6 +3092,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3188,18 +3159,15 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.accountName
-      name: AccountName
-      type: string
-    - jsonPath: .spec.clusterName
-      name: ClusterName
-      type: string
     - jsonPath: .spec.targetNamespace
       name: target-namespace
       type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -3223,19 +3191,9 @@ spec:
           spec:
             description: ProjectSpec defines the desired state of Project
             properties:
-              accountName:
-                type: string
-              clusterName:
-                type: string
-              displayName:
-                type: string
-              logo:
-                type: string
               targetNamespace:
                 type: string
             required:
-            - accountName
-            - clusterName
             - targetNamespace
             type: object
           status:
@@ -3247,6 +3205,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3440,6 +3399,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3593,6 +3553,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3777,6 +3738,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3944,6 +3906,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -4148,6 +4111,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -4548,6 +4512,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -4757,6 +4722,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5144,6 +5110,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5284,7 +5251,6 @@ spec:
                 type: string
             required:
             - msvcRef
-            - resourceName
             type: object
           status:
             properties:
@@ -5295,6 +5261,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5363,15 +5330,12 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.region
-      name: Region
-      type: string
-    - jsonPath: .spec.replicaCount
-      name: ReplicaCount
-      type: integer
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -5514,6 +5478,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5709,6 +5674,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5840,6 +5806,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6041,6 +6008,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6236,6 +6204,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6334,6 +6303,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6466,6 +6436,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6574,6 +6545,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6828,6 +6800,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6950,6 +6923,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7082,6 +7056,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7255,6 +7230,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7366,6 +7342,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7471,6 +7448,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7816,6 +7794,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -8225,7 +8204,7 @@ spec:
     listKind: DeviceList
     plural: devices
     singular: device
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.lastReconcileTime
@@ -8260,10 +8239,10 @@ spec:
           spec:
             description: DeviceSpec defines the desired state of Device
             properties:
+              activeNamespace:
+                type: string
               cnameRecords:
                 items:
-                  description: type DnsRecord struct { Host string `json:"host,omitempty"`
-                    CName string `json:"cname,omitempty"` }
                   properties:
                     host:
                       type: string
@@ -8271,8 +8250,10 @@ spec:
                       type: string
                   type: object
                 type: array
-              deviceNamespace:
-                type: string
+              disabled:
+                type: boolean
+              noExternalService:
+                type: boolean
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -8298,6 +8279,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -8490,6 +8472,7 @@ spec:
                       format: int64
                       type: integer
                     message:
+                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
