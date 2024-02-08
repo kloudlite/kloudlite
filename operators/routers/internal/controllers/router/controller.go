@@ -319,7 +319,11 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	defer req.LogPostCheck(IngressReady)
 
 	if len(obj.Spec.Routes) == 0 {
-		return req.CheckFailed(IngressReady, check, "no routes specified in ingress resource").Err(nil)
+		check.Status = true
+		fn.MapSet(&obj.Status.Checks, IngressReady, check)
+		if err := r.Status().Update(ctx, obj); err != nil {
+			return req.CheckFailed(IngressReady, check, err.Error())
+		}
 	}
 
 	wcDomains, nonWcDomains, err := r.parseAndExtractDomains(req)
