@@ -142,6 +142,16 @@ func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) 
 
 	resources := make(map[string]*Subscription)
 
+	defer func() {
+		for _, v := range resources {
+			if v.jc != nil {
+				if err := v.jc.Stop(ctx); err != nil {
+					log.Warnf("stop jetstream consumer: %w", err)
+				}
+			}
+		}
+	}()
+
 	type Message struct {
 		Event string      `json:"event"`
 		Data  LogsReqData `json:"data"`
