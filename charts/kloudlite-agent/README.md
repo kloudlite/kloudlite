@@ -108,7 +108,6 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
 | helmCharts.vector.nodeSelector | object | `{}` |  |
-| helmCharts.vector.tolerations | list | `[]` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | jobsNamespace | string | `"kloudlite-jobs"` |  |
 | kloudliteRelease | string | `""` | kloudlite release version |
