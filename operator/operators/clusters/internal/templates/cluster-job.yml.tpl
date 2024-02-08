@@ -1,6 +1,9 @@
 {{- $jobName := get . "job-name" }} 
 {{- $jobNamespace := get . "job-namespace" }} 
+
 {{- $labels := get . "labels" | default dict }} 
+{{- $podAnnotations := get . "pod-annotations" | default dict }}
+
 {{- $ownerRefs := get . "owner-refs" |default list }}
 
 {{- $serviceAccountName := get . "service-account-name" }} 
@@ -34,9 +37,7 @@ metadata:
 spec:
   template:
     metadata:
-      annotations:
-        kloudlite.io/job_name: {{$jobName}}
-        kloudlite.io/job_type: "cluster-{{$action}}"
+      annotations: {{$podAnnotations | toYAML | nindent 8 }}
     spec:
       serviceAccountName: {{$serviceAccountName}}
       containers:
