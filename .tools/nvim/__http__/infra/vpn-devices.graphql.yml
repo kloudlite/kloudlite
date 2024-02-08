@@ -2,8 +2,6 @@
 global:
   namespace: sample
   name: s1
-  namespace: sample-nxtcoder17
-  clusterName: sample-cluster2
 ---
 
 label: List VPN Devices
@@ -50,6 +48,34 @@ query: |+
       }
     }
   }
+
+---
+label: "Get VPN Device"
+query: |+
+  query Core_getVPNDevices($name: String!) {
+    core_getVPNDevice(name: $name) {
+      displayName
+      metadata {
+        name
+        }
+        clusterName
+        projectName
+        spec {
+          activeNamespace
+          disabled
+          ports {
+            port
+            targetPort
+          }
+        }
+        wireguardConfig {
+          encoding
+          value
+        }
+      }
+  }
+variables:
+  name: "baby-589403"
 
 ---
 

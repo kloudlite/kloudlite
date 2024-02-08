@@ -133,6 +133,7 @@ type Domain interface {
 	GetPV(ctx InfraContext, clusterName string, pvName string) (*entities.PersistentVolume, error)
 	OnPVUpdateMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnPVDeleteMessage(ctx InfraContext, clusterName string, pv entities.PersistentVolume) error
+	DeletePV(ctx InfraContext, clusterName string, pvName string) error
 
 	OnIngressUpdateMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress, status types.ResourceStatus, opts UpdateAndDeleteOpts) error
 	OnIngressDeleteMessage(ctx InfraContext, clusterName string, ingress networkingv1.Ingress) error
