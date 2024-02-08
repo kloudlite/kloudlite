@@ -2012,6 +2012,7 @@ export type ConsoleGetNodePoolQueryVariables = Exact<{
 
 export type ConsoleGetNodePoolQuery = {
   infra_getNodePool?: {
+    id: string;
     clusterName: string;
     creationTime: any;
     displayName: string;
@@ -2100,6 +2101,7 @@ export type ConsoleListNodePoolsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        id: string;
         clusterName: string;
         creationTime: any;
         displayName: string;
@@ -5045,6 +5047,7 @@ export type AuthCli_GetDeviceQuery = {
     displayName: string;
     clusterName?: string;
     projectName?: string;
+    environmentName?: string;
     metadata?: { name: string };
     spec?: {
       activeNamespace?: string;

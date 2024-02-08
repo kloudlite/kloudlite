@@ -4,6 +4,7 @@ import { ChildrenProps } from '~/components/types';
 import authStylesUrl from './styles/index.css';
 import highlightCss from './styles/hljs/tokyo-night-dark.min.css';
 import { DataContextProvider } from './page-components/common-state';
+import { LogsProvider } from './components/logger/useSocketLogs';
 
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';
@@ -26,7 +27,9 @@ const Layout = ({ children }: ChildrenProps) => {
 const _Root = ({ ...props }) => {
   return (
     <DataContextProvider>
-      <Root {...props} Wrapper={Layout} />
+      <LogsProvider>
+        <Root {...props} Wrapper={Layout} />
+      </LogsProvider>
     </DataContextProvider>
   );
 };

@@ -1,4 +1,4 @@
-import { PencilLine, Trash, Cpu, CircleFill } from '@jengaicons/react';
+import { PencilLine, Trash, Cpu } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -25,11 +25,17 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { Link } from '@remix-run/react';
+import { Link, useOutletContext } from '@remix-run/react';
 import { IStatus, listRender } from '~/console/components/commons';
 import { listStatus } from '~/console/components/sync-status';
+import AnimateHide from '~/components/atoms/animate-hide';
+import LogComp from '~/console/components/logger';
+import { ISetState } from '~/console/page-components/app-states';
+import { Button } from '~/components/atoms/button';
+import { dayjs } from '~/components/molecule/dayjs';
 import HandleNodePool from './handle-nodepool';
 import { findNodePlanWithCategory } from './nodepool-utils';
+import { IAccountContext } from '../../../_layout';
 
 const RESOURCE_NAME = 'nodepool';
 type BaseType = ExtractNodeType<INodepools>;
@@ -99,13 +105,19 @@ const NodePoolAvatar = ({ title }: { title: string }) => {
 };
 
 const ListDetail = (
-  props: Omit<IResource, 'items'> & { open: boolean; item: BaseType }
+  props: Omit<IResource, 'items'> & {
+    open: string;
+    item: BaseType;
+    setOpen: ISetState<string>;
+  }
 ) => {
-  const { item, open, onDelete, onEdit } = props;
+  const { item, onDelete, onEdit, open, setOpen } = props;
   const { name, id } = parseItem(item);
   const { minCount, maxCount, cloudProvider, aws } = item.spec;
   const keyPrefix = `${RESOURCE_NAME}-${id}`;
   const lR = listRender({ keyPrefix, resource: item });
+
+  const { account } = useOutletContext<IAccountContext>();
 
   const parseSize = () => {
     if (minCount === maxCount) {
@@ -164,6 +176,8 @@ const ListDetail = (
     className: 'basis-full text-center',
   });
 
+  const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex flex-row items-center">
@@ -173,13 +187,30 @@ const ListDetail = (
             subtitle={
               <div className="flex flex-row items-center gap-md">
                 {id}
-                {/*<CircleFill size={7} />*/}
-                {/*<span>Running {targetCount} nodes</span>*/}
+                {/* <CircleFill size={7} /> */}
+                {/* <span>Running {targetCount} nodes</span> */}
               </div>
             }
             avatar={<NodePoolAvatar title={id} />}
           />
         </div>
+
+        {isLatest && (
+          <Button
+            size="sm"
+            variant="basic"
+            content={open === item.id ? 'Hide Logs' : 'Show Logs'}
+            onClick={() =>
+              setOpen((s) => {
+                if (s === item.id) {
+                  return '';
+                }
+                return item.id;
+              })
+            }
+          />
+        )}
+
         <div className="flex items-center w-[20px] mx-xl flex-grow">
           {tempStatus.render()}
         </div>
@@ -191,33 +222,41 @@ const ListDetail = (
           <ListItem data={parseProviderInfo()} />
         </div>
 
-        {/* <div className="flex flex-row gap-2xl items-center pl-3xl pr-xl mr-3xl border-border-disabled border-r w-[160px] min-w-[160px]">
-          <div className="flex flex-col gap-sm">
-            <span className="bodySm text-text-soft pulsable">Expected</span>
-            <span className="bodyMd-medium pulsable">
-              {targetCount} node
-              {targetCount > 1 && 's'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-sm">
-            <span className="bodySm text-text-soft pulsable">Current</span>
-            <span className="bodyMd-medium pulsable">
-              {targetCount} node
-              {targetCount > 1 && 's'}
-            </span>
-          </div>
-        </div> */}
         <div className="pr-3xl w-[180px] min-w-[180px]">
           {lR.authorRender({ className: '' }).render()}
         </div>
+
         <ExtraButton
           onDelete={() => onDelete(item)}
           onEdit={() => onEdit(item)}
+          // onLogsToggle={() => {
+          //   setOpen((s) => {
+          //     if (s === item.id) {
+          //       return '';
+          //     }
+          //     return item.id;
+          //   });
+          // }}
           status={statusRender.status}
         />
       </div>
 
-      {/* <AnimateHide show={open}>hello</AnimateHide> */}
+      <AnimateHide show={open === item.id} className="w-full pt-4xl">
+        <LogComp
+          {...{
+            dark: true,
+            width: '100%',
+            height: '40rem',
+            title: 'Logs',
+            hideLineNumber: true,
+            websocket: {
+              account: parseName(account),
+              cluster: item.clusterName,
+              trackingId: item.id,
+            },
+          }}
+        />
+      </AnimateHide>
     </div>
   );
 };
@@ -295,7 +334,7 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
 };
 
 const ListView = ({ items, onDelete, onEdit }: IResource) => {
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useState<string>('');
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -306,32 +345,6 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            onClick={() => setOpen((prev) => (prev === id ? null : id))}
-            // columns={[
-            //   {
-            //     key: generateKey(keyPrefix, name + id),
-            //     className: 'flex-1',
-            //     render: () => (
-            //       <ListTitle
-            //         title={name}
-            //         subtitle={id}
-            //         avatar={<NodePoolAvatar title={name} />}
-            //       />
-            //     ),
-            //   },
-            //   lR.statusRender({ className: 'w-[180px]' }),
-            //   lR.authorRender({ className: 'w-[180px]' }),
-            //   {
-            //     key: generateKey(keyPrefix, 'action'),
-            //     render: () => (
-            //       <ExtraButton
-            //         onDelete={() => onDelete(item)}
-            //         onEdit={() => onEdit(item)}
-            //         onShowResourceYaml={() => onShowResourceYaml(item)}
-            //       />
-            //     ),
-            //   },
-            // ]}
             columns={[
               {
                 className: 'w-full',
@@ -339,7 +352,8 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
                 render: () => (
                   <ListDetail
                     item={item}
-                    open={open === id}
+                    open={open}
+                    setOpen={setOpen}
                     onDelete={() => onDelete(item)}
                     onEdit={() => onEdit(item)}
                   />

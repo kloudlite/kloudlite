@@ -7,31 +7,21 @@ import Fuse from 'fuse.js';
 import hljs from 'highlight.js';
 import React, { ReactNode, memo, useEffect, useRef, useState } from 'react';
 import { ViewportList } from 'react-viewport-list';
-import * as sock from 'websocket';
 import { dayjs } from '~/components/molecule/dayjs';
 import {
   ISearchInfProps,
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
-import { socketUrl } from '~/root/lib/configs/base-url.cjs';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { generatePlainColor } from './color-generator';
-import Pulsable from './pulsable';
-import { logsMockData } from '../dummy/data';
+import { generatePlainColor } from '../color-generator';
+import Pulsable from '../pulsable';
+import { logsMockData } from '../../dummy/data';
+import { ILog, ISocketMessage, IuseLog, useSocketLogs } from './useSocketLogs';
 
 const hoverClass = `hover:bg-[#ddd]`;
 const hoverClassDark = `hover:bg-[#333]`;
 
-type ILog = {
-  pod_name: string;
-  container_name: string;
-  message: string;
-  timestamp: string;
-};
 type ILogWithLineNumber = ILog & { lineNumber: number };
-
-type ISocketMessage = ILog;
 
 const padLeadingZeros = (num: number, size: number) => {
   let s = `${num}`;
@@ -568,13 +558,6 @@ const LogBlock = ({
   );
 };
 
-interface IuseLog {
-  url?: string;
-  account: string;
-  cluster: string;
-  trackingId: string;
-}
-
 export interface IHighlightJsLog {
   websocket: IuseLog;
   follow?: boolean;
@@ -597,185 +580,6 @@ export interface IHighlightJsLog {
   className?: string;
   dark?: boolean;
 }
-
-const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
-  const [logs, setLogs] = useState<ISocketMessage[]>([]);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  let wsclient: Promise<sock.w3cwebsocket>;
-
-  const [socState, setSocState] = useState<sock.w3cwebsocket | null>(null);
-  const [subscribed, setSubscribed] = useState(false);
-
-  if (typeof window !== 'undefined') {
-    try {
-      wsclient = new Promise<sock.w3cwebsocket>((res, rej) => {
-        let rejected = false;
-        try {
-          // eslint-disable-next-line new-cap
-          const w = new sock.w3cwebsocket(
-            url || `${socketUrl}/logs`,
-            '',
-            '',
-            {}
-          );
-
-          w.onmessage = (msg) => {
-            try {
-              const m: {
-                timestamp: string;
-                message: string;
-                spec: {
-                  podName: string;
-                  containerName: string;
-                };
-                type: 'update' | 'error' | 'info';
-              } = JSON.parse(msg.data as string);
-
-              if (m.type === 'error') {
-                setLogs([]);
-                console.error(m.message);
-                return;
-              }
-
-              if (m.type === 'info') {
-                if (m.message === 'subscribed to logs') {
-                  setSubscribed(true);
-                }
-                console.log(m.message);
-                return;
-              }
-
-              if (m.type === 'update') {
-                console.log(m.message);
-                return;
-              }
-
-              if (m.type === 'log') {
-                setIsLoading(false);
-                setLogs((s) => [
-                  ...s,
-                  {
-                    pod_name: m.spec.podName,
-                    container_name: m.spec.containerName,
-                    message: m.message,
-                    timestamp: m.timestamp,
-                  },
-                ]);
-                return;
-              }
-
-              console.log(m);
-            } catch (err) {
-              console.error(err);
-            }
-          };
-
-          w.onopen = () => {
-            res(w);
-          };
-
-          w.onerror = (e) => {
-            console.error(e);
-            if (!rejected) {
-              rejected = true;
-              rej(e);
-            }
-          };
-
-          w.onclose = () => {};
-        } catch (e) {
-          rej(e);
-        }
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  useDebounce(
-    () => {
-      (async () => {
-        try {
-          if (account === '' || cluster === '' || trackingId === '') {
-            return () => {};
-          }
-
-          if (logs.length) {
-            setLogs([]);
-          }
-          setIsLoading(true);
-
-          const client = await wsclient;
-
-          setSocState(client);
-
-          client.send(
-            JSON.stringify({
-              event: 'subscribe',
-              data: {
-                account,
-                cluster,
-                trackingId,
-              },
-            })
-          );
-        } catch (e) {
-          console.error(e);
-          setLogs([]);
-          setError((e as Error).message);
-        }
-
-        return () => {
-          (async () => {
-            if (!socState) return;
-
-            socState.send(
-              JSON.stringify({
-                event: 'unsubscribe',
-                data: {
-                  account,
-                  cluster,
-                  trackingId,
-                },
-              })
-            );
-
-            // client.close();
-
-            setLogs([]);
-          })();
-        };
-      })();
-    },
-    1000,
-    [account, cluster, trackingId, url]
-  );
-
-  useEffect(() => {
-    const sorted = logs.sort((a, b) => {
-      const resp = a.pod_name.localeCompare(b.pod_name);
-
-      if (resp === 0) {
-        return dayjs(a.timestamp).unix() - dayjs(b.timestamp).unix();
-      }
-
-      return resp;
-    });
-
-    if (JSON.stringify(sorted) !== JSON.stringify(logs)) {
-      setLogs(sorted);
-    }
-  }, [logs]);
-
-  return {
-    logs,
-    error,
-    isLoading,
-    subscribed,
-  };
-};
 
 const LogComp = ({
   websocket,
@@ -837,7 +641,7 @@ const LogComp = ({
     <div
       className={classNames(className, {
         'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
-        relative: !fullScreen,
+        'relative hljs rounded-md': !fullScreen,
       })}
       style={{
         width: fullScreen ? '100%' : width,

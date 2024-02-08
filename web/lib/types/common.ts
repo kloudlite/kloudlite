@@ -68,3 +68,5 @@ export type ExtractArrayType<T> = T extends (infer U)[] ? U : never;
 export type LoaderResult<T extends (props: any) => Promise<any>> = Awaited<
   ReturnType<T>
 >;
+
+export type ISetState<T> = React.Dispatch<React.SetStateAction<T>>;

@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
-import { cn, generateKey, titleCase } from '~/components/utils';
+import { cn, generateKey } from '~/components/utils';
 import {
   ListBody,
   ListTitle,
@@ -9,15 +8,12 @@ import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { handleError } from '~/root/lib/utils/common';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import { IBuildRuns } from '~/console/server/gql/queries/build-run-queries';
 import AnimateHide from '~/components/atoms/animate-hide';
 import LogComp from '~/console/components/logger';
@@ -30,7 +26,6 @@ import {
   XCircleFill,
 } from '@jengaicons/react';
 import dayjs from 'dayjs';
-import { Badge } from '~/components/atoms/badge';
 import { IAccountContext } from '../../../_layout';
 
 const RESOURCE_NAME = 'build run';
@@ -234,9 +229,6 @@ const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
     null
   );
 
-  const api = useConsoleApi();
-  const reloadPage = useReload();
-
   const props: IResource = {
     items,
     // onDelete: (item) => {
@@ -244,7 +236,6 @@ const BuildRunResources = ({ items = [] }: { items: BaseType[] }) => {
     // },
   };
 
-  const params = useParams();
   return (
     <>
       <ListGridView

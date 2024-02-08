@@ -23,7 +23,7 @@ const defaultApp: AppIn = {
   displayName: '',
 };
 
-type ISetState<T = any> = (fn: ((val: T) => T) | T) => void;
+export type ISetState<T = any> = (fn: ((val: T) => T) | T) => void;
 type ISetContainer<T = any> = (fn: ((val: T) => T) | T, index?: number) => void;
 
 const CreateAppContext = createContext<any>(null);
