@@ -39,7 +39,6 @@ spec:
 
         - key: LOGS_AND_METRICS_HTTP_PORT
           value: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort | squote}}
-          {{- /* LOGS_AND_METRICS_HTTP_PORT=9999 */}}
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
@@ -88,7 +87,7 @@ spec:
           value: http://{{ .Values.loki.name }}.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:3100
 
         - key: PROM_HTTP_ADDR
-          value: http://{{ .Values.prometheus.name }}-prometheus.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:9090
+          value: http://vmselect-{{ .Values.victoriaMetrics.name }}.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:8481/select/0/prometheus
 
         - key: DEVICE_NAMESPACE
           value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}

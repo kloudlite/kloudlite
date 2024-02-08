@@ -76,7 +76,6 @@ spec:
     tolerations:
       - operator: "Exists"
 
-
     extraContainers:
       - name: kubelet-metrics-reexporter
         image: ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0
@@ -86,9 +85,9 @@ spec:
           {{/* - --enrich-from-labels */}}
           - --enrich-from-annotations
           - --enrich-tag
-          - "kl_account_name={{.AccountName}}"
+          - "kl_account_name={{.Values.global.accountName}}"
           - --enrich-tag
-          - "kl_cluster_name={{.ClusterName}}"
+          - "kl_cluster_name={{.Values.global.clusterName}}"
           - --enrich-tag
           - "kl_resource_namespace={{ "{{" }}.Namespace{{ "}}" }}"
           - --filter-prefix

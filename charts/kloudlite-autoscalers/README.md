@@ -72,11 +72,11 @@ helm show values kloudlite/kloudlite-autoscalers
 |-----|------|---------|-------------|
 | clusterAutoscaler.configuration.scaleDownUnneededTime | string | `"1m"` |  |
 | clusterAutoscaler.enabled | bool | `true` |  |
-| clusterAutoscaler.image.repository | string | `"ghcr.io/kloudlite/cluster-autoscaler-amd64"` |  |
-| clusterAutoscaler.image.tag | string | `"kloudlite-v1.0.5-nightly"` |  |
+| clusterAutoscaler.image.repository | string | `"ghcr.io/kloudlite/autoscaler/cluster-autoscaler"` |  |
+| clusterAutoscaler.image.tag | string | `""` |  |
 | clusterAutoscaler.nodeSelector | object | `{}` |  |
 | clusterAutoscaler.tolerations | list | `[]` |  |
-| defaults.imagePullPolicy | string | `"Always"` |  |
-| defaults.imageTag | string | `"v1.0.5-nightly"` |  |
+| imagePullPolicy | string | `""` |  |
+| kloudliteRelease | string | `""` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.nameSuffix | string | `"sa"` |  |
