@@ -30,12 +30,8 @@ func NewClient(ctx context.Context, uri string) (*Client, error) {
 	return newClient(ctx, uri)
 }
 
-func (c *Client) ValidateAuthenticatedURI(ctx context.Context, uri string) error {
-	cli, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
-	if err != nil {
-		return errors.NewEf(err, "could not connect to specified mongodb service")
-	}
-	if err := cli.Ping(ctx, nil); err != nil {
+func (c *Client) Ping(ctx context.Context) error {
+	if err := c.conn.Ping(ctx, nil); err != nil {
 		return errors.NewEf(err, "could not ping mongodb")
 	}
 
@@ -132,7 +128,6 @@ func (c *Client) userExists(ctx context.Context, dbName string, userName string)
 
 func ConnectAndPing(ctx context.Context, authenticatedUri string) error {
 	cli, err := newClient(ctx, authenticatedUri)
-
 	if err != nil {
 		return err
 	}
