@@ -1,6 +1,11 @@
 name: Build Worker/Runner/Base Images
 
 on:
+  workflow_run:
+    workflows: ["Build Operators"]
+    types:
+      - completed
+
   push:
     branches:
       - 'releases/**'
