@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v1.0.5] - 2024-01-26
+## [v1.0.1] - 2024-02-07
+
+### Added
+
+- [operators/routers] router now gets ready, when there are no routes
+
+## [v1.0.0] - 2024-01-26
 
 ### Added
 
@@ -15,4 +21,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - router controller now adds annotation `nginx.ingress.kubernetes.io/from-to-www-redirect: "true"` to all the ingress resources, by default
 - helmchart CR, now has `.spec.releaseName` optional field to have a different release name than `.metadata.name`.
 
-[v1.0.5]: https://github.com/kloudlite/operator/compare/master...release-1.0.5
+[v1.0.1]: https://github.com/kloudlite/operator/compare/v1.0.0...v1.0.1
+[v1.0.0]: https://github.com/kloudlite/operator/compare/master...release-1.0.0
