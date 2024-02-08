@@ -16,7 +16,7 @@ includes:
 tasks:
   debug:
     cmds:
-      - helm install --dry-run --debug {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}} | {{.SCHELM}} -f /tmp/manifests
+      - helm install --dry-run=server --debug {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}} | {{.SCHELM}} -f /tmp/manifests
       - tree /tmp/manifests
 
   install:

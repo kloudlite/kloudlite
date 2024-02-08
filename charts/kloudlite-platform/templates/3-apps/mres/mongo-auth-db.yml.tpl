@@ -12,4 +12,5 @@ spec:
     kind: StandaloneService
     {{- end }}
     name: mongo-svc
+    namespace: {{.Release.Namespace}}
   resourceName: auth-db

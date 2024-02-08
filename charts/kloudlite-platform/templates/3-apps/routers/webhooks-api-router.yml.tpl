@@ -2,12 +2,12 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: webhook
+  name: webhooks
   namespace: {{.Release.Namespace}}
 spec:
   ingressClass: {{.Values.global.ingressClassName}}
   domains:
-    - "webhook.{{.Values.global.baseDomain}}"
+    - webhooks.{{include "router-domain" .}}
   https:
     enabled: true
     forceRedirect: true

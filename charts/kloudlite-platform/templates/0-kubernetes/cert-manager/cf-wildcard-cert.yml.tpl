@@ -16,9 +16,13 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   dnsNames:
-  {{range $v := .Values.cloudflareWildCardCert.domains}}
+    {{range $v := .Values.cloudflareWildCardCert.domains}}
     - {{$v | squote}}
-  {{end}}
+    {{end}}
+    {{ if .Values.global.routerDomain }}
+    - '*.{{include "router-domain" .}}'
+    - '{{include "router-domain" .}}'
+    {{ end }}
   secretName: kl-cert-wildcard-tls
   issuerRef:
     name: {{.Values.certManager.certIssuer.name}}

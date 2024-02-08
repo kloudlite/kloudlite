@@ -30,12 +30,18 @@ spec:
         - command:
             - /cluster-autoscaler
           args:
-            - --cloud-provider=kloudlite
-            - --logtostderr=true
-            - --stderrthreshold=info
-            - scale-down-unneeded-time=10m
-          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag  | default .Chart.AppVersion }}
-          imagePullPolicy: {{.Values.clusterAutoscaler.image.pullPolicy | default .Values.defaults.imagePullPolicy }}
+            - --cloud-provider
+            - kloudlite
+            - --logtostderr
+            - "true"
+            - --stderrthreshold
+            - info
+            - --scale-down-unneeded-time
+            - {{.Values.clusterAutoscaler.configuration.scaleDownUnneededTime | squote}}
+            - --enforce-node-group-min-size 
+            - "true"
+          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default (include "image-tag" .) }}
+          imagePullPolicy: {{ include "image-pull-policy" . }}
           name: main
           securityContext:
             allowPrivilegeEscalation: false
@@ -58,6 +64,6 @@ spec:
             requests:
               cpu: 200m
               memory: 200Mi
-      serviceAccountName: {{.Release.Name}}-{{.Values.serviceAccount.nameSuffix}}
+      serviceAccountName: {{ include "service-account-name" . }}
       terminationGracePeriodSeconds: 10
 {{- end }}

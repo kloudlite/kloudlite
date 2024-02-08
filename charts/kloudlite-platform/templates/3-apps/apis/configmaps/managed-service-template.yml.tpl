@@ -1,4 +1,3 @@
-{{/*TODO: Ask anshuman*/}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -48,7 +47,9 @@ data:
             - name: JSON
               description: Configuration JSON
           resources:
-            - name: db
+            - apiVersion: mongodb.msvc.kloudlite.io/v1
+              kind: Database
+              name: db
               displayName: Database
               description: MongoDB
               fields:
@@ -63,6 +64,7 @@ data:
                   label: Password
                 - name: DB_URL
                   label: Connection String
+
         - name: mongo_standalone
           logoUrl: https://img.icons8.com/color/344/mongodb.png
           displayName: MongoDB Standalone
@@ -97,7 +99,7 @@ data:
             - name: resources.memory
               label: Memory
               inputType: Resource
-              defaultValue: 400
+              defaultValue: 0.4
               min: 0.4
               step: 0.1
               max: 2
@@ -105,52 +107,6 @@ data:
               multiplier: 1000
               displayUnit: GB
               unit: "Mi"
-
-          inputMiddleware: |-
-            const inputMiddleware = (inputs) => {
-              return {
-                annotation: {
-                  "kloudlite.io/billing-plan": "Basic",
-                  "kloudlite.io/billable-quantity": `${inputs.cpu}`,
-                  "kloudlite.io/is-shared": "false",
-                },
-                inputs: {
-                  resources: {
-                    cpu: {
-                      min: `${inputs.cpu * 1000}m`,
-                      max: `${inputs.cpu * 1000}m`,
-                    },
-                    memory: `${inputs.cpu * 1000}Mi`,
-                  },
-                  storage: {
-                    size: `${inputs.size}Gi`,
-                  }
-                },
-                error: null,
-              };
-            }
-
-
-          estimator: |-
-            function (inputs, plans) {
-              var computePrice = plans.compute["Basic"].dedicatedPrice * inputs.cpu;
-              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
-              var totalPrice = computePrice + storagePrice;
-              var numberOfSupportedConnections = inputs.cpu * 40 * 2;
-
-              return {
-                totalPrice: totalPrice,
-                error: null,
-                properties: [
-                    {
-                      name: "capacity",
-                      items:[
-                          "Supports around "  + numberOfSupportedConnections + " connections",
-                      ]
-                    }
-                ]
-              };
-            }
 
           outputs:
             - name: ROOT_PASSWORD
@@ -161,9 +117,10 @@ data:
               description: DB URL
             - name: JSON
               description: Configuration JSON
+
           resources:
             - name: db
-              apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
+              apiVersion: mongodb.msvc.kloudlite.io/v1
               kind: Database
               displayName: Database
               description: MongoDB
@@ -179,6 +136,7 @@ data:
                   label: Password
                 - name: DB_URL
                   label: Connection String
+
         - name: mysql_standalone
           kind: StandaloneService
           logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
@@ -206,51 +164,6 @@ data:
               required: true
               unit: vCpu
 
-          inputMiddleware: |-
-            const inputMiddleware = (inputs) =>{
-              const plan = "Basic"
-              return {
-                annotation: {
-                  "kloudlite.io/billing-plan": plan,
-                  "kloudlite.io/billable-quantity": inputs.cpu,
-                  "kloudlite.io/is-shared": true,
-                },
-                inputs: {
-                  resources: {
-                    cpu: {
-                      min: `${inputs.cpu * 1000/2}m`,
-                      max: `${inputs.cpu * 1000}m`,
-                    },
-                    memory: `${inputs.cpu * 1000}Mi`,
-                  },
-                  storage: {
-                    size: `${inputs.size}Gi`,
-                  },
-                },
-                error: null,
-              };
-            }
-
-          estimator: |-
-            function (inputs, plans) {
-              const defaultPlan = "Basic"
-              var computePrice = plans.compute[defaultPlan].sharedPrice * inputs.cpu;
-              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
-              var totalPrice = computePrice + storagePrice;
-              var numberOfSupportedConnections = inputs.cpu * 40;
-              return {
-                totalPrice: totalPrice,
-                error: null,
-                properties: [
-                    {
-                      name: "capacity",
-                      items:[
-                          "Supports around "  + numberOfSupportedConnections + " connections",
-                      ]
-                    }
-                ]
-              };
-            }
           outputs:
             - name: DSN
               label: Mysql DSN

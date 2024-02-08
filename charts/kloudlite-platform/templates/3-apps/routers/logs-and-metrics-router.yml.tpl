@@ -8,7 +8,7 @@ spec:
   ingressClass: {{ .Values.global.ingressClassName }}
 
   domains:
-    - "observe.{{.Values.global.baseDomain}}"
+    - observe.{{include "router-domain" .}}
   https:
     enabled: true
     forceRedirect: true

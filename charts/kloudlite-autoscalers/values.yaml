@@ -1,8 +1,8 @@
 # Default values for kloudlite-autoscalers.
 # This is a YAML-formatted file.
-defaults:
-  imageTag: "v1.0.5-nightly"
-  imagePullPolicy: "Always"
+
+kloudliteRelease: ""
+imagePullPolicy: ""
 
 serviceAccount:
   create: true
@@ -11,6 +11,9 @@ serviceAccount:
 clusterAutoscaler:
   enabled: true
   image:
-    repository: "ghcr.io/kloudlite/cluster-autoscaler-amd64"
+    repository: "ghcr.io/kloudlite/autoscaler/cluster-autoscaler"
+    tag: ""
   nodeSelector: {}
   tolerations: []
+  configuration:
+    scaleDownUnneededTime: 1m

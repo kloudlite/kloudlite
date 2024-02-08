@@ -16,8 +16,8 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.commsApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.commsApi.image.repository}}:{{.Values.apps.commsApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev
@@ -40,20 +40,20 @@ spec:
           value: {{.Values.sendGrid.apiKey}}
 
         - key: ACCOUNTS_WEB_INVITE_URL
-          value: https://auth.{{.Values.global.baseDomain}}/invite
+          value: https://auth.{{ include "router-domain" . }}/invite
 
         - key: PROJECTS_WEB_INVITE_URL
-          value: https://auth.{{.Values.global.baseDomain}}/invite
+          value: https://auth.{{ include "router-domain" . }}/invite
 
         - key: KLOUDLITE_CONSOLE_WEB_URL
-          value: https://console.{{.Values.global.baseDomain}}
+          value: https://console.{{include "router-domain" .}}
 
         - key: RESET_PASSWORD_WEB_URL
-          value: https://auth.{{.Values.global.baseDomain}}/reset-password
+          value: https://auth.{{include "router-domain" .}}/reset-password
 
         - key: VERIFY_EMAIL_WEB_URL
-          value: https://auth.{{.Values.global.baseDomain}}/verify-email
+          value: https://auth.{{include "router-domain" . }}/verify-email
         
         {{/* TODO: url should definitely NOT be auth.{{.Values.baseDomain}} */}}
         - key: EMAIL_LINKS_BASE_URL
-          value: https://auth.{{.Values.global.baseDomain}}/
+          value: https://auth.{{include "router-domain" .}}/

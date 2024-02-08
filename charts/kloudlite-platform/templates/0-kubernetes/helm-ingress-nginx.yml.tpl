@@ -8,10 +8,9 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://kubernetes.github.io/ingress-nginx
-
-  chartName: ingress-nginx/ingress-nginx
-  {{- /* chartVersion: 4.8.0 */}}
-  chartVersion: 4.6.0
+  chartName: ingress-nginx
+  {{- /* chartVersion: 4.6.0 */}}
+  chartVersion: 4.9.0
 
   values:
     nameOverride: {{$chartOpts.name}}

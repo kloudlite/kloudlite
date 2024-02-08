@@ -26,8 +26,8 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.messageOfficeApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy}}
+      image: {{.Values.apps.messageOfficeApi.image.repository}}:{{.Values.apps.messageOfficeApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev

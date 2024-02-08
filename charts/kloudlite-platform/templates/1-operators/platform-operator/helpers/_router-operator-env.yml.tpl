@@ -6,10 +6,10 @@
 - name: WORKSPACE_ROUTE_SWITCHER_PORT
   value: "80"
 
-- name: CLUSTER_ISSUER
+- name: DEFAULT_CLUSTER_ISSUER
   value: {{.Values.certManager.certIssuer.name}}
 
-- name: INGRESS_CLASS
+- name: DEFAULT_INGRESS_CLASS
   value: {{.Values.global.ingressClassName}}
 
 {{- end -}}

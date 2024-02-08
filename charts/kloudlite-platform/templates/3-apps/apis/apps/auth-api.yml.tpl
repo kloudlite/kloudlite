@@ -3,9 +3,10 @@ kind: App
 metadata:
   name: auth-api
   namespace: {{.Release.Namespace}}
+  annotations:
+    kloudlite.io/checksum.oauth-secrets: {{ include (print $.Template.BasePath "/3-apps/apis/secrets/oauth-secrets.yml.tpl") . | sha256sum }}
 spec:
   serviceAccount: {{ .Values.global.clusterSvcAccount }}
-
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
   services:
@@ -17,10 +18,11 @@ spec:
       targetPort: 3001
       name: grpc
       type: tcp
+
   containers:
     - name: main
-      image: {{.Values.apps.authApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.authApi.image.repository}}:{{.Values.apps.authApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev
@@ -32,15 +34,14 @@ spec:
         min: "80Mi"
         max: "120Mi"
       env:
-
         - key: MONGO_URI
           type: secret
-          refName: mres-auth-db-creds
+          refName: mres-{{.Values.envVars.db.authDB}}-creds
           refKey: URI
 
         - key: MONGO_DB_NAME
           type: secret
-          refName: mres-auth-db-creds
+          refName: mres-{{.Values.envVars.db.authDB}}-creds
           refKey: DB_NAME
 
         - key: COMMS_SERVICE
@@ -65,8 +66,7 @@ spec:
           value: {{.Values.envVars.nats.url}}
 
         - key: ORIGINS
-          {{/* value: "https://{{.AuthWebDomain}},http://localhost:4001,https://studio.apollographql.com" */}}
-          value: "https://kloudlite.io,http://localhost:4001,https://studio.apollographql.com"
+          value: "https://kloudlite.io,https://studio.apollographql.com"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"

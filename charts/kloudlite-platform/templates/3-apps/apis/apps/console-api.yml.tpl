@@ -21,8 +21,8 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.consoleApi.image}}
-      imagePullPolicy: {{.Values.global.imagePullPolicy }}
+      image: {{.Values.apps.consoleApi.image.repository}}:{{.Values.apps.consoleApi.image.tag | default (include "image-tag" .) }}
+      imagePullPolicy: {{ include "image-pull-policy" .}}
       {{if .Values.global.isDev}}
       args:
        - --dev
@@ -89,6 +89,9 @@ spec:
 
         - key: PROM_HTTP_ADDR
           value: http://{{ .Values.prometheus.name }}-prometheus.{{.Release.Namespace}}.svc.{{.Values.global.clusterInternalDNS}}:9090
+
+        - key: DEVICE_NAMESPACE
+          value: {{.Values.apps.consoleApi.configuration.vpnDeviceNamespace}}
 
       volumes:
         - mountPath: /console.d/templates

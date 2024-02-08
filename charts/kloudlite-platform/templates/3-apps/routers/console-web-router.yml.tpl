@@ -7,7 +7,7 @@ metadata:
 spec:
   ingressClass: {{ .Values.global.ingressClassName }}
   domains:
-    - "console.{{.Values.global.baseDomain}}"
+    - console.{{include "router-domain" .}}
   https:
     enabled: true
     forceRedirect: true
