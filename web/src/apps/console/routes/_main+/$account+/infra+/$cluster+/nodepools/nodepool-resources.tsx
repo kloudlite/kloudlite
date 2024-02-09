@@ -16,7 +16,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { HighlightJsLogs } from 'react-highlightjs-logs';
 import { yamlDump } from '~/console/components/diff-viewer';
@@ -34,7 +34,10 @@ import { ISetState } from '~/console/page-components/app-states';
 import { Button } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
 import HandleNodePool from './handle-nodepool';
-import { findNodePlanWithCategory } from './nodepool-utils';
+import {
+  findNodePlanWithCategory,
+  findNodePlanWithSpec,
+} from './nodepool-utils';
 import { IAccountContext } from '../../../_layout';
 
 const RESOURCE_NAME = 'nodepool';
@@ -138,9 +141,34 @@ const ListDetail = (
     const iconSize = 14;
     switch (cloudProvider) {
       case 'aws':
-        const nodePlan = findNodePlanWithCategory(
+        let nodePlan = findNodePlanWithCategory(
           aws?.ec2Pool?.instanceType || ''
         );
+
+        if (aws?.poolType === 'spot') {
+          nodePlan = findNodePlanWithSpec({
+            spot: true,
+            spec: {
+              cpu: aws.spotPool?.cpuNode?.vcpu.min,
+              memory: aws.spotPool?.cpuNode?.memoryPerVcpu?.min,
+            },
+          });
+          <div className="flex flex-col gap-sm">
+            <div className="bodySm text-text-soft pulsable">
+              {nodePlan?.category} - {nodePlan?.labelDetail.size}
+            </div>
+            <div className="flex flex-row gap-lg bodyMd-medium pulsable">
+              <span className="flex flex-row gap-md items-center">
+                <Cpu size={iconSize} /> <span>{nodePlan?.labelDetail.cpu}</span>
+              </span>
+              <span className="flex flex-row gap-md items-center">
+                <Cpu size={iconSize} />{' '}
+                <span>{nodePlan?.labelDetail.memory}</span>
+              </span>
+            </div>
+          </div>;
+        }
+
         return (
           <div className="flex flex-col gap-sm">
             <div className="bodySm text-text-soft pulsable">

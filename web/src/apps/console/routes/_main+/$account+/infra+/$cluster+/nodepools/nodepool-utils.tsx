@@ -1,3 +1,5 @@
+import { parseValue } from '~/console/page-components/util';
+
 const { nodePlans, provisionTypes, taintsData } = {
   nodePlans: [
     {
@@ -8,14 +10,14 @@ const { nodePlans, provisionTypes, taintsData } = {
           labelDetail: {
             size: 'small',
             cpu: '2VCPU',
-            memory: '3.75GB',
+            memory: '4GB',
           },
           value: 'c6a.large',
           spotSpec: {
-            cpuMax: 4,
-            cpuMin: 4,
-            memMax: 8192,
-            memMin: 8192,
+            cpuMax: 2,
+            cpuMin: 2,
+            memMax: 2,
+            memMin: 2,
             disabled: false,
           },
           gpuEnabled: false,
@@ -25,14 +27,14 @@ const { nodePlans, provisionTypes, taintsData } = {
           labelDetail: {
             size: 'medium',
             cpu: '4VCPU',
-            memory: '7.5GB',
+            memory: '8GB',
           },
           value: 'c6a.xlarge',
           spotSpec: {
-            cpuMax: 8,
-            cpuMin: 8,
-            memMax: 16384,
-            memMin: 16384,
+            cpuMax: 4,
+            cpuMin: 4,
+            memMax: 2,
+            memMin: 2,
             disabled: false,
           },
         },
@@ -41,14 +43,14 @@ const { nodePlans, provisionTypes, taintsData } = {
           labelDetail: {
             size: 'large',
             cpu: '8VCPU',
-            memory: '15GB',
+            memory: '16GB',
           },
           value: 'c6a.2xlarge',
           spotSpec: {
-            cpuMax: 16,
-            cpuMin: 16,
-            memMax: 32768,
-            memMin: 32768,
+            cpuMax: 8,
+            cpuMin: 8,
+            memMax: 2,
+            memMin: 2,
             disabled: false,
           },
         },
@@ -57,14 +59,14 @@ const { nodePlans, provisionTypes, taintsData } = {
           labelDetail: {
             size: 'xlarge',
             cpu: '16VCPU',
-            memory: '30GB',
+            memory: '32GB',
           },
           value: 'c6a.4xlarge',
           spotSpec: {
-            cpuMax: 32,
-            cpuMin: 32,
-            memMax: 65536,
-            memMin: 65536,
+            cpuMax: 16,
+            cpuMin: 16,
+            memMax: 2,
+            memMin: 2,
             disabled: false,
           },
         },
@@ -78,14 +80,14 @@ const { nodePlans, provisionTypes, taintsData } = {
           labelDetail: {
             size: 'small',
             cpu: '2VCPU',
-            memory: '4GB',
+            memory: '2GB',
           },
           value: 't4g.small',
           spotSpec: {
-            cpuMax: 4,
-            cpuMin: 4,
-            memMax: 8192,
-            memMin: 8192,
+            cpuMax: 2,
+            cpuMin: 2,
+            memMax: 1,
+            memMin: 1,
             disabled: false,
           },
         },
@@ -93,15 +95,15 @@ const { nodePlans, provisionTypes, taintsData } = {
           label: '2x - medium - 4VCPU 8GB Memory',
           labelDetail: {
             size: 'medium',
-            cpu: '4VCPU',
-            memory: '8GB',
+            cpu: '2VCPU',
+            memory: '4GB',
           },
           value: 't4g.medium',
           spotSpec: {
-            cpuMax: 8,
-            cpuMin: 8,
-            memMax: 16384,
-            memMin: 16384,
+            cpuMax: 2,
+            cpuMin: 2,
+            memMax: 2,
+            memMin: 2,
             disabled: false,
           },
         },
@@ -109,15 +111,15 @@ const { nodePlans, provisionTypes, taintsData } = {
           label: '4x - large - 8VCPU 16GB Memory',
           labelDetail: {
             size: 'large',
-            cpu: '8VCPU',
-            memory: '16GB',
+            cpu: '2VCPU',
+            memory: '8GB',
           },
           value: 't4g.large',
           spotSpec: {
-            cpuMax: 16,
-            cpuMin: 16,
-            memMax: 32768,
-            memMin: 32768,
+            cpuMax: 2,
+            cpuMin: 2,
+            memMax: 4,
+            memMin: 2,
             disabled: false,
           },
         },
@@ -125,15 +127,15 @@ const { nodePlans, provisionTypes, taintsData } = {
           label: '8x - xlarge - 16VCPU 32GB Memory',
           labelDetail: {
             size: 'xlarge',
-            cpu: '16VCPU',
-            memory: '32GB',
+            cpu: '4VCPU',
+            memory: '16GB',
           },
           value: 't4g.xlarge',
           spotSpec: {
-            cpuMax: 32,
-            cpuMin: 32,
-            memMax: 65536,
-            memMin: 65536,
+            cpuMax: 4,
+            cpuMin: 4,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
         },
@@ -143,69 +145,69 @@ const { nodePlans, provisionTypes, taintsData } = {
       label: 'GPU Optimised',
       options: [
         {
-          label: '1x - small - 2VCPU 8GB Memory',
+          label: '1x - small - (1 GPU 24GB) (4VCPU 16GB)',
           labelDetail: {
             size: 'small',
             cpu: '2VCPU',
             memory: '8GB',
           },
-          value: 'g4dn.xlarge',
+          value: 'g5.xlarge',
           spotSpec: {
-            cpuMax: 4,
-            cpuMin: 4,
-            memMax: 16384,
-            memMin: 16384,
+            cpuMax: 2,
+            cpuMin: 2,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
           gpuEnabled: true,
         },
         {
-          label: '2x - medium - 4VCPU 16GB Memory',
+          label: '2x - medium - (1 GPU 24GB) (8VCPU 32GB)',
           labelDetail: {
             size: 'medium',
             cpu: '4VCPU',
             memory: '16GB',
           },
-          value: 'g4dn.2xlarge',
+          value: 'g5.2xlarge',
           spotSpec: {
-            cpuMax: 8,
-            cpuMin: 8,
-            memMax: 32768,
-            memMin: 32768,
+            cpuMax: 4,
+            cpuMin: 4,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
           gpuEnabled: true,
         },
         {
-          label: '4x - large - 8VCPU 32GB Memory',
+          label: '4x - large - (1 GPU 24GB) (16VCPU 64GB)',
           labelDetail: {
             size: 'large',
             cpu: '8VCPU',
             memory: '32GB',
           },
-          value: 'g4dn.4xlarge',
+          value: 'g5.4xlarge',
           spotSpec: {
-            cpuMax: 16,
-            cpuMin: 16,
-            memMax: 65536,
-            memMin: 65536,
+            cpuMax: 8,
+            cpuMin: 8,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
           gpuEnabled: true,
         },
         {
-          label: '8x - xlarge - 16VCPU 64GB Memory',
+          label: '8x - xlarge - (1 GPU 24GB) (32VCPU 128GB)',
           labelDetail: {
             size: 'xlarge',
             cpu: '16VCPU',
             memory: '64GB',
           },
-          value: 'g4dn.8xlarge',
+          value: 'g5.8xlarge',
           spotSpec: {
-            cpuMax: 32,
-            cpuMin: 32,
-            memMax: 131072,
-            memMin: 131072,
+            cpuMax: 16,
+            cpuMin: 16,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
           gpuEnabled: true,
@@ -224,10 +226,10 @@ const { nodePlans, provisionTypes, taintsData } = {
           },
           value: 'm6a.large',
           spotSpec: {
-            cpuMax: 4,
-            cpuMin: 4,
-            memMax: 16384,
-            memMin: 16384,
+            cpuMax: 2,
+            cpuMin: 2,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
         },
@@ -240,10 +242,10 @@ const { nodePlans, provisionTypes, taintsData } = {
           },
           value: 'm6a.xlarge',
           spotSpec: {
-            cpuMax: 8,
-            cpuMin: 8,
-            memMax: 32768,
-            memMin: 32768,
+            cpuMax: 4,
+            cpuMin: 4,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
         },
@@ -256,10 +258,10 @@ const { nodePlans, provisionTypes, taintsData } = {
           },
           value: 'm6a.2xlarge',
           spotSpec: {
-            cpuMax: 16,
-            cpuMin: 16,
-            memMax: 65536,
-            memMin: 65536,
+            cpuMax: 8,
+            cpuMin: 8,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
         },
@@ -272,10 +274,10 @@ const { nodePlans, provisionTypes, taintsData } = {
           },
           value: 'm6a.4xlarge',
           spotSpec: {
-            cpuMax: 32,
-            cpuMin: 32,
-            memMax: 131072,
-            memMin: 131072,
+            cpuMax: 16,
+            cpuMin: 16,
+            memMax: 4,
+            memMin: 4,
             disabled: false,
           },
         },
@@ -301,6 +303,45 @@ const findNodePlan = (id: string) => {
   return nodePlans
     .flatMap((np) => np.options.flat())
     .find((np) => np.value === id);
+};
+
+export const findNodePlanWithSpec = ({
+  spot,
+  spec,
+}: {
+  spot?: boolean;
+  spec?: {
+    cpu?: string;
+    memory?: string;
+  };
+}):
+  | ((typeof nodePlans)[number]['options'][number] & { category: string })
+  | null => {
+  if (!spec) {
+    return null;
+  }
+
+  let nodePlan = null;
+
+  nodePlans.forEach((np) => {
+    np.options.forEach((npp) => {
+      if (
+        (spot && npp.spotSpec) ||
+        (!spot && !npp.spotSpec) ||
+        (spot && !npp.spotSpec)
+      ) {
+        if (
+          npp.spotSpec &&
+          npp.spotSpec.cpuMax === parseValue(spec.cpu, 0) &&
+          npp.spotSpec.memMax === parseValue(spec.memory, 0)
+        ) {
+          nodePlan = { ...npp, category: np.label };
+        }
+      }
+    });
+  });
+
+  return nodePlan;
 };
 
 const findNodePlanWithCategory = (
