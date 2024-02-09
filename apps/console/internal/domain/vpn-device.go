@@ -202,7 +202,7 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, nDevice.Name, PublishAdd)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *nDevice.ProjectName, entities.ResourceTypeVPNDevice, nDevice.Name, PublishAdd)
 
 	if device.ProjectName == nil || device.EnvironmentName == nil {
 		return nDevice, nil
@@ -237,7 +237,7 @@ func (d *domain) ActivateVPNDeviceOnNamespace(ctx ConsoleContext, devName string
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, devName, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *upDevice.ProjectName, entities.ResourceTypeVPNDevice, devName, PublishUpdate)
 
 	if err := d.applyVPNDevice(ctx, upDevice); err != nil {
 		return errors.NewE(err)
@@ -310,7 +310,7 @@ func (d *domain) updateVpnDevice(ctx ConsoleContext, device entities.ConsoleVPND
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, device.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *upDevice.ProjectName, entities.ResourceTypeVPNDevice, device.Name, PublishUpdate)
 
 	if err := d.updateVpnOnCluster(ctx, upDevice, xdevice); err != nil {
 		return nil, errors.NewE(err)
@@ -340,7 +340,7 @@ func (d *domain) DeleteVPNDevice(ctx ConsoleContext, name string) error {
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, name, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *upDevice.ProjectName, entities.ResourceTypeVPNDevice, name, PublishUpdate)
 
 	for _, v := range upDevice.LinkedClusters {
 		if err := d.deleteK8sResourceOfCluster(ctx, v, &upDevice.Device); err != nil {
@@ -387,7 +387,7 @@ func (d *domain) UpdateVpnDevicePorts(ctx ConsoleContext, devName string, ports 
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, devName, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *upDevice.ProjectName, entities.ResourceTypeVPNDevice, devName, PublishUpdate)
 	return nil
 }
 
@@ -458,7 +458,7 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.Co
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, upDevice.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *upDevice.ProjectName, entities.ResourceTypeVPNDevice, upDevice.Name, PublishUpdate)
 
 	return nil
 }
@@ -502,7 +502,7 @@ func (d *domain) OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.Co
 			return errors.NewE(err)
 		}
 
-		d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, device.Name, PublishDelete)
+		d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *device.ProjectName, entities.ResourceTypeVPNDevice, device.Name, PublishDelete)
 		return nil
 	}
 
@@ -536,6 +536,6 @@ func (d *domain) OnVPNDeviceApplyError(ctx ConsoleContext, errMsg string, name s
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeVPNDevice, udevice.Name, PublishDelete)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, *udevice.ProjectName, entities.ResourceTypeVPNDevice, udevice.Name, PublishDelete)
 	return errors.NewE(err)
 }
