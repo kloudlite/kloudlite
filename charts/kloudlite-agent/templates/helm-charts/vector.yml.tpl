@@ -72,6 +72,9 @@ spec:
     containerPorts:
       - containerPort: 6000
 
+    tolerations:
+      - operator: Exists
+
     service:
       enabled: false
 
