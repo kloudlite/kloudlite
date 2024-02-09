@@ -5,8 +5,7 @@ import (
 
 	"github.com/getlantern/systray"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
-	"github.com/kloudlite/kl/pkg/functions"
-	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
+	"github.com/kloudlite/kl/domain/server"
 )
 
 func (h *handler) ReconDevice() {
@@ -20,24 +19,26 @@ func (h *handler) ReconDevice() {
 	}
 
 	go func() {
-
 		for {
-			wgInterface, err := wgc.Show(&wgc.WgShowOptions{
-				Interface: "interfaces",
-			})
-
-			if err != nil {
-				functions.PrintError(err)
-				functions.Notify(err)
-			}
-
-			if len(wgInterface) == 0 {
-				dev.SetTitle("VPN - Disconnected")
-			} else {
+			if server.CheckDeviceStatus() {
 				dev.SetTitle("VPN - Connected")
+			} else {
+				dev.SetTitle("VPN - Disconnected")
 			}
 
 			<-time.After(1 * time.Second)
+		}
+	}()
+
+	go func() {
+		for {
+			<-dev.ClickedCh
+			h.channel <- ChanelMsg{
+				Msg:      "Device clicked",
+				Item:     dev,
+				ItemName: ns.DeviceBtn,
+				Action:   ns.ToggleDevice,
+			}
 		}
 	}()
 }

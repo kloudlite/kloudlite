@@ -417,3 +417,23 @@ func ReadFile(name string) ([]byte, error) {
 
 	return file, nil
 }
+
+func IsLoading() (bool, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return false, err
+	}
+
+	return extraData.Loading, nil
+}
+
+func SetLoading(loading bool) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.Loading = loading
+
+	return SaveExtraData(extraData)
+}

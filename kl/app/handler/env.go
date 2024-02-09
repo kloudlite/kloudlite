@@ -117,7 +117,7 @@ func (h *handler) ReconEnv() {
 		ps, err := server.ListProjects()
 		if err != nil {
 			fn.PrintError(err)
-			fn.Notify(err)
+			fn.Notify("error:", err)
 		}
 
 		for _, p := range ps {
@@ -125,7 +125,7 @@ func (h *handler) ReconEnv() {
 			e, err := server.ListEnvs(fn.MakeOption("projectName", p.Metadata.Name))
 			if err != nil {
 				fn.PrintError(err)
-				fn.Notify(err)
+				fn.Notify("error:", err)
 			}
 
 			for _, env := range e {
@@ -140,7 +140,7 @@ func (h *handler) ReconEnv() {
 		d, err := server.GetDevice()
 		if err != nil {
 			fn.PrintError(err)
-			fn.Notify(err)
+			fn.Notify("error:", err)
 
 			envBtn.SetTitle("...")
 			return

@@ -3,11 +3,14 @@ package handler
 import (
 	"fmt"
 
+	"github.com/getlantern/systray"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
+	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -82,6 +85,74 @@ func (h *handler) StartListener() {
 
 				case ns.ToggleDevice:
 					{
+						cmd := constants.InfraCliName
+						if s, err := client.CurrentClusterName(); err != nil || s == "" {
+							kt, err := client.GetKlFile("")
+							defEnv := ""
+							if err == nil && kt.DefaultEnv != "" {
+								defEnv = kt.DefaultEnv
+							}
+
+							if e, err := client.CurrentEnv(); (err != nil || e == nil || e.Name == "") && (defEnv == "") {
+								fn.Println(err)
+								fn.Alert("No Cluster or Environment Selected", "Please select a cluster or environment")
+								continue
+							}
+
+							cmd = constants.CoreCliName
+						}
+
+						if !IsCmdExists(cmd, true) {
+							continue
+						}
+
+						if !server.CheckDeviceStatus() {
+							if err := fn.ExecCmd(fmt.Sprintf("%s vpn start", cmd), nil, true); err != nil {
+								fn.PrintError(err)
+								fn.Alert("Start VPN failed", err.Error())
+							}
+							continue
+						}
+
+						if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
+							fn.PrintError(err)
+							fn.Alert("Stop VPN failed", err.Error())
+						}
+
+						fn.Notify("Info", "Kloudlite VPN Connected")
+					}
+
+				case ns.Quit:
+					{
+
+						wgInterface, err := wgc.Show(&wgc.WgShowOptions{
+							Interface: "interfaces",
+						})
+
+						if err != nil {
+							functions.PrintError(err)
+							functions.Notify("error:", err)
+						}
+
+						if len(wgInterface) > 0 {
+
+							cmd := "kl"
+
+							if !IsCmdExists(cmd, false) {
+								cmd = "kli"
+								if !IsCmdExists(cmd, true) {
+									systray.Quit()
+									continue
+								}
+							}
+
+							if err := fn.ExecCmd(fmt.Sprintf("%s vpn stop", cmd), nil, true); err != nil {
+								fn.PrintError(err)
+								fn.Alert("Stop VPN failed", err.Error())
+							}
+						}
+
+						systray.Quit()
 					}
 
 					// action block end
@@ -90,4 +161,16 @@ func (h *handler) StartListener() {
 			}
 		}
 	}()
+}
+
+func IsCmdExists(cmd string, verbose bool) bool {
+	if fn.ExecCmd(fmt.Sprintf("whereis %s", cmd), nil, false) != nil {
+		if verbose {
+			fn.Println(fmt.Sprintf("%s not found", cmd))
+			fn.Alert("Cmd not found", fmt.Sprintf("%s not found", cmd))
+		}
+		return false
+	}
+
+	return true
 }

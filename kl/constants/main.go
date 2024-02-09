@@ -8,6 +8,9 @@ import (
 
 const (
 	DefaultBaseURL = "https://auth.kloudlite.io"
+	RuntimeLinux   = "linux"
+	RuntimeDarwin  = "darwin"
+	RuntimeWindows = "windows"
 )
 
 var (

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/getlantern/systray"
-	"github.com/getlantern/systray/example/icon"
+	"github.com/kloudlite/kl/app/handler/icons"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -81,7 +81,7 @@ func (h *handler) ItemMap() map[ns.ItemName]*systray.MenuItem {
 }
 
 func (h *handler) ReconMeta() {
-	systray.SetIcon(icon.Data)
+	systray.SetIcon(icons.Loading)
 	systray.SetTitle("Kloudlite")
 	systray.SetTooltip("Kloudlite vpn client")
 
@@ -94,9 +94,9 @@ func (h *handler) ReconMeta() {
 			}
 
 			if b {
-				systray.SetIcon(icon.Data)
+				systray.SetIcon(icons.Loading)
 			} else {
-				systray.SetIcon(icon.Data)
+				systray.SetIcon(icons.Logo)
 			}
 
 			<-time.After(time.Millisecond * 500)
@@ -108,8 +108,10 @@ func (h *handler) ReconQuit() {
 	mQuitOrig := systray.AddMenuItem("Quit", "Quit client")
 	go func() {
 		<-mQuitOrig.ClickedCh
-		fn.Println("Requesting quit")
-		systray.Quit()
-		fn.Println("Finished quitting")
+		h.channel <- ChanelMsg{
+			Msg:    "Device clicked",
+			Item:   mQuitOrig,
+			Action: ns.Quit,
+		}
 	}()
 }

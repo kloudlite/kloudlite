@@ -25,4 +25,5 @@ const (
 	UpdateClient        Action = "UpdateClient"
 	SwitchAccount       Action = "SwitchAccount"
 	OpenAccountSettings Action = "OpenAccountSettings"
+	Quit                Action = "QuitApp"
 )

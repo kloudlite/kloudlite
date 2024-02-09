@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
@@ -50,7 +51,7 @@ func ExecCmd(cmdString string, verbose bool) error {
 }
 
 func StartServiceInBg(devName string, configFolder string) error {
-	command := exec.Command("kl", "vpn", "start-fg", "-d", devName)
+	command := exec.Command(flags.CliName, "vpn", "start-fg", "-d", devName)
 	err := command.Start()
 	if err != nil {
 		return err
