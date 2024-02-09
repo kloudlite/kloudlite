@@ -25,7 +25,7 @@ func (r *ResourceEventPublisherImpl) PublishConsoleEvent(ctx domain.ConsoleConte
 }
 
 func (r *ResourceEventPublisherImpl) PublishResourceEvent(ctx domain.ResourceContext, resourceType entities.ResourceType, name string, update domain.PublishMsg) {
-	subject := fmt.Sprintf("res-updates.account.%s.project.%s.environmentName.%s.%s.%s", ctx.AccountName, ctx.ProjectName, ctx.EnvironmentName, resourceType, name)
+	subject := fmt.Sprintf("res-updates.account.%s.project.%s.environment.%s.%s.%s", ctx.AccountName, ctx.ProjectName, ctx.EnvironmentName, resourceType, name)
 	r.publish(subject, update)
 }
 
