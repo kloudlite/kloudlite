@@ -271,5 +271,6 @@ const (
 
 type ResourceEventPublisher interface {
 	PublishConsoleEvent(ctx ConsoleContext, resourceType entities.ResourceType, name string, update PublishMsg)
+	PublishProjectResourceEvent(ctx ConsoleContext, projectName string, resourceType entities.ResourceType, name string, update PublishMsg)
 	PublishResourceEvent(ctx ResourceContext, resourceType entities.ResourceType, name string, update PublishMsg)
 }
