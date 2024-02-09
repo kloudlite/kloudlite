@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	fc "github.com/kloudlite/api/apps/infra/internal/entities/field-constants"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
-	"strings"
-	"time"
 
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
@@ -22,7 +23,9 @@ import (
 	"github.com/kloudlite/api/pkg/repos"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/sts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -49,13 +52,15 @@ func generateAWSCloudformationTemplateUrl(args entities.AWSSecretCredentials, ev
 	return result.String(), nil
 }
 
-func (d *domain) validateAWSAssumeRole(_ context.Context, paramExternalId string, roleARN string) error {
+func (d *domain) validateAWSAssumeRole(_ context.Context, paramExternalId string, roleARN string, instanceProfileName string, cfStackName string) error {
 	sess, err := session.NewSession()
+	sess.Config.Region = aws.String("ap-south-1")
 	if err != nil {
 		d.logger.Errorf(err, "while creating new session")
 		return errors.NewE(err)
 	}
 
+	// 1. validating IAM Assume Role
 	svc := sts.New(sess)
 
 	resp, err := svc.AssumeRole(&sts.AssumeRoleInput{
@@ -68,8 +73,39 @@ func (d *domain) validateAWSAssumeRole(_ context.Context, paramExternalId string
 		return errors.NewE(err)
 	}
 
-	if resp.AssumedRoleUser.Arn != nil {
-		return nil
+	if resp.AssumedRoleUser == nil || resp.AssumedRoleUser.Arn == nil {
+		return errors.Newf("AWS assume role (%s) not found", roleARN)
+	}
+
+	nsess, err := session.NewSession(&aws.Config{
+		Region:      aws.String("ap-south-1"),
+		Credentials: credentials.NewStaticCredentials(*resp.Credentials.AccessKeyId, *resp.Credentials.SecretAccessKey, *resp.Credentials.SessionToken),
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	cf := cloudformation.New(nsess)
+	dso, err := cf.DescribeStacks(&cloudformation.DescribeStacksInput{
+		StackName: &cfStackName,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	stackFound := false
+
+	for i := range dso.Stacks {
+		if dso.Stacks[i] != nil && *dso.Stacks[i].StackName == cfStackName {
+			stackFound = true
+			if *dso.Stacks[i].StackStatus != cloudformation.StackStatusCreateComplete {
+				return errors.Newf("cloudformation stack (%s) is not completed, yet", cfStackName)
+			}
+		}
+	}
+
+	if !stackFound {
+		return errors.Newf("waiting for cloudformation stack to be created")
 	}
 
 	return nil
@@ -94,7 +130,7 @@ func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) 
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.validateAWSAssumeRole(ctx, psecret.AWS.CfParamExternalID, psecret.AWS.GetAssumeRoleRoleARN()); err != nil {
+	if err := d.validateAWSAssumeRole(ctx, psecret.AWS.CfParamExternalID, psecret.AWS.GetAssumeRoleRoleARN(), psecret.AWS.CfParamInstanceProfileName, psecret.AWS.CfParamStackName); err != nil {
 		installationURL, err := generateAWSCloudformationTemplateUrl(*psecret.AWS, d.env)
 		if err != nil {
 			return nil, errors.NewE(err)
@@ -246,7 +282,6 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, providerSecretIn entitie
 		},
 		patchForUpdate,
 	)
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
