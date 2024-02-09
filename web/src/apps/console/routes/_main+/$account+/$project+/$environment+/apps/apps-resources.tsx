@@ -1,4 +1,9 @@
-import { GearSix, LinkBreak, Link as LinkIcon } from '@jengaicons/react';
+import {
+  GearSix,
+  LinkBreak,
+  Link as LinkIcon,
+  Repeat,
+} from '@jengaicons/react';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
@@ -47,7 +52,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'delete' | 'edit' | 'intercept' | 'remove_intercept';
+  action: 'delete' | 'edit' | 'intercept' | 'remove_intercept' | 'restart';
   item: BaseType;
 }) => void;
 
@@ -83,7 +88,7 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
     options = [
       {
         label: 'Intercept',
-        icon: <LinkIcon size={iconSize} />,
+        icon: <Repeat size={iconSize} />,
         type: 'item',
         onClick: () => onAction({ action: 'intercept', item }),
         key: 'intercept',
@@ -91,6 +96,18 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       ...options,
     ];
   }
+
+  options = [
+    {
+      label: 'Restart',
+      icon: <LinkIcon size={iconSize} />,
+      type: 'item',
+      onClick: () => onAction({ action: 'restart', item }),
+      key: 'restart',
+    },
+    ...options,
+  ];
+
   return <ResourceExtraAction options={options} />;
 };
 
@@ -240,12 +257,38 @@ const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       }
     }
   };
+
+  const restartApp = async (item: BaseType) => {
+    if (!environment || !project) {
+      throw new Error('Environment is required!.');
+    }
+
+    try {
+      const { errors } = await api.restartApp({
+        appName: parseName(item),
+        envName: environment,
+        projectName: project,
+      });
+
+      if (errors) {
+        throw errors[0];
+      }
+      toast.success('App restarted successfully');
+      reload();
+    } catch (error) {
+      handleError(error);
+    }
+  };
+
   const props: IResource = {
     items,
     onAction: ({ action, item }) => {
       switch (action) {
         case 'intercept':
           interceptApp(item, true);
+          break;
+        case 'restart':
+          restartApp(item);
           break;
         case 'remove_intercept':
           interceptApp(item, false);

@@ -14,12 +14,29 @@ import {
   ConsoleUpdateAppMutationVariables,
   ConsoleInterceptAppMutation,
   ConsoleInterceptAppMutationVariables,
+  ConsoleRestartAppQuery,
+  ConsoleRestartAppQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IApp = NN<ConsoleGetAppQuery['core_getApp']>;
 export type IApps = NN<ConsoleListAppsQuery['core_listApps']>;
 
 export const appQueries = (executor: IExecutor) => ({
+  restartApp: executor(
+    gql`
+      query Query($projectName: String!, $envName: String!, $appName: String!) {
+        core_restartApp(
+          projectName: $projectName
+          envName: $envName
+          appName: $appName
+        )
+      }
+    `,
+    {
+      transformer: (data: ConsoleRestartAppQuery) => data.core_restartApp,
+      vars: (_: ConsoleRestartAppQueryVariables) => {},
+    }
+  ),
   createApp: executor(
     gql`
       mutation Core_createApp(
@@ -38,7 +55,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleCreateAppMutation) => data.core_createApp,
-      vars(_: ConsoleCreateAppMutationVariables) { },
+      vars(_: ConsoleCreateAppMutationVariables) {},
     }
   ),
 
@@ -62,7 +79,7 @@ export const appQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleUpdateAppMutation) => {
         return data.core_updateApp;
       },
-      vars(_: ConsoleUpdateAppMutationVariables) { },
+      vars(_: ConsoleUpdateAppMutationVariables) {},
     }
   ),
   interceptApp: executor(
@@ -86,7 +103,7 @@ export const appQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleInterceptAppMutation) =>
         data.core_interceptApp,
-      vars(_: ConsoleInterceptAppMutationVariables) { },
+      vars(_: ConsoleInterceptAppMutationVariables) {},
     }
   ),
   deleteApp: executor(
@@ -105,7 +122,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleDeleteAppMutation) => data.core_deleteApp,
-      vars(_: ConsoleDeleteAppMutationVariables) { },
+      vars(_: ConsoleDeleteAppMutationVariables) {},
     }
   ),
   getApp: executor(
@@ -252,7 +269,7 @@ export const appQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetAppQuery) {
         return data.core_getApp;
       },
-      vars(_: ConsoleGetAppQueryVariables) { },
+      vars(_: ConsoleGetAppQueryVariables) {},
     }
   ),
   listApps: executor(
@@ -397,7 +414,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListAppsQuery) => data.core_listApps,
-      vars(_: ConsoleListAppsQueryVariables) { },
+      vars(_: ConsoleListAppsQueryVariables) {},
     }
   ),
 });

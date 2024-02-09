@@ -896,6 +896,10 @@ mutation consoleCloneEnvironment($projectName: String!, $sourceEnvName: String!,
   }
 }
 
+query consoleRestartApp($projectName: String!, $envName: String!, $appName: String!) {
+  core_restartApp(projectName: $projectName, envName: $envName, appName: $appName)
+}
+
 mutation consoleCreateApp($projectName: String!, $envName: String!, $app: AppIn!) {
   core_createApp(projectName: $projectName, envName: $envName, app: $app) {
     id

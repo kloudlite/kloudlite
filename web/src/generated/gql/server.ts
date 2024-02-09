@@ -2311,6 +2311,14 @@ export type ConsoleCloneEnvironmentMutation = {
   core_cloneEnvironment?: { id: string };
 };
 
+export type ConsoleRestartAppQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  appName: Scalars['String']['input'];
+}>;
+
+export type ConsoleRestartAppQuery = { core_restartApp: boolean };
+
 export type ConsoleCreateAppMutationVariables = Exact<{
   projectName: Scalars['String']['input'];
   envName: Scalars['String']['input'];
