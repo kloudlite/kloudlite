@@ -124,7 +124,7 @@ func (d *domain) CreateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, pms.Name, PublishAdd)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, pms.ProjectName, entities.ResourceTypeProjectManagedService, pms.Name, PublishAdd)
 
 	return pms, nil
 }
@@ -180,7 +180,7 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, service.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, upmsvc.ProjectName, entities.ResourceTypeProjectManagedService, service.Name, PublishUpdate)
 
 	if err := d.applyProjectManagedService(ctx, upmsvc); err != nil {
 		return nil, errors.NewE(err)
@@ -206,7 +206,7 @@ func (d *domain) DeleteProjectManagedService(ctx ConsoleContext, projectName str
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, name, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, upmsvc.ProjectName, entities.ResourceTypeProjectManagedService, name, PublishUpdate)
 
 	return d.deleteK8sResource(ctx, projectName, &upmsvc.ProjectManagedService)
 }
@@ -247,7 +247,7 @@ func (d *domain) OnProjectManagedServiceApplyError(ctx ConsoleContext, projectNa
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, upmsvc.Name, PublishDelete)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, upmsvc.ProjectName, entities.ResourceTypeProjectManagedService, upmsvc.Name, PublishDelete)
 
 	return errors.NewE(err)
 }
@@ -263,7 +263,7 @@ func (d *domain) OnProjectManagedServiceDeleteMessage(ctx ConsoleContext, projec
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, service.Name, PublishDelete)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, projectName, entities.ResourceTypeProjectManagedService, service.Name, PublishDelete)
 	return nil
 }
 
@@ -299,7 +299,7 @@ func (d *domain) OnProjectManagedServiceUpdateMessage(ctx ConsoleContext, projec
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishConsoleEvent(ctx, entities.ResourceTypeProjectManagedService, upmsvc.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, upmsvc.ProjectName, entities.ResourceTypeProjectManagedService, upmsvc.Name, PublishUpdate)
 
 	return nil
 }
