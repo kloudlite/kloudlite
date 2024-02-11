@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -13,12 +14,16 @@ import (
 
 	flag "github.com/spf13/pflag"
 
+	"github.com/nxtcoder17/kubelet-metrics-reexporter/internal/kloudlite"
 	"github.com/nxtcoder17/kubelet-metrics-reexporter/internal/parser"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/nxtcoder17/kubelet-metrics-reexporter/internal/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	kubelet_stats "k8s.io/kubelet/pkg/apis/stats/v1alpha1"
+
+	// "github.com/kubernetes/kubelet/blob/master/pkg/apis/stats/v1alpha1/types.go"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func main() {
@@ -82,7 +87,15 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	grabPodsByNodeName := func(nodeName string) (map[string]corev1.Pod, error) {
+	getCurrentNode := func() (*corev1.Node, error) {
+		node, err := kCli.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return node, nil
+	}
+
+	grabPodsByNodeName := func(nodeName string) (types.PodsMap, error) {
 		pl, err := kCli.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
 		})
@@ -90,11 +103,7 @@ func main() {
 			return nil, err
 		}
 
-		m := make(map[string]corev1.Pod, len(pl.Items))
-		for _, pod := range pl.Items {
-			m[types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}.String()] = pod
-		}
-		return m, nil
+		return types.ToPodsMap(pl.Items), nil
 	}
 
 	parserOpts := parser.ParserOpts{
@@ -165,6 +174,68 @@ func main() {
 
 	http.HandleFunc("/metrics/probes", func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	})
+
+	http.HandleFunc("/metrics/kloudlite", func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+		defer func() {
+			logger.Printf("GET [%s] at %s, and took %.2fs\n", r.URL, time.Now().Format(time.RFC3339), time.Since(t).Seconds())
+		}()
+
+		req := kCli.RESTClient().Get().AbsPath(fmt.Sprintf("/api/v1/nodes/%s/proxy/stats/summary", nodeName))
+		b, err := req.DoRaw(r.Context())
+		if err != nil {
+			logger.Printf("[ERR] %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		if r.URL.Query().Get("raw") == "true" {
+			w.Write(b)
+			return
+		}
+
+		var summary kubelet_stats.Summary
+		if err := json.Unmarshal(b, &summary); err != nil {
+			logger.Printf("[ERR] %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		podsMap, err := grabPodsByNodeName(nodeName)
+		if err != nil {
+			logger.Printf("[ERR] %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		currNode, err := getCurrentNode()
+		if err != nil {
+			logger.Printf("[ERR] %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		out := bytes.NewBuffer(nil)
+		kloudlite.Metrics(summary, currNode, podsMap, out)
+		io.Copy(w, out)
+	})
+
+	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+		defer func() {
+			logger.Printf("GET [%s] at %s, and took %.2fs\n", r.URL, time.Now().Format(time.RFC3339), time.Since(t).Seconds())
+		}()
+
+		req := kCli.RESTClient().Get().AbsPath(fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics", nodeName))
+		b, err := req.DoRaw(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		if r.URL.Query().Get("raw") == "true" {
+			w.Write(b)
+			return
+		}
 	})
 
 	logger.Printf("http server starting on %s\n", addr)

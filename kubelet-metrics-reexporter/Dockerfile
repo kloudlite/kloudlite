@@ -1,4 +1,3 @@
 FROM gcr.io/distroless/static:nonroot
-ARG BIN
-COPY ${BIN} /kubelet-metrics-reexporter
+COPY ./bin/kubelet-metrics-reexporter /kubelet-metrics-reexporter
 ENTRYPOINT [ "/kubelet-metrics-reexporter" ]

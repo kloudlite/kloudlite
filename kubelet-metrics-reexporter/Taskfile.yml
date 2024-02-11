@@ -1,6 +1,13 @@
 version: 3
 
 tasks:
+  build:
+    env:
+      GOOS: linux
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    cmds:
+      - go build -o ./bin/kubelet-metrics-reexporter .
   dev:
     preconditions:
       - sh: '[ ! -z "{{.NodeName}}" ]'
@@ -23,8 +30,12 @@ tasks:
       - go-test-cover.sh ./internal/parser/...
 
   docker:build-n-push:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: "env var Tag must be provided"
     vars:
-      Image: "ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0"
+      Image: "ghcr.io/nxtcoder17/kubelet-metrics-reexporter:{{.Tag}}"
     cmds:
+      - task: build
       - docker build -t {{.Image}} .
       - docker push {{.Image}}
