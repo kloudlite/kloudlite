@@ -1,0 +1,14 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+tasks:
+  init:
+    cmds:
+      - packer init .
+
+  build:
+    cmds:
+      - packer validate .
+      - packer build .
