@@ -1,6 +1,5 @@
 **
-!terraform/modules
-!terraform/bundles
+!terraform
 !build-scripts
 !infrastructure-templates
 !.ci

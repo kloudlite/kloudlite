@@ -1,0 +1,108 @@
+name: 
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - cmd/k3s-runner
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  docker-builds:
+    strategy:
+      matrix:
+        target_arch:
+          - amd64
+          - arm64
+
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21.5
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install UPX
+        run: |
+          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+          tar -xf upx.tar.xz
+          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
+
+
+      - name: Create Release Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          set +e
+          RELEASE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+          echo "$RELEASE_TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            RELEASE_TAG="$RELEASE_TAG-nightly"
+          fi
+          set -e
+
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_RELEASE=true" >> $GITHUB_ENV
+
+      - name: Create Release Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          RELEASE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_RELEASE=false" >> $GITHUB_ENV
+
+      - name: Build And Release
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          RELEASE_TITLE: "kloudlite-k3s-runner"
+          RELEASE_NOTES: "kloudlite k3s runner"
+          GOARCH: ${{matrix.target_arch}}
+        run: |
+          pushd cmd/k3s-runner
+
+          task build
+
+          PRE_RELEASE=$OVERRIDE_RELEASE
+
+          opts=("-R" "${{ github.repository }}")
+
+          release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$RELEASE_TAG\s+" || echo -n "") | awk '{print $3}')
+
+          if [[ -z $release ]]; then
+            echo "going to create release, as RELEASE ($RELEASE_TAG) does not exist"
+            createOpts="${opts[@]}"
+            if [ $PRE_RELEASE = "true" ]; then
+              createOpts+=("--prerelease")
+            fi
+
+            if ! [[ -z $RELEASE_TITLE ]]; then
+              createOpts+=("--title" "'$RELEASE_TITLE'")
+            fi
+            createOpts+=("--notes" "'$RELEASE_NOTES'")
+
+            echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` "
+            eval gh release create "$RELEASE_TAG" ${createOpts[@]} --generate-notes
+          fi
+
+          uploadOpts="${opts[@]}"
+          if [ "$OVERRIDE_RELEASE" = "true" ]; then
+            uploadOpts+=("--clobber")
+          fi
+
+          echo "uploading buillt binary with cmd: \`gh release upload $RELEASE_TAG ${uploadOpts[*]} bin/*\`"
+          gh release upload "$RELEASE_TAG" ${uploadOpts[@]} bin/*
