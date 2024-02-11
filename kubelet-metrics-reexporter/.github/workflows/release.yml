@@ -38,7 +38,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
- 
       - name: Setup Golang caches
         uses: actions/cache@v3
         with:
