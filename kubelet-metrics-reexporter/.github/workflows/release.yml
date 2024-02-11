@@ -75,11 +75,13 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
           set +e
-          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/release-})
           echo "$IMAGE_TAG" | grep -i '\-nightly$'
           if [ $? -ne 0 ]; then
             IMAGE_TAG="$IMAGE_TAG-nightly"
           fi
+
+          echo "IMAGE_TAG: ${IMAGE_TAG}"
           set -e
 
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
@@ -97,7 +99,7 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
         run: |+
           set +e
-          image_name="ghcr.io/${{ github.repository }}/kubelet-metrics-reexporter"
+          image_name="ghcr.io/${{ github.repository }}"
 
           docker manifest inspect $image_name:$IMAGE_TAG
           exit_status=$?
@@ -107,5 +109,5 @@ jobs:
           fi
           set -e
 
-          task docker:build-n-push Tag="$IMAGE_TAG"
+          task docker:build-n-push Image="$image_name:$IMAGE_TAG"
 

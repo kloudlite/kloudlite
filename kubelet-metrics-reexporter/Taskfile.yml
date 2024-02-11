@@ -35,12 +35,10 @@ tasks:
 
   docker:build-n-push:
     preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
+      - sh: '[ -n "{{.Image}}" ]'
         msg: "env var Tag must be provided"
-    vars:
-      Image: "ghcr.io/kloudlite/kubelet-metrics-reexporter:{{.Tag}}-nightly"
     cmds:
       - task: build
         vars:
           Out: kubelet-metrics-reexporter 
-      - docker buildx build --build-args BIN=kubelet-metrics-reexporter -t {{.Image}} . --push
+      - docker buildx build --build-arg BIN=kubelet-metrics-reexporter -t {{.Image}} . --push
