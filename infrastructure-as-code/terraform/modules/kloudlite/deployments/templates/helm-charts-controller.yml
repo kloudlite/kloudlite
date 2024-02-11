@@ -41,9 +41,7 @@ spec:
               cpu: 5m
               memory: 10Mi
 
-        - command:
-            - /manager
-          args:
+        - args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
@@ -56,6 +54,8 @@ spec:
               value: "30s"
             - name: MAX_CONCURRENT_RECONCILES
               value: "1"
+            - name: HELM_JOB_RUNNER_IMAGE
+              value: "ghcr.io/kloudlite/operator/workers/helm-runner:${kloudlite_release}"
           name: manager
           securityContext:
             runAsNonRoot: true
