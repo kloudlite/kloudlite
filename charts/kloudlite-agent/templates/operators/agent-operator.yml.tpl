@@ -127,7 +127,8 @@ spec:
 
             {{- /* for: nodepool operator */}}
             - name: "IAC_JOB_IMAGE"
-              value: {{.Values.operators.agentOperator.configuration.iacJobImage.repository}}:{{.Values.operators.agentOperator.configuration.iacJobImage.tag | default (include "image-tag" .)}}
+              {{- $iacjobimageTag := .Values.operators.agentOperator.configuration.iacJobImage.tag | default (include "image-tag" .) }}
+              value: {{.Values.operators.agentOperator.configuration.iacJobImage.repository}}:{{$iacjobimageTag}}
 
             - name: "K3S_JOIN_TOKEN"
               valueFrom:
@@ -183,8 +184,9 @@ spec:
 
             {{ include "helmchart-operator-env" . | nindent 12 }}
 
-          image: {{.Values.operators.agentOperator.image.repository}}:{{.Values.operators.agentOperator.image.tag | default (include "image-tag" .)}}
-          imagePullPolicy: {{ include "image-pull-policy" .}}
+          {{- $imageTag := .Values.operators.agentOperator.image.tag | default (include "image-tag" .) }}
+          image: {{.Values.operators.agentOperator.image.repository}}:{{$imageTag}}
+          imagePullPolicy: {{ include "image-pull-policy" $imageTag}}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
