@@ -14,10 +14,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Go
-        uses: actions/setup-go@v2
+      - name: Setup Golang caches
+        uses: actions/cache@v3
         with:
-          go-version: 1.20.x  # Replace with your desired Go version
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21.5
 
       - name: Install dependencies
         run: go mod download

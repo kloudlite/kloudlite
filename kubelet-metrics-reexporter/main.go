@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -13,11 +12,9 @@ import (
 
 	flag "github.com/spf13/pflag"
 
-	"github.com/nxtcoder17/kubelet-metrics-reexporter/internal/parser"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
+	"github.com/kloudlite/kubelet-metrics-reexporter/internal/kloudlite"
+	"github.com/kloudlite/kubelet-metrics-reexporter/internal/parser"
+	"github.com/kloudlite/kubelet-metrics-reexporter/pkg/k8s"
 	"k8s.io/client-go/rest"
 )
 
@@ -77,24 +74,20 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	kCli, err := kubernetes.NewForConfig(restCfg)
-	if err != nil {
-		log.Fatalln(err)
+	extraTags := make(map[string]string, len(enrichTags))
+	for i := range enrichTags {
+		s := strings.SplitN(enrichTags[i], "=", 2)
+		if len(s) != 2 {
+			continue
+		}
+		extraTags[s[0]] = s[1]
 	}
 
-	grabPodsByNodeName := func(nodeName string) (map[string]corev1.Pod, error) {
-		pl, err := kCli.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
-			FieldSelector: fmt.Sprintf("spec.nodeName=%s", nodeName),
-		})
-		if err != nil {
-			return nil, err
-		}
+  fmt.Printf("extra tags: %+v\n", extraTags)
 
-		m := make(map[string]corev1.Pod, len(pl.Items))
-		for _, pod := range pl.Items {
-			m[types.NamespacedName{Namespace: pod.Namespace, Name: pod.Name}.String()] = pod
-		}
-		return m, nil
+	kcli, err := k8s.NewClient(restCfg)
+	if err != nil {
+		logger.Fatalln(err)
 	}
 
 	parserOpts := parser.ParserOpts{
@@ -134,22 +127,19 @@ func main() {
 			logger.Printf("GET [%s] at %s, and took %.2fs\n", r.URL, time.Now().Format(time.RFC3339), time.Since(t).Seconds())
 		}()
 
-		parserOpts.PodsMap, err = grabPodsByNodeName(nodeName)
+		mParser, err := parser.NewParser(r.Context(), kcli, nodeName, parserOpts)
 		if err != nil {
+			logger.Printf("[ERROR]: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		mParser, err := parser.NewParser(kCli, nodeName, parserOpts)
+		b, err := kcli.MetricsResource(r.Context(), nodeName)
 		if err != nil {
+			logger.Printf("[ERROR]: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-
-		req := kCli.RESTClient().Get().AbsPath(fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/resource", nodeName))
-		b, err := req.DoRaw(r.Context())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
 		if r.URL.Query().Get("raw") == "true" {
 			w.Write(b)
 			return
@@ -165,6 +155,51 @@ func main() {
 
 	http.HandleFunc("/metrics/probes", func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	})
+
+	http.HandleFunc("/metrics/kloudlite", func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+		defer func() {
+			logger.Printf("GET [%s] at %s, and took %.2fs\n", r.URL, time.Now().Format(time.RFC3339), time.Since(t).Seconds())
+		}()
+
+		if r.URL.Query().Get("raw") == "true" {
+			b, err := kcli.StatsSummaryRaw(r.Context(), nodeName)
+			if err != nil {
+				logger.Printf("[ERROR]: %v\n", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Write(b)
+			return
+		}
+
+		out := bytes.NewBuffer(nil)
+		ma, err := kloudlite.NewMetricsAggregator(r.Context(), kcli, nodeName, extraTags)
+		if err != nil {
+			logger.Printf("[ERROR]: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		ma.WriteNodeMetrics(out)
+		ma.WritePodMetrics(out)
+		io.Copy(w, out)
+	})
+
+	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+		defer func() {
+			logger.Printf("GET [%s] at %s, and took %.2fs\n", r.URL, time.Now().Format(time.RFC3339), time.Since(t).Seconds())
+		}()
+
+		b, err := kcli.Metrics(r.Context(), nodeName)
+		if err != nil {
+			logger.Printf("[ERROR]: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(b)
 	})
 
 	logger.Printf("http server starting on %s\n", addr)
