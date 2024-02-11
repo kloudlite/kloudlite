@@ -1,11 +1,11 @@
 {{- define "vector-vm-scrape" -}}
 apiVersion: operator.victoriametrics.com/v1beta1
-kind: VMServiceScrape
+kind: VMPodScrape
 metadata:
-  name: vector-vm-scrape
+  name: vector-aggregator-scrape
   namespace: {{.Release.Namespace}}
 spec:
-  endpoints:
+  podMetricsEndpoints:
   - port: prom-exporter
   namespaceSelector:
     matchNames:

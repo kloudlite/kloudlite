@@ -27,8 +27,9 @@ spec:
 
       containers:
       - name: main
-        image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default (include "image-tag" .) }}
-        imagePullPolicy: {{ include "image-pull-policy" . }}
+        {{- $imageTag := .Values.agent.image.tag | default (include "image-tag" .) }}
+        image: {{.Values.agent.image.repository}}:{{$imageTag}}
+        imagePullPolicy: {{ include "image-pull-policy" $imageTag }}
         env:
           - name: GRPC_ADDR
             value: {{.Values.messageOfficeGRPCAddr}}

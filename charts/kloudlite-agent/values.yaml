@@ -111,6 +111,11 @@ helmCharts:
     name: "vector"
     debugOnStdout: false
     nodeSelector: {}
+    configuration:
+      kubeletMetricsReexporter:
+        image:
+          repository: "ghcr.io/kloudlite/kubelet-metrics-reexporter"
+          tag: ""
 
   clusterAutoscaler:
     enabled: true

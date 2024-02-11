@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added [charts/kloudlite-agent]
 
 - vector agent now, tolerates all taints i.e. it will even run on master nodes [#95](https://github.com/kloudlite/helm-charts/issues/95)
+- kubelet-metrics-reexporter image is now configurable via helm values.
+- kubelet-metrics-reexporter now exposes route `/metrics/kloudlite`, which generates metrics from kubelet API `/stats/summary`. vector agent is also configured to scrape it.
 
 ### Added [charts/kloudlite-platform]
 
 - victoria metrics VMCluster instance, now has a retention period of 1d
+
+### Changed [charts/kloudlite-platform]
+
+- victoria metrics scraping for `vector` is migrated from `vmservicescrape` to `podscrape`, as vector had 2 services, `vector`, and `vector-headless`, which caused same data to be stored twice.
 
 ### Fixed [charts/kloudlite-platform]
 
