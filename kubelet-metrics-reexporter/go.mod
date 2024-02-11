@@ -1,4 +1,4 @@
-module github.com/nxtcoder17/kubelet-metrics-reexporter
+module github.com/kloudlite/kubelet-metrics-reexporter
 
 go 1.21
 

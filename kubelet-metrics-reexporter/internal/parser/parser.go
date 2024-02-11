@@ -3,16 +3,17 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
 	"text/template"
 
+	"github.com/kloudlite/kubelet-metrics-reexporter/pkg/k8s"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -49,12 +50,12 @@ type ParserOpts struct {
 }
 
 type Parser struct {
-	kCli     *kubernetes.Clientset
+	kCli     *k8s.Client
 	nodeName string
 	ParserOpts
 }
 
-func NewParser(kCli *kubernetes.Clientset, nodeName string, opts ParserOpts) (*Parser, error) {
+func NewParser(ctx context.Context, kcli *k8s.Client, nodeName string, opts ParserOpts) (*Parser, error) {
 	r, err := regexp.Compile(opts.ValidLabelRegexExpr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to compile metric label regexp")
@@ -62,8 +63,15 @@ func NewParser(kCli *kubernetes.Clientset, nodeName string, opts ParserOpts) (*P
 
 	opts.labelValidator = r
 
+	pl, err := kcli.ListPodsOnNode(ctx, nodeName)
+	if err != nil {
+		return nil, err
+	}
+
+	opts.PodsMap = k8s.ToPodsMap(pl)
+
 	return &Parser{
-		kCli:       kCli,
+		kCli:       kcli,
 		nodeName:   nodeName,
 		ParserOpts: opts,
 	}, nil
