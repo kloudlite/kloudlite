@@ -1,0 +1,130 @@
+tracker_id: "${TRACKER_ID}"
+
+aws_region: ${AWS_REGION}
+aws_access_key: ${AWS_ACCESS_KEY}
+aws_secret_key: ${AWS_SECRET_KEY}
+
+aws_assume_role:
+  enabled: true
+  role_arn: "${AWS_ASSUME_ROLE_ARN}"
+  external_id: "${AWS_ASSUME_ROLE_PARAM_EXTERNAL_ID}"
+
+vpc:
+  name: test-vpc
+  cidr: 10.0.0.0/16
+  public_subnets:
+    - availability_zone: ap-south-1a
+      cidr: 10.0.1.0/24
+    - availability_zone: ap-south-1b
+      cidr: 10.0.2.0/24
+    - availability_zone: ap-south-1c
+      cidr: 10.0.3.0/24
+
+k3s_masters:
+  # image_id: ami-06d146e85d1709abb
+  image_id: &imageId ami-0ec149e1e8b76e957
+  image_ssh_username: ubuntu
+  instance_type: "c6a.large"
+  nvidia_gpu_enabled: false
+  root_volume_type: gp3
+  root_volume_size: 50
+  iam_instance_profile: "${AWS_INSTANCE_PROFILE}"
+
+  # public_dns_host: dev3.kloudlite.io
+  public_dns_host: ${PUBLIC_DNS_HOST_MASTERS}
+  cluster_internal_dns_host: cluster.local
+
+  cloudflare:
+    enabled: true
+    api_token: ${CLOUDFLARE_API_TOKEN}
+    zone_id: ${CLOUDFLARE_ZONE_ID}
+    domain: ${PUBLIC_DNS_HOST_MASTERS}
+
+  taint_master_nodes: true
+
+  backup_to_s3:
+    enabled: true
+
+    endpoint: "s3.amazonaws.com"
+    bucket_name: "${K3S_BACKUP_S3_BUCKET_NAME}"
+    bucket_region: "${K3S_BACKUP_S3_BUCKET_REGION}"
+    bucket_folder: "${K3S_BACKUP_S3_BUCKET_FOLDER}"
+
+  restore_from_latest_snapshot: true
+
+  nodes:
+    master-1:
+      role: primary-master
+      availability_zone: ap-south-1a
+    master-2:
+      role: secondary-master
+      availability_zone: ap-south-1b
+      # last_recreated_at: 0
+    master-3:
+      role: secondary-master
+      availability_zone: ap-south-1c
+        # last_recreated_at: 0
+
+ec2_nodepools:
+  np-1:
+    # image_id: ami-06d146e85d1709abb
+    image_id: *imageId
+    image_ssh_username: ubuntu
+    availability_zone: "ap-south-1a"
+    instance_type: "c6a.large"
+    nvidia_gpu_enabled: false
+    root_volume_type: gp3
+    root_volume_size: 50
+    # iam_instance_profile: "kloudlite-instance-profile"
+    nodes:
+      node-1: { }
+
+# ec2_nodepools: {}
+# spot_nodepools: {}
+
+spot_nodepools:
+  spot-np-1:
+    # image_id: ami-0fdcdf796bf63edfd
+    image_id: *imageId
+    image_ssh_username: ubuntu
+    availability_zone: "ap-south-1b"
+    nvidia_gpu_enabled: false
+    root_volume_type: gp3
+    root_volume_size: 50
+    # iam_instance_profile: "kloudlite-instance-profile"
+    spot_fleet_tagging_role_name: "aws-ec2-spot-fleet-tagging-role"
+    # gpu_node:
+    #   instance_types: ["g5.xlarge"]
+    cpu_node:
+      vcpu:
+        min: 1
+        max: 2
+      memory_per_vcpu:
+        min: 2
+        max: 4
+    nodes:
+      node-1: { }
+
+enable_nvidia_gpu_support: false
+kloudlite_params:
+  release: v1.0.5-nightly
+  install_agent: false
+  install_crds: true
+  install_csi_driver: true
+  install_operators: true
+  agent_vars:
+    cluster_token: "asdfafa"
+    cluster_name: "tetaa"
+    account_name: "asdfasfasf"
+    message_office_grpc_addr: "message-office:443"
+
+extra_server_args:
+  - --snapshotter
+  - "stargz"
+extra_agent_args:
+  - --snapshotter
+  - "stargz"
+
+save_ssh_key_to_path: .secrets/${TRACKER_ID}.pem
+save_kubeconfig_to_path: .secrets/${TRACKER_ID}.kubeconfig
+save_worker_ssh_key_to_path: .secrets/${TRACKER_ID}-worker.pem
