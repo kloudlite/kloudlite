@@ -45,7 +45,7 @@ func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, nde.DomainName, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, nde.ClusterName, ResourceTypeDomainEntries, nde.DomainName, PublishAdd)
 
 	return nde, nil
 }
@@ -71,7 +71,7 @@ func (d *domain) UpdateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, newDe.DomainName, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, newDe.ClusterName, ResourceTypeDomainEntries, newDe.DomainName, PublishUpdate)
 	return newDe, nil
 }
 
@@ -79,7 +79,13 @@ func (d *domain) DeleteDomainEntry(ctx InfraContext, domainName string) error {
 	if err := d.canPerformActionInAccount(ctx, iamT.DeleteDomainEntry); err != nil {
 		return errors.NewE(err)
 	}
-	err := d.domainEntryRepo.DeleteOne(
+
+	existing, err := d.findDomainEntry(ctx, ctx.AccountName, domainName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	err = d.domainEntryRepo.DeleteOne(
 		ctx,
 		repos.Filter{
 			fields.AccountName:  ctx.AccountName,
@@ -89,7 +95,7 @@ func (d *domain) DeleteDomainEntry(ctx InfraContext, domainName string) error {
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, domainName, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, existing.ClusterName, ResourceTypeDomainEntries, domainName, PublishDelete)
 	return nil
 }
 
