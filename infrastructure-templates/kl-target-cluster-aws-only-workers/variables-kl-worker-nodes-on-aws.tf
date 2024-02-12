@@ -102,3 +102,11 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "vpc" {
+  description = "VPC related params, vpc_public_subnet_ids is a map of availability zone to subnet id"
+  type        = object({
+    vpc_id                = string
+    vpc_public_subnet_ids = map(string)
+  })
+}

@@ -14,7 +14,7 @@ module "kl-master-nodes-on-aws" {
 
 module "kl-worker-nodes-on-aws" {
   source     = "../../terraform/bundles/kl-worker-nodes-on-aws"
-  depends_on = [module.kl-master-nodes-on-aws]
+  depends_on = [module.kl-master-nodes-on-aws.k3s_agent_token]
   aws_region = var.aws_region
 
   ec2_nodepools              = var.ec2_nodepools

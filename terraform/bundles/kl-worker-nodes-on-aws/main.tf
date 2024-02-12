@@ -63,8 +63,10 @@ locals {
 }
 
 module "aws-security-groups" {
-  source                       = "../../modules/aws/security-groups"
-  depends_on                   = [null_resource.variable_validations]
+  source     = "../../modules/aws/security-groups"
+  depends_on = [null_resource.variable_validations]
+  vpc_id     = var.vpc.vpc_id
+
   create_group_for_k3s_workers = true
 
   allow_incoming_http_traffic_on_master = true
@@ -100,7 +102,11 @@ module "aws-ec2-nodepool" {
   security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   tags                 = var.tags
-  nodes                = {
+  vpc                  = {
+    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone]
+    vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
+  }
+  nodes = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
         tf_image_ssh_username   = each.value.image_ssh_username
@@ -146,7 +152,11 @@ module "aws-spot-nodepool" {
   ssh_key_name                 = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   cpu_node                     = each.value.cpu_node
   gpu_node                     = each.value.gpu_node
-  nodes                        = {
+  vpc                          = {
+    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone]
+    vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
+  }
+  nodes = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
         tf_image_ssh_username   = each.value.image_ssh_username
