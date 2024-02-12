@@ -5,96 +5,28 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
-	"github.com/gofiber/websocket/v2"
 	"github.com/google/uuid"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/apps/websocket-server/internal/domain/logs"
+	"github.com/kloudlite/api/apps/websocket-server/internal/domain/types"
+	"github.com/kloudlite/api/apps/websocket-server/internal/domain/utils"
 	"github.com/kloudlite/api/pkg/errors"
-	httpServer "github.com/kloudlite/api/pkg/http-server"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
-	"github.com/kloudlite/api/pkg/messaging/types"
-	"github.com/kloudlite/api/pkg/repos"
+	msg_types "github.com/kloudlite/api/pkg/messaging/types"
+
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-type Event string
-
-const (
-	EventSubscribe   Event = "subscribe"
-	EventUnsubscribe Event = "unsubscribe"
-)
-
-func parseTime(since string) (time.Time, error) {
-	now := time.Now()
-
-	// Split the string into the numeric and duration type parts
-	length := len(since)
-	if length < 2 {
-		return now, fmt.Errorf("invalid expiration format")
-	}
-
-	durationValStr := since[:length-1]
-	durationVal, err := strconv.Atoi(durationValStr)
-	if err != nil {
-		return now, fmt.Errorf("invalid duration value: %v", err)
-	}
-
-	durationType := since[length-1]
-
-	switch durationType {
-	case 'm':
-		return now.Add(-time.Duration(durationVal) * time.Minute), nil
-	case 'h':
-		return now.Add(-time.Duration(durationVal) * time.Hour), nil
-	case 'd':
-		return now.AddDate(0, 0, -durationVal), nil
-	case 'w':
-		return now.AddDate(0, 0, -durationVal*7), nil
-	case 'M':
-		return now.AddDate(0, -durationVal, 0), nil
-	default:
-		return now, fmt.Errorf("invalid duration type: %v, available types: m, h, d, w, M", durationType)
-	}
-}
-
-func parseSince(since *string) (*time.Time, error) {
-	if since == nil {
-		return nil, nil
-	}
-
-	if *since == "" {
-		return nil, nil
-	}
-
-	t, err := parseTime(*since)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	return &t, nil
-}
-
-type LogsReqData struct {
-	AccountName string  `json:"account"`
-	ClusterName string  `json:"cluster"`
-	TrackingId  string  `json:"trackingId"`
-	Since       *string `json:"since,omitempty"`
-}
-
 func (d *domain) newJetstreamConsumerForLog(ctx context.Context, subject string, consumerId string, since *string) (*msg_nats.JetstreamConsumer, error) {
-	t, err := parseSince(since)
+	t, err := logs.ParseSince(since)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	id := uuid.New().String()
 	cid := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s-%s", consumerId, id))))
-
-	fmt.Println("consumerId: ", cid)
 
 	if t != nil {
 		return msg_nats.NewJetstreamConsumer(ctx, d.jetStreamClient, msg_nats.JetstreamConsumerArgs{
@@ -123,248 +55,127 @@ func (d *domain) newJetstreamConsumerForLog(ctx context.Context, subject string,
 	})
 }
 
-func getLogHash(ld LogsReqData, userId repos.ID, sid string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%s-%s-%s-%s", ld.AccountName, ld.ClusterName, ld.TrackingId, userId))))
-}
-
-func (d *domain) getLogSubsId(ld LogsReqData) string {
-	return fmt.Sprintf("%s.%s.%s.%s.>", d.env.LogsStreamName, ld.AccountName, ld.ClusterName, ld.TrackingId)
-}
-
-func (d *domain) HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) error {
-	sess := httpServer.GetSession[*common.AuthSession](ctx)
-	if sess == nil {
-		return errors.NewE(fmt.Errorf("session not found"))
-	}
-
-	defer func() {
-		if err := c.Close(); err != nil {
-			d.logger.Warnf("websocket close: %w", err)
-		}
-	}()
-
+func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, msgAny map[string]any) error {
 	log := d.logger
 
-	type Subscription struct {
-		resource LogsReqData
-		jc       *msg_nats.JetstreamConsumer
-		open     bool
-		Id       string
+	var msg logs.Message
+	b, err := json.Marshal(msgAny)
+	if err != nil {
+		return err
 	}
 
-	resources := make(map[string]*Subscription)
-
-	defer func() {
-		for _, v := range resources {
-			if v.jc != nil {
-				if err := v.jc.Stop(ctx); err != nil {
-					log.Warnf("stop jetstream consumer: %w", err)
-				}
-			}
-		}
-	}()
-
-	type Message struct {
-		Event Event       `json:"event"`
-		Data  LogsReqData `json:"data"`
-		Id    string
+	if err := json.Unmarshal(b, &msg); err != nil {
+		return err
 	}
 
-	type MessageType string
-
-	const (
-		MessageTypeError  MessageType = "error"
-		MessageTypeUpdate MessageType = "update"
-		MessageTypeInfo   MessageType = "info"
-		MessageTypeLog    MessageType = "log"
-	)
-	type MsgSpec struct {
-		PodName       string `json:"podName"`
-		ContainerName string `json:"containerName"`
+	if msg.Id == "" {
+		msg.Id = "default"
 	}
 
-	type MessageResponse struct {
-		Timestamp time.Time   `json:"timestamp"`
-		Message   string      `json:"message"`
-		Id        string      `json:"id"`
-		Spec      *MsgSpec    `json:"spec,omitempty"`
-		Type      MessageType `json:"type"`
-	}
+	hash := logs.LogHash(msg.Spec, ctx.Session.UserId, msg.Id)
 
-	closed := false
+	switch msg.Event {
+	case logs.EventSubscribe:
+		{
 
-	writeError := func(c *websocket.Conn, err error) error {
-		if c != nil {
-			return c.WriteJSON(MessageResponse{
-				Type:    MessageTypeError,
-				Message: err.Error(),
-			})
-		}
-		return nil
-	}
-
-	writeInfo := func(c *websocket.Conn, msg string) error {
-		if c != nil {
-			return c.WriteJSON(MessageResponse{
-				Type:    MessageTypeInfo,
-				Message: msg,
-			})
-		}
-		return nil
-	}
-
-	for {
-		if closed {
-			break
-		}
-
-		var msg Message
-		if err := c.ReadJSON(&msg); err != nil {
-
-			if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-				break
-			}
-			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-				break
+			if err := d.checkAccountAccess(ctx.Context, msg.Spec.Account, ctx.Session.UserId, iamT.ReadLogs); err != nil {
+				return err
 			}
 
-			if err := writeError(c, err); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
-
-			continue
-		}
-
-		if err := d.checkAccountAccess(ctx, msg.Data.AccountName, sess.UserId, iamT.ReadLogs); err != nil {
-			if err := writeError(c, err); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
-			continue
-		}
-
-		if msg.Id == "" {
-			msg.Id = "default"
-		}
-
-		hash := getLogHash(msg.Data, sess.UserId, msg.Id)
-
-		switch msg.Event {
-		case EventSubscribe:
-
-			if _, ok := resources[hash]; ok {
-
-				if resources[hash].jc != nil {
-					err := resources[hash].jc.Stop(ctx)
-					if err != nil {
-						if err := writeError(
-							c, errors.Newf("already subscribed to logs for account: %s, cluster: %s, trackingId: %s",
-								msg.Data.AccountName, msg.Data.ClusterName, msg.Data.TrackingId,
-							),
-						); err != nil {
-							log.Warnf("websocket write: %w", err)
-						}
-						// todo: reverify
-						continue
+			if _, ok := (*logsSubs)[hash]; ok {
+				if (*logsSubs)[hash].Jc != nil {
+					if err := (*logsSubs)[hash].Jc.Stop(ctx.Context); err != nil {
+						return err
 					}
 				}
-
 			}
 
-			jc, err := d.newJetstreamConsumerForLog(ctx, d.getLogSubsId(msg.Data), hash, msg.Data.Since)
+			jc, err := d.newJetstreamConsumerForLog(ctx.Context, logs.LogSubsId(msg.Spec, d.env.LogsStreamName), hash, msg.Spec.Since)
 			if err != nil {
-				if err := writeError(c, err); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-				continue
+				return err
 			}
 
-			resources[hash] = &Subscription{
-				resource: msg.Data,
-				jc:       jc,
-				open:     true,
+			if (*logsSubs) == nil {
+				*logsSubs = make(logs.LogsSubsMap)
+			}
+
+			(*logsSubs)[hash] = logs.LogsSubs{
+				Jc:       jc,
 				Id:       msg.Id,
+				Resource: msg.Spec,
 			}
 
 			go func() {
-				if err := writeInfo(c, "subscribed to logs"); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
+
+				utils.WriteInfo(ctx, "subscribed to logs", msg.Id, types.ForLogs)
 
 				if err := jc.Consume(
-					func(m *types.ConsumeMsg) error {
-						if c != nil {
-							var resp MessageResponse
-							if err := json.Unmarshal(m.Payload, &resp); err != nil {
-								if err := writeError(c, err); err != nil {
+					func(m *msg_types.ConsumeMsg) error {
+						if ctx.Connection != nil {
+							var data logs.Response
+							var resp types.Response[logs.Response]
+							if err := json.Unmarshal(m.Payload, &data); err != nil {
+								return err
+							}
+
+							resp.Type = types.MessageTypeResponse
+							resp.Id = msg.Id
+							sp := strings.Split(m.Subject, ".")
+
+							data.PodName = sp[len(sp)-2]
+							data.ContainerName = sp[len(sp)-1]
+
+							resp.Data = data
+							resp.For = types.ForLogs
+
+							ctx.Mutex.Lock()
+							if ctx.Connection != nil {
+								if err := ctx.Connection.WriteJSON(resp); err != nil {
 									log.Warnf("websocket write: %w", err)
 								}
 							}
-							resp.Type = MessageTypeLog
-							resp.Id = msg.Id
-							sp := strings.Split(m.Subject, ".")
-							resp.Spec = &MsgSpec{
-								PodName:       sp[len(sp)-2],
-								ContainerName: sp[len(sp)-1],
-							}
-							if err := c.WriteJSON(resp); err != nil {
-								log.Warnf("websocket write: %w", err)
-							}
+							ctx.Mutex.Unlock()
 						}
 
 						return nil
 					},
-					types.ConsumeOpts{
+					msg_types.ConsumeOpts{
 						OnError: func(err error) error {
-							if err := writeError(c, err); err != nil {
-								log.Warnf("websocket write: %w", err)
-							}
-
+							utils.WriteError(ctx, err, msg.Id, types.ForLogs)
 							return err
 						},
 					},
 				); err != nil {
-					if err := writeError(c, err); err != nil {
-						log.Warnf("websocket write: %w", err)
-					}
+					utils.WriteError(ctx, err, msg.Id, types.ForLogs)
 				}
 
 			}()
 
-		case "unsubscribe":
-			if _, ok := resources[hash]; !ok {
-				if err := writeError(
-					c, errors.Newf("not subscribed to logs for account: %s, cluster: %s, trackingId: %s",
-						msg.Data.AccountName, msg.Data.ClusterName, msg.Data.TrackingId,
-					),
-				); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-
-				continue
-			}
-
-			if resources[hash].jc != nil {
-				if err := resources[hash].jc.Stop(ctx); err != nil {
-					if err := writeError(c, err); err != nil {
-						log.Warnf("websocket write: %w", err)
-					}
-					continue
-				}
-
-				delete(resources, hash)
-				if err := writeInfo(c, "unsubscribed from logs"); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-			}
-
-		default:
-			if err := writeError(
-				c, errors.Newf("invalid event: %s, available events: subscribe, unsubscribe", msg.Event),
-			); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
 		}
 
+	case logs.EventUnsubscribe:
+		{
+
+			ctx.Mutex.Lock()
+			if res, ok := (*logsSubs)[hash]; ok {
+				if res.Jc != nil {
+					if err := res.Jc.Stop(ctx.Context); err != nil {
+						return err
+					}
+
+					delete(*logsSubs, hash)
+				}
+				ctx.Mutex.Unlock()
+				utils.WriteInfo(ctx, "[logs] subscription cancelled for ", msg.Id, types.ForLogs)
+			} else {
+				ctx.Mutex.Unlock()
+				utils.WriteError(ctx, fmt.Errorf("[logs] no subscription found for account: %s, cluster: %s, trackingId: %s",
+					msg.Spec.Account, msg.Spec.Cluster, msg.Spec.TrackingId), msg.Id, types.ForLogs)
+			}
+
+		}
+	default:
+		return fmt.Errorf("invalid event: %s", msg.Event)
 	}
 
 	return nil
