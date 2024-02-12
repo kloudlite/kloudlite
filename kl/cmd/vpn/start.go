@@ -121,15 +121,6 @@ sudo {cmd} vpn start`),
 
 func startConnecting(verbose bool, options ...fn.Option) error {
 
-	data, err := client.GetExtraData()
-	if err != nil {
-		return err
-	}
-	data.VpnConnected = true
-	if err := client.SaveExtraData(data); err != nil {
-		return err
-	}
-
 	if err := connect(verbose, options...); err != nil {
 		return err
 	}
