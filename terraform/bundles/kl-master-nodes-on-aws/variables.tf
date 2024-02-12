@@ -8,9 +8,20 @@ variable "tracker_id" {
   type        = string
 }
 
+variable "vpc" {
+  type = object({
+    name           = string
+    cidr           = string
+    public_subnets = list(object({
+      availability_zone = string
+      cidr              = string
+    }))
+  })
+}
+
 variable "k3s_masters" {
   description = "k3s masters configuration"
-  type = object({
+  type        = object({
     image_id             = string
     image_ssh_username   = string
     instance_type        = string
@@ -51,7 +62,7 @@ variable "k3s_masters" {
 
   validation {
     error_message = "when backup_to_s3 is enabled, all the following variables must be set: endpoint, bucket_name, bucket_region, bucket_folder"
-    condition = var.k3s_masters.backup_to_s3.enabled == false || alltrue([
+    condition     = var.k3s_masters.backup_to_s3.enabled == false || alltrue([
       var.k3s_masters.backup_to_s3.endpoint != "",
       var.k3s_masters.backup_to_s3.bucket_name != "",
       var.k3s_masters.backup_to_s3.bucket_region != "",
@@ -61,7 +72,7 @@ variable "k3s_masters" {
 
   validation {
     error_message = "if enabled, all mandatory Cloudflare bucket details are specified"
-    condition = var.k3s_masters.cloudflare == null || (var.k3s_masters.cloudflare.enabled == true && alltrue([
+    condition     = var.k3s_masters.cloudflare == null || (var.k3s_masters.cloudflare.enabled == true && alltrue([
       var.k3s_masters.cloudflare.api_token != "",
       var.k3s_masters.cloudflare.zone_id != "",
       var.k3s_masters.cloudflare.domain != "",
@@ -71,14 +82,14 @@ variable "k3s_masters" {
 
 variable "kloudlite_params" {
   description = "kloudlite related parameters"
-  type = object({
+  type        = object({
     release            = string
     install_crds       = optional(bool, true)
     install_csi_driver = optional(bool, false)
     install_operators  = optional(bool, false)
 
     install_agent = optional(bool, false)
-    agent_vars = optional(object({
+    agent_vars    = optional(object({
       account_name             = string
       cluster_name             = string
       cluster_token            = string
