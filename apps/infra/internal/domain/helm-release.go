@@ -125,7 +125,7 @@ func (d *domain) CreateHelmRelease(ctx InfraContext, clusterName string, hr enti
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeHelmRelease, nhr.Name, PublishAdd)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, nhr.ClusterName, ResourceTypeHelmRelease, nhr.Name, PublishAdd)
 
 	if err = d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
@@ -179,7 +179,7 @@ func (d *domain) UpdateHelmRelease(ctx InfraContext, clusterName string, hrIn en
 		return nil, errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uphr.ClusterName, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
 	if err := d.applyHelmRelease(ctx, uphr); err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -204,7 +204,7 @@ func (d *domain) DeleteHelmRelease(ctx InfraContext, clusterName string, name st
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uphr.ClusterName, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
 
 	return d.resDispatcher.DeleteFromTargetCluster(ctx, clusterName, &uphr.HelmChart)
 }
@@ -227,7 +227,7 @@ func (d *domain) OnHelmReleaseApplyError(ctx InfraContext, clusterName string, n
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uphr.ClusterName, ResourceTypeHelmRelease, uphr.Name, PublishUpdate)
 	return errors.NewE(err)
 }
 
@@ -243,7 +243,7 @@ func (d *domain) OnHelmReleaseDeleteMessage(ctx InfraContext, clusterName string
 	if err != nil {
 		return errors.NewE(err)
 	}
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeHelmRelease, hr.Name, PublishDelete)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeHelmRelease, hr.Name, PublishDelete)
 	return err
 }
 
@@ -268,6 +268,6 @@ func (d *domain) OnHelmReleaseUpdateMessage(ctx InfraContext, clusterName string
 		return errors.NewE(err)
 	}
 
-	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeHelmRelease, uphr.GetName(), PublishUpdate)
+	d.resourceEventPublisher.PublishResourceEvent(ctx, uphr.ClusterName, ResourceTypeHelmRelease, uphr.GetName(), PublishUpdate)
 	return nil
 }
