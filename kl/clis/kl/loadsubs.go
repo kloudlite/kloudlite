@@ -1,6 +1,7 @@
 package kl
 
 import (
+	"github.com/kloudlite/kl/flags"
 	"runtime"
 
 	"github.com/kloudlite/kl/cmd/auth"
@@ -25,7 +26,9 @@ func init() {
 		Hidden: true,
 	})
 
-	rootCmd.AddCommand(DocsCmd)
+	if flags.IsDev() {
+		rootCmd.AddCommand(DocsCmd)
+	}
 	rootCmd.AddCommand(UpdateCmd)
 
 	rootCmd.AddCommand(list.Cmd)
