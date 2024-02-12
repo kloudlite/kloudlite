@@ -29,6 +29,15 @@ variable "security_groups" {
   type        = list(string)
 }
 
+variable "vpc" {
+  description = "VPC related params"
+  type        = object({
+    subnet_id              = string
+    vpc_security_group_ids = list(string)
+  })
+  default = null
+}
+
 variable "nvidia_gpu_enabled" {
   description = "is this nodepool nvidia gpu enabled"
   type        = string

@@ -14,6 +14,17 @@ variable "tracker_id" {
   type        = string
 }
 
+variable "vpc" {
+  type = object({
+    name           = string
+    cidr           = string
+    public_subnets = list(object({
+      availability_zone = string
+      cidr              = string
+    }))
+  })
+}
+
 variable "k3s_masters" {
   description = "k3s masters configuration"
   type        = object({
@@ -120,3 +131,10 @@ variable "save_kubeconfig_to_path" {
   type        = string
   default     = ""
 }
+
+variable "tags" {
+  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+  type        = map(string)
+  default     = {}
+}
+

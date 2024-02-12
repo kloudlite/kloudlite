@@ -20,3 +20,7 @@ output "kubeconfig" {
   sensitive = true
   value     = module.kl-master-nodes-on-aws.kubeconfig
 }
+
+output "kloudlite-k3s-params" {
+  value = module.kl-master-nodes-on-aws.k3s-params
+}

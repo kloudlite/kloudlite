@@ -8,4 +8,6 @@ module "kl-master-nodes-on-aws" {
   save_ssh_key_to_path      = var.save_ssh_key_to_path
   save_kubeconfig_to_path   = var.save_kubeconfig_to_path
   extra_server_args         = var.extra_server_args
+  tags                      = var.tags
+  vpc                       = var.vpc
 }

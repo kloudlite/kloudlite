@@ -22,9 +22,13 @@ resource "null_resource" "lifecycle_resource" {
 }
 
 resource "aws_instance" "ec2_instance" {
-  ami               = var.ami
-  instance_type     = var.instance_type
-  security_groups   = var.security_groups
+  ami           = var.ami
+  instance_type = var.instance_type
+
+  security_groups        = var.vpc == null ? var.security_groups : null
+  vpc_security_group_ids = var.vpc != null ? var.vpc.vpc_security_group_ids : null
+  subnet_id              = var.vpc != null ? var.vpc.subnet_id : null
+
   key_name          = var.ssh_key_name
   availability_zone = var.availability_zone
 
@@ -50,26 +54,3 @@ resource "aws_instance" "ec2_instance" {
     # kms_key_id  = data.aws_kms_key.customer_master_key.arn
   }
 }
-
-#locals {
-#  nodes_with_elastic_ips = {
-#    for node_name, node_cfg in var.nodes_config : node_name => node_cfg
-#    if node_cfg.with_elastic_ip == true
-#  }
-#}
-
-#resource "aws_eip" "elastic_ips" {
-#  for_each   = local.nodes_with_elastic_ips
-#  depends_on = [aws_instance.ec2_instances]
-#  tags       = {
-#    Name      = "${each.key}-elastic-ip"
-#    Terraform = true
-#  }
-#}
-#
-#resource "aws_eip_association" "k3s_masters_elastic_ips_association" {
-#  for_each      = local.nodes_with_elastic_ips
-#  depends_on    = [aws_eip.elastic_ips]
-#  instance_id   = aws_instance.ec2_instances[each.key].id
-#  allocation_id = aws_eip.elastic_ips[each.key].id
-#}

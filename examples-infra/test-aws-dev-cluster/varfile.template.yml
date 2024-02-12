@@ -9,6 +9,17 @@ aws_assume_role:
   role_arn: "${AWS_ASSUME_ROLE_ARN}"
   external_id: "${AWS_ASSUME_ROLE_PARAM_EXTERNAL_ID}"
 
+vpc:
+  name: test-vpc
+  cidr: 10.0.0.0/16
+  public_subnets:
+    - availability_zone: ap-south-1a
+      cidr: 10.0.1.0/24
+    - availability_zone: ap-south-1b
+      cidr: 10.0.2.0/24
+    - availability_zone: ap-south-1c
+      cidr: 10.0.3.0/24
+
 k3s_masters:
   image_id: ami-06d146e85d1709abb
   image_ssh_username: ubuntu
@@ -44,14 +55,14 @@ k3s_masters:
     master-1:
       role: primary-master
       availability_zone: ap-south-1a
-    # master-2:
-    #   role: secondary-master
-    #   availability_zone: ap-south-1b
-    #   # last_recreated_at: 0
-    # master-3:
-    #   role: secondary-master
-    #   availability_zone: ap-south-1c
+    master-2:
+      role: secondary-master
+      availability_zone: ap-south-1b
       # last_recreated_at: 0
+    master-3:
+      role: secondary-master
+      availability_zone: ap-south-1c
+        # last_recreated_at: 0
 
 # ec2_nodepools:
 #   np-1:

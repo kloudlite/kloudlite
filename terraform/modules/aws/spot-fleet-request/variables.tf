@@ -45,6 +45,15 @@ variable "security_groups" {
   type        = list(string)
 }
 
+variable "vpc" {
+  description = "VPC related params"
+  type        = object({
+    subnet_id              = string
+    vpc_security_group_ids = list(string)
+  })
+  default = null
+}
+
 variable "iam_instance_profile" {
   description = "iam instance profile for all nodes in this nodepool"
   type        = string
