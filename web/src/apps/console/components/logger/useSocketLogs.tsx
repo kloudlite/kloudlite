@@ -9,12 +9,13 @@ import {
 import * as wsock from 'websocket';
 import { dayjs } from '~/components/molecule/dayjs';
 import { ChildrenProps } from '~/components/types';
+import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
 
 export type ILog = {
-  pod_name: string;
-  container_name: string;
+  podName: string;
+  containerName: string;
   message: string;
   timestamp: string;
 };
@@ -66,7 +67,7 @@ export const LogsProvider = ({
           try {
             // eslint-disable-next-line new-cap
             const w = new wsock.w3cwebsocket(
-              url || `${socketUrl}/logs`,
+              url || `${socketUrl}/ws`,
               '',
               '',
               {}
@@ -75,13 +76,16 @@ export const LogsProvider = ({
             w.onmessage = (msg) => {
               try {
                 const m: {
-                  timestamp: string;
                   message: string;
-                  spec: {
+                  data: {
+                    message: string;
+                    timestamp: string;
                     podName: string;
                     containerName: string;
                   };
-                  type: 'update' | 'error' | 'info';
+                  id: string;
+                  for: 'logs';
+                  type: 'response' | 'error' | 'info';
                 } = JSON.parse(msg.data as string);
 
                 if (m.type === 'error') {
@@ -98,22 +102,23 @@ export const LogsProvider = ({
                   return;
                 }
 
-                if (m.type === 'update') {
-                  console.log(m.message);
-                  return;
-                }
-
-                if (m.type === 'log') {
+                if (m.type === 'response') {
+                  switch (m.for) {
+                    case 'logs':
+                      setLogs((s) => [
+                        ...s,
+                        {
+                          podName: m.data.podName,
+                          containerName: m.data.containerName,
+                          message: m.message,
+                          timestamp: m.data.timestamp,
+                        },
+                      ]);
+                      break;
+                    default:
+                      logger.log('unknown message', m);
+                  }
                   // setIsLoading(false);
-                  setLogs((s) => [
-                    ...s,
-                    {
-                      pod_name: m.spec.podName,
-                      container_name: m.spec.containerName,
-                      message: m.message,
-                      timestamp: m.timestamp,
-                    },
-                  ]);
                   return;
                 }
 
@@ -148,7 +153,7 @@ export const LogsProvider = ({
 
   useEffect(() => {
     const sorted = logs.sort((a, b) => {
-      const resp = a.pod_name.localeCompare(b.pod_name);
+      const resp = a.podName.localeCompare(b.podName);
 
       if (resp === 0) {
         return dayjs(a.timestamp).unix() - dayjs(b.timestamp).unix();
@@ -210,11 +215,14 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
 
         sock?.send(
           JSON.stringify({
-            event: 'subscribe',
+            for: 'logs',
             data: {
-              account,
-              cluster,
-              trackingId,
+              event: 'subscribe',
+              spec: {
+                account,
+                cluster,
+                trackingId,
+              },
             },
           })
         );
@@ -228,11 +236,14 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
         setSubscribed(false);
         sock?.send(
           JSON.stringify({
-            event: 'unsubscribe',
+            for: 'logs',
             data: {
-              account,
-              cluster,
-              trackingId,
+              event: 'unsubscribe',
+              spec: {
+                account,
+                cluster,
+                trackingId,
+              },
             },
           })
         );

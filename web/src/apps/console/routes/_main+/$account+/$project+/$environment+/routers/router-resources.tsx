@@ -12,14 +12,12 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IRouters } from '~/console/server/gql/queries/router-queries';
 import { Link, useParams } from '@remix-run/react';
@@ -168,8 +166,6 @@ const RouterResources = ({ items = [] }: { items: BaseType[] }) => {
     null
   );
   const [visible, setVisible] = useState<BaseType | null>(null);
-  const api = useConsoleApi();
-  const reloadPage = useReload();
 
   const props: IResource = {
     items,

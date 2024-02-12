@@ -23,7 +23,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
 import {
   ExtractNodeType,
-  parseName,
+  parseName as pn,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
@@ -31,7 +31,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { listStatus } from '~/console/components/sync-status';
-import { IAppContext } from '../app+/$app+/_layout';
+import { IEnvironmentContext } from '../_layout';
 
 const RESOURCE_NAME = 'app';
 type BaseType = ExtractNodeType<IApps>;
@@ -39,7 +39,7 @@ type BaseType = ExtractNodeType<IApps>;
 const parseItem = (item: ExtractNodeType<IApps>) => {
   return {
     name: item.displayName,
-    id: parseName(item),
+    id: pn(item),
     intercept: item.spec.intercept,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
@@ -116,7 +116,7 @@ interface IResource {
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], onAction }: IResource) => {
+const GridView = ({ items = [], onAction: _ }: IResource) => {
   const { account, project, environment } = useParams();
 
   return (
@@ -228,9 +228,16 @@ const ListView = ({ items = [], onAction }: IResource) => {
 
 const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   const api = useConsoleApi();
-  const { environment, project } = useParams();
-  const { devicesForUser } = useOutletContext<IAppContext>();
+  const { environment, project, account } = useParams();
+  const { devicesForUser } = useOutletContext<IEnvironmentContext>();
   const reload = useReload();
+
+  // useWatchItems(items, (item) => ({
+  //   account,
+  //   project,
+  //   environment,
+  //   app: pn(item),
+  // }));
 
   const interceptApp = async (item: BaseType, intercept: boolean) => {
     if (!environment || !project) {
@@ -240,8 +247,8 @@ const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
       const device = devicesForUser[0];
       try {
         const { errors } = await api.interceptApp({
-          appname: parseName(item),
-          deviceName: parseName(device),
+          appname: pn(item),
+          deviceName: pn(device),
           envName: environment,
           intercept,
           projectName: project,
@@ -265,7 +272,7 @@ const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
 
     try {
       const { errors } = await api.restartApp({
-        appName: parseName(item),
+        appName: pn(item),
         envName: environment,
         projectName: project,
       });
@@ -274,7 +281,7 @@ const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
         throw errors[0];
       }
       toast.success('App restarted successfully');
-      reload();
+      // reload();
     } catch (error) {
       handleError(error);
     }

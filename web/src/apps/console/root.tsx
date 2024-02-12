@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-no-useless-fragment */
 import Root, { links as baseLinks } from '~/lib/app-setup/root';
 import { ChildrenProps } from '~/components/types';
+import { SockProvider } from '~/root/lib/client/helpers/socket/context';
 import authStylesUrl from './styles/index.css';
 import highlightCss from './styles/hljs/tokyo-night-dark.min.css';
 import { DataContextProvider } from './page-components/common-state';
@@ -20,17 +21,18 @@ export const links = () => {
 export { ErrorBoundary } from '~/lib/app-setup/root';
 
 const Layout = ({ children }: ChildrenProps) => {
-  // return <SocketProvider>{children}</SocketProvider>;
   return <>{children}</>;
 };
 
 const _Root = ({ ...props }) => {
   return (
-    <DataContextProvider>
-      <LogsProvider>
-        <Root {...props} Wrapper={Layout} />
-      </LogsProvider>
-    </DataContextProvider>
+    <SockProvider>
+      <DataContextProvider>
+        <LogsProvider>
+          <Root {...props} Wrapper={Layout} />
+        </LogsProvider>
+      </DataContextProvider>
+    </SockProvider>
   );
 };
 

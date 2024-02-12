@@ -19,10 +19,7 @@ const useDebounce: IuseDebounce = (action, delay, dep = []) => {
         clearTimeout(handler);
         if (typeof resp === 'function') {
           resp();
-          return;
         }
-
-        console.log('resp', resp);
       };
     },
     [delay, ...dep] // Only re-call effect if value or delay changes

@@ -13,10 +13,11 @@ import {
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
+import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
 import { generatePlainColor } from '../color-generator';
 import Pulsable from '../pulsable';
 import { logsMockData } from '../../dummy/data';
-import { ILog, ISocketMessage, IuseLog, useSocketLogs } from './useSocketLogs';
+import { ILog, ISocketMessage, IuseLog } from './useSocketLogs';
 
 const hoverClass = `hover:bg-[#ddd]`;
 const hoverClassDark = `hover:bg-[#333]`;
@@ -341,7 +342,7 @@ const LogLine = ({
 }: ILogLine) => {
   return (
     <code
-      title={`pod: ${log.pod_name} | container: ${log.container_name} | line: ${
+      title={`pod: ${log.podName} | container: ${log.containerName} | line: ${
         log.lineNumber
       } | timestamp: ${dayjs(`${log.timestamp}`).format('lll')}`}
       className={classNames(
@@ -368,7 +369,7 @@ const LogLine = ({
 
       <div
         className="w-[3px] mr-xl ml-sm h-full pulsable pulsable-hidden"
-        style={{ background: generatePlainColor(log.pod_name) }}
+        style={{ background: generatePlainColor(log.podName) }}
       />
 
       <div className="inline-flex gap-xl pulsable">
@@ -543,7 +544,7 @@ const LogBlock = ({
                     lines={data.length}
                     showAll={showAll}
                     key={getHashId(
-                      `${log.message}${log.timestamp}${log.pod_name}${index}`
+                      `${log.message}${log.timestamp}${log.podName}${index}`
                     )}
                     hideLineNumber={hideLineNumber}
                     selectableLines={selectableLines}
@@ -627,7 +628,7 @@ const LogComp = ({
     }
   }, [fullScreen]);
 
-  const { logs, error, subscribed } = useSocketLogs(websocket);
+  const { logs, subscribed, errors } = useSocketLogs(websocket);
 
   const [isClientSide, setIsClientSide] = useState(false);
 
@@ -688,13 +689,15 @@ const LogComp = ({
 
       {!subscribed && logs.length === 0 && <LoadingComp />}
 
-      {error ? (
-        <pre>{error}</pre>
+      {errors.length ? (
+        <pre>{JSON.stringify(errors)}</pre>
       ) : (
         logs.length > 0 && (
           <LogBlock
             {...{
-              data: logs,
+              data: logs.map((d) => {
+                return d.data;
+              }),
               follow,
               dark,
               enableSearch,
