@@ -72,7 +72,7 @@ export const loader = (ctx: IRemixCtx) => {
 
 const Projects = () => {
   // return <Wip />;
-
+  console.log('projects');
   const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();
 

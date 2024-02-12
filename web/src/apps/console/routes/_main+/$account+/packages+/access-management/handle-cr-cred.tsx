@@ -5,6 +5,7 @@ import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IdSelector } from '~/console/components/id-selector';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -29,23 +30,24 @@ const Root = (props: IDialog) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
+        displayName: '',
         name: '',
-        username: '',
         access: 'read_write' as CredentialIn['access'],
         unit: 'd' as CredentialIn['expiration']['unit'],
         value: '1',
+        isNameError: false,
       },
       validationSchema: Yup.object({
+        displayName: Yup.string().required(),
         name: Yup.string().required(),
-        username: Yup.string().required(),
         value: Yup.string().required('expiration time is required.'),
       }),
       onSubmit: async (val) => {
         try {
           const { errors: e } = await api.createCred({
             credential: {
-              name: val.name,
-              username: val.username,
+              name: val.displayName,
+              username: val.name,
               expiration: {
                 unit: val.unit,
                 value: parseInt(val.value, 10),
@@ -69,24 +71,14 @@ const Root = (props: IDialog) => {
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content>
         <div className="flex flex-col gap-3xl">
-          <TextInput
-            value={values.name}
-            label="Name"
-            onChange={handleChange('name')}
-            error={!!errors.name}
-            message={errors.name}
-          />
-          {/* <TextInput
-          value={values.username}
-          label="Username"
-          onChange={handleChange('username')}
-          error={!!errors.username}
-          message={errors.username}
-        /> */}
-          <IdSelector
-            name={values.name}
+          <NameIdView
             resType="username"
-            onChange={(value) => handleChange('username')(dummyEvent(value))}
+            label="Name"
+            displayName={values.displayName}
+            name={values.name}
+            errors={errors.name}
+            handleChange={handleChange}
+            nameErrorLabel="isNameError"
           />
           <Radio.Root
             label="Access"
