@@ -23,10 +23,6 @@ func (d *domain) checkAccountAccess(ctx context.Context, accountName string, use
 		Action:       string(action),
 	})
 
-	// if err != nil {
-	// return err
-	// }
-
 	if err != nil {
 		d.logger.Errorf(err, "iam.can check for action: ", action)
 		return errors.Newf("unauthorized to perform action: %s", action)
