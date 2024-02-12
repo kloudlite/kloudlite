@@ -96,7 +96,15 @@ func (h *handler) ReconMeta() {
 			if b {
 				systray.SetIcon(icons.Loading)
 			} else {
-				systray.SetIcon(icons.Logo)
+				data, err := client.GetExtraData()
+				if err != nil {
+					data.VpnConnected = false
+				}
+				if data.VpnConnected {
+					systray.SetIcon(icons.Logo)
+				} else {
+					systray.SetIcon(icons.DisabledLogo)
+				}
 			}
 
 			<-time.After(time.Millisecond * 500)

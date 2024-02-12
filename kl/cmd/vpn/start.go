@@ -24,7 +24,7 @@ var startCmd = &cobra.Command{
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		if runtime.GOOS != "linux" {
+		if runtime.GOOS != constants.RuntimeLinux {
 			if err := connect(connectVerbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)

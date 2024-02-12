@@ -38,7 +38,7 @@ func MakeOption(key, value string) Option {
 }
 
 func PrintError(err error) {
-	_, _ = os.Stderr.WriteString(fmt.Sprintf("%s\n", text.Red(err.Error())))
+	_, _ = os.Stderr.WriteString(fmt.Sprintf("[#] %s\n", text.Red(err.Error())))
 }
 
 func Log(str ...interface{}) {

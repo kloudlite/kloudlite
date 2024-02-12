@@ -56,6 +56,7 @@ type ExtraData struct {
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
+	VpnConnected bool            `json:"vpnConnected"`
 }
 
 func GetConfigFolder() (configFolder string, err error) {

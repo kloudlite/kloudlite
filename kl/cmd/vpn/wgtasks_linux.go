@@ -56,6 +56,15 @@ func connect(verbose bool, options ...fn.Option) error {
 		return err
 	}
 	success = true
+
+	data, err := client.GetExtraData()
+	if err != nil {
+		return err
+	}
+	data.VpnConnected = true
+	if err := client.SaveExtraData(data); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -64,7 +73,20 @@ func disconnect(verbose bool) error {
 		fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 	}
 
-	return wg_vpn.StopService(verbose)
+	if err := wg_vpn.StopService(verbose); err != nil {
+		return err
+	}
+
+	data, err := client.GetExtraData()
+	if err != nil {
+		return err
+	}
+	data.VpnConnected = false
+	if err := client.SaveExtraData(data); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func ensureAppRunning() error {
@@ -77,11 +99,9 @@ func ensureAppRunning() error {
 
 	if err == nil {
 		pid := string(b)
-
 		if fn.ExecCmd(fmt.Sprintf("ps -p %s", pid), nil, false) == nil {
 			return nil
 		}
-
 	}
 
 	command := exec.Command(flags.CliName, "start-app")

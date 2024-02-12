@@ -8,7 +8,6 @@ import (
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
-	"github.com/kloudlite/kl/pkg/functions"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/wg_vpn/wgc"
 	"github.com/skratchdot/open-golang/open"
@@ -111,6 +110,7 @@ func (h *handler) StartListener() {
 								fn.PrintError(err)
 								fn.Alert("Start VPN failed", err.Error())
 							}
+							fn.Notify("Info", "Kloudlite VPN Connected")
 							continue
 						}
 
@@ -118,8 +118,7 @@ func (h *handler) StartListener() {
 							fn.PrintError(err)
 							fn.Alert("Stop VPN failed", err.Error())
 						}
-
-						fn.Notify("Info", "Kloudlite VPN Connected")
+						fn.Notify("Info", "Kloudlite VPN Disconnected")
 					}
 
 				case ns.Quit:
@@ -130,8 +129,8 @@ func (h *handler) StartListener() {
 						})
 
 						if err != nil {
-							functions.PrintError(err)
-							functions.Notify("error:", err)
+							fn.PrintError(err)
+							fn.Notify("error:", err)
 						}
 
 						if len(wgInterface) > 0 {
