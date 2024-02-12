@@ -1,0 +1,58 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+vars:
+  Varsfile: ".secrets/varfile.json"
+
+tasks:
+  sync-from-template:
+    vars:
+      InfrastructureTemplate: ../../infrastructure-templates/kl-target-cluster-aws
+    env:
+      SHELL: bash
+    silent: true
+    cmds:
+      - chmod -f 600 ./*.tf | true
+      - cp {{.InfrastructureTemplate}}/*.tf ./
+      - chmod 400 ./*.tf
+      - echo "sync complete"
+
+  init:
+    cmds:
+      - terraform init
+    silent: true
+
+  plan:
+    dir: ./
+    vars:
+      PlanOutput: ".secrets/plan.out"
+    cmds:
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan --var-file "{{.Varsfile}}" --out "{{.PlanOutput}}"
+
+  apply:
+    dir: ./
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: ".secrets/plan.out"
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  validate:
+    dir: ./
+    cmds:
+      - terraform validate  -var-file={{.Varsfile}}
+
+  destroy:
+    dir: ./
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: ".secrets/plan.destroy.out"
+    cmds:
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.PlanOutput}}"
+      - terraform apply "{{.PlanOutput}}"
