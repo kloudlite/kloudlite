@@ -5,7 +5,6 @@ import { SockProvider } from '~/root/lib/client/helpers/socket/context';
 import authStylesUrl from './styles/index.css';
 import highlightCss from './styles/hljs/tokyo-night-dark.min.css';
 import { DataContextProvider } from './page-components/common-state';
-import { LogsProvider } from './components/logger/useSocketLogs';
 
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';
@@ -28,9 +27,7 @@ const _Root = ({ ...props }) => {
   return (
     <SockProvider>
       <DataContextProvider>
-        <LogsProvider>
-          <Root {...props} Wrapper={Layout} />
-        </LogsProvider>
+        <Root {...props} Wrapper={Layout} />
       </DataContextProvider>
     </SockProvider>
   );

@@ -17,7 +17,22 @@ import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
 import { generatePlainColor } from '../color-generator';
 import Pulsable from '../pulsable';
 import { logsMockData } from '../../dummy/data';
-import { ILog, ISocketMessage, IuseLog } from './useSocketLogs';
+
+export type ILog = {
+  podName: string;
+  containerName: string;
+  message: string;
+  timestamp: string;
+};
+
+export type ISocketMessage = ILog;
+
+export interface IuseLog {
+  url?: string;
+  account: string;
+  cluster: string;
+  trackingId: string;
+}
 
 const hoverClass = `hover:bg-[#ddd]`;
 const hoverClassDark = `hover:bg-[#333]`;
