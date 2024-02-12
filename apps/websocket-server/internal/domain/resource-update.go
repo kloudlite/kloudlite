@@ -2,30 +2,19 @@ package domain
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/gofiber/websocket/v2"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/common"
+	res_watch "github.com/kloudlite/api/apps/websocket-server/internal/domain/resource_watch"
+	"github.com/kloudlite/api/apps/websocket-server/internal/domain/types"
+	"github.com/kloudlite/api/apps/websocket-server/internal/domain/utils"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
-	"github.com/kloudlite/api/pkg/errors"
-	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/repos"
 	mnats "github.com/nats-io/nats.go"
 )
 
-type RUpdateReqData struct {
-	AccountName string `json:"account"`
-	ProjectName string `json:"project"`
-
-	// ResourceName string `json:"resource"`
-	// ResourceType string `json:"resource_type"`
-	Topic    string `json:"topic"`
-	ReqTopic string `json:"req_topic"`
-}
-
-func (d *domain) checkAccess(ctx context.Context, rdata *RUpdateReqData, userId repos.ID) error {
+func (d *domain) checkAccess(ctx context.Context, rdata *res_watch.ReqData, userId repos.ID) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(userId),
 		ResourceRefs: func() []string {
@@ -60,230 +49,65 @@ func (d *domain) checkAccess(ctx context.Context, rdata *RUpdateReqData, userId 
 	return nil
 }
 
-func (d *domain) parseRUpdateReq(rt string) (*RUpdateReqData, error) {
-
-	entriesStrs := strings.Split(rt, ".")
-
-	rdata := &RUpdateReqData{}
-
-	nTopics := "res-updates"
-
-	for _, entryStr := range entriesStrs {
-		entry := strings.Split(entryStr, ":")
-
-		if len(entry) != 2 {
-			nTopics += fmt.Sprintf(".%s.*", entry[0])
-		} else {
-			nTopics += fmt.Sprintf(".%s.%s", entry[0], entry[1])
-		}
-
-		if (entry[0] == "account" || entry[0] == "project") && len(entry) == 2 {
-			if entry[0] == "account" {
-				rdata.AccountName = entry[1]
-			}
-			if entry[0] == "project" {
-				rdata.ProjectName = entry[1]
-			}
-		}
-
+func (d *domain) handleResWatchMsg(ctx types.Context, resources *res_watch.ResWatchSubsMap, msgAny map[string]any) error {
+	var msg res_watch.Message
+	b, err := json.Marshal(msgAny)
+	if err != nil {
+		return err
 	}
 
-	rdata.Topic = nTopics
-	rdata.ReqTopic = rt
-	if rdata.AccountName == "" {
-		return nil, fmt.Errorf("invalid topic %s", rt)
+	if err := json.Unmarshal(b, &msg); err != nil {
+		return err
 	}
 
-	return rdata, nil
-}
-
-func (d *domain) HandleWebSocketForRUpdate(ctx context.Context, c *websocket.Conn) error {
-
-	sess := httpServer.GetSession[*common.AuthSession](ctx)
-	if sess == nil {
-		return errors.NewE(fmt.Errorf("session not found"))
+	if msg.Id == "" {
+		msg.Id = "default"
 	}
 
-	defer func() {
-		if err := c.Close(); err != nil {
-			d.logger.Warnf("websocket close: %w", err)
-		}
-	}()
-	log := d.logger
+	rd, err := res_watch.ParseReq(msg.ResPath)
 
-	type Subscription struct {
-		resource RUpdateReqData
-		sub      *mnats.Subscription
-		open     bool
+	if err != nil {
+		return err
 	}
 
-	resources := make(map[string]*Subscription)
-
-	type Message struct {
-		Event string `json:"event"`
-		Data  string `json:"data"`
+	if err := d.checkAccess(ctx.Context, rd, ctx.Session.UserId); err != nil {
+		return err
 	}
 
-	// "account:accid.cluster:clusterid.nodepool:nodepoolid"
-
-	type MessageType string
-
-	const (
-		MessageTypeError  MessageType = "error"
-		MessageTypeUpdate MessageType = "update"
-		MessageTypeInfo   MessageType = "info"
-	)
-
-	type MessageResponse struct {
-		Topic   string      `json:"topic"`
-		Message string      `json:"message"`
-		Type    MessageType `json:"type"`
-	}
-
-	closed := false
-
-	c.SetCloseHandler(func(_ int, _ string) error {
-		closed = true
-		return nil
-	})
-
-	defer func() {
-		for _, r := range resources {
-			if err := r.sub.Unsubscribe(); err != nil {
-				log.Warnf("websocket unsubscribe: %w", err)
-			}
-		}
-	}()
-
-	writeError := func(c *websocket.Conn, err error) error {
-		if c != nil {
-			return c.WriteJSON(MessageResponse{
-				Type:    MessageTypeError,
-				Message: err.Error(),
-			})
-		}
-		return nil
-	}
-
-	writeInfo := func(c *websocket.Conn, msg string) error {
-		if c != nil {
-			return c.WriteJSON(MessageResponse{
-				Type:    MessageTypeInfo,
-				Message: msg,
-			})
-		}
-		return nil
-	}
-
-	// Keep the connection open
-	for {
-
-		if closed {
-			break
-		}
-
-		var message Message
-		if err := c.ReadJSON(&message); err != nil {
-
-			if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-				break
-			}
-			if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-				break
+	switch msg.Event {
+	case res_watch.EventSubscribe:
+		{
+			if _, ok := (*resources)[rd.Topic]; ok {
+				return fmt.Errorf("resource already subscribed")
 			}
 
-			if err := writeError(c, err); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
-
-			continue
-		}
-
-		rd, err := d.parseRUpdateReq(message.Data)
-		if err != nil {
-
-			if err := writeError(c, err); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
-
-			continue
-		}
-
-		if err := d.checkAccess(ctx, rd, sess.UserId); err != nil {
-
-			if err := writeError(c, err); err != nil {
-				log.Warnf("websocket write: %w", err)
-			}
-
-			continue
-		}
-
-		switch message.Event {
-		case "subscribe":
-			if _, ok := resources[message.Data]; ok {
-				if err := writeError(c, fmt.Errorf("resource already subscribed")); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-			}
-
-			sub, err := d.natsClient.Conn.Subscribe(rd.Topic, func(_ *mnats.Msg) {
-
-				rmessage := MessageResponse{
-					Topic:   rd.ReqTopic,
-					Message: resources[rd.Topic].resource.ReqTopic,
-					Type:    MessageTypeUpdate,
-				}
-
-				if c != nil && resources[rd.Topic] != nil && resources[rd.Topic].open {
-					if err := c.WriteJSON(rmessage); err != nil {
-						log.Warnf("websocket write: %w", err)
-					}
-				}
-
-			})
-
+			s, err := d.natsClient.Conn.Subscribe(rd.Topic, func(m *mnats.Msg) {})
 			if err != nil {
-				if err := writeError(c, err); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-
-				continue
+				return err
 			}
 
-			if err := writeInfo(c, fmt.Sprintf("subscribed to %s", rd.Topic)); err != nil {
-				log.Warnf("websocket write: %w", err)
+			(*resources)[rd.Topic] = res_watch.ResWatchSubs{
+				Sub:      s,
+				Resource: *rd,
 			}
 
-			resources[rd.Topic] = &Subscription{
-				resource: *rd,
-				sub:      sub,
-				open:     true,
-			}
-
-		case "unsubscribe":
-			if _, ok := resources[message.Data]; !ok {
-				if err := writeError(c, fmt.Errorf("resource not subscribed")); err != nil {
-					log.Warnf("websocket write: %w", err)
-				}
-
-				continue
-			}
-
-			if resources[rd.Topic].sub != nil {
-				if err := resources[rd.Topic].sub.Unsubscribe(); err != nil {
-					if err := writeError(c, err); err != nil {
-						log.Warnf("websocket write: %w", err)
-					}
-					break
-				}
-
-				delete(resources, message.Data)
-			}
-
-		default:
-			log.Errorf(fmt.Errorf("websocket read: invalid event %s", message.Event))
+			utils.WriteInfo(ctx, fmt.Sprintf("subscribed to %s", rd.Topic), msg.Id, types.ForResourceUpdate)
 		}
+	case res_watch.EventUnsubscribe:
+		{
+			if s, ok := (*resources)[rd.Topic]; ok {
+				if err := s.Sub.Unsubscribe(); err != nil {
+					return err
+				}
 
+				delete(*resources, rd.Topic)
+				utils.WriteInfo(ctx, fmt.Sprintf("unsubscribed from %s", rd.Topic), msg.Id, types.ForResourceUpdate)
+			}
+
+			utils.WriteError(ctx, fmt.Errorf("resource not found"), msg.Id, types.ForResourceUpdate)
+		}
+	default:
+		return fmt.Errorf("invalid event: %s", msg.Event)
 	}
 
 	return nil
