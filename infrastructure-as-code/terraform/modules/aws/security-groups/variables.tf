@@ -1,3 +1,14 @@
+variable "tracker_id" {
+  description = "tracker id"
+  type        = string
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "VPC Id onto which security groups will be created"
+  default     = ""
+}
+
 variable "create_group_for_k3s_masters" {
   description = "create a group for k3s masters"
   type        = bool
@@ -8,11 +19,6 @@ variable "create_group_for_k3s_workers" {
   description = "create a group for k3s workers"
   type        = bool
   default     = false
-}
-
-variable "tracker_id" {
-  description = "tracker id"
-  type        = string
 }
 
 variable "allow_metrics_server_on_master" {

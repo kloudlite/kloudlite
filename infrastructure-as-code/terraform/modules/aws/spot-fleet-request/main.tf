@@ -50,18 +50,21 @@ resource "aws_launch_template" "spot_template" {
     }
   }
 
+  vpc_security_group_ids = var.vpc != null ? var.vpc.vpc_security_group_ids : null
+
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = var.security_groups
+    security_groups             = var.vpc == null ?  var.security_groups : null
+    subnet_id                   = var.vpc != null ? var.vpc.subnet_id : null
   }
 
   tag_specifications {
     resource_type = "instance"
-    tags          = merge({
+    tags          = merge(var.tags, {
       Name        = "${var.tracker_id}-${var.node_name}"
       Terraform   = "true"
       ReferenceId = var.tracker_id
-    }, var.tags)
+    })
   }
 }
 

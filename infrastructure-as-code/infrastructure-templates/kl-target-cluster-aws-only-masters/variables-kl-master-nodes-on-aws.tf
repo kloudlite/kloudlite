@@ -14,6 +14,17 @@ variable "tracker_id" {
   type        = string
 }
 
+variable "vpc" {
+  type = object({
+    name           = string
+    cidr           = string
+    public_subnets = list(object({
+      availability_zone = string
+      cidr              = string
+    }))
+  })
+}
+
 variable "k3s_masters" {
   description = "k3s masters configuration"
   type        = object({
@@ -46,8 +57,6 @@ variable "k3s_masters" {
       api_token = optional(string)
       zone_id   = optional(string)
       domain    = optional(string)
-
-      extra_domains = optional(list(string))
     }))
 
     nodes = map(object({

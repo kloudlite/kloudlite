@@ -43,6 +43,15 @@ resource "aws_key_pair" "k3s_nodes_ssh_key" {
   depends_on = [null_resource.variable_validations]
 }
 
+module "aws-vpc" {
+  source         = "../../modules/aws/vpc"
+  public_subnets = var.vpc.public_subnets
+  tags           = var.tags
+  tracker_id     = var.tracker_id
+  vpc_cidr       = var.vpc.cidr
+  vpc_name       = var.vpc.name
+}
+
 module "aws-security-groups" {
   source                                = "../../modules/aws/security-groups"
   depends_on                            = [null_resource.variable_validations]
@@ -56,6 +65,7 @@ module "aws-security-groups" {
   allow_outgoing_to_all_internet_on_agent = true
   expose_k8s_node_ports_on_agent          = false
   tracker_id                              = var.tracker_id
+  vpc_id                                  = module.aws-vpc.vpc_id
 }
 
 module "k3s-master-instances" {
@@ -74,6 +84,10 @@ module "k3s-master-instances" {
   ssh_key_name         = aws_key_pair.k3s_nodes_ssh_key.key_name
   tracker_id           = var.tracker_id
   tags                 = var.tags
+  vpc                  = {
+    subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone].id
+    vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_masters_ids
+  }
 }
 
 module "kloudlite-k3s-masters" {
