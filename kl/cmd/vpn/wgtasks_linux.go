@@ -77,11 +77,9 @@ func ensureAppRunning() error {
 
 	if err == nil {
 		pid := string(b)
-
 		if fn.ExecCmd(fmt.Sprintf("ps -p %s", pid), nil, false) == nil {
 			return nil
 		}
-
 	}
 
 	command := exec.Command(flags.CliName, "start-app")

@@ -24,7 +24,7 @@ var startCmd = &cobra.Command{
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		if runtime.GOOS != "linux" {
+		if runtime.GOOS != constants.RuntimeLinux {
 			if err := connect(connectVerbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)
@@ -120,6 +120,15 @@ sudo {cmd} vpn start`),
 }
 
 func startConnecting(verbose bool, options ...fn.Option) error {
+
+	data, err := client.GetExtraData()
+	if err != nil {
+		return err
+	}
+	data.VpnConnected = true
+	if err := client.SaveExtraData(data); err != nil {
+		return err
+	}
 
 	if err := connect(verbose, options...); err != nil {
 		return err

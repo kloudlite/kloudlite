@@ -4,18 +4,17 @@ type Action string
 type ItemName string
 
 const (
-	AuthBtn         ItemName = "AuthBtn"
-	AccountTitle    ItemName = "AccountTitle"
-	DeviceBtn       ItemName = "DeviceBtn"
-	UpdateBtn       ItemName = "UpdateBtn"
-	UserBtn         ItemName = "UserBtn"
-	AccountItem     ItemName = "AccountItem"
-	AccountBtn      ItemName = "AccountBtn"
-	AccountSettings ItemName = "AccountSettings"
-
-	EnvTitle ItemName = "EnvTitle"
-
-	EnvBtn ItemName = "EnvBtn"
+	AuthBtn          ItemName = "AuthBtn"
+	AccountTitle     ItemName = "AccountTitle"
+	DeviceBtn        ItemName = "DeviceBtn"
+	UpdateBtn        ItemName = "UpdateBtn"
+	UserBtn          ItemName = "UserBtn"
+	AccountItem      ItemName = "AccountItem"
+	AccountBtn       ItemName = "AccountBtn"
+	AccountSettings  ItemName = "AccountSettings"
+	EnvTitle         ItemName = "EnvTitle"
+	EnvBtn           ItemName = "EnvBtn"
+	VpnConnectionBtn ItemName = "ConnectionBtn"
 )
 
 const (

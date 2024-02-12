@@ -33,3 +33,4 @@ tasks:
     cmds:
       - 2goarray Loading icons < app/handler/icons/loading.png > app/handler/icons/loading.go
       - 2goarray Logo icons < app/handler/icons/logo.png > app/handler/icons/logo.go
+      - 2goarray DisabledLogo icons < app/handler/icons/disabled-logo.png > app/handler/icons/disabled-logo.go

@@ -60,6 +60,17 @@ Example:
 
 		fn.Log("[#] disconnected")
 
+		data, err := client.GetExtraData()
+		if err != nil {
+			fn.PrintError(err)
+			return
+		}
+		data.VpnConnected = false
+		if err := client.SaveExtraData(data); err != nil {
+			fn.PrintError(err)
+			return
+		}
+
 		s, err := client.CurrentDeviceName()
 		if err != nil {
 			fn.PrintError(err)
