@@ -19,6 +19,10 @@ resource "random_password" "k3s_agent_token" {
   special = false
 }
 
+module "kloudlite-k3s-templates" {
+  source = "../k3s-templates"
+}
+
 locals {
   #  backup_crontab_schedule = "1 2/${2 * length(var.master_nodes)} * * *" # explanation https://crontab.guru/#1_1/2_*_*_*
   backup_crontab_schedule = "1/11 * * * *" # explanation https://crontab.guru/#1/8_*_*_*_* # every 11th minute
@@ -77,7 +81,7 @@ resource "ssh_resource" "k3s_primary_master" {
   commands = [
     <<-EOT
     echo "setting up k3s on primary master"
-    cat > runner-config.yml <<EOF2
+    cat > /tmp/runner-config.yml <<EOF2
 runAs: primaryMaster
 primaryMaster:
   publicIP: ${each.value.public_ip}
@@ -92,8 +96,7 @@ primaryMaster:
 )}
 
 EOF2
-
-    sudo ln -sf $PWD/runner-config.yml /runner-config.yml
+    sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
     sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
@@ -199,7 +202,7 @@ if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
   sudo systemctl start kloudlite-k3s.service
 fi
 
-cat > runner-config.yml<<EOF2
+cat > /tmp/runner-config.yml<<EOF2
 runAs: secondaryMaster
 secondaryMaster:
   publicIP: ${each.value.public_ip}
@@ -212,14 +215,18 @@ secondaryMaster:
   extraServerArgs: ${jsonencode(local.k3s_server_extra_args[each.key])}
 EOF2
 
-sudo ln -sf $PWD/runner-config.yml /runner-config.yml
+sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
+sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
 }
 
 // these steps need to be followed: https://docs.k3s.io/cli/etcd-snapshot
 resource "ssh_resource" "k3s_restore_step_1_restore_primary_master" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = {
+    for k, v in var.master_nodes : k => v
+    if v.role == local.primary_master_role && var.restore_from_latest_s3_snapshot == true
+  }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -265,7 +272,10 @@ EOT
 }
 
 resource "ssh_resource" "k3s_restore_step_2_stop_k3s_on_secondary_masters" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role}
+  for_each = {
+    for k, v in var.master_nodes : k => v
+    if v.role == local.secondary_master_role && var.restore_from_latest_s3_snapshot == true
+  }
 
   depends_on = [ssh_resource.k3s_restore_step_1_restore_primary_master]
 
@@ -293,7 +303,10 @@ EOC
 }
 
 resource "ssh_resource" "k3s_restore_step_3_start_k3s_on_primary_master" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+  for_each = {
+    for k, v in var.master_nodes : k => v
+    if v.role == local.primary_master_role && var.restore_from_latest_s3_snapshot == true
+  }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user
@@ -315,7 +328,10 @@ EOT
 }
 
 resource "ssh_resource" "k3s_restore_step_4_start_k3s_on_secondary_masters" {
-  for_each = {for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role}
+  for_each = {
+    for k, v in var.master_nodes : k => v
+    if v.role == local.secondary_master_role && var.restore_from_latest_s3_snapshot == true
+  }
 
   host        = each.value.public_ip
   user        = var.ssh_params.user

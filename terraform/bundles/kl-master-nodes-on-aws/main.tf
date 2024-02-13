@@ -68,6 +68,10 @@ module "aws-security-groups" {
   vpc_id                                  = module.aws-vpc.vpc_id
 }
 
+module "kloudlite-k3s-templates" {
+  source = "../../modules/kloudlite/k3s/k3s-templates"
+}
+
 module "k3s-master-instances" {
   source               = "../../modules/aws/ec2-node"
   for_each             = {for name, cfg in var.k3s_masters.nodes : name => cfg}
@@ -84,7 +88,11 @@ module "k3s-master-instances" {
   ssh_key_name         = aws_key_pair.k3s_nodes_ssh_key.key_name
   tracker_id           = var.tracker_id
   tags                 = var.tags
-  vpc                  = {
+  user_data_base64     = base64encode(templatefile(module.kloudlite-k3s-templates.k3s-vm-setup-template-path, {
+    kloudlite_release = var.kloudlite_params.release
+    kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
+  }))
+  vpc = {
     subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone].id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_masters_ids
   }

@@ -83,7 +83,7 @@ module "aws-security-groups" {
 
 module "k3s-templates" {
   depends_on = [null_resource.variable_validations]
-  source     = "../../modules/k3s/k3s-templates"
+  source     = "../../modules/kloudlite/k3s/k3s-templates"
 }
 
 module "aws-ec2-nodepool" {
@@ -109,6 +109,13 @@ module "aws-ec2-nodepool" {
   nodes = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
+        kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+
+        vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
+          kloudlite_release    = var.kloudlite_release
+          kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+        })
+
         tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
@@ -159,6 +166,13 @@ module "aws-spot-nodepool" {
   nodes = {
     for name, cfg in each.value.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
+        kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+
+        vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
+          kloudlite_release    = var.kloudlite_release
+          kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
+        })
+
         tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token

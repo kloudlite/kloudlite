@@ -21,6 +21,11 @@ variable "k3s_server_public_dns_host" {
   type        = string
 }
 
+variable "kloudlite_release" {
+  description = "kloudlite release, to be installed"
+  type        = string
+}
+
 variable "ec2_nodepools" {
   type = map(object({
     image_id             = string
