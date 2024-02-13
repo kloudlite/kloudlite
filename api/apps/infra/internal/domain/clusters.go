@@ -35,6 +35,8 @@ type ErrClusterAlreadyExists struct {
 	AccountName string
 }
 
+var ErrClusterNotFound error = fmt.Errorf("cluster not found")
+
 func (e ErrClusterAlreadyExists) Error() string {
 	return fmt.Sprintf("cluster with name %q already exists for account: %s", e.ClusterName, e.AccountName)
 }
@@ -504,7 +506,7 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 	}
 
 	if cluster == nil {
-		return nil, errors.Newf("cluster with name %q not found", clusterName)
+		return nil, ErrClusterNotFound
 	}
 	return cluster, nil
 }

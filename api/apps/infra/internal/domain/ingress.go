@@ -31,7 +31,7 @@ func (d *domain) OnIngressUpdateMessage(ctx InfraContext, clusterName string, in
 			return err
 		}
 
-		d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, de.DomainName, PublishUpdate)
+		d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeDomainEntries, de.DomainName, PublishUpdate)
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (d *domain) OnIngressDeleteMessage(ctx InfraContext, clusterName string, in
 	}
 
 	for i := range domainNames {
-		d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeDomainEntries, domainNames[i].(string), PublishDelete)
+		d.resourceEventPublisher.PublishResourceEvent(ctx, clusterName, ResourceTypeDomainEntries, domainNames[i].(string), PublishDelete)
 	}
 	return nil
 }
