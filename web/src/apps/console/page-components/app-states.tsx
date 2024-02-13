@@ -28,14 +28,6 @@ type ISetContainer<T = any> = (fn: ((val: T) => T) | T, index?: number) => void;
 
 const CreateAppContext = createContext<any>(null);
 
-export type createAppTabs =
-  | 'Environment'
-  | 'Application details'
-  | 'Compute'
-  | 'Network'
-  | 'Review'
-  | NonNullableString;
-
 export type createAppEnvPage =
   | 'environment_variables'
   | 'config_mounts'
@@ -47,7 +39,7 @@ interface IappState {
   };
   activeContIndex: number;
   envPage: createAppEnvPage;
-  page: createAppTabs;
+  page: number;
   app: AppIn;
 }
 
@@ -99,7 +91,7 @@ export const useAppState = () => {
     });
   };
 
-  const setPage: ISetState<createAppTabs> = (fn) => {
+  const setPage: ISetState<number> = (fn) => {
     if (typeof fn === 'function') {
       setState((s) => ({ ...s, page: fn(s.page) }));
     } else {
@@ -117,7 +109,7 @@ export const useAppState = () => {
 
   useEffect(() => {
     if (!page) {
-      setPage('Application details');
+      setPage(1);
     }
     if (!envPage) {
       setEnvPage('environment_variables');
@@ -159,7 +151,7 @@ export const useAppState = () => {
     }
   };
 
-  const isPageComplete = (page: createAppTabs) => {
+  const isPageComplete = (page: number) => {
     if (completePages) return completePages[page];
 
     setState((s) => {
@@ -171,7 +163,7 @@ export const useAppState = () => {
     return false;
   };
 
-  const markPageAsCompleted = (page: createAppTabs) => {
+  const markPageAsCompleted = (page: number) => {
     setState((s) => {
       return {
         ...s,
@@ -185,7 +177,7 @@ export const useAppState = () => {
 
   const resetState = (iApp?: AppIn) => {
     setState({
-      page: 'Application details',
+      page: 1,
       app: iApp || defaultApp,
       completePages: {},
       envPage: 'environment_variables',

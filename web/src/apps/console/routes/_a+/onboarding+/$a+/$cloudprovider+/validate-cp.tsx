@@ -19,6 +19,10 @@ import { LoadingPlaceHolder } from '~/console/components/loading';
 import CodeView from '~/console/components/code-view';
 import { asyncPopupWindow } from '~/console/utils/commons';
 import ProgressWrapper from '~/console/components/progress-wrapper';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
 import { IAccountContext } from '../../../../_main+/$account+/_layout';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -45,7 +49,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
   const { account } = useOutletContext<IAccountContext>();
-  const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const navigate = useNavigate();
 
   const api = useConsoleApi();
@@ -73,126 +76,114 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
     }
   );
 
-  const progressItems = [
-    {
-      label: 'Create Team',
-      active: false,
-      completed: true,
-    },
-    {
-      label: 'Invite your Team Members',
-      active: false,
-      completed: true,
-    },
-    {
-      label: 'Add your Cloud Provider',
-      active: false,
-      completed: true,
-    },
-    {
-      label: 'Validate Cloud Provider',
-      active: true,
-      completed: false,
-      children: (
-        <div className="flex flex-col gap-3xl py-3xl">
-          <div className="bodyMd text-text-soft">
-            Validate your cloud provider's credentials
-          </div>
-          {il ? (
-            <div className="py-2xl">
-              <LoadingPlaceHolder
-                title="Validating the cloudformation stack"
-                height={100}
-              />
-            </div>
-          ) : data?.result ? (
-            <div className="py-2xl">
-              <Badge type="success" icon={<Check />}>
-                Your Credential is valid
-              </Badge>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3xl p-xl border border-border-default rounded">
-              <div className="flex gap-xl items-center">
-                <span>Account ID</span>
-                <span className="bodyMd-semibold text-text-primary">
-                  {cloudProvider.aws?.awsAccountId}
-                </span>
-              </div>
-              <div className="flex flex-col gap-2xl text-start">
-                <CodeView copy data={data?.installationUrl || ''} />
-
-                <span className="">
-                  visit the link above or
-                  <button
-                    className="inline-block mx-lg text-text-primary hover:underline"
-                    onClick={async () => {
-                      setIsLoading(true);
-                      try {
-                        await asyncPopupWindow({
-                          url: data?.installationUrl || '',
-                        });
-
-                        const res = await checkAwsAccess();
-
-                        if (res.result) {
-                          toast.success('Aws account validated successfully');
-                        } else {
-                          toast.error('Aws account validation failed');
-                        }
-                      } catch (err) {
-                        handleError(err);
-                      }
-
-                      setIsLoading(false);
-                    }}
-                  >
-                    click here
-                  </button>
-                  to create AWS cloudformation stack
-                </span>
-              </div>
-            </div>
-          )}
-          <div className="flex flex-row gap-xl justify-start">
-            {/* <Button */}
-            {/*   variant="outline" */}
-            {/*   content="Back" */}
-            {/*   prefix={<ArrowLeft />} */}
-            {/*   size="lg" */}
-            {/* /> */}
-            <Button
-              variant="primary"
-              content={data?.result ? 'Next' : 'Skip'}
-              suffix={<ArrowRight />}
-              onClick={() => {
-                navigate(
-                  `/onboarding/${parseName(account)}/${parseName(
-                    cloudProvider
-                  )}/new-cluster`
-                );
-              }}
-            />
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: 'Setup First Cluster',
-      active: false,
-      completed: false,
-    },
-  ];
+  const { currentStep, jumpStep } = useMultiStepProgress({
+    defaultStep: 3,
+    totalSteps: 4,
+  });
 
   return (
-    <ProgressWrapper
-      title="Setup your account!"
-      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
+    <form>
+      <MultiStepProgressWrapper
+        title="Setup your account!"
+        subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
-      progressItems={{
-        items: progressItems,
-      }}
-    />
+      >
+        <MultiStepProgress.Root
+          currentStep={currentStep}
+          editable={false}
+          noJump={() => true}
+          jumpStep={jumpStep}
+        >
+          <MultiStepProgress.Step
+            step={1}
+            label="Create team"
+            className="py-3xl flex flex-col gap-3xl
+            "
+          />
+          <MultiStepProgress.Step step={2} label="Add your cloud provider" />
+          <MultiStepProgress.Step step={3} label="Validate cloud provider">
+            <div className="flex flex-col gap-3xl">
+              <div className="bodyMd text-text-soft">
+                Validate your cloud provider's credentials
+              </div>
+              {il ? (
+                <div className="py-2xl">
+                  <LoadingPlaceHolder
+                    title="Validating the cloudformation stack"
+                    height={100}
+                  />
+                </div>
+              ) : data?.result ? (
+                <div className="py-2xl">
+                  <Badge type="success" icon={<Check />}>
+                    Your Credential is valid
+                  </Badge>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3xl p-xl border border-border-default rounded">
+                  <div className="flex gap-xl items-center">
+                    <span>Account ID</span>
+                    <span className="bodyMd-semibold text-text-primary">
+                      {cloudProvider.aws?.awsAccountId}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-2xl text-start">
+                    <CodeView copy data={data?.installationUrl || ''} />
+
+                    <span className="">
+                      visit the link above or
+                      <button
+                        className="inline-block mx-lg text-text-primary hover:underline"
+                        onClick={async () => {
+                          setIsLoading(true);
+                          try {
+                            await asyncPopupWindow({
+                              url: data?.installationUrl || '',
+                            });
+
+                            const res = await checkAwsAccess();
+
+                            if (res.result) {
+                              toast.success(
+                                'Aws account validated successfully'
+                              );
+                            } else {
+                              toast.error('Aws account validation failed');
+                            }
+                          } catch (err) {
+                            handleError(err);
+                          }
+
+                          setIsLoading(false);
+                        }}
+                      >
+                        click here
+                      </button>
+                      to create AWS cloudformation stack
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-row gap-xl justify-start">
+                <Button
+                  variant="primary"
+                  content={data?.result ? 'Next' : 'Skip'}
+                  suffix={<ArrowRight />}
+                  onClick={() => {
+                    navigate(
+                      `/onboarding/${parseName(account)}/${parseName(
+                        cloudProvider
+                      )}/new-cluster`
+                    );
+                  }}
+                />
+              </div>
+            </div>
+          </MultiStepProgress.Step>
+          <MultiStepProgress.Step step={4} label="Setup first cluster" />
+        </MultiStepProgress.Root>
+      </MultiStepProgressWrapper>
+    </form>
   );
 };
 

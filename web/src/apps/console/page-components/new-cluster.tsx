@@ -65,6 +65,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }));
 
   const { a: accountName } = useParams();
+  const rootUrl = `/${accountName}/infra/clusters`;
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: isOnboarding ? 4 : 1,
@@ -151,7 +152,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             throw e[0];
           }
           toast.success('Cluster created successfully');
-          navigate(`/${accountName}/infra/clusters`);
+          navigate(rootUrl);
         } catch (err) {
           handleError(err);
         }
@@ -173,7 +174,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const getView = () => {
     return (
-      <div className="flex flex-col gap-3xl py-3xl">
+      <div className="flex flex-col gap-3xl">
         <TitleBox
           subtitle="A cluster is a group of interconnected elements working together as a
           single unit."
@@ -307,14 +308,15 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           : {
               backButton: {
                 content: 'Back to clusters',
-                to: `/${accountName}/infra/clusters`,
+                to: rootUrl,
               },
             })}
       >
         <MultiStepProgress.Root
-          noJump={isOnboarding}
+          noJump={(step) => isOnboarding || !(step < currentStep)}
           currentStep={currentStep}
           jumpStep={jumpStep}
+          editable={!isOnboarding}
         >
           {!isOnboarding ? (
             <>
@@ -328,7 +330,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                     jumpStep(1);
                   }}
                 >
-                  <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+                  <div className="flex flex-col p-xl gap-lg rounded border border-border-default flex-1 overflow-hidden">
                     <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
                       <div className="bodyMd-semibold text-text-default">
                         Cluster name

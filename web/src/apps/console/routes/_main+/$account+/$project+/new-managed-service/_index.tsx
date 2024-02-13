@@ -359,7 +359,7 @@ const ReviewView = ({
     return null;
   };
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3xl py-3xl">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
       <div className="flex flex-col gap-xl">
         <ReviewComponent
           title="Basic detail"
@@ -445,11 +445,13 @@ const ManagedServiceLayout = () => {
   const api = useConsoleApi();
 
   const { project, account } = useParams();
+  const rootUrl = `/${account}/${project}/managed-services`;
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
     totalSteps: 3,
   });
+
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
       initialValues: {
@@ -537,7 +539,7 @@ const ManagedServiceLayout = () => {
             if (e) {
               throw e[0];
             }
-            navigate(`/${account}/${project}/managed-services`);
+            navigate(rootUrl);
           } catch (err) {
             handleError(err);
           }
@@ -580,6 +582,10 @@ const ManagedServiceLayout = () => {
     <MultiStepProgressWrapper
       title="Let’s create new managed service."
       subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
+      backButton={{
+        content: 'Back to managed services',
+        to: rootUrl,
+      }}
     >
       <MultiStepProgress.Root currentStep={currentStep} jumpStep={jumpStep}>
         <MultiStepProgress.Step label="Select template" step={1}>
