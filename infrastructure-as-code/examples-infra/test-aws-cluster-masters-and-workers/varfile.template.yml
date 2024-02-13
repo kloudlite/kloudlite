@@ -50,20 +50,20 @@ k3s_masters:
     bucket_region: "${K3S_BACKUP_S3_BUCKET_REGION}"
     bucket_folder: "${K3S_BACKUP_S3_BUCKET_FOLDER}"
 
-  restore_from_latest_snapshot: true
+  restore_from_latest_snapshot: false
 
   nodes:
     master-1:
       role: primary-master
       availability_zone: ap-south-1a
-    master-2:
-      role: secondary-master
-      availability_zone: ap-south-1b
-      # last_recreated_at: 0
-    master-3:
-      role: secondary-master
-      availability_zone: ap-south-1c
-        # last_recreated_at: 0
+    # master-2:
+    #   role: secondary-master
+    #   availability_zone: ap-south-1b
+    #   # last_recreated_at: 0
+    # master-3:
+    #   role: secondary-master
+    #   availability_zone: ap-south-1c
+    #   last_recreated_at: 0
 
 ec2_nodepools:
   np-1:
@@ -107,7 +107,7 @@ spot_nodepools:
 
 enable_nvidia_gpu_support: false
 kloudlite_params:
-  release: v1.0.5-nightly
+  release: v1.0.0
   install_agent: false
   install_crds: true
   install_csi_driver: true

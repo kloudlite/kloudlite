@@ -27,7 +27,7 @@ module "constants" {
 }
 
 module "k3s-masters" {
-  source       = "../../modules/k3s/k3s-master"
+  source       = "../../modules/kloudlite/k3s/k3s-master"
   backup_to_s3 = {
     enabled = var.backup_to_s3.enabled
 

@@ -14,7 +14,7 @@ module "kl-master-nodes-on-aws" {
 
 module "kl-worker-nodes-on-aws" {
   source     = "../../terraform/bundles/kl-worker-nodes-on-aws"
-  depends_on = [module.kl-master-nodes-on-aws.k3s_agent_token]
+  depends_on = [module.kl-master-nodes-on-aws]
   aws_region = var.aws_region
 
   ec2_nodepools              = var.ec2_nodepools
@@ -29,4 +29,5 @@ module "kl-worker-nodes-on-aws" {
     vpc_id                = module.kl-master-nodes-on-aws.vpc_id
     vpc_public_subnet_ids = {for az, subnet in  module.kl-master-nodes-on-aws.vpc_public_subnets : az => subnet.id}
   }
+  kloudlite_release = var.kloudlite_params.release
 }
