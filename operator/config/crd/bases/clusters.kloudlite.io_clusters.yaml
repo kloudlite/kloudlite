@@ -257,6 +257,10 @@ spec:
                     type: string
                   jobNamespace:
                     type: string
+                  keyAWSVPCId:
+                    type: string
+                  keyAWSVPCPublicSubnets:
+                    type: string
                   keyK3sAgentJoinToken:
                     type: string
                   keyK3sServerJoinToken:
@@ -268,6 +272,8 @@ spec:
                 required:
                 - jobName
                 - jobNamespace
+                - keyAWSVPCId
+                - keyAWSVPCPublicSubnets
                 - keyK3sAgentJoinToken
                 - keyK3sServerJoinToken
                 - keyKubeconfig
