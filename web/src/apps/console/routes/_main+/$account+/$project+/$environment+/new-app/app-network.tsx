@@ -234,21 +234,20 @@ export const ExposedPorts = () => {
 
 const AppNetwork = () => {
   const { setPage, markPageAsCompleted } = useAppState();
-  console.log('networkd');
   return (
-    <FadeIn className="py-3xl">
+    <FadeIn>
       <div className="bodyMd text-text-soft">
         Expose service ports that need to be exposed from container
       </div>
 
       <ExposedPorts />
-      <div className="flex flex-row gap-xl justify-end items-center">
+      <div className="flex flex-row gap-xl items-center">
         <Button
           content="Environments"
           prefix={<ArrowLeft />}
           variant="outline"
           onClick={() => {
-            setPage('Environment');
+            setPage(3);
           }}
         />
 
@@ -259,9 +258,9 @@ const AppNetwork = () => {
           suffix={<ArrowRight />}
           variant="primary"
           onClick={() => {
-            setPage('Review');
-            markPageAsCompleted('Network');
-            markPageAsCompleted('Review');
+            setPage(5);
+            markPageAsCompleted(4);
+            markPageAsCompleted(5);
           }}
         />
       </div>
