@@ -23,7 +23,7 @@ resource "null_resource" "lifecycle_resource" {
 
 data "aws_ami" "ubuntu_ami" {
   most_recent = true
-  owners = ["099720109477"] # Canonical
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
@@ -32,7 +32,7 @@ data "aws_ami" "ubuntu_ami" {
 }
 
 resource "aws_instance" "ec2_instance" {
-#  ami           = var.ami
+  #  ami           = var.ami
   ami           = data.aws_ami.ubuntu_ami.id
   instance_type = var.instance_type
 
@@ -45,6 +45,7 @@ resource "aws_instance" "ec2_instance" {
 
   lifecycle {
     replace_triggered_by = [null_resource.lifecycle_resource]
+    ignore_changes       = [ami, instance_type]
   }
 
   depends_on = [null_resource.variable_validation]

@@ -12,14 +12,11 @@ permissions:
   contents: write
   id-token: write
 
-jobs:
-  docker-builds:
-    strategy:
-      matrix:
-        target_arch:
-          - amd64
-          - arm64
+env:
+  K3S_VERSION: v1.28.6+k3s2
 
+jobs:
+  binary-builds:
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
     steps:
@@ -42,7 +39,6 @@ jobs:
           curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
           tar -xf upx.tar.xz
           sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
-
 
       - name: Create Release Tag from branch name
         if: startsWith(github.ref, 'refs/heads/release')
@@ -70,14 +66,13 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          RELEASE_TITLE: "kloudlite-k3s-runner"
           RELEASE_NOTES: "kloudlite k3s runner"
-          GOARCH: ${{matrix.target_arch}}
         run: |
           pushd cmd/k3s-runner
 
-          task build
-          curl -L0 'https://github.com/k3s-io/k3s/releases/download/v1.28.6+k3s2/k3s' > bin/k3s
+          GOARCH=amd64 task build
+          GOARCH=arm64 task build
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s" > bin/k3s
 
           PRE_RELEASE=$OVERRIDE_RELEASE
 
@@ -92,13 +87,11 @@ jobs:
               createOpts+=("--prerelease")
             fi
 
-            if ! [[ -z $RELEASE_TITLE ]]; then
-              createOpts+=("--title" "'$RELEASE_TITLE'")
-            fi
+            createOpts+=("--title" "'kloudlite release $RELEASE_TAG'")
             createOpts+=("--notes" "'$RELEASE_NOTES'")
 
             echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` "
-            eval gh release create "$RELEASE_TAG" ${createOpts[@]} --generate-notes
+            eval gh release create "$RELEASE_TAG" ${createOpts[@]}
           fi
 
           uploadOpts="${opts[@]}"
