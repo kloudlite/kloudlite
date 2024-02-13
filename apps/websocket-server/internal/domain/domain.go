@@ -13,8 +13,7 @@ import (
 )
 
 type SocketService interface {
-	HandleWebSocketForRUpdate(ctx context.Context, c *websocket.Conn) error
-	HandleWebSocketForLogs(ctx context.Context, c *websocket.Conn) error
+	HandleWebSocket(ctx context.Context, c *websocket.Conn) error
 }
 
 type Domain interface {
