@@ -107,6 +107,7 @@ spot_nodepools:
 
 enable_nvidia_gpu_support: false
 kloudlite_params:
+  # release: v1.0.2-nightly
   release: v1.0.0
   install_agent: false
   install_crds: true
