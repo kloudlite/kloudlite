@@ -1,5 +1,5 @@
---- ../../terraform/bundles/kl-worker-nodes-on-aws/variables.tf	2024-02-13 12:52:12.706637632 +0530
-+++ ./variables-kl-worker-nodes-on-aws.tf	2024-02-13 13:20:51.737099690 +0530
+--- ../../terraform/bundles/kl-worker-nodes-on-aws/variables.tf	2024-02-14 00:35:43.356760877 +0530
++++ ./variables-kl-worker-nodes-on-aws.tf	2024-02-14 00:41:42.697233116 +0530
 @@ -1,24 +1,8 @@
 -variable "aws_region" { type = string }
 -
@@ -38,7 +38,7 @@
 +variable "save_worker_ssh_key_to_path" {
    description = "save ssh key to this path"
    type        = string
- }
+-}
 -
 -variable "tags" {
 -  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
@@ -48,8 +48,10 @@
 -
 -variable "vpc" {
 -  description = "VPC related params, vpc_public_subnet_ids is a map of availability zone to subnet id"
--  type        = object({
+-  type = object({
 -    vpc_id                = string
 -    vpc_public_subnet_ids = map(string)
 -  })
 -}
++}
+\ No newline at end of file

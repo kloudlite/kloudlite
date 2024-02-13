@@ -11,19 +11,19 @@ aws_assume_role:
 
 vpc:
   name: test-vpc
-  cidr: 10.0.0.0/16
-  public_subnets:
-    - availability_zone: ap-south-1a
-      cidr: 10.0.1.0/24
-    - availability_zone: ap-south-1b
-      cidr: 10.0.2.0/24
-    - availability_zone: ap-south-1c
-      cidr: 10.0.3.0/24
+  # cidr: 10.0.0.0/16
+  # public_subnets:
+  #   - availability_zone: eu-west-2a
+  #     cidr: 10.0.1.0/24
+  #   - availability_zone: ap-south-1b
+  #     cidr: 10.0.2.0/24
+  #   - availability_zone: ap-south-1c
+  #     cidr: 10.0.3.0/24
 
 k3s_masters:
   # image_id: ami-06d146e85d1709abb
-  image_id: &imageId ami-0ec149e1e8b76e957
-  image_ssh_username: ubuntu
+  # image_id: &imageId ami-0ec149e1e8b76e957
+  # image_ssh_username: ubuntu
   instance_type: "c6a.large"
   nvidia_gpu_enabled: false
   root_volume_type: gp3
@@ -56,54 +56,55 @@ k3s_masters:
     master-1:
       role: primary-master
       availability_zone: ap-south-1a
+      # availability_zone: eu-west-2a
+      # kloudlite_release: &kloudlite-release v1.0.2-nightly
+      kloudlite_release: &kloudlite-release v1.0.0
     # master-2:
     #   role: secondary-master
     #   availability_zone: ap-south-1b
+    #   kloudlite_release: v1.0.0
     #   # last_recreated_at: 0
     # master-3:
     #   role: secondary-master
     #   availability_zone: ap-south-1c
-    #   last_recreated_at: 0
+    #   # last_recreated_at: 0
+    #   kloudlite_release: v1.0.0
 
-ec2_nodepools:
-  np-1:
-    # image_id: ami-06d146e85d1709abb
-    image_id: *imageId
-    image_ssh_username: ubuntu
-    availability_zone: "ap-south-1a"
-    instance_type: "c6a.large"
-    nvidia_gpu_enabled: false
-    root_volume_type: gp3
-    root_volume_size: 50
-    # iam_instance_profile: "kloudlite-instance-profile"
-    nodes:
-      node-1: { }
+ec2_nodepools: {}
+spot_nodepools: {}
 
-# ec2_nodepools: {}
-# spot_nodepools: {}
-
-spot_nodepools:
-  spot-np-1:
-    # image_id: ami-0fdcdf796bf63edfd
-    image_id: *imageId
-    image_ssh_username: ubuntu
-    availability_zone: "ap-south-1b"
-    nvidia_gpu_enabled: false
-    root_volume_type: gp3
-    root_volume_size: 50
-    # iam_instance_profile: "kloudlite-instance-profile"
-    spot_fleet_tagging_role_name: "aws-ec2-spot-fleet-tagging-role"
-    # gpu_node:
-    #   instance_types: ["g5.xlarge"]
-    cpu_node:
-      vcpu:
-        min: 1
-        max: 2
-      memory_per_vcpu:
-        min: 2
-        max: 4
-    nodes:
-      node-1: { }
+# ec2_nodepools:
+#   np-1:
+#     availability_zone: "ap-south-1a"
+#     instance_type: "c6a.large"
+#     nvidia_gpu_enabled: false
+#     root_volume_type: gp3
+#     root_volume_size: 50
+#     # iam_instance_profile: "kloudlite-instance-profile"
+#     nodes:
+#       node-1: { }
+#
+#
+# spot_nodepools:
+#   spot-np-1:
+#     # image_id: ami-0fdcdf796bf63edfd
+#     availability_zone: "ap-south-1b"
+#     nvidia_gpu_enabled: false
+#     root_volume_type: gp3
+#     root_volume_size: 50
+#     # iam_instance_profile: "kloudlite-instance-profile"
+#     spot_fleet_tagging_role_name: "aws-ec2-spot-fleet-tagging-role"
+#     # gpu_node:
+#     #   instance_types: ["g5.xlarge"]
+#     cpu_node:
+#       vcpu:
+#         min: 1
+#         max: 2
+#       memory_per_vcpu:
+#         min: 2
+#         max: 4
+#     nodes:
+#       node-1: { }
 
 enable_nvidia_gpu_support: false
 kloudlite_params:
