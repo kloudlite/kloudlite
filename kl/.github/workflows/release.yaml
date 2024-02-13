@@ -27,7 +27,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        goversion: "https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz"
+        goversion: "https://dl.google.com/go/go1.21.7.linux-amd64.tar.gz"
         project_path: "."
         ldflags: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.binary_name }}"
         binary_name: ${{ matrix.binary_name }}
