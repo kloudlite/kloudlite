@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -23,7 +24,7 @@ Example:
 	`,
 	Run: func(_ *cobra.Command, _ []string) {
 
-		if runtime.GOOS != "linux" {
+		if runtime.GOOS == constants.RuntimeWindows {
 			if err := disconnect(connectVerbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)

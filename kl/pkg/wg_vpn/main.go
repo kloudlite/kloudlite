@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/spinner"
@@ -116,7 +118,7 @@ func Configure(
 			return nil
 		}
 
-		dServers, err := getCurrentDns()
+		dServers, err := getDNSServers("Wi-Fi", verbose)
 		if err != nil {
 			return err
 		}
@@ -143,16 +145,52 @@ func Configure(
 			return ipNet
 		}()
 
-		emptydns := []net.IP{}
-		cfg.DNS = emptydns
+		if runtime.GOOS != constants.RuntimeDarwin {
+			emptydns := []net.IP{}
+			cfg.DNS = emptydns
+		}
 
 		return nil
 	}(); err != nil {
 		return err
 	}
 
-	if isSystemdReslov || runtime.GOOS == "darwin" {
-		if err := setDnsServer(cfg.DNS[0], interfaceName, verbose); err != nil {
+	if isSystemdReslov {
+		if err := setDnsServer(cfg.DNS[0], devName, verbose); err != nil {
+			return err
+		}
+	}
+
+	if runtime.GOOS == constants.RuntimeDarwin {
+		if err := setDnsServers(func() []net.IPNet {
+			ipNet := dnsServers
+
+			matched := false
+			for _, i2 := range dnsServers {
+				if i2.IP.String() == cfg.DNS[0].String() {
+					matched = true
+					break
+				}
+			}
+
+			if !matched {
+				ipNet = append([]net.IPNet{{
+					IP:   cfg.DNS[0],
+					Mask: net.CIDRMask(32, 32),
+				}}, ipNet...)
+
+				client.SetDns(func() []string {
+					var dns []string
+					for _, v := range cfg.DNS {
+						dns = append(dns, v.String())
+					}
+					return dns
+				}())
+
+			}
+
+			return ipNet
+		}(), "Wi-Fi", verbose); err != nil {
 			return err
 		}
 	}
@@ -172,4 +210,14 @@ func Configure(
 	}
 
 	return err
+}
+
+func setDnsServers(dnsServers []net.IPNet, inf string, verbose bool) error {
+	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", inf, func() string {
+		var dns []string
+		for _, v := range dnsServers {
+			dns = append(dns, v.IP.String())
+		}
+		return strings.Join(dns, " ")
+	}()), verbose)
 }

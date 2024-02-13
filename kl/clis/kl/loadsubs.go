@@ -1,8 +1,9 @@
 package kl
 
 import (
-	"github.com/kloudlite/kl/flags"
 	"runtime"
+
+	"github.com/kloudlite/kl/flags"
 
 	"github.com/kloudlite/kl/cmd/auth"
 	"github.com/kloudlite/kl/cmd/get"
@@ -38,7 +39,7 @@ func init() {
 
 	rootCmd.AddCommand(vpn.Cmd)
 
-	if runtime.GOOS == constants.RuntimeLinux {
+	if runtime.GOOS != constants.RuntimeWindows {
 		rootCmd.AddCommand(app.Cmd)
 	}
 
