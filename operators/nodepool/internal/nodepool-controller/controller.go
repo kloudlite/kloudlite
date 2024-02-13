@@ -353,7 +353,7 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	return req.Next()
 }
 
-func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string]clustersv1.NodeProps) (string, error) {
+func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps) (string, error) {
 	if obj.Spec.AWS == nil {
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
@@ -365,8 +365,8 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 	case clustersv1.AWSPoolTypeEC2:
 		{
 			ec2Nodepools[obj.Name] = map[string]any{
-				"image_id":             obj.Spec.AWS.ImageId,
-				"image_ssh_username":   obj.Spec.AWS.ImageSSHUsername,
+				// "image_id":             obj.Spec.AWS.ImageId,
+				// "image_ssh_username":   obj.Spec.AWS.ImageSSHUsername,
 				"availability_zone":    obj.Spec.AWS.AvailabilityZone,
 				"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
 				"root_volume_type":     obj.Spec.AWS.RootVolumeType,
@@ -383,8 +383,8 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 			}
 
 			spotNodepools[obj.Name] = map[string]any{
-				"image_id":                     obj.Spec.AWS.ImageId,
-				"image_ssh_username":           obj.Spec.AWS.ImageSSHUsername,
+				// "image_id":                     obj.Spec.AWS.ImageId,
+				// "image_ssh_username":           obj.Spec.AWS.ImageSSHUsername,
 				"availability_zone":            obj.Spec.AWS.AvailabilityZone,
 				"nvidia_gpu_enabled":           obj.Spec.AWS.NvidiaGpuEnabled,
 				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
@@ -420,14 +420,19 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 		}
 	}
 
+	var publicsubnets map[string]any
+	if err := json.Unmarshal([]byte(r.Env.AWSVpcPublicSubnets), &publicsubnets); err != nil {
+		return "", err
+	}
+
 	variables := map[string]any{
 		// INFO: there will be no aws_access_key, aws_secret_key thing, as we expect this autoscaler to run on AWS instances configured with proper IAM instance profile
 		// "aws_access_key":             nil,
 		// "aws_secret_key":             nil,
-		"aws_region":                 ev.CloudProviderRegion,
-		"tracker_id":                 fmt.Sprintf("cluster-%s", ev.ClusterName),
-		"k3s_join_token":             ev.K3sJoinToken,
-		"k3s_server_public_dns_host": ev.K3sServerPublicHost,
+		"aws_region":                 r.Env.CloudProviderRegion,
+		"tracker_id":                 fmt.Sprintf("cluster-%s", r.Env.ClusterName),
+		"k3s_join_token":             r.Env.K3sJoinToken,
+		"k3s_server_public_dns_host": r.Env.K3sServerPublicHost,
 		"ec2_nodepools":              ec2Nodepools,
 		"spot_nodepools":             spotNodepools,
 		"extra_agent_args": []string{
@@ -436,8 +441,13 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 		},
 		"save_ssh_key_to_path": "",
 		"tags": map[string]string{
-			"kloudlite-account": ev.AccountName,
-			"kloudlite-cluster": ev.ClusterName,
+			"kloudlite-account": r.Env.AccountName,
+			"kloudlite-cluster": r.Env.ClusterName,
+		},
+
+		"vpc": map[string]any{
+			"vpc_id":                r.Env.AWSVpcId,
+			"vpc_public_subnet_ids": publicsubnets,
 		},
 	}
 
@@ -475,7 +485,7 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
-		return toAWSVarfileJson(obj, r.Env, nodesMap)
+		return r.toAWSVarfileJson(obj, nodesMap)
 	default:
 		// accessKey, secretKey, err := r.getAccessAndSecretKey(ctx, obj)
 		return "", fmt.Errorf("unsupported cloud provider: %s", obj.Spec.CloudProvider)

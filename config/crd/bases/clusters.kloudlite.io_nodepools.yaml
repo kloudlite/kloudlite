@@ -71,10 +71,6 @@ spec:
                     type: object
                   iamInstanceProfileRole:
                     type: string
-                  imageId:
-                    type: string
-                  imageSSHUsername:
-                    type: string
                   nvidiaGpuEnabled:
                     type: boolean
                   poolType:
@@ -139,14 +135,20 @@ spec:
                     required:
                     - spotFleetTaggingRoleName
                     type: object
+                  vpcId:
+                    type: string
+                  vpcPublicSubnets:
+                    additionalProperties:
+                      type: string
+                    type: object
                 required:
                 - availabilityZone
-                - imageId
-                - imageSSHUsername
                 - nvidiaGpuEnabled
                 - poolType
                 - rootVolumeSize
                 - rootVolumeType
+                - vpcId
+                - vpcPublicSubnets
                 type: object
               cloudProvider:
                 enum:

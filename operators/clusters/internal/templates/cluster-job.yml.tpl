@@ -1,7 +1,7 @@
-{{- $jobName := get . "job-name" }} 
-{{- $jobNamespace := get . "job-namespace" }} 
+{{- $jobName := get . "job-name" }}
+{{- $jobNamespace := get . "job-namespace" }}
 
-{{- $labels := get . "labels" | default dict }} 
+{{- $labels := get . "labels" | default dict }}
 {{- $podAnnotations := get . "pod-annotations" | default dict }}
 
 {{- $ownerRefs := get . "owner-refs" |default list }}
@@ -18,7 +18,7 @@
 {{- $awsAccessKeyId := get . "aws-access-key-id" }}
 {{- $awsSecretAccessKey := get . "aws-secret-access-key" }}
 
-{{- $action := get . "action" }} 
+{{- $action := get . "action" }}
 {{- if not (or (eq $action "apply") (eq $action "delete")) }}
 {{- fail "action should be either apply,delete" -}}
 {{- end }}
@@ -103,9 +103,11 @@ spec:
                 namespace: {{$kubeconfigSecretNamespace}}
                 annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
               data:
-                kubeconfig: $(cat kubeconfig)
+                kubeconfig: $(terraform output -json kubeconfig | jq -r)
                 k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
                 k3s_params: $(cat k3s-params)
+                aws_vpc_id: $(terraform output -json vpc_id | jq -r) 
+                aws_vpc_public_subnets: $(terraform output -json vpc_public_subnets | jq -r)
             EOF
             fi
             exit 0

@@ -20,6 +20,9 @@ type Env struct {
 
 	TFStateSecretNamespace string `env:"TF_STATE_SECRET_NAMESPACE" required:"true" default:"kloudlite"`
 	IACJobImage            string `env:"IAC_JOB_IMAGE" required:"true"`
+
+	AWSVpcId            string `env:"AWS_VPC_ID"`
+	AWSVpcPublicSubnets string `env:"AWS_VPC_PUBLIC_SUBNETS"`
 }
 
 func GetEnvOrDie() *Env {

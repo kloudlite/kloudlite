@@ -140,10 +140,13 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 			JobName:      fmt.Sprintf("iac-cluster-job-%s", obj.Name),
 			JobNamespace: obj.Namespace,
 
-			SecretName:            fmt.Sprintf("clusters-%s-credentials", obj.Name),
-			KeyKubeconfig:         "kubeconfig",
-			KeyK3sServerJoinToken: "k3s_server_token",
-			KeyK3sAgentJoinToken:  "k3s_agent_token",
+			SecretName: fmt.Sprintf("clusters-%s-credentials", obj.Name),
+
+			KeyKubeconfig:          "kubeconfig",
+			KeyK3sServerJoinToken:  "k3s_server_token",
+			KeyK3sAgentJoinToken:   "k3s_agent_token",
+			KeyAWSVPCId:            "aws_vpc_id",
+			KeyAWSVPCPublicSubnets: "aws_vpc_public_subnets",
 		}
 	}
 
