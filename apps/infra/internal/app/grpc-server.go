@@ -86,6 +86,29 @@ func (g *grpcServer) GetNodepool(ctx context.Context, in *infra.GetNodepoolIn) (
 	}, nil
 }
 
+func (g *grpcServer) ClusterExists(ctx context.Context, in *infra.ClusterExistsIn) (*infra.ClusterExistsOut, error) {
+	infraCtx := domain.InfraContext{
+		Context:     ctx,
+		UserId:      repos.ID(in.UserId),
+		UserEmail:   in.UserEmail,
+		UserName:    in.UserName,
+		AccountName: in.AccountName,
+	}
+	cluster, err := g.d.GetCluster(infraCtx, in.ClusterName)
+	if err != nil {
+		if errors.Is(err, domain.ErrClusterNotFound) {
+			return &infra.ClusterExistsOut{Exists: false}, nil
+		}
+		return nil, errors.NewE(err)
+	}
+
+	if cluster == nil {
+		return &infra.ClusterExistsOut{Exists: false}, nil
+	}
+
+	return &infra.ClusterExistsOut{Exists: true}, nil
+}
+
 func newGrpcServer(d domain.Domain) infra.InfraServer {
 	return &grpcServer{
 		d: d,
