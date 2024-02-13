@@ -27,13 +27,13 @@ func onReady() {
 	h.ReconMeta()
 	// systray.AddSeparator()
 
+	// handle actions releated to account
+	h.ReconAccount()
+	systray.AddSeparator()
+
 	// handle actions releated to device
 	h.ReconDevice()
 	systray.AddSeparator()
-
-	// handle actions releated to account
-	// h.ReconAccount()
-	// systray.AddSeparator()
 
 	// handle actions releated to environment
 	// h.ReconEnv()

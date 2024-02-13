@@ -27,96 +27,106 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		return err
 	}
 
-	switch flags.CliName {
-	case constants.CoreCliName:
-		envName := fn.GetOption(options, "envName")
-		if envName != "" {
-			en, err := client.CurrentEnv()
+	devName := selectedDevice.DeviceName
 
-			if (err == nil && en.Name != envName) || (err != nil && envName != "") {
-				if err := server.UpdateDeviceEnv(options...); err != nil {
-					return err
-				}
-			}
-		}
+	if !skipCheck {
+		switch flags.CliName {
+		case constants.CoreCliName:
+			envName := fn.GetOption(options, "envName")
+			if envName != "" {
+				en, err := client.CurrentEnv()
 
-	case constants.InfraCliName:
-		clusterName := fn.GetOption(options, "clusterName")
-		if clusterName != "" {
-			cn, err := client.CurrentClusterName()
-			if err != nil {
-				return err
-			}
-			if cn != "" && cn != clusterName {
-				if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-					return err
+				if (err == nil && en.Name != envName) || (err != nil && envName != "") {
+					if err := server.UpdateDeviceEnv(options...); err != nil {
+						return err
+					}
 				}
 			}
 
-			time.Sleep(2 * time.Second)
+		case constants.InfraCliName:
+			clusterName := fn.GetOption(options, "clusterName")
+			if clusterName != "" {
+				cn, err := client.CurrentClusterName()
+				if err != nil {
+					return err
+				}
+				if cn != "" && cn != clusterName {
+					if err := server.UpdateDeviceClusterName(clusterName); err != nil {
+						return err
+					}
+				}
+
+				time.Sleep(2 * time.Second)
+			}
 		}
 	}
-
-	devName := selectedDevice.DeviceName
 
 	device, err := server.GetDevice(fn.MakeOption("deviceName", devName))
 	if err != nil {
 		switch flags.CliName {
 		case constants.CoreCliName:
-			return fmt.Errorf("error getting device vpn config, please ensure environment is selected and try again")
+			return err
 		case constants.InfraCliName:
-			return fmt.Errorf("error getting device vpn config, please ensure cluster is selected and try again")
+			return err
 		default:
 			return err
 		}
 	}
 
-	switch flags.CliName {
-	case constants.CoreCliName:
-		envName := fn.GetOption(options, "envName")
-		projectName := fn.GetOption(options, "projectName")
+	if device.ClusterName != "" {
+		_ = client.SetDevInfo(fn.Truncate(device.ClusterName, 15))
+	} else {
+		_ = client.SetDevInfo(fmt.Sprintf("%s/%s", fn.Truncate(device.ProjectName, 5), fn.Truncate(device.EnvName, 5)))
+	}
 
-		if envName == "" {
-			en, err := client.CurrentEnv()
-			if err == nil && en.Name != "" {
-				envName = en.Name
-			}
-		}
+	if !skipCheck {
+		switch flags.CliName {
+		case constants.CoreCliName:
+			envName := fn.GetOption(options, "envName")
+			projectName := fn.GetOption(options, "projectName")
 
-		if projectName == "" {
-			pn, err := client.CurrentProjectName()
-			if err == nil && pn != "" {
-				projectName = pn
-			}
-		}
-
-		if (envName != "" && device.EnvName != envName) || (projectName != "" && device.ProjectName != projectName) {
-			if err := server.UpdateDeviceEnv([]fn.Option{
-				fn.MakeOption("envName", envName),
-				fn.MakeOption("projectName", projectName),
-			}...); err != nil {
-				return err
-			}
-			time.Sleep(2 * time.Second)
-		}
-
-	case constants.InfraCliName:
-		clusterName := fn.GetOption(options, "clusterName")
-
-		if clusterName == "" {
-			if s, err := client.CurrentClusterName(); err != nil {
-				return err
-			} else {
-				clusterName = s
-			}
-		}
-
-		if device.ClusterName == "" || (device.ClusterName != clusterName) {
-			if err := server.UpdateDeviceClusterName(clusterName); err != nil {
-				return err
+			if envName == "" {
+				en, err := client.CurrentEnv()
+				if err == nil && en.Name != "" {
+					envName = en.Name
+				}
 			}
 
-			time.Sleep(2 * time.Second)
+			if projectName == "" {
+				pn, err := client.CurrentProjectName()
+				if err == nil && pn != "" {
+					projectName = pn
+				}
+			}
+
+			if (envName != "" && device.EnvName != envName) || (projectName != "" && device.ProjectName != projectName) {
+				if err := server.UpdateDeviceEnv([]fn.Option{
+					fn.MakeOption("envName", envName),
+					fn.MakeOption("projectName", projectName),
+				}...); err != nil {
+					return err
+				}
+				time.Sleep(2 * time.Second)
+			}
+
+		case constants.InfraCliName:
+			clusterName := fn.GetOption(options, "clusterName")
+
+			if clusterName == "" {
+				if s, err := client.CurrentClusterName(); err != nil {
+					return err
+				} else {
+					clusterName = s
+				}
+			}
+
+			if device.ClusterName == "" || (device.ClusterName != clusterName) {
+				if err := server.UpdateDeviceClusterName(clusterName); err != nil {
+					return err
+				}
+
+				time.Sleep(2 * time.Second)
+			}
 		}
 	}
 
@@ -133,7 +143,7 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		return err
 	}
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == constants.RuntimeWindows {
 		if err := wg_svc.StartVpn(configuration); err != nil {
 			return err
 		}
@@ -142,7 +152,7 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 	}
 
 	if err := wg_vpn.Configure(configuration, devName, func() string {
-		if runtime.GOOS == "darwin" {
+		if runtime.GOOS == constants.RuntimeDarwin {
 			return ifName
 		}
 		return devName

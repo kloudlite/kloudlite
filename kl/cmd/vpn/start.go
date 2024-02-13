@@ -17,6 +17,8 @@ import (
 
 var connectVerbose bool
 
+var skipCheck bool
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start vpn device",
@@ -122,6 +124,9 @@ sudo {cmd} vpn start`),
 func startConnecting(verbose bool, options ...fn.Option) error {
 
 	if err := connect(verbose, options...); err != nil {
+		if skipCheck {
+			fn.Notify("Error: ", err.Error())
+		}
 		return err
 	}
 
@@ -130,6 +135,7 @@ func startConnecting(verbose bool, options ...fn.Option) error {
 
 func init() {
 	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
+	startCmd.Flags().BoolVarP(&skipCheck, "skipCheck", "s", false, "skip checks of env and cluster")
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
 
 	switch flags.CliName {

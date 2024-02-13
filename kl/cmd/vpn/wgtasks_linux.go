@@ -2,11 +2,11 @@ package vpn
 
 import (
 	"fmt"
+	"github.com/kloudlite/kl/constants"
+	"github.com/kloudlite/kl/domain/server"
 	"os"
 	"os/exec"
 
-	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/server"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
@@ -28,11 +28,13 @@ func connect(verbose bool, options ...fn.Option) error {
 		client.SetLoading(false)
 	}()
 
-	switch flags.CliName {
-	case constants.CoreCliName:
-		_, err := server.EnsureProject()
-		if err != nil {
-			return err
+	if !skipCheck {
+		switch flags.CliName {
+		case constants.CoreCliName:
+			_, err := server.EnsureProject()
+			if err != nil {
+				return err
+			}
 		}
 	}
 

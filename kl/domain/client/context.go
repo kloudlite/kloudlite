@@ -57,6 +57,32 @@ type ExtraData struct {
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
 	VpnConnected bool            `json:"vpnConnected"`
+	DevInfo      string          `json:"devInfo"`
+}
+
+func GetDevInfo() (string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return "", err
+	}
+
+	return extraData.DevInfo, nil
+}
+
+func SetDevInfo(devCluster string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.DevInfo = devCluster
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
 }
 
 func GetDns() ([]string, error) {

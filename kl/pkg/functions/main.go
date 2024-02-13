@@ -236,3 +236,11 @@ func notification(title string, txt string, iconPath string) {
 		PrintError(err)
 	}
 }
+
+func Truncate(str string, length int) string {
+	if len(str) < length {
+		return str
+	}
+
+	return fmt.Sprintf("%s...", str[0:length])
+}

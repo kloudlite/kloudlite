@@ -106,7 +106,7 @@ func (h *handler) StartListener() {
 						}
 
 						if !server.CheckDeviceStatus() {
-							if err := fn.ExecCmd(fmt.Sprintf("%s vpn start", cmd), nil, true); err != nil {
+							if err := fn.ExecCmd(fmt.Sprintf("%s vpn start -s", cmd), nil, true); err != nil {
 								fn.PrintError(err)
 								fn.Alert("Start VPN failed", err.Error())
 							}

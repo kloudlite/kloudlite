@@ -15,6 +15,7 @@ const (
 	EnvTitle         ItemName = "EnvTitle"
 	EnvBtn           ItemName = "EnvBtn"
 	VpnConnectionBtn ItemName = "ConnectionBtn"
+	ClusterBtn       ItemName = "ClusterBtn"
 )
 
 const (
