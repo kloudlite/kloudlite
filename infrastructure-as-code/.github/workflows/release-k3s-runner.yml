@@ -48,7 +48,7 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
           set +e
-          RELEASE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+          RELEASE_TAG=$(echo ${GITHUB_REF#refs/heads/release-})
           echo "$RELEASE_TAG" | grep -i '\-nightly$'
           if [ $? -ne 0 ]; then
             RELEASE_TAG="$RELEASE_TAG-nightly"
@@ -67,6 +67,7 @@ jobs:
           echo "OVERRIDE_RELEASE=false" >> $GITHUB_ENV
 
       - name: Build And Release
+        if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           RELEASE_TITLE: "kloudlite-k3s-runner"
