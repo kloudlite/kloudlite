@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/kloudlite/api/apps/iam/internal/entities"
@@ -138,6 +139,11 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 				if err != nil {
 					return nil, err
 				}
+
+				if strings.TrimSpace(accountName) == "" {
+					return nil, fmt.Errorf("accountName must be provided")
+				}
+
 				nf := s.rbRepo.MergeMatchFilters(repos.Filter{}, map[string]repos.MatchFilter{
 					"resource_ref": {
 						MatchType: repos.MatchTypeRegex,
