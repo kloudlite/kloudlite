@@ -11,7 +11,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-func getCurrentDns() ([]string, error) {
+func getCurrentDns(verbose bool) ([]string, error) {
 	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 
 	if err != nil {

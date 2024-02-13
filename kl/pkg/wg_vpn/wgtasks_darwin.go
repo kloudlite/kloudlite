@@ -16,7 +16,6 @@ import (
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/functions"
-	"github.com/miekg/dns"
 
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
@@ -27,16 +26,6 @@ import (
 const (
 	ifName string = "utun2464"
 )
-
-func getCurrentDns() ([]string, error) {
-	config, err := dns.ClientConfigFromFile("/etc/resolv.conf")
-
-	if err != nil {
-		return nil, err
-	}
-
-	return config.Servers, nil
-}
 
 func ipRouteAdd(ip string, interfaceIp string, deviceName string, verbose bool) error {
 	return ExecCmd(fmt.Sprintf("route -n add -net %s %s", ip, interfaceIp), verbose)
@@ -59,7 +48,8 @@ func getNetworkServices(verbose bool) ([]string, error) {
 	return networkServices, err
 }
 
-func getDNSServers(networkService string, verbose bool) ([]string, error) {
+func getCurrentDns(verbose bool) ([]string, error) {
+	networkService := "Wi-Fi"
 	if verbose {
 		functions.Log(fmt.Sprintf("[#] networksetup -getdnsservers %s", networkService))
 	}
@@ -170,7 +160,7 @@ func StopService(verbose bool) error {
 	}
 
 	if runtime.GOOS == "darwin" {
-		dnsServers, err := getDNSServers("Wi-Fi", verbose)
+		dnsServers, err := getCurrentDns(verbose)
 		if err != nil {
 			return err
 		}

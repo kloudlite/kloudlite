@@ -118,7 +118,7 @@ func Configure(
 			return nil
 		}
 
-		dServers, err := getDNSServers("Wi-Fi", verbose)
+		dServers, err := getCurrentDns(verbose)
 		if err != nil {
 			return err
 		}
