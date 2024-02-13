@@ -81,6 +81,7 @@ variable "master_nodes" {
     node_labels       = map(string)
     availability_zone = string
     last_recreated_at = optional(number)
+    kloudlite_release = string
   }))
 }
 

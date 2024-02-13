@@ -43,6 +43,7 @@ module "k3s-masters" {
       role : v.role,
       public_ip : v.public_ip,
       node_labels : v.node_labels
+      kloudlite_release : v.kloudlite_release
     }
   }
   public_dns_host = var.public_dns_host
@@ -229,32 +230,3 @@ module "kloudlite-agent" {
     private_key = local.master_ssh_params.private_key
   }
 }
-
-#module "kloudlite-agent" {
-#  count                              = var.kloudlite_params.install_agent ? 1 : 0
-#  source                             = "../../modules/kloudlite/helm-kloudlite-agent"
-#  kloudlite_account_name             = var.kloudlite_params.agent_vars.account_name
-#  kloudlite_cluster_name             = var.kloudlite_params.agent_vars.cluster_name
-#  kloudlite_cluster_token            = var.kloudlite_params.agent_vars.cluster_token
-#  kloudlite_dns_host                 = var.public_dns_host
-#  kloudlite_message_office_grpc_addr = var.kloudlite_params.agent_vars.message_office_grpc_addr
-#  kloudlite_release                  = var.kloudlite_params.release
-#  ssh_params                         = local.master_ssh_params
-#
-#  release_name      = "kl-agent"
-#  release_namespace = local.kloudlite_namespace
-#
-#  cloudprovider_name   = var.cloudprovider_name
-#  cloudprovider_region = var.cloudprovider_region
-#  k3s_agent_join_token = module.k3s-masters.k3s_agent_token
-#}
-
-#module "kloudlite-autoscalers" {
-#  count             = var.kloudlite_params.install_autoscalers ? 1 : 0
-#  source            = "../../modules/kloudlite/helm-kloudlite-autoscalers"
-#  depends_on        = [module.kloudlite-crds]
-#  kloudlite_release = var.kloudlite_params.release
-#  ssh_params        = local.master_ssh_params
-#  release_name      = "kl-autoscalers"
-#  release_namespace = local.kloudlite_namespace
-#}

@@ -57,6 +57,7 @@ resource "aws_key_pair" "k3s_worker_nodes_ssh_key" {
 
 locals {
   common_node_labels = {
+    (module.constants.node_labels.kloudlite_release) : var.kloudlite_release,
     (module.constants.node_labels.provider_name) : "aws",
     (module.constants.node_labels.provider_region) : var.aws_region,
   }
@@ -65,20 +66,14 @@ locals {
 module "aws-security-groups" {
   source     = "../../modules/aws/security-groups"
   depends_on = [null_resource.variable_validations]
-  vpc_id     = var.vpc.vpc_id
-
-  create_group_for_k3s_workers = true
-
-  allow_incoming_http_traffic_on_master = true
-  allow_metrics_server_on_master        = true
-  expose_k8s_node_ports_on_master       = true
-
-  allow_incoming_http_traffic_on_agent    = false
-  allow_metrics_server_on_agent           = true
-  allow_outgoing_to_all_internet_on_agent = true
-  expose_k8s_node_ports_on_agent          = false
 
   tracker_id = var.tracker_id
+  vpc_id     = var.vpc.vpc_id
+
+  create_for_k3s_workers = true
+
+  allow_incoming_http_traffic = false
+  expose_k8s_node_ports       = false
 }
 
 module "k3s-templates" {
@@ -86,13 +81,17 @@ module "k3s-templates" {
   source     = "../../modules/kloudlite/k3s/k3s-templates"
 }
 
+module "aws-amis" {
+  source = "../../modules/aws/AMIs"
+}
+
 module "aws-ec2-nodepool" {
   source     = "../../modules/aws/aws-ec2-nodepool"
   depends_on = [null_resource.variable_validations]
-  for_each   = {for np_name, np_config in var.ec2_nodepools : np_name => np_config}
+  for_each   = { for np_name, np_config in var.ec2_nodepools : np_name => np_config }
 
   tracker_id           = "${var.tracker_id}-${each.key}"
-  ami                  = each.value.image_id
+  ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
   availability_zone    = each.value.availability_zone
   iam_instance_profile = each.value.iam_instance_profile
   instance_type        = each.value.instance_type
@@ -102,7 +101,7 @@ module "aws-ec2-nodepool" {
   security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   tags                 = var.tags
-  vpc                  = {
+  vpc = {
     subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone]
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
@@ -112,14 +111,13 @@ module "aws-ec2-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          kloudlite_release    = var.kloudlite_release
+          kloudlite_release          = var.kloudlite_release
           kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
         })
 
-        tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
-        tf_node_taints          = concat([],
+        tf_node_taints = concat([],
           each.value.node_taints != null ? each.value.node_taints : [],
           each.value.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
         )
@@ -147,9 +145,9 @@ module "aws-ec2-nodepool" {
 module "aws-spot-nodepool" {
   source                       = "../../modules/aws/aws-spot-nodepool"
   depends_on                   = [null_resource.variable_validations]
-  for_each                     = {for np_name, np_config in var.spot_nodepools : np_name => np_config}
+  for_each                     = { for np_name, np_config in var.spot_nodepools : np_name => np_config }
   tracker_id                   = "${var.tracker_id}-${each.key}"
-  ami                          = each.value.image_id
+  ami                          = module.aws-amis.ubuntu_amd64_cpu_ami_id
   availability_zone            = each.value.availability_zone
   root_volume_size             = each.value.root_volume_size
   root_volume_type             = each.value.root_volume_type
@@ -159,7 +157,7 @@ module "aws-spot-nodepool" {
   ssh_key_name                 = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   cpu_node                     = each.value.cpu_node
   gpu_node                     = each.value.gpu_node
-  vpc                          = {
+  vpc = {
     subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone]
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
@@ -169,14 +167,13 @@ module "aws-spot-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          kloudlite_release    = var.kloudlite_release
+          kloudlite_release          = var.kloudlite_release
           kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
         })
 
-        tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
-        tf_node_taints          = concat([],
+        tf_node_taints = concat([],
           each.value.node_taints != null ? each.value.node_taints : [],
           each.value.gpu_node != null ? module.constants.gpu_node_taints : [],
         )

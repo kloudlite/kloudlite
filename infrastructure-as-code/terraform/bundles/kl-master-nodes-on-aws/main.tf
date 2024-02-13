@@ -44,38 +44,39 @@ resource "aws_key_pair" "k3s_nodes_ssh_key" {
 }
 
 module "aws-vpc" {
-  source         = "../../modules/aws/vpc"
-  public_subnets = var.vpc.public_subnets
-  tags           = var.tags
-  tracker_id     = var.tracker_id
-  vpc_cidr       = var.vpc.cidr
-  vpc_name       = var.vpc.name
+  source     = "../../modules/aws/vpc"
+  tags       = var.tags
+  tracker_id = var.tracker_id
+  vpc_name   = var.vpc.name
 }
 
 module "aws-security-groups" {
-  source                                = "../../modules/aws/security-groups"
-  depends_on                            = [null_resource.variable_validations]
-  create_group_for_k3s_masters          = true
-  allow_incoming_http_traffic_on_master = true
-  allow_metrics_server_on_master        = true
-  expose_k8s_node_ports_on_master       = true
+  source     = "../../modules/aws/security-groups"
+  depends_on = [null_resource.variable_validations]
 
-  allow_incoming_http_traffic_on_agent    = false
-  allow_metrics_server_on_agent           = true
-  allow_outgoing_to_all_internet_on_agent = true
-  expose_k8s_node_ports_on_agent          = false
-  tracker_id                              = var.tracker_id
-  vpc_id                                  = module.aws-vpc.vpc_id
+  tracker_id = var.tracker_id
+  vpc_id     = module.aws-vpc.vpc_id
+
+  create_for_k3s_masters = true
+
+  allow_incoming_http_traffic = true
+  expose_k8s_node_ports       = true
 }
 
 module "kloudlite-k3s-templates" {
   source = "../../modules/kloudlite/k3s/k3s-templates"
 }
 
+module "aws-amis" {
+  source = "../../modules/aws/AMIs"
+}
+
 module "k3s-master-instances" {
-  source               = "../../modules/aws/ec2-node"
+  source     = "../../modules/aws/ec2-node"
+  depends_on = [module.aws-vpc]
+
   for_each             = {for name, cfg in var.k3s_masters.nodes : name => cfg}
-  ami                  = var.k3s_masters.image_id
+  ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
   availability_zone    = each.value.availability_zone
   instance_type        = var.k3s_masters.instance_type
   iam_instance_profile = var.k3s_masters.iam_instance_profile
@@ -89,11 +90,11 @@ module "k3s-master-instances" {
   tracker_id           = var.tracker_id
   tags                 = var.tags
   user_data_base64     = base64encode(templatefile(module.kloudlite-k3s-templates.k3s-vm-setup-template-path, {
-    kloudlite_release = var.kloudlite_params.release
+    kloudlite_release          = var.kloudlite_params.release
     kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
   }))
   vpc = {
-    subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone].id
+    subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone]
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_masters_ids
   }
 }
@@ -110,6 +111,7 @@ module "kloudlite-k3s-masters" {
       role : cfg.role,
       public_ip : module.k3s-master-instances[name].public_ip,
       node_labels : {
+        (module.constants.node_labels.kloudlite_release) : cfg.kloudlite_release,
         (module.constants.node_labels.provider_name) : "aws",
         (module.constants.node_labels.provider_region) : var.aws_region,
         (module.constants.node_labels.provider_az) : cfg.availability_zone,
@@ -119,17 +121,49 @@ module "kloudlite-k3s-masters" {
       }
       availability_zone = cfg.availability_zone,
       last_recreated_at = cfg.last_recreated_at,
+      kloudlite_release = cfg.kloudlite_release,
     }
   }
   public_dns_host              = var.k3s_masters.public_dns_host
   restore_from_latest_snapshot = var.k3s_masters.restore_from_latest_snapshot
   ssh_private_key              = module.ssh-rsa-key.private_key
-  ssh_username                 = var.k3s_masters.image_ssh_username
+  ssh_username                 = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
   taint_master_nodes           = var.k3s_masters.taint_master_nodes
   tracker_id                   = var.tracker_id
   save_kubeconfig_to_path      = var.save_kubeconfig_to_path
   cloudprovider_name           = "aws"
   cloudprovider_region         = var.aws_region
+}
+
+module "kloudlite-aws-secret" {
+  source     = "../../modules/kloudlite/execute_command_over_ssh"
+  depends_on = [
+    module.kloudlite-k3s-masters
+  ]
+  pre_command = <<EOF
+cat > /tmp/kloudlite-aws-settings.yml <<EOF2
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kloudlite-aws-settings
+  namespace: kube-system
+data:
+  vpc_id: ${base64encode(module.aws-vpc.vpc_id)}
+  vpc_public_subnets: ${base64encode(jsonencode(module.aws-vpc.vpc_public_subnets))}
+EOF2
+
+kubectl apply -f /tmp/kloudlite-aws-settings.yml
+EOF
+
+  command = <<EOF
+cat /tmp/kloudlite-aws-settings.yml
+EOF
+
+  ssh_params = {
+    public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
+    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
+    private_key = module.ssh-rsa-key.private_key
+  }
 }
 
 module "helm-aws-ebs-csi" {
@@ -151,7 +185,7 @@ module "helm-aws-ebs-csi" {
   daemonset_node_selector  = module.constants.agent_node_selector
   ssh_params               = {
     public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
-    username    = var.k3s_masters.image_ssh_username
+    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
     private_key = module.ssh-rsa-key.private_key
   }
 }
@@ -162,7 +196,7 @@ module "aws-k3s-spot-termination-handler" {
   spot_nodes_selector = module.constants.spot_node_selector
   ssh_params          = {
     public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
-    username    = var.k3s_masters.image_ssh_username
+    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
     private_key = module.ssh-rsa-key.private_key
   }
   kloudlite_release = var.kloudlite_params.release
