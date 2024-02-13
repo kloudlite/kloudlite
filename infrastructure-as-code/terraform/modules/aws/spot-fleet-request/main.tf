@@ -48,7 +48,7 @@ resource "aws_launch_template" "spot_template" {
   }
 
   lifecycle {
-    ignore_changes = [iam_instance_profile]
+    ignore_changes = [iam_instance_profile, image_id]
   }
 
   user_data = var.user_data_base64
@@ -99,7 +99,7 @@ resource "aws_spot_fleet_request" "cpu_spot_fleet" {
   on_demand_allocation_strategy = "lowestPrice"
 
   lifecycle {
-    ignore_changes       = [instance_pools_to_use_count]
+    ignore_changes       = [instance_pools_to_use_count, iam_fleet_role]
     replace_triggered_by = [null_resource.lifecycle_resource]
   }
 
