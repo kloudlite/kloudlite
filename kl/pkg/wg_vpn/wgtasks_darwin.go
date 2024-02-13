@@ -7,10 +7,14 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
 
+	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/flags"
 	"github.com/kloudlite/kl/pkg/functions"
 	"github.com/miekg/dns"
 
@@ -70,7 +74,7 @@ func getDNSServers(networkService string, verbose bool) ([]string, error) {
 	}
 	lines := strings.Split(string(output), "\n")
 	var dnsServers []string
-	for _, line := range lines[1:] {
+	for _, line := range lines {
 		if line == "" {
 			continue
 		}
@@ -144,7 +148,7 @@ func StartService(_ string, verbose bool) error {
 }
 
 func StopService(verbose bool) error {
-	output, err := exec.Command("pgrep", "-f", "kl vpn start-fg").Output()
+	output, err := exec.Command("pgrep", "-f", fmt.Sprintf("%s %s", flags.CliName, "vpn start-fg")).Output()
 	if err != nil {
 		return err
 	}
@@ -164,9 +168,41 @@ func StopService(verbose bool) error {
 	if err != nil {
 		return err
 	}
+
+	if runtime.GOOS == "darwin" {
+		dnsServers, err := getDNSServers("Wi-Fi", verbose)
+		if err != nil {
+			return err
+		}
+
+		servers, err := client.GetDns()
+		if err != nil {
+			return err
+		}
+
+		filteredDnsServers := []string{}
+
+		for _, dnsServer := range dnsServers {
+			if !slices.Contains(servers, dnsServer) {
+				filteredDnsServers = append(filteredDnsServers, dnsServer)
+			}
+		}
+
+		if err := setDnsServers(func() []net.IPNet {
+			var ipNets []net.IPNet
+			for _, dnsServer := range filteredDnsServers {
+				ipNets = append(ipNets, net.IPNet{IP: net.ParseIP(dnsServer)})
+			}
+			return ipNets
+		}(), "Wi-Fi", verbose); err != nil {
+			return err
+		}
+
+	}
+
 	return nil
 }
 
-func setDnsServer(dnsServer net.IP, _ string, verbose bool) error {
-	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", ifName, dnsServer.String()), verbose)
+func setDnsServer(dnsServer net.IP, d string, verbose bool) error {
+	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", d, dnsServer.String()), verbose)
 }

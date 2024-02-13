@@ -59,6 +59,31 @@ type ExtraData struct {
 	VpnConnected bool            `json:"vpnConnected"`
 }
 
+func GetDns() ([]string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return nil, err
+	}
+
+	return extraData.DNS, nil
+}
+
+func SetDns(dns []string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.DNS = dns
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
+}
+
 func GetConfigFolder() (configFolder string, err error) {
 	homePath := ""
 

@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"runtime"
 	"time"
 
 	"github.com/getlantern/systray"
 	"github.com/kloudlite/kl/app/handler/icons"
 	ns "github.com/kloudlite/kl/app/handler/name-conts"
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	fn "github.com/kloudlite/kl/pkg/functions"
 )
@@ -82,7 +84,7 @@ func (h *handler) ItemMap() map[ns.ItemName]*systray.MenuItem {
 
 func (h *handler) ReconMeta() {
 	systray.SetIcon(icons.Loading)
-	systray.SetTitle("Kloudlite")
+	// systray.SetTitle("Kloudlite")
 	systray.SetTooltip("Kloudlite vpn client")
 
 	go func() {
@@ -94,17 +96,28 @@ func (h *handler) ReconMeta() {
 			}
 
 			if b {
-				systray.SetIcon(icons.Loading)
+				systray.SetTemplateIcon(icons.Loading, icons.Loading)
 			} else {
 				data, err := client.GetExtraData()
 				if err != nil {
 					data.VpnConnected = false
 				}
-				if data.VpnConnected {
-					systray.SetIcon(icons.Logo)
-				} else {
-					systray.SetIcon(icons.DisabledLogo)
+
+				switch runtime.GOOS {
+				case constants.RuntimeDarwin:
+					if data.VpnConnected {
+						systray.SetTemplateIcon(icons.Logo, icons.Logo)
+					} else {
+						systray.SetIcon(icons.DisabledLogo)
+					}
+				case constants.RuntimeLinux:
+					if data.VpnConnected {
+						systray.SetIcon(icons.Logo)
+					} else {
+						systray.SetIcon(icons.DisabledLogo)
+					}
 				}
+
 			}
 
 			<-time.After(time.Millisecond * 500)

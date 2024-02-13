@@ -1,8 +1,9 @@
 package kli
 
 import (
-	"github.com/kloudlite/kl/flags"
 	"runtime"
+
+	"github.com/kloudlite/kl/flags"
 
 	"github.com/kloudlite/kl/cmd/auth"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
@@ -35,7 +36,7 @@ func init() {
 	rootCmd.AddCommand(use.InfraCmd)
 	rootCmd.AddCommand(status.Cmd)
 
-	if runtime.GOOS == constants.RuntimeLinux {
+	if runtime.GOOS != constants.RuntimeWindows {
 		rootCmd.AddCommand(app.Cmd)
 	}
 

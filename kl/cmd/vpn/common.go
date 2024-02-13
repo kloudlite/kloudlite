@@ -133,8 +133,7 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		return err
 	}
 
-	if runtime.GOOS != "linux" {
-
+	if runtime.GOOS == "windows" {
 		if err := wg_svc.StartVpn(configuration); err != nil {
 			return err
 		}
