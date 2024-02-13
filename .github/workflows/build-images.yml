@@ -55,7 +55,7 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/release')
         run: |
           set +e
-          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/} | sed 's/release-//g')
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/release-})
           echo "$IMAGE_TAG" | grep -i '\-nightly$'
           if [ $? -ne 0 ]; then
             IMAGE_TAG="$IMAGE_TAG-nightly"
