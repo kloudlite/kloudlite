@@ -382,6 +382,11 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 				LabelClusterApplyJob:    "true",
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
 			},
+			"pod-annotations": fn.MapMerge(fn.FilterObservabilityAnnotations(obj.GetAnnotations()), map[string]string{
+				constants.ObservabilityAccountNameKey: obj.Spec.AccountName,
+				constants.ObservabilityClusterNameKey: obj.Name,
+			}),
+
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 			"service-account-name": clusterJobServiceAccount,
