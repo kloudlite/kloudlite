@@ -5,7 +5,7 @@ import (
 	"net"
 )
 
-func getCurrentDns() ([]string, error) {
+func getCurrentDns(verbose bool) ([]string, error) {
 	return []string{}, nil
 }
 
