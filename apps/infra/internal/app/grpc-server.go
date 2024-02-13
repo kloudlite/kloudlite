@@ -96,7 +96,7 @@ func (g *grpcServer) ClusterExists(ctx context.Context, in *infra.ClusterExistsI
 	}
 	cluster, err := g.d.GetCluster(infraCtx, in.ClusterName)
 	if err != nil {
-		if !errors.Is(err, domain.ErrClusterNotFound) {
+		if errors.Is(err, domain.ErrClusterNotFound) {
 			return &infra.ClusterExistsOut{Exists: false}, nil
 		}
 		return nil, errors.NewE(err)
