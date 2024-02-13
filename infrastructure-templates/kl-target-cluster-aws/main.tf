@@ -29,4 +29,5 @@ module "kl-worker-nodes-on-aws" {
     vpc_id                = module.kl-master-nodes-on-aws.vpc_id
     vpc_public_subnet_ids = {for az, subnet in  module.kl-master-nodes-on-aws.vpc_public_subnets : az => subnet.id}
   }
+  kloudlite_release = var.kloudlite_params.release
 }

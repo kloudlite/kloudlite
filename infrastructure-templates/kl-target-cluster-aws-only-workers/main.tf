@@ -11,4 +11,5 @@ module "kl-worker-nodes-on-aws" {
   save_ssh_key_to_path       = var.save_ssh_key_to_path
   tags                       = var.tags
   vpc                        = var.vpc
+  kloudlite_release          = var.kloudlite_release
 }

@@ -1,6 +1,8 @@
 #! /usr/bin/env bash
 
-cat > ~/runner-config.yml <<EOF2
+${vm_setup_script}
+
+cat > ${kloudlite_config_directory}/runner-config.yml <<EOF2
 runAs: agent
 agent:
   serverIP: ${tf_k3s_masters_dns_host}
@@ -13,8 +15,6 @@ agent:
   extraAgentArgs: ${jsonencode(tf_extra_agent_args)}
 EOF2
 
-sudo ln -sf ~/runner-config.yml /runner-config.yml
-sudo ln -sf ~/runner-config.yml /home/${tf_image_ssh_username}/runner-config.yml
 if [ "${tf_use_cloudflare_nameserver}" = "true" ]; then
 lineNo=$(sudo cat /etc/resolv.conf -n | grep "nameserver" | awk '{print $1}')
 sudo sed -i "$lineNo i nameserver 1.1.1.1" /etc/resolv.conf

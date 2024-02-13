@@ -76,6 +76,7 @@ jobs:
           pushd cmd/k3s-runner
 
           task build
+          curl -L0 'https://github.com/k3s-io/k3s/releases/download/v1.28.6+k3s2/k3s' > bin/k3s
 
           PRE_RELEASE=$OVERRIDE_RELEASE
 

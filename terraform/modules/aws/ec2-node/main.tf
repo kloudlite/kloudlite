@@ -21,8 +21,19 @@ resource "null_resource" "lifecycle_resource" {
   }
 }
 
+data "aws_ami" "ubuntu_ami" {
+  most_recent = true
+  owners = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+}
+
 resource "aws_instance" "ec2_instance" {
-  ami           = var.ami
+#  ami           = var.ami
+  ami           = data.aws_ami.ubuntu_ami.id
   instance_type = var.instance_type
 
   security_groups        = var.vpc == null ? var.security_groups : null

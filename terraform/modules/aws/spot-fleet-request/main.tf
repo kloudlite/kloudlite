@@ -23,9 +23,20 @@ resource "null_resource" "variable_validation" {
   }
 }
 
+data "aws_ami" "ubuntu_ami" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+}
+
 resource "aws_launch_template" "spot_template" {
   name     = "lt-${var.tracker_id}-${var.node_name}"
-  image_id = var.ami
+  #  image_id = var.ami
+  image_id = data.aws_ami.ubuntu_ami.id
 
   default_version = 1
 
