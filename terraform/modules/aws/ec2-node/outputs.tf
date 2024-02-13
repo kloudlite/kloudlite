@@ -32,3 +32,7 @@ output "public_ip" {
 output "private_ip" {
   value = aws_instance.ec2_instance.private_ip
 }
+
+#output "k3s_data_volume_device" {
+#  value = local.k3s_data_volume_device
+#}

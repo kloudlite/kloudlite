@@ -3,6 +3,6 @@ output "vpc_id" {
 }
 
 output "vpc_public_subnets" {
-  value = aws_subnet.public_subnets
+  value = {for idx, subnet in aws_subnet.public_subnets : subnet.availability_zone => subnet.id}
 }
 
