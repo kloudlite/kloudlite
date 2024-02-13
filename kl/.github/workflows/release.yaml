@@ -1,34 +1,174 @@
+name: Conditional Builds Workflow
+
 on:
   release:
     types: [created]
+  push:
+    branches:
+      - 'release-*'
+      - 'fix-*'
 
 jobs:
-  releases-matrix:
-    name: Release Go Binary
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
     strategy:
+      fail-fast: false
       matrix:
-        # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
-        goos: [linux, windows, darwin]
-        goarch: ["386", amd64, arm64]
-        binary_name: ["kl", "kli"]
-        exclude:
-          - goarch: "386"
-            goos: darwin
-          - goarch: arm64
+        app: [kl,kli]
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
+        arch: [amd64, arm64]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            platform: linux
+          - os: windows-latest
             goos: windows
+            platform: windows
+          - os: macos-latest
+            goos: darwin
+            platform: darwin
+          - os: macos-14
+            goos: darwin
+            platform: darwin
+        exclude:
+          - os: macos-14
+            arch: amd64
+          - os: macos-latest
+            arch: arm64
+          - os: ubuntu-latest
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Extract tag name
-      id: tag_name
-      run: echo "::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}"
-    - uses: wangyoucao577/go-release-action@v1.30
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        goos: ${{ matrix.goos }}
-        goarch: ${{ matrix.goarch }}
-        goversion: "https://dl.google.com/go/go1.21.7.linux-amd64.tar.gz"
-        project_path: "."
-        ldflags: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.binary_name }}"
-        binary_name: ${{ matrix.binary_name }}
-        extra_files: LICENSE README.md
+      - uses: actions/checkout@v4.1.1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5.0.0
+        with:
+          go-version: '^1.19'
+
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64' && matrix.os == 'ubuntu-latest'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
+
+      - name: Setup libappindicator3-dev for linux
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc libgtk-3-dev libayatana-appindicator3-dev
+
+      - name: Check Go version
+        run: |
+          go version
+          echo "[PRE] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
+
+      - name: Create Image Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release-')
+        run: |
+          set +e
+          TAG=$(echo ${GITHUB_REF#refs/heads/release-})
+          echo "$TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            TAG="$TAG-nightly"
+          fi
+          set -e
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Create Image Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Set Tag Output
+        id: tag_name
+        run: echo "::set-output name=TAG_NAME::${TAG}"
+
+      - name: Build Linux & Mac
+        if: matrix.goos == 'linux' || matrix.goos == 'darwin'
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.arch }}
+          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }} -X github.com/kloudlite/kl/flags.DevMode=true"
+          RELEASE_NAME: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+        run: |
+          echo "[POST] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
+
+          echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
+          mkdir bin
+          mkdir out
+          go build -o bin/${{ matrix.app }} main.go
+
+          zip -j out/$RELEASE_NAME.zip bin/${{ matrix.app }}
+          tar -czvf out/$RELEASE_NAME.tar.gz bin/${{ matrix.app }}
+
+      - name: Build Windows
+        if: matrix.goos == 'windows'
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.arch }}
+          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }} -X github.com/kloudlite/kl/flags.DevMode=true"
+          RELEASE_NAME: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+        run: |
+          echo "[POST] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
+
+          echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
+          mkdir bin
+          mkdir out
+          go build -o bin/${{ matrix.app }}.exe main.go
+
+          tar.exe -cvf out/$RELEASE_NAME.tar.gz bin/${{ matrix.app }}.exe
+          tar.exe -a -cvf out/$RELEASE_NAME.zip bin/${{ matrix.app }}.exe
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ${{ github.workspace }}/artifacts
+
+      - name: Create Image Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release-')
+        run: |
+          set +e
+          TAG=$(echo ${GITHUB_REF#refs/heads/release-})
+          echo "$TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            TAG="$TAG-nightly"
+          fi
+          set -e
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Create Image Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Set Tag Output
+        id: tag_name
+        run: echo "::set-output name=TAG_NAME::${TAG}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**
+          tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
