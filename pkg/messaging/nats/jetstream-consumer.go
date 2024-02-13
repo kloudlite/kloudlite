@@ -86,7 +86,9 @@ func (jc *JetstreamConsumer) Consume(consumeFn func(msg *types.ConsumeMsg) error
 
 // Stop implements Consumer.
 func (nc *JetstreamConsumer) Stop(context.Context) error {
-	nc.consumeCtx.Stop()
+	if nc.consumeCtx != nil {
+		nc.consumeCtx.Stop()
+	}
 	return nil
 }
 

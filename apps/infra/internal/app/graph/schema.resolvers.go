@@ -220,7 +220,7 @@ func (r *mutationResolver) InfraDeleteHelmRelease(ctx context.Context, clusterNa
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteHelmRelease(ictx, clusterName, releaseName); err != nil {
-		return false, err
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }

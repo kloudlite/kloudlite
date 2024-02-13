@@ -44,7 +44,7 @@ func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteProject(cc, name); err != nil {
-		return false, nil
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -74,7 +74,7 @@ func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, projectNam
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteEnvironment(cc, projectName, envName); err != nil {
-		return false, nil
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
@@ -105,7 +105,7 @@ func (r *mutationResolver) CoreDeleteImagePullSecret(ctx context.Context, projec
 		return false, errors.NewE(err)
 	}
 	if err := r.Domain.DeleteImagePullSecret(newResourceContext(cc, projectName, envName), secretName); err != nil {
-		return false, nil
+		return false, errors.NewE(err)
 	}
 	return true, nil
 }
