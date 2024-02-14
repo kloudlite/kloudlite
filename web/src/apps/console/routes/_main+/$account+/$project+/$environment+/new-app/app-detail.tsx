@@ -1,10 +1,9 @@
 import { ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import { IdSelector } from '~/console/components/id-selector';
 import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
@@ -41,8 +40,8 @@ const AppDetail = () => {
           displayName: val.displayName,
         };
       });
-      setPage('Compute');
-      markPageAsCompleted('Application details');
+      setPage(2);
+      markPageAsCompleted(1);
     },
   });
 
@@ -55,7 +54,6 @@ const AppDetail = () => {
           e.preventDefault();
         }
       }}
-      className="py-3xl"
     >
       <div className="bodyMd text-text-soft">
         The application streamlines project management through intuitive task
@@ -82,14 +80,13 @@ const AppDetail = () => {
           onChange={handleChange('description')}
         />
       </div>
-      <div className="flex flex-row gap-xl justify-end items-center">
+      <div className="flex flex-row gap-xl items-center">
         <Button
           loading={isLoading}
           type="submit"
           content="Save & Continue"
           suffix={<ArrowRight />}
           variant="primary"
-          // onClick={next}
         />
       </div>
     </FadeIn>

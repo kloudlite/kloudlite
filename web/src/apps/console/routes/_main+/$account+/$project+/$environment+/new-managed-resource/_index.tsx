@@ -10,17 +10,10 @@ import {
 import { Button } from '~/components/atoms/button';
 import Select from '~/components/atoms/select';
 import { NameIdView } from '~/console/components/name-id-view';
-import ProgressWrapper from '~/console/components/progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import {
-  Dispatch,
-  FormEventHandler,
-  SetStateAction,
-  useEffect,
-  useState,
-} from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import { IMSvTemplate } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
@@ -37,6 +30,10 @@ import {
 } from '~/console/server/r-utils/common';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 import { getManagedTemplate } from '~/console/utils/commons';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
 import { ReviewComponent } from '../new-app/app-review';
 import { IProjectContext } from '../../_layout';
 
@@ -56,11 +53,6 @@ export const loader = (ctx: IRemixCtx) => {
   });
   return defer({ promise });
 };
-
-type steps = 'Select service' | 'Configure resource' | 'Review';
-
-const hasResource = (res: any) =>
-  (!!res && res?.resource?.fields.length > 0) || !res;
 
 const RenderField = ({
   field,
@@ -252,7 +244,7 @@ const TemplateView = ({
   isLoading,
 }: ITemplateView) => {
   return (
-    <form className="flex flex-col gap-3xl py-3xl" onSubmit={handleSubmit}>
+    <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
       <div className="bodyMd text-text-soft">Create your managed services.</div>
 
       <Select
@@ -322,7 +314,7 @@ const FieldView = ({
 }) => {
   return (
     <form
-      className="flex flex-col gap-3xl py-3xl"
+      className="flex flex-col gap-3xl"
       onSubmit={(e) => {
         if (!values.isNameError) {
           handleSubmit(e);
@@ -379,14 +371,14 @@ const ReviewView = ({
   selectedResource,
   selectedService,
   isLoading,
-  setStep,
+  onEdit,
 }: {
   values: Record<string, any>;
   handleSubmit: FormEventHandler<HTMLFormElement>;
   selectedResource: ISelectedResource | null;
   selectedService: ISelectedService | null;
   isLoading?: boolean;
-  setStep: Dispatch<SetStateAction<steps>>;
+  onEdit: (step: number) => void;
 }) => {
   const renderFieldView = () => {
     const fields = Object.entries(values.res).filter(
@@ -397,7 +389,7 @@ const ReviewView = ({
         <ReviewComponent
           title="Fields"
           onEdit={() => {
-            setStep('Configure resource');
+            onEdit(2);
           }}
         >
           <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
@@ -424,12 +416,12 @@ const ReviewView = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3xl py-3xl">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
       <div className="flex flex-col gap-xl">
         <ReviewComponent
           title="Basic detail"
           onEdit={() => {
-            setStep('Configure resource');
+            onEdit(2);
           }}
         >
           <div className="flex flex-col p-xl gap-lg rounded border border-border-default">
@@ -445,7 +437,7 @@ const ReviewView = ({
           <ReviewComponent
             title="Service detail"
             onEdit={() => {
-              setStep('Select service');
+              onEdit(1);
             }}
           >
             <div className="flex flex-col p-xl gap-lg rounded border border-border-default">
@@ -484,12 +476,16 @@ const ReviewView = ({
 
 const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
   const { msvtemplates } = useOutletContext<IProjectContext>();
-  const [activeState, setActiveState] = useState<steps>('Select service');
   const navigate = useNavigate();
   const api = useConsoleApi();
-  const isActive = (step: steps) => step === activeState;
 
   const { project, account, environment } = useParams();
+  const rootUrl = `/${account}/${project}/${environment}/managed-resources`;
+
+  const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
+    defaultStep: 1,
+    totalSteps: 3,
+  });
 
   const { values, errors, handleSubmit, handleChange, isLoading, setValues } =
     useForm({
@@ -503,10 +499,10 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
       },
       validationSchema: Yup.object({
         name: Yup.string().test('required', 'Name is required', (v) => {
-          return !(isActive('Configure resource') && !v);
+          return !(currentStep === 2 && !v);
         }),
         displayName: Yup.string().test('required', 'Name is required', (v) => {
-          return !(isActive('Configure resource') && !v);
+          return !(currentStep === 2 && !v);
         }),
         selectedService: Yup.object().required('Service is required'),
         selectedResource: Yup.object({}).required('Resource type is required'),
@@ -561,19 +557,19 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
             if (e) {
               throw e[0];
             }
-            navigate(`/${account}/${project}/${environment}/managed-resources`);
+            navigate(rootUrl);
           } catch (err) {
             handleError(err);
           }
         };
-        switch (activeState) {
-          case 'Select service':
-            setActiveState('Configure resource');
+        switch (currentStep) {
+          case 1:
+            nextStep();
             break;
-          case 'Configure resource':
-            setActiveState('Review');
+          case 2:
+            nextStep();
             break;
-          case 'Review':
+          case 3:
             await submit();
             break;
           default:
@@ -618,13 +614,17 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
     })
   );
 
-  const items = useMapper(
-    [
-      {
-        label: 'Select service',
-        active: isActive('Select service'),
-        completed: false,
-        children: isActive('Select service') ? (
+  return (
+    <MultiStepProgressWrapper
+      title="Let’s create new managed resource."
+      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
+      backButton={{
+        content: 'Back to managed resources',
+        to: rootUrl,
+      }}
+    >
+      <MultiStepProgress.Root currentStep={currentStep} jumpStep={jumpStep}>
+        <MultiStepProgress.Step label="Select service" step={1}>
           <TemplateView
             isLoading={isLoading}
             services={services}
@@ -634,13 +634,8 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
             values={values}
             resources={resources}
           />
-        ) : null,
-      },
-      {
-        label: 'Configure resource',
-        active: isActive('Configure resource'),
-        completed: false,
-        children: isActive('Configure resource') ? (
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step label="Configure managed resource" step={2}>
           <FieldView
             selectedResource={values.selectedResource}
             values={values}
@@ -648,41 +643,19 @@ const App = ({ services }: { services: ExtractNodeType<IProjectMSvs>[] }) => {
             handleChange={handleChange}
             handleSubmit={handleSubmit}
           />
-        ) : null,
-      },
-      {
-        label: 'Review',
-        active: isActive('Review'),
-        completed: false,
-        children: isActive('Review') ? (
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step label="Review" step={3}>
           <ReviewView
-            setStep={setActiveState}
+            onEdit={jumpStep}
             values={values}
             handleSubmit={handleSubmit}
             selectedService={values.selectedService}
             selectedResource={values.selectedResource}
             isLoading={isLoading}
           />
-        ) : null,
-      },
-    ],
-    (val) => val
-  );
-
-  return (
-    <ProgressWrapper
-      title="Let’s create new managed resource."
-      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
-      progressItems={{
-        items,
-      }}
-      onClick={({ label }) => {
-        if (label !== 'Review')
-          if (values.selectedResource) {
-            setActiveState(label as steps);
-          }
-      }}
-    />
+        </MultiStepProgress.Step>
+      </MultiStepProgress.Root>
+    </MultiStepProgressWrapper>
   );
 };
 

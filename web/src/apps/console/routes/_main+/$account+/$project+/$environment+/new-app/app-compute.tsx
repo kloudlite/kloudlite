@@ -134,12 +134,11 @@ const AppCompute = () => {
         (async () => {
           const res = await submit();
           if (res) {
-            setPage('Environment');
-            markPageAsCompleted('Compute');
+            setPage(3);
+            markPageAsCompleted(2);
           }
         })();
       }}
-      className="py-3xl"
     >
       <div className="bodyMd text-text-soft">
         Compute refers to the processing power and resources used for data
@@ -396,7 +395,7 @@ const AppCompute = () => {
         </div>
       </div> */}
 
-      <div className="flex flex-row gap-xl justify-end items-center">
+      <div className="flex flex-row gap-xl items-center">
         <Button
           content="App Info"
           prefix={<ArrowLeft />}
@@ -405,7 +404,7 @@ const AppCompute = () => {
             (async () => {
               const res = await submit();
               if (res) {
-                setPage('Application details');
+                setPage(1);
               }
             })();
           }}
