@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/templates"
@@ -270,7 +271,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 		"name":          obj.Name,
 		"namespace":     obj.Namespace,
 		"labels":        obj.GetLabels(),
-		"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj)},
+		"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"node-selector": obj.Spec.NodeSelector,
 
 		"storage-class": obj.Spec.Resources.Storage.StorageClass,
@@ -390,6 +391,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
+	builder.Owns(&crdsv1.HelmChart{})
 
 	watchList := []client.Object{
 		&appsv1.StatefulSet{},

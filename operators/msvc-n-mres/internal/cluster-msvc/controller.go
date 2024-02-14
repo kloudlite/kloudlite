@@ -112,22 +112,22 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ClusterManagedService]) 
 		return result
 	}
 
-	if msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Name, obj.Spec.TargetNamespace), &crdsv1.ManagedService{}); err != nil {
+	req.Logger.Infof("proceeding forward to delete msvc %s/%s", obj.Spec.TargetNamespace, obj.Name)
+	msvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, obj.Name), &crdsv1.ManagedService{})
+	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
 		}
-	} else {
-		if msvc != nil && msvc.DeletionTimestamp == nil {
-			if err := r.Delete(ctx, msvc); err != nil {
-				return failed(err)
-			}
-
-			return failed(fmt.Errorf("managed service %q is scheduled for deletion", msvc.Name))
-		}
-
-		return failed(fmt.Errorf("managed service %q is being deleted", msvc.Name))
+		msvc = nil
 	}
 
+	if msvc != nil {
+		if err := fn.DeleteAndWait(ctx, r.logger, r.Client, msvc); err != nil {
+			return failed(err)
+		}
+	}
+
+	req.Logger.Infof("proceeding forward to delete namespace %s", obj.Spec.TargetNamespace)
 	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
 	if err != nil {
 		return req.CheckFailed(checkName, check, err.Error())

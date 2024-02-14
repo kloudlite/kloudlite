@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- mongodb standalone controller was missing events generated on `HelmResource` it creates, which caused mongodb standalone services, not getting ready,or hanging while being deleted.
+
+- fixes project managed service namespace getting deleted before its child resources getting properly finalized
+
+## [v1.0.2] - 2024-02-13
+
+### Added
+
+- cluster and nodepool job pods, now have desired observability annotations for log and metrics scraping
+
 ## [v1.0.1] - 2024-02-07
 
 ### Added
