@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { dayjs } from '~/components/molecule/dayjs';
+import { ILog } from '~/console/components/logger';
 import { ISocketResp, useSubscribe } from './context';
 
 interface IuseLog {
@@ -9,7 +10,7 @@ interface IuseLog {
 }
 
 export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
-  const [logs, setLogs] = useState<ISocketResp<IuseLog>[]>([]);
+  const [logs, setLogs] = useState<ISocketResp<ILog>[]>([]);
   const { responses, subscribed, errors } = useSubscribe(
     {
       for: 'logs',
