@@ -1,8 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
-import * as Chips from '~/components/atoms/chips';
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { IdSelector } from '~/console/components/id-selector';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
@@ -64,12 +62,15 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
   const { cluster } = useParams();
+
   const [hemlCharts, setHelmCharts] = useState<
     Array<{ label: string; value: string; item: IHelmDoc['entries']['key'] }>
   >([]);
+
   const [chartVersions, setChartVersions] = useState<
     IHelmDoc['entries']['key']
   >([]);
+
   const [helmChartsLoading, setHelmChartsLoading] = useState(false);
   const [repoSearchText, setRepoSearchText] = useState('');
   const [repos, setRepos] = useState<
@@ -80,6 +81,7 @@ const Root = (props: IDialog) => {
       render: () => ReactNode;
     }[]
   >([]);
+
   const [reposLoading, setReposLoading] = useState(false);
   const [chartName, setChartName] = useState<
     { label: string; value: string } | undefined
@@ -182,7 +184,7 @@ const Root = (props: IDialog) => {
               };
             }) => ({
               label: hc.name,
-              value: hc.package_id,
+              value: hc.repository.url,
               repoUrl: hc.repository.url,
               render: () => (
                 <div className="flex flex-row gap-xl items-center">
@@ -463,7 +465,7 @@ const Root = (props: IDialog) => {
                   } else {
                     handleChange('chartRepoURL')(dummyEvent(value.value));
                   }
-
+                  console.log(value.repoUrl, values.chartRepoURL);
                   setHelmCharts([]);
                 }}
                 onSearch={(text) => {
