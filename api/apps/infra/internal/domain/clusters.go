@@ -261,22 +261,23 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, nCluster.Name, PublishAdd)
 
-	if err := d.applyHelmKloudliteAgent(ctx, nCluster, string(tokenScrt.Data[keyClusterToken])); err != nil {
+	if err := d.applyHelmKloudliteAgent(ctx, nCluster.Name, string(tokenScrt.Data[keyClusterToken])); err != nil {
 		return nil, errors.NewE(err)
 	}
 
 	return nCluster, nil
 }
 
-func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, cluster *entities.Cluster, clusterToken string) error {
+func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, clusterName string, clusterToken string) error {
 	b, err := templates.Read(templates.HelmKloudliteAgent)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
 	b2, err := templates.ParseBytes(b, map[string]any{
-		"account-name":  ctx.AccountName,
-		"cluster-name":  cluster.Name,
+		"account-name": ctx.AccountName,
+
+		"cluster-name":  clusterName,
 		"cluster-token": clusterToken,
 
 		"kloudlite-release":        d.env.KloudliteRelease,
@@ -312,18 +313,34 @@ func (d *domain) applyHelmKloudliteAgent(ctx InfraContext, cluster *entities.Clu
 			},
 		},
 		AccountName: ctx.AccountName,
-		ClusterName: cluster.Name,
+		ClusterName: clusterName,
 		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, 0),
 	}
 
 	hr.IncrementRecordVersion()
 
-	uhr, err := d.upsertHelmRelease(ctx, cluster.Name, &hr)
+	uhr, err := d.upsertHelmRelease(ctx, clusterName, &hr)
 	if err != nil {
 		return errors.NewE(err)
 	}
 
-	if err := d.resDispatcher.ApplyToTargetCluster(ctx, cluster.Name, &uhr.HelmChart, uhr.RecordVersion); err != nil {
+	if err := d.resDispatcher.ApplyToTargetCluster(ctx, clusterName, &uhr.HelmChart, uhr.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
+}
+
+func (d *domain) UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error {
+	out, err := d.messageOfficeInternalClient.GetClusterToken(ctx, &message_office_internal.GetClusterTokenIn{
+		AccountName: ctx.AccountName,
+		ClusterName: clusterName,
+	})
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if err := d.applyHelmKloudliteAgent(ctx, clusterName, out.ClusterToken); err != nil {
 		return errors.NewE(err)
 	}
 
