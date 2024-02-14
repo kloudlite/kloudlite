@@ -11,6 +11,7 @@ import { parseName } from '~/console/server/r-utils/common';
 import { Clock, ListNumbers } from '@jengaicons/react';
 import { cn } from '~/components/utils';
 import { useDataState } from '~/console/page-components/common-state';
+import { observeUrl } from '~/root/lib/configs/base-url.cjs';
 import { IAppContext } from '../_layout';
 
 const LogsAndMetrics = () => {
@@ -31,7 +32,7 @@ const LogsAndMetrics = () => {
       (async () => {
         try {
           const resp = await axios({
-            url: `https://observe.dev.kloudlite.io/observability/metrics/cpu?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
+            url: `${observeUrl}/observability/metrics/cpu?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
             method: 'GET',
             withCredentials: true,
           });
@@ -44,7 +45,7 @@ const LogsAndMetrics = () => {
       (async () => {
         try {
           const resp = await axios({
-            url: `https://observe.dev.kloudlite.io/observability/metrics/memory?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
+            url: `${observeUrl}/observability/metrics/memory?cluster_name=${project.clusterName}&tracking_id=${app.id}`,
             method: 'GET',
             withCredentials: true,
           });

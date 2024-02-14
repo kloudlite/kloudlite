@@ -15,7 +15,7 @@ import { socketUrl } from '~/root/lib/configs/base-url.cjs';
 
 type IFor = 'logs' | 'resource-update';
 
-interface ISocketResp<T = any> {
+export interface ISocketResp<T = any> {
   type: 'response' | 'error' | 'info';
   for: IFor;
   message: string;
