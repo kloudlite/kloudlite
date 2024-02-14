@@ -65,9 +65,7 @@ var Module = fx.Module("app",
 		}
 	}),
 
-	fx.Provide(func(d domain.Domain) message_office_internal.MessageOfficeInternalServer {
-		return newInternalMsgServer(d)
-	}),
+	fx.Provide(newInternalMsgServer),
 
 	fx.Invoke(func(server InternalGrpcServer, internalMsgServer message_office_internal.MessageOfficeInternalServer) {
 		message_office_internal.RegisterMessageOfficeInternalServer(server, internalMsgServer)
