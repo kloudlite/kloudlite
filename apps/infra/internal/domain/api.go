@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	networkingv1 "k8s.io/api/networking/v1"
 	"time"
+
+	networkingv1 "k8s.io/api/networking/v1"
 
 	"github.com/kloudlite/api/apps/infra/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
@@ -53,6 +54,8 @@ type Domain interface {
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	DeleteCluster(ctx InfraContext, name string) error
+
+	UpgradeHelmKloudliteAgent(ctx InfraContext, clusterName string) error
 
 	ListClusters(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error)
 	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
