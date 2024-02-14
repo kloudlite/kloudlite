@@ -140,6 +140,14 @@ variables:
           iamInstanceProfileRole: "EC2StorageAccess"
 
 ---
+label: Upgrade Helm Kloudlite Agent
+query: |+
+  mutation Infra_upgradeHelmKloudliteAgent($clusterName: String!) {
+    infra_upgradeHelmKloudliteAgent(clusterName: $clusterName)
+  }
+variables:
+  clusterName: "ab-cluster-3"
+---
 
 label: Delete Cluster
 query: |+
