@@ -38,7 +38,6 @@ var Module = fx.Module("app",
 			logr logging.Logger,
 			sessionRepo kv.Repo[*common.AuthSession],
 		) {
-
 			a := server.Raw()
 
 			a.Use(
@@ -76,7 +75,6 @@ var Module = fx.Module("app",
 			a.All("*", func(c *fiber.Ctx) error {
 				return c.SendStatus(fiber.StatusNotFound)
 			})
-
 		},
 	),
 )
