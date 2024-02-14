@@ -3,12 +3,12 @@ import Chart from '~/console/components/charts/charts-client';
 import { useState } from 'react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { ApexOptions } from 'apexcharts';
-import LogComp from '~/console/components/logger';
 import { parseName } from '~/console/server/r-utils/common';
 import { Clock, ListNumbers } from '@jengaicons/react';
 import { cn } from '~/components/utils';
 import { useDataState } from '~/console/page-components/common-state';
 import { IClusterContext } from '../../_layout';
+import LogComp from '~/root/lib/client/components/logger';
 
 const LogsAndMetrics = () => {
   const { cluster, account } = useOutletContext<IClusterContext>();

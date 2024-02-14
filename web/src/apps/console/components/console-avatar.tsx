@@ -1,6 +1,6 @@
 import { Avatar } from '~/components/atoms/avatar';
 import { titleCase } from '~/components/utils';
-import generateColor from './color-generator';
+import generateColor from '~/root/lib/utils/color-generator';
 
 const ConsoleAvatar = ({
   name,

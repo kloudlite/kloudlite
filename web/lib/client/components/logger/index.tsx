@@ -14,9 +14,12 @@ import {
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
 import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
-import { generatePlainColor } from '../color-generator';
-import Pulsable from '../pulsable';
-import { logsMockData } from '../../dummy/data';
+import Pulsable from '~/components/atoms/pulsable';
+import { generatePlainColor } from '~/root/lib/utils/color-generator';
+import { logsMockData } from './dummy';
+// import { generatePlainColor } from '../color-generator';
+// import Pulsable from '../pulsable';
+// import { logsMockData } from '../../dummy/data';
 
 export type ILog = {
   podName: string;

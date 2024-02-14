@@ -6,13 +6,13 @@ import { useState } from 'react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { parseValue } from '~/console/page-components/util';
 import { ApexOptions } from 'apexcharts';
-import LogComp from '~/console/components/logger';
 import { parseName } from '~/console/server/r-utils/common';
 import { Clock, ListNumbers } from '@jengaicons/react';
 import { cn } from '~/components/utils';
 import { useDataState } from '~/console/page-components/common-state';
 import { observeUrl } from '~/root/lib/configs/base-url.cjs';
 import { IAppContext } from '../_layout';
+import LogComp from '~/root/lib/client/components/logger';
 
 const LogsAndMetrics = () => {
   const { app, project, account } = useOutletContext<IAppContext>();

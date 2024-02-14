@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { dayjs } from '~/components/molecule/dayjs';
-import { ILog } from '~/console/components/logger';
 import { ISocketResp, useSubscribe } from './context';
+import { ILog } from '../../components/logger';
 
 interface IuseLog {
   account: string;
