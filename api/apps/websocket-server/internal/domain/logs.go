@@ -13,6 +13,7 @@ import (
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/types"
 	"github.com/kloudlite/api/apps/websocket-server/internal/domain/utils"
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/messaging/nats"
 	msg_nats "github.com/kloudlite/api/pkg/messaging/nats"
 	msg_types "github.com/kloudlite/api/pkg/messaging/types"
 
@@ -106,7 +107,6 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 			}
 
 			go func() {
-
 				utils.WriteInfo(ctx, "subscribed to logs", msg.Id, types.ForLogs)
 
 				if err := jc.Consume(
@@ -148,7 +148,6 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 				); err != nil {
 					utils.WriteError(ctx, err, msg.Id, types.ForLogs)
 				}
-
 			}()
 
 		}
@@ -160,6 +159,10 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 			if res, ok := (*logsSubs)[hash]; ok {
 				if res.Jc != nil {
 					if err := res.Jc.Stop(ctx.Context); err != nil {
+						return err
+					}
+
+					if err := nats.DeleteConsumer(ctx.Context, d.jetStreamClient, res.Jc); err != nil {
 						return err
 					}
 
