@@ -38,7 +38,6 @@ jobs:
           - os: ubuntu-latest
             arch: arm64
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v4.1.1
 
@@ -64,29 +63,23 @@ jobs:
           go version
           echo "[PRE] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
 
-      - name: Create Image Tag from branch name
-        if: startsWith(github.ref, 'refs/heads/release-')
+      - name: Create Image Tag
         run: |
-          set +e
-          TAG=$(echo ${GITHUB_REF#refs/heads/release-})
-          echo "$TAG" | grep -i '\-nightly$'
-          if [ $? -ne 0 ]; then
-            TAG="$TAG-nightly"
-          fi
-          set -e
+          import re
+          import os
 
-          echo "TAG=$TAG" >> $GITHUB_ENV
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag = f"{tag}-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag' # Fallback tag, adjust as needed
 
-      - name: Create Image Tag from tag
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          TAG=$(echo ${GITHUB_REF#refs/tags/})
-
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Set Tag Output
-        id: tag_name
-        run: echo "::set-output name=TAG_NAME::${TAG}"
+          print(f"::set-env name=TAG::{tag}")
+        shell: python
 
       - name: Build Linux & Mac
         if: matrix.goos == 'linux' || matrix.goos == 'darwin'
@@ -140,29 +133,24 @@ jobs:
         with:
           path: ${{ github.workspace }}/artifacts
 
-      - name: Create Image Tag from branch name
-        if: startsWith(github.ref, 'refs/heads/release-')
-        run: |
-          set +e
-          TAG=$(echo ${GITHUB_REF#refs/heads/release-})
-          echo "$TAG" | grep -i '\-nightly$'
-          if [ $? -ne 0 ]; then
-            TAG="$TAG-nightly"
-          fi
-          set -e
-
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Create Image Tag from tag
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          TAG=$(echo ${GITHUB_REF#refs/tags/})
-
-          echo "TAG=$TAG" >> $GITHUB_ENV
-
-      - name: Set Tag Output
+      - name: Create Image Tag
         id: tag_name
-        run: echo "::set-output name=TAG_NAME::${TAG}"
+        run: |
+          import re
+          import os
+
+          ref = os.getenv('GITHUB_REF')
+          if ref.startswith('refs/heads/release-'):
+              tag = ref.replace('refs/heads/release-', '')
+              if not re.search('-nightly$', tag):
+                  tag = f"{tag}-nightly"
+          elif ref.startswith('refs/tags/'):
+              tag = ref.replace('refs/tags/', '')
+          else:
+              tag = 'default-tag' # Fallback tag, adjust as needed
+
+          print(f"::set-env name=TAG::{tag}")
+        shell: python
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
