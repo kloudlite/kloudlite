@@ -68,6 +68,7 @@ jobs:
           python-version: '3.x'
 
       - name: Create and Set Image Tag
+        id: tag_name
         run: |
           import re
           import os
@@ -84,6 +85,9 @@ jobs:
 
           with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
               env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
         shell: python
 
 
@@ -92,34 +96,32 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.arch }}
-          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }} -X github.com/kloudlite/kl/flags.DevMode=true"
-          RELEASE_NAME: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }}"
         run: |
           echo "[POST] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
 
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
-          go build -o bin/${{ matrix.app }} main.go
+          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Build Linux & Mac
         if: matrix.goos == 'windows'
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.arch }}
-          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }} -X github.com/kloudlite/kl/flags.DevMode=true"
-          RELEASE_NAME: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          FLAGS: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ matrix.app }}"
         run: |
           echo "[POST] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
 
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
-          go build -o bin/${{ matrix.app }}.exe main.go
+          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Zip and Tar Application with OS-specific Naming
         env:
-          RELEASE_NAME: ${{ needs.setup.outputs.RELEASE_NAME }} # Adjust as necessary
+          RELEASE_NAME: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           APP_NAME: ${{ matrix.app }} # Assume this is the base app name without .exe
         run: |
           import os
@@ -167,7 +169,7 @@ jobs:
         with:
           path: ${{ github.workspace }}/artifacts
 
-      - name: Create Image Tag
+      - name: Create and Set Image Tag
         id: tag_name
         run: |
           import re
@@ -177,56 +179,26 @@ jobs:
           if ref.startswith('refs/heads/release-'):
               tag = ref.replace('refs/heads/release-', '')
               if not re.search('-nightly$', tag):
-                  tag = f"{tag}-nightly"
+                  tag += "-nightly"
           elif ref.startswith('refs/tags/'):
               tag = ref.replace('refs/tags/', '')
           else:
-              tag = 'default-tag' # Fallback tag, adjust as needed
+              tag = 'default-tag'  # Adjust this fallback tag as necessary
 
-          print(f"::set-env name=TAG::{tag}")
+          with open(os.getenv('GITHUB_ENV'), 'a') as env_file:
+              env_file.write(f"TAG={tag}\n")
+
+          with open(os.getenv('GITHUB_OUTPUT'), 'a') as env_out:
+              env_out.write(f"TAG_NAME={tag}\n")
         shell: python
+
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**
+          files: artifacts/**/**
           tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
           prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-
-# on:
-#   release:
-#     types: [created]
-#
-# jobs:
-#   releases-matrix:
-#     name: Release Go Binary
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
-#         goos: [linux, windows, darwin]
-#         goarch: ["386", amd64, arm64]
-#         exclude:
-#           - goarch: "386"
-#             goos: darwin
-#           - goarch: arm64
-#             goos: windows
-#     steps:
-#     - uses: actions/checkout@v3
-#     - name: Extract tag name
-#       id: tag_name
-#       run: echo "::set-output name=TAG_NAME::${GITHUB_REF#refs/tags/}"
-#     - uses: wangyoucao577/go-release-action@v1.30
-#       with:
-#         github_token: ${{ secrets.GITHUB_TOKEN }}
-#         goos: ${{ matrix.goos }}
-#         goarch: ${{ matrix.goarch }}
-#         goversion: "https://dl.google.com/go/go1.19.1.linux-amd64.tar.gz"
-#         project_path: "."
-#         ldflags: "-X github.com/kloudlite/kl/flags.Version=${{ steps.tag_name.outputs.TAG_NAME }} -X github.com/kloudlite/kl/flags.CliName=${{ steps.determine_cli.outputs.CLI_TO_BUILD }}"
-#         binary_name: ${{ steps.determine_cli.outputs.CLI_TO_BUILD }}
-#         extra_files: LICENSE README.md
-#
