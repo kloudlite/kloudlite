@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/msvc-n-mres/internal/env"
@@ -195,14 +196,11 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 		for k, v := range m {
 			fn.MapSet(&msvc.Annotations, k, v)
 		}
-		labels := obj.GetLabels()
-		fn.MapSet(&labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s_%s", obj.Namespace, obj.Name))
-
-		msvc.SetLabels(labels)
+		fn.MapSet(&msvc.Labels, constants.ProjectManagedServiceRefKey, fmt.Sprintf("%s_%s", obj.Namespace, obj.Name))
 		msvc.Spec = obj.Spec.MSVCSpec
 		return nil
 	}); err != nil {
-		return failed(err)
+		return failed(err).RequeueAfter(1 * time.Second)
 	}
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(msvc))
@@ -223,8 +221,9 @@ func (r *Reconciler) ensureMsvcCreatedNReady(req *rApi.Request[*crdsv1.ProjectMa
 			return failed(err)
 		}
 		if err := r.Update(ctx, obj); err != nil {
-			return failed(err)
+			return failed(err).RequeueAfter(1 * time.Second)
 		}
+		return req.Done()
 	}
 
 	if !msvc.Status.IsReady {
