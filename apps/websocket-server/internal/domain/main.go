@@ -13,6 +13,7 @@ import (
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/errors"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
+	"github.com/kloudlite/api/pkg/messaging/nats"
 )
 
 func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
@@ -23,8 +24,8 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 
 	mu := sync.Mutex{}
 
-	var logsSubs = &logs.LogsSubsMap{}
-	var rWatchSubs = &res_watch.ResWatchSubsMap{}
+	logsSubs := &logs.LogsSubsMap{}
+	rWatchSubs := &res_watch.ResWatchSubsMap{}
 
 	defer func() {
 		if err := c.Close(); err != nil {
@@ -35,7 +36,10 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 			for _, v := range *logsSubs {
 				if v.Jc != nil {
 					if err := v.Jc.Stop(ctx); err != nil {
-						d.logger.Warnf("stop jetstream consumer: %w", err)
+						d.logger.Warnf("stop jetstream consumer failed with err: %w", err)
+					}
+					if err := nats.DeleteConsumer(ctx, d.jetStreamClient, v.Jc); err != nil {
+						d.logger.Warnf("deleting jetstream consumer failed with err: %w", err)
 					}
 				}
 			}
@@ -50,7 +54,6 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 				}
 			}
 		}
-
 	}()
 
 	closed := false
@@ -67,7 +70,6 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 	}
 
 	for {
-
 		if closed {
 			break
 		}
