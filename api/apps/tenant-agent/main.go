@@ -172,7 +172,7 @@ func (g *grpcHandler) ensureAccessToken() error {
 		return nil
 	}
 
-	out, err := g.msgDispatchCli.GetAccessToken(ctx, &messages.GetClusterTokenIn{
+	out, err := g.msgDispatchCli.GetAccessToken(ctx, &messages.GetAccessTokenIn{
 		AccountName:  g.ev.AccountName,
 		ClusterName:  g.ev.ClusterName,
 		ClusterToken: g.ev.ClusterToken,
