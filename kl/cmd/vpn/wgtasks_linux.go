@@ -35,6 +35,11 @@ func connect(verbose bool, options ...fn.Option) error {
 			if err != nil {
 				return err
 			}
+		case constants.InfraCliName:
+			_, err := server.EnsureAccount()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
