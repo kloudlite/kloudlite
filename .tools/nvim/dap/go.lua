@@ -171,4 +171,17 @@ dap.configurations.go = {
       vim.g.nxt.project_root_dir .. "/apps/tenant-agent" .. "/.secrets/env",
     },
   },
+
+  {
+    type = "go",
+    name = "Debug Websocket Server",
+    request = "launch",
+    program = vim.g.nxt.project_root_dir .. "/apps/websocket-server",
+    args = { "--dev"},
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.nxt.project_root_dir .. "/apps/websocket-server" .. "/.secrets/env",
+    },
+  },
 }
