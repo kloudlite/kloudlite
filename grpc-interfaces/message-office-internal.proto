@@ -4,6 +4,7 @@ option go_package = "kloudlite.io/rpc/message-office-internal";
 
 service MessageOfficeInternal {
   rpc GenerateClusterToken(GenerateClusterTokenIn) returns (GenerateClusterTokenOut);
+  rpc GetClusterToken(GetClusterTokenIn) returns (GetClusterTokenOut);
 }
 
 message GenerateClusterTokenIn {
@@ -12,5 +13,14 @@ message GenerateClusterTokenIn {
 }
 
 message GenerateClusterTokenOut {
+  string clusterToken = 1;
+}
+
+message GetClusterTokenIn {
+  string accountName = 1;
+  string clusterName = 2;
+}
+
+message GetClusterTokenOut {
   string clusterToken = 1;
 }
