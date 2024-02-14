@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
@@ -21,7 +22,7 @@ var restartCmd = &cobra.Command{
 sudo {cmd} vpn start`),
 	Run: func(_ *cobra.Command, _ []string) {
 
-		if runtime.GOOS != "linux" {
+		if runtime.GOOS == constants.RuntimeWindows {
 			if err := connect(connectVerbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)

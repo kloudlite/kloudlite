@@ -1,9 +1,15 @@
 package kli
 
 import (
+	"runtime"
+
+	"github.com/kloudlite/kl/flags"
+
 	"github.com/kloudlite/kl/cmd/auth"
 	set_base_url "github.com/kloudlite/kl/cmd/set-base-url"
+	app "github.com/kloudlite/kl/cmd/start-app"
 	"github.com/kloudlite/kl/cmd/status"
+	"github.com/kloudlite/kl/constants"
 	"github.com/spf13/cobra"
 
 	"github.com/kloudlite/kl/cmd/use"
@@ -18,7 +24,9 @@ func init() {
 		Hidden: true,
 	})
 
-	rootCmd.AddCommand(DocsCmd)
+	if flags.IsDev() {
+		rootCmd.AddCommand(DocsCmd)
+	}
 	rootCmd.AddCommand(UpdateCmd)
 
 	rootCmd.AddCommand(auth.Cmd)
@@ -27,6 +35,10 @@ func init() {
 	rootCmd.AddCommand(vpn.InfraCmd)
 	rootCmd.AddCommand(use.InfraCmd)
 	rootCmd.AddCommand(status.Cmd)
+
+	if runtime.GOOS != constants.RuntimeWindows {
+		rootCmd.AddCommand(app.Cmd)
+	}
 
 	rootCmd.AddCommand(set_base_url.Cmd)
 }

@@ -70,7 +70,7 @@ func installApp() error {
 	if resp.StatusCode == 404 {
 		// using fallback url
 
-		specUrl = fmt.Sprint("https://github.com/kloudlite/vpn-app/releases/download/v1.0.5-nightly/kloudlite_windows.zip")
+		specUrl = fmt.Sprint("https://github.com/kloudlite/vpn-app/releases/download/v1.0.5-nightly/kloudlite_macos.zip")
 		var err2 error
 		resp, err2 = http.Get(specUrl)
 		if err2 != nil {

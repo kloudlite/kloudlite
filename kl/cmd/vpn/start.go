@@ -17,6 +17,8 @@ import (
 
 var connectVerbose bool
 
+var skipCheck bool
+
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "start vpn device",
@@ -24,7 +26,7 @@ var startCmd = &cobra.Command{
 sudo {cmd} vpn start`),
 	Run: func(cmd *cobra.Command, _ []string) {
 
-		if runtime.GOOS != "linux" {
+		if runtime.GOOS == constants.RuntimeWindows {
 			if err := connect(connectVerbose); err != nil {
 				fn.Notify("Error:", err.Error())
 				fn.PrintError(err)
@@ -40,10 +42,6 @@ sudo {cmd} vpn start`),
 		}
 
 		options := []fn.Option{}
-
-		if b := cmd.Flags().Changed("no-dns"); b {
-			options = append(options, fn.MakeOption("noDns", "yes"))
-		}
 
 		switch flags.CliName {
 		case constants.CoreCliName:
@@ -124,31 +122,20 @@ sudo {cmd} vpn start`),
 }
 
 func startConnecting(verbose bool, options ...fn.Option) error {
-	// success := false
-
-	// defer func() {
-	// 	time.Sleep(200 * time.Millisecond)
-	// 	if !success {
-	// 		_ = wg_vpn.StopService(verbose)
-	// 	}
-	// }()
-
-	// if err := wg_vpn.StartServiceInBg(devName, configFolder); err != nil {
-	// 	return err
-	// }
 
 	if err := connect(verbose, options...); err != nil {
+		if skipCheck {
+			fn.Notify("Error: ", err.Error())
+		}
 		return err
 	}
 
-	// success = true
 	return nil
 }
 
 func init() {
 	startCmd.Flags().BoolVarP(&connectVerbose, "verbose", "v", false, "show verbose")
-	startCmd.Flags().BoolP("skip-dns", "s", false, "do not update dns")
-
+	startCmd.Flags().BoolVarP(&skipCheck, "skipCheck", "s", false, "skip checks of env and cluster")
 	startCmd.Aliases = append(stopCmd.Aliases, "connect")
 
 	switch flags.CliName {

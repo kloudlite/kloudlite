@@ -24,7 +24,7 @@ func ensureInstalled() error {
 		return err
 	}
 
-	appPath := path.Join(configFolder, "app", "kloudlite")
+	appPath := path.Join(configFolder, "app", "kloudlite_windows")
 
 	if _, err := os.Stat(appPath); err != nil {
 		if os.IsNotExist(err) {
@@ -127,7 +127,7 @@ func startApp() error {
 		return err
 	}
 
-	appPath := path.Join(configFolder, "app", "kloudlite", "kloudlite_vpn.exe")
+	appPath := path.Join(configFolder, "app", "kloudlite_windows", "kloudlite_vpn.exe")
 
 	if _, err := os.Stat(appPath); err != nil {
 		if os.IsNotExist(err) {

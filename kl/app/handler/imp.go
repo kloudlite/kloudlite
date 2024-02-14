@@ -19,7 +19,7 @@ func (h *handler) ReconAuth() {
 	session, err := client.GetAuthSession()
 	if err != nil {
 		functions.PrintError(err)
-		functions.Notify(err)
+		functions.Notify("error:", err)
 	}
 
 	if session == "" {
@@ -35,7 +35,7 @@ func (h *handler) ReconAuth() {
 			ses, err := client.GetAuthSession()
 			if err != nil {
 				functions.PrintError(err)
-				functions.Notify(err)
+				functions.Notify("error:", err)
 			}
 
 			h.channel <- ChanelMsg{

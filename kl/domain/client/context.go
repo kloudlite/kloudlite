@@ -56,6 +56,58 @@ type ExtraData struct {
 	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
 	DNS          []string        `json:"dns"`
 	Loading      bool            `json:"loading"`
+	VpnConnected bool            `json:"vpnConnected"`
+	DevInfo      string          `json:"devInfo"`
+}
+
+func GetDevInfo() (string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return "", err
+	}
+
+	return extraData.DevInfo, nil
+}
+
+func SetDevInfo(devCluster string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.DevInfo = devCluster
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
+}
+
+func GetDns() ([]string, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return nil, err
+	}
+
+	return extraData.DNS, nil
+}
+
+func SetDns(dns []string) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.DNS = dns
+
+	file, err := yaml.Marshal(extraData)
+	if err != nil {
+		return err
+	}
+
+	return writeOnUserScope(ExtraDataFileName, file)
 }
 
 func GetConfigFolder() (configFolder string, err error) {
@@ -416,4 +468,24 @@ func ReadFile(name string) ([]byte, error) {
 	}
 
 	return file, nil
+}
+
+func IsLoading() (bool, error) {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return false, err
+	}
+
+	return extraData.Loading, nil
+}
+
+func SetLoading(loading bool) error {
+	extraData, err := GetExtraData()
+	if err != nil {
+		return err
+	}
+
+	extraData.Loading = loading
+
+	return SaveExtraData(extraData)
 }

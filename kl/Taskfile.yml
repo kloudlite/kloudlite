@@ -6,25 +6,32 @@ tasks:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kl:build && echo '# build success' || exit"
   kl:build:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl main.go
+      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl main.go
 
   kli:dev:
     cmds:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kli:build && echo '# build success' || exit"
   kli:build:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly  -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kli" -o ./bin/kli main.go
+      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly  -X github.com/kloudlite/kl/flags.BasePrefix=dev. -X github.com/kloudlite/kl/flags.CliName=kli -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kli main.go
 
   kl:dev:win:
     cmds:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kl:build:win && echo '# build success' || exit"
   kl:build:win:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kl" -o ./bin/kl.exe main.go
+      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kl -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kl.exe main.go
 
   kli:dev:win:
     cmds:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kli:build:win && echo '# build success' || exit"
   kli:build:win:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kli" -o ./bin/kli.exe main.go 
+      - CGO_ENABLED=0 go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kli -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kli.exe main.go
+
+  gen:icons:
+    cmds:
+      - go install github.com/cratonica/2goarray
+      - 2goarray Loading icons < app/handler/icons/loading.png > app/handler/icons/loading.go
+      - 2goarray Logo icons < app/handler/icons/logo.png > app/handler/icons/logo.go
+      - 2goarray DisabledLogo icons < app/handler/icons/disabled-logo.png > app/handler/icons/disabled-logo.go

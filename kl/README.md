@@ -29,6 +29,11 @@ curl https://kl.kloudlite.io/kloudlite/kl@v1.0.0! | bash
 curl https://kl.kloudlite.io/kloudlite/kl | bash
 ```
 
+###### install in windows
+```
+iwr https://kl.kloudlite.io/kloudlite/kl | iex
+```
+
 #### Installation of kli
 
 ###### Install latest with curl
@@ -50,6 +55,11 @@ curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?source=kli' | bash
 ###### download but don't install
 ```sh
 curl 'https://kl.kloudlite.io/kloudlite/kl?source=kli' | bash
+```
+
+###### install in windows
+```
+iwr https://kl.kloudlite.io/kloudlite/kl?source=kli | iex
 ```
 
 ### Authentication
@@ -83,7 +93,7 @@ kl init
 
 With this CLI you can list accounts, projects, envs, devices, configs, secrets and apps.
 To list resources you can use the following commands.
-For more details visit [kl list](./docs/kl_list.md)
+For more details visit [kl list](./docs/kl/kl_list.md)
 
 
 ```sh
@@ -97,7 +107,7 @@ kl list apps
 ```
 
 with these commands you can provide the resource id. In case of you don't provide resource 
-it it will show you a picker. For more details visit [kl list](./docs/kl_list.md)
+it it will show you a picker. For more details visit [kl list](./docs/kl/kl_list.md)
 
 ### Working with vpn
 
@@ -118,7 +128,7 @@ kl wg expose -p <server_port>:<local_port> -d    # provide -d flag to delete
 We support multiple environments to work with. these commands 
 will help you to import config,secrets as environment variables, mount and also ipmprting managed resources.
 
-For more details visit [kl add](./docs/kl_add.md).
+For more details visit [kl add](./docs/kl/kl_add.md).
 
 
 ```sh
@@ -132,12 +142,12 @@ kl add mount <file_path/file_name>
 ### Intercepting App
 You can tunnel you local running app to the server and intercept your app to forward all the request of that app to your local system. 
 for that you need to perform following actions.
-- [connecting to vpn](./docs/kl_vpn_start.md)
-- [exposing port](./docs/kl_vpn_expose.md)
-- [intercept an app](./docs/kl_vpn_intercept.md)
+- [connecting to vpn](./docs/kl/kl_vpn_start.md)
+- [exposing port](./docs/kl/kl_vpn_expose.md)
+- [intercept an app](./docs/kl/kl_vpn_intercept.md)
 
 So you can use following commands to work with interception. 
-For more details visit [kl vpn intecept start](./docs/kl_vpn_intercept_start.md) and [kl vpn intecept stop](./docs/kl_vpn_intercept_stop.md)
+For more details visit [kl vpn intecept start](./docs/kl/kl_vpn_intercept_start.md) and [kl vpn intecept stop](./docs/kl/kl_vpn_intercept_stop.md)
 
 ```sh
 kl vpn intercept start
@@ -190,9 +200,9 @@ kl -- printenv # will print all the environments
 
 ## Working with kli
 kli is the cli for the infrastructure team to work with kloudlite.
-visit [kli](./docs/kli.md) for more details.
+visit [kli](./docs/kli/kli.md) for more details.
 
 > This CLI is under development so, more information will will be updated in this doc. also if some new commands will be added to the CLI will be updated to this doc.
 
 
-> for more details visit [docs](./docs/kl.md)
+> for more details visit [docs](./docs/kl/kl.md)

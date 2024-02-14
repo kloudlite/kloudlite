@@ -17,6 +17,12 @@ var rootCmd = &cobra.Command{
 	Use:                flags.CliName,
 	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if (len(args) != 0) && (args[0] == "--version" || args[0] == "-v") {
+			fn.Log(cmd.Version)
+			return
+		}
+
 		if len(args) < 2 || args[0] != "--" {
 			// fn.Log(GetRootHelp(cmd))
 

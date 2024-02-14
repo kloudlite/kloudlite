@@ -249,19 +249,21 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 		return "", err
 	}
 
-	devResult, err := GetDeviceName(func() string {
+	finDev := func() string {
 		if devName != "" {
 			return devName
 		}
 		return deviceDisplayName
-	}(), accName)
+	}()
+
+	devResult, err := GetDeviceName(finDev, accName)
 	if err != nil {
 		return "", err
 	}
 
 	selectedDeviceName := ""
 	if devResult.Result == true {
-		selectedDeviceName = devName
+		selectedDeviceName = finDev
 	} else {
 		if len(devResult.SuggestedNames) == 0 {
 			return "", fmt.Errorf("no suggested names found")
@@ -270,7 +272,7 @@ func EnsureDevice(options ...fn.Option) (string, error) {
 		selectedDeviceName = devResult.SuggestedNames[0]
 	}
 
-	dev, err := CreateDevice(selectedDeviceName, devName)
+	dev, err := CreateDevice(selectedDeviceName, deviceDisplayName)
 	if err != nil {
 		return "", err
 	}

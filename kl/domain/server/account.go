@@ -2,8 +2,9 @@ package server
 
 import (
 	"errors"
-
+	"fmt"
 	"github.com/kloudlite/kl/domain/client"
+	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/fzf"
 )
@@ -89,7 +90,7 @@ func EnsureAccount(options ...fn.Option) (string, error) {
 		return "", err
 	}
 	if s == "" {
-		return "", errors.New("no account selected, please select an account using 'kl use account'")
+		return "", errors.New(fmt.Sprintf("no account selected, please select an account using '%s use account'", flags.CliName))
 	}
 
 	return s, nil
