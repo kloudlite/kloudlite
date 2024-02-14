@@ -732,7 +732,7 @@ const LogComp = ({
               </div>
               <div className="flex flex-col items-center justify-center flex-1">
                 <div className="headingMd">
-                  No logs produced in the last 3 hours.
+                  (only last 3 hours logs) fetching logs...
                 </div>
               </div>
             </div>
