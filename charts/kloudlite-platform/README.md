@@ -77,8 +77,8 @@ helm show values kloudlite/kloudlite-platform
 | apps.authWeb.enabled | bool | `true` |  |
 | apps.authWeb.image | object | `{"repository":"ghcr.io/kloudlite/web/auth","tag":""}` | image (with tag) for auth web |
 | apps.commsApi.image | object | `{"repository":"ghcr.io/kloudlite/api/comms","tag":""}` | image (with tag) for comms api |
-| apps.consoleApi.configuration.consoleVPNDeviceNamespace | string | `"kloudlite-console-devices"` |  |
 | apps.consoleApi.configuration.logsAndMetricsHttpPort | int | `9100` |  |
+| apps.consoleApi.configuration.vpnDeviceNamespace | string | `"kl-vpn-devices"` |  |
 | apps.consoleApi.image | object | `{"repository":"ghcr.io/kloudlite/api/console","tag":""}` | image (with tag) for console api |
 | apps.consoleWeb.enabled | bool | `true` |  |
 | apps.consoleWeb.image | object | `{"repository":"ghcr.io/kloudlite/web/console","tag":""}` | image (with tag) for console web |
@@ -93,7 +93,6 @@ helm show values kloudlite/kloudlite-platform
 | apps.gatewayApi.image.tag | string | `""` |  |
 | apps.iamApi.image.repository | string | `"ghcr.io/kloudlite/api/iam"` |  |
 | apps.iamApi.image.tag | string | `""` |  |
-| apps.infraApi.configuration.infraVPNDeviceNamespace | string | `"kloudlite-infra-devices"` |  |
 | apps.infraApi.image | object | `{"repository":"ghcr.io/kloudlite/api/infra","tag":""}` | image (with tag) for infra api |
 | apps.klInstaller.image.repository | string | `"ghcr.io/kloudlite/kl/installer"` |  |
 | apps.klInstaller.image.tag | string | `""` |  |
@@ -123,6 +122,7 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains[0] | string | `"*.platform.kloudlite.io"` | should default to basedomain |
 | cloudflareWildCardCert.enabled | bool | `true` |  |
 | cloudflareWildCardCert.tlsSecretName | string | `"kl-cert-wildcard-tls"` |  |
+| clusterAutoscaler.configuration.chartVersion | string | `""` |  |
 | clusterAutoscaler.enabled | bool | `true` |  |
 | descheduler.enabled | bool | `true` |  |
 | distribution.domain | string | `"cr.khost.dev"` |  |
@@ -227,7 +227,7 @@ helm show values kloudlite/kloudlite-platform
 | oAuth.secretName | string | `"oauth-secrets"` | secret where all oauth credentials should be |
 | operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created |
 | operators.platformOperator.configuration.cluster.cloudflare.zoneId | string | `""` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
-| operators.platformOperator.configuration.cluster.jobImage.repository | string | `"ghcr.io/kloudlite/infrastructure-as-code"` |  |
+| operators.platformOperator.configuration.cluster.jobImage.repository | string | `"ghcr.io/kloudlite/infrastructure-as-code/iac-job"` |  |
 | operators.platformOperator.configuration.cluster.jobImage.tag | string | `""` |  |
 | operators.platformOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/operator/workers/helm-runner"` |  |
 | operators.platformOperator.configuration.helmCharts.jobImage.tag | string | `""` |  |

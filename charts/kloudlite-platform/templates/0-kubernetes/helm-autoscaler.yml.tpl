@@ -13,7 +13,6 @@ spec:
     tolerations:
       - operator: Exists
   values:
-    kloudliteRelease: {{ include "image-tag" . }}
     clusterAutoscaler:
       enabled: true
       nodeSelector:

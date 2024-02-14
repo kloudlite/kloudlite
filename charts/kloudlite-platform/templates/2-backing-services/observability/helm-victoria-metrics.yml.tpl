@@ -18,7 +18,7 @@ spec:
       - operator: Exists
 
   preInstall: |+
-    curl -L0 'https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-{{$chartVersion}}/charts/victoria-metrics-k8s-stack/charts/crds/crds/crd.yaml'
+    curl -L0 'https://raw.githubusercontent.com/VictoriaMetrics/helm-charts/victoria-metrics-k8s-stack-{{$chartVersion}}/charts/victoria-metrics-k8s-stack/charts/crds/crds/crd.yaml' | kubectl apply -f -
 
   postInstall: |+
     kubectl apply -f - <<EOF
@@ -45,6 +45,7 @@ spec:
     vmcluster:
       enabled: true
       spec:
+        retentionPeriod: "1d"
         vmstorage:
           storage:
             volumeClaimTemplate:

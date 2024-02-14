@@ -7,7 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v1.0.5](https://github.com/kloudlite/helm-charts/compare/master...release-1.0.5) - 2024-02-01
+### Added [charts/kloudlite-agent]
+
+- vector agent now, tolerates all taints i.e. it will even run on master nodes [#95](https://github.com/kloudlite/helm-charts/issues/95)
+- kubelet-metrics-reexporter image is now configurable via helm values.
+- kubelet-metrics-reexporter now exposes route `/metrics/kloudlite`, which generates metrics from kubelet API `/stats/summary`. vector agent is also configured to scrape it.
+
+### Added [charts/kloudlite-platform]
+
+- victoria metrics VMCluster instance, now has a retention period of 1d
+
+### Changed [charts/kloudlite-platform]
+
+- victoria metrics scraping for `vector` is migrated from `vmservicescrape` to `podscrape`, as vector had 2 services, `vector`, and `vector-headless`, which caused same data to be stored twice.
+
+### Fixed [charts/kloudlite-platform]
+
+- console API env var `PROM_HTTP_ADDR` now points to victoria metrics vmselect instance with [correct url format](https://docs.victoriametrics.com/cluster-victoriametrics/#url-format)
+
+### Deprecated [charts/kloudlite-operators]
+
+- charts/kloudlite-operators is now deprecated, as the operators are now directly a part of [platform operator](./charts/kloudlite-platform) and [agent operator](./charts/kloudlite-agent).
+
+## [v1.0.1] - 2024-02-08
+
+Bumps `kloudlite/api`, `kloudlite/operator` images to v1.0.1, and chartAppVersion to v1.0.1
+
+## [v1.0.0] - 2024-02-01
 
 ### Added [charts/kloudlite-agent]
 - helm chart now imports secret `kube-system/k3s-params` into the release, as it is used to provide k3s credentials to nodepool controller, and allow users to skip providing those values via helm.
