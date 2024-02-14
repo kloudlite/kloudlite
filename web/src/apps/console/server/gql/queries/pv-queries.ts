@@ -6,6 +6,8 @@ import {
   ConsoleGetPvQueryVariables,
   ConsoleListPvsQuery,
   ConsoleListPvsQueryVariables,
+  ConsoleDeletePvMutationVariables,
+  ConsoleDeletePvMutation,
 } from '~/root/src/generated/gql/server';
 
 export type IPvs = NN<ConsoleListPvsQuery['infra_listPVs']>;
@@ -514,6 +516,17 @@ export const pvQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListPvsQuery) => data.infra_listPVs,
       vars(_: ConsoleListPvsQueryVariables) { },
+    }
+  ),
+  deletePV: executor(
+    gql`
+      mutation Infra_deletePV($clusterName: String!, $pvName: String!) {
+        infra_deletePV(clusterName: $clusterName, pvName: $pvName)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeletePvMutation) => data.infra_deletePV,
+      vars(_: ConsoleDeletePvMutationVariables) { },
     }
   ),
 });
