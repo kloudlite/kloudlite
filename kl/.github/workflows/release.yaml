@@ -170,7 +170,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.app }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ${{ matrix.app }}${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: bin/*
 
   release:
