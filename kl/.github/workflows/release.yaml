@@ -120,57 +120,10 @@ jobs:
           mkdir out
           go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
 
-      # - name: Decode and Sign on Windows
-      #   if: matrix.goos == 'windows'
-      #   run: |
-      #     echo "${{ secrets.CERT_PFX }}" > certificate.pfx
-      #     $certPassword = ""
-      #     $filePath = "bin/${{ matrix.app }}.exe"
-      #     $signtoolPath = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin\" -Filter signtool.exe -Recurse | Where-Object FullName -like "*x64*" | Select-Object -ExpandProperty FullName -First 1
-      #         if (-not $signtoolPath) {
-      #           throw "Signtool.exe not found"
-      #         }
-      #         & $signtoolPath sign /f certificate.pfx /tr http://timestamp.digicert.com /td sha256 /fd sha256 $filePath
-      #   shell: pwsh
-        
-      # - name: Zip and Tar Application with OS-specific Naming
-      #   env:
-      #     RELEASE_NAME: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
-      #     APP_NAME: ${{ matrix.app }} # Assume this is the base app name without .exe
-      #   run: |
-      #     import os
-      #     import zipfile
-      #     import tarfile
-
-      #     release_name = os.getenv('RELEASE_NAME')
-      #     app_name = os.getenv('APP_NAME')
-      #     # Append .exe to the app name if the script is running on Windows
-      #     if os.name == 'nt':
-      #         app_name += '.exe'
-
-      #     out_dir = "out"
-      #     bin_dir = "bin"
-
-      #     # Ensure the output directory exists
-      #     os.makedirs(out_dir, exist_ok=True)
-
-      #     # Create ZIP file
-      #     zip_path = os.path.join(out_dir, f"{release_name}.zip")
-      #     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-      #         zipf.write(os.path.join(bin_dir, app_name), arcname=app_name)
-
-      #     # Create TAR.GZ file
-      #     tar_path = os.path.join(out_dir, f"{release_name}.tar.gz")
-      #     with tarfile.open(tar_path, "w:gz") as tarf:
-      #         tarf.add(os.path.join(bin_dir, app_name), arcname=app_name)
-
-      #   shell: python
-
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.app }}${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: bin/*
 
   release:
