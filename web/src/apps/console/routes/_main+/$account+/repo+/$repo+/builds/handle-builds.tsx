@@ -22,7 +22,6 @@ import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import Popup from '~/components/molecule/popup';
-import GitRepoSelector from '~/console/components/git-repo-selector';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { IBuilds } from '~/console/server/gql/queries/build-queries';
 import {
@@ -144,7 +143,7 @@ const Root = (props: IDialog) => {
     }
   }, [isUpdate]);
 
-  const { currentStep, onNext, onPrevious } = useMultiStep({
+  const { currentStep, onPrevious } = useMultiStep({
     defaultStep: isUpdate ? 2 : 1,
     totalSteps: 2,
   });
@@ -162,30 +161,30 @@ const Root = (props: IDialog) => {
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: isUpdate
       ? {
-          name: props.data.name,
-          tags:
-            props.data.spec.registry.repo.tags.map((t) => ({
-              label: t,
-              value: t,
-            })) || [],
-          buildClusterName: '',
-          repository: repo,
-          advanceOptions: isAdvanceOptions(props.data.spec.buildOptions),
-          ...props.data.spec.buildOptions,
-          ...(props.data.spec.buildOptions?.buildArgs || props),
-        }
+        name: props.data.name,
+        tags:
+          props.data.spec.registry.repo.tags.map((t) => ({
+            label: t,
+            value: t,
+          })) || [],
+        buildClusterName: '',
+        repository: repo,
+        advanceOptions: isAdvanceOptions(props.data.spec.buildOptions),
+        ...props.data.spec.buildOptions,
+        ...(props.data.spec.buildOptions?.buildArgs || props),
+      }
       : {
-          name: '',
-          tags: [],
-          buildClusterName: '',
-          advanceOptions: false,
-          repository: repo,
-          buildArgs: {},
-          buildContexts: {},
-          contextDir: '',
-          dockerfilePath: '',
-          dockerfileContent: '',
-        },
+        name: '',
+        tags: [],
+        buildClusterName: '',
+        advanceOptions: false,
+        repository: repo,
+        buildArgs: {},
+        buildContexts: {},
+        contextDir: '',
+        dockerfilePath: '',
+        dockerfileContent: '',
+      },
     validationSchema: Yup.object({
       name: Yup.string().required(),
       buildClusterName: Yup.string().required(),
@@ -230,15 +229,15 @@ const Root = (props: IDialog) => {
                   ...{
                     ...(val.advanceOptions
                       ? {
-                          buildOptions: {
-                            buildArgs: val.buildArgs,
-                            buildContexts: val.buildContexts,
-                            contextDir: val.contextDir,
-                            dockerfileContent: val.dockerfileContent,
-                            dockerfilePath: val.dockerfilePath,
-                            targetPlatforms: [],
-                          },
-                        }
+                        buildOptions: {
+                          buildArgs: val.buildArgs,
+                          buildContexts: val.buildContexts,
+                          contextDir: val.contextDir,
+                          dockerfileContent: val.dockerfileContent,
+                          dockerfilePath: val.dockerfilePath,
+                          targetPlatforms: [],
+                        },
+                      }
                       : {}),
                   },
                   registry: {
@@ -272,15 +271,15 @@ const Root = (props: IDialog) => {
                   ...{
                     ...(val.advanceOptions
                       ? {
-                          buildOptions: {
-                            buildArgs: val.buildArgs,
-                            buildContexts: val.buildContexts,
-                            contextDir: val.contextDir,
-                            dockerfileContent: val.dockerfileContent,
-                            dockerfilePath: val.dockerfilePath,
-                            targetPlatforms: [],
-                          },
-                        }
+                        buildOptions: {
+                          buildArgs: val.buildArgs,
+                          buildContexts: val.buildContexts,
+                          contextDir: val.contextDir,
+                          dockerfileContent: val.dockerfileContent,
+                          dockerfilePath: val.dockerfilePath,
+                          targetPlatforms: [],
+                        },
+                      }
                       : {}),
                   },
                   registry: {
