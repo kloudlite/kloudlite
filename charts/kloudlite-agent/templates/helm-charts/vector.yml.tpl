@@ -24,6 +24,7 @@ rules:
   - nodes
   - pods
   verbs:
+  - get
   - list
   - watch
 
@@ -31,6 +32,10 @@ rules:
   - ""
   resources:
   - nodes/proxy
+  - nodes/log
+  - nodes/stats
+  - nodes/stats/summary
+  - nodes/metrics
   verbs:
   - get
 
@@ -63,13 +68,17 @@ spec:
   
   jobVars:
     backOffLimit: 1
-    tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toJson }}
+    tolerations:
+      - operator: Exists
     nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toJson }}
 
   values:
     role: Agent
     containerPorts:
       - containerPort: 6000
+
+    tolerations:
+      - operator: Exists
 
     service:
       enabled: false
@@ -79,7 +88,9 @@ spec:
 
     extraContainers:
       - name: kubelet-metrics-reexporter
-        image: ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0
+        {{- $imageTag := .Values.helmCharts.vector.configuration.kubeletMetricsReexporter.image.tag | default (include "image-tag" .) }}
+        image: {{.Values.helmCharts.vector.configuration.kubeletMetricsReexporter.image.repository}}:{{$imageTag}}
+        imagePullPolicy: {{ include "image-pull-policy" $imageTag }}
         args:
           - --addr
           - "0.0.0.0:9999"
@@ -132,7 +143,10 @@ spec:
           type: prometheus_scrape
           endpoints:
             - http://localhost:9999/metrics/resource
-
+        kloudlite_metrics_exporter:
+          type: prometheus_scrape
+          endpoints:
+            - http://localhost:9999/metrics/kloudlite
       sinks:
         {{- if not $chartOpts.debugOnStdout }}
         console:
@@ -140,6 +154,7 @@ spec:
           inputs:
             {{- /* - "*" */}}
             - kubelet_metrics_exporter
+            - kloudlite_metrics_exporter
           encoding:
             codec: json
         {{- end }}
@@ -150,6 +165,7 @@ spec:
           inputs:
             - kubernetes_logs
             - kubelet_metrics_exporter
+            - kloudlite_metrics_exporter
           address: {{.Values.agent.name}}.{{.Release.Namespace}}.svc.cluster.local:6000
 
 {{- end }}

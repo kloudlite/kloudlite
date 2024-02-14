@@ -41,13 +41,5 @@ preferredDuringSchedulingIgnoredDuringExecution:
 {{- end -}}
 
 {{- define "image-pull-policy" -}}
-{{- if .Values.imagePullPolicy -}}
-{{- .Values.imagePullPolicy}}
-{{- else -}}
-{{- if hasSuffix "-nightly" (include "image-tag" .) -}}
-{{- "Always" }}
-{{- else -}}
-{{- "IfNotPresent" }}
-{{- end -}}
-{{- end -}}
+{{- hasSuffix "-nightly" . | ternary "Always" "IfNotPresent"}}
 {{- end -}}
