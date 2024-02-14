@@ -16,12 +16,12 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import LogComp from '~/console/components/logger';
 import { renderCloudProvider } from '~/console/utils/commons';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { DetailItem } from '~/console/components/commons';
 import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
 import { IAccountContext } from '../../../_layout';
+import LogComp from '~/root/lib/client/components/logger';
 
 const ClusterTabs = () => {
   const { account, cluster } = useParams();

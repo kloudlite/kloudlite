@@ -5,7 +5,16 @@ import Anser from 'anser';
 import classNames from 'classnames';
 import Fuse from 'fuse.js';
 import hljs from 'highlight.js';
-import React, { ReactNode, memo, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ViewportList } from 'react-viewport-list';
 import { dayjs } from '~/components/molecule/dayjs';
 import {
@@ -14,9 +23,38 @@ import {
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
 import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
-import { generatePlainColor } from '../color-generator';
-import Pulsable from '../pulsable';
-import { logsMockData } from '../../dummy/data';
+import { generatePlainColor } from '~/root/lib/utils/color-generator';
+
+import ReactPulsable from 'react-pulsable';
+import { ChildrenProps } from '~/components/types';
+import { logsMockData } from './dummy';
+
+const pulsableContext = createContext(false);
+
+export const usePulsableLoading = () => {
+  return useContext(pulsableContext);
+};
+
+const Pulsable = ({
+  children,
+  isLoading,
+}: ChildrenProps & { isLoading: boolean }) => {
+  return (
+    <pulsableContext.Provider value={useMemo(() => isLoading, [isLoading])}>
+      <ReactPulsable
+        config={{
+          bgColors: {
+            light: 'rgba(161, 161, 170, 0.2)',
+            medium: 'rgba(161, 161, 170, 0.3)',
+          },
+        }}
+        isLoading={isLoading}
+      >
+        {children}
+      </ReactPulsable>
+    </pulsableContext.Provider>
+  );
+};
 
 export type ILog = {
   podName: string;
@@ -694,7 +732,7 @@ const LogComp = ({
               </div>
               <div className="flex flex-col items-center justify-center flex-1">
                 <div className="headingMd">
-                  No logs produced in the last 3 hours.
+                  (only last 3 hours logs) fetching logs...
                 </div>
               </div>
             </div>

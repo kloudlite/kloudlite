@@ -29,7 +29,6 @@ import { Link, useOutletContext } from '@remix-run/react';
 import { IStatus, listRender } from '~/console/components/commons';
 import { listStatus } from '~/console/components/sync-status';
 import AnimateHide from '~/components/atoms/animate-hide';
-import LogComp from '~/console/components/logger';
 import { ISetState } from '~/console/page-components/app-states';
 import { Button } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
@@ -39,6 +38,7 @@ import {
   findNodePlanWithSpec,
 } from './nodepool-utils';
 import { IAccountContext } from '../../../_layout';
+import LogComp from '~/root/lib/client/components/logger';
 
 const RESOURCE_NAME = 'nodepool';
 type BaseType = ExtractNodeType<INodepools>;

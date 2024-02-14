@@ -16,7 +16,6 @@ import {
 import { useOutletContext } from '@remix-run/react';
 import { IBuildRuns } from '~/console/server/gql/queries/build-run-queries';
 import AnimateHide from '~/components/atoms/animate-hide';
-import LogComp from '~/console/components/logger';
 import { Button } from '~/components/atoms/button';
 import {
   CheckCircleFill,
@@ -27,6 +26,7 @@ import {
 } from '@jengaicons/react';
 import dayjs from 'dayjs';
 import { IAccountContext } from '../../../_layout';
+import LogComp from '~/root/lib/client/components/logger';
 
 const RESOURCE_NAME = 'build run';
 type BaseType = ExtractNodeType<IBuildRuns>;
