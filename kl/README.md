@@ -29,6 +29,11 @@ curl https://kl.kloudlite.io/kloudlite/kl@v1.0.0! | bash
 curl https://kl.kloudlite.io/kloudlite/kl | bash
 ```
 
+###### install in windows
+```
+iwr https://kl.kloudlite.io/kloudlite/kl | iex
+```
+
 #### Installation of kli
 
 ###### Install latest with curl
@@ -50,6 +55,11 @@ curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?source=kli' | bash
 ###### download but don't install
 ```sh
 curl 'https://kl.kloudlite.io/kloudlite/kl?source=kli' | bash
+```
+
+###### install in windows
+```
+iwr https://kl.kloudlite.io/kloudlite/kl?source=kli | iex
 ```
 
 ### Authentication

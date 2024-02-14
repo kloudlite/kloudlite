@@ -27,7 +27,7 @@ tasks:
       - nodemon -q -e 'go' --signal SIGTERM --exec "echo '# building' && task kli:build:win && echo '# build success' || exit"
   kli:build:win:
     cmds:
-      - go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kli -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kli.exe main.go
+      - CGO_ENABLED=0 go build -ldflags="-X github.com/kloudlite/kl/flags.Version=v1.0.5-nightly -X github.com/kloudlite/kl/flags.CliName=kli -X github.com/kloudlite/kl/flags.DevMode=true" -o ./bin/kli.exe main.go
 
   gen:icons:
     cmds:
