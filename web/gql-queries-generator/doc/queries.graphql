@@ -2697,6 +2697,10 @@ query consoleListPvs($clusterName: String!, $search: SearchPersistentVolumes, $p
   }
 }
 
+mutation consoleDeletePV($clusterName: String!, $pvName: String!) {
+  infra_deletePV(clusterName: $clusterName, pvName: $pvName)
+}
+
 query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
   cr_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
     edges {

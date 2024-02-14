@@ -19,8 +19,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { NameIdView } from '~/console/components/name-id-view';
 import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { IDomains } from '~/console/server/gql/queries/domain-queries';
-import { useMapper } from '~/components/utils';
+import { useAppend, useMapper } from '~/components/utils';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
 
@@ -31,7 +30,7 @@ const Root = (props: IDialog) => {
 
   const { project: projectName, environment: envName } = useParams();
   const [selectedDomains, setSelectedDomains] = useState<
-    { label: string; value: string; domain: ExtractNodeType<IDomains> }[]
+    { label: string; value: string }[]
   >([]);
 
   const {
@@ -46,17 +45,17 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            name: parseName(props.data),
-            displayName: props.data.displayName,
-            domains: [],
-            isNameError: false,
-          }
+          name: parseName(props.data),
+          displayName: props.data.displayName,
+          domains: [],
+          isNameError: false,
+        }
         : {
-            name: '',
-            displayName: '',
-            domains: [],
-            isNameError: false,
-          },
+          name: '',
+          displayName: '',
+          domains: [],
+          isNameError: false,
+        },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
         name: Yup.string().required(),
@@ -129,15 +128,24 @@ const Root = (props: IDialog) => {
     });
 
   const domains = useMapper(parseNodes(data), (val) => ({
-    label: val.displayName,
+    label: val.domainName,
     value: val.domainName,
-    domain: val,
-    render: () => val.displayName,
   }));
+
+  const combinedDomains = useAppend(
+    domains,
+    isUpdate
+      ? props.data.spec.domains
+        .filter((d) => !domains.find((f) => f.value === d))
+        .map((d) => ({ label: d, value: d }))
+      : []
+  );
+
+  console.log(combinedDomains);
 
   useEffect(() => {
     if (isUpdate) {
-      const d = domains.filter((d) =>
+      const d = combinedDomains.filter((d) =>
         props.data.spec.domains.includes(d.value)
       );
       setSelectedDomains(d);
@@ -179,7 +187,7 @@ const Root = (props: IDialog) => {
           label="Domains"
           multiple
           value={selectedDomains}
-          options={async () => [...domains]}
+          options={async () => [...combinedDomains]}
           onChange={(val) => {
             setSelectedDomains(val);
             handleChange('domains')(dummyEvent([...val.map((v) => v.value)]));

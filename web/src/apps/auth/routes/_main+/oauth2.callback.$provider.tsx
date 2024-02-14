@@ -47,6 +47,7 @@ const CallBack = () => {
                     type: 'add-provider',
                     query,
                     status: 'success',
+                    provider,
                   },
                   '*'
                 );

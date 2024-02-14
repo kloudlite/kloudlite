@@ -4039,6 +4039,13 @@ export type ConsoleListPvsQuery = {
   };
 };
 
+export type ConsoleDeletePvMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  pvName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeletePvMutation = { infra_deletePV: boolean };
+
 export type ConsoleListBuildRunsQueryVariables = Exact<{
   repoName: Scalars['String']['input'];
   search?: InputMaybe<SearchBuildRuns>;

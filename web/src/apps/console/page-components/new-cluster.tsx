@@ -33,13 +33,13 @@ import { TitleBox } from '../components/raw-wrapper';
 
 type props =
   | {
-      providerSecrets: IProviderSecrets;
-      cloudProvider?: IProviderSecret;
-    }
+    providerSecrets: IProviderSecrets;
+    cloudProvider?: IProviderSecret;
+  }
   | {
-      providerSecrets?: IProviderSecrets;
-      cloudProvider: IProviderSecret;
-    };
+    providerSecrets?: IProviderSecrets;
+    cloudProvider: IProviderSecret;
+  };
 
 export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
@@ -76,11 +76,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const [selectedProvider, setSelectedProvider] = useState<
     | {
-        label: string;
-        value: string;
-        provider: ExtractNodeType<IProviderSecrets>;
-        render: () => JSX.Element;
-      }
+      label: string;
+      value: string;
+      provider: ExtractNodeType<IProviderSecrets>;
+      render: () => JSX.Element;
+    }
     | undefined
   >(options.length === 1 ? options[0] : undefined);
 
@@ -94,7 +94,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
-      vpc: '',
       name: '',
       region: 'ap-south-1' || selectedRegion?.Name,
       cloudProvider: cloudProvider
@@ -106,7 +105,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       isNameError: false,
     },
     validationSchema: Yup.object({
-      vpc: Yup.string(),
       region: Yup.string().trim().required('Region is required'),
       cloudProvider: Yup.string().trim().required('Cloud provider is required'),
       name: Yup.string().trim().required('Name is required'),
@@ -254,15 +252,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 setSelectedAvailabilityMode(availabilityMode);
               }}
             />
-
-            <TextInput
-              label="VPC"
-              size="lg"
-              onChange={handleChange('vpc')}
-              value={values.vpc}
-              error={!!errors.vpc}
-              message={errors.vpc}
-            />
           </div>
         </div>
         {isOnboarding ? (
@@ -306,11 +295,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         {...(isOnboarding
           ? {}
           : {
-              backButton: {
-                content: 'Back to clusters',
-                to: rootUrl,
-              },
-            })}
+            backButton: {
+              content: 'Back to clusters',
+              to: rootUrl,
+            },
+          })}
       >
         <MultiStepProgress.Root
           noJump={(step) => isOnboarding || !(step < currentStep)}

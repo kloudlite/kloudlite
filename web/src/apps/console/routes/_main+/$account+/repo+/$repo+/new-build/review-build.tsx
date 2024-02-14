@@ -1,8 +1,6 @@
 import {
   GitBranchFill,
-  GithubLogo,
   GithubLogoFill,
-  GitlabLogo,
   GitlabLogoFill,
 } from '@jengaicons/react';
 import { ReviewComponent } from '../../../$project+/$environment+/new-app/app-review';
@@ -86,50 +84,56 @@ const ReviewBuild = ({
           </div>
         </div>
       </ReviewComponent>
-      {values.advanceOptions && (
-        <ReviewComponent title="Advance options" onEdit={() => onEdit(2)}>
-          <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
-            {Object.keys(values.buildArgs).length > 0 && (
-              <div className="flex flex-row items-center gap-lg [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
-                <div className="flex-1 bodyMd-medium text-text-default">
-                  Build Args
+      {values.advanceOptions &&
+        (Object.keys(values.buildArgs).length > 0 ||
+          Object.keys(values.buildContexts).length > 0 ||
+          values.contextDir ||
+          values.dockerfilePath) && (
+          <ReviewComponent title="Advance options" onEdit={() => onEdit(2)}>
+            <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
+              {Object.keys(values.buildArgs).length > 0 && (
+                <div className="flex flex-row items-center gap-lg [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
+                  <div className="flex-1 bodyMd-medium text-text-default">
+                    Build Args
+                  </div>
+                  <div className="text-text-soft bodyMd">
+                    {Object.keys(values.buildArgs).length || 0}
+                  </div>
                 </div>
-                <div className="text-text-soft bodyMd">
-                  {Object.keys(values.buildArgs).length || 0}
+              )}
+              {Object.keys(values.buildContexts).length > 0 && (
+                <div className="flex flex-row items-center gap-lg [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
+                  <div className="flex-1 bodyMd-medium text-text-default">
+                    Build contexts
+                  </div>
+                  <div className="text-text-soft bodyMd">
+                    {Object.keys(values.buildContexts).length || 0}
+                  </div>
                 </div>
-              </div>
-            )}
-            {Object.keys(values.buildContexts).length > 0 && (
-              <div className="flex flex-row items-center gap-lg [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
-                <div className="flex-1 bodyMd-medium text-text-default">
-                  Build contexts
+              )}
+              {values.contextDir && (
+                <div className="flex flex-col gap-md [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
+                  <div className="bodyMd-medium text-text-default">
+                    Context dir
+                  </div>
+                  <div className="bodySm text-text-soft">
+                    {values.contextDir}
+                  </div>
                 </div>
-                <div className="text-text-soft bodyMd">
-                  {Object.keys(values.buildContexts).length || 0}
+              )}
+              {values.dockerfilePath && (
+                <div className="flex flex-col gap-md [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
+                  <div className="bodyMd-medium text-text-default">
+                    Docker filepath
+                  </div>
+                  <div className="bodySm text-text-soft">
+                    {values.dockerfilePath}
+                  </div>
                 </div>
-              </div>
-            )}
-            {values.contextDir && (
-              <div className="flex flex-col gap-md [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
-                <div className="bodyMd-medium text-text-default">
-                  Context dir
-                </div>
-                <div className="bodySm text-text-soft">{values.contextDir}</div>
-              </div>
-            )}
-            {values.dockerfilePath && (
-              <div className="flex flex-col gap-md [&:not(:last-child)]:pb-lg [&:not(:last-child)]:border-b border-border-default">
-                <div className="bodyMd-medium text-text-default">
-                  Docker filepath
-                </div>
-                <div className="bodySm text-text-soft">
-                  {values.dockerfilePath}
-                </div>
-              </div>
-            )}
-          </div>
-        </ReviewComponent>
-      )}
+              )}
+            </div>
+          </ReviewComponent>
+        )}
     </div>
   );
 };
