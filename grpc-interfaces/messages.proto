@@ -1,9 +1,10 @@
 syntax = "proto3";
+
 option go_package = "grpc/messages";
 
 service MessageDispatchService {
   rpc ValidateAccessToken(ValidateAccessTokenIn) returns (ValidateAccessTokenOut) {}
-  rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
+  rpc GetAccessToken(GetAccessTokenIn) returns (GetAccessTokenOut) {}
 
   rpc SendActions (Empty) returns (stream Action) {}
 
@@ -26,13 +27,13 @@ message ValidateAccessTokenOut {
   bool valid = 1;
 }
 
-message GetClusterTokenIn {
+message GetAccessTokenIn {
   string accountName = 1;
   string clusterName = 2;
   string clusterToken = 3;
 }
 
-message GetClusterTokenOut {
+message GetAccessTokenOut {
   string accessToken = 1;
 }
 
