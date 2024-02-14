@@ -2,9 +2,10 @@ package nats
 
 import (
 	"context"
-	"github.com/kloudlite/api/pkg/errors"
 	"os"
 	"os/signal"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/pkg/messaging/types"
 	"github.com/kloudlite/api/pkg/nats"
@@ -13,6 +14,7 @@ import (
 
 type JetstreamConsumer struct {
 	name       string
+	stream     string
 	client     *nats.JetstreamClient
 	consumer   jetstream.Consumer
 	consumeCtx jetstream.ConsumeContext
@@ -114,5 +116,10 @@ func NewJetstreamConsumer(ctx context.Context, jc *nats.JetstreamClient, args Je
 		name:     args.ConsumerConfig.Name,
 		client:   jc,
 		consumer: c,
+		stream:   args.Stream,
 	}, nil
+}
+
+func DeleteConsumer(ctx context.Context, jc *nats.JetstreamClient, consumer *JetstreamConsumer) error {
+	return jc.Jetstream.DeleteConsumer(ctx, consumer.stream, consumer.name)
 }
