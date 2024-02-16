@@ -29,7 +29,6 @@ spec:
         min: "50Mi"
         max: "100Mi"
       env:
-
         - key: HTTP_PORT
           value: "3001"
 
@@ -53,5 +52,4 @@ spec:
 
         - key: GIT_WEBHOOKS_TOPIC
           value: "{{.Values.global.cookieDomain}}"
-
 
