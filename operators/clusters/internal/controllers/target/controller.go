@@ -194,7 +194,7 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 
 	if step := r.startClusterDestroyJob(req); !step.ShouldProceed() {
 		check.Status = false
-		check.Message = "cluster job failed"
+		check.Message = "waiting for cluster destroy job check to be completed"
 		if check != obj.Status.Checks[checkName] {
 			fn.MapSet(&obj.Status.Checks, checkName, check)
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -489,7 +489,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 			"service-account-name": clusterJobServiceAccount,
 
-			"kubeconfig-secret-name":      fmt.Sprintf("cluster-%s-kubeconfig", obj.Name),
+			"kubeconfig-secret-name":      obj.Spec.Output.SecretName,
 			"kubeconfig-secret-namespace": obj.Namespace,
 
 			"cluster-name":              obj.Name,

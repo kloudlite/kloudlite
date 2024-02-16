@@ -100,10 +100,9 @@ func RegisterInto(mgr operator.Operator) {
 				if err != nil {
 					return err
 				}
-				logger.Infof("[%s] published cluster update to nats: %s", fmt.Sprintf("%s/%s", obj.Spec.AccountName, obj.Name))
+				logger.Infof("published cluster update to nats: %s/%s", obj.Spec.AccountName, obj.Name)
 				return nil
 			},
 		},
-		// &account_s3_bucket.Reconciler{Name: "clusters:account-s3-bucket", Env: ev},
 	)
 }
