@@ -34,7 +34,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessageDispatchServiceClient interface {
 	ValidateAccessToken(ctx context.Context, in *ValidateAccessTokenIn, opts ...grpc.CallOption) (*ValidateAccessTokenOut, error)
-	GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error)
+	GetAccessToken(ctx context.Context, in *GetAccessTokenIn, opts ...grpc.CallOption) (*GetAccessTokenOut, error)
 	SendActions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
 	ReceiveError(ctx context.Context, in *ErrorData, opts ...grpc.CallOption) (*Empty, error)
 	ReceiveConsoleResourceUpdate(ctx context.Context, in *ResourceUpdate, opts ...grpc.CallOption) (*Empty, error)
@@ -60,8 +60,8 @@ func (c *messageDispatchServiceClient) ValidateAccessToken(ctx context.Context, 
 	return out, nil
 }
 
-func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error) {
-	out := new(GetClusterTokenOut)
+func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *GetAccessTokenIn, opts ...grpc.CallOption) (*GetAccessTokenOut, error) {
+	out := new(GetAccessTokenOut)
 	err := c.cc.Invoke(ctx, MessageDispatchService_GetAccessToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (c *messageDispatchServiceClient) Ping(ctx context.Context, in *Empty, opts
 // for forward compatibility
 type MessageDispatchServiceServer interface {
 	ValidateAccessToken(context.Context, *ValidateAccessTokenIn) (*ValidateAccessTokenOut, error)
-	GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error)
+	GetAccessToken(context.Context, *GetAccessTokenIn) (*GetAccessTokenOut, error)
 	SendActions(*Empty, MessageDispatchService_SendActionsServer) error
 	ReceiveError(context.Context, *ErrorData) (*Empty, error)
 	ReceiveConsoleResourceUpdate(context.Context, *ResourceUpdate) (*Empty, error)
@@ -168,7 +168,7 @@ type UnimplementedMessageDispatchServiceServer struct {
 func (UnimplementedMessageDispatchServiceServer) ValidateAccessToken(context.Context, *ValidateAccessTokenIn) (*ValidateAccessTokenOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateAccessToken not implemented")
 }
-func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error) {
+func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context, *GetAccessTokenIn) (*GetAccessTokenOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
 }
 func (UnimplementedMessageDispatchServiceServer) SendActions(*Empty, MessageDispatchService_SendActionsServer) error {
@@ -222,7 +222,7 @@ func _MessageDispatchService_ValidateAccessToken_Handler(srv interface{}, ctx co
 }
 
 func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClusterTokenIn)
+	in := new(GetAccessTokenIn)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context
 		FullMethod: MessageDispatchService_GetAccessToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessageDispatchServiceServer).GetAccessToken(ctx, req.(*GetClusterTokenIn))
+		return srv.(MessageDispatchServiceServer).GetAccessToken(ctx, req.(*GetAccessTokenIn))
 	}
 	return interceptor(ctx, in, info, handler)
 }
