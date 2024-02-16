@@ -1,6 +1,3 @@
-[submodule "helm-charts"]
-	path = helm-charts
-	url = git@github.com:kloudlite/helm-charts
 [submodule "operator"]
 	path = operator
 	url = git@github.com:kloudlite/operator

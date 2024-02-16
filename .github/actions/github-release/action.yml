@@ -1,0 +1,112 @@
+name: 'github release action'
+description: 'sets up kloudlite build environment'
+
+inputs:
+  github_token:
+    description: "Github Token"
+    required: true
+
+  release_tag:
+    description: "Github Release Tag"
+    required: true
+
+  override_release_assets:
+    description: "Whether override release assets"
+    required: true
+
+  release_title:
+    description: "Release Title, should be of format 'my release %s', %s must be there, as it will be substituted by release tag"
+    required: false
+
+  release_notes:
+    description: 'Release Notes'
+    required: true
+
+  working_dir:
+    description: 'working directory from where to resolve file globs'
+    required: true
+
+  files:
+    description: "file name patterns to upload to github release"
+    required: false
+
+  debug:
+    description: "whether debug logs are enabled?"
+    required: false
+    default: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checking whether github release exists
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ inputs.release_tag }}
+        OVERRIDE_RELEASE_ASSETS: ${{ inputs.override_release_assets }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |+
+        # as github runs this script with `bash -e -o pipefail`, need to disable it, as i am manually handling it
+        set +e
+        set +o pipefail
+
+        debug() {
+          echo "[# DEBUG] $@"
+        }
+
+        if [ "${{ inputs.debug }}" = "true" ]; then
+          set -x
+        fi
+        opts=("-R" "${{ github.repository }}")
+
+        release=$(gh release list ${opts[@]} | tail -n +1 | awk '{print $3}' | grep -iE "$RELEASE_TAG")
+        exit_code=$?
+
+        if [ $exit_code -eq 0 ]; then
+          echo "🚀 github release_tag (${RELEASE_TAG}) already exists"
+          if [ "$OVERRIDE_RELEASE_ASSETS" = "true" ]; then
+            echo "deleting old release ($RELEASE_TAG)"
+            gh release delete ${RELEASE_TAG} -y --cleanup-tag
+            echo "old release ($RELEASE_TAG) deleted"
+          fi
+        fi
+
+        echo "🚀 creating github release_tag (${RELEASE_TAG})"
+        set -e
+        set -o pipefail
+
+        createOpts="${opts[@]}"
+        if [ "$OVERRIDE_RELEASE_ASSETS" = "true" ]; then
+          createOpts+=("--prerelease")
+        fi
+
+        if ! [[ -z "${{ inputs.release_title }}" ]]; then
+          createOpts+=("--title" "'$RELEASE_TAG'")
+        fi
+
+        createOpts+=(
+          # "--notes" "'$RELEASE_NOTES'"
+          "--generate-notes"
+        )
+
+        debug "creating github release with " gh release create "$RELEASE_TAG" ${createOpts[@]}
+        gh release create "$RELEASE_TAG" ${createOpts[@]}
+        echo "🚀 github release_tag (${RELEASE_TAG}) CREATED"
+
+        uploadOpts="${opts[@]}"
+        if $OVERRIDE_RELEASE_ASSETS; then
+         uploadOpts+=("--clobber")
+        fi
+
+        echo "${{ inputs.files }}" | while read line
+        do
+          echo "uploading files with pattern '$line'"
+          [ -z "$line" ] && continue
+          files=$(find ${{ inputs.working_dir }} -wholename "${{ inputs.working_dir }}/$line" -type f -print0 | xargs -0)
+          echo "files: $files"
+
+          if [ -z "$files" ]; then
+            continue
+          fi
+
+          gh release upload "${RELEASE_TAG}" ${uploadOpts[@]} $files
+        done
