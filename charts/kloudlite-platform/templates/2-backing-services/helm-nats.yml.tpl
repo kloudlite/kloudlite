@@ -53,4 +53,9 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           nodeAffinityPolicy: Honor
           nodeTaintsPolicy: Honor
+        kloudlite.io/node.name:
+          maxSkew: 1
+          whenUnsatisfiable: DoNotSchedule
+          nodeAffinityPolicy: Honor
+          nodeTaintsPolicy: Honor
 {{- end}}
