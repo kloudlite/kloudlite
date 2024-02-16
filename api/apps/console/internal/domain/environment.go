@@ -478,7 +478,7 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, projectName string, name 
 
 	if err := d.deleteK8sResource(ctx, uenv.ProjectName, &uenv.Environment); err != nil {
 		if errors.Is(err, ErrNoClusterAttached) {
-			return d.appRepo.DeleteById(ctx, uenv.Id)
+			return d.environmentRepo.DeleteById(ctx, uenv.Id)
 		}
 		return errors.NewE(err)
 	}
