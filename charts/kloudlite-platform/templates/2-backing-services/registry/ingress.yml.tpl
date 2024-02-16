@@ -27,12 +27,11 @@ spec:
   {{ if .Values.distribution.tls.enabled }}
   tls:
     - hosts:
-      - "*.{{ .Values.global.baseDomain }}"
-      - "*.{{ .Values.global.secondaryDomain }}"
+      - "*.{{include "router-domain" .}}"
   {{ end }}
   ingressClassName: {{ .Values.global.ingressClassName }}
   rules:
-  - host: registry.{{ .Values.global.baseDomain }}
+  - host: registry.{{include "router-domain" .}}
     http:
       paths:
       - backend:
