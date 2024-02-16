@@ -3,16 +3,17 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
 	"text/template"
 
+	"github.com/kloudlite/kubelet-metrics-reexporter/pkg/k8s"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -25,6 +26,8 @@ var (
 	podCpuUsageMetricName  = []byte("pod_cpu_usage_seconds_total")
 	podMemUsageMetricName  = []byte("pod_memory_working_set_bytes")
 	podStartTimeMetricName = []byte("pod_start_time_seconds")
+
+	kubeletVolumeStatsUsedBytes = []byte("kubelet_volume_stats_used_bytes")
 )
 
 var (
@@ -34,7 +37,7 @@ var (
 )
 
 type ParserOpts struct {
-	PodsMap                   map[string]corev1.Pod
+	PodsMap                   map[types.NamespacedName]corev1.Pod
 	EnrichTags                map[string]string
 	EnrichFromLabels          bool
 	EnrichFromAnnotations     bool
@@ -47,12 +50,12 @@ type ParserOpts struct {
 }
 
 type Parser struct {
-	kCli     *kubernetes.Clientset
+	kCli     *k8s.Client
 	nodeName string
 	ParserOpts
 }
 
-func NewParser(kCli *kubernetes.Clientset, nodeName string, opts ParserOpts) (*Parser, error) {
+func NewParser(ctx context.Context, kcli *k8s.Client, nodeName string, opts ParserOpts) (*Parser, error) {
 	r, err := regexp.Compile(opts.ValidLabelRegexExpr)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to compile metric label regexp")
@@ -60,7 +63,15 @@ func NewParser(kCli *kubernetes.Clientset, nodeName string, opts ParserOpts) (*P
 
 	opts.labelValidator = r
 
-	return &Parser{kCli: kCli,
+	pl, err := kcli.ListPodsOnNode(ctx, nodeName)
+	if err != nil {
+		return nil, err
+	}
+
+	opts.PodsMap = k8s.ToPodsMap(pl)
+
+	return &Parser{
+		kCli:       kcli,
 		nodeName:   nodeName,
 		ParserOpts: opts,
 	}, nil
@@ -130,7 +141,7 @@ func (p *Parser) ParseAndEnhanceMetricsInto(b []byte, writer io.Writer) error {
 
 		namespace, podName, containerName := parseContainerLabels(tagBytes)
 
-		nn := types.NamespacedName{Namespace: namespace, Name: podName}.String()
+		nn := types.NamespacedName{Namespace: namespace, Name: podName}
 
 		tags := make([]string, 0, len(p.PodsMap[nn].Labels)+3+len(p.EnrichTags))
 
@@ -173,12 +184,12 @@ func (p *Parser) ParseAndEnhanceMetricsInto(b []byte, writer io.Writer) error {
 					return err
 				}
 
-				tags = append(tags, fmt.Sprintf("%s=%q", k, string(buff.Bytes())))
+				tags = append(tags, fmt.Sprintf("%s=%q", k, buff.String()))
 			}
 		}
 
 		x := fmt.Sprintf("{%s}", strings.Join(tags, ","))
-		out := fmt.Sprintf("%s", string(line[:tagStart])+x+string(line[tagEnd+1:]))
+		out := string(line[:tagStart]) + x + string(line[tagEnd+1:])
 		if _, err := writer.Write([]byte(out)); err != nil {
 			return err
 		}
@@ -192,17 +203,17 @@ func parseContainerLabels(tags []byte) (namespace, podName, containerName string
 	for i := range b {
 		b2 := bytes.Split(b[i], []byte("="))
 
-		if bytes.Compare(b2[0], containerNameTag) == 0 {
+		if bytes.Equal(b2[0], containerNameTag) {
 			containerName = string(b2[1][1 : len(b2[1])-1])
 			continue
 		}
 
-		if bytes.Compare(b2[0], namespaceTag) == 0 {
+		if bytes.Equal(b2[0], namespaceTag) {
 			namespace = string(b2[1][1 : len(b2[1])-1])
 			continue
 		}
 
-		if bytes.Compare(b2[0], podNameTag) == 0 {
+		if bytes.Equal(b2[0], podNameTag) {
 			podName = string(b2[1][1 : len(b2[1])-1])
 		}
 	}

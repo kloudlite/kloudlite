@@ -2,19 +2,21 @@ package parser
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"testing"
 
+	"github.com/kloudlite/kubelet-metrics-reexporter/pkg/k8s"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 	type fields struct {
-		kCli                  *kubernetes.Clientset
+		kCli                  *k8s.Client
 		nodeName              string
-		podsMap               map[string]corev1.Pod
+		podsMap               map[types.NamespacedName]corev1.Pod
 		enrichTags            map[string]string
 		enrichFromLabels      bool
 		enrichFromAnnotations bool
@@ -39,8 +41,8 @@ func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"without-group-1": "without-group-1-value",
@@ -70,8 +72,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"k1": "v1",
@@ -96,8 +98,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
 								"k1": "v1",
@@ -122,8 +124,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Annotations: map[string]string{
 								"k1": "v1",
@@ -149,8 +151,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1": "label-value-1",
@@ -179,8 +181,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -206,8 +208,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -237,8 +239,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {},
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {},
 				},
 				enrichFromLabels:      false,
 				enrichFromAnnotations: false,
@@ -258,8 +260,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -290,8 +292,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -321,8 +323,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -352,8 +354,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {},
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {},
 				},
 				enrichFromLabels:      false,
 				enrichFromAnnotations: false,
@@ -373,8 +375,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -405,8 +407,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -436,8 +438,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -467,8 +469,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -498,8 +500,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -529,8 +531,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -562,8 +564,8 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			fields: fields{
 				kCli:     nil,
 				nodeName: "test",
-				podsMap: map[string]corev1.Pod{
-					"test/test": {
+				podsMap: map[types.NamespacedName]corev1.Pod{
+					{Name: "test", Namespace: "test"}: {
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
 								"label1":           "label-value-1",
@@ -596,21 +598,27 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 		tt := _tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			p, err := NewParser(tt.fields.kCli, tt.fields.nodeName, ParserOpts{
-				PodsMap:                   tt.fields.podsMap,
-				EnrichTags:                tt.fields.enrichTags,
-				EnrichFromLabels:          tt.fields.enrichFromLabels,
-				EnrichFromAnnotations:     tt.fields.enrichFromAnnotations,
-				FilterPrefixes:            tt.fields.filterPrefixes,
-				ReplacePrefixes:           tt.fields.replacePrefixes,
-				ShouldValidateMetricLabel: tt.fields.shouldValidateMetricLabel,
-				ValidLabelRegexExpr:       `^[a-zA-Z_][a-zA-Z0-9_]*$`, // source: https://prometheus.io/docs/concepts/data_model/
-			})
+
+			r, err := regexp.Compile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 			if err != nil {
 				t.Error(err)
-				return
 			}
 
+			p := Parser{
+				kCli:     nil,
+				nodeName: tt.fields.nodeName,
+				ParserOpts: ParserOpts{
+					PodsMap:                   tt.fields.podsMap,
+					EnrichTags:                tt.fields.enrichTags,
+					EnrichFromLabels:          tt.fields.enrichFromLabels,
+					EnrichFromAnnotations:     tt.fields.enrichFromAnnotations,
+					FilterPrefixes:            tt.fields.filterPrefixes,
+					ReplacePrefixes:           tt.fields.replacePrefixes,
+					ShouldValidateMetricLabel: tt.fields.shouldValidateMetricLabel,
+					ValidLabelRegexExpr:       `^[a-zA-Z_][a-zA-Z0-9_]*$`, // source: https://prometheus.io/docs/concepts/data_model/
+					labelValidator:            r,
+				},
+			}
 			writer := &bytes.Buffer{}
 			if err := p.ParseAndEnhanceMetricsInto(tt.args.b, writer); (err != nil) != tt.wantErr {
 				t.Errorf("Parser.ParseAndEnhanceMetricsInto() error = %v, wantErr %v", err, tt.wantErr)

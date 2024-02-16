@@ -1,18 +1,18 @@
 name: Release Container Image
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-    inputs:
-      release_tag:
-        type: string
-        description: "release tag that should be used for this release"
-        required: true
-        default: "v1.0.0-nightly"
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  push:
+    paths:
+      - "*.go"
+      - "pkg/**"
+      - "internal/**"
+      - ".github/**"
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   release:
@@ -34,36 +34,80 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: go mod download
+      - name: Setup Golang caches
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-golang-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-golang-
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21.5
+
+      - name: Install Task
+        uses: arduino/setup-task@v1
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install UPX
+        run: |
+          curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+          tar -xf upx.tar.xz
+          sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
 
       - name: Building Binary
         env:
           CGO_ENABLED: 0
-          GOOS: linux
-          GOARCH: amd64
         run: |
-          mkdir -p .bin
-          go build -v -ldflags="-s -w" -o .bin/kubelet-metrics-reexporter .
-          echo "GO_BINARY=.bin/kubelet-metrics-reexporter" >> $GITHUB_ENV
+          task build Out=kubelet-metrics-reexporter
 
-      - name: Building Docker Image
-        env:
-          TAG: v2
-          REGISTRY: ${{ env.REGISTRY }}
-          IMAGE_NAME: "${{ env.IMAGE_NAME }}"
-          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
-        # if: github.ref == 'refs/heads/master' && success()  # Only run if branch is 'master' and tests are successful
+      - name: Create Image Tag from branch name
+        if: startsWith(github.ref, 'refs/heads/release')
+        run: |
+          set +e
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/heads/release-})
+          echo "$IMAGE_TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            IMAGE_TAG="$IMAGE_TAG-nightly"
+          fi
+
+          echo "IMAGE_TAG: ${IMAGE_TAG}"
+          set -e
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=true" >> $GITHUB_ENV
+
+      - name: Create Image Tag from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
+
+      - name: Build And Push Image
+        if: startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/tags/')
         run: |+
-          echo "!$GO_BINARY" >> .dockerignore
-          DOCKER_IMAGE=${REGISTRY}/${IMAGE_NAME}:${RELEASE_TAG}
-          echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_ENV
-          docker build -f Dockerfile --build-arg BIN="${GO_BINARY}" -t ${DOCKER_IMAGE} .
+          set +e
+          image_name="ghcr.io/${{ github.repository }}"
 
-      - name: Pushing Docker Image
-        run: docker push ${DOCKER_IMAGE}
+          docker manifest inspect $image_name:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+          set -e
+
+          task docker:build-n-push Image="$image_name:$IMAGE_TAG"
 

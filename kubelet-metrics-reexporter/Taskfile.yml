@@ -1,6 +1,15 @@
 version: 3
 
 tasks:
+  build:
+    env:
+      CGO_ENABLED: 0
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: "var Out must be provided"
+    cmds:
+      - go build -ldflags='-s -w' -o ./bin/{{.Out}} .
+
   dev:
     preconditions:
       - sh: '[ ! -z "{{.NodeName}}" ]'
@@ -9,6 +18,8 @@ tasks:
       - fwatcher --ext '.go' --exec '
           go run main.go --dev 
                 --node-name {{.NodeName}} 
+                --enrich-tag "kl_account_name=KL_ACCOUNT_NAME"
+                --enrich-tag "kl_cluster_name=KL_CLUSTER_NAME"
                 --enrich-from-annotations 
                 --filter-prefix "kloudlite.io/observability"
                 --replace-prefix "kloudlite.io/observability.tracking.id/=kl_tracking_id"
@@ -23,8 +34,11 @@ tasks:
       - go-test-cover.sh ./internal/parser/...
 
   docker:build-n-push:
-    vars:
-      Image: "ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0"
+    preconditions:
+      - sh: '[ -n "{{.Image}}" ]'
+        msg: "env var Tag must be provided"
     cmds:
-      - docker build -t {{.Image}} .
-      - docker push {{.Image}}
+      - task: build
+        vars:
+          Out: kubelet-metrics-reexporter 
+      - docker buildx build --build-arg BIN=kubelet-metrics-reexporter -t {{.Image}} . --push
