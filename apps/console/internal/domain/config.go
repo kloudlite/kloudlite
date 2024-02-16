@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"maps"
-
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -101,10 +99,12 @@ func (d *domain) CreateConfig(ctx ResourceContext, config entities.Config) (*ent
 	config.AccountName = ctx.AccountName
 	config.ProjectName = ctx.ProjectName
 	config.EnvironmentName = ctx.EnvironmentName
+
 	if config.Annotations == nil {
-		config.Annotations = types.ConfigWatchingAnnotation
-	} else {
-		maps.Copy(config.Annotations, types.ConfigWatchingAnnotation)
+		config.Annotations = make(map[string]string, len(types.ConfigWatchingAnnotation))
+	}
+	for k, v := range types.ConfigWatchingAnnotation {
+		config.Annotations[k] = v
 	}
 
 	return d.createAndApplyConfig(ctx, &config)
@@ -126,8 +126,8 @@ func (d *domain) createAndApplyConfig(ctx ResourceContext, config *entities.Conf
 		return nil, errors.NewE(err)
 	}
 
-	if err := d.applyK8sResource(ctx, config.ProjectName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
-		return cfg, errors.NewE(err)
+	if err := d.applyK8sResource(ctx, cfg.ProjectName, &cfg.ConfigMap, cfg.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
 	}
 
 	return cfg, nil
@@ -140,27 +140,27 @@ func (d *domain) UpdateConfig(ctx ResourceContext, config entities.Config) (*ent
 
 	config.SetGroupVersionKind(fn.GVK("v1", "ConfigMap"))
 
-	patchForUpdate := common.PatchForUpdate(
-		ctx,
-		&config,
-		common.PatchOpts{
-			XPatch: repos.Document{
-				fc.ConfigData: config.Data,
-			},
-		})
+	if config.Annotations == nil {
+		config.Annotations = make(map[string]string, len(types.ConfigWatchingAnnotation))
+	}
 
-	upConfig, err := d.configRepo.Patch(
-		ctx,
-		ctx.DBFilters().Add(fields.MetadataName, config.Name),
-		patchForUpdate,
+	for k, v := range types.ConfigWatchingAnnotation {
+		config.Annotations[k] = v
+	}
+
+	upConfig, err := d.configRepo.Patch(ctx, ctx.DBFilters().Add(fields.MetadataName, config.Name),
+		common.PatchForUpdate(ctx, &config, common.PatchOpts{XPatch: repos.Document{
+			fc.ConfigData: config.Data,
+		}}),
 	)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, entities.ResourceTypeConfig, upConfig.Name, PublishUpdate)
 
-	if err := d.applyK8sResource(ctx, ctx.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
-		return upConfig, errors.NewE(err)
+	if err := d.applyK8sResource(ctx, upConfig.ProjectName, &upConfig.ConfigMap, upConfig.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
 	}
 
 	return upConfig, nil
