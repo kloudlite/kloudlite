@@ -118,6 +118,14 @@ func (d *domain) CreateSecret(ctx ResourceContext, secret entities.Secret) (*ent
 	secret.EnvironmentName = ctx.EnvironmentName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
 
+	if secret.Annotations == nil {
+		secret.Annotations = make(map[string]string, len(types.SecretWatchingAnnotation))
+	}
+
+	for k, v := range types.SecretWatchingAnnotation {
+		secret.Annotations[k] = v
+	}
+
 	return d.createAndApplySecret(ctx, &secret)
 }
 
@@ -125,7 +133,6 @@ func (d *domain) createAndApplySecret(ctx ResourceContext, secret *entities.Secr
 	if _, err := d.upsertEnvironmentResourceMapping(ctx, secret); err != nil {
 		return nil, errors.NewE(err)
 	}
-
 	nsecret, err := d.secretRepo.Create(ctx, secret)
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
@@ -133,14 +140,6 @@ func (d *domain) createAndApplySecret(ctx ResourceContext, secret *entities.Secr
 			return nil, errors.NewE(err)
 		}
 		return nil, errors.NewE(err)
-	}
-
-	if nsecret.Annotations == nil {
-		nsecret.Annotations = make(map[string]string)
-	}
-
-	for k, v := range types.SecretWatchingAnnotation {
-		nsecret.Annotations[k] = v
 	}
 
 	if err := d.applyK8sResource(ctx, nsecret.ProjectName, &nsecret.Secret, nsecret.RecordVersion); err != nil {
@@ -153,6 +152,14 @@ func (d *domain) createAndApplySecret(ctx ResourceContext, secret *entities.Secr
 func (d *domain) UpdateSecret(ctx ResourceContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInEnvironment(ctx); err != nil {
 		return nil, errors.NewE(err)
+	}
+
+	if secret.Annotations == nil {
+		secret.Annotations = make(map[string]string, len(types.SecretWatchingAnnotation))
+	}
+
+	for k, v := range types.SecretWatchingAnnotation {
+		secret.Annotations[k] = v
 	}
 
 	patchForUpdate := common.PatchForUpdate(
