@@ -97,8 +97,8 @@ func BuildUrl(repo string, pullToken []byte) (string, error) {
 		return "", err
 	}
 
-	parsedURL.User = url.User(string(pullToken))
-
+	// parsedURL.User = url.User(string(pullToken))
+	parsedURL.User = url.UserPassword("git", string(pullToken))
 	return parsedURL.String(), nil
 }
 

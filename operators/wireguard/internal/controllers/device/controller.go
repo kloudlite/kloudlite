@@ -650,7 +650,6 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 
 	// external service to active namespace
 	if err := func() error {
-
 		if obj.Spec.NoExternalService {
 			// external service is not required, skippping this step
 			return nil
