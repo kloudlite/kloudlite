@@ -54,7 +54,9 @@ func unmarshalUnstructured(obj *unstructured.Unstructured, resource client.Objec
 	return json.Unmarshal(b, resource)
 }
 
-func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) (ctrl.Result, error) {
+var ErrNoMsgSender error = fmt.Errorf("msg sender is nil")
+
+func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstructured) error {
 	mctx, cf := func() (context.Context, context.CancelFunc) {
 		if r.Env.IsDev {
 			return context.WithCancel(context.TODO())
@@ -64,7 +66,7 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	defer cf()
 
 	if r.MsgSender == nil {
-		return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
+		return ErrNoMsgSender
 	}
 
 	ann := obj.GetAnnotations()
@@ -76,19 +78,18 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 	switch gvk.String() {
 	case ProjectGVK.String(), AppGVK.String(), EnvironmentGVK.String(), RouterGVK.String(), SecretGVK.String(), ConfigmapGVK.String():
 		{
-			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	case ManagedResourceGVK.String():
 		{
 			mr, err := fn.JsonConvert[crdsv1.ManagedResource](obj.Object)
 			if err != nil {
-				return ctrl.Result{}, err
+				return err
 			}
 
 			mresSecret := &corev1.Secret{}
@@ -101,19 +102,18 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyManagedResSecret] = mresSecret
 			}
 
-			err = r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	case ProjectManageServiceGVK.String():
 		{
 			var pmsvc crdsv1.ProjectManagedService
 			if err := unmarshalUnstructured(obj, &pmsvc); err != nil {
-				return ctrl.Result{}, err
+				return err
 			}
 
 			pmsvcSecret := &corev1.Secret{}
@@ -126,19 +126,18 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyProjectManagedSvcSecret] = pmsvcSecret
 			}
 
-			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	case ClusterManagedServiceGVK.String():
 		{
 			var cmsvc crdsv1.ClusterManagedService
 			if err := unmarshalUnstructured(obj, &cmsvc); err != nil {
-				return ctrl.Result{}, err
+				return err
 			}
 
 			cmsvcSecret := &corev1.Secret{}
@@ -151,22 +150,20 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 				obj.Object[t.KeyClusterManagedSvcSecret] = cmsvcSecret
 			}
 
-			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	case BuildRunGVK.String():
 		{
-			err := r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchContainerRegistryResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	case DeviceGVK.String():
@@ -186,32 +183,30 @@ func (r *Reconciler) dispatchEvent(ctx context.Context, obj *unstructured.Unstru
 
 			if obj.GetNamespace() != r.Env.DeviceNamespace {
 				r.logger.Infof("device created in namespace (%s), is not acknowledged by kloudlite, ignoring it.", obj.GetNamespace())
-				return ctrl.Result{}, nil
+				return nil
 			}
 
-			err := r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchConsoleResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	case NodePoolGVK.String(), PersistentVolumeClaimGVK.String(), PersistentVolumeGVK.String(), VolumeAttachmentGVK.String(), IngressGVK.String(), HelmChartGVK.String():
 		{
 			// dispatch to infra
-			err := r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
+			return r.MsgSender.DispatchInfraResourceUpdates(mctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
 			})
-			return ctrl.Result{}, err
 		}
 
 	default:
 		{
 			r.logger.Infof("message sender is not configured for resource (%s) of gvk(%s). Ignoring resource update", fmt.Sprintf(obj.GetNamespace(), obj.GetName()), obj.GetObjectKind().GroupVersionKind().String())
-			return ctrl.Result{}, nil
+			return nil
 		}
 	}
 }
@@ -220,21 +215,29 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 	obj.SetManagedFields(nil)
 
 	if obj.GetDeletionTimestamp() != nil {
-		// resource is about to be deleted
-		if t.HasOtherKloudliteFinalizers(obj) {
-			// 1. send deleting event
-			obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleting
-			return r.dispatchEvent(ctx, obj)
+		hasOtherKloudliteFinalizers := t.HasOtherKloudliteFinalizers(obj)
+
+		obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleting
+		if !hasOtherKloudliteFinalizers {
+			obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
 		}
 
-		// 2. send deleted event
-		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
-			if rr, err := r.RemoveWatcherFinalizer(ctx, obj); err != nil {
-				return rr, err
+		if err := r.dispatchEvent(ctx, obj); err != nil {
+			if !errors.Is(err, ErrNoMsgSender) {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+		}
+
+		if !hasOtherKloudliteFinalizers {
+			// only status watcher finalizer is there, so remove it
+			if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
+				if rr, err := r.RemoveWatcherFinalizer(ctx, obj); err != nil {
+					return rr, err
+				}
 			}
 		}
-		obj.Object[t.ResourceStatusKey] = t.ResourceStatusDeleted
-		return r.dispatchEvent(ctx, obj)
+		return ctrl.Result{}, nil
 	}
 
 	if !controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
@@ -244,7 +247,13 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 	}
 
 	obj.Object[t.ResourceStatusKey] = t.ResourceStatusUpdated
-	return r.dispatchEvent(ctx, obj)
+	if err := r.dispatchEvent(ctx, obj); err != nil {
+		if !errors.Is(err, ErrNoMsgSender) {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+	}
+	return ctrl.Result{}, nil
 }
 
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers,verbs=get;list;watch;create;update;patch;delete

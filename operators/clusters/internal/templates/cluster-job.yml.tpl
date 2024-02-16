@@ -43,8 +43,16 @@ spec:
       containers:
       - name: iac
         image: {{$jobImage}}
-
         imagePullPolicy: Always
+
+        resources:
+          requests:
+            cpu: 800m
+            memory: 1200Mi
+          limits:
+            cpu: 800m
+            memory: 1200Mi
+
         env:
           - name: KUBE_IN_CLUSTER_CONFIG
             value: "true"
