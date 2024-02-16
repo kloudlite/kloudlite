@@ -1,0 +1,147 @@
+name: 'kloudlite build setup'
+description: 'sets up kloudlite build environment'
+
+inputs:
+  github_token:
+    description: 'GitHub Token'
+    required: true
+
+  enable_go:
+    description: "enable go support"
+    type: boolean
+    required: false
+
+  go_mod_file:
+    description: 'go.mod file path, must be provided when enable_go is true'
+    required: false
+
+  go_sum_file:
+    description: 'go.sum file path, must be provided when enable_go is true'
+    required: false
+
+  go_build_cache_key:
+    description: 'go build cache key'
+    required: false
+
+  enable_task:
+    description: "install task"
+    required: true
+    type: boolean
+
+  enable_upx:
+    description: "install upx"
+    required: false
+    type: boolean
+
+  enable_docker:
+    description: "setup docker buildx and ghcr.io container registry"
+    required: false
+    type: boolean
+
+outputs:
+  image_tag: 
+    description: "docker image tag to use"
+    value: ${{ steps.output.outputs.image_tag }}
+  override_pushed_image: 
+    description: "whether override already pushed image"
+    value: ${{ steps.output.outputs.override_pushed_image }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Go with Go Module Caching
+      uses: actions/setup-go@v5
+      if: ${{ inputs.enable_go == 'true' }}
+      with:
+        # go-version: 1.21.5
+        go-version-file: ${{inputs.go_mod_file}}
+        cache-dependency-path: |+
+          ${{inputs.go_sum_file}}
+
+    - name: go env vars
+      id: go_env_vars
+      shell: bash
+      run: |+
+        echo "GOARCH=$(go env GOARCH)" >> $GITHUB_OUTPUT
+        echo "GOCACHE=$(go env GOCACHE)" >> $GITHUB_OUTPUT
+        echo "GOVERSION=$(go env GOVERSION)" >> $GITHUB_OUTPUT
+
+    - name: Setup Go Build Cache
+      uses: actions/cache@v4
+      if: inputs.go_build_cache_key
+      with:
+        path: |
+          ${{ steps.go_env_vars.outputs.GOCACHE }}
+        key: ${{ runner.os }}-golang-${{steps.go_env_vars.outputs.GOARCH}}-${{steps.go_env_vars.outputs.GOVERSION}}-go-build-cache-${{ inputs.go_build_cache_key }}
+        restore-keys: |
+          ${{ runner.os }}-golang-${{steps.go_env_vars.outputs.GOARCH}}-${{steps.go_env_vars.outputs.GOVERSION}}-go-build-cache-${{ inputs.go_build_cache_key }}
+
+    - name: Install Task
+      uses: arduino/setup-task@v2
+      if: ${{ inputs.enable_task == 'true' }}
+      with:
+        version: 3.x
+        repo-token: ${{ inputs.github_token }}
+
+    - name: Install UPX
+      if: ${{ inputs.enable_upx == 'true' }}
+      shell: bash
+      run: |
+        curl -L0 https://github.com/upx/upx/releases/download/v4.2.1/upx-4.2.1-amd64_linux.tar.xz > upx.tar.xz
+        tar -xf upx.tar.xz
+        sudo mv upx-4.2.1-amd64_linux/upx /usr/local/bin
+
+
+    - name: Set up QEMU
+      if: ${{ inputs.enable_docker == 'true' }}
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      if: ${{ inputs.enable_docker == 'true' }}
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      if: ${{ inputs.enable_docker == 'true' }}
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github_token }}
+
+    - name: Create Image Tag from branch name
+      id: gitref_branch
+      if: startsWith(github.ref, 'refs/heads/release')
+      shell: bash
+      run: |
+        set +e
+        IMAGE_TAG=${GITHUB_REF#refs/heads/release-}
+        echo "$IMAGE_TAG" | grep -i '\-nightly$'
+        if [ $? -ne 0 ]; then
+          IMAGE_TAG="$IMAGE_TAG-nightly"
+        fi
+        set -e
+
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "override_pushed_image=true" >> $GITHUB_OUTPUT
+
+    - name: Create Image Tag from tag
+      if: startsWith(github.ref, 'refs/tags/')
+      id: gitref_tag
+      shell: bash
+      run: |
+        IMAGE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+        echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+        echo "override_pushed_image=false" >> $GITHUB_OUTPUT
+
+    - name: Output Image Tag
+      id: output
+      shell: bash
+      run: |+
+        if [ "${{ steps.gitref_branch.outputs.image_tag }}" != "" ]; then
+          echo "image_tag=${{ steps.gitref_branch.outputs.image_tag }}" >> $GITHUB_OUTPUT
+          echo "override_pushed_image=${{ steps.gitref_branch.outputs.override_pushed_image }}" >> $GITHUB_OUTPUT
+        else
+          echo "image_tag=${{ steps.gitref_tag.outputs.image_tag }}" >> $GITHUB_OUTPUT
+          echo "override_pushed_image=${{ steps.gitref_tag.outputs.override_pushed_image }}" >> $GITHUB_OUTPUT
+        fi

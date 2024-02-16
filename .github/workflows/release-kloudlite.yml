@@ -1,0 +1,445 @@
+name: release kloudlite
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - 'release-v*'
+    tags:
+      - '*'
+    paths:
+      - "api/**"
+      - "operator/**"
+      - "infrastructure-as-code/**"
+      - "kubelet-metrics-reexporter/**"
+      - ".github/workflows/**"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  K3S_RELEASE: "v1.28.6+k3s2"
+
+jobs:
+  # setup:
+  #   - uses: dorny/paths-filter@v3
+  #     id: changes
+  #     with:
+  #       filters: |
+  #         api:
+  #           - 'api/**'
+  #         operator:
+  #           - 'operator/**'
+  #         infrastructure-as-code:
+  #           - 'infrastructure-as-code/**'
+
+  api-go-modules-cache:
+    runs-on: ubuntu-latest
+    name: API go modules cache
+    env:
+      SUBMODULE: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          enable_task: false
+          enable_upx: false
+
+          enable_docker: false
+
+      - name: Setup Go Modules Cache
+        shell: bash
+        run: |+
+          pushd $SUBMODULE
+          go mod download
+          popd
+
+  api:
+    needs: api-go-modules-cache
+    strategy:
+      matrix:
+        app:
+          # golang builds
+          - accounts
+          - auth
+          - comms
+          - console
+          - container-registry
+          - iam
+          - infra
+          - worker-audit-logging
+          - webhook
+          - websocket-server
+          - message-office
+          - tenant-agent
+
+          - gateway # nodejs process
+
+    runs-on: ubuntu-latest
+    name: kloudlite API
+    env:
+      SUBMODULE: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.app}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: true
+
+      - name: Build & Push Container Images
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          ls -al .
+
+          set +e
+          image="ghcr.io/${{ github.repository }}/$SUBMODULE/${{ matrix.app }}:$IMAGE_TAG"
+          echo "image is $image"
+          docker manifest inspect $image
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          pushd apps/${{ matrix.app }}
+          task container:build-and-push Image="$image"
+          popd
+
+          popd
+
+  operator-go-modules-cache:
+    runs-on: ubuntu-latest
+    name: Operator go modules cache
+    env:
+      SUBMODULE: operator
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          enable_task: false
+          enable_upx: false
+
+          enable_docker: false
+
+      - name: Setup Go Modules Cache
+        shell: bash
+        run: |+
+          pushd $SUBMODULE
+          go mod download
+          popd
+
+  operator:
+    needs: operator-go-modules-cache
+    strategy:
+      matrix:
+        name:
+          - platform
+          - agent
+          - wireguard
+
+          - helm-charts
+          - helm-job-runner
+        include:
+          - name: platform
+            build_dir: cmd/platform-operator
+          - name: agent
+            build_dir: cmd/agent-operator
+          - name: wireguard
+            build_dir: operators/wireguard
+
+          - name: helm-charts
+            build_dir: operators/helm-charts
+          - name: helm-job-runner
+            image_prefix: "workers"
+            build_dir: operators/helm-charts/needs-images/helm-job-runner
+    runs-on: ubuntu-latest
+    name: kloudlite operator
+    env:
+      SUBMODULE: operator
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: true
+
+      - name: Build & Push Container Images
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}:$IMAGE_TAG
+          if [ ! -z "${{ matrix.image_prefix }}" ]; then
+            image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.image_prefix}}/${{matrix.name}}:$IMAGE_TAG
+          fi
+          echo "building image: $image"
+
+          docker manifest inspect $image
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          task container:build-and-push Image="$image"
+          # task build Out=$PWD/.github/workflows/container-build/app CWD=${{matrix.build_dir}}
+          #
+          # pushd .github/workflows/container-build
+          # upx ./app
+          # task go-container-build Image="$image_name:$IMAGE_TAG"
+          # popd
+
+          popd
+
+  infrastructure-as-code-go-modules-cache:
+    runs-on: ubuntu-latest
+    name: IAC go modules cache
+    env:
+      SUBMODULE: infrastructure-as-code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          enable_task: false
+          enable_upx: false
+
+          enable_docker: false
+
+      - name: Setup Go Modules Cache
+        shell: bash
+        run: |+
+          pushd $SUBMODULE
+          go mod download
+          popd
+
+  infrastructure-as-code:
+    needs: infrastructure-as-code-go-modules-cache
+    strategy:
+      matrix:
+        name:
+          # - iac-job
+          # - aws-spot-k3s-terminator
+          - k3s-runner
+        include:
+          # - name: iac-job
+          #   build_dir: .
+          #   container_image: true
+          #
+          # - name: aws-spot-k3s-terminator
+          #   build_dir: cmd/aws-spot-k3s-terminator
+          #   container_image: true
+
+          - name: k3s-runner
+            build_dir: cmd/k3s-runner
+            github_release: true
+
+    runs-on: ubuntu-latest
+    name: IAC
+    env:
+      SUBMODULE: infrastructure-as-code
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: ${{ matrix.container_image }}
+
+      - name: Build & Push Image
+        if: matrix.container_image
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}:$IMAGE_TAG
+          echo "building image: $image"
+
+          docker manifest inspect $image
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          docker buildx build -t $image . --push
+          popd
+
+      - name: Release Artifact
+        if: matrix.github_release
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+          echo "building ${{ matrix.name }}"
+          task build
+
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_RELEASE/k3s" > bin/k3s
+
+          echo "k3s_runner_path=$PWD/bin/*" >> $GITHUB_ENV
+
+          popd
+          popd
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        if: matrix.github_release
+        with:
+          name: k3s-runner
+          path: ${{ env.k3s_runner_path }}
+
+  github_release:
+    needs:
+      - api
+      - operator
+      - infrastructure-as-code
+    runs-on: ubuntu-latest
+    name: Creating a Github Release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ci-artifacts
+
+      - run: |+
+          ls ci-artifacts/*
+
+      - name: Create Release Tag from branch name
+        id: gitref_branch
+        if: startsWith(github.ref, 'refs/heads/release')
+        shell: bash
+        run: |
+          set +e
+          RELEASE_TAG=${GITHUB_REF#refs/heads/release-}
+          echo "$RELEASE_TAG" | grep -i '\-nightly$'
+          if [ $? -ne 0 ]; then
+            RELEASE_TAG="$RELEASE_TAG-nightly"
+          fi
+          set -e
+
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
+          echo "override_release_assets=true" >> $GITHUB_ENV
+
+      - name: Create Release Tag from git tag
+        if: startsWith(github.ref, 'refs/tags/')
+        id: gitref_tag
+        shell: bash
+        run: |
+          RELEASE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+
+          echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
+          echo "override_release_assets=false" >> $GITHUB_ENV
+
+      - name: Github Release
+        uses: ./.github/actions/github-release/
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_tag: ${{ env.release_tag }}
+          override_release_assets: ${{ env.override_release_assets }}
+          release_title: "kloudlite release %s"
+          working_dir: "ci-artifacts"
+          files: |+
+            **
