@@ -283,7 +283,7 @@ func (g *grpcServer) processError(ctx context.Context, accountName string, clust
 }
 
 // GetAccessToken implements messages.MessageDispatchServiceServer
-func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetClusterTokenIn) (*messages.GetClusterTokenOut, error) {
+func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetAccessTokenIn) (*messages.GetAccessTokenOut, error) {
 	g.logger.Infof("request received for cluster-token (%q) exchange", msg.ClusterToken)
 
 	ct, err := g.domain.GetClusterToken(ctx, msg.AccountName, msg.ClusterName)
@@ -297,7 +297,7 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 	s := encodeAccessToken(msg.AccountName, msg.ClusterName, msg.ClusterToken, g.ev.TokenHashingSecret)
 	g.logger.Infof("SUCCESSFUL cluster-token exchange for account=%q, cluster=%q", msg.ClusterToken, msg.AccountName, msg.ClusterName)
 
-	return &messages.GetClusterTokenOut{
+	return &messages.GetAccessTokenOut{
 		AccessToken: s,
 	}, nil
 }
