@@ -1,0 +1,15 @@
+[submodule "helm-charts"]
+	path = helm-charts
+	url = git@github.com:kloudlite/helm-charts
+[submodule "operator"]
+	path = operator
+	url = git@github.com:kloudlite/operator
+[submodule "api"]
+	path = api
+	url = git@github.com:kloudlite/api
+[submodule "kubelet-metrics-reexporter"]
+	path = kubelet-metrics-reexporter
+	url = git@github.com:kloudlite/kubelet-metrics-reexporter
+[submodule "infrastructure-as-code"]
+	path = infrastructure-as-code
+	url = git@github.com:kloudlite/infrastructure-as-code
