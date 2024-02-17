@@ -1,0 +1,12 @@
+version: 3
+
+tasks:
+  build:
+    vars:
+      Containerfile: ./Containerfile
+      Dir: ./
+    preconditions:
+      - sh: '[ -n "{{.Image}}" ]'
+        msg: var Image must have a value
+    cmds:
+      - echo docker buildx build -f {{.Containerfile}} -t {{.Image}} {{.Dir}} {{.BuildArgs}} --push

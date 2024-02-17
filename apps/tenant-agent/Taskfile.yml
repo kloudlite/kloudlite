@@ -1,24 +1,15 @@
 version: 3
 
+vars:
+  app: tenant-agent
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
+
 tasks:
   vector:proto:
     cmds:
       - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./internal/proto/*.proto
-
-  build:
-    env:
-      GOOS: linux
-      GOARCH: amd64
-      CGO_ENABLED: 0
-    vars:
-      BuiltAt:
-        sh: date | sed 's/\s/_/g'
-
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-    cmds:
-      - go build -ldflags="-s -w -X 'github.com/kloudlite/api/common.BuiltAt={{.BuiltAt}}'" -o {{.Out}}
 
   run:
     dotenv:
@@ -26,23 +17,17 @@ tasks:
     cmds:
       - go run . --dev
 
-  local-build:
-    preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      Name: tenant-agent
-      Image: ghcr.io/kloudlite/api/{{.Name}}:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    silent: true
+  build:
     cmds:
-      - |+
-        task build Out=bin/{{.Name}}
-        echo "[#] building container image {{.Image}}"
-        podman buildx build -f ./Containerfile.local --build-context local-builder=bin --build-arg binpath=./{{.Name}} -t {{.Image}} .
-        echo "[#] pushing container image {{.Image}}"
-        podman push {{.Image}}
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
 
