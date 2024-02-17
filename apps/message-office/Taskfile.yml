@@ -1,7 +1,10 @@
 version: 3
 
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/api"
+  app: message-office
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
 
 tasks:
   run:
@@ -14,42 +17,22 @@ tasks:
     cmds:
       - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./internal/app/proto/*.proto
 
-
-  build:
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    vars:
-      BuiltAt:
-        sh: date | sed 's/\s/_/g'
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-    cmds:
-      - go build -ldflags="-s -w -X 'kloudlite.io/common.BuiltAt={{.BuiltAt}}'" -o {{.Out}}
-      - upx {{.Out}}
-
   gql:
     dir: internal/app
     cmds:
       - go run github.com/99designs/gqlgen generate
 
-  local-build:
-    preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      APP: message-office
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
-    silent: true
+  build:
     cmds:
-      - |+
-        tDir=$(mktemp -d)
-        binpath="{{.APP}}"
-        task build Out=$tDir/$binpath
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
 
-        echo "[#] building container image"
-        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-arg binpath="$binpath" --build-context local-builder=${tDir}
-        echo "[#] pushing container image"
-        podman push {{.IMAGE}}
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+
