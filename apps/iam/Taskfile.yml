@@ -1,35 +1,18 @@
 version: 3
 
-dotenv:
-  - .secrets/.env
-
 includes:
   grpc:
     taskfile: ../../grpc-interfaces/Taskfile.yml
     dir: ../../grpc-interfaces/
+  go: ../../.tools/taskfiles/go-build.yml
 
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/api"
+  app: iam
 
 tasks:
   proto:
     cmds:
       - task: grpc:build
-
-  build:
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    vars:
-      BuiltAt:
-        sh: date | sed 's/\s/_/g'
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-    cmds:
-      - go build -ldflags="-s -w -X kloudlite.io/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
-      - upx {{.Out}}
 
   run:
     dotenv:
@@ -37,19 +20,17 @@ tasks:
     cmds:
       - go run ./main.go
 
-  local-build:
-    vars:
-      APP: iam
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
-    preconditions:
-      - sh: '[[ -n "{{.Tag}}" ]]'
-        msg: 'var Tag must have a value'
-    silent: true
+  build:
     cmds:
-      - |+
-        tdir=$(mktemp -d)
-        task build Out=$tdir/{{.APP}}
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
 
-        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
-        podman push {{.IMAGE}}
-        rm -rf $tdir
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+
