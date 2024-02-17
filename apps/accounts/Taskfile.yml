@@ -1,10 +1,10 @@
 version: "3"
 
-dotenv:
-  - .secrets/env
-
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+  app: accounts
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
 
 tasks:
   gql:
@@ -12,21 +12,6 @@ tasks:
     cmds:
       - go run github.com/99designs/gqlgen generate
       - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
-
-  build:
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    vars:
-      BuiltAt:
-        sh: date | sed 's/\s/_/g'
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-    cmds:
-      - go build -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
-      - upx {{.Out}}
 
   run:
     dotenv:
@@ -48,34 +33,17 @@ tasks:
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
-  docker-build:
-    vars:
-      APP: finance
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    preconditions:
-      - sh: '[[ -n "{{.Tag}}" ]]'
-        msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
+  build:
     cmds:
-      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
-      - docker push {{.IMAGE}}
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
 
-  local-build:
+  container:build-and-push:
     preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      Dockerfile: "./Containerfile.local"
-      APP: accounts
-      Image: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - |+
-        dir=$(mktemp -d)
-        task build Out=$dir/{{.APP}}
-
-        podman buildx build -t {{.Image}} -f {{.Dockerfile}} . --build-context builder=$dir --build-arg APP={{.APP}}
-        podman push {{.Image}}
-        rm -rf $dir
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
 

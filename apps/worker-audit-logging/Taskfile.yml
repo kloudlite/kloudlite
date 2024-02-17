@@ -1,49 +1,22 @@
 version: 3
 
+vars:
+  app: worker-audit-logging
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
+
 tasks:
   build:
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
-      - upx {{.Out}}
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
 
-  local-build:
+  container:build-and-push:
     preconditions:
-        - sh: '[ -n "{{.EnvName}}" ]'
-          msg: 'var EnvName must have a value'
-        - sh: '[ -n "{{.Tag}}" ]'
-          msg: 'var Tag must have a value'
-    vars:
-      APP: worker-audit-logging
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    silent: true
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
-        tDir=$(mktemp -d)
-
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
-
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder --chown=1001 ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
-        docker push {{.IMAGE}}
-        rm -rf $tDir
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
