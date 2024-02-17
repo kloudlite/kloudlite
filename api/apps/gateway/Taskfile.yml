@@ -1,23 +1,21 @@
 version: 3
 
-dotenv:
-- "./.secrets/env"
-
 vars:
-  ImagePrefix: ghcr.io/kloudlite/platform/apis
+  app: gateway
 
 tasks:
   dev:
+    dotenv:
+      - "./.secrets/env"
     interactive: true
     cmds:
       - npm start
-  docker-build:
-    vars:
-      Image: "{{.ImagePrefix}}/gateway:{{.Tag}}"
+
+  container:build-and-push:
     preconditions:
-      - sh: test -n '{{.Tag}}'
-        msg: 'var Tag must be defined'
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
-      - podman build . -t  {{.Image}}
-      - podman push {{.Image}}
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --push
+
 

@@ -1,0 +1,4 @@
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG BINARY
+COPY ./bin/${BINARY} ./container-registry
+ENTRYPOINT ["./container-registry"]

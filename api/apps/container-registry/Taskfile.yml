@@ -1,10 +1,10 @@
 version: "3"
 
-dotenv:
-  - .secrets/env
-
 vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+  app: container-registry
+
+includes:
+  go: ../../.tools/taskfiles/go-build.yml
 
 tasks:
   gql:
@@ -12,21 +12,6 @@ tasks:
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
       - gofmt -w -d -r '"errors" -> "github.com/kloudlite/api/pkg/errors"' graph/*.resolvers.go
-
-  build:
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-    vars:
-      BuiltAt:
-        sh: date | sed 's/\s/_/g'
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-    cmds:
-      - go build -v -ldflags="-s -w -X github.com/kloudlite/api/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
-      - upx {{.Out}}
 
   k8s-schema:
     cmds:
@@ -54,47 +39,25 @@ tasks:
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
-  docker-build:
-    vars:
-      APP: container-registry
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    preconditions:
-      - sh: '[[ -n "{{.Tag}}" ]]'
-        msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
-    cmds:
-      - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
-      - docker push {{.IMAGE}}
-
-
-  local-build:
-    preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
-    vars:
-      APP: container-registry
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
-      BUILDER: podman
-    silent: true
-    cmds:
-      - |+
-        tDir=$(mktemp -d)
-
-        echo "building application ..."
-        task build Out=$tDir/{{.APP}}
-
-        {{.BUILDER}} buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
-        {{.BUILDER}} push {{.IMAGE}}
-        rm -rf $tDir
-
   run:
-    vars:
-      Name: console
     dotenv:
       - .secrets/env
     env:
       CGO_ENABLED: 0
     cmds:
       - go run ./main.go --dev
+
+  build:
+    cmds:
+      - task: go:build 
+        vars: 
+          Out: ./bin/{{.app}}
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
+
