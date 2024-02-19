@@ -1,41 +1,42 @@
 import { Check } from '@jengaicons/react';
-import React, {
-  Children,
-  ReactElement,
-  ReactNode,
-  useRef,
-  useState,
-} from 'react';
+import React, { Children, ReactElement, ReactNode, useState } from 'react';
 import { cn } from '~/components/utils';
 
 interface IUseMultiStepProgress {
   defaultStep: number;
   totalSteps: number;
+  onChange?: (step: number) => void;
 }
 export const useMultiStepProgress = ({
   defaultStep = 1,
   totalSteps = 1,
+  onChange,
 }: IUseMultiStepProgress) => {
   const [currentIndex, setCurrentIndex] = useState(defaultStep);
 
   const nextStep = () => {
     if (currentIndex < totalSteps) {
+      onChange?.(currentIndex + 1);
       setCurrentIndex((prev) => prev + 1);
     }
   };
   const prevStep = () => {
     if (currentIndex > 1) {
+      onChange?.(currentIndex - 1);
       setCurrentIndex((prev) => prev - 1);
     }
   };
 
   const jumpStep = (step: number) => {
+    onChange?.(step);
     setCurrentIndex(step);
   };
 
   const reset = () => {
+    onChange?.(1);
     setCurrentIndex(1);
   };
+
   return { currentStep: currentIndex, nextStep, prevStep, reset, jumpStep };
 };
 
@@ -45,9 +46,10 @@ type IProgressTrackerItem = {
   label: ReactNode;
   children?: ReactNode;
   onClick?: () => void;
-  hasBorder: boolean;
   index: number;
-  noJump?: boolean;
+  noJump?: (step: number) => boolean;
+  editable?: boolean;
+  step: number;
 };
 
 function ProgressTrackerItem(
@@ -59,17 +61,19 @@ function ProgressTrackerItem(
     completed = false,
     label,
     onClick,
-    hasBorder,
     index,
     noJump,
+    editable,
+    step,
   } = props;
-
   return (
     <div
       className={cn(
-        'pl-3xl  border-dashed flex flex-col -mt-[10px]',
-        { 'border-l': hasBorder || active },
-        completed ? 'border-l-border-primary' : 'border-l-icon-disabled'
+        'pl-5xl  border-dashed flex flex-col -mt-[10px] border-l-icon-disabled',
+        {
+          '[&:not(:last-child)]:border-l': !active,
+          'border-l': active,
+        }
       )}
     >
       <div>
@@ -78,12 +82,17 @@ function ProgressTrackerItem(
           aria-label={`step-${index}`}
           onClick={onClick}
           className={cn(
-            'border-2 border-surface-basic-default headingXs box-content w-3xl h-3xl rounded-full flex items-center justify-center absolute left-0 -ml-[12px]',
-            completed
-              ? 'bg-surface-primary-default text-text-on-primary'
-              : 'bg-surface-primary-selected',
-            active && !completed ? 'text-text-primary' : 'text-text-disabled',
-            onClick && !noJump ? 'cursor-pointer' : 'cursor-default'
+            'border-2 border-surface-basic-default headingXs box-content w-3xl h-3xl rounded-full flex items-center justify-center absolute left-0 ',
+            onClick && !noJump?.(step) ? 'cursor-pointer' : 'cursor-default',
+            {
+              'bg-surface-primary-default text-text-on-primary':
+                !!completed && !!editable,
+              'bg-icon-disabled text-text-on-primary': !!completed && !editable,
+              'bg-surface-basic-active text-text-disabled':
+                !completed && !active,
+              'bg-surface-primary-selected text-text-default':
+                active && !completed,
+            }
           )}
         >
           {completed ? <Check size={12} /> : index}
@@ -91,8 +100,11 @@ function ProgressTrackerItem(
         <span
           className={cn(
             '-mt-[14px] headingMd',
-            !noJump ? 'cursor-pointer select-none' : '',
-            !active || completed ? 'text-text-disabled' : 'text-text-default'
+            !noJump?.(step) ? 'cursor-pointer select-none' : 'cursor-default',
+            {
+              'text-text-default': !completed || (!!completed && !!editable),
+              'text-text-disabled': !!completed && !editable,
+            }
           )}
           onClick={onClick}
         >
@@ -109,8 +121,15 @@ interface IStep {
   label: ReactNode;
   step: number;
   className?: string;
+  completed?: boolean;
 }
-const Step = ({ children, step, className, label: _label }: IStep) => {
+const Step = ({
+  children,
+  step,
+  className,
+  label: _label,
+  completed: _completed,
+}: IStep) => {
   return (
     <div className={className} data-step={step}>
       {children}
@@ -122,13 +141,15 @@ interface IMultiStepProgress {
   children: ReactElement<IStep> | ReactElement<IStep>[];
   currentStep: number;
   jumpStep: (step: number) => void;
-  noJump?: boolean;
+  noJump?: (step: number) => boolean;
+  editable?: boolean;
 }
 const Root = ({
   children,
   currentStep,
   jumpStep,
   noJump,
+  editable = true,
 }: IMultiStepProgress) => {
   let child = children;
   // @ts-ignore
@@ -138,26 +159,26 @@ const Root = ({
   }
 
   return (
-    <div className="flex flex-col relative [counter-reset:steps]">
+    <div className="pl-[12px] flex flex-col relative [counter-reset:steps]">
       {Children.map(child, (ch, index) => {
         return (
           <ProgressTrackerItem
             {...ch}
             index={index + 1}
             label={ch.props.label}
-            hasBorder={ch.props.step <= currentStep}
+            step={ch.props.step}
             active={currentStep === ch.props.step}
-            noJump={noJump}
+            noJump={noJump || (() => !(index + 1 < currentStep))}
+            editable={editable}
+            completed={currentStep > ch.props.step}
             onClick={() => {
-              if (index + 1 < currentStep) {
-                if (!noJump) {
-                  jumpStep(index + 1);
-                }
+              if (noJump ? !noJump?.(ch.props.step) : index + 1 < currentStep) {
+                jumpStep(index + 1);
               }
             }}
           >
             {currentStep === ch.props.step ? (
-              <div className="py-3xl">{ch.props.children}</div>
+              <div className="pt-3xl pb-5xl">{ch.props.children}</div>
             ) : null}
           </ProgressTrackerItem>
         );

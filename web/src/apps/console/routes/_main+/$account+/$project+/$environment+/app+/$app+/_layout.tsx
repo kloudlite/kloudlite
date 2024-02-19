@@ -26,16 +26,10 @@ const ProjectTabs = () => {
       }}
       tabs={[
         {
-          label: 'Overview',
-          to: '/overview',
-          value: '/overview',
+          label: 'Logs & Metrics',
+          to: '/logs-n-metrics',
+          value: '/logs-n-metrics',
         },
-        {
-          label: 'Logs',
-          to: '/logs',
-          value: '/logs',
-        },
-
         {
           label: 'Settings',
           to: '/settings/general',

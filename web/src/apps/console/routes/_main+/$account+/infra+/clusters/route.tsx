@@ -7,7 +7,6 @@ import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
-import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -130,33 +129,31 @@ const Clusters = () => {
 
         const { pageInfo, totalCount } = clustersData;
         return (
-          <div className="flex flex-col gap-6xl">
-            <Wrapper
-              secondaryHeader={{
-                title: 'Clusters',
-                action: clusters.length > 0 && (
-                  <Button
-                    content="Create cluster"
-                    variant="primary"
-                    prefix={<Plus />}
-                    LinkComponent={Link}
-                    to={`/${account}/new-cluster`}
-                  />
-                ),
-              }}
-              empty={getEmptyState({
-                clustersCount: clusters.length,
-                cloudProviderSecretsCount: secretsCount,
-              })}
-              pagination={{
-                pageInfo,
-                totalCount,
-              }}
-              tools={<Tools />}
-            >
-              <ClusterResources items={clusters} />
-            </Wrapper>
-          </div>
+          <Wrapper
+            secondaryHeader={{
+              title: 'Clusters',
+              action: clusters.length > 0 && (
+                <Button
+                  content="Create cluster"
+                  variant="primary"
+                  prefix={<Plus />}
+                  LinkComponent={Link}
+                  to={`/${account}/new-cluster`}
+                />
+              ),
+            }}
+            empty={getEmptyState({
+              clustersCount: clusters.length,
+              cloudProviderSecretsCount: secretsCount,
+            })}
+            pagination={{
+              pageInfo,
+              totalCount,
+            }}
+            tools={<Tools />}
+          >
+            <ClusterResources items={clusters} />
+          </Wrapper>
         );
       }}
     </LoadingComp>

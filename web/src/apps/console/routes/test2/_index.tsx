@@ -1,34 +1,18 @@
-import LogComp from '~/console/components/logger';
-import axios from "axios";
-import {useEffect} from "react";
-import https from "https";
+import { useEffect } from 'react';
+import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
 
 const App = () => {
+  const resp = useSocketLogs({
+    account: 'ab-641330',
+    cluster: 'ab-cluster-3',
+    trackingId: 'app-3ez2fpr-3oc8gqjib-ii5-pbat6d',
+  });
 
-    useEffect(() => {
-        (async()=>{
-            try{
-                var axios1 =await axios({
-                    url:'http://10.13.0.1:17171',
+  useEffect(() => {
+    console.log(resp);
+  }, [resp]);
 
-                });
-
-                console.log((axios1))
-            }catch(err){
-                // console.log(err.message)
-            }
-
-        })()
-    }, []);
-  return (
-    <div className="flex items-center justify-center h-screen w-screen">
-     kk
-    </div>
-  );
+  return <div>Logs</div>;
 };
 
-const Logs = () => {
-  return <App />;
-};
-
-export default Logs;
+export default App;

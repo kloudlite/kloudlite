@@ -273,7 +273,7 @@ const Root = ({
       {loading && (
         <div
           className={cn(
-            'flex items-center justify-center',
+            'flex items-center justify-center h-full',
             {
               'rounded border border-border-default shadow-button': !plain,
             },

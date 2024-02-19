@@ -75,6 +75,12 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
           echo "OVERRIDE_PUSHED_IMAGE=false" >> $GITHUB_ENV
 
+      - name: Build
+        if: "!startsWith(github.ref, 'refs/heads/release-') && !startsWith(github.ref, 'refs/tags/')"
+        run: |
+          image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:test"
+
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
         run: |
@@ -92,12 +98,3 @@ jobs:
           
           docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:$IMAGE_TAG" --push
 
-
-#      - name: Build & Push Image
-#        if: startsWith(github.ref, 'refs/heads/release')
-#        run: |
-#          branch_name=${GITHUB_REF#refs/heads/}
-#          version_string="v${branch_name#release-}-nightly"
-#
-#          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:$version_string --push
-#          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t ghcr.io/kloudlite/web/${{matrix.app}}:commit-${GITHUB_SHA} --push

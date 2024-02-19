@@ -1,5 +1,5 @@
 /* eslint-disable no-prototype-builtins */
-import { Params } from '@remix-run/react';
+// import { Params } from '@remix-run/react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
@@ -13,9 +13,9 @@ type IparseNodes<T> = {
   edges: Array<{ node: T }>;
 };
 
-interface IParamsCtx {
-  params: Params<string>;
-}
+// interface IParamsCtx {
+//   params: Params<string>;
+// }
 
 // export const getProjectQuery = (ctx: IParamsCtx): ProjectId => {
 //   const { project } = ctx.params;
@@ -47,10 +47,10 @@ export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
 
 type IparseName =
   | {
-    metadata?: {
-      name: string;
-    };
-  }
+      metadata?: {
+        name: string;
+      };
+    }
   | undefined
   | null;
 
@@ -74,10 +74,10 @@ export const parseName = (resource: IparseName, ensure = false) => {
 
 type IparseNamespace =
   | {
-    metadata: {
-      namespace: string;
-    };
-  }
+      metadata: {
+        namespace: string;
+      };
+    }
   | undefined
   | null;
 
@@ -86,10 +86,10 @@ export const parseNamespace = (resource: IparseNamespace) =>
 
 type IparseTargetNs =
   | {
-    spec?: {
-      targetNamespace: string;
-    };
-  }
+      spec?: {
+        targetNamespace: string;
+      };
+    }
   | undefined
   | null;
 

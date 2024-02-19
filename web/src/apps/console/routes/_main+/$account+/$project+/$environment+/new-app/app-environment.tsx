@@ -33,7 +33,7 @@ const AppEnvironment = () => {
   ];
 
   return (
-    <FadeIn notForm className="py-3xl">
+    <FadeIn notForm>
       <div className="flex flex-col gap-xl ">
         <ExtendedFilledTab
           value={envPage}
@@ -55,13 +55,13 @@ const AppEnvironment = () => {
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex flex-row gap-xl justify-end items-center">
+      <div className="flex flex-row gap-xl items-center">
         <Button
           content="Compute"
           prefix={<ArrowLeft />}
           variant="outline"
           onClick={() => {
-            setPage('Compute');
+            setPage(2);
           }}
         />
 
@@ -72,8 +72,8 @@ const AppEnvironment = () => {
           suffix={<ArrowRight />}
           variant="primary"
           onClick={() => {
-            setPage('Network');
-            markPageAsCompleted('Environment');
+            setPage(4);
+            markPageAsCompleted(3);
           }}
         />
       </div>

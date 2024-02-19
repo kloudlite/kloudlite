@@ -87,6 +87,7 @@ const baseUrls = () => {
     baseUrl: bUrl,
     githubAppName: 'kloudlite-dev',
     socketUrl: `wss://websocket.${bUrl}`,
+    observeUrl: `https://observe.${bUrl}`,
   };
 };
 
@@ -99,6 +100,7 @@ const defaultConfig = {
   githubAppName: baseUrls().githubAppName,
   socketUrl: baseUrls().socketUrl,
   registryHost: baseUrls().registryHost,
+  observeUrl: baseUrls().observeUrl,
   getServerEnv,
   getClientEnv,
 };

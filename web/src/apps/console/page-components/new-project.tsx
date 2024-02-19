@@ -28,6 +28,7 @@ const NewProject = () => {
 
   const params = useParams();
   const { a: accountName } = params;
+  const rootUrl = `/${accountName}/projects`;
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
@@ -68,7 +69,7 @@ const NewProject = () => {
             throw e[0];
           }
           toast.success('project created successfully');
-          navigate(`/${accountName}/projects`);
+          navigate(rootUrl);
         } catch (err) {
           handleError(err);
         }
@@ -102,7 +103,7 @@ const NewProject = () => {
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
         backButton={{
           content: 'Back to projects',
-          to: `/${accountName}/projects`,
+          to: rootUrl,
         }}
       >
         <MultiStepProgress.Root currentStep={currentStep} jumpStep={jumpStep}>

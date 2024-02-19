@@ -1,15 +1,15 @@
 /* eslint-disable react/destructuring-assignment */
-import { NumberInput, TextInput } from '~/components/atoms/input';
+import { NumberInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
-import { IdSelector } from '~/console/components/id-selector';
+import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IBuildCaches } from '~/console/server/gql/queries/build-caches-queries';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
@@ -19,81 +19,76 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
-  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
-    useForm({
-      initialValues: isUpdate
-        ? {
-            name: props.data.name,
-            displayName: props.data.displayName,
-            volumeSize: props.data.volumeSizeInGB,
-          }
-        : {
-            name: '',
-            displayName: '',
-            volumeSize: 0,
-          },
-      validationSchema: Yup.object({
-        name: Yup.string().required(),
-        displayName: Yup.string().required(),
-        volumeSize: Yup.number().required(),
-      }),
-      onSubmit: async (val) => {
-        try {
-          if (!isUpdate) {
-            const { errors: e } = await api.createBuildCache({
-              buildCacheKey: {
-                displayName: val.displayName,
-                name: val.name,
-                volumeSizeInGB: val.volumeSize,
-              },
-            });
-            if (e) {
-              throw e[0];
-            }
-          } else {
-            const { errors: e } = await api.updateBuildCaches({
-              crUpdateBuildCacheKeyId: props.data.id,
-              buildCacheKey: {
-                displayName: val.displayName,
-                name: props.data.name,
-                volumeSizeInGB: val.volumeSize,
-              },
-            });
-            if (e) {
-              throw e[0];
-            }
-          }
-          // resetValues();
-          toast.success(
-            `Build cache ${isUpdate ? 'updated' : 'created'} successfully`
-          );
-          setVisible(false);
-          reloadPage();
-        } catch (err) {
-          handleError(err);
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: isUpdate
+      ? {
+          name: props.data.name,
+          displayName: props.data.displayName,
+          volumeSize: props.data.volumeSizeInGB,
+          isNameError: false,
         }
-      },
-    });
+      : {
+          name: '',
+          displayName: '',
+          volumeSize: 0,
+          isNameError: false,
+        },
+    validationSchema: Yup.object({
+      name: Yup.string().required(),
+      displayName: Yup.string().required(),
+      volumeSize: Yup.number().required(),
+    }),
+    onSubmit: async (val) => {
+      try {
+        if (!isUpdate) {
+          const { errors: e } = await api.createBuildCache({
+            buildCacheKey: {
+              displayName: val.displayName,
+              name: val.name,
+              volumeSizeInGB: val.volumeSize,
+            },
+          });
+          if (e) {
+            throw e[0];
+          }
+        } else {
+          const { errors: e } = await api.updateBuildCaches({
+            crUpdateBuildCacheKeyId: props.data.id,
+            buildCacheKey: {
+              displayName: val.displayName,
+              name: props.data.name,
+              volumeSizeInGB: val.volumeSize,
+            },
+          });
+          if (e) {
+            throw e[0];
+          }
+        }
+        // resetValues();
+        toast.success(
+          `Build cache ${isUpdate ? 'updated' : 'created'} successfully`
+        );
+        setVisible(false);
+        reloadPage();
+      } catch (err) {
+        handleError(err);
+      }
+    },
+  });
   return (
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
-          <TextInput
-            value={values.displayName}
+          <NameIdView
+            displayName={values.displayName}
+            name={values.name}
+            handleChange={handleChange}
+            isUpdate={isUpdate}
             label="Name"
-            onChange={handleChange('displayName')}
-            error={!!errors.displayName}
-            message={errors.displayName}
+            errors={errors.name}
+            resType="project"
+            nameErrorLabel="isNameError"
           />
-          {!isUpdate && (
-            <IdSelector
-              resType="username"
-              onChange={(v) => {
-                handleChange('name')(dummyEvent(v));
-              }}
-              name={values.displayName}
-            />
-          )}
           <NumberInput
             value={values.volumeSize}
             min={0}

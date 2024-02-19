@@ -33,13 +33,13 @@ import { TitleBox } from '../components/raw-wrapper';
 
 type props =
   | {
-      providerSecrets: IProviderSecrets;
-      cloudProvider?: IProviderSecret;
-    }
+    providerSecrets: IProviderSecrets;
+    cloudProvider?: IProviderSecret;
+  }
   | {
-      providerSecrets?: IProviderSecrets;
-      cloudProvider: IProviderSecret;
-    };
+    providerSecrets?: IProviderSecrets;
+    cloudProvider: IProviderSecret;
+  };
 
 export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
@@ -65,6 +65,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }));
 
   const { a: accountName } = useParams();
+  const rootUrl = `/${accountName}/infra/clusters`;
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: isOnboarding ? 4 : 1,
@@ -75,11 +76,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const [selectedProvider, setSelectedProvider] = useState<
     | {
-        label: string;
-        value: string;
-        provider: ExtractNodeType<IProviderSecrets>;
-        render: () => JSX.Element;
-      }
+      label: string;
+      value: string;
+      provider: ExtractNodeType<IProviderSecrets>;
+      render: () => JSX.Element;
+    }
     | undefined
   >(options.length === 1 ? options[0] : undefined);
 
@@ -93,7 +94,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
-      vpc: '',
       name: '',
       region: 'ap-south-1' || selectedRegion?.Name,
       cloudProvider: cloudProvider
@@ -105,7 +105,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       isNameError: false,
     },
     validationSchema: Yup.object({
-      vpc: Yup.string(),
       region: Yup.string().trim().required('Region is required'),
       cloudProvider: Yup.string().trim().required('Cloud provider is required'),
       name: Yup.string().trim().required('Name is required'),
@@ -151,7 +150,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             throw e[0];
           }
           toast.success('Cluster created successfully');
-          navigate(`/${accountName}/infra/clusters`);
+          navigate(rootUrl);
         } catch (err) {
           handleError(err);
         }
@@ -173,7 +172,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const getView = () => {
     return (
-      <div className="flex flex-col gap-3xl py-3xl">
+      <div className="flex flex-col gap-3xl">
         <TitleBox
           subtitle="A cluster is a group of interconnected elements working together as a
           single unit."
@@ -253,15 +252,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 setSelectedAvailabilityMode(availabilityMode);
               }}
             />
-
-            <TextInput
-              label="VPC"
-              size="lg"
-              onChange={handleChange('vpc')}
-              value={values.vpc}
-              error={!!errors.vpc}
-              message={errors.vpc}
-            />
           </div>
         </div>
         {isOnboarding ? (
@@ -305,16 +295,17 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         {...(isOnboarding
           ? {}
           : {
-              backButton: {
-                content: 'Back to clusters',
-                to: `/${accountName}/infra/clusters`,
-              },
-            })}
+            backButton: {
+              content: 'Back to clusters',
+              to: rootUrl,
+            },
+          })}
       >
         <MultiStepProgress.Root
-          noJump={isOnboarding}
+          noJump={(step) => isOnboarding || !(step < currentStep)}
           currentStep={currentStep}
           jumpStep={jumpStep}
+          editable={!isOnboarding}
         >
           {!isOnboarding ? (
             <>
@@ -328,7 +319,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                     jumpStep(1);
                   }}
                 >
-                  <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+                  <div className="flex flex-col p-xl gap-lg rounded border border-border-default flex-1 overflow-hidden">
                     <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
                       <div className="bodyMd-semibold text-text-default">
                         Cluster name

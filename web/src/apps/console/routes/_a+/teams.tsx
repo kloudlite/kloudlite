@@ -70,9 +70,10 @@ const Accounts = () => {
     user: UserMe;
   }>();
 
-  const [isHandling, setIsHandling] = useState<
-    'none' | 'accepting' | 'rejecting'
-  >('none');
+  const [isHandling, setIsHandling] = useState<{
+    id: string;
+    state: 'none' | 'accepting' | 'rejecting';
+  }>({ id: '', state: 'none' });
 
   const { email } = user;
 
@@ -134,7 +135,7 @@ const Accounts = () => {
     } catch (err) {
       handleError(err);
     } finally {
-      setIsHandling('none');
+      setIsHandling({ id: '', state: 'none' });
     }
   };
 
@@ -145,7 +146,7 @@ const Accounts = () => {
     accountName: string;
     inviteToken: string;
   }) => {
-    setIsHandling('accepting');
+    setIsHandling({ id: accountName, state: 'accepting' });
     await handleInvitation({
       accountName,
       inviteToken,
@@ -163,7 +164,7 @@ const Accounts = () => {
     accountName: string;
     inviteToken: string;
   }) => {
-    setIsHandling('rejecting');
+    setIsHandling({ id: accountName, state: 'rejecting' });
 
     await handleInvitation({
       accountName,
@@ -175,6 +176,7 @@ const Accounts = () => {
     });
   };
 
+  console.log('accounts', accounts, page);
   return (
     <div className="min-h-screen max-w-[1024px] bg-surface-basic-default p-10xl">
       <div className="max-w-[568px] flex flex-col gap-7xl">
@@ -193,7 +195,7 @@ const Accounts = () => {
               hasNext,
               hasPrevious,
               hasItems: accounts.length > 0 || invites.length > 0,
-              noItemsMessage: '0 teammates to invite.',
+              noItemsMessage: '0 teams',
               onNext,
               onPrev,
               header: (
@@ -203,12 +205,14 @@ const Accounts = () => {
                 </div>
               ),
             }}
-            className="shadow-button border border-border-default bg-surface-basic-default rounded min-h-[427px]"
+            className="shadow-button border border-border-default bg-surface-basic-default rounded min-h-[427px] h-[427px]"
           >
-            <List.Root plain linkComponent={Link}>
+            <List.Root
+              plain
+              linkComponent={Link}
+              loading={accounts.length > 0 && page.length === 0}
+            >
               {page.map((account, index) => {
-                // console.log('here....', account);
-
                 const name = parseName(account);
                 const { isInvite, displayName, inviteToken } = account;
                 return (
@@ -252,7 +256,10 @@ const Accounts = () => {
                                         inviteToken: inviteToken || '',
                                       });
                                     }}
-                                    loading={isHandling === 'rejecting'}
+                                    loading={
+                                      isHandling.id === displayName &&
+                                      isHandling.state === 'rejecting'
+                                    }
                                   />
                                   <Button
                                     content="Accept invitation"
@@ -263,7 +270,10 @@ const Accounts = () => {
                                         inviteToken: inviteToken || '',
                                       })
                                     }
-                                    loading={isHandling === 'accepting'}
+                                    loading={
+                                      isHandling.id === displayName &&
+                                      isHandling.state === 'accepting'
+                                    }
                                   />
                                 </div>
                               ),

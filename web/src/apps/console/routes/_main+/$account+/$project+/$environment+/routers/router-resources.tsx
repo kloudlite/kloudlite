@@ -1,6 +1,6 @@
 import { Trash, PencilLine } from '@jengaicons/react';
 import { useState } from 'react';
-import { generateKey } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
@@ -12,18 +12,19 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IRouters } from '~/console/server/gql/queries/router-queries';
 import { Link, useParams } from '@remix-run/react';
 import { listStatus } from '~/console/components/sync-status';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { toast } from '~/components/molecule/toast';
 import HandleRouter from './handle-router';
 
 const RESOURCE_NAME = 'domain';
@@ -170,6 +171,7 @@ const RouterResources = ({ items = [] }: { items: BaseType[] }) => {
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
+  const { environment, project } = useParams();
 
   const props: IResource = {
     items,
@@ -197,16 +199,21 @@ const RouterResources = ({ items = [] }: { items: BaseType[] }) => {
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!environment || !project) {
+            throw new Error('Project and Environment is required!.');
+          }
           try {
-            // const { errors } = await api.deleteDomain({
-            //   domainName: showDeleteDialog!.domainName,
-            // });
+            const { errors } = await api.deleteRouter({
+              envName: environment,
+              projectName: project,
+              routerName: parseName(showDeleteDialog),
+            });
 
-            // if (errors) {
-            //   throw errors[0];
-            // }
-            // reloadPage();
-            // toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
             setShowDeleteDialog(null);
           } catch (err) {
             handleError(err);

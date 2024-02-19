@@ -41,23 +41,15 @@ const ConsoleVPN = () => {
 
   return (
     <>
-      <LoadingComp
-        data={promise}
-        // skeletonData={{
-        //   devicesData: fake.vp
-        //     .core_listVPNDevicesForUser as any,
-        // }}
-      >
+      <LoadingComp data={promise}>
         {({ devicesData }) => {
           const devices = devicesData?.edges?.map(({ node }) => node);
-          console.log('devices', devicesData);
-
           if (!devices) {
             return null;
           }
           return (
             <Wrapper
-              header={{
+              secondaryHeader={{
                 title: 'VPN devices',
                 action: devices.length > 0 && (
                   <Button

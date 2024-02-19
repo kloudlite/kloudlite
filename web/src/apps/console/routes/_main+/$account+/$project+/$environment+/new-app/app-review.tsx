@@ -171,13 +171,13 @@ const AppReview = () => {
           })}
         </div>
       )}
-      <div className="flex flex-row gap-xl justify-end items-center">
+      <div className="flex flex-row gap-xl items-center">
         <Button
           content="Networks"
           prefix={<ArrowLeft />}
           variant="outline"
           onClick={() => {
-            setPage('Network');
+            setPage(4);
           }}
         />
 

@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { Link, useOutletContext } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import { Box } from '~/console/components/common-console-components';
 import { parseName } from '~/console/server/r-utils/common';
 import { DownloadSimple } from '@jengaicons/react';
@@ -73,7 +73,7 @@ const KubeConfigDownload = ({ cluster }: { cluster: string }) => {
 };
 
 const ClusterInfo = () => {
-  const { cluster, account } = useOutletContext<IClusterContext>();
+  const { cluster } = useOutletContext<IClusterContext>();
   const providerInfo = () => {
     const provider = cluster.spec?.cloudProvider;
     switch (provider) {
@@ -176,31 +176,31 @@ const ClusterInfo = () => {
           </span>
           <span className="bodyMd">
             Log into your account and start accessing your cluster config using
-            <code className="mx-md">kl cluster</code>command as shown below.
+            <code className="mx-md">kli</code>command as shown below.
           </span>
         </div>
-        <DetailItem
-          title="Kubectl"
-          value={
-            <CodeView
-              copy
-              data={`kl cluter --cluster=${parseName(
-                cluster
-              )} --account=${parseName(account)} -- kubectl ...`}
-            />
-          }
+
+        <CodeView
+          title="Download kli CLI to manage your infrastructure"
+          copy
+          data="curl 'https://kl.kloudlite.io/kloudlite/kl!?source=kli' | bash"
         />
-        <DetailItem
-          title="Helm"
-          value={
-            <CodeView
-              copy
-              data={`kl exec --cluster-name=${parseName(
-                cluster
-              )} --account-name=${parseName(account)} -- helm ...`}
-            />
-          }
+
+        <CodeView
+          title="Login to your account and select cluster"
+          copy
+          data="kli auth login
+kli use account
+kli use cluster
+kli status"
         />
+
+        <CodeView
+          title="Access cluster using kubectl"
+          copy
+          data="kli -- kubectl get nodes"
+        />
+        <CodeView title="Helm" copy data="kli -- helm ..." />
       </Box>
     </>
   );

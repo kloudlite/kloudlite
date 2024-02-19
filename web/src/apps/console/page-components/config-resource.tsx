@@ -224,7 +224,7 @@ const ConfigResources = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { project, workspace } = useParams();
+  const { project, environment } = useParams();
   const props: IResource = {
     items,
     hasActions,
@@ -246,14 +246,14 @@ const ConfigResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!project || !workspace) {
+          if (!project || !environment) {
             throw new Error('Project and Environment name is required!.');
           }
           try {
             const { errors } = await api.deleteConfig({
               configName: parseName(showDeleteDialog),
               projectName: project,
-              envName: workspace,
+              envName: environment,
             });
 
             if (errors) {
