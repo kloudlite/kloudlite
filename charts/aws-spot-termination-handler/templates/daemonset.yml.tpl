@@ -15,6 +15,8 @@ spec:
     spec:
       serviceAccountName: {{.Values.name}}
       nodeSelector: {{ .Values.nodeSelector | toYaml | nindent 10 }}
+      tolerations:
+        - operator: Exists
       containers:
       - name: main
         image: {{.Values.image.name}}:{{.Values.kloudliteRelease}}
