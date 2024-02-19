@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{.Values.name}}
-  namespace: kube-system
+  namespace: {{.Release.Namespace}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -15,5 +15,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{.Values.name}}
-    namespace: kube-system
+    namespace: {{.Release.Namespace}}
 ---
