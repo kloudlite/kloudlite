@@ -25,16 +25,16 @@ spec:
       env:
         # different from k8s units, suffix must be B, KiB, MiB, GiB, or TiB
         # should be ~90% of memory limit
-        GOMEMLIMIT: 1700MiB
+        GOMEMLIMIT: 2700MiB
       merge:
         # recommended limit is at least 2 CPU cores and 8Gi Memory for production JetStream clusters
         resources:
           requests:
             cpu: "1"
-            memory: 2Gi
+            memory: 3Gi
           limits:
             cpu: "1"
-            memory: 2Gi
+            memory: 3Gi
 
     config:
       cluster:

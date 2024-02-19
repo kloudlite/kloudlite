@@ -1,7 +1,7 @@
 name: "aws-spot-termination-handler"
 
 # -- kloudlite release identifier
-kloudliteRelease: v1.0.5-nightly
+kloudliteRelease: ""
 
 image:
   # -- kloudlite image repository, tag will be dervied from {{.kloudliteRelease}}

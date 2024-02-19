@@ -19,7 +19,7 @@ spec:
         - operator: Exists
       containers:
       - name: main
-        image: {{.Values.image.name}}:{{.Values.kloudliteRelease}}
+        image: {{.Values.image.name}}:{{.Values.kloudliteRelease | default .Chart.AppVersion}}
         imagePullPolicy: {{.Values.imagePullPolicy}}
         env:
          - name: NODE_NAME

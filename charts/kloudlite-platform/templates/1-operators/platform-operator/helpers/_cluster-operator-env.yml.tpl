@@ -52,4 +52,10 @@ data:
 - name: IAC_JOB_IMAGE
   value: {{.Values.operators.platformOperator.configuration.cluster.jobImage.repository}}:{{.Values.operators.platformOperator.configuration.cluster.jobImage.tag | default (include "image-tag" .) }}
 
+- name: "IAC_JOB_TOLERATIONS"
+  value: '[{"key":"kloudlite.io/nodepool.role","value":"iac","effect":"NoExecute"}]'
+
+- name: IAC_JOB_NODE_SELECTOR
+  value: '{"kloudlite.io/nodepool.role": "iac"}'
+
 {{- end -}}
