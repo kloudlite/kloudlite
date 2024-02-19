@@ -8,6 +8,8 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   replicas: {{.Values.mongo.replicas}}
+  tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 4}}
+  nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 4}}
   resources:
     cpu:
       min: 300m
@@ -25,6 +27,8 @@ metadata:
   name: {{$name}}
   namespace: {{.Release.Namespace}}
 spec:
+  tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 4}}
+  nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 4}}
   resources:
     cpu:
       min: 300m

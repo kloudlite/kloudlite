@@ -9,8 +9,11 @@ metadata:
 spec:
   chartRepoURL: https://charts.jetstack.io
   chartName: cert-manager
-  {{- /* chartVersion: v1.11.0 */}}
   chartVersion: v1.13.2
+
+  jobVars:
+    tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 8}}
+    nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 8}}
 
   values:
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
@@ -19,10 +22,9 @@ spec:
       - "--dns01-recursive-nameservers-only"
       - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
-    {{- /* tolerations: {{ include "tolerations" . | nindent 6 }} */}}
-    tolerations: {{.Values.certManager.configuration.tolerations | default list | toYaml | nindent 6 }}
-    {{- /* nodeSelector: {{ include "node-selector" . | nindent 6 }} */}}
-    nodeSelector: {{.Values.certManager.configuration.nodeSelector | default dict | toYaml | nindent 6 }}
+    tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 8}}
+    nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 8}}
+
     podLabels: {{ include "pod-labels" . | nindent 6 }}
 
     startupapicheck:
@@ -44,6 +46,9 @@ spec:
 
     webhook:
       podLabels: {{ include "pod-labels" . | nindent 8 }}
+      tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 8}}
+      nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 8}}
+
       # -- resource limits for cert-manager webhook pods
       resources:
         # -- resource limits for cert-manager webhook pods
@@ -60,6 +65,9 @@ spec:
 
     cainjector:
       podLabels: {{ include "pod-labels" . | nindent 8 }}
+      tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 8}}
+      nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 8}}
+
       # -- resource limits for cert-manager cainjector pods
       resources:
         # -- resource limits for cert-manager webhook pods

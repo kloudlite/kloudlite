@@ -27,11 +27,16 @@ rules:
   verbs:
   - list
   - watch
+  - get
 
 - apiGroups:
   - ""
   resources:
   - nodes/proxy
+  - nodes/log
+  - nodes/stats
+  - nodes/stats/summary
+  - nodes/metrics
   verbs:
   - get
 
@@ -61,6 +66,10 @@ spec:
   chartRepoURL: https://helm.vector.dev
   chartName: vector
   chartVersion: 0.30.0
+
+  jobVars:
+    tolerations:
+      - operator: Exists
 
   values:
     role: Agent

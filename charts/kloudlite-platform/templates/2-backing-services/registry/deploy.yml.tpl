@@ -17,6 +17,8 @@ spec:
       labels:
         app: {{ $name }}
     spec:
+      tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 8 }}
+      nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 8 }}
       containers:
       - name: registry-container
         image: registry:2

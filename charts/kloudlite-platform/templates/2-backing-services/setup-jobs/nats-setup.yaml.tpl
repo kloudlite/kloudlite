@@ -8,6 +8,8 @@ metadata:
 spec:
   template:
     spec:
+      tolerations: {{ .Values.nodepools.stateless.tolerations |toYaml| nindent 8 }}
+      nodeSelector: {{.Values.nodepools.stateless.labels |toYaml | nindent 8}}
       containers:
       - name: nats-kv-creator
         image: natsio/nats-box:0.14.1
