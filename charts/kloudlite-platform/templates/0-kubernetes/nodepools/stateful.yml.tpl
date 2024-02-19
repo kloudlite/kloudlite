@@ -3,7 +3,7 @@ kind: NodePool
 metadata:
   name: stateful
 spec:
-  minCount: 2
+  minCount: 3
   maxCount: 3
 
   nodeTaints: {{.Values.nodepools.stateful.taints | toYaml | nindent 4}}
