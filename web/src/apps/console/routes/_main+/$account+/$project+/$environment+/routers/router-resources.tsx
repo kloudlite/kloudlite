@@ -5,7 +5,7 @@ import {
   ListItem,
   ListTitle,
   listClass,
-  listFlex,
+  listFlex, ListDomainItem,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -26,6 +26,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import HandleRouter from './handle-router';
+import {CopyButton} from "~/console/components/commons";
 
 const RESOURCE_NAME = 'domain';
 type BaseType = ExtractNodeType<IRouters>;
@@ -105,6 +106,21 @@ const GridView = ({ items, onAction }: IResource) => {
                 ),
               },
               {
+                key: generateKey(keyPrefix, name),
+                className: listClass.author,
+                render: () => (
+                    item.spec.domains.map((domain) => {
+                      return (
+                          <ListDomainItem
+                              key={generateKey(keyPrefix, id + domain)}
+                              data={domain}
+                              value={domain}
+                          />
+                      )
+                    })
+                ),
+              },
+              {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItem
@@ -141,6 +157,20 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ListTitle title={name} />,
               },
               status,
+              {
+                key: generateKey(keyPrefix, name),
+                render: () => (
+                    item.spec.domains.map((domain) => {
+                      return (
+                          <ListDomainItem
+                              key={generateKey(keyPrefix, id + domain)}
+                              data={domain}
+                              value={domain}
+                          />
+                      )
+                    })
+                ),
+              },
               listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),
