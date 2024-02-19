@@ -12,6 +12,10 @@ spec:
   chartName: vector
   chartVersion: 0.23.0
   
+  jobVars:
+    tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 6}}
+    nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 6}}
+
   values:
     global:
       storageClass: {{.Values.persistence.storageClasses.ext4}}
@@ -21,6 +25,9 @@ spec:
 
     replicas: 1
     role: "Stateless-Aggregator"
+
+    tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 6}}
+    nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 6}}
 
     customConfig:
       data_dir: /vector-data-dir

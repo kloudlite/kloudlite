@@ -21,6 +21,21 @@ spec:
     fullnameOverride: {{$chartName}}
     namespaceOverride: {{.Release.Namespace}}
 
+    container:
+      env:
+        # different from k8s units, suffix must be B, KiB, MiB, GiB, or TiB
+        # should be ~90% of memory limit
+        GOMEMLIMIT: 1700MiB
+      merge:
+        # recommended limit is at least 2 CPU cores and 8Gi Memory for production JetStream clusters
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+
     config:
       cluster:
         enabled: {{.Values.nats.runAsCluster}}
@@ -45,8 +60,20 @@ spec:
             storageClassName: {{.Values.persistence.storageClasses.xfs}}
             name: {{$chartName}}-jetstream-pvc
 
+    natsBox:
+      enabled: true
+      podTemplate:
+        merge:
+          spec:
+            tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 12 }}
+            nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 12 }}
+
 {{- if .Values.nats.runAsCluster}}
     podTemplate:
+      merge:
+        spec:
+          tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 12}}
+          nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 12}}
       topologySpreadConstraints:
         kloudlite.io/provider.az:
           maxSkew: 1

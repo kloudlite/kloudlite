@@ -65,10 +65,6 @@ certManager:
     # -- email that should be used for communicating with lets-encrypt services
     acmeEmail: sample@example.com
 
-  configuration:
-    nodeSelector: {}
-    tolerations: []
-
 ingressController:
   enabled: true
   name: ingress-nginx
@@ -83,6 +79,45 @@ ingressController:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
 
+nodepools:
+  stateless:
+    labels:
+      kloudlite.io/nodepool.role: "stateless"
+    taints:
+      - key: "kloudlite.io/nodepool.role"
+        value: "stateless"
+        effect: "NoExecute"
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateless"
+        effect: "NoExecute"
+
+  stateful:
+    labels:
+      kloudlite.io/nodepool.role: "stateful"
+    taints:
+      - key: "kloudlite.io/nodepool.role"
+        value: "stateful"
+        effect: "NoExecute"
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "stateful"
+        effect: "NoExecute"
+  iac:
+    labels:
+      kloudlite.io/nodepool.role: "iac"
+    taints:
+      - key: "kloudlite.io/nodepool.role"
+        value: "iac"
+        effect: "NoExecute"
+    tolerations:
+      - key: "kloudlite.io/nodepool.role"
+        operator: "Equal"
+        value: "iac"
+        effect: "NoExecute"
+
 descheduler:
   enabled: true
 
@@ -95,6 +130,12 @@ vectorAgent:
   enabled: true
   name: vector-agent
   description: "vector agent for shipping logs to centralized vector aggregator"
+
+  # configuration:
+  #   kubeletMetricsReExporter:
+  #     image:
+  #       repository: "ghcr.io/kloudlite/kubelet-metrics-reexporter"
+  #       tag: ""
 
 cloudflareWildCardCert:
   enabled: true

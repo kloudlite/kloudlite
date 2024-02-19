@@ -7,7 +7,9 @@ metadata:
     kloudlite.io/checksum.oauth-secrets: {{ include (print $.Template.BasePath "/3-apps/apis/secrets/oauth-secrets.yml.tpl") . | sha256sum }}
 spec:
   serviceAccount: {{ .Values.global.clusterSvcAccount }}
-  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+  tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
+  nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
+
 
   services:
     - port: 80

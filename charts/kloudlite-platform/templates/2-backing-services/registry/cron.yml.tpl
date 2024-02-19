@@ -12,6 +12,8 @@ spec:
       template:
         spec:
           restartPolicy: OnFailure
+          tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 12 }}
+          nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 12 }}
           containers:
           - name: registry-container
             image: registry:2

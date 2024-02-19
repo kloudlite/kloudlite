@@ -5,6 +5,9 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
+  tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
+  nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
+
   services:
     - port: 80
       targetPort: 3000

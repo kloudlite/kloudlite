@@ -1,12 +1,13 @@
-{{- $nodepoolName := "stateful" }}
----
 apiVersion: clusters.kloudlite.io/v1
 kind: NodePool
 metadata:
-  name: {{$nodepoolName}}
+  name: stateful
 spec:
-  maxCount: 3
   minCount: 2
+  maxCount: 3
+
+  nodeTaints: {{.Values.nodepools.stateful.taints | toYaml | nindent 4}}
+  nodeLabels: {{.Values.nodepools.stateful.labels | toYaml | nindent 4}}
 
   cloudProvider: aws
   iac:
@@ -28,4 +29,4 @@ spec:
 
     poolType: ec2
     ec2Pool:
-      instanceType: c6a.large
+      instanceType: c6a.xlarge
