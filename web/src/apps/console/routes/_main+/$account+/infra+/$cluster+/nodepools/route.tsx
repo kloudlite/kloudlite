@@ -1,6 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -11,7 +11,6 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
@@ -59,8 +58,6 @@ const Nodepools = () => {
             return null;
           }
           const { pageInfo, totalCount } = nodePoolData;
-
-          console.log('nodepools...', nodepools, nodePoolData);
 
           return (
             <Wrapper

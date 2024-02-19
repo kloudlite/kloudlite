@@ -1,85 +1,61 @@
-import { useMapper } from '~/components/utils';
 import {
   AppContextProvider,
-  createAppTabs,
   useAppState,
 } from '~/console/page-components/app-states';
-import ProgressWrapper from '~/console/components/progress-wrapper';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import { useEffect } from 'react';
 import AppCompute from './app-compute';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
-import { FadeIn } from '../../../../../../page-components/util';
 
 const AppComp = () => {
   const { setPage, page, isPageComplete } = useAppState();
-  const isActive = (t: createAppTabs) => t === page;
 
-  const progressItems: {
-    label: createAppTabs;
-  }[] = [
-    {
-      label: 'Application details',
-    },
-    {
-      label: 'Compute',
-    },
-    {
-      label: 'Environment',
-    },
-    {
-      label: 'Network',
-    },
-    {
-      label: 'Review',
-    },
-  ];
-
-  const tab = () => {
-    switch (page) {
-      case 'Application details':
-        return <AppDetail />;
-      case 'Compute':
-        return <AppCompute />;
-      case 'Environment':
-        return <AppEnvironment />;
-      case 'Network':
-        return <AppNetwork />;
-      case 'Review':
-        return <AppReview />;
-      default:
-        return (
-          <FadeIn>
-            <span>404 | page not found</span>
-          </FadeIn>
-        );
-    }
-  };
-
-  const items = useMapper(progressItems, (i) => {
-    return {
-      label: i.label,
-      active: isActive(i.label),
-      completed: isPageComplete(i.label),
-      children: isActive(i.label) ? tab() : null,
-    };
+  const { currentStep, jumpStep } = useMultiStepProgress({
+    defaultStep: page || 1,
+    totalSteps: 5,
   });
 
-  return (
-    <ProgressWrapper
-      onClick={(p) => {
-        console.log(p);
+  useEffect(() => {
+    jumpStep(page);
+  }, [page]);
 
-        if (isPageComplete(p.label as createAppTabs))
-          setPage(p.label as createAppTabs);
-      }}
+  return (
+    <MultiStepProgressWrapper
       title="Let’s create new application."
       subTitle="Create your application under project effortlessly."
-      progressItems={{
-        items,
+      backButton={{
+        content: 'Back to apps',
+        to: '../apps',
       }}
-    />
+    >
+      <MultiStepProgress.Root
+        currentStep={currentStep}
+        jumpStep={(step) => setPage(step)}
+        noJump={(step) => !isPageComplete(step)}
+      >
+        <MultiStepProgress.Step step={1} label="Application details">
+          <AppDetail />
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step step={2} label="Compute">
+          <AppCompute />
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step step={3} label="Environment">
+          <AppEnvironment />
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step step={4} label="Network">
+          <AppNetwork />
+        </MultiStepProgress.Step>
+        <MultiStepProgress.Step step={5} label="Review">
+          <AppReview />
+        </MultiStepProgress.Step>
+      </MultiStepProgress.Root>
+    </MultiStepProgressWrapper>
   );
 };
 

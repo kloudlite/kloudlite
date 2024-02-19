@@ -1,10 +1,9 @@
 /* eslint-disable react/destructuring-assignment */
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { NumberInput, TextInput } from '~/components/atoms/input';
+import { NumberInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
-import { IdSelector } from '~/console/components/id-selector';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -14,7 +13,6 @@ import { handleError } from '~/root/lib/utils/common';
 import { Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType as awsPoolType } from '~/root/src/generated/gql/server';
 import { useOutletContext } from '@remix-run/react';
 import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
-import Chips from '~/components/atoms/chips';
 import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
 import { IDialogBase } from '~/console/components/types.d';
@@ -99,21 +97,27 @@ const Root = (props: IDialog) => {
                 };
               case 'spot':
                 const plan = findNodePlan(val.instanceType);
-                return {
-                  spotPool: {
-                    cpuNode: {
-                      vcpu: {
-                        max: `${plan?.spotSpec.cpuMax}`,
-                        min: `${plan?.spotSpec.cpuMin}`,
+                return val.nvidiaGpuEnabled
+                  ? {
+                      gpuNode: {
+                        instanceTypes: [plan?.value],
                       },
-                      memoryPerVcpu: {
-                        max: `${plan?.spotSpec.memMax}`,
-                        min: `${plan?.spotSpec.memMin}`,
+                    }
+                  : {
+                      spotPool: {
+                        cpuNode: {
+                          vcpu: {
+                            max: `${plan?.spotSpec.cpuMax}`,
+                            min: `${plan?.spotSpec.cpuMin}`,
+                          },
+                          memoryPerVcpu: {
+                            max: `${plan?.spotSpec.memMax}`,
+                            min: `${plan?.spotSpec.memMin}`,
+                          },
+                        },
+                        nodes: {},
                       },
-                    },
-                    nodes: {},
-                  },
-                };
+                    };
               default:
                 return {};
             }

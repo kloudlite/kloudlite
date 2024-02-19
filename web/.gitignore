@@ -29,6 +29,7 @@ public/**
 
 out
 .firebase
+.firebaseConfig.js
 
 storybook-dist
 

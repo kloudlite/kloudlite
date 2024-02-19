@@ -1,4 +1,4 @@
-import { generateKey } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListSecondary,
@@ -16,6 +16,12 @@ import { IPvs } from '~/console/server/gql/queries/pv-queries';
 import { CircleFill, Database, Trash } from '@jengaicons/react';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useState } from 'react';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useParams } from '@remix-run/react';
+import { toast } from '~/components/molecule/toast';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { handleError } from '~/root/lib/utils/common';
 
 const RESOURCE_NAME = 'storage';
 type BaseType = ExtractNodeType<IPvs>;
@@ -165,6 +171,11 @@ const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+
+  const { cluster } = useParams();
+  const reloadPage = useReload();
+  const api = useConsoleApi();
+
   const props: IResource = {
     items,
     onAction: ({ action, item }) => {
@@ -184,20 +195,19 @@ const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
         listView={<ListView {...props} />}
         gridView={<GridView {...props} />}
       />
-      {/* <DeleteDialog
+      <DeleteDialog
         resourceName={parseName(showDeleteDialog)}
         resourceType={RESOURCE_NAME}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!params.project || !params.environment) {
-            throw new Error('Project and Environment is required!.');
+          if (!cluster) {
+            throw new Error('Cluster is required!.');
           }
           try {
-            const { errors } = await api.deleteManagedResource({
-              mresName: parseName(showDeleteDialog),
-              envName: params.environment,
-              projectName: params.project,
+            const { errors } = await api.deletePV({
+              pvName: parseName(showDeleteDialog),
+              clusterName: cluster,
             });
 
             if (errors) {
@@ -210,7 +220,7 @@ const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
             handleError(err);
           }
         }}
-      /> */}
+      />
     </>
   );
 };

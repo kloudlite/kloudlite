@@ -31,6 +31,8 @@ export type IGithubInstallations = NN<
 export type IGitlabGroups = NN<
   ConsoleListGitlabGroupsQuery['cr_listGitlabGroups']
 >;
+export type ILogins = NN<ConsoleGetLoginsQuery['auth_me']>;
+export type ILoginUrls = NN<ConsoleLoginUrlsQuery>;
 // export type IProject = NN<Console['core_getProject']>;
 
 export const gitQueries = (executor: IExecutor) => ({
@@ -127,7 +129,10 @@ export const gitQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListGithubInstalltionsQuery) =>
-        data.cr_listGithubInstallations,
+        data.cr_listGithubInstallations?.map((ins) => ({
+          label: ins.account?.login || '',
+          value: `${ins.id}`,
+        })),
       vars(_: ConsoleListGithubInstalltionsQueryVariables) {},
     }
   ),
@@ -195,7 +200,10 @@ export const gitQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListGitlabGroupsQuery) =>
-        data.cr_listGitlabGroups,
+        data.cr_listGitlabGroups?.map((gps) => ({
+          label: gps.fullName,
+          value: gps.id,
+        })),
       vars(_: ConsoleListGitlabGroupsQueryVariables) {},
     }
   ),

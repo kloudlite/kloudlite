@@ -5,31 +5,77 @@ import Anser from 'anser';
 import classNames from 'classnames';
 import Fuse from 'fuse.js';
 import hljs from 'highlight.js';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { ViewportList } from 'react-viewport-list';
-import * as sock from 'websocket';
 import { dayjs } from '~/components/molecule/dayjs';
 import {
   ISearchInfProps,
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
-import { socketUrl } from '~/root/lib/configs/base-url.cjs';
-import { generatePlainColor } from './color-generator';
-import Pulsable from './pulsable';
-import { logsMockData } from '../dummy/data';
+import { useSocketLogs } from '~/root/lib/client/helpers/socket/useSockLogs';
+import { generatePlainColor } from '~/root/lib/utils/color-generator';
+
+import ReactPulsable from 'react-pulsable';
+import { ChildrenProps } from '~/components/types';
+import { logsMockData } from './dummy';
+
+const pulsableContext = createContext(false);
+
+export const usePulsableLoading = () => {
+  return useContext(pulsableContext);
+};
+
+const Pulsable = ({
+  children,
+  isLoading,
+}: ChildrenProps & { isLoading: boolean }) => {
+  return (
+    <pulsableContext.Provider value={useMemo(() => isLoading, [isLoading])}>
+      <ReactPulsable
+        config={{
+          bgColors: {
+            light: 'rgba(161, 161, 170, 0.2)',
+            medium: 'rgba(161, 161, 170, 0.3)',
+          },
+        }}
+        isLoading={isLoading}
+      >
+        {children}
+      </ReactPulsable>
+    </pulsableContext.Provider>
+  );
+};
+
+export type ILog = {
+  podName: string;
+  containerName: string;
+  message: string;
+  timestamp: string;
+};
+
+export type ISocketMessage = ILog;
+
+export interface IuseLog {
+  url?: string;
+  account: string;
+  cluster: string;
+  trackingId: string;
+}
 
 const hoverClass = `hover:bg-[#ddd]`;
 const hoverClassDark = `hover:bg-[#333]`;
 
-type ILog = {
-  pod_name: string;
-  message: string;
-  timestamp: string;
-};
 type ILogWithLineNumber = ILog & { lineNumber: number };
-
-type ISocketMessage = ILog;
 
 const padLeadingZeros = (num: number, size: number) => {
   let s = `${num}`;
@@ -45,6 +91,48 @@ interface IHighlightIt {
   className?: string;
   enableHL?: boolean;
 }
+
+const LoadingComp = memo(() => (
+  <Pulsable isLoading>
+    <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md">
+      <div className="flex flex-col w-full">
+        <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
+          <div>Logs</div>
+
+          <div className="flex items-center gap-xl">
+            <div className="flex gap-xl items-center text-sm">
+              <div className="pulsable">
+                <input
+                  className="bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
+                  placeholder="Search"
+                />
+              </div>
+              <div className="cursor-pointer active:translate-y-[1px] transition-all">
+                <span className={classNames('font-medium pulsable', {})}>
+                  <List color="currentColor" size={16} />
+                </span>
+              </div>
+              <code className={classNames('text-xs font-bold pulsable', {})}>
+                00 matches
+              </code>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col p-3xl gap-md">
+          {Array.from({ length: 20 }).map((_, i) => {
+            const log = logsMockData[Math.floor(Math.random() * 10)];
+            return (
+              <div className="flex gap-3xl" key={`${i + log}`}>
+                <div className="w-xl pulsable" />
+                <div className="pulsable">{log}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  </Pulsable>
+));
 
 const getHashId = (str: string) => {
   let hash = 0;
@@ -285,7 +373,8 @@ interface ILogLine {
   searchText: string;
   language: string;
   lines: number;
-  hideLines?: boolean;
+  hideLineNumber?: boolean;
+  hideTimestamp?: boolean;
   log: ILogWithLineNumber & {
     searchInf?: ISearchInfProps['searchInf'];
   };
@@ -300,12 +389,15 @@ const LogLine = ({
   searchText,
   language,
   lines,
-  hideLines,
+  hideLineNumber,
+  hideTimestamp,
   dark,
 }: ILogLine) => {
   return (
     <code
-      title={`pod: ${log.pod_name}`}
+      title={`pod: ${log.podName} | container: ${log.containerName} | line: ${
+        log.lineNumber
+      } | timestamp: ${dayjs(`${log.timestamp}`).format('lll')}`}
       className={classNames(
         'flex py-xs items-center whitespace-pre border-b border-transparent transition-all',
         {
@@ -320,7 +412,7 @@ const LogLine = ({
         paddingRight: fontSize / 2,
       }}
     >
-      {!hideLines && (
+      {!hideLineNumber && (
         <LineNumber
           lineNumber={log.lineNumber}
           lines={lines}
@@ -330,18 +422,20 @@ const LogLine = ({
 
       <div
         className="w-[3px] mr-xl ml-sm h-full pulsable pulsable-hidden"
-        style={{ background: generatePlainColor(log.pod_name) }}
+        style={{ background: generatePlainColor(log.podName) }}
       />
 
       <div className="inline-flex gap-xl pulsable">
-        <HighlightIt
-          {...{
-            className: 'select-none',
-            inlineData: `${dayjs(log.timestamp).format('lll')} |`,
-            language: 'apache',
-            enableHL: true,
-          }}
-        />
+        {!hideTimestamp && (
+          <HighlightIt
+            {...{
+              className: 'select-none',
+              inlineData: `${dayjs(log.timestamp).format('lll')} |`,
+              language: 'apache',
+              enableHL: true,
+            }}
+          />
+        )}
 
         <FilterdHighlightIt
           {...{
@@ -367,7 +461,8 @@ interface ILogBlock {
   noScrollBar: boolean;
   fontSize: number;
   actionComponent: ReactNode;
-  hideLines: boolean;
+  hideLineNumber: boolean;
+  hideTimestamp: boolean;
   language: string;
   solid: boolean;
   dark: boolean;
@@ -383,10 +478,11 @@ const LogBlock = ({
   maxLines,
   fontSize,
   actionComponent,
-  hideLines,
+  hideLineNumber,
   language,
   solid,
   dark,
+  hideTimestamp,
 }: ILogBlock) => {
   const [searchText, setSearchText] = useState('');
 
@@ -404,13 +500,15 @@ const LogBlock = ({
   const [showAll, setShowAll] = useState(true);
 
   const ref = useRef(null);
-  // const listRef = useRef(null);
 
   useEffect(() => {
-    console.log('data', ref.current);
-
     (async () => {
-      if (follow && ref.current) {
+      if (
+        follow &&
+        ref.current &&
+        // @ts-ignore
+        typeof ref.current.scrollToIndex === 'function'
+      ) {
         // @ts-ignore
         ref.current.scrollToIndex({
           index: data.length - 1,
@@ -426,7 +524,7 @@ const LogBlock = ({
       })}
     >
       <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
-        <div className="">{data ? title : 'No logs found'}</div>
+        <div>{data ? title : 'No logs found'}</div>
 
         <div className="flex items-center gap-xl">
           {actionComponent}
@@ -487,6 +585,7 @@ const LogBlock = ({
               {(log, index) => {
                 return (
                   <LogLine
+                    hideTimestamp={hideTimestamp}
                     dark={dark}
                     log={{
                       ...log,
@@ -498,9 +597,9 @@ const LogBlock = ({
                     lines={data.length}
                     showAll={showAll}
                     key={getHashId(
-                      `${log.message}${log.timestamp}${log.pod_name}${index}`
+                      `${log.message}${log.timestamp}${log.podName}${index}`
                     )}
-                    hideLines={hideLines}
+                    hideLineNumber={hideLineNumber}
                     selectableLines={selectableLines}
                   />
                 );
@@ -512,13 +611,6 @@ const LogBlock = ({
     </div>
   );
 };
-
-interface IuseLog {
-  url?: string;
-  account: string;
-  cluster: string;
-  trackingId: string;
-}
 
 export interface IHighlightJsLog {
   websocket: IuseLog;
@@ -535,169 +627,13 @@ export interface IHighlightJsLog {
   fontSize?: number;
   loadingComponent?: ReactNode;
   actionComponent?: ReactNode;
-  hideLines?: boolean;
+  hideLineNumber?: boolean;
+  hideTimestamp?: boolean;
   language?: string;
   solid?: boolean;
   className?: string;
   dark?: boolean;
 }
-
-const useSocketLogs = ({ url, account, cluster, trackingId }: IuseLog) => {
-  const [logs, setLogs] = useState<ISocketMessage[]>([]);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  let wsclient: Promise<sock.w3cwebsocket>;
-
-  const [socState, setSocState] = useState<sock.w3cwebsocket | null>(null);
-
-  if (typeof window !== 'undefined') {
-    try {
-      wsclient = new Promise<sock.w3cwebsocket>((res, rej) => {
-        try {
-          // eslint-disable-next-line new-cap
-          const w = new sock.w3cwebsocket(
-            url || `${socketUrl}/logs`,
-            '',
-            '',
-            {}
-          );
-
-          w.onmessage = (msg) => {
-            try {
-              const m: {
-                timestamp: string;
-                message: string;
-                spec: {
-                  podName: string;
-                  containerName: string;
-                };
-                type: 'update' | 'error' | 'info';
-              } = JSON.parse(msg.data as string);
-
-              if (m.type === 'error') {
-                setLogs([]);
-                console.error(m.message);
-                return;
-              }
-
-              if (m.type === 'info') {
-                console.log(m.message);
-                return;
-              }
-
-              if (m.type === 'update') {
-                console.log(m.message);
-                return;
-              }
-
-              if (m.type === 'log') {
-                setIsLoading(false);
-                setLogs((s) => [
-                  ...s,
-                  {
-                    pod_name: `${m.spec.podName}:${m.spec.containerName}`,
-                    message: m.message,
-                    timestamp: m.timestamp,
-                  },
-                ]);
-                return;
-              }
-
-              console.log(m);
-            } catch (err) {
-              console.error(err);
-            }
-          };
-
-          w.onopen = () => {
-            // console.log('socket connected');
-            res(w);
-          };
-
-          w.onerror = (e) => {
-            console.error(e);
-            rej(e);
-          };
-
-          w.onclose = () => {
-            // wsclient.send(newMessage({ event: 'unsubscribe', data: 'test' }));
-            // logger.log('socket disconnected');
-          };
-        } catch (e) {
-          rej(e);
-        }
-      });
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
-  useEffect(() => {
-    (async () => {
-      try {
-        // const client = await wsclient.;
-        // 'wss://auth-vision.devc.kloudlite.io/logs'
-
-        if (account === '' || cluster === '' || trackingId === '') {
-          return () => {};
-        }
-
-        if (logs.length) {
-          setLogs([]);
-        }
-        setIsLoading(true);
-
-        const client = await wsclient;
-        console.log('client', client);
-
-        setSocState(client);
-
-        client.send(
-          JSON.stringify({
-            event: 'subscribe',
-            data: {
-              account,
-              cluster,
-              trackingId,
-            },
-          })
-        );
-      } catch (e) {
-        console.error(e);
-        setLogs([]);
-        setError((e as Error).message);
-      }
-
-      return () => {
-        (async () => {
-          if (!socState) return;
-
-          socState.send(
-            JSON.stringify({
-              event: 'unsubscribe',
-              data: {
-                account,
-                cluster,
-                trackingId,
-              },
-            })
-          );
-
-          // client.close();
-
-          setLogs([]);
-        })();
-      };
-    })();
-  }, [account, cluster, trackingId, url]);
-
-  return {
-    logs,
-    error,
-    isLoading,
-  };
-};
 
 const LogComp = ({
   websocket,
@@ -711,7 +647,8 @@ const LogComp = ({
   maxLines,
   fontSize = 14,
   actionComponent = null,
-  hideLines = false,
+  hideLineNumber = false,
+  hideTimestamp = false,
   language = 'accesslog',
   solid = false,
   className = '',
@@ -744,7 +681,7 @@ const LogComp = ({
     }
   }, [fullScreen]);
 
-  const { logs, error, isLoading } = useSocketLogs(websocket);
+  const { logs, subscribed, errors } = useSocketLogs(websocket);
 
   const [isClientSide, setIsClientSide] = useState(false);
 
@@ -755,22 +692,65 @@ const LogComp = ({
   }, []);
 
   return isClientSide ? (
-    <Pulsable isLoading={isLoading}>
-      <div
-        className={classNames(className, {
-          'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
-        })}
-        style={{
-          width: fullScreen ? '100%' : width,
-          height: fullScreen ? '100vh' : height,
-        }}
-      >
-        {error ? (
-          <pre>{error}</pre>
-        ) : (
+    <div
+      className={classNames(className, {
+        'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
+        'relative hljs rounded-md': !fullScreen,
+      })}
+      style={{
+        width: fullScreen ? '100%' : width,
+        height: fullScreen ? '100vh' : height,
+      }}
+    >
+      {subscribed && logs.length === 0 && (
+        <Pulsable isLoading>
+          <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md">
+            <div className="flex flex-col w-full">
+              <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
+                <div>Logs</div>
+
+                <div className="flex items-center gap-xl">
+                  <div className="flex gap-xl items-center text-sm">
+                    <div className="pulsable">
+                      <input
+                        className="bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
+                        placeholder="Search"
+                      />
+                    </div>
+                    <div className="cursor-pointer active:translate-y-[1px] transition-all">
+                      <span className={classNames('font-medium pulsable', {})}>
+                        <List color="currentColor" size={16} />
+                      </span>
+                    </div>
+                    <code
+                      className={classNames('text-xs font-bold pulsable', {})}
+                    >
+                      00 matches
+                    </code>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center flex-1">
+                <div className="headingMd">
+                  (only last 3 hours logs) fetching logs...
+                </div>
+              </div>
+            </div>
+          </div>
+        </Pulsable>
+      )}
+
+      {!subscribed && logs.length === 0 && <LoadingComp />}
+
+      {errors.length ? (
+        <pre>{JSON.stringify(errors)}</pre>
+      ) : (
+        logs.length > 0 && (
           <LogBlock
             {...{
-              data: isLoading ? logsMockData : logs,
+              data: logs.map((d) => {
+                return d.data;
+              }),
               follow,
               dark,
               enableSearch,
@@ -804,13 +784,14 @@ const LogComp = ({
               ),
               width: fullScreen ? '100vw' : width,
               height: fullScreen ? '100vh' : height,
-              hideLines,
+              hideLineNumber,
+              hideTimestamp,
               language,
             }}
           />
-        )}
-      </div>
-    </Pulsable>
+        )
+      )}
+    </div>
   ) : (
     <div
       className={classNames(className, {

@@ -11,7 +11,7 @@ import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import Wrapper from '~/console/components/wrapper';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import { IAppContext } from '../../route';
+import { IAppContext } from '../../_layout';
 
 const SettingAdvance = () => {
   const { app } = useAppState();

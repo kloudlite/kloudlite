@@ -10,8 +10,11 @@ import { handleError } from '~/root/lib/utils/common';
 import { useState } from 'react';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { validateCloudProvider } from '~/console/server/r-utils/common';
-import ProgressWrapper from '~/console/components/progress-wrapper';
 import { NameIdView } from '~/console/components/name-id-view';
+import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import MultiStepProgress, {
+  useMultiStepProgress,
+} from '~/console/components/multi-step-progress';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -80,92 +83,89 @@ const NewCloudProvider = () => {
     },
   });
 
-  const progressItems = [
-    {
-      label: 'Create Team',
-      active: false,
-      completed: true,
-    },
-    {
-      label: 'Add your Cloud Provider',
-      active: true,
-      completed: false,
-      children: (
-        <form className="py-3xl flex flex-col gap-3xl" onSubmit={handleSubmit}>
-          <div className="bodyMd text-text-soft">
-            A cloud provider offers remote computing resources and services over
-            the internet.
-          </div>
-          <div className="flex flex-col">
-            <NameIdView
-              nameErrorLabel="isNameError"
-              resType="providersecret"
-              displayName={values.displayName}
-              name={values.name}
-              label="Name"
-              placeholder="Enter provider name"
-              errors={errors.name}
-              handleChange={handleChange}
-            />
-            <div className="flex flex-col gap-3xl pt-3xl">
-              <Select
-                error={!!errors.provider}
-                message={errors.provider}
-                value={values.provider}
-                size="lg"
-                label="Provider"
-                onChange={(value) => {
-                  handleChange('provider')(dummyEvent(value));
-                }}
-                options={async () => providers}
-              />
-
-              {values.provider.value === 'aws' && (
-                <TextInput
-                  name="awsAccountId"
-                  onChange={handleChange('awsAccountId')}
-                  error={!!errors.awsAccountId}
-                  message={errors.awsAccountId}
-                  value={values.awsAccountId}
-                  label="Account ID"
-                  size="lg"
-                />
-              )}
-            </div>
-          </div>
-          <div className="flex flex-row gap-xl justify-start">
-            <Button
-              loading={isLoading}
-              type="submit"
-              variant="primary"
-              content="Continue"
-              suffix={<ArrowRight />}
-            />
-          </div>
-        </form>
-      ),
-    },
-    {
-      label: 'Validate Cloud Provider',
-      active: false,
-      completed: false,
-    },
-    {
-      label: 'Setup First Cluster',
-      active: false,
-      completed: false,
-    },
-  ];
+  const { currentStep, jumpStep } = useMultiStepProgress({
+    defaultStep: 2,
+    totalSteps: 4,
+  });
 
   return (
-    <ProgressWrapper
-      title="Setup your account!"
-      subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
+    <form onSubmit={handleSubmit}>
+      <MultiStepProgressWrapper
+        title="Setup your account!"
+        subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
-      progressItems={{
-        items: progressItems,
-      }}
-    />
+      >
+        <MultiStepProgress.Root
+          currentStep={currentStep}
+          editable={false}
+          noJump={() => true}
+          jumpStep={jumpStep}
+        >
+          <MultiStepProgress.Step
+            step={1}
+            label="Create team"
+            className="py-3xl flex flex-col gap-3xl
+            "
+          />
+          <MultiStepProgress.Step step={2} label="Add your cloud provider">
+            <div className="flex flex-col gap-3xl">
+              <div className="bodyMd text-text-soft">
+                A cloud provider offers remote computing resources and services
+                over the internet.
+              </div>
+              <div className="flex flex-col">
+                <NameIdView
+                  nameErrorLabel="isNameError"
+                  resType="providersecret"
+                  displayName={values.displayName}
+                  name={values.name}
+                  label="Name"
+                  placeholder="Enter provider name"
+                  errors={errors.name}
+                  handleChange={handleChange}
+                />
+                <div className="flex flex-col gap-3xl pt-3xl">
+                  <Select
+                    error={!!errors.provider}
+                    message={errors.provider}
+                    value={values.provider}
+                    size="lg"
+                    label="Provider"
+                    onChange={(value) => {
+                      handleChange('provider')(dummyEvent(value));
+                    }}
+                    options={async () => providers}
+                  />
+
+                  {values.provider.value === 'aws' && (
+                    <TextInput
+                      name="awsAccountId"
+                      onChange={handleChange('awsAccountId')}
+                      error={!!errors.awsAccountId}
+                      message={errors.awsAccountId}
+                      value={values.awsAccountId}
+                      label="Account ID"
+                      size="lg"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-row gap-xl justify-start">
+                <Button
+                  loading={isLoading}
+                  type="submit"
+                  variant="primary"
+                  content="Continue"
+                  suffix={<ArrowRight />}
+                />
+              </div>
+            </div>
+          </MultiStepProgress.Step>
+          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
+          <MultiStepProgress.Step step={4} label="Setup first cluster" />
+        </MultiStepProgress.Root>
+      </MultiStepProgressWrapper>
+    </form>
   );
 };
 

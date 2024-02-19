@@ -557,6 +557,7 @@ query consoleGetProviderSecret($name: String!) {
 
 query consoleGetNodePool($clusterName: String!, $poolName: String!) {
   infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
+    id
     clusterName
     createdBy {
       userEmail
@@ -657,6 +658,7 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
     edges {
       cursor
       node {
+        id
         clusterName
         createdBy {
           userEmail
@@ -892,6 +894,10 @@ mutation consoleCloneEnvironment($projectName: String!, $sourceEnvName: String!,
   ) {
     id
   }
+}
+
+query consoleRestartApp($projectName: String!, $envName: String!, $appName: String!) {
+  core_restartApp(projectName: $projectName, envName: $envName, appName: $appName)
 }
 
 mutation consoleCreateApp($projectName: String!, $envName: String!, $app: AppIn!) {
@@ -2691,6 +2697,10 @@ query consoleListPvs($clusterName: String!, $search: SearchPersistentVolumes, $p
   }
 }
 
+mutation consoleDeletePV($clusterName: String!, $pvName: String!) {
+  infra_deletePV(clusterName: $clusterName, pvName: $pvName)
+}
+
 query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
   cr_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
     edges {
@@ -3786,6 +3796,7 @@ query authCli_getDevice($name: String!) {
     }
     clusterName
     projectName
+    environmentName
     spec {
       activeNamespace
       disabled

@@ -15,7 +15,10 @@ const useCustomSwr = <T>(
   key: string | null | (() => string | null),
   func: () => IGqlReturn<T>
 ) => {
-  return useSWR(key, caller(func));
+  return useSWR(key, caller(func), {
+    shouldRetryOnError: false,
+    revalidateOnFocus: false,
+  });
 };
 
 export default useCustomSwr;

@@ -2920,6 +2920,7 @@ type Mutation {
   infra_deleteHelmRelease(clusterName: String!, releaseName: String!): Boolean!
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
+  infra_deletePV(clusterName: String!, pvName: String!): Boolean!
   infra_updateCluster(cluster: ClusterIn!): Cluster
   infra_updateClusterManagedService(clusterName: String!, service: ClusterManagedServiceIn!): ClusterManagedService
   infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry

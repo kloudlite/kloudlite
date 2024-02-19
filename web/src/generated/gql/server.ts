@@ -2012,6 +2012,7 @@ export type ConsoleGetNodePoolQueryVariables = Exact<{
 
 export type ConsoleGetNodePoolQuery = {
   infra_getNodePool?: {
+    id: string;
     clusterName: string;
     creationTime: any;
     displayName: string;
@@ -2100,6 +2101,7 @@ export type ConsoleListNodePoolsQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        id: string;
         clusterName: string;
         creationTime: any;
         displayName: string;
@@ -2308,6 +2310,14 @@ export type ConsoleCloneEnvironmentMutationVariables = Exact<{
 export type ConsoleCloneEnvironmentMutation = {
   core_cloneEnvironment?: { id: string };
 };
+
+export type ConsoleRestartAppQueryVariables = Exact<{
+  projectName: Scalars['String']['input'];
+  envName: Scalars['String']['input'];
+  appName: Scalars['String']['input'];
+}>;
+
+export type ConsoleRestartAppQuery = { core_restartApp: boolean };
 
 export type ConsoleCreateAppMutationVariables = Exact<{
   projectName: Scalars['String']['input'];
@@ -4029,6 +4039,13 @@ export type ConsoleListPvsQuery = {
   };
 };
 
+export type ConsoleDeletePvMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  pvName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeletePvMutation = { infra_deletePV: boolean };
+
 export type ConsoleListBuildRunsQueryVariables = Exact<{
   repoName: Scalars['String']['input'];
   search?: InputMaybe<SearchBuildRuns>;
@@ -5045,6 +5062,7 @@ export type AuthCli_GetDeviceQuery = {
     displayName: string;
     clusterName?: string;
     projectName?: string;
+    environmentName?: string;
     metadata?: { name: string };
     spec?: {
       activeNamespace?: string;
