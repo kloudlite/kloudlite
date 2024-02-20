@@ -134,9 +134,9 @@ const ListTitle = ({
 };
 
 const ListDomainItem = ({
-                            data,
-                            value,
-                        }: {
+                        data,
+                        value,
+                    }: {
     data: ReactNode;
     value: string;
 }) => {
