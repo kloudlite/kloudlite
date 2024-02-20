@@ -96,11 +96,13 @@ const Root = (props: IDialog) => {
                                             path: r.path,
                                             app: r.app,
                                             port: r.port,
+                                            rewrite: r.rewrite,
                                         })) || []),
                                         {
                                             path: `/${val.path}`,
                                             app: val.app,
                                             port: parseInt(val.port, 10),
+                                            rewrite: val.reWrite,
                                         },
                                     ],
                                 },
