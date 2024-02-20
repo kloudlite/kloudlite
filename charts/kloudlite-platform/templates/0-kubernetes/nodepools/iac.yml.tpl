@@ -1,10 +1,11 @@
+{{- if .Values.nodepools.iac.enabled }}
 apiVersion: clusters.kloudlite.io/v1
 kind: NodePool
 metadata:
   name: iac
 spec:
-  minCount: 2
-  maxCount: 10
+  minCount: {{.Values.nodepools.iac.min}}
+  maxCount: {{.Values.nodepools.iac.max}}
 
   nodeTaints: {{.Values.nodepools.iac.taints | toYaml | nindent 4}}
   nodeLabels: {{.Values.nodepools.iac.labels | toYaml | nindent 4}}
@@ -28,3 +29,4 @@ spec:
         memoryPerVcpu:
           min: "2"
           max: "2"
+{{- end }}
