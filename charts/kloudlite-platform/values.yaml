@@ -81,6 +81,8 @@ ingressController:
 
 nodepools:
   stateless:
+    min: 2
+    max: 2
     labels:
       kloudlite.io/nodepool.role: "stateless"
     taints:
@@ -94,6 +96,8 @@ nodepools:
         effect: "NoExecute"
 
   stateful:
+    min: 2
+    max: 2
     labels:
       kloudlite.io/nodepool.role: "stateful"
     taints:
@@ -106,6 +110,9 @@ nodepools:
         value: "stateful"
         effect: "NoExecute"
   iac:
+    enabled: true
+    min: 2
+    max: 10
     labels:
       kloudlite.io/nodepool.role: "iac"
     taints:
@@ -358,6 +365,9 @@ apps:
     image:
       repository: ghcr.io/kloudlite/api/infra
       tag: ""
+
+    configuration:
+      kloudliteRelease: ""
 
   gatewayApi:
     image:

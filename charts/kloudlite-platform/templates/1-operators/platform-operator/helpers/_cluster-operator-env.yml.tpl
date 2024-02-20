@@ -53,9 +53,9 @@ data:
   value: {{.Values.operators.platformOperator.configuration.cluster.jobImage.repository}}:{{.Values.operators.platformOperator.configuration.cluster.jobImage.tag | default (include "image-tag" .) }}
 
 - name: "IAC_JOB_TOLERATIONS"
-  value: '[{"key":"kloudlite.io/nodepool.role","value":"iac","effect":"NoExecute"}]'
+  value: {{.Values.nodepools.iac.tolerations | toJson | squote}}
 
 - name: IAC_JOB_NODE_SELECTOR
-  value: '{"kloudlite.io/nodepool.role": "iac"}'
+  value: {{.Values.nodepools.iac.labels | toJson |squote}}
 
 {{- end -}}

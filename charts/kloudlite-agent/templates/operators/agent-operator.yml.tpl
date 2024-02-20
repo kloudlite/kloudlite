@@ -15,6 +15,25 @@ metadata:
   namespace: {{.Release.Namespace}}
 data: {{ $k3sParams.data | toYaml | nindent 2 }}
 
+{{- $hasAwsVPC := and (eq .Values.operators.agentOperator.configuration.cloudprovider "aws") .Values.operators.agentOperator.configuration.aws.vpc_params.readFromCluster }}
+
+---
+{{- if $hasAwsVPC }}
+
+{{- $awsSettings := (lookup "v1" "Secret" .Values.operators.agentOperator.configuration.aws.vpc_params.secret.namespace .Values.operators.agentOperator.configuration.aws.vpc_params.secret.name ) -}}
+
+{{- if not $awsSettings }}
+{{ fail "secret kloudlite-aws-settings is not present in namespace kube-system, could not proceed with helm installation" }}
+{{- end }}
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{.Values.operators.agentOperator.configuration.aws.vpc_params.secret.name}}
+  namespace: {{.Release.Namespace}}
+data: {{ $awsSettings.data | toYaml | nindent 2 }}
+
+{{- end }}
 ---
 
 apiVersion: apps/v1
@@ -153,6 +172,20 @@ spec:
                 secretKeyRef:
                   name: k3s-params
                   key: cloudprovider_region
+
+            {{- if $hasAwsVPC }}
+            - name: AWS_VPC_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.operators.agentOperator.configuration.aws.vpc_params.secret.name}}
+                  key: {{.Values.operators.agentOperator.configuration.aws.vpc_params.secret.keys.vpcId}}
+
+            - name: AWS_VPC_PUBLIC_SUBNETS
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.operators.agentOperator.configuration.aws.vpc_params.secret.name}}
+                  key: {{.Values.operators.agentOperator.configuration.aws.vpc_params.secret.keys.vpcPublicSubnets}}
+            {{- end }}
 
             {{- /* for: routers */}}
             - name: ACME_EMAIL
