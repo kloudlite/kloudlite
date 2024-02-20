@@ -83,7 +83,7 @@ spec:
           value: message-office.{{include "router-domain" . }}:443
 
         - key: KLOUDLITE_RELEASE
-          value: {{.Values.global.kloudlite_release}}
+          value: {{.Values.apps.infraApi.configuration.kloudliteRelease | default .Values.global.kloudlite_release}}
 
         - key: AWS_ACCESS_KEY
           value: {{.Values.aws.accessKey}}

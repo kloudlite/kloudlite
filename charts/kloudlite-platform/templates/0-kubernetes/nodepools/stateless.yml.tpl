@@ -3,8 +3,8 @@ kind: NodePool
 metadata:
   name: stateless
 spec:
-  minCount: 2
-  maxCount: 2
+  minCount: {{.Values.nodepools.stateless.min }}
+  maxCount: {{.Values.nodepools.stateless.max }}
 
   nodeTaints: {{.Values.nodepools.stateless.taints | toYaml | nindent 4}}
   nodeLabels: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
