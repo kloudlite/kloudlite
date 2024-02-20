@@ -65,21 +65,24 @@ operators:
     nodeSelector: {}
 
     configuration:
-      cloudprovider: "aws"
-      aws:
-        vpc_params:
-          readFromCluster: true
-          secret:
-            name: "kloudlite-aws-settings"
-            namespace: "kube-system"
-            keys:
-              vpcId: "vpc_id"
-              vpcPublicSubnets: "vpc_public_subnets"
+      nodepools:
+        enabled: true
 
-      letsEncryptSupportEmail: "support@kloudlite.io"
-      iacJobImage: 
-        repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
-        tag: ""
+        # must be one of aws,azure,gcp
+        cloudprovider: ""
+        aws:
+          vpc_params:
+            readFromCluster: true
+            secret:
+              name: "kloudlite-aws-settings"
+              namespace: "kube-system"
+              keys:
+                vpcId: "vpc_id"
+                vpcPublicSubnets: "vpc_public_subnets"
+
+        iacJobImage:
+          repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
+          tag: ""
 
       helmCharts:
         jobImage:
