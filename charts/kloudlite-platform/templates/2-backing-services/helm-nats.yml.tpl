@@ -11,8 +11,8 @@ spec:
   chartName: nats
   chartVersion: 1.1.5
   jobVars:
-    tolerations:
-      - operator: Exists
+    tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 6 }}
+    nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 6 }}
   values:
     global:
       labels:
@@ -21,6 +21,7 @@ spec:
     fullnameOverride: {{$chartName}}
     namespaceOverride: {{.Release.Namespace}}
 
+    {{- if .Values.nats.runAsCluster }}
     container:
       env:
         # different from k8s units, suffix must be B, KiB, MiB, GiB, or TiB
@@ -35,6 +36,7 @@ spec:
           limits:
             cpu: "1"
             memory: 3Gi
+    {{- end }}
 
     config:
       cluster:
@@ -68,12 +70,12 @@ spec:
             tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 12 }}
             nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 12 }}
 
-{{- if .Values.nats.runAsCluster}}
     podTemplate:
       merge:
         spec:
           tolerations: {{.Values.nodepools.stateful.tolerations | toYaml | nindent 12}}
           nodeSelector: {{.Values.nodepools.stateful.labels | toYaml | nindent 12}}
+{{- if .Values.nats.runAsCluster}}
       topologySpreadConstraints:
         kloudlite.io/provider.az:
           maxSkew: 1
