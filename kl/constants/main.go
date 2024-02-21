@@ -11,6 +11,9 @@ const (
 	RuntimeLinux   = "linux"
 	RuntimeDarwin  = "darwin"
 	RuntimeWindows = "windows"
+	BashShell      = "bash"
+	FishShell      = "fish"
+	ZshShell       = "zsh"
 )
 
 var (

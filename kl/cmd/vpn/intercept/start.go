@@ -34,4 +34,6 @@ Examples:
 
 func init() {
 	startCmd.Flags().StringP("app", "a", "", "app name")
+
+	startCmd.Aliases = append(startCmd.Aliases, "add", "begin")
 }
