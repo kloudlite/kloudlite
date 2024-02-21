@@ -48,5 +48,5 @@ Examples:
 func init() {
 	stopCmd.Flags().StringP("app", "a", "", "app name")
 
-	stopCmd.Aliases = append(startCmd.Aliases, "close", "end", "leave", "quit", "terminate", "exit", "remove")
+	stopCmd.Aliases = append(startCmd.Aliases, "close", "end", "leave", "quit", "terminate", "exit", "remove", "disconnect")
 }
