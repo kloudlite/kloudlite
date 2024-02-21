@@ -1,6 +1,7 @@
 package kli
 
 import (
+	"github.com/kloudlite/kl/cmd/shell"
 	"runtime"
 
 	"github.com/kloudlite/kl/flags"
@@ -41,4 +42,6 @@ func init() {
 	}
 
 	rootCmd.AddCommand(set_base_url.Cmd)
+
+	rootCmd.AddCommand(shell.ShellCmd)
 }

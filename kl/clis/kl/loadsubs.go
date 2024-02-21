@@ -1,6 +1,7 @@
 package kl
 
 import (
+	"github.com/kloudlite/kl/cmd/shell"
 	"runtime"
 
 	"github.com/kloudlite/kl/flags"
@@ -50,4 +51,6 @@ func init() {
 	rootCmd.AddCommand(add.Command)
 
 	rootCmd.AddCommand(status.Cmd)
+
+	rootCmd.AddCommand(shell.ShellCmd)
 }

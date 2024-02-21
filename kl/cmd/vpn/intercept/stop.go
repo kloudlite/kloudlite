@@ -8,8 +8,8 @@ import (
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "stop intercept app to stop tunnel trafic to your device",
-	Long: `stop intercept app to stop tunnel trafic to your device
+	Short: "stop intercept app to stop tunnel traffic to your device",
+	Long: `stop intercept app to stop tunnel traffic to your device
 Examples:
 	# close intercept app
   kl vpn intercept stop --app <app_name>
@@ -41,12 +41,12 @@ Examples:
 			return
 		}
 
-		fn.Log("intercept app started successfully")
+		fn.Log("intercepted app stopped successfully")
 	},
 }
 
 func init() {
 	stopCmd.Flags().StringP("app", "a", "", "app name")
 
-	stopCmd.Aliases = append(startCmd.Aliases, "close", "end", "leave", "quit", "terminate", "exit")
+	stopCmd.Aliases = append(startCmd.Aliases, "close", "end", "leave", "quit", "terminate", "exit", "remove")
 }
