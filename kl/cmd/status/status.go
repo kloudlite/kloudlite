@@ -2,7 +2,6 @@ package status
 
 import (
 	"fmt"
-
 	"github.com/kloudlite/kl/constants"
 	"github.com/kloudlite/kl/domain/client"
 	"github.com/kloudlite/kl/domain/server"
@@ -66,11 +65,18 @@ var Cmd = &cobra.Command{
 
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), s, func() string {
 				if b {
-					return text.Bold(text.Green(" (Connected)"))
+					return text.Bold(text.Green(" (Connected) "))
 				} else {
-					return text.Bold(text.Red(" (Disconnected)"))
+					return text.Bold(text.Red(" (Disconnected) "))
 				}
-			}()))
+			}(), text.Blue("(10.13.0.1) "), text.Blue("(10.13.0.3) ")))
+			// Device IP and DNS IPv4 is same for all the devices
+			// 10.13.0.1 - IP
+			// 10.13.0.3 - DNS IPv4
+			//fn.Log(text.Bold(text.Blue("Device IP address: ") + "10.13.0.1"))
+			//fn.Log(text.Bold(text.Blue("Device DNS: ") + "10.13.0.3"))
+			//resolveConfig, _ := wg_vpn.getCurrentDns(false)
+			//fmt.Println(resolveConfig)
 		}
 	},
 }

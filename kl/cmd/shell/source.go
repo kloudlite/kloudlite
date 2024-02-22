@@ -49,7 +49,7 @@ func loadEnv(cmd *cobra.Command) error {
 			return err
 		}
 
-		_, cmap, smap, err := server.GetLoadMaps()
+		envs, cmap, smap, err := server.GetLoadMaps()
 		if err != nil {
 			return err
 		}
@@ -77,8 +77,11 @@ func loadEnv(cmd *cobra.Command) error {
 		if err != nil {
 			cwd = "."
 		}
-		newEnv = append(newEnv, fmt.Sprintf("KL_MOUNT_PATH=%s", path.Join(cwd, klfile.FileMount.MountBasePath)))
+		envs["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
 
+		for index, value := range envs {
+			newEnv = append(newEnv, fmt.Sprintf("%s=%s", index, value))
+		}
 	case constants.InfraCliName:
 
 		clusterName, err = server.EnsureCluster([]fn.Option{
@@ -132,7 +135,7 @@ func shellName() string {
 }
 
 func init() {
-	ShellCmd.Aliases = append(ShellCmd.Aliases, "s")
+	ShellCmd.Aliases = append(ShellCmd.Aliases, "s", "sh")
 	ShellCmd.Flags().StringP("account", "a", "", "account name")
 	ShellCmd.Flags().StringP("cluster", "c", "", "cluster name")
 
