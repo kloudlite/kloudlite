@@ -140,10 +140,13 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 			JobName:      fmt.Sprintf("iac-cluster-job-%s", obj.Name),
 			JobNamespace: obj.Namespace,
 
-			SecretName:            fmt.Sprintf("clusters-%s-credentials", obj.Name),
-			KeyKubeconfig:         "kubeconfig",
-			KeyK3sServerJoinToken: "k3s_server_token",
-			KeyK3sAgentJoinToken:  "k3s_agent_token",
+			SecretName: fmt.Sprintf("clusters-%s-credentials", obj.Name),
+
+			KeyKubeconfig:          "kubeconfig",
+			KeyK3sServerJoinToken:  "k3s_server_token",
+			KeyK3sAgentJoinToken:   "k3s_agent_token",
+			KeyAWSVPCId:            "aws_vpc_id",
+			KeyAWSVPCPublicSubnets: "aws_vpc_public_subnets",
 		}
 	}
 
@@ -265,6 +268,8 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 			isAssumeRole := providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey] == nil || providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey] == nil
 
 			valuesBytes, err := json.Marshal(map[string]any{
+				"tracker_id": fmt.Sprintf("cluster-%s", obj.Name),
+				"aws_region": obj.Spec.AWS.Region,
 				"aws_access_key": func() string {
 					if !isAssumeRole {
 						return string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey])
@@ -288,10 +293,12 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 						"external_id": string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
 					}
 				}(),
-				"aws_region": obj.Spec.AWS.Region,
 
-				"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
 				"enable_nvidia_gpu_support": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
+
+				"vpc": map[string]any{
+					"name": obj.Name,
+				},
 
 				"k3s_masters": map[string]any{
 					"image_id":           obj.Spec.AWS.K3sMasters.ImageId,
@@ -321,6 +328,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 								"role":              v.Role,
 								"availability_zone": v.AvaialbilityZone,
 								"last_recreated_at": v.LastRecreatedAt,
+								"kloudlite_release": v.KloudliteRelease,
 							}
 						}
 						return nodes
@@ -378,6 +386,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			"action":        "apply",
 			"job-name":      obj.Spec.Output.JobName,
 			"job-namespace": obj.Namespace,
+
 			"labels": map[string]string{
 				LabelClusterApplyJob:    "true",
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
@@ -386,6 +395,9 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 				constants.ObservabilityAccountNameKey: obj.Spec.AccountName,
 				constants.ObservabilityClusterNameKey: obj.Name,
 			}),
+
+			"job-node-selector": r.Env.IACJobNodeSelector,
+			"job-tolerations":   r.Env.IACJobTolerations,
 
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
@@ -486,6 +498,9 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
 			},
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+			"job-node-selector": r.Env.IACJobNodeSelector,
+			"job-tolerations":   r.Env.IACJobTolerations,
 
 			"service-account-name": clusterJobServiceAccount,
 

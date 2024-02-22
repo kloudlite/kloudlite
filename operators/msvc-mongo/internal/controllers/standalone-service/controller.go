@@ -273,6 +273,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 		"labels":        obj.GetLabels(),
 		"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		"node-selector": obj.Spec.NodeSelector,
+		"tolerations":   obj.Spec.Tolerations,
 
 		"storage-class": obj.Spec.Resources.Storage.StorageClass,
 		"storage-size":  obj.Spec.Resources.Storage.Size,

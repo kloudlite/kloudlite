@@ -361,6 +361,7 @@ func (r *Request[T]) PostReconcile() {
 
 	m := make(map[string]string, len(r.Object.GetAnnotations()))
 	maps.Copy(m, r.Object.GetAnnotations())
+
 	m[constants.AnnotationResourceReady] = func() string {
 		readyMsg := strconv.FormatBool(isReady)
 
@@ -375,6 +376,19 @@ func (r *Request[T]) PostReconcile() {
 		}
 
 		return fmt.Sprintf("%s (%s%s)", readyMsg, generationMsg, deletionMsg)
+	}()
+
+	m["kloudlite.io/checks"] = func() string {
+		checks := make([]string, 0, len(r.Object.GetStatus().Checks))
+		for _, check := range r.Object.GetStatus().Checks {
+			if check.Status {
+				checks = append(checks, "🟢")
+				continue
+			}
+			checks = append(checks, "🔴")
+		}
+
+		return strings.Join(checks, "")
 	}()
 
 	if !fn.MapEqual(r.Object.GetAnnotations(), m) {

@@ -20,6 +20,7 @@ type MasterNodeProps struct {
 	// +kubebuilder:validation:Enum=primary-master;secondary-master;
 	Role             string `json:"role"`
 	AvaialbilityZone string `json:"availabilityZone"`
+	KloudliteRelease string `json:"kloudliteRelease"`
 	NodeProps        `json:",inline"`
 }
 
@@ -65,12 +66,16 @@ type AzureConfig struct{}
 type GCPConfig struct{}
 
 type ClusterOutput struct {
-	JobName               string `json:"jobName"`
-	JobNamespace          string `json:"jobNamespace"`
-	SecretName            string `json:"secretName"`
-	KeyKubeconfig         string `json:"keyKubeconfig"`
-	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken"`
-	KeyK3sAgentJoinToken  string `json:"keyK3sAgentJoinToken"`
+	JobName      string `json:"jobName"`
+	JobNamespace string `json:"jobNamespace"`
+
+	SecretName string `json:"secretName"`
+
+	KeyKubeconfig          string `json:"keyKubeconfig"`
+	KeyK3sServerJoinToken  string `json:"keyK3sServerJoinToken"`
+	KeyK3sAgentJoinToken   string `json:"keyK3sAgentJoinToken"`
+	KeyAWSVPCId            string `json:"keyAWSVPCId,omitempty"`
+	KeyAWSVPCPublicSubnets string `json:"keyAWSVPCPublicSubnets,omitempty"`
 }
 
 // ClusterSpec defines the desired state of Cluster

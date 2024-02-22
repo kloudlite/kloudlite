@@ -1,0 +1,12 @@
+version: 3
+
+vars:
+  app: helm-job-runner
+
+tasks:
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --push

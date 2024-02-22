@@ -344,6 +344,58 @@ rules:
   - patch
   - update
 - apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - configmaps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - secrets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8s.io/core/v1
+  resources:
+  - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - mongodb.msvc.kloudlite.io
   resources:
   - clusterServices

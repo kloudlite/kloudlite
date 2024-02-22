@@ -66,6 +66,7 @@ type RouterSpec struct {
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.ingress-class",name=Class,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.domains",name=domains,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Router is the Schema for the routers API
