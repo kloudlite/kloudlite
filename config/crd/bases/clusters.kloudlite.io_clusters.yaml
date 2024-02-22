@@ -78,6 +78,8 @@ spec:
                           properties:
                             availabilityZone:
                               type: string
+                            kloudliteRelease:
+                              type: string
                             lastRecreatedAt:
                               format: date-time
                               type: string
@@ -88,6 +90,7 @@ spec:
                               type: string
                           required:
                           - availabilityZone
+                          - kloudliteRelease
                           - role
                           type: object
                         type: object
@@ -256,6 +259,10 @@ spec:
                   jobName:
                     type: string
                   jobNamespace:
+                    type: string
+                  keyAWSVPCId:
+                    type: string
+                  keyAWSVPCPublicSubnets:
                     type: string
                   keyK3sAgentJoinToken:
                     type: string

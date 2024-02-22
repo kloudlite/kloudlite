@@ -120,6 +120,20 @@ const (
 	ObservabilityClusterNameKey string = "kloudlite.io/observability.cluster.name"
 )
 
+// ConfigSecretReplicator
+const (
+	ReplicationEnableKey        string = "kloudlite.io/replication.enable"
+	ReplicationEnableValueTrue  string = "true"
+	ReplicationEnableValueFalse string = "false"
+
+	ReplicationFromNameKey      string = "kloudlite.io/replication.from-name"
+	ReplicationFromNamespaceKey string = "kloudlite.io/replication.from-namespace"
+
+	// it should me comma separated list of namespaces to exclude
+	ReplicationExcludeNsKey string = "kloudlite.io/replication.exclude-ns"
+	ReplicationIncludeNsKey string = "kloudlite.io/replication.include-ns"
+)
+
 // distribution constants
 const (
 	CacheNameKey                      string = "kloudlite.io/cache-key"
