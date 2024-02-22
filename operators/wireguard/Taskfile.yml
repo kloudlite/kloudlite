@@ -4,7 +4,7 @@ includes:
   go: ../../.tools/taskfiles/go-build.Taskfile.yml
 
 vars:
-  app: platform-operator
+  app: wireguard-controller
 
 tasks:
   run:
