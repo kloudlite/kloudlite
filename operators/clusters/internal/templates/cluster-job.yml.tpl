@@ -2,6 +2,10 @@
 {{- $jobNamespace := get . "job-namespace" }}
 
 {{- $labels := get . "labels" | default dict }}
+
+{{- $jobTolerations := get . "job-tolerations" | default list }}
+{{- $jobNodeSelector := get . "job-node-selector"  | default dict }}
+
 {{- $podAnnotations := get . "pod-annotations" | default dict }}
 
 {{- $ownerRefs := get . "owner-refs" |default list }}
@@ -40,6 +44,8 @@ spec:
       annotations: {{$podAnnotations | toYAML | nindent 8 }}
     spec:
       serviceAccountName: {{$serviceAccountName}}
+      nodeSelector: {{$jobNodeSelector | toYAML | nindent 8 }}
+      tolerations: {{$jobTolerations | toYAML | nindent 8 }}
       containers:
       - name: iac
         image: {{$jobImage}}
@@ -62,6 +68,7 @@ spec:
 
           - name: AWS_ACCESS_KEY_ID
             value: {{$awsAccessKeyId}}
+
           - name: AWS_SECRET_ACCESS_KEY
             value: {{$awsSecretAccessKey}}
 
@@ -92,8 +99,12 @@ spec:
               terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
 
-              terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
-              terraform state pull | jq '.outputs."kloudlite-k3s-params".value' -r > k3s-params
+              terraform state pull | jq '.outputs' -r > outputs.json
+              
+              cat outputs.json
+
+              {{- /* terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig */}}
+              {{- /* terraform state pull | jq '.outputs."kloudlite-k3s-params".value' -r > k3s-params */}}
 
               kubectl apply -f - <<EOF
               apiVersion: v1
@@ -103,11 +114,12 @@ spec:
                 namespace: {{$kubeconfigSecretNamespace}}
                 annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
               data:
-                kubeconfig: $(terraform output -json kubeconfig | jq -r)
-                k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
-                k3s_params: $(cat k3s-params)
-                aws_vpc_id: $(terraform output -json vpc_id | jq -r) 
-                aws_vpc_public_subnets: $(terraform output -json vpc_public_subnets | jq -r)
+                kubeconfig: $(cat outputs.json | jq '.kubeconfig.value')
+                k3s_params: $(cat outputs.json | jq -r '."kloudlite-k3s-params".value' | base64 | tr -d '\n')
+                {{- /* output: $(cat outputs.json | base64 | tr -d '\n') */}}
+                k3s_agent_token: $(cat outputs.json | jq -r '.k3s_agent_token.value' | base64 | tr -d '\n')
+                aws_vpc_id: $(cat outputs.json | jq -r '.vpc_id.value'  | base64 | tr -d '\n') 
+                aws_vpc_public_subnets: $(cat outputs.json | jq -r '.vpc_public_subnets.value' | base64 | tr -d '\n')
             EOF
             fi
             exit 0
