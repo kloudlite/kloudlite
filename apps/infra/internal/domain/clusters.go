@@ -210,19 +210,23 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 						if cluster.Spec.AvailabilityMode == "dev" {
 							return map[string]clustersv1.MasterNodeProps{
 								"master-1": {
-									Role: "primary-master",
+									Role:             "primary-master",
+									KloudliteRelease: d.env.KloudliteRelease,
 								},
 							}
 						}
 						return map[string]clustersv1.MasterNodeProps{
 							"master-1": {
-								Role: "primary-master",
+								Role:             "primary-master",
+								KloudliteRelease: d.env.KloudliteRelease,
 							},
 							"master-2": {
-								Role: "secondary-master",
+								Role:             "secondary-master",
+								KloudliteRelease: d.env.KloudliteRelease,
 							},
 							"master-3": {
-								Role: "secondary-master",
+								Role:             "secondary-master",
+								KloudliteRelease: d.env.KloudliteRelease,
 							},
 						}
 					}(),
