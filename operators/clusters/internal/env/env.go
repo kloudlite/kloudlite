@@ -1,10 +1,14 @@
 package env
 
 import (
+	"encoding/json"
+	"os"
+
 	"github.com/codingconcepts/env"
+	corev1 "k8s.io/api/core/v1"
 )
 
-type Env struct {
+type realEnv struct {
 	MaxConcurrentReconciles int `env:"MAX_CONCURRENT_RECONCILES"`
 
 	CloudflareApiToken string `env:"CLOUDFLARE_API_TOKEN" required:"true"`
@@ -23,10 +27,35 @@ type Env struct {
 	NatsClusterUpdateSubjectFormat string `env:"NATS_CLUSTER_UPDATE_SUBJECT_FORMAT" required:"true"`
 }
 
+type Env struct {
+	realEnv
+	IACJobTolerations  []corev1.Toleration `env:"IAC_JOB_TOLERATIONS" required:"false"`
+	IACJobNodeSelector map[string]string   `env:"IAC_JOB_NODE_SELECTOR" required:"false"`
+}
+
 func GetEnvOrDie() *Env {
-	var ev Env
-	if err := env.Set(&ev); err != nil {
+	var rev realEnv
+	if err := env.Set(&rev); err != nil {
 		panic(err)
 	}
-	return &ev
+
+	ev := &Env{
+		realEnv: rev,
+	}
+
+	ev.IACJobTolerations = []corev1.Toleration{}
+	if v, ok := os.LookupEnv("IAC_JOB_TOLERATIONS"); ok {
+		if err := json.Unmarshal([]byte(v), &ev.IACJobTolerations); err != nil {
+			panic(err)
+		}
+	}
+
+	ev.IACJobNodeSelector = map[string]string{}
+	if v, ok := os.LookupEnv("IAC_JOB_NODE_SELECTOR"); ok {
+		if err := json.Unmarshal([]byte(v), &ev.IACJobNodeSelector); err != nil {
+			panic(err)
+		}
+	}
+
+	return ev
 }
