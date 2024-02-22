@@ -15,6 +15,8 @@ import (
 	resourceWatcher "github.com/kloudlite/operator/operators/resource-watcher/controller"
 	routers "github.com/kloudlite/operator/operators/routers/controller"
 	wireguard "github.com/kloudlite/operator/operators/wireguard/controller"
+
+	config_secret_replicator "github.com/kloudlite/operator/operators/config-secret-replicator/controller"
 )
 
 func main() {
@@ -40,6 +42,8 @@ func main() {
 	distribution.RegisterInto(mgr)
 
 	wireguard.RegisterInto(mgr)
+
+	config_secret_replicator.RegisterInto(mgr)
 
 	mgr.Start()
 }
