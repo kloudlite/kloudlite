@@ -69,7 +69,7 @@ var Cmd = &cobra.Command{
 				} else {
 					return text.Bold(text.Red(" (Disconnected) "))
 				}
-			}(), text.Blue("(10.13.0.1) "), text.Blue("(10.13.0.3) ")))
+			}(), text.Blue("(ip: 10.13.0.1) ")))
 			// Device IP and DNS IPv4 is same for all the devices
 			// 10.13.0.1 - IP
 			// 10.13.0.3 - DNS IPv4
