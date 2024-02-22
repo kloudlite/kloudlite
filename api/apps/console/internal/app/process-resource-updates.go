@@ -166,7 +166,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return errors.NewE(err)
 				}
 
-				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetName())
+				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, ru.ClusterName, obj.GetNamespace(), obj.GetName())
 				if err != nil {
 					return err
 				}
