@@ -2,17 +2,20 @@ package config_replicator
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/kloudlite/operator/operators/config-secret-replicator/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -138,18 +141,30 @@ func (r *Reconciler) replicateConfigmap(ctx context.Context, configmap *corev1.C
 			continue
 		}
 
-		cfgmap := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: configmap.Name, Namespace: namespace}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, cfgmap, func() error {
-			if cfgmap.Labels == nil {
-				cfgmap.Labels = make(map[string]string, 2)
+		cm, err := rApi.Get(ctx, r.Client, fn.NN(namespace, configmap.Name), &corev1.ConfigMap{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return fail(err)
 			}
-			cfgmap.Labels[constants.ReplicationFromNameKey] = configmap.Name
-			cfgmap.Labels[constants.ReplicationFromNamespaceKey] = configmap.Namespace
 
-			cfgmap.Data = configmap.Data
-			return nil
-		}); err != nil {
-			return fail(err)
+			if err := r.Create(ctx, &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      configmap.Name,
+					Namespace: namespace,
+					Labels: map[string]string{
+						constants.ReplicationFromNameKey:      configmap.Name,
+						constants.ReplicationFromNamespaceKey: configmap.Namespace,
+					},
+				},
+				Data:       configmap.Data,
+				BinaryData: configmap.BinaryData,
+			}); err != nil {
+				return fail(errors.NewEf(err, "replicating secret"))
+			}
+		}
+
+		if cm != nil && (cm.Labels[constants.ReplicationFromNameKey] != configmap.Name || cm.Labels[constants.ReplicationFromNamespaceKey] != configmap.Namespace) {
+			return fail(fmt.Errorf("configmap %s, already exists in namespace %s, will not replicate, as it would cause data loss", configmap.Name, namespace)).Err(nil)
 		}
 	}
 
