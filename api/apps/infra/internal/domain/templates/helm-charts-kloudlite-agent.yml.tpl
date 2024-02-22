@@ -43,8 +43,6 @@ spec:
 
     clusterInternalDNS: "cluster.local"
 
-    {{- /* kloudliteRelease: {{$kloudliteRelease}} */}}
-
     nodeSelector:
       node-role.kubernetes.io/master: "true"
     tolerations:
@@ -56,7 +54,7 @@ spec:
       enabled: true
       name: kl-agent
       image:
-        repository:  ghcr.io/kloudlite/api/tenant-agent
+        repository: ghcr.io/kloudlite/api/tenant-agent
         tag: ""
         pullPolicy: ""
       nodeSelector: {}
@@ -76,13 +74,19 @@ spec:
         nodeSelector: {}
 
         configuration:
-          letsEncryptSupportEmail: "support@kloudlite.io"
+          routers:
+            letsEncryptSupportEmail: "support@kloudlite.io"
 
-        wireguard:
-          podCIDR: 10.42.0.0/16
-          svcCIDR: 10.43.0.0/16
+          nodepools:
+            enabled: true
+            # must be one of aws,azure,gcp
+            cloudprovider: "aws"
 
-          deviceNamespace: kl-vpn-devices
+          {{- /* wireguard: */}}
+          {{- /*   podCIDR: 10.42.0.0/16 */}}
+          {{- /*   svcCIDR: 10.43.0.0/16 */}}
+          {{- /**/}}
+          {{- /*   deviceNamespace: kl-vpn-devices */}}
 
     helmCharts:
       ingressNginx:
@@ -116,3 +120,7 @@ spec:
         nodeSelector: {}
         tolerations: []
 
+      clusterAutoscaler:
+        enabled: true
+        {{- /* configuration: */}}
+        {{- /*   chartVersion: "v1.0.3" */}}

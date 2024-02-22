@@ -49,6 +49,7 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 			nodepool.Spec.AWS = &clustersv1.AWSNodePoolConfig{
 				ImageId:          d.env.AWSAMI,
 				ImageSSHUsername: "ubuntu",
+
 				AvailabilityZone: nodepool.Spec.AWS.AvailabilityZone,
 				NvidiaGpuEnabled: nodepool.Spec.AWS.NvidiaGpuEnabled,
 				RootVolumeType:   "gp3",
