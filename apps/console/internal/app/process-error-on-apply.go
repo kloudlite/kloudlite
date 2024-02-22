@@ -102,7 +102,7 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logger 
 			}
 		case projectManagedServiceGVK.String():
 			{
-				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, errObj.ClusterName, obj.GetName())
+				mapping, err := d.GetProjectResourceMapping(dctx, entities.ResourceTypeProjectManagedService, errObj.ClusterName, obj.GetNamespace(), obj.GetName())
 				if err != nil {
 					return err
 				}
