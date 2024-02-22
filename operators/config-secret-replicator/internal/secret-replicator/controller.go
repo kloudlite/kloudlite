@@ -2,17 +2,20 @@ package secret_replicator
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/kloudlite/operator/operators/config-secret-replicator/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -133,18 +136,30 @@ func (r *Reconciler) replicatesecret(ctx context.Context, secret *corev1.Secret)
 			continue
 		}
 
-		scrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secret.Name, Namespace: namespace}, Type: secret.Type}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
-			if scrt.Labels == nil {
-				scrt.Labels = make(map[string]string, 2)
+		scrt, err := rApi.Get(ctx, r.Client, fn.NN(namespace, secret.Name), &corev1.Secret{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return fail(err)
 			}
-			scrt.Labels[constants.ReplicationFromNameKey] = secret.Name
-			scrt.Labels[constants.ReplicationFromNamespaceKey] = secret.Namespace
 
-			scrt.Data = secret.Data
-			return nil
-		}); err != nil {
-			return fail(err)
+			if err := r.Create(ctx, &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      secret.Name,
+					Namespace: namespace,
+					Labels: map[string]string{
+						constants.ReplicationFromNameKey:      secret.Name,
+						constants.ReplicationFromNamespaceKey: secret.Namespace,
+					},
+				},
+				Data:       secret.Data,
+				StringData: secret.StringData,
+			}); err != nil {
+				return fail(errors.NewEf(err, "replicating secret"))
+			}
+		}
+
+		if scrt != nil && (scrt.Labels[constants.ReplicationFromNameKey] != secret.Name || scrt.Labels[constants.ReplicationFromNamespaceKey] != secret.Namespace) {
+			return fail(fmt.Errorf("secret %s, already exists in namespace %s, will not replicate, as it would cause data loss", secret.Name, namespace)).Err(nil)
 		}
 	}
 
