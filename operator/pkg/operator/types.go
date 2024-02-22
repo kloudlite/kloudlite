@@ -23,8 +23,7 @@ const (
 
 // +kubebuilder:object:generate=true
 type Check struct {
-	Status bool `json:"status"`
-	// State      State  `json:"state"`
+	Status     bool   `json:"status"`
 	Message    string `json:"message,omitempty"`
 	Generation int64  `json:"generation,omitempty"`
 }
