@@ -32,8 +32,11 @@ type AwsSpotPoolConfig struct {
 }
 
 type AWSNodePoolConfig struct {
-	VPCId            string            `json:"vpcId" graphql:"noinput"`
-	VPCPublicSubnets map[string]string `json:"vpcPublicSubnets" graphql:"noinput`
+	ImageId          string `json:"imageId"`
+	ImageSSHUsername string `json:"imageSSHUsername"`
+
+	// VPCId            string            `json:"vpcId" graphql:"noinput"`
+	// VPCPublicSubnets map[string]string `json:"vpcPublicSubnets" graphql:"noinput`
 
 	AvailabilityZone string `json:"availabilityZone"`
 
