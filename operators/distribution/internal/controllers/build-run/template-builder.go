@@ -7,7 +7,6 @@ import (
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	"github.com/kloudlite/operator/operators/distribution/internal/templates"
-	"github.com/kloudlite/operator/pkg/functions"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
@@ -57,7 +56,7 @@ func (r *Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra 
 	ctx, obj := req.Context(), req.Object
 
 	if err := func() error {
-		s, err := rApi.Get(ctx, r.Client, functions.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
+		s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
 		if err != nil {
 			return err
 		}
@@ -144,7 +143,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 			Cpu:    200,
 			Memory: 200,
 		},
-		OwnerReferences: []metav1.OwnerReference{functions.AsOwner(obj, true)},
+		OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 	}
 
 	o.ServerResource = Resource{

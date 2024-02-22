@@ -5,6 +5,12 @@
 
 {{- $labels := get . "labels" | default dict }} 
 {{- $annotations := get . "annotations" | default dict}}
+{{- $nodeSelector := get . "node-selector" |default dict }}
+{{- $tolerations := get . "tolerations" | default list }}
+{{- $priorityClassname := get . "priority-classname" | default "stateful" }}
+
+{{- $topologySpreadConstraints := get . "topology-spread-constraints" }}
+
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $storageClass := get . "storage-class" }}
@@ -38,6 +44,10 @@ spec:
   releaseName: {{$releaseName}}
   {{- end }}
 
+  jobVars:
+    tolerations: {{$tolerations | toYAML | nindent 6 }}
+    nodeSelector: {{$nodeSelector | toYAML | nindent 6 }}
+
   values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
     global:
@@ -60,6 +70,9 @@ spec:
 
     directoryPerDB: true
 
+    tolerations: {{$tolerations | toYAML | nindent 8 }}
+    nodeSelector: {{$nodeSelector | toYAML | nindent 8 }}
+
     persistence:
       enabled: true
       size: {{$storageSize}}
@@ -75,11 +88,18 @@ spec:
     metrics:
       enabled: true
 
-    priorityClassName: "stateful"
+    priorityClassName: "{{$priorityClassname}}"
 
     topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: kloudlite.io/provider.az
+        whenUnsatisfiable: DoNotSchedule
+        nodeAffinityPolicy: Honor
+        nodeTaintsPolicy: Honor
+        labelSelector:
+          matchLabels: {{$labels | toYAML | nindent 12}}
+      - maxSkew: 1
+        topologyKey: kloudlite.io/node.name
         whenUnsatisfiable: DoNotSchedule
         nodeAffinityPolicy: Honor
         nodeTaintsPolicy: Honor
