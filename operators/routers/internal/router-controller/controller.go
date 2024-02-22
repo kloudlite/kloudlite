@@ -1,4 +1,4 @@
-package router
+package router_controller
 
 import (
 	"context"
@@ -12,12 +12,13 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
@@ -28,6 +29,7 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 )
 
 type Reconciler struct {
@@ -50,7 +52,8 @@ const (
 	BasicAuthReady  string = "basic-auth-ready"
 	DefaultsPatched string = "patch-defaults"
 
-	Finalizing string = "finalizing"
+	Finalizing         string = "finalizing"
+	CheckHttpsCerteady string = "https-cert-ready"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -97,11 +100,19 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ensuringTLSCertSecretsAreReplicated(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.reconBasicAuth(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	if step := r.ensureIngresses(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.checkHttpsCert(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -153,7 +164,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Resu
 
 	var ingList networkingv1.IngressList
 	if err := r.List(ctx, &ingList, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(obj.GetEnsuredLabels()),
+		LabelSelector: apiLabels.SelectorFromValidatedSet(obj.GetEnsuredLabels()),
 		Namespace:     obj.Namespace,
 	}); err != nil {
 		return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
@@ -249,9 +260,7 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) ([]string, []string, error) {
 	ctx, obj := req.Context(), req.Object
 
-	var wcDomains, nonWcDomains []string
-
-	wcdMap := make(map[string]bool, cap(wcDomains))
+	var wildcardPatterns []string
 
 	if obj.Spec.Https != nil && obj.Spec.Https.Enabled {
 		issuerName := obj.Spec.Https.ClusterIssuer
@@ -268,6 +277,7 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) (
 			if !apiErrors.IsNotFound(err) {
 				return nil, nil, err
 			}
+			clusterIssuer = nil
 		}
 
 		if clusterIssuer != nil {
@@ -282,33 +292,14 @@ func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) (
 
 			for _, solver := range clusterIssuer.Spec.ACME.Solvers {
 				if solver.DNS01 != nil {
-					for _, dnsName := range solver.Selector.DNSNames {
-						if strings.HasPrefix(dnsName, "*.") {
-							wcdMap[dnsName[2:]] = true
-						}
-						wcdMap[dnsName] = true
-						wcDomains = append(wcDomains, dnsName)
-					}
+					wildcardPatterns = solver.Selector.DNSNames
 				}
 			}
 		}
 	}
 
-	for _, domain := range obj.Spec.Domains {
-		if _, ok := wcdMap[domain]; ok {
-			continue
-		}
-		sp := strings.SplitN(domain, ".", 2)
-		if len(sp) < 2 {
-			continue
-		}
-		if _, ok := wcdMap[sp[1]]; ok {
-			continue
-		}
-		nonWcDomains = append(nonWcDomains, domain)
-	}
-
-	return wcDomains, nonWcDomains, nil
+	wildcardDomains, nonWildcardDomains := FilterDomains(wildcardPatterns, obj.Spec.Domains)
+	return wildcardDomains, nonWildcardDomains, nil
 }
 
 func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -341,9 +332,13 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	}
 
 	if obj.Spec.Https != nil && obj.Spec.Https.Enabled {
-		annotations["cert-manager.io/cluster-issuer"] = r.Env.DefaultClusterIssuer
 		annotations["nginx.kubernetes.io/ssl-redirect"] = "true"
 		annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"] = fmt.Sprintf("%v", obj.Spec.Https.ForceRedirect)
+
+		// cert-manager.io annotations, [read more](https://cert-manager.io/docs/usage/ingress/#supported-annotations)
+		annotations["cert-manager.io/cluster-issuer"] = r.Env.DefaultClusterIssuer
+		annotations["cert-manager.io/renew-before"] = "168h" // renew certificates a week before expiry
+		annotations["acme.cert-manager.io/http01-ingress-class"] = r.Env.DefaultIngressClass
 	}
 
 	if obj.Spec.RateLimit != nil && obj.Spec.RateLimit.Enabled {
@@ -474,31 +469,112 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 	req.AddToOwnedResources(rr...)
 
-	// INFO: since, nginx controller behaviour is dictated by annotations, and on kubectl apply, removed annotations will be left over on the resource, we need to manually ensure all the correct and only those annotations are there on the real ingress resource
-	// for i := range rr {
-	// 	ing := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: rr[i].Name, Namespace: rr[i].Namespace}}
-	// 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ing, func() error {
-	// 		matches := true
-	//
-	// 		for k := range ing.GetAnnotations() {
-	// 			if _, ok := annotations[k]; !ok && !strings.HasPrefix(k, "kloudlite.io") {
-	// 				matches = false
-	// 				break
-	// 			}
-	// 		}
-	//
-	// 		if !matches {
-	// 			ing.SetAnnotations(annotations)
-	// 		}
-	// 		return nil
-	// 	}); err != nil {
-	// 		return req.CheckFailed(IngressReady, check, err.Error()).Err(nil)
-	// 	}
-	// }
-
 	check.Status = true
 	if check != checks[IngressReady] {
 		checks[IngressReady] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) ensuringTLSCertSecretsAreReplicated(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "tls-secrets-are-replicated"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	scrtlist, err := r.yamlClient.Client().CoreV1().Secrets(obj.Namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("type=%s", corev1.SecretTypeTLS),
+	})
+	if err != nil {
+		return fail(err)
+	}
+
+	for _, scrt := range scrtlist.Items {
+		if v, ok := scrt.Annotations[constants.ReplicationEnableKey]; !ok || v != constants.ReplicationEnableValueTrue {
+			if scrt.Annotations == nil {
+				scrt.Annotations = make(map[string]string, 1)
+			}
+			scrt.Annotations[constants.ReplicationEnableKey] = constants.ReplicationEnableValueTrue
+			if err := r.Update(ctx, &scrt); err != nil {
+				return fail(err).RequeueAfter(100 * time.Millisecond)
+			}
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) checkHttpsCert(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := CheckHttpsCerteady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	if obj.Spec.Https == nil || !obj.Spec.Https.Enabled {
+		return req.Done()
+	}
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	var certlist certmanagerv1.CertificateList
+	if err := r.List(ctx, &certlist, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			constants.RouterNameKey: obj.GetName(),
+		}),
+		Namespace: obj.GetNamespace(),
+	}); err != nil {
+		return fail(err)
+	}
+
+	for _, cert := range certlist.Items {
+		errmsg := ""
+		for _, cond := range cert.Status.Conditions {
+			if cond.Type == certmanagerv1.CertificateConditionReady {
+				check.Status = metav1.ConditionStatus(cond.Status) == metav1.ConditionTrue
+				if !check.Status {
+					errmsg = fmt.Sprintf("HTTPS Certificate is not ready yet. cert-manager says '%s'.", cond.Message)
+				}
+			}
+		}
+
+		if !check.Status {
+			for _, cond := range cert.Status.Conditions {
+				if cond.Type == certmanagerv1.CertificateConditionIssuing {
+					errmsg = fmt.Sprintf("%s It also says '%s'", errmsg, check.Message)
+				}
+			}
+
+			return fail(fmt.Errorf(errmsg))
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -521,6 +597,15 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})
+
+	builder.Watches(&certmanagerv1.Certificate{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
+		if v, ok := obj.GetLabels()[constants.RouterNameKey]; ok {
+			return []reconcile.Request{{fn.NN(obj.GetNamespace(), v)}}
+		}
+
+		return nil
+	}))
+
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
