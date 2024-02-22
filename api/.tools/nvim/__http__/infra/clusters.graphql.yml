@@ -1,9 +1,12 @@
 ---
 global:
-  clusterName: sample-cluster2
+  clusterName: sample-cluster3
 
-  providerSecretName: "aws-283277"
-  providerSecretNamespace: "kl-account-new-prod-team"
+  # providerSecretName: "aws-283277"
+  # providerSecretNamespace: "kl-account-new-prod-team"
+
+  providerSecretName: "aws-creds2"
+  providerSecretNamespace: "kl-account-ab-641330"
 ---
 
 label: Create Cluster
@@ -150,7 +153,7 @@ variables:
 ---
 
 label: Delete Cluster
-query: |+
+query: |+ #graphql
   mutation Infra_deleteCluster($name: String!) {
     infra_deleteCluster(name: $name)
   }

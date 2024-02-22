@@ -37,7 +37,7 @@ func (d *domain) upsertEnvironmentResourceMapping(ctx ResourceContext, res resou
 	}
 
 	return d.resourceMappingRepo.Upsert(ctx, repos.Filter{
-		fields.ClusterName: clusterName,
+		fields.ClusterName:     clusterName,
 		fields.AccountName:     ctx.AccountName,
 		fields.ProjectName:     ctx.ProjectName,
 		fields.EnvironmentName: ctx.EnvironmentName,
@@ -46,7 +46,6 @@ func (d *domain) upsertEnvironmentResourceMapping(ctx ResourceContext, res resou
 		fc.ResourceMappingResourceType:      res.GetResourceType(),
 		fc.ResourceMappingResourceName:      res.GetName(),
 		fc.ResourceMappingResourceNamespace: res.GetNamespace(),
-
 	}, &entities.ResourceMapping{
 		ResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
 
@@ -73,9 +72,9 @@ func (d *domain) upsertProjectResourceMapping(ctx ConsoleContext, projectName st
 	}
 
 	return d.resourceMappingRepo.Upsert(ctx, repos.Filter{
-		fields.AccountName: ctx.AccountName,
-		fields.ClusterName: *clusterName,
-		fields.ProjectName: projectName,
+		fields.AccountName:                  ctx.AccountName,
+		fields.ClusterName:                  *clusterName,
+		fields.ProjectName:                  projectName,
 		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyProject,
 		fc.ResourceMappingResourceType:      res.GetResourceType(),
 		fc.ResourceMappingResourceName:      res.GetName(),
@@ -96,8 +95,10 @@ func (d *domain) upsertProjectResourceMapping(ctx ConsoleContext, projectName st
 
 func (d *domain) GetEnvironmentResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:                      ctx.AccountName,
-		fields.ClusterName:                      clusterName,
+		fields.AccountName: ctx.AccountName,
+		fields.ClusterName: clusterName,
+		// fields.ProjectName:                  "",
+		// fields.EnvironmentName:              "",
 		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyEnvironment,
 		fc.ResourceMappingResourceType:      resType,
 		fc.ResourceMappingResourceName:      name,
@@ -105,12 +106,13 @@ func (d *domain) GetEnvironmentResourceMapping(ctx ConsoleContext, resType entit
 	})
 }
 
-func (d *domain) GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, name string) (*entities.ResourceMapping, error) {
+func (d *domain) GetProjectResourceMapping(ctx ConsoleContext, resType entities.ResourceType, clusterName string, namespace string, name string) (*entities.ResourceMapping, error) {
 	return d.resourceMappingRepo.FindOne(ctx, repos.Filter{
-		fields.AccountName:                      ctx.AccountName,
-		fields.ClusterName:                      clusterName,
+		fields.AccountName:                  ctx.AccountName,
+		fields.ClusterName:                  clusterName,
 		fc.ResourceMappingResourceHeirarchy: entities.ResourceHeirarchyProject,
 		fc.ResourceMappingResourceType:      resType,
 		fc.ResourceMappingResourceName:      name,
+		fc.ResourceMappingResourceNamespace: namespace,
 	})
 }
