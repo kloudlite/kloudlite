@@ -12,11 +12,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	fn "github.com/kloudlite/operator/pkg/functions"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func nodesBelongingToNodepool(ctx context.Context, cli client.Client, name string) ([]clustersv1.Node, error) {
 	var nodesList clustersv1.NodeList
+	if err := cli.List(ctx, &nodesList, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			constants.NodePoolNameKey: name,
+		}),
+	}); err != nil {
+		return nil, err
+	}
+
+	return nodesList.Items, nil
+}
+
+func realNodesBelongingToNodepool(ctx context.Context, cli client.Client, name string) ([]corev1.Node, error) {
+	var nodesList corev1.NodeList
 	if err := cli.List(ctx, &nodesList, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
 			constants.NodePoolNameKey: name,

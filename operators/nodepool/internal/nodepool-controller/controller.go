@@ -25,6 +25,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kubernetes/pkg/util/taints"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
@@ -89,6 +90,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.updateNodeTaintsAndLabels(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -163,6 +168,55 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 			return fail(err)
 		}
 		return req.Done()
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "node-taints-and-labels"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	nodes, err := realNodesBelongingToNodepool(ctx, r.Client, obj.Name)
+	if err != nil {
+		return fail(err)
+	}
+
+	for _, node := range nodes {
+		for _, taint := range obj.Spec.NodeTaints {
+			if !taints.TaintExists(node.Spec.Taints, &taint) {
+				node.Spec.Taints = append(node.Spec.Taints, taint)
+			}
+		}
+
+		if node.Labels == nil {
+			node.Labels = map[string]string{}
+		}
+
+		for k, v := range obj.Spec.NodeLabels {
+			node.Labels[k] = v
+		}
+
+		if err := r.Update(ctx, &node); err != nil {
+			return fail(err).RequeueAfter(200 * time.Millisecond)
+		}
 	}
 
 	check.Status = true
@@ -420,6 +474,10 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 		}
 	}
 
+	if r.Env.AWSVpcId == "" || r.Env.AWSVpcPublicSubnets == "" {
+		return "", fmt.Errorf("env-var AWS_VPC_ID or AWS_VPC_PUBLIC_SUBNETS is not set, aborting nodepool job")
+	}
+
 	var publicsubnets map[string]any
 	if err := json.Unmarshal([]byte(r.Env.AWSVpcPublicSubnets), &publicsubnets); err != nil {
 		return "", err
@@ -449,6 +507,8 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 			"vpc_id":                r.Env.AWSVpcId,
 			"vpc_public_subnet_ids": publicsubnets,
 		},
+
+		"kloudlite_release": r.Env.KloudliteRelease,
 	}
 
 	b, err := json.Marshal(variables)

@@ -15,7 +15,9 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kubernetes/pkg/util/taints"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -205,8 +207,15 @@ func (r *Reconciler) finalizeOld(req *rApi.Request[*clustersv1.Node]) stepResult
 	}
 
 	if !realNode.Spec.Unschedulable {
-		realNode.Spec.Unschedulable = true
 		hasUpdatedNode = true
+
+		realNode.Spec.Unschedulable = true
+		taints.AddOrUpdateTaint(realNode, &corev1.Taint{
+			Key:       "kloudlite.io/node.deleting",
+			Value:     "true",
+			Effect:    "NoExecute",
+			TimeAdded: &metav1.Time{Time: time.Now()},
+		})
 	}
 
 	if hasUpdatedNode {
