@@ -99,7 +99,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	failed := func(err error) stepResult.Result {
@@ -109,9 +109,11 @@ func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 	if obj.Spec.CacheKeyName == nil {
 		check.Status = true
 		check.Message = "no cache key name specified, so not required"
-		if check != checks[PVCReady] {
-			checks[PVCReady] = check
-			req.UpdateStatus()
+		if check != obj.Status.Checks[PVCReady] {
+			fn.MapSet(&obj.Status.Checks, PVCReady, check)
+			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+				return sr
+			}
 		}
 		return req.Next()
 	}
@@ -125,22 +127,24 @@ func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 	}
 
 	check.Status = true
-	if check != checks[PVCReady] {
-		checks[PVCReady] = check
-		req.UpdateStatus()
+	if check != obj.Status.Checks[PVCReady] {
+		fn.MapSet(&obj.Status.Checks, PVCReady, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(JobCreated, check, err.Error())
 	}
 
-	if checks[JobCreated].Status {
+	if obj.Status.Checks[JobCreated].Status {
 		return req.Next()
 	}
 
@@ -170,29 +174,31 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return failed(err)
+		return failed(err).Err(nil)
 	}
 
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != checks[JobCreated] {
-		checks[JobCreated] = check
-		req.UpdateStatus()
+	if check != obj.Status.Checks[JobCreated] {
+		fn.MapSet(&obj.Status.Checks, JobCreated, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
 }
 
 func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(JobCompleted, check, err.Error())
 	}
 
-	if checks[JobCompleted].Status || checks[JobFailed].Status {
+	if obj.Status.Checks[JobCompleted].Status || obj.Status.Checks[JobFailed].Status {
 		return req.Next()
 	}
 
@@ -207,17 +213,21 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 
 	if j.Status.Succeeded > 0 {
 		check.Status = true
-		if check != checks[JobCompleted] {
-			checks[JobCompleted] = check
-			req.UpdateStatus()
+		if check != obj.Status.Checks[JobCompleted] {
+			fn.MapSet(&obj.Status.Checks, JobCompleted, check)
+			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+				return sr
+			}
 		}
 	}
 
 	if j.Status.Failed > 0 {
 		check.Status = true
-		if check != checks[JobFailed] {
-			checks[JobFailed] = check
-			req.UpdateStatus()
+		if check != obj.Status.Checks[JobFailed] {
+			fn.MapSet(&obj.Status.Checks, JobFailed, check)
+			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+				return sr
+			}
 		}
 	}
 
@@ -225,7 +235,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	ctx, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	failed := func(err error) stepResult.Result {
