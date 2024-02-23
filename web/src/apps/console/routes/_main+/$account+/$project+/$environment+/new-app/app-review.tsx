@@ -16,24 +16,28 @@ interface IReviewComponent {
   title: string;
   children: ReactNode;
   onEdit: () => void;
+  canEdit?: boolean;
 }
 export const ReviewComponent = ({
   title = '',
   children,
   onEdit,
+  canEdit = true,
 }: IReviewComponent) => {
   return (
     <div className="flex flex-col gap-2xl pb-3xl">
       <div className="flex flex-row items-center">
         <span className="text-text-soft bodyMd flex-1">{title}</span>
-        <button
-          type="button"
-          aria-label="edit"
-          className="text-icon-soft"
-          onClick={onEdit}
-        >
-          <PencilLine size={16} />
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            aria-label="edit"
+            className="text-icon-soft"
+            onClick={onEdit}
+          >
+            <PencilLine size={16} />
+          </button>
+        )}
       </div>
       {children}
     </div>
@@ -83,7 +87,7 @@ const AppReview = () => {
     <FadeIn onSubmit={handleSubmit} className="py-3xl">
       <div>An assessment of the work, product, or performance.</div>
       <div className="flex flex-col gap-3xl">
-        <ReviewComponent title="Application detail" onEdit={() => {}}>
+        <ReviewComponent title="Application detail" onEdit={() => { }}>
           <div className="flex flex-col p-xl gap-md rounded border border-border-default">
             <div className="bodyMd-semibold text-text-default">
               {app.displayName}
@@ -92,7 +96,7 @@ const AppReview = () => {
           </div>
         </ReviewComponent>
 
-        <ReviewComponent title="Compute" onEdit={() => {}}>
+        <ReviewComponent title="Compute" onEdit={() => { }}>
           <div className="flex flex-row gap-3xl">
             <div className="flex flex-col rounded border border-border-default flex-1 overflow-hidden">
               <div className="px-xl py-lg bg-surface-basic-subdued">
@@ -127,7 +131,7 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Environment" onEdit={() => {}}>
+        <ReviewComponent title="Environment" onEdit={() => { }}>
           <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
             <div className="flex flex-row items-center gap-lg pb-xl border-b border-border-default">
               <div className="flex-1 bodyMd-medium text-text-default">
@@ -147,7 +151,7 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Network" onEdit={() => {}}>
+        <ReviewComponent title="Network" onEdit={() => { }}>
           <div className="flex flex-row gap-xl p-xl rounded border border-border-default">
             <div className="text-text-default bodyMd flex-1">
               Ports exposed from the app

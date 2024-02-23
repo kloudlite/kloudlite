@@ -13,11 +13,10 @@ import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import Wrapper from '~/console/components/wrapper';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { Button } from '~/components/atoms/button';
+import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseNodes } from '~/console/server/r-utils/common';
 import { plans } from '../../../../new-app/datas';
-import useCustomSwr from "~/lib/client/hooks/use-custom-swr";
-import {useConsoleApi} from "~/console/server/gql/api-provider";
-import {useMapper} from "~/components/utils";
-import {parseNodes} from "~/console/server/r-utils/common";
 
 const valueRender = ({
   label,
@@ -41,15 +40,13 @@ const valueRender = ({
 };
 
 const SettingCompute = () => {
-  const { app, setApp, getContainer, activeContIndex, getRepoMapper } = useAppState();
+  const { app, setApp, getContainer, activeContIndex, getRepoMapper } =
+    useAppState();
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
 
-  const api = useConsoleApi()
+  const api = useConsoleApi();
 
-  const [selectedRepo, setSelectedRepo] = useState("");
-  const [imageDigests, setImageDigests] = useState<{ tags: string[], digest: string }[]>([])
-  const [accountName, setAccountName] = useState("")
-
+  const [accountName, setAccountName] = useState('');
 
   const {
     data,
@@ -66,8 +63,8 @@ const SettingCompute = () => {
       cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
       memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || 1,
 
-      repoName: '',
-      repoImageTag: '',
+      repoName: app.metadata?.annotations?.[keyconstants.repoName] || '',
+      repoImageTag: app.metadata?.annotations?.[keyconstants.imageTag] || '',
       repoImageUrl: '',
 
       cpu: parseValue(
@@ -111,6 +108,8 @@ const SettingCompute = () => {
             ...(s.metadata?.annotations || {}),
             [keyconstants.cpuMode]: val.cpuMode,
             [keyconstants.selectedPlan]: val.selectedPlan,
+            [keyconstants.repoName]: val.repoName,
+            [keyconstants.imageTag]: val.repoImageTag,
           },
         },
         spec: {
@@ -161,22 +160,18 @@ const SettingCompute = () => {
   //   accName: val.accountName
   // }));
 
-  const repos = getRepoMapper(data)
+  const repos = getRepoMapper(data);
 
-
-  useEffect(() => {
-    (async () => {
-      const {data} = await api.listDigest({repoName: selectedRepo})
-
-      const digests = data.edges.map(item => ({
-        digest: item.node.digest,
-        tags: item.node.tags,
-      }))
-
-      setImageDigests(digests);
-    })()
-
-  }, [selectedRepo])
+  const {
+    data: digestData,
+    isLoading: digestLoading,
+    error: digestError,
+  } = useCustomSwr(
+    () => `/digests_${values.repoName}`,
+    async () => {
+      return api.listDigest({ repoName: values.repoName });
+    }
+  );
 
   useEffect(() => {
     submit();
@@ -213,14 +208,14 @@ const SettingCompute = () => {
       >
         <div className="flex flex-col gap-3xl">
           <TextInput
-              label={
-                <InfoLabel info="some usefull information" label="Image Url"/>
-              }
-              size="lg"
-              value={values.imageUrl}
-              onChange={handleChange('imageUrl')}
-              error={!!errors.imageUrl}
-              message={errors.imageUrl}
+            label={
+              <InfoLabel info="some usefull information" label="Image Url" />
+            }
+            size="lg"
+            value={values.imageUrl}
+            onChange={handleChange('imageUrl')}
+            error={!!errors.imageUrl}
+            message={errors.imageUrl}
           />
           {/* <PasswordInput
             label={
@@ -233,49 +228,62 @@ const SettingCompute = () => {
             // onChange={handleChange('pullSecret')}
           /> */}
 
-          <div>
-            OR
-          </div>
+          <div>OR</div>
 
           <Select
-              label="Repository Name"
-              size="lg"
-              placeholder="Select Repo"
-              value={
-                {label: '', value: values.repoName}
-              }
-              searchable
-              onChange={(val) => {
-                handleChange('repoName')(dummyEvent(val.value));
-                setSelectedRepo(val.value)
-                setAccountName(val.accName)
-              }}
-              options={async () => [...repos]}
-              error={!!errors.repos || !!repoLoadingError}
-              message={repoLoadingError ? 'Error fetching repos.' : errors.app}
-              loading={repoLoading}
+            label="Repository Name"
+            size="lg"
+            placeholder="Select Repo"
+            value={{ label: '', value: values.repoName }}
+            searchable
+            onChange={(val) => {
+              handleChange('repoName')(dummyEvent(val.value));
+              setAccountName(val.accName);
+            }}
+            options={async () => [...repos]}
+            error={!!errors.repos || !!repoLoadingError}
+            message={
+              repoLoadingError ? 'Error fetching repositories.' : errors.app
+            }
+            loading={repoLoading}
           />
 
           <Select
-              label="Repo Image Tag"
-              size="lg"
-              placeholder="Select Image Tag"
-              value={
-                {label: '', value: values.repoImageTag}
-              }
-              searchable
-              onChange={(val) => {
-                handleChange('repoImageTag')(dummyEvent(val.value));
-                handleChange('repoImageUrl')(dummyEvent(`registry.kloudlite.io/${accountName}/${values.repoName}:${val.value}`))
-              }}
-              options={async () => [...new Set(imageDigests.map(item => item.tags).flat())].map(item => ({
+            label="Image Tag"
+            size="lg"
+            placeholder="Select Image Tag"
+            value={{ label: '', value: values.repoImageTag }}
+            searchable
+            onChange={(val) => {
+              handleChange('repoImageTag')(dummyEvent(val.value));
+              handleChange('repoImageUrl')(
+                dummyEvent(
+                  `registry.kloudlite.io/${accountName}/${values.repoName}:${val.value}`
+                )
+              );
+            }}
+            options={async () =>
+              [
+                ...new Set(
+                  parseNodes(digestData)
+                    .map((item) => item.tags)
+                    .flat()
+                ),
+              ].map((item) => ({
                 label: item,
                 value: item,
-              }))}
-              error={!!errors.repoImageTag}
-              message={errors.repoImageTag}
+              }))
+            }
+            error={!!errors.repoImageTag || !!digestError}
+            message={
+              errors.repoImageTag
+                ? errors.repoImageTag
+                : digestError
+                ? 'Failed to load Image tags.'
+                : ''
+            }
+            loading={digestLoading}
           />
-
         </div>
         {/* <div className="flex flex-col border border-border-default bg-surface-basic-default rounded overflow-hidden">
         <div className="p-2xl gap-2xl flex flex-row items-center border-b border-border-disabled bg-surface-basic-subdued">

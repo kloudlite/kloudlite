@@ -8,4 +8,6 @@ export const keyconstants = {
   selectedPlan: 'kloudlite.io/ui-selected-plan',
   memPerCpu: 'kloudlite.io/ui-mem-per-cpu',
   nodeType: 'kloudlite.io/ui-node-type',
+  repoName: 'kloudlite.io/ui-repoName',
+  imageTag: 'kloudlite.io/ui-imageTag',
 };
