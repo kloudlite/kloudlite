@@ -41,6 +41,10 @@ tasks:
           "vision")
             URL_SUFFIX="-vision"
             ;;
+          
+          "piyush")
+            URL_SUFFIX="-piyush"
+            ;;
 
           *)
             URL_SUFFIX=""

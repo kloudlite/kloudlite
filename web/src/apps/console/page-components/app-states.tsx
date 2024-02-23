@@ -6,6 +6,8 @@ import {
   AppIn,
   Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn as AppSpecContainersIn,
 } from '~/root/src/generated/gql/server';
+import {useMapper} from "~/components/utils";
+import {parseNodes} from "~/console/server/r-utils/common";
 
 const defaultApp: AppIn = {
   metadata: {
@@ -185,6 +187,18 @@ export const useAppState = () => {
     });
   };
 
+  type IparseNodes = {
+    edges: Array<{ node: any }>;
+  };
+
+  const getRepoMapper = (resources: IparseNodes | undefined) => {
+    return useMapper(parseNodes(resources), (val) => ({
+      label: val.name,
+      value: val.name,
+      accName: val.accountName
+    }))
+  }
+
   return {
     resetState,
     completePages,
@@ -203,6 +217,7 @@ export const useAppState = () => {
     activeContIndex: activeContIndex || 0,
     services: app.spec.services || [],
     setServices,
+    getRepoMapper,
   };
 };
 
