@@ -10,3 +10,6 @@
 [submodule "infrastructure-as-code"]
 	path = infrastructure-as-code
 	url = git@github.com:kloudlite/infrastructure-as-code
+[submodule "autoscaler"]
+	path = autoscaler
+	url = git@github.com:kloudlite/autoscaler

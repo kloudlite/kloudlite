@@ -95,7 +95,7 @@ jobs:
       SUBMODULE: api
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -205,7 +205,7 @@ jobs:
       SUBMODULE: operator
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -297,17 +297,17 @@ jobs:
     strategy:
       matrix:
         name:
-          # - iac-job
-          # - aws-spot-k3s-terminator
+          - iac-job
+          - aws-spot-k3s-terminator
           - k3s-runner
         include:
-          # - name: iac-job
-          #   build_dir: .
-          #   container_image: true
-          #
-          # - name: aws-spot-k3s-terminator
-          #   build_dir: cmd/aws-spot-k3s-terminator
-          #   container_image: true
+          - name: iac-job
+            build_dir: .
+            container_image: true
+
+          - name: aws-spot-k3s-terminator
+            build_dir: cmd/aws-spot-k3s-terminator
+            container_image: true
 
           - name: k3s-runner
             build_dir: cmd/k3s-runner
@@ -319,7 +319,7 @@ jobs:
       SUBMODULE: infrastructure-as-code
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -360,7 +360,7 @@ jobs:
 
           set -e
 
-          docker buildx build -t $image . --push
+          task container:build-n-push Image=$image
           popd
 
       - name: Release Artifact
@@ -386,16 +386,78 @@ jobs:
           name: k3s-runner
           path: ${{ env.k3s_runner_path }}
 
+  autoscaler:
+    needs: []
+
+    strategy:
+      matrix:
+        name:
+          - cluster-autoscaler
+        include:
+          - name: cluster-autoscaler
+            build_dir: ./cluster-autoscaler
+
+    runs-on: ubuntu-latest
+    name: autoscaler
+    env:
+      SUBMODULE: autoscaler
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/${{ matrix.name }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/${{ matrix.name}}/go.sum
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: true
+
+      - name: Build & Push Autoscaler
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}
+          echo "building image: $image:$IMAGE_TAG"
+
+          docker manifest inspect $image:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          task docker:build IMAGE=$image TAG="$IMAGE_TAG"
+          popd
+
   github_release:
     needs:
       - api
       - operator
       - infrastructure-as-code
+      - autoscaler
     runs-on: ubuntu-latest
     name: Creating a Github Release
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -422,6 +484,7 @@ jobs:
 
           echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
           echo "override_release_assets=true" >> $GITHUB_ENV
+          echo "github_branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Create Release Tag from git tag
         if: startsWith(github.ref, 'refs/tags/')
@@ -438,8 +501,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_tag: ${{ env.release_tag }}
-          override_release_assets: ${{ env.override_release_assets }}
-          release_title: "kloudlite release %s"
-          working_dir: "ci-artifacts"
+          github_ref: ${GITHUB_REF}
           files: |+
-            **
+            ci-artifacts/**

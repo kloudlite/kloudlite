@@ -1,0 +1,15 @@
+version: 3
+
+tasks:
+  debug:
+    env:
+      RELEASE_TAG: "v1.0.0-nightly"
+      # RELEASE_TAG: "v1.0.0-nightly"
+      RELEASE_TITLE: "sample"
+      GITHUB_REPOSITORY: "kloudlite/test-oss-ci"
+      # GIT_BRANCH: "release-v1.0.0"
+      GITHUB_REF: "/refs/heads/release-v1.0.0"
+      # GITHUB_REF: "/refs/tags/v1.0.0-nightly"
+      FILES: "/tmp/x/**/*"
+    cmds:
+      - npx zx ./script.mjs
