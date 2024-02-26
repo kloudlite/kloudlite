@@ -6,5 +6,4 @@ RUN chmod +x kubectl && mv kubectl /usr/local/bin/
 COPY main.sh ./main.sh
 RUN chmod +x main.sh
 USER 1717
-CMD ["./main.sh"]
-
+ENTRYPOINT ["./main.sh"]
