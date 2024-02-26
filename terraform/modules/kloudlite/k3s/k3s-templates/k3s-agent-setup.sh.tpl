@@ -12,7 +12,7 @@ agent:
   taints: ${jsonencode([
     for taint in  tf_node_taints: "${taint.key}=${taint.value}:${taint.effect}"
   ])}
-  extraAgentArgs: ${jsonencode(tf_extra_agent_args)}
+  extraAgentArgs: ${jsonencode(concat(["--kubelet-arg", "--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000" ],tf_extra_agent_args))}
 EOF2
 
 if [ "${tf_use_cloudflare_nameserver}" = "true" ]; then
