@@ -57,6 +57,7 @@ resource "aws_key_pair" "k3s_worker_nodes_ssh_key" {
 
 locals {
   common_node_labels = {
+    (module.constants.node_labels.kloudlite_release) : var.kloudlite_release,
     (module.constants.node_labels.provider_name) : "aws",
     (module.constants.node_labels.provider_region) : var.aws_region,
   }
@@ -65,25 +66,27 @@ locals {
 module "aws-security-groups" {
   source     = "../../modules/aws/security-groups"
   depends_on = [null_resource.variable_validations]
-  vpc_id     = var.vpc.vpc_id
-
-  create_group_for_k3s_workers = true
-
-  allow_incoming_http_traffic_on_master = true
-  allow_metrics_server_on_master        = true
-  expose_k8s_node_ports_on_master       = true
-
-  allow_incoming_http_traffic_on_agent    = false
-  allow_metrics_server_on_agent           = true
-  allow_outgoing_to_all_internet_on_agent = true
-  expose_k8s_node_ports_on_agent          = false
 
   tracker_id = var.tracker_id
+  vpc_id     = var.vpc.vpc_id
+
+  create_for_k3s_workers = true
+
+  allow_incoming_http_traffic = false
+  expose_k8s_node_ports       = false
 }
 
 module "k3s-templates" {
   depends_on = [null_resource.variable_validations]
   source     = "../../modules/kloudlite/k3s/k3s-templates"
+}
+
+module "aws-amis" {
+  source = "../../modules/aws/AMIs"
+}
+
+module "availability_zones" {
+  source = "../../modules/aws/availability-zones"
 }
 
 module "aws-ec2-nodepool" {
@@ -92,8 +95,8 @@ module "aws-ec2-nodepool" {
   for_each   = {for np_name, np_config in var.ec2_nodepools : np_name => np_config}
 
   tracker_id           = "${var.tracker_id}-${each.key}"
-  ami                  = each.value.image_id
-  availability_zone    = each.value.availability_zone
+  ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
+  availability_zone    = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]
   iam_instance_profile = each.value.iam_instance_profile
   instance_type        = each.value.instance_type
   nvidia_gpu_enabled   = each.value.nvidia_gpu_enabled
@@ -103,7 +106,7 @@ module "aws-ec2-nodepool" {
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   tags                 = var.tags
   vpc                  = {
-    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone]
+    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]]
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
   nodes = {
@@ -112,11 +115,10 @@ module "aws-ec2-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          kloudlite_release    = var.kloudlite_release
+          kloudlite_release          = var.kloudlite_release
           kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
         })
 
-        tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
         tf_node_taints          = concat([],
@@ -125,10 +127,8 @@ module "aws-ec2-nodepool" {
         )
         tf_node_labels = jsonencode(merge(
           local.common_node_labels,
-          each.value.availability_zone != "" && each.value.availability_zone != null ? {
-            (module.constants.node_labels.provider_az) = each.value.availability_zone
-          } : {},
           {
+            (module.constants.node_labels.provider_az)   = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0],
             (module.constants.node_labels.node_has_role) = "agent"
             (module.constants.node_labels.nodepool_name) : each.key,
             (module.constants.node_labels.provider_aws_instance_profile_name) : each.value.iam_instance_profile,
@@ -149,8 +149,8 @@ module "aws-spot-nodepool" {
   depends_on                   = [null_resource.variable_validations]
   for_each                     = {for np_name, np_config in var.spot_nodepools : np_name => np_config}
   tracker_id                   = "${var.tracker_id}-${each.key}"
-  ami                          = each.value.image_id
-  availability_zone            = each.value.availability_zone
+  ami                          = module.aws-amis.ubuntu_amd64_cpu_ami_id
+  availability_zone            = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]
   root_volume_size             = each.value.root_volume_size
   root_volume_type             = each.value.root_volume_type
   security_groups              = module.aws-security-groups.sg_for_k3s_agents_ids
@@ -160,7 +160,7 @@ module "aws-spot-nodepool" {
   cpu_node                     = each.value.cpu_node
   gpu_node                     = each.value.gpu_node
   vpc                          = {
-    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone]
+    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]]
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
   nodes = {
@@ -169,11 +169,10 @@ module "aws-spot-nodepool" {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
         vm_setup_script = templatefile(module.k3s-templates.k3s-vm-setup-template-path, {
-          kloudlite_release    = var.kloudlite_release
+          kloudlite_release          = var.kloudlite_release
           kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
         })
 
-        tf_image_ssh_username   = each.value.image_ssh_username
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
         tf_node_taints          = concat([],
@@ -182,10 +181,8 @@ module "aws-spot-nodepool" {
         )
         tf_node_labels = jsonencode(merge(
           local.common_node_labels,
-          each.value.availability_zone != "" && each.value.availability_zone != null ? {
-            (module.constants.node_labels.provider_az) = each.value.availability_zone
-          } : {},
           {
+            (module.constants.node_labels.provider_az)   = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0],
             (module.constants.node_labels.node_has_role) = "agent"
             (module.constants.node_labels.node_is_spot)  = "true"
             (module.constants.node_labels.nodepool_name) : each.key,
