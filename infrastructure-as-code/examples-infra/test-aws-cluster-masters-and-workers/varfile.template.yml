@@ -11,14 +11,6 @@ aws_assume_role:
 
 vpc:
   name: test-vpc
-  # cidr: 10.0.0.0/16
-  # public_subnets:
-  #   - availability_zone: eu-west-2a
-  #     cidr: 10.0.1.0/24
-  #   - availability_zone: ap-south-1b
-  #     cidr: 10.0.2.0/24
-  #   - availability_zone: ap-south-1c
-  #     cidr: 10.0.3.0/24
 
 k3s_masters:
   # image_id: ami-06d146e85d1709abb
@@ -55,10 +47,11 @@ k3s_masters:
   nodes:
     master-1:
       role: primary-master
-      availability_zone: ap-south-1a
+      # availability_zone: ap-south-1a
+      availability_zone: ""
       # availability_zone: eu-west-2a
       # kloudlite_release: &kloudlite-release v1.0.2-nightly
-      kloudlite_release: &kloudlite-release v1.0.0
+      kloudlite_release: &kloudlite-release v1.0.0-nightly
     # master-2:
     #   role: secondary-master
     #   availability_zone: ap-south-1b
@@ -83,8 +76,9 @@ spot_nodepools: {}
 #     # iam_instance_profile: "kloudlite-instance-profile"
 #     nodes:
 #       node-1: { }
-#
-#
+
+# spot_nodepools: {}
+
 # spot_nodepools:
 #   spot-np-1:
 #     # image_id: ami-0fdcdf796bf63edfd
@@ -109,8 +103,8 @@ spot_nodepools: {}
 enable_nvidia_gpu_support: false
 kloudlite_params:
   # release: v1.0.2-nightly
-  release: v1.0.0
-  install_agent: false
+  release: v1.0.4-nightly
+  install_agent: true
   install_crds: true
   install_csi_driver: true
   install_operators: true
