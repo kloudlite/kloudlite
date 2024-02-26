@@ -38,6 +38,8 @@ locals {
         "--tls-san-security",
         "--flannel-external-ip",
         "--cluster-domain", var.cluster_internal_dns_host,
+        # [read more here](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#system-reserved)
+        "--kubelet-arg", "--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000"
       ],
       var.backup_to_s3.enabled && v.role == "primary-master" ? [
         "--etcd-s3",
@@ -98,6 +100,31 @@ primaryMaster:
 EOF2
     sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
     sudo systemctl restart kloudlite-k3s.service
+EOT
+  ]
+}
+
+resource "ssh_resource" "k3s_primary_master_upgrade" {
+  for_each = {for k, v in var.master_nodes : k => v if v.role == local.primary_master_role}
+
+  host        = each.value.public_ip
+  user        = var.ssh_params.user
+  private_key = var.ssh_params.private_key
+
+  depends_on = [ssh_resource.k3s_primary_master]
+
+  when = "create"
+  triggers = {
+    when_kloudlite_release_changes = each.value.kloudlite_release
+  }
+
+  timeout     = "2m"
+  retry_delay = "2s"
+
+  commands = [
+    <<EOT
+sudo kloudlite-upgrade.sh ${each.value.kloudlite_release}
+sudo systemctl restart kloudlite-k3s.service
 EOT
   ]
 }
@@ -216,6 +243,31 @@ secondaryMaster:
 EOF2
 
 sudo mv /tmp/runner-config.yml ${module.kloudlite-k3s-templates.kloudlite_config_directory}/runner-config.yml
+sudo systemctl restart kloudlite-k3s.service
+EOT
+  ]
+}
+
+resource "ssh_resource" "k3s_secondary_masters_upgrade" {
+  for_each = {for k, v in var.master_nodes : k => v if v.role == local.secondary_master_role}
+
+  host        = each.value.public_ip
+  user        = var.ssh_params.user
+  private_key = var.ssh_params.private_key
+
+  depends_on = [ssh_resource.k3s_secondary_masters]
+
+  when = "create"
+  triggers = {
+    when_kloudlite_release_changes = each.value.kloudlite_release
+  }
+
+  timeout     = "2m"
+  retry_delay = "2s"
+
+  commands = [
+    <<EOT
+sudo kloudlite-upgrade.sh ${each.value.kloudlite_release}
 sudo systemctl restart kloudlite-k3s.service
 EOT
   ]

@@ -1,17 +1,28 @@
 version: 3
 
-vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform"
-
 tasks:
+  container:build-n-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+    vars:
+      Push: true
+    cmds:
+      - docker build -t {{.Image}} .
+      - |+
+        if [ "{{.Push}}" == "true" ]; then
+          docker push {{.Image}}
+        end
+
   local-build:
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
     vars:
       Name: aws-spot-k3s-termination-handler
+      ImagePrefix: "ghcr.io/kloudlite/platform"
       Image: "{{.ImagePrefix}}/{{.Name}}:{{.Tag}}"
     cmds:
-      - podman build -t {{.Image}} .
-      - podman push {{.Image}}
+      - docker build -t {{.Image}} .
+      - docker push {{.Image}}
 
