@@ -38,8 +38,9 @@ tasks:
       - .secrets/env
     vars:
       PlanOutput: ".secrets/plan.out"
+      P: 3
     cmds:
-      - terraform apply "{{.PlanOutput}}"
+      - terraform apply -parallelism={{.P}} "{{.PlanOutput}}" 
 
   validate:
     dir: ./

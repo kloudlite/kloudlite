@@ -77,7 +77,7 @@ module "k3s-master-instances" {
 
   for_each             = {for name, cfg in var.k3s_masters.nodes : name => cfg}
   ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone    = each.value.availability_zone
+  availability_zone    = each.value.availability_zone != "" ? each.value.availability_zone : module.aws-vpc.vpc_availability_zones[0]
   instance_type        = var.k3s_masters.instance_type
   iam_instance_profile = var.k3s_masters.iam_instance_profile
   is_nvidia_gpu_node   = var.enable_nvidia_gpu_support
@@ -94,7 +94,7 @@ module "k3s-master-instances" {
     kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
   }))
   vpc = {
-    subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone]
+    subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone != "" ? each.value.availability_zone : module.aws-vpc.vpc_availability_zones[0]]
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_masters_ids
   }
 }
@@ -114,7 +114,7 @@ module "kloudlite-k3s-masters" {
         (module.constants.node_labels.kloudlite_release) : cfg.kloudlite_release,
         (module.constants.node_labels.provider_name) : "aws",
         (module.constants.node_labels.provider_region) : var.aws_region,
-        (module.constants.node_labels.provider_az) : cfg.availability_zone,
+        (module.constants.node_labels.provider_az) : cfg.availability_zone != "" ? cfg.availability_zone : module.aws-vpc.vpc_availability_zones[0]
         (module.constants.node_labels.node_has_role) : cfg.role,
         (module.constants.node_labels.provider_aws_instance_profile_name) : var.k3s_masters.iam_instance_profile,
         (module.constants.node_labels.provider_instance_type) : var.k3s_masters.instance_type,
@@ -164,42 +164,4 @@ EOF
     username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
     private_key = module.ssh-rsa-key.private_key
   }
-}
-
-module "helm-aws-ebs-csi" {
-  count           = var.kloudlite_params.install_csi_driver ? 1 : 0
-  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
-  depends_on      = [module.kloudlite-k3s-masters]
-  storage_classes = {
-    "sc-xfs" : {
-      volume_type = "gp3"
-      fs_type     = "xfs"
-    },
-    "sc-ext4" : {
-      volume_type = "gp3"
-      fs_type     = "ext4"
-    },
-  }
-  controller_node_selector = module.constants.master_node_selector
-  controller_tolerations   = module.constants.master_node_tolerations
-  daemonset_node_selector  = module.constants.agent_node_selector
-  ssh_params               = {
-    public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
-    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
-    private_key = module.ssh-rsa-key.private_key
-  }
-}
-
-module "aws-k3s-spot-termination-handler" {
-  source              = "../../modules/kloudlite/spot-termination-handler"
-  depends_on          = [module.kloudlite-k3s-masters.kubeconfig]
-  spot_nodes_selector = module.constants.spot_node_selector
-  ssh_params          = {
-    public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
-    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
-    private_key = module.ssh-rsa-key.private_key
-  }
-  kloudlite_release = var.kloudlite_params.release
-  release_name      = "kl-aws-spot-termination-handler"
-  release_namespace = module.kloudlite-k3s-masters.kloudlite_namespace
 }
