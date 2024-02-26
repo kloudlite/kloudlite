@@ -15,10 +15,21 @@ tasks:
         msg: 'var Tag must have a value'
     silent: true
     cmds:
+      - podman buildx build -t {{.Image}} .
+      - podman push {{.Image}}
+
+  container:build-n-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+    vars:
+      Push: true
+    cmds:
       - docker build -t {{.Image}} .
-      - docker push {{.Image}}
-      # - podman buildx build -t {{.Image}} .
-      # - podman push {{.Image}}
+      - |+
+        if [ "{{.Push}}" == "true" ]; then
+          docker push {{.Image}}
+        fi
 
   tf:download:kubeconfig:dev:
     vars:

@@ -12,7 +12,7 @@ tasks:
       - |+
         if [ "{{.Push}}" == "true" ]; then
           docker push {{.Image}}
-        end
+        fi
 
   local-build:
     preconditions:
