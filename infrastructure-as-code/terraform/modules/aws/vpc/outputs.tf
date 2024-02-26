@@ -6,3 +6,6 @@ output "vpc_public_subnets" {
   value = {for idx, subnet in aws_subnet.public_subnets : subnet.availability_zone => subnet.id}
 }
 
+output "vpc_availability_zones" {
+  value = module.availability_zones.names
+}
