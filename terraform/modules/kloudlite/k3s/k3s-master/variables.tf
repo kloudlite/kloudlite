@@ -34,9 +34,10 @@ variable "extra_server_args" {
 variable "master_nodes" {
   description = "map of secondary master nodes to join the cluster"
   type        = map(object({
-    role        = string
-    public_ip   = string
-    node_labels = map(string)
+    role              = string
+    public_ip         = string
+    node_labels       = map(string)
+    kloudlite_release = string
   }))
 
   validation {

@@ -2,7 +2,7 @@
 .terraform
 .terraform.out
 .idea
-*.tfstate
+*.tfstate*
 *.tfstate.backup
 .terraform.d
 .direnv

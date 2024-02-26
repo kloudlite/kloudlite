@@ -1,5 +1,6 @@
 locals {
   kloudlite_node_labels = {
+    kloudlite_release      = "kloudlite.io/release"
     provider_name          = "kloudlite.io/provider.name"
     provider_region        = "kloudlite.io/provider.region"
     provider_az            = "kloudlite.io/provider.az"
@@ -86,3 +87,7 @@ output "spot_node_selector" {
 output "node_labels" {
   value = local.kloudlite_node_labels
 }
+
+#output "k3s_data_volume_device" {
+#  value = "/dev/sdf"
+#}

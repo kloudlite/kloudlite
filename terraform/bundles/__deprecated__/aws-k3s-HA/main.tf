@@ -9,13 +9,13 @@ resource "aws_iam_instance_profile" "iam_instance_profile" {
 
 module "aws-security-groups" {
   source                                = "../../../modules/aws/security-groups"
-  allow_incoming_http_traffic_on_master = true
+  allow_incoming_http_traffic = true
   allow_metrics_server_on_master        = true
-  expose_k8s_node_ports_on_master       = true
+  expose_k8s_node_ports       = true
 
-  allow_incoming_http_traffic_on_agent    = false
+  allow_incoming_http_traffic    = false
   allow_metrics_server_on_agent           = true
-  allow_outgoing_to_all_internet_on_agent = true
+  allow_outgoing_to_internet = true
   expose_k8s_node_ports_on_agent          = false
 }
 

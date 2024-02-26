@@ -21,19 +21,24 @@ resource "null_resource" "lifecycle_resource" {
   }
 }
 
-data "aws_ami" "ubuntu_ami" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
+locals {
+  resource_tracker_id = "${var.tracker_id}-${var.node_name}"
+  #  k3s_data_volume_device = "/dev/sdf"
 }
 
+#resource "aws_ebs_volume" "k3s_data_volume" {
+#  availability_zone = var.availability_zone
+#  size              = 10  # Size in GiB
+#  type              = "gp3"  # Adjust type based on needs
+#  tags              = {
+#    Name         = "${local.resource_tracker_id}-k3s-data-volume"
+#    TrackerId    = var.tracker_id
+#    KloudliteIAC = true
+#  }
+#}
+
 resource "aws_instance" "ec2_instance" {
-  #  ami           = var.ami
-  ami           = data.aws_ami.ubuntu_ami.id
+  ami           = var.ami
   instance_type = var.instance_type
 
   security_groups        = var.vpc == null ? var.security_groups : null
@@ -45,18 +50,17 @@ resource "aws_instance" "ec2_instance" {
 
   lifecycle {
     replace_triggered_by = [null_resource.lifecycle_resource]
-    ignore_changes       = [ami, instance_type]
+    ignore_changes       = [ami, instance_type, user_data_base64]
   }
 
   depends_on = [null_resource.variable_validation]
 
-  user_data_base64 = var.user_data_base64 != "" ? var.user_data_base64 : null
-
+  user_data_base64     = var.user_data_base64 != "" ? var.user_data_base64 : null
   iam_instance_profile = var.iam_instance_profile != "" ? var.iam_instance_profile : null
 
   tags = merge({
-    Name                               = "${var.tracker_id}-${var.node_name}"
-    "kloudlite-infrastructure-as-code" = true
+    Name         = local.resource_tracker_id
+    KloudliteIAC = true
   }, var.tags)
 
   root_block_device {
@@ -66,3 +70,9 @@ resource "aws_instance" "ec2_instance" {
     # kms_key_id  = data.aws_kms_key.customer_master_key.arn
   }
 }
+
+#resource "aws_volume_attachment" "ebs_attach" {
+#  device_name = local.k3s_data_volume_device
+#  volume_id   = aws_ebs_volume.k3s_data_volume.id
+#  instance_id = aws_instance.ec2_instance.id
+#}
