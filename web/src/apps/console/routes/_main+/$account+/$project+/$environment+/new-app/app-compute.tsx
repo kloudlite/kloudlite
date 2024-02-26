@@ -10,6 +10,11 @@ import { InfoLabel } from '~/console/components/commons';
 import { FadeIn, parseValue } from '~/console/page-components/util';
 import Select from '~/components/atoms/select';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { parseNodes } from '~/console/server/r-utils/common';
+import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useMapper } from '~/components/utils';
+import { useState } from 'react';
 import { plans } from './datas';
 
 const valueRender = ({
@@ -36,6 +41,18 @@ const valueRender = ({
 const AppCompute = () => {
   const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
     useAppState();
+  const api = useConsoleApi();
+
+  const [accountName, setAccountName] = useState('');
+  const [showImageUrl, setShowImageUrl] = useState(true);
+
+  const {
+    data,
+    isLoading: repoLoading,
+    error: repoLoadingError,
+  } = useCustomSwr('/repos', async () => {
+    return api.listRepo({});
+  });
 
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
@@ -48,6 +65,11 @@ const AppCompute = () => {
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
         250
       ),
+
+      repoName: app.metadata?.annotations?.[keyconstants.repoName] || '',
+      repoImageTag: app.metadata?.annotations?.[keyconstants.imageTag] || '',
+      repoImageUrl: app.metadata?.annotations?.[keyconstants.repoImageUrl] || '',
+      image: app.metadata?.annotations?.[keyconstants.image] || '',
 
       selectedPlan:
         app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
@@ -71,7 +93,7 @@ const AppCompute = () => {
       ),
     },
     validationSchema: Yup.object({
-      imageUrl: Yup.string().required(),
+      // imageUrl: Yup.string().required(),
       pullSecret: Yup.string(),
       cpuMode: Yup.string().required(),
       selectedPlan: Yup.string().required(),
@@ -88,6 +110,10 @@ const AppCompute = () => {
             [keyconstants.memPerCpu]: val.memPerCpu,
             [keyconstants.selectionModeKey]: val.selectionMode,
             [keyconstants.selectedPlan]: val.selectedPlan,
+            [keyconstants.repoName]: val.repoName,
+            [keyconstants.imageTag]: val.repoImageTag,
+            [keyconstants.image]: val.image,
+            [keyconstants.repoImageUrl]: val.repoImageUrl,
           },
         },
         spec: {
@@ -95,7 +121,7 @@ const AppCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              image: val.imageUrl,
+              image: val.image === '' ? val.repoImageUrl : val.imageUrl,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
@@ -126,6 +152,23 @@ const AppCompute = () => {
     },
   });
 
+  const repos = useMapper(parseNodes(data), (val) => ({
+    label: val.name,
+    value: val.name,
+    accName: val.accountName,
+  }));
+
+  const {
+    data: digestData,
+    isLoading: digestLoading,
+    error: digestError,
+  } = useCustomSwr(
+    () => `/digests_${values.repoName}`,
+    async () => {
+      return api.listDigest({ repoName: values.repoName });
+    }
+  );
+
   return (
     <FadeIn
       onSubmit={(e) => {
@@ -145,16 +188,95 @@ const AppCompute = () => {
         manipulation and calculations in a system.
       </div>
       <div className="flex flex-col gap-3xl">
-        <TextInput
-          label={
-            <InfoLabel info="some usefull information" label="Image Url" />
-          }
-          size="lg"
-          value={values.imageUrl}
-          onChange={handleChange('imageUrl')}
-          error={!!errors.imageUrl}
-          message={errors.imageUrl}
+        {showImageUrl && (
+          <TextInput
+            label={
+              <InfoLabel info="some usefull information" label="Image Url" />
+            }
+            size="lg"
+            value={values.image}
+            onChange={(e) => {
+              handleChange('imageUrl')(
+                dummyEvent(e.target.value.toLowerCase())
+              );
+              handleChange('image')(dummyEvent(e.target.value.toLowerCase()));
+              handleChange('repoName')(dummyEvent(''));
+              handleChange('repoImageTag')(dummyEvent(''));
+            }}
+            error={!!errors.imageUrl}
+            message={errors.imageUrl}
+          />
+        )}
+
+        <Button
+          onClick={() => {
+            setShowImageUrl(!showImageUrl);
+          }}
+          content={showImageUrl ? 'Advanced options' : 'Image option'}
+          variant="primary-plain"
+          size="sm"
         />
+
+        {!showImageUrl && (
+          <Select
+            label="Repo Name"
+            size="lg"
+            placeholder="Select Repo"
+            value={{ label: '', value: values.repoName }}
+            searchable
+            onChange={(val) => {
+              handleChange('repoName')(dummyEvent(val.value));
+              handleChange('image')(dummyEvent(''));
+              setAccountName(val.accName);
+            }}
+            options={async () => [...repos]}
+            error={!!errors.repos || !!repoLoadingError}
+            message={
+              repoLoadingError ? 'Error fetching repositories.' : errors.app
+            }
+            loading={repoLoading}
+          />
+        )}
+
+        {!showImageUrl && (
+          <Select
+            label="Image Tag"
+            size="lg"
+            placeholder="Select Image Tag"
+            value={{ label: '', value: values.repoImageTag }}
+            searchable
+            onChange={(val) => {
+              handleChange('repoImageTag')(dummyEvent(val.value));
+              handleChange('repoImageUrl')(
+                dummyEvent(
+                  `registry.kloudlite.io/${accountName}/${values.repoName}:${val.value}`
+                )
+              );
+            }}
+            options={async () =>
+              [
+                ...new Set(
+                  parseNodes(digestData)
+                    .map((item) => item.tags)
+                    .flat()
+                ),
+              ].map((item) => ({
+                label: item,
+                value: item,
+              }))
+            }
+            error={!!errors.repoImageTag || !!digestError}
+            message={
+              errors.repoImageTag
+                ? errors.repoImageTag
+                : digestError
+                ? 'Failed to load Image tags.'
+                : ''
+            }
+            loading={digestLoading}
+          />
+        )}
+
         {/* <PasswordInput
           label={
             <InfoLabel info="some usefull information" label="Pull Secret" />
@@ -424,4 +546,21 @@ const AppCompute = () => {
   );
 };
 
+// const ContainerRepoLayout = () => {
+//   const { promise } = useLoaderData<typeof Reposloader>();
+//   return (
+//       <LoadingComp data={promise}>
+//         {({ repository }) => {
+//           const repoList = parseNodes(repository);
+//           return <AppCompute services={repoList} />;
+//         }}
+//       </LoadingComp>
+//   );
+// };
+//
+// const NewContainerRepo = () => {
+//   return <ContainerRepoLayout />;
+// };
+
 export default AppCompute;
+//  export default NewContainerRepo
