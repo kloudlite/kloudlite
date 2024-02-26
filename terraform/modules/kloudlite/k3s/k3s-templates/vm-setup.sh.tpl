@@ -2,6 +2,7 @@
 
 KLOUDLITE_CONFIG_DIRECTORY=${kloudlite_config_directory}
 KLOUDLITE_RELEASE=${kloudlite_release}
+
 LOG_FILE=$KLOUDLITE_CONFIG_DIRECTORY/execution.log
 
 debug() {
@@ -26,18 +27,20 @@ cat > $BIN_DIR/kloudlite-upgrade.sh <<'EOF'
 
 k3s_bin_path=/usr/local/bin/k3s
 kloudlite_runner_bin_path=/usr/local/bin/kloudlite-runner
-
 KLOUDLITE_RELEASE=$1
 
 systemctl is-active --quiet kloudlite-k3s.service && systemctl stop kloudlite-k3s.service && (pkill kloudlite-runner; pkill k3s)
 
+#BASE_URL="https://github.com/kloudlite/infrastructure-as-code/releases/download/$KLOUDLITE_RELEASE"
+BASE_URL="https://github.com/kloudlite/kloudlite/releases/download/$KLOUDLITE_RELEASE"
+
 echo "[#] downloading from kloudlite release $KLOUDLITE_RELEASE: k3s binary"
-curl -L0 "https://github.com/kloudlite/infrastructure-as-code/releases/download/$KLOUDLITE_RELEASE/k3s" >$k3s_bin_path
+curl -L0 "$BASE_URL/k3s" >$k3s_bin_path
 chmod +x $k3s_bin_path
 echo "[#] downloaded @ $k3s_k3s_bin_path"
 
 echo "[#] downloading from kloudlite release $KLOUDLITE_RELEASE: kloudlite runner binary"
-curl -L0 "https://github.com/kloudlite/infrastructure-as-code/releases/download/$KLOUDLITE_RELEASE/runner-amd64" >$kloudlite_runner_bin_path
+curl -L0 "$BASE_URL/runner-amd64" >$kloudlite_runner_bin_path
 chmod +x $kloudlite_runner_bin_path
 debug "[#] downloaded @ $kloudlite_runner_bin_path"
 
