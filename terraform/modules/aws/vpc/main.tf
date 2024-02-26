@@ -5,12 +5,16 @@ resource "aws_vpc" "vpc" {
   })
 }
 
-data "aws_availability_zones" "az" {
-  filter {
-    name   = "opt-in-status"
-    values = ["opt-in-not-required"]
-  }
+module "availability_zones" {
+  source = "../availability-zones"
 }
+
+#data "aws_availability_zones" "az" {
+#  filter {
+#    name   = "opt-in-status"
+#    values = ["opt-in-not-required"]
+#  }
+#}
 
 #locals {
 #  public_subnet = {for idx, subnet in var.public_subnets : subnet.availability_zone => subnet.cidr}
@@ -18,9 +22,11 @@ data "aws_availability_zones" "az" {
 
 resource "aws_subnet" "public_subnets" {
   for_each = {
-    for idx, value in data.aws_availability_zones.az.names : idx => {
+    #    for idx, value in data.aws_availability_zones.az.names : idx => {
+    for idx, value in module.availability_zones.names : idx => {
       name = value
-      cidr = "10.0.${idx+1}.0/24"
+      # it will generate subnet CIDRs in order 10.0.0.0/21, 10.0.8.0/21, 10.0.16.0/21, 10.0.24.0/21
+      cidr = "10.0.${8*idx}.0/21"
     }
   }
   vpc_id                  = aws_vpc.vpc.id
