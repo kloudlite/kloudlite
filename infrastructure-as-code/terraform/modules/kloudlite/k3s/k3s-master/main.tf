@@ -38,6 +38,8 @@ locals {
         "--tls-san-security",
         "--flannel-external-ip",
         "--cluster-domain", var.cluster_internal_dns_host,
+        # [read more here](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#system-reserved)
+        "--kubelet-arg", "--system-reserved=cpu=100m,memory=200Mi,ephemeral-storage=1Gi,pid=1000"
       ],
       var.backup_to_s3.enabled && v.role == "primary-master" ? [
         "--etcd-s3",
