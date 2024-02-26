@@ -68,7 +68,8 @@ const AppCompute = () => {
 
       repoName: app.metadata?.annotations?.[keyconstants.repoName] || '',
       repoImageTag: app.metadata?.annotations?.[keyconstants.imageTag] || '',
-      repoImageUrl: '',
+      repoImageUrl: app.metadata?.annotations?.[keyconstants.repoImageUrl] || '',
+      image: app.metadata?.annotations?.[keyconstants.image] || '',
 
       selectedPlan:
         app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
@@ -111,6 +112,8 @@ const AppCompute = () => {
             [keyconstants.selectedPlan]: val.selectedPlan,
             [keyconstants.repoName]: val.repoName,
             [keyconstants.imageTag]: val.repoImageTag,
+            [keyconstants.image]: val.image,
+            [keyconstants.repoImageUrl]: val.repoImageUrl,
           },
         },
         spec: {
@@ -118,7 +121,7 @@ const AppCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              image: val.imageUrl === '' ? val.repoImageUrl : val.imageUrl,
+              image: val.image === '' ? val.repoImageUrl : val.imageUrl,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
@@ -191,11 +194,12 @@ const AppCompute = () => {
               <InfoLabel info="some usefull information" label="Image Url" />
             }
             size="lg"
-            value={values.imageUrl}
+            value={values.image}
             onChange={(e) => {
               handleChange('imageUrl')(
                 dummyEvent(e.target.value.toLowerCase())
               );
+              handleChange('image')(dummyEvent(e.target.value.toLowerCase()));
               handleChange('repoName')(dummyEvent(''));
               handleChange('repoImageTag')(dummyEvent(''));
             }}
@@ -208,7 +212,7 @@ const AppCompute = () => {
           onClick={() => {
             setShowImageUrl(!showImageUrl);
           }}
-          content={showImageUrl ? 'Advanced options' : 'Normal options'}
+          content={showImageUrl ? 'Advanced options' : 'Image option'}
           variant="primary-plain"
           size="sm"
         />
@@ -222,7 +226,7 @@ const AppCompute = () => {
             searchable
             onChange={(val) => {
               handleChange('repoName')(dummyEvent(val.value));
-              handleChange('imageUrl')(dummyEvent(''));
+              handleChange('image')(dummyEvent(''));
               setAccountName(val.accName);
             }}
             options={async () => [...repos]}

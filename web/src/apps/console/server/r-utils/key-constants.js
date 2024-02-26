@@ -10,4 +10,6 @@ export const keyconstants = {
   nodeType: 'kloudlite.io/ui-node-type',
   repoName: 'kloudlite.io/ui-repoName',
   imageTag: 'kloudlite.io/ui-imageTag',
+  image: 'kloudlite.io/ui-image',
+  repoImageUrl: 'kloudlite.io/ui-repoImageUrl',
 };

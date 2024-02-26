@@ -65,7 +65,8 @@ const SettingCompute = () => {
 
       repoName: app.metadata?.annotations?.[keyconstants.repoName] || '',
       repoImageTag: app.metadata?.annotations?.[keyconstants.imageTag] || '',
-      repoImageUrl: '',
+      repoImageUrl: app.metadata?.annotations?.[keyconstants.repoImageUrl] || '',
+      image: app.metadata?.annotations?.[keyconstants.image] || '',
 
       cpu: parseValue(
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
@@ -110,6 +111,8 @@ const SettingCompute = () => {
             [keyconstants.selectedPlan]: val.selectedPlan,
             [keyconstants.repoName]: val.repoName,
             [keyconstants.imageTag]: val.repoImageTag,
+            [keyconstants.image]: val.image,
+            [keyconstants.repoImageUrl]: val.repoImageUrl,
           },
         },
         spec: {
@@ -117,7 +120,8 @@ const SettingCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              image: val.imageUrl,
+              // image: val.imageUrl,
+              image: val.repoImageUrl == '' ? val.imageUrl : val.repoImageUrl,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
@@ -207,16 +211,18 @@ const SettingCompute = () => {
         }}
       >
         <div className="flex flex-col gap-3xl">
-          <TextInput
-            label={
-              <InfoLabel info="some usefull information" label="Image Url" />
-            }
-            size="lg"
-            value={values.imageUrl}
-            onChange={handleChange('imageUrl')}
-            error={!!errors.imageUrl}
-            message={errors.imageUrl}
-          />
+          {!values.repoImageUrl && (
+              <TextInput
+                  label={
+                    <InfoLabel info="some usefull information" label="Image Url" />
+                  }
+                  size="lg"
+                  value={values.imageUrl}
+                  onChange={handleChange('imageUrl')}
+                  error={!!errors.imageUrl}
+                  message={errors.imageUrl}
+              />
+          )}
           {/* <PasswordInput
             label={
               <InfoLabel info="some usefull information" label="Pull Secret" />
@@ -228,62 +234,66 @@ const SettingCompute = () => {
             // onChange={handleChange('pullSecret')}
           /> */}
 
-          <div>OR</div>
+          {values.repoImageUrl && (
+              <Select
+                  label="Repository Name"
+                  size="lg"
+                  placeholder="Select Repo"
+                  value={{ label: '', value: values.repoName }}
+                  searchable
+                  onChange={(val) => {
+                    handleChange('repoName')(dummyEvent(val.value));
+                    handleChange('image')(dummyEvent(''));
+                    setAccountName(val.accName);
+                  }}
+                  options={async () => [...repos]}
+                  error={!!errors.repos || !!repoLoadingError}
+                  message={
+                    repoLoadingError ? 'Error fetching repositories.' : errors.app
+                  }
+                  loading={repoLoading}
+              />
+          )}
 
-          <Select
-            label="Repository Name"
-            size="lg"
-            placeholder="Select Repo"
-            value={{ label: '', value: values.repoName }}
-            searchable
-            onChange={(val) => {
-              handleChange('repoName')(dummyEvent(val.value));
-              setAccountName(val.accName);
-            }}
-            options={async () => [...repos]}
-            error={!!errors.repos || !!repoLoadingError}
-            message={
-              repoLoadingError ? 'Error fetching repositories.' : errors.app
-            }
-            loading={repoLoading}
-          />
+          {values.repoImageUrl && (
+              <Select
+                  label="Image Tag"
+                  size="lg"
+                  placeholder="Select Image Tag"
+                  value={{ label: '', value: values.repoImageTag }}
+                  searchable
+                  onChange={(val) => {
+                    handleChange('repoImageTag')(dummyEvent(val.value));
+                    handleChange('repoImageUrl')(
+                        dummyEvent(
+                            `registry.kloudlite.io/${accountName}/${values.repoName}:${val.value}`
+                        )
+                    );
+                  }}
+                  options={async () =>
+                      [
+                        ...new Set(
+                            parseNodes(digestData)
+                                .map((item) => item.tags)
+                                .flat()
+                        ),
+                      ].map((item) => ({
+                        label: item,
+                        value: item,
+                      }))
+                  }
+                  error={!!errors.repoImageTag || !!digestError}
+                  message={
+                    errors.repoImageTag
+                        ? errors.repoImageTag
+                        : digestError
+                            ? 'Failed to load Image tags.'
+                            : ''
+                  }
+                  loading={digestLoading}
+              />
+          )}
 
-          <Select
-            label="Image Tag"
-            size="lg"
-            placeholder="Select Image Tag"
-            value={{ label: '', value: values.repoImageTag }}
-            searchable
-            onChange={(val) => {
-              handleChange('repoImageTag')(dummyEvent(val.value));
-              handleChange('repoImageUrl')(
-                dummyEvent(
-                  `registry.kloudlite.io/${accountName}/${values.repoName}:${val.value}`
-                )
-              );
-            }}
-            options={async () =>
-              [
-                ...new Set(
-                  parseNodes(digestData)
-                    .map((item) => item.tags)
-                    .flat()
-                ),
-              ].map((item) => ({
-                label: item,
-                value: item,
-              }))
-            }
-            error={!!errors.repoImageTag || !!digestError}
-            message={
-              errors.repoImageTag
-                ? errors.repoImageTag
-                : digestError
-                ? 'Failed to load Image tags.'
-                : ''
-            }
-            loading={digestLoading}
-          />
         </div>
         {/* <div className="flex flex-col border border-border-default bg-surface-basic-default rounded overflow-hidden">
         <div className="p-2xl gap-2xl flex flex-row items-center border-b border-border-disabled bg-surface-basic-subdued">
