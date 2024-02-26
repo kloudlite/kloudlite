@@ -43,7 +43,7 @@ if [[ "$az_name" != "$labelled_az" ]]; then
 fi
 
 while true; do
-	debug_msg "executing 'curl --connect-timeout -s -f $url'"
+	debug_msg "executing 'curl --connect-timeout 1 -s -f $url'"
 	d=$(curl --connect-timeout 1 -s -f "$url")
 	exit_code=$?
 	debug_msg "exit_code is $exit_code (!= 0), so trying again in 3 seconds"
