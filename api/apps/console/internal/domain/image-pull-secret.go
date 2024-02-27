@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -27,7 +28,6 @@ func (d *domain) ListImagePullSecrets(ctx ResourceContext, search map[string]rep
 }
 
 func (d *domain) findImagePullSecret(ctx ResourceContext, name string) (*entities.ImagePullSecret, error) {
-
 	ips, err := d.pullSecretsRepo.FindOne(
 		ctx,
 		ctx.DBFilters().Add(fields.MetadataName, name),
@@ -254,7 +254,6 @@ func (d *domain) OnImagePullSecretUpdateMessage(ctx ResourceContext, ips entitie
 		common.PatchForSyncFromAgent(&ips, recordVersion, status, common.PatchOpts{
 			MessageTimestamp: opts.MessageTimestamp,
 		}))
-
 	if err != nil {
 		return err
 	}
