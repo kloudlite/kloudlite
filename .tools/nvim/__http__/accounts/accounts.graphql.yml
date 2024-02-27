@@ -1,6 +1,6 @@
 ---
-global:
-  accountName: kloudlite-dev
+# global:
+#   accountName: kloudlite-dev
 ---
 
 label: List Accounts
@@ -12,6 +12,9 @@ query: |+
       displayName
       creationTime
       markedForDeletion
+      createdBy {
+        userEmail
+      }
       metadata{
         # labels
         name
@@ -22,7 +25,7 @@ query: |+
 ---
 
 label: Get Account
-query: |+
+query: |+ #graphql
   query Accounts_getAccount($accountName: String!) {
     accounts_getAccount(accountName: $accountName) {
       metadata {
@@ -30,29 +33,25 @@ query: |+
       }
     }
   }
-variables:
-  # accountName: "{{.accountName}}"
-  accountName: "sample"
 
+variables:
+  accountName: "{{.accountName}}"
 ---
 
 label: Create Account
 query: |
   mutation Accounts_createAccount($account: AccountIn!) {
     accounts_createAccount(account: $account) {
-      apiVersion
       id
       isActive
-      kind
     }
   }
 variables:
   account:
     contactEmail: "{{.email}}"
-    displayName: "Sample Account"
+    displayName: "Example Account Name"
     metadata:
       name: "{{.accountName}}"
-    spec: {}
 
 ---
 
@@ -99,7 +98,7 @@ variables:
 ---
 
 lable: Check Name Availability
-query: |+
+query: |+ #graphql
   query Accounts_checkNameAvailability($name: String!) {
     accounts_checkNameAvailability(name: $name) {
       result
@@ -108,6 +107,16 @@ query: |+
   }
 variables:
   name: sample
+---
+
+label: Ensure Kloudlite Registry Pull Secrets
+query: |+ #graphql
+  query Query($accountName: String!) {
+    accounts_ensureKloudliteRegistryPullSecrets(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
+
 ---
 
 label: Delete Account

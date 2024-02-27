@@ -6,12 +6,14 @@ package graph
 
 import (
 	"context"
+
+	"github.com/kloudlite/api/pkg/errors"
+
 	"github.com/kloudlite/api/apps/accounts/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/accounts/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/accounts/internal/domain"
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
-	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -250,6 +252,19 @@ func (r *queryResolver) AccountsGetAccountMembership(ctx context.Context, accoun
 	return r.domain.GetAccountMembership(uc, accountName)
 }
 
+// AccountsEnsureKloudliteRegistryPullSecrets is the resolver for the accounts_ensureKloudliteRegistryPullSecrets field.
+func (r *queryResolver) AccountsEnsureKloudliteRegistryPullSecrets(ctx context.Context, accountName string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, errors.NewE(err)
+	}
+
+	if err := r.domain.EnsureKloudliteRegistryCredentials(uc, accountName); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Accounts is the resolver for the accounts field.
 func (r *userResolver) Accounts(ctx context.Context, obj *model.User) ([]*entities.AccountMembership, error) {
 	uc, err := toUserContext(ctx)
@@ -279,6 +294,8 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
-type userResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+	userResolver     struct{ *Resolver }
+)
