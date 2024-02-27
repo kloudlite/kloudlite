@@ -161,11 +161,46 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, projectName string, env e
 		d.logger.Errorf(err, "error while adding membership")
 	}
 
+	if err := d.applyEnvironmentTargetNamespace(ctx, nenv); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	if err := d.applyK8sResource(ctx, nenv.ProjectName, &nenv.Environment, nenv.RecordVersion); err != nil {
 		return nil, errors.NewE(err)
 	}
 
+	if err := d.syncAccountLevelImagePullSecrets(ctx, nenv.ProjectName, nenv.Spec.TargetNamespace); err != nil {
+		return nil, errors.NewE(err)
+	}
+
 	return nenv, nil
+}
+
+func (d *domain) syncAccountLevelImagePullSecrets(ctx ConsoleContext, projectName string, envTargetNamespace string) error {
+	secrets, err := d.k8sClient.ListSecrets(ctx, constants.GetAccountTargetNamespace(ctx.AccountName), corev1.SecretTypeDockerConfigJson)
+	if err != nil {
+		return err
+	}
+
+	for i := range secrets {
+		if err := d.applyK8sResource(ctx, projectName, &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secrets[i].Name,
+				Namespace: envTargetNamespace,
+			},
+			Data:       secrets[i].Data,
+			StringData: secrets[i].StringData,
+			Type:       secrets[i].Type,
+		}, 1); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, sourceEnvName string, destinationEnvName string, displayName string, envRoutingMode crdsv1.EnvironmentRoutingMode) (*entities.Environment, error) {
@@ -239,6 +274,10 @@ func (d *domain) CloneEnvironment(ctx ConsoleContext, projectName string, source
 			Name: destEnv.Spec.TargetNamespace,
 		},
 	}, destEnv.RecordVersion); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.syncAccountLevelImagePullSecrets(ctx, destEnv.ProjectName, destEnv.Spec.TargetNamespace); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -561,6 +600,22 @@ func (d *domain) OnEnvironmentUpdateMessage(ctx ConsoleContext, env entities.Env
 	}
 
 	d.resourceEventPublisher.PublishProjectResourceEvent(ctx, uenv.ProjectName, entities.ResourceTypeEnvironment, uenv.Name, PublishUpdate)
+	return nil
+}
+
+func (d *domain) applyEnvironmentTargetNamespace(ctx ConsoleContext, env *entities.Environment) error {
+	if err := d.applyK8sResource(ctx, env.ProjectName, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: env.Spec.TargetNamespace,
+			Labels: map[string]string{
+				constants.EnvNameKey: env.Name,
+			},
+		},
+	}, env.RecordVersion); err != nil {
+		return errors.NewE(err)
+	}
+
 	return nil
 }
 
