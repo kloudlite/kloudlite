@@ -3,15 +3,17 @@ package domain
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	fc "github.com/kloudlite/api/apps/accounts/internal/entities/field-constants"
 	"github.com/kloudlite/api/common/fields"
 	"github.com/kloudlite/api/pkg/errors"
-	"strings"
 
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/container_registry"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/repos"
@@ -92,8 +94,61 @@ func (d *domain) deleteNamespaceForAccount(ctx context.Context, targetNamespace 
 	panic("not implemented. Yet to decide if we want to delete namespace when account is deleted")
 }
 
+func (d *domain) ensureKloudliteRegistryCredentials(ctx UserContext, account *entities.Account) error {
+	credentialsName := "kloudlite-registry-pull-creds"
+
+	secret := &corev1.Secret{}
+	if err := d.k8sClient.Get(ctx, fn.NN(account.TargetNamespace, credentialsName), secret); err != nil {
+		secret = nil
+	}
+
+	if secret != nil {
+		d.logger.Infof("kloudlite registry image pull secret already exists")
+		return nil
+	}
+
+	out, err := d.containerRegistryClient.CreateReadOnlyCredential(ctx, &container_registry.CreateReadOnlyCredentialIn{
+		AccountName:      account.Name,
+		UserId:           string(ctx.UserId),
+		CredentialName:   credentialsName,
+		RegistryUsername: fmt.Sprintf("account_%s", account.Name),
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := d.k8sClient.Create(ctx, &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      credentialsName,
+			Namespace: account.TargetNamespace,
+		},
+		Immutable: new(bool),
+		Data: map[string][]byte{
+			corev1.DockerConfigJsonKey: []byte(out.DockerConfigJson),
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *domain) EnsureKloudliteRegistryCredentials(ctx UserContext, accountName string) error {
+	a, err := d.findAccount(ctx, accountName)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	return d.ensureKloudliteRegistryCredentials(ctx, a)
+}
+
 func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
-	account.TargetNamespace = fmt.Sprintf("kl-account-%s", account.Name)
+	account.TargetNamespace = constants.GetAccountTargetNamespace(account.Name)
 	account.IsActive = fn.New(true)
 	account.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -112,6 +167,10 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 	}
 
 	if err := d.ensureNamespaceForAccount(ctx, account.Name, account.TargetNamespace); err != nil {
+		return nil, errors.NewE(err)
+	}
+
+	if err := d.ensureKloudliteRegistryCredentials(ctx, &account); err != nil {
 		return nil, errors.NewE(err)
 	}
 
@@ -147,7 +206,6 @@ func (d *domain) UpdateAccount(ctx UserContext, accountIn entities.Account) (*en
 			UserEmail: ctx.UserEmail,
 		},
 	})
-
 	if err != nil {
 		return nil, errors.NewE(err)
 	}

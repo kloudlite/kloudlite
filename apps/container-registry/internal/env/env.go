@@ -7,6 +7,7 @@ import (
 
 type Env struct {
 	Port              uint16 `env:"PORT" required:"true"`
+	GrpcPort          uint16 `env:"GRPC_PORT" required:"true"`
 	CookieDomain      string `env:"COOKIE_DOMAIN" required:"true"`
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 

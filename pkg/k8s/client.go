@@ -9,6 +9,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/xeipuuv/gojsonschema"
+	corev1 "k8s.io/api/core/v1"
 	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,6 +27,8 @@ type Client interface {
 	Update(ctx context.Context, obj client.Object) error
 	Delete(ctx context.Context, obj client.Object) error
 
+	ListSecrets(ctx context.Context, namespace string, secretType corev1.SecretType) ([]corev1.Secret, error)
+
 	// custom ones
 	ValidateObject(ctx context.Context, obj client.Object) error
 
@@ -37,6 +40,18 @@ type clientHandler struct {
 	kclient    client.Client
 	kclientset *clientset.Clientset
 	yamlclient kubectl.YAMLClient
+}
+
+// ListSecrets implements Client.
+func (ch *clientHandler) ListSecrets(ctx context.Context, namespace string, secretType corev1.SecretType) ([]corev1.Secret, error) {
+	out, err := ch.yamlclient.Client().CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("type=%s", secretType),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return out.Items, nil
 }
 
 // Delete implements Client.
