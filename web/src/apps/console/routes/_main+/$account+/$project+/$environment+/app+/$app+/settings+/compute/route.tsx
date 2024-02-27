@@ -17,6 +17,8 @@ import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { plans } from '../../../../new-app/datas';
+import {registryHost} from "~/lib/configs/base-url.cjs";
+
 
 const valueRender = ({
   label,
@@ -114,7 +116,7 @@ const SettingCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              image: values.repoAccountName == undefined || values.repoAccountName == ''  ? `${values.repoName}:${values.repoImageTag}` : `registry.kloudlite.io/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
+              image: values.repoAccountName == undefined || values.repoAccountName == ''  ? `${values.repoName}:${values.repoImageTag}` : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'

@@ -16,6 +16,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
 import {useEffect, useState } from 'react';
 import { plans } from './datas';
+import {registryHost} from "~/lib/configs/base-url.cjs";
 
 const valueRender = ({
   label,
@@ -115,7 +116,7 @@ const AppCompute = () => {
             {
               ...(s.spec.containers?.[0] || {}),
               // image: val.image === '' ? val.repoImageUrl : val.imageUrl,
-              image: values.repoAccountName == undefined || values.repoAccountName == '' ? `${values.repoName}:${values.repoImageTag}` : `registry.kloudlite.io/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
+              image: values.repoAccountName == undefined || values.repoAccountName == '' ? `${values.repoName}:${values.repoImageTag}` : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
@@ -162,7 +163,7 @@ const AppCompute = () => {
       return api.listDigest({ repoName: values.repoName });
     }
   );
-
+  
   return (
     <FadeIn
       onSubmit={(e) => {
