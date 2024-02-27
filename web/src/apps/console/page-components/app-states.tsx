@@ -199,6 +199,19 @@ export const useAppState = () => {
     }))
   }
 
+  const getRepoName = (imageUrl: string) => {
+    const parts: string[] = imageUrl.split(':');
+    const repoParts: string[] = parts[0].split('/');
+    console.log("repo name", repoParts[repoParts.length - 1])
+    return repoParts[repoParts.length - 1];
+  }
+
+  const getImageTag = (imageUrl: string) => {
+    const parts: string[] = imageUrl.split(':');
+    console.log("image tag", parts[1])
+    return parts[1];
+  }
+
   return {
     resetState,
     completePages,
@@ -218,6 +231,8 @@ export const useAppState = () => {
     services: app.spec.services || [],
     setServices,
     getRepoMapper,
+    getRepoName,
+    getImageTag
   };
 };
 
