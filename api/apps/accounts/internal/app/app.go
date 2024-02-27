@@ -12,6 +12,7 @@ import (
 	"github.com/kloudlite/api/apps/accounts/internal/env"
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/constants"
+	"github.com/kloudlite/api/grpc-interfaces/container_registry"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
@@ -59,6 +60,10 @@ var Module = fx.Module("app",
 
 	fx.Provide(func(conn AuthClient) auth.AuthClient {
 		return auth.NewAuthClient(conn)
+	}),
+
+	fx.Provide(func(conn ContainerRegistryClient) container_registry.ContainerRegistryClient {
+		return container_registry.NewContainerRegistryClient(conn)
 	}),
 
 	fx.Provide(func(d domain.Domain) accounts.AccountsServer {

@@ -3,10 +3,12 @@ package domain
 import (
 	"context"
 	"fmt"
-	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
-	"github.com/kloudlite/api/common/fields"
+	"net/http"
 	"regexp"
 	"strings"
+
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -42,22 +44,14 @@ type Impl struct {
 	dispatcher             ResourceDispatcher
 }
 
+var repositoryNamePattern = regexp.MustCompile(`.*[^\/].*\/.*$`)
+
 func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
 	l := logger.WithName("registry-event")
 
-	pattern := `.*[^\/].*\/.*$`
-
-	re, err := regexp.Compile(pattern)
-	if err != nil {
-		l.Errorf(err)
-		return errors.NewE(err)
-	}
-
 	for _, e := range events {
-
 		r := e.Target.Repository
-
-		if !re.MatchString(r) {
+		if !repositoryNamePattern.MatchString(r) {
 			l.Warnf("invalid repository name %s\n, ignoring", r)
 			return nil
 		}
@@ -69,13 +63,13 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		tag := e.Target.Tag
 
 		switch e.Request.Method {
-		case "PUT":
-
+		case http.MethodPut:
 			if tag == "" {
 				fmt.Println("tag is empty with digest", e.Target.Digest)
 				return nil
 			}
 
+			// INFO: finding by tag
 			digest, err := d.digestRepo.FindOne(ctx, repos.Filter{
 				fc.DigestTags: map[string]any{
 					"$in": []string{tag},
@@ -87,19 +81,10 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				return errors.NewE(err)
 			}
 
-			if digest == nil {
-			} else {
-				digest.Tags = func() []string {
-					tags := []string{}
-
-					for _, v := range digest.Tags {
-						if v != tag {
-							tags = append(tags, v)
-						}
-					}
-
-					return tags
-				}()
+			if digest != nil {
+				digest.Tags = slices.Filter(nil, digest.Tags, func(s string) bool {
+					return s != tag
+				})
 
 				if len(digest.Tags) == 0 {
 					if err := d.digestRepo.DeleteById(ctx, digest.Id); err != nil {
@@ -111,15 +96,14 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 						return errors.NewE(err)
 					}
 				}
-
 			}
 
+			// INFO: finding by digest
 			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
 				fc.DigestDigest:     e.Target.Digest,
 				fc.DigestRepository: repoName,
 				fields.AccountName:  accountName,
 			})
-
 			if err != nil {
 				return errors.NewE(err)
 			}
@@ -153,32 +137,20 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				}
 			}
 
-			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
+			if _, err := d.repositoryRepo.Upsert(ctx, repos.Filter{
 				fields.AccountName: accountName,
 				fc.RepositoryName:  repoName,
-			})
-			if err != nil {
+			}, &entities.Repository{
+				CreatedBy:     common.CreatedOrUpdatedBy{UserName: e.Actor.Name},
+				LastUpdatedBy: common.CreatedOrUpdatedBy{UserName: e.Actor.Name},
+				AccountName:   accountName,
+				Name:          repoName,
+			}); err != nil {
+				d.logger.Errorf(err)
 				return errors.NewE(err)
 			}
 
-			if ee == nil {
-				_, err := d.repositoryRepo.Create(ctx, &entities.Repository{})
-				if err != nil {
-					return errors.NewE(err)
-				}
-				return nil
-			}
-
-			ee.LastUpdatedBy = common.CreatedOrUpdatedBy{
-				UserName: e.Actor.Name,
-			}
-
-			if _, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee); err != nil {
-				d.logger.Errorf(err)
-			}
-
-		case "DELETE":
-
+		case http.MethodDelete:
 			l.Infof("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
 
 			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
@@ -190,10 +162,10 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				return errors.NewE(err)
 			}
 
-		case "HEAD":
+		case http.MethodHead:
 			l.Infof("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
 
-		case "GET":
+		case http.MethodGet:
 			l.Infof("GET %s:%s", e.Target.Repository, e.Target.Tag)
 
 		default:

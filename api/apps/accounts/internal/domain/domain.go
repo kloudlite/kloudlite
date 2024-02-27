@@ -3,10 +3,10 @@ package domain
 import (
 	"github.com/kloudlite/api/apps/accounts/internal/entities"
 	iamT "github.com/kloudlite/api/apps/iam/types"
+	"github.com/kloudlite/api/grpc-interfaces/container_registry"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/auth"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/comms"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/console"
-	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"github.com/kloudlite/api/grpc-interfaces/kloudlite.io/rpc/iam"
 	"github.com/kloudlite/api/pkg/k8s"
 	"github.com/kloudlite/api/pkg/logging"
@@ -34,6 +34,8 @@ type AccountService interface {
 
 	ActivateAccount(ctx UserContext, name string) (bool, error)
 	DeactivateAccount(ctx UserContext, name string) (bool, error)
+
+	EnsureKloudliteRegistryCredentials(ctx UserContext, accountName string) error
 }
 
 type InvitationService interface {
@@ -86,7 +88,7 @@ type domain struct {
 func NewDomain(
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
-	// containerRegistryClient container_registry.ContainerRegistryClient,
+	containerRegistryClient container_registry.ContainerRegistryClient,
 	authClient auth.AuthClient,
 	commsClient comms.CommsClient,
 
@@ -99,16 +101,16 @@ func NewDomain(
 	logger logging.Logger,
 ) Domain {
 	return &domain{
-		authClient:    authClient,
-		iamClient:     iamCli,
-		consoleClient: consoleClient,
-		commsClient:   commsClient,
+		authClient:              authClient,
+		iamClient:               iamCli,
+		consoleClient:           consoleClient,
+		commsClient:             commsClient,
+		containerRegistryClient: containerRegistryClient,
 
 		k8sClient: k8sClient,
 
 		accountRepo:    accountRepo,
 		invitationRepo: invitationRepo,
-		// accountInviteTokenRepo: accountInviteTokenRepo,
 
 		logger: logger,
 	}
