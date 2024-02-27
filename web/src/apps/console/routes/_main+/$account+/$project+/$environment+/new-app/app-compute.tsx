@@ -14,8 +14,9 @@ import { parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
-import { useState } from 'react';
+import {useEffect, useState } from 'react';
 import { plans } from './datas';
+import {registryHost} from "~/lib/configs/base-url.cjs";
 
 const valueRender = ({
   label,
@@ -39,12 +40,9 @@ const valueRender = ({
 };
 
 const AppCompute = () => {
-  const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
+  const { app, setApp, setPage, markPageAsCompleted, activeContIndex , getRepoName, getImageTag} =
     useAppState();
   const api = useConsoleApi();
-
-  const [accountName, setAccountName] = useState('');
-  const [showImageUrl, setShowImageUrl] = useState(true);
 
   const {
     data,
@@ -65,11 +63,10 @@ const AppCompute = () => {
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
         250
       ),
-
-      repoName: app.metadata?.annotations?.[keyconstants.repoName] || '',
-      repoImageTag: app.metadata?.annotations?.[keyconstants.imageTag] || '',
-      repoImageUrl: app.metadata?.annotations?.[keyconstants.repoImageUrl] || '',
-      image: app.metadata?.annotations?.[keyconstants.image] || '',
+      
+      repoName: app.spec.containers[activeContIndex]?.image ? getRepoName(app.spec.containers[activeContIndex]?.image) : '',
+      repoImageTag: app.spec.containers[activeContIndex]?.image ? getImageTag(app.spec.containers[activeContIndex]?.image) : '',
+      repoAccountName: app.metadata?.annotations?.[keyconstants.repoAccountName] || '',
 
       selectedPlan:
         app.metadata?.annotations[keyconstants.selectedPlan] || 'shared-1',
@@ -110,10 +107,7 @@ const AppCompute = () => {
             [keyconstants.memPerCpu]: val.memPerCpu,
             [keyconstants.selectionModeKey]: val.selectionMode,
             [keyconstants.selectedPlan]: val.selectedPlan,
-            [keyconstants.repoName]: val.repoName,
-            [keyconstants.imageTag]: val.repoImageTag,
-            [keyconstants.image]: val.image,
-            [keyconstants.repoImageUrl]: val.repoImageUrl,
+            [keyconstants.repoAccountName]: val.repoAccountName,
           },
         },
         spec: {
@@ -121,7 +115,8 @@ const AppCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              image: val.image === '' ? val.repoImageUrl : val.imageUrl,
+              // image: val.image === '' ? val.repoImageUrl : val.imageUrl,
+              image: values.repoAccountName == undefined || values.repoAccountName == '' ? `${values.repoName}:${values.repoImageTag}` : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
@@ -168,7 +163,7 @@ const AppCompute = () => {
       return api.listDigest({ repoName: values.repoName });
     }
   );
-
+  
   return (
     <FadeIn
       onSubmit={(e) => {
@@ -188,46 +183,27 @@ const AppCompute = () => {
         manipulation and calculations in a system.
       </div>
       <div className="flex flex-col gap-3xl">
-        {showImageUrl && (
-          <TextInput
-            label={
-              <InfoLabel info="some usefull information" label="Image Url" />
-            }
-            size="lg"
-            value={values.image}
-            onChange={(e) => {
-              handleChange('imageUrl')(
-                dummyEvent(e.target.value.toLowerCase())
-              );
-              handleChange('image')(dummyEvent(e.target.value.toLowerCase()));
-              handleChange('repoName')(dummyEvent(''));
-              handleChange('repoImageTag')(dummyEvent(''));
-            }}
-            error={!!errors.imageUrl}
-            message={errors.imageUrl}
-          />
-        )}
 
-        <Button
-          onClick={() => {
-            setShowImageUrl(!showImageUrl);
-          }}
-          content={showImageUrl ? 'Advanced options' : 'Image option'}
-          variant="primary-plain"
-          size="sm"
-        />
-
-        {!showImageUrl && (
           <Select
             label="Repo Name"
             size="lg"
             placeholder="Select Repo"
-            value={{ label: '', value: values.repoName }}
-            searchable
+            // value={{ label: '', value: values.repoName }}
+              value={
+                values.repoName
+                ? { label: values.repoName, value: values.repoName }
+                :undefined
+              }
+            // searchable
+            creatable={true}
             onChange={(val) => {
               handleChange('repoName')(dummyEvent(val.value));
-              handleChange('image')(dummyEvent(''));
-              setAccountName(val.accName);
+              if (val.accName == undefined || val.accName == ''){
+                handleChange('repoAccountName')(dummyEvent(''));
+              }
+              else {
+                handleChange('repoAccountName')(dummyEvent(val.accName));
+              }
             }}
             options={async () => [...repos]}
             error={!!errors.repos || !!repoLoadingError}
@@ -236,22 +212,20 @@ const AppCompute = () => {
             }
             loading={repoLoading}
           />
-        )}
 
-        {!showImageUrl && (
           <Select
             label="Image Tag"
             size="lg"
             placeholder="Select Image Tag"
-            value={{ label: '', value: values.repoImageTag }}
-            searchable
+            // value={{ label: '', value: values.repoImageTag }}
+            value={
+              values.repoImageTag
+                  ? { label: values.repoImageTag, value: values.repoImageTag }
+                  :undefined
+            }
+            creatable={true}
             onChange={(val) => {
               handleChange('repoImageTag')(dummyEvent(val.value));
-              handleChange('repoImageUrl')(
-                dummyEvent(
-                  `registry.kloudlite.io/${accountName}/${values.repoName}:${val.value}`
-                )
-              );
             }}
             options={async () =>
               [
@@ -275,15 +249,6 @@ const AppCompute = () => {
             }
             loading={digestLoading}
           />
-        )}
-
-        {/* <PasswordInput
-          label={
-            <InfoLabel info="some usefull information" label="Pull Secret" />
-          }
-          size="lg"
-          value={values.pullSecret}
-        /> */}
       </div>
 
       <div className="flex flex-col">
