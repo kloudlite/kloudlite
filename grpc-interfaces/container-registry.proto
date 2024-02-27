@@ -1,25 +1,40 @@
 syntax = "proto3";
 
-option go_package = "kloudlite.io/rpc/container_registry";
+// option go_package = "kloudlite.io/rpc/container_registry";
+option go_package = "./container_registry";
 
 service ContainerRegistry {
-  rpc CreateProjectForAccount(CreateProjectIn) returns (CreateProjectOut);
-  rpc GetSvcCredentials(GetSvcCredentialsIn) returns (GetSvcCredentialsOut);
+  // rpc CreateProjectForAccount(CreateProjectIn) returns (CreateProjectOut);
+  // rpc GetSvcCredentials(GetSvcCredentialsIn) returns (GetSvcCredentialsOut);
+  rpc CreateReadOnlyCredential(CreateReadOnlyCredentialIn) returns (CreateReadOnlyCredentialOut);
 }
 
-message CreateProjectIn {
+// message CreateProjectIn {
+//   string accountName = 1;
+// }
+//
+// message CreateProjectOut {
+//   bool success = 1;
+// }
+//
+// message GetSvcCredentialsIn {
+//   string accountName = 1;
+// }
+//
+// message GetSvcCredentialsOut {
+//   string userName = 1;
+//   string password = 2;
+// }
+
+message CreateReadOnlyCredentialIn {
   string accountName = 1;
+  string userId = 2;
+
+  string credentialName = 3;
+  string registryUsername = 4;
 }
 
-message CreateProjectOut {
-  bool success = 1;
-}
-
-message GetSvcCredentialsIn {
-  string accountName = 1;
-}
-
-message GetSvcCredentialsOut {
-  string userName = 1;
-  string password = 2;
+message CreateReadOnlyCredentialOut {
+  // dcokerconfigjson is as per format: https://kubernetes.io/docs/concepts/configuration/secret/#docker-config-secrets
+  bytes dockerConfigJson = 1;
 }
