@@ -1,5 +1,7 @@
 package constants
 
+import "fmt"
+
 type ResourceType string
 
 const (
@@ -156,3 +158,7 @@ const (
 
 	ManagedByKloudlite string = "kloudlite.io/managed-by.kloudlite"
 )
+
+func GetAccountTargetNamespace(accountName string) string {
+	return fmt.Sprintf("kl-account-%s", accountName)
+}
