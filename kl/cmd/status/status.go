@@ -69,14 +69,14 @@ var Cmd = &cobra.Command{
 				} else {
 					return text.Bold(text.Red(" (Disconnected) "))
 				}
-			}(), text.Blue("(ip: 10.13.0.1) ")))
-			// Device IP and DNS IPv4 is same for all the devices
-			// 10.13.0.1 - IP
-			// 10.13.0.3 - DNS IPv4
-			//fn.Log(text.Bold(text.Blue("Device IP address: ") + "10.13.0.1"))
-			//fn.Log(text.Bold(text.Blue("Device DNS: ") + "10.13.0.3"))
-			//resolveConfig, _ := wg_vpn.getCurrentDns(false)
-			//fmt.Println(resolveConfig)
+			}()))
+			ips, err := client.CurrentDeviceDNS()
+			if err == nil {
+				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
+				for _, ip := range ips {
+					fmt.Printf("%s ", ip)
+				}
+			}
 		}
 	},
 }
