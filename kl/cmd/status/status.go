@@ -73,9 +73,11 @@ var Cmd = &cobra.Command{
 			ips, err := client.CurrentDeviceDNS()
 			if err == nil {
 				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
+				var ipAddr []string
 				for _, ip := range ips {
-					fmt.Printf("%+v ", ip)
+					ipAddr = append(ipAddr, ip.String())
 				}
+				fmt.Println(ipAddr)
 			}
 		}
 	},
