@@ -24,6 +24,8 @@ type Query {
   accounts_listMembershipsForUser: [AccountMembership!] @isLoggedInAndVerified
   accounts_listMembershipsForAccount(accountName: String!, role: Github__com___kloudlite___api___apps___iam___types__Role): [AccountMembership!] @isLoggedInAndVerified
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
+
+  accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean! @isLoggedInAndVerified
 }
 
 type Mutation {
