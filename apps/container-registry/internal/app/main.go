@@ -117,7 +117,7 @@ var Module = fx.Module("app",
 			ConsumerConfig: msg_nats.ConsumerConfig{
 				Name:           consumerName,
 				Durable:        consumerName,
-				Description:    "this consumer receives container registry resource updates, processes them, and keeps our Database updated about things happening in the cluster",
+				Description:    "this consumer receives container registry resource updates, processes them, and keeps our Database updated about things happening in our client's cluster",
 				FilterSubjects: []string{topic},
 			},
 		})
@@ -241,7 +241,6 @@ var Module = fx.Module("app",
 	),
 
 	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain, logger logging.Logger) {
-
 		authLogger := logger.WithKV("route", "/auth")
 
 		a := server.Raw()
@@ -316,4 +315,6 @@ var Module = fx.Module("app",
 	}),
 
 	domain.Module,
+
+	fx.Invoke(InitializeGrpcServer),
 )

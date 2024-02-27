@@ -3,12 +3,14 @@ package framework
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/nats"
 
 	app "github.com/kloudlite/api/apps/container-registry/internal/app"
 	"github.com/kloudlite/api/apps/container-registry/internal/env"
-	rpc "github.com/kloudlite/api/pkg/grpc"
+	"github.com/kloudlite/api/pkg/grpc"
 	httpServer "github.com/kloudlite/api/pkg/http-server"
 	"github.com/kloudlite/api/pkg/kv"
 	"github.com/kloudlite/api/pkg/logging"
@@ -38,11 +40,11 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.AuthGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.AuthGrpcAddr)
+		return grpc.NewGrpcClient(ev.AuthGrpcAddr)
 	}),
 
 	mongoDb.NewMongoClientFx[*fm](),
@@ -99,6 +101,45 @@ var Module = fx.Module("framework",
 			},
 			OnStop: func(context.Context) error {
 				return server.Close()
+			},
+		})
+	}),
+
+	// creates New GRPC server
+	fx.Provide(func(logger logging.Logger) (app.ContainerRegistryGRPCServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logger.WithName("GRPC server"),
+		})
+	}),
+
+	// handles GRPC server lifecycle
+	fx.Invoke(func(lf fx.Lifecycle, server app.ContainerRegistryGRPCServer, ev *env.Env, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				errCh := make(chan error, 1)
+
+				tctx, cf := context.WithTimeout(ctx, 2*time.Second)
+				defer cf()
+
+				go func() {
+					err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+					if err != nil {
+						errCh <- err
+						logger.Errorf(err, "failed to start grpc server")
+					}
+				}()
+
+				select {
+				case <-tctx.Done():
+				case err := <-errCh:
+					return err
+				}
+
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
 			},
 		})
 	}),

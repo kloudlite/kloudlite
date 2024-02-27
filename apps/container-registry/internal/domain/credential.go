@@ -3,10 +3,11 @@ package domain
 import (
 	"context"
 	"fmt"
-	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
-	"github.com/kloudlite/api/common/fields"
 	"regexp"
 	"time"
+
+	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
+	"github.com/kloudlite/api/common/fields"
 
 	"github.com/kloudlite/api/pkg/errors"
 
@@ -144,14 +145,13 @@ func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (
 	}, nil
 }
 
+// var reCredsUsername = regexp.MustCompile(`^([a-z])[a-z0-9_]+$`)
+var reCredsUsername = regexp.MustCompile(`^([a-z])[a-z0-9_-]+$`)
+
 // CreateCredential implements Domain.
 func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credential) (*entities.Credential, error) {
-	pattern := `^([a-z])[a-z0-9_]+$`
-
-	re := regexp.MustCompile(pattern)
-
-	if !re.MatchString(credential.UserName) {
-		return nil, errors.Newf("invalid credential name, must be lowercase alphanumeric with underscore")
+	if !reCredsUsername.MatchString(credential.UserName) {
+		return nil, errors.Newf("invalid credential user name, must be lowercase alphanumeric with underscore")
 	}
 
 	if credential.UserName == KL_ADMIN {
