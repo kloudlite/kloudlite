@@ -62,7 +62,6 @@ var Cmd = &cobra.Command{
 			// }
 
 			b := server.CheckDeviceStatus()
-
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), s, func() string {
 				if b {
 					return text.Bold(text.Green(" (Connected) "))
