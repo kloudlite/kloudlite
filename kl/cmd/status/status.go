@@ -74,7 +74,7 @@ var Cmd = &cobra.Command{
 			if err == nil {
 				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
 				for _, ip := range ips {
-					fmt.Printf("%s ", ip)
+					fmt.Printf("%+v ", ip)
 				}
 			}
 		}
