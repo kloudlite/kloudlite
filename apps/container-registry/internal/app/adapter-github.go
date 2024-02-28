@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+
 	// "io/ioutil"
 	"net/http"
 	"os"
@@ -20,6 +21,7 @@ import (
 	oauthGithub "golang.org/x/oauth2/github"
 
 	"github.com/kloudlite/api/pkg/errors"
+	"github.com/kloudlite/api/pkg/logging"
 	// fn "kloudlite.io/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 )
@@ -30,6 +32,7 @@ type githubOptions interface {
 }
 
 type githubI struct {
+	logger       logging.Logger
 	cfg          *oauth2.Config
 	ghCli        *github.Client
 	ghCliForUser func(ctx context.Context, token *oauth2.Token) *github.Client
@@ -111,7 +114,6 @@ func (gh *githubI) Callback(ctx context.Context, code string, state string) (*gi
 		return nil, nil, errors.NewEf(err, "could nog get authenticated user from github")
 	}
 	return u, token, nil
-
 }
 
 // CheckWebhookExists implements domain.Github.
@@ -135,9 +137,7 @@ func (gh *githubI) CheckWebhookExists(ctx context.Context, token *entities.Acces
 
 // DeleteWebhook implements domain.Github.
 func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *entities.AccessToken, repoUrl string, hookId entities.GithubWebhookId) error {
-
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
-
 	if err != nil {
 		return errors.NewE(err)
 	}
@@ -147,13 +147,11 @@ func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *entities.AccessT
 		return nil
 	}
 	return errors.NewE(err)
-
 }
 
 // GetInstallationToken implements domain.Github.
 func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (string, error) {
 	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
-
 	if err != nil {
 		return "", errors.NewE(err)
 	}
@@ -168,7 +166,6 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (st
 		return "", errors.NewEf(err, "failed to get installation token")
 	}
 	return it.GetToken(), errors.NewE(err)
-
 }
 
 // GetLatestCommit implements domain.Github.
@@ -246,30 +243,27 @@ func (gh *githubI) ListRepos(ctx context.Context, accToken *entities.AccessToken
 		return nil, errors.NewEf(err, "could not list user repositories")
 	}
 	return repos, nil
-
 }
 
 // SearchRepos implements domain.Github.
 func (gh *githubI) SearchRepos(ctx context.Context, accToken *entities.AccessToken, q string, org string, pagination *types.Pagination) (*github.RepositoriesSearchResult, error) {
-	// TODO: search repos not working at all from the API
-	searchQ := fmt.Sprintf("%s org:%s", q, org)
+	searchQ := fmt.Sprintf("%s org:%s fork:true", q, org)
 	rsr, resp, err := gh.ghCliForUser(ctx, accToken.Token).Search.Repositories(
 		context.TODO(), searchQ, &github.SearchOptions{
 			ListOptions: gh.buildListOptions(pagination),
 		},
 	)
-	fmt.Println(resp)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not search repositories")
 	}
+	gh.logger.Warnf("github rate {limit: %d, remaining: %d}", resp.Rate.Limit, resp.Rate.Remaining)
 	return rsr, nil
 }
 
 func fxGithub[T githubOptions]() fx.Option {
-
 	return fx.Module("github-fx",
 		fx.Provide(
-			func(env T) (domain.Github, error) {
+			func(env T, logger logging.Logger) (domain.Github, error) {
 				clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile := env.GithubConfig()
 				cfg := oauth2.Config{
 					ClientID:     clientId,
@@ -304,6 +298,7 @@ func fxGithub[T githubOptions]() fx.Option {
 				ghCli := github.NewClient(&http.Client{Transport: itr, Timeout: 30 * time.Second})
 
 				return &githubI{
+					logger:       logger,
 					cfg:          &cfg,
 					ghCli:        ghCli,
 					ghCliForUser: ghCliForUser,
