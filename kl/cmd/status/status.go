@@ -74,9 +74,7 @@ var Cmd = &cobra.Command{
 
 			if runtime.GOOS == constants.RuntimeDarwin {
 				cmd := exec.Command("networksetup", "-setsearchdomains", "Wi-Fi", ".local")
-				if err := cmd.Run(); err != nil {
-					return
-				}
+				_ = cmd.Run()
 			}
 
 			ips, err := client.CurrentDeviceDNS()
