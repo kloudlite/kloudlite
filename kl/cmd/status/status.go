@@ -9,6 +9,8 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
+	"os/exec"
+	"runtime"
 )
 
 var Cmd = &cobra.Command{
@@ -62,21 +64,28 @@ var Cmd = &cobra.Command{
 			// }
 
 			b := server.CheckDeviceStatus()
-
 			fn.Log(fmt.Sprint(text.Bold(text.Blue("Device: ")), s, func() string {
 				if b {
 					return text.Bold(text.Green(" (Connected) "))
 				} else {
 					return text.Bold(text.Red(" (Disconnected) "))
 				}
-			}(), text.Blue("(ip: 10.13.0.1) ")))
-			// Device IP and DNS IPv4 is same for all the devices
-			// 10.13.0.1 - IP
-			// 10.13.0.3 - DNS IPv4
-			//fn.Log(text.Bold(text.Blue("Device IP address: ") + "10.13.0.1"))
-			//fn.Log(text.Bold(text.Blue("Device DNS: ") + "10.13.0.3"))
-			//resolveConfig, _ := wg_vpn.getCurrentDns(false)
-			//fmt.Println(resolveConfig)
+			}()))
+
+			if runtime.GOOS == constants.RuntimeDarwin {
+				cmd := exec.Command("networksetup", "-setsearchdomains", "Wi-Fi", ".local")
+				_ = cmd.Run()
+			}
+
+			ips, err := client.CurrentDeviceDNS()
+			if err == nil {
+				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
+				var ipAddr []string
+				for _, ip := range ips {
+					ipAddr = append(ipAddr, ip.String())
+				}
+				fmt.Println(ipAddr)
+			}
 		}
 	},
 }
