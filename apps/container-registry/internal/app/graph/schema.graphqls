@@ -27,7 +27,7 @@ type CRCheckNameAvailabilityOutput @shareable {
 }
 
 type Query {
-  cr_listRepos(search:SearchRepos, pagination:CursorPaginationIn) : RepositoryPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listRepos(search: SearchRepos, pagination: CursorPaginationIn): RepositoryPaginatedRecords @isLoggedInAndVerified @hasAccount
   cr_listCreds(search:SearchCreds, pagination:CursorPaginationIn) : CredentialPaginatedRecords @isLoggedInAndVerified @hasAccount
   cr_listDigests(repoName:String!, search: SearchRepos, pagination:CursorPaginationIn) : DigestPaginatedRecords @isLoggedInAndVerified @hasAccount
 
@@ -39,8 +39,8 @@ type Query {
   cr_listBuilds(repoName:String!, search:SearchBuilds, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
 
   cr_listGithubInstallations(pagination:PaginationIn) : [GithubInstallation!] @isLoggedInAndVerified
-  cr_listGithubRepos(installationId:Int!, pagination:PaginationIn) : GithubListRepository @isLoggedInAndVerified
-  cr_searchGithubRepos(organization:String!, search:String!, pagination:PaginationIn) : GithubSearchRepository @isLoggedInAndVerified
+  cr_listGithubRepos(installationId:Int!, pagination:PaginationIn): GithubListRepository @isLoggedInAndVerified
+  cr_searchGithubRepos(organization:String!, search:String!, pagination:PaginationIn): GithubSearchRepository @isLoggedInAndVerified
   cr_listGithubBranches(repoUrl:String!, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
 
   cr_listGitlabGroups(query:String, pagination:PaginationIn) : [GitlabGroup!] @isLoggedInAndVerified
