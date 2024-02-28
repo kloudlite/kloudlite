@@ -25,7 +25,10 @@ const types: string[] = [
   'ConsoleListProjectMSvsQuery',
   'ConsoleListMSvTemplatesQuery',
   'ConsoleListRoutersQuery',
-  'ConsoleListManagedResourcesQuery'
+  'ConsoleListManagedResourcesQuery',
+  'ConsoleListDigestQuery',
+  'ConsoleListBuildsQuery',
+  'ConsoleListBuildRunsQuery',
 ];
 
 async function fake(files: string[], types: string[] = []) {

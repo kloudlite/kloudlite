@@ -10,6 +10,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import TagsResources from './tags-resources';
 import Tools from './tools';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
@@ -36,7 +37,12 @@ export const loader = async (ctx: IRemixCtx) => {
 const Images = () => {
   const { promise } = useLoaderData<typeof loader>();
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp
+        data={promise}
+        skeletonData={{
+          tagsData: fake.ConsoleListDigestQuery.cr_listDigests as any,
+        }}
+    >
       {({ tagsData }) => {
         const tags = tagsData.edges?.map(({ node }) => node);
 
