@@ -15,6 +15,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -47,10 +48,9 @@ const Nodepools = () => {
     <>
       <LoadingComp
         data={promise}
-        // skeletonData={{
-        //   nodePoolData: fake.ConsoleListNodePoolsQuery
-        //     .infra_listNodePools as any,
-        // }}
+        skeletonData={{
+          nodePoolData: fake.ConsoleListNodePoolsQuery.infra_listNodePools as any,
+        }}
       >
         {({ nodePoolData }) => {
           const nodepools = nodePoolData?.edges?.map(({ node }) => node);

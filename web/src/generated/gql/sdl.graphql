@@ -3223,6 +3223,7 @@ scalar ProviderDetail
 
 type Query {
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput!
+  accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean!
   accounts_getAccount(accountName: String!): Account
   accounts_getAccountMembership(accountName: String!): AccountMembership
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation
