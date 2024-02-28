@@ -9,6 +9,8 @@ import (
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
+	"os/exec"
+	"runtime"
 )
 
 var Cmd = &cobra.Command{
@@ -69,6 +71,12 @@ var Cmd = &cobra.Command{
 					return text.Bold(text.Red(" (Disconnected) "))
 				}
 			}()))
+
+			if runtime.GOOS == constants.RuntimeDarwin {
+				cmd := exec.Command("networksetup", "-setsearchdomains", "Wi-Fi", ".local")
+				_ = cmd.Run()
+			}
+
 			ips, err := client.CurrentDeviceDNS()
 			if err == nil {
 				fmt.Print(fmt.Sprintf(text.Bold(text.Blue("Device IP: "))))
