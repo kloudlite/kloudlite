@@ -3,6 +3,7 @@ package wg_vpn
 import (
 	"errors"
 	"fmt"
+	"github.com/kloudlite/kl/constants"
 	"net"
 	"os"
 	"os/exec"
@@ -195,4 +196,74 @@ func StopService(verbose bool) error {
 
 func setDnsServer(dnsServer net.IP, d string, verbose bool) error {
 	return ExecCmd(fmt.Sprintf("networksetup -setdnsservers %s %s", d, dnsServer.String()), verbose)
+}
+
+func setDnsSearchDomain(networkService string, localSearchDomains []string) error {
+	if localSearchDomains == nil {
+		return ExecCmd(fmt.Sprintf("networksetup -setsearchdomains %s %s", networkService, "Empty"), false)
+	}
+	return ExecCmd(fmt.Sprintf("networksetup -setsearchdomains %s %s", networkService, strings.Join(localSearchDomains, " ")), false)
+}
+
+func getDnsSearchDomain(networkService string) ([]string, error) {
+	d, err := exec.Command("networksetup", "-getsearchdomains", networkService).Output()
+	if err != nil {
+		return nil, err
+	}
+	domains := strings.Split(strings.TrimSpace(string(d)), "\n")
+	if domains[0] == constants.NoExistingSearchDomainError {
+		return domains, errors.New("no existing search domain found")
+	}
+	return domains, nil
+}
+
+func SetDnsSearch() error {
+	searchDomains, err := getDnsSearchDomain(constants.NetworkService)
+	if err == nil {
+		if slices.Contains(searchDomains, constants.LocalSearchDomains) {
+			return nil
+		}
+		searchDomains = append(searchDomains, constants.LocalSearchDomains)
+		err1 := setDnsSearchDomain(constants.NetworkService, searchDomains)
+		if err1 != nil {
+			return nil
+		}
+	} else {
+		searchDomains[0] = constants.LocalSearchDomains
+		err1 := setDnsSearchDomain(constants.NetworkService, searchDomains)
+		if err1 != nil {
+			return nil
+		}
+	}
+	data, err := client.GetExtraData()
+	if err != nil {
+		return err
+	}
+	data.SearchDomainAdded = true
+	if err := client.SaveExtraData(data); err != nil {
+		return err
+	}
+	return nil
+}
+
+func UnsetDnsSearch() error {
+	data, err := client.GetExtraData()
+	if err != nil {
+		return err
+	}
+	if data.SearchDomainAdded {
+		searchDomains, err := getDnsSearchDomain(constants.NetworkService)
+		if err != nil {
+			return err
+		}
+		searchDomains = functions.RemoveFromArray(constants.LocalSearchDomains, searchDomains)
+		if err = setDnsSearchDomain(constants.NetworkService, searchDomains); err != nil {
+			return err
+		}
+		data.SearchDomainAdded = false
+		if err := client.SaveExtraData(data); err != nil {
+			return err
+		}
+	}
+	return nil
 }

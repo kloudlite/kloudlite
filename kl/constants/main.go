@@ -7,13 +7,16 @@ import (
 )
 
 const (
-	DefaultBaseURL = "https://auth.kloudlite.io"
-	RuntimeLinux   = "linux"
-	RuntimeDarwin  = "darwin"
-	RuntimeWindows = "windows"
-	BashShell      = "bash"
-	FishShell      = "fish"
-	ZshShell       = "zsh"
+	DefaultBaseURL              = "https://auth.kloudlite.io"
+	RuntimeLinux                = "linux"
+	RuntimeDarwin               = "darwin"
+	RuntimeWindows              = "windows"
+	BashShell                   = "bash"
+	FishShell                   = "fish"
+	ZshShell                    = "zsh"
+	NetworkService              = "Wi-Fi"
+	LocalSearchDomains          = ".local"
+	NoExistingSearchDomainError = "There aren't any Search Domains set on Wi-Fi."
 )
 
 var (

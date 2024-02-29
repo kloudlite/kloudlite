@@ -244,3 +244,16 @@ func Truncate(str string, length int) string {
 
 	return fmt.Sprintf("%s...", str[0:length])
 }
+
+func RemoveFromArray(target string, arr []string) []string {
+	var result []string
+	for _, s := range arr {
+		if s != target {
+			result = append(result, s)
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}

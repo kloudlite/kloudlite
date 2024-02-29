@@ -70,6 +70,9 @@ func connect(verbose bool, options ...fn.Option) error {
 	if err := client.SaveExtraData(data); err != nil {
 		return err
 	}
+	if err = wg_vpn.SetDnsSearch(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -90,7 +93,9 @@ func disconnect(verbose bool) error {
 	if err := client.SaveExtraData(data); err != nil {
 		return err
 	}
-
+	if err = wg_vpn.UnsetDnsSearch(); err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -52,12 +52,13 @@ type InfraContexts struct {
 }
 
 type ExtraData struct {
-	BaseUrl      string          `json:"baseUrl"`
-	SelectedEnvs map[string]*Env `json:"selectedEnvs"`
-	DNS          []string        `json:"dns"`
-	Loading      bool            `json:"loading"`
-	VpnConnected bool            `json:"vpnConnected"`
-	DevInfo      string          `json:"devInfo"`
+	BaseUrl           string          `json:"baseUrl"`
+	SelectedEnvs      map[string]*Env `json:"selectedEnvs"`
+	DNS               []string        `json:"dns"`
+	Loading           bool            `json:"loading"`
+	VpnConnected      bool            `json:"vpnConnected"`
+	DevInfo           string          `json:"devInfo"`
+	SearchDomainAdded bool            `json:"searchDomainAdded"`
 }
 
 func GetDevInfo() (string, error) {
