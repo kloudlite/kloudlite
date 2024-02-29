@@ -2,10 +2,6 @@ name: build-docker-images-web
 
 on:
   workflow_call:
-    inputs:
-      github_token:
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -37,7 +33,7 @@ jobs:
         id: setup
         uses: ./.github/actions/setup/
         with:
-          github_token: ${{ inputs.github_token }}
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
           enable_go: false
           enable_task: false
           enable_upx: false

@@ -70,8 +70,6 @@ jobs:
 
   web:
     uses: ./.github/workflows/web.yml
-    with:
-      github_token: "${{ secrets.GITHUB_TOKEN }}"
 
   api:
     needs: api-go-modules-cache
