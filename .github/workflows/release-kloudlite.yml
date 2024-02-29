@@ -68,6 +68,11 @@ jobs:
           go mod download
           popd
 
+  web:
+    uses: ./.github/actions/apps/web.yml@main
+    with:
+      github_token: ${{ secrets.GITHUB_TOKEN }}
+
   api:
     needs: api-go-modules-cache
     strategy:
@@ -113,7 +118,6 @@ jobs:
 
           enable_task: true
           enable_upx: true
-
           enable_docker: true
 
       - name: Build & Push Container Images
@@ -453,6 +457,7 @@ jobs:
       - operator
       - infrastructure-as-code
       - autoscaler
+      - web
     runs-on: ubuntu-latest
     name: Creating a Github Release
     steps:

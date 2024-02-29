@@ -1,0 +1,80 @@
+name: build-docker-images-web
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - release-*
+    tags:
+      - '*'
+    paths:
+      - "web/lib/**/**"
+      - "web/src/**"
+      - "web/.github/workflows/**"
+      - ".github/workflows/**"
+
+  workflow_call:
+    inputs:
+      github_token:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-builds:
+    strategy:
+      matrix:
+        app:
+          - auth
+          - console
+          - website
+        include:
+          - app: auth
+            dockerFile: Dockerfile
+          - app: console
+            dockerFile: Dockerfile
+          - app: website
+            dockerFile: Dockerfile.devdoc
+
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: ${{ inputs.github_token }}
+          enable_go: false
+          enable_task: false
+          enable_upx: false
+          enable_docker: true
+
+      - name: Build
+        if: "!startsWith(github.ref, 'refs/heads/release-') && !startsWith(github.ref, 'refs/tags/')"
+        run: |
+          image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:test"
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+        run: |
+          set +e
+          image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
+
+          docker manifest inspect $image_name:${{ env.release_tag }}
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:${{ env.release_tag }}) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+          
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:${{ env.release_tag }}" --push

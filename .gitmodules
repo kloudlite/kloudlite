@@ -13,3 +13,9 @@
 [submodule "autoscaler"]
 	path = autoscaler
 	url = git@github.com:kloudlite/autoscaler
+[submodule "web"]
+	path = web
+	url = git@github.com:kloudlite/web.git
+[submodule "kl"]
+	path = kl
+	url = git@github.com:kloudlite/kl.git
