@@ -13,14 +13,14 @@ on:
       - "operator/**"
       - "infrastructure-as-code/**"
       - "kubelet-metrics-reexporter/**"
+      - "autoscaler/**"
+      - "kl/**"
+      - "web/**"
       - ".github/workflows/**"
 
 permissions:
   contents: write
   packages: write
-
-env:
-  K3S_RELEASE: "v1.28.6+k3s2"
 
 jobs:
   # setup:
@@ -54,6 +54,22 @@ jobs:
   autoscaler:
     uses: ./.github/workflows/autoscaler.yml
 
+  k3s:
+    runs-on: ubuntu-latest
+    name: supported k3s binary
+    env:
+      K3S_VERSION: "v1.28.6+k3s2"
+    steps:
+      - name: k3s binary download
+        run: |+
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_VERSION/k3s" > ./k3s
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k3s
+          path: ./k3s
+
   github_release:
     needs:
       - api
@@ -82,9 +98,16 @@ jobs:
           name: kl
           path: kl-artifacts
 
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: k3s
+          path: k3s
+
       - run: |+
           ls k3s-runner-artifacts/*
           ls kl-artifacts/*
+          ls k3s/*
 
       - name: Create Release Tag from branch name
         id: gitref_branch
@@ -122,3 +145,4 @@ jobs:
           files: |+
             k3s-runner-artifacts/**
             kl-artifacts/**
+            k3s/**

@@ -115,9 +115,6 @@ jobs:
           pushd ${{matrix.build_dir}}
           echo "building ${{ matrix.name }}"
           task build
-
-          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_RELEASE/k3s" > bin/k3s
-
           echo "k3s_runner_path=$PWD/bin/*" >> $GITHUB_ENV
 
           popd
