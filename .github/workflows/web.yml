@@ -14,14 +14,11 @@ jobs:
         app:
           - auth
           - console
-          - website
         include:
           - app: auth
             dockerFile: Dockerfile
           - app: console
             dockerFile: Dockerfile
-          - app: website
-            dockerFile: Dockerfile.devdoc
 
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
@@ -62,4 +59,4 @@ jobs:
 
           set -e
           
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} web -t "$image_name:${{ env.release_tag }}" --push
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} web -t "$image_name:$IMAGE_TAG" --push
