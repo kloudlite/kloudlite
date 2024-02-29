@@ -1,0 +1,65 @@
+name: build-autoscaler
+on:
+  workflow_call:
+
+jobs:
+  autoscaler:
+    needs: []
+
+    strategy:
+      matrix:
+        name:
+          - cluster-autoscaler
+        include:
+          - name: cluster-autoscaler
+            build_dir: ./cluster-autoscaler
+
+    runs-on: ubuntu-latest
+    name: autoscaler
+    env:
+      SUBMODULE: autoscaler
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/${{ matrix.name }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/${{ matrix.name}}/go.sum
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: true
+
+      - name: Build & Push Autoscaler
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}
+          echo "building image: $image:$IMAGE_TAG"
+
+          docker manifest inspect $image:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          task docker:build IMAGE=$image TAG="$IMAGE_TAG"
+          popd

@@ -1,0 +1,110 @@
+name: build-apis
+on:
+  workflow_call:
+
+jobs:
+  api-go-modules-cache:
+    runs-on: ubuntu-latest
+    name: API go modules cache
+    env:
+      SUBMODULE: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          enable_task: false
+          enable_upx: false
+
+          enable_docker: false
+
+      - name: Setup Go Modules Cache
+        shell: bash
+        run: |+
+          pushd $SUBMODULE
+          go mod download
+          popd
+
+  api:
+    needs: api-go-modules-cache
+    strategy:
+      matrix:
+        app:
+          # golang builds
+          - accounts
+          - auth
+          - comms
+          - console
+          - container-registry
+          - iam
+          - infra
+          - worker-audit-logging
+          - webhook
+          - websocket-server
+          - message-office
+          - tenant-agent
+
+          - gateway # nodejs process
+
+    runs-on: ubuntu-latest
+    name: kloudlite API
+    env:
+      SUBMODULE: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.app}}
+
+          enable_task: true
+          enable_upx: true
+          enable_docker: true
+
+      - name: Build & Push Container Images
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          ls -al .
+
+          set +e
+          image="ghcr.io/${{ github.repository }}/$SUBMODULE/${{ matrix.app }}:$IMAGE_TAG"
+          echo "image is $image"
+          docker manifest inspect $image
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          pushd apps/${{ matrix.app }}
+          task container:build-and-push Image="$image"
+          popd
+
+          popd
