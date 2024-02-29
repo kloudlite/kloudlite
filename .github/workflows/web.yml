@@ -43,11 +43,12 @@ jobs:
         if: "!startsWith(github.ref, 'refs/heads/release-') && !startsWith(github.ref, 'refs/tags/')"
         run: |
           image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:test"
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} web -t "$image_name:test"
 
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
-        IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
         run: |
           set +e
           image_name="ghcr.io/${{ github.repository }}/${{matrix.app}}"
@@ -61,4 +62,4 @@ jobs:
 
           set -e
           
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} . -t "$image_name:${{ env.release_tag }}" --push
+          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} web -t "$image_name:${{ env.release_tag }}" --push
