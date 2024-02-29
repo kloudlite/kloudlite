@@ -122,7 +122,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: tmp-${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: kl/bin/*
 
   release:
@@ -170,10 +170,13 @@ jobs:
             fi
           done
 
+          rm -rf tmp*
+
+
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kl-binaries
           path: out/**
 
       # - name: Create Release
