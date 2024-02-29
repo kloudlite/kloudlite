@@ -30,6 +30,7 @@ input SearchClusterManagedService {
 
 input SearchNodepool {
     text: MatchFilterIn
+    isStateful: MatchFilterIn
 }
 
 input SearchHelmRelease {
