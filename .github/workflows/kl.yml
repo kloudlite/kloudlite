@@ -33,7 +33,9 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Go
         uses: actions/setup-go@v5.0.0
@@ -98,7 +100,7 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
-          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" main.go
+          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" kl/main.go
 
       - name: Build Windows
         if: matrix.goos == 'windows'
@@ -113,7 +115,7 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
-          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
+          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" kl/main.go
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3

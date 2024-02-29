@@ -459,6 +459,7 @@ jobs:
       - infrastructure-as-code
       - autoscaler
       - web
+      - kl
     runs-on: ubuntu-latest
     name: Creating a Github Release
     steps:
