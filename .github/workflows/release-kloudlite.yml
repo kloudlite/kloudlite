@@ -71,6 +71,9 @@ jobs:
   web:
     uses: ./.github/workflows/web.yml
 
+  kl:
+    uses: ./.github/workflows/kl.yml
+
   api:
     needs: api-go-modules-cache
     strategy:
