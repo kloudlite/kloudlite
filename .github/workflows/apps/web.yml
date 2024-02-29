@@ -1,19 +1,6 @@
 name: build-docker-images-web
 
 on:
-  workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - release-*
-    tags:
-      - '*'
-    paths:
-      - "web/lib/**/**"
-      - "web/src/**"
-      - "web/.github/workflows/**"
-      - ".github/workflows/**"
-
   workflow_call:
     inputs:
       github_token:
