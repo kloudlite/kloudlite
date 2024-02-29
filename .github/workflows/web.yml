@@ -1,0 +1,65 @@
+name: build-docker-images-web
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-builds:
+    strategy:
+      matrix:
+        app:
+          - auth
+          - console
+        include:
+          - app: auth
+            dockerFile: Dockerfile
+          - app: console
+            dockerFile: Dockerfile
+
+    runs-on: ubuntu-latest
+    name: Deploy to Docker Image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+          enable_go: false
+          enable_task: false
+          enable_upx: false
+          enable_docker: true
+
+      - name: Build
+        if: "!startsWith(github.ref, 'refs/heads/release-') && !startsWith(github.ref, 'refs/tags/')"
+        run: |
+          image_name="ghcr.io/${{ github.repository }}/web/${{matrix.app}}"
+          docker buildx build --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:test" --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"
+
+      - name: Build & Push Image
+        if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          DOCKER_BUILDKIT: "1" 
+        run: |
+          set +e
+          image_name="ghcr.io/${{ github.repository }}/web/${{matrix.app}}"
+
+          docker manifest inspect $image_name:$IMAGE_TAG
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image_name:$IMAGE_TAG) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+          
+          docker buildx build --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:$IMAGE_TAG" --push --cache-from="type=registry,ref=$image_name:buildcache" --cache-to="type=registry,ref=$image_name:buildcache,mode=max"

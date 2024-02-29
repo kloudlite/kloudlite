@@ -1,0 +1,121 @@
+name: build-operators
+on:
+  workflow_call:
+
+jobs:
+  operator-go-modules-cache:
+    runs-on: ubuntu-latest
+    name: Operator go modules cache
+    env:
+      SUBMODULE: operator
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+
+          enable_task: false
+          enable_upx: false
+
+          enable_docker: false
+
+      - name: Setup Go Modules Cache
+        shell: bash
+        run: |+
+          pushd $SUBMODULE
+          go mod download
+          popd
+
+  operator:
+    needs: operator-go-modules-cache
+    strategy:
+      matrix:
+        name:
+          - platform
+          - agent
+          - wireguard
+
+          - helm-charts
+          - helm-job-runner
+        include:
+          - name: platform
+            build_dir: cmd/platform-operator
+          - name: agent
+            build_dir: cmd/agent-operator
+          - name: wireguard
+            build_dir: operators/wireguard
+
+          - name: helm-charts
+            build_dir: operators/helm-charts
+          - name: helm-job-runner
+            image_prefix: "workers"
+            build_dir: operators/helm-charts/needs-images/helm-job-runner
+    runs-on: ubuntu-latest
+    name: kloudlite operator
+    env:
+      SUBMODULE: operator
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: true
+
+      - name: Build & Push Container Images
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}:$IMAGE_TAG
+          if [ ! -z "${{ matrix.image_prefix }}" ]; then
+            image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.image_prefix}}/${{matrix.name}}:$IMAGE_TAG
+          fi
+          echo "building image: $image"
+
+          docker manifest inspect $image
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          task container:build-and-push Image="$image"
+          # task build Out=$PWD/.github/workflows/container-build/app CWD=${{matrix.build_dir}}
+          #
+          # pushd .github/workflows/container-build
+          # upx ./app
+          # task go-container-build Image="$image_name:$IMAGE_TAG"
+          # popd
+
+          popd
