@@ -171,11 +171,17 @@ jobs:
             fi
           done
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: out/**
-          tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: kl-binaries
+          path: out/**
+
+      # - name: Create Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     files: out/**
+      #     tag_name: ${{ steps.tag_name.outputs.TAG_NAME }}
+      #     prerelease: true
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
