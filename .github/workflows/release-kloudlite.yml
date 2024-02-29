@@ -69,7 +69,7 @@ jobs:
           popd
 
   web:
-    uses: ./.github/workflows/apps/web.yml@main
+    uses: ./.github/workflows/apps/web.yml
     with:
       github_token: ${{ secrets.GITHUB_TOKEN }}
 
