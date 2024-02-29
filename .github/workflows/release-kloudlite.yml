@@ -70,16 +70,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Download all all artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
+          name: release
           path: ci-artifacts
-
-      - run: |+
-          ls ci-artifacts/*
-
-      - run: |+
-          rm -rf tmp*
 
       - run: |+
           ls ci-artifacts/*

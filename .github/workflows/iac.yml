@@ -127,5 +127,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: matrix.github_release
         with:
-          name: k3s-runner
+          name: release
           path: ${{ env.k3s_runner_path }}

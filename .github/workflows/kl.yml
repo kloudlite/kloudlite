@@ -125,7 +125,7 @@ jobs:
           name: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: kl/bin/*
 
-  release:
+  upload-release-binaries:
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -162,7 +162,7 @@ jobs:
           out_dir=${{ github.workspace }}/out
           mkdir -p $out_dir
 
-          cd ${{ github.workspace }}/artifacts/tmp
+          cd ${{ github.workspace }}/artifacts
           for f in *; do
             if [ -d "$f" ]; then
               zip -r "$out_dir/$f.zip" "$f"
@@ -171,10 +171,12 @@ jobs:
           done
 
 
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          path: ${{ github.workspace }}/out/**
+          name: release
+          path: out/**
 
       # - name: Create Release
       #   uses: softprops/action-gh-release@v1
