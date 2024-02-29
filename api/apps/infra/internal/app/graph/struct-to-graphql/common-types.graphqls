@@ -130,6 +130,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCre
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
   jobName: String!
   jobNamespace: String!
+  keyAWSVPCId: String
+  keyAWSVPCPublicSubnets: String
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
   keyKubeconfig: String!
@@ -155,18 +157,9 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   taintMasterNodes: Boolean!
 }
 
-type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode @shareable {
-  cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
-  cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
-  jobName: String
-  jobNamespace: String
-  stateS3BucketFilePath: String!
-  stateS3BucketName: String!
-  stateS3BucketRegion: String!
-}
-
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {
   availabilityZone: String!
+  kloudliteRelease: String!
   lastRecreatedAt: Date
   role: String!
 }
@@ -174,7 +167,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @shareable {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
-  iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
   maxCount: Int!
   minCount: Int!
   nodeLabels: Map
@@ -219,6 +211,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @share
   postUninstall: String
   preInstall: String
   preUninstall: String
+  releaseName: String
   values: Map!
 }
 
@@ -722,6 +715,8 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersCo
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
   availabilityZone: String!
   ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
+  imageId: String!
+  imageSSHUsername: String!
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
@@ -1261,7 +1256,7 @@ enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvail
 enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
   aws
   azure
-  do
+  digitalocean
   gcp
 }
 
