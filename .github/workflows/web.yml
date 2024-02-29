@@ -59,4 +59,4 @@ jobs:
 
           set -e
           
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} web -t "$image_name:$IMAGE_TAG" --push
+          docker build --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:$IMAGE_TAG" --push
