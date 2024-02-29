@@ -40,7 +40,7 @@ jobs:
         if: "!startsWith(github.ref, 'refs/heads/release-') && !startsWith(github.ref, 'refs/tags/')"
         run: |
           image_name="ghcr.io/${{ github.repository }}/web/${{matrix.app}}"
-          docker build --build-arg APP=${{matrix.app}} -f ${{matrix.dockerFile}} web -t "$image_name:test"
+          docker build --build-arg APP=${{matrix.app}} -f web/${{matrix.dockerFile}} web -t "$image_name:test"
 
       - name: Build & Push Image
         if: startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/tags/')
