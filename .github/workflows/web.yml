@@ -52,12 +52,6 @@ jobs:
           set +e
           image_name="ghcr.io/${{ github.repository }}/web/${{matrix.app}}"
 
-          case $IMAGE_TAG in
-            *nightly)
-              OVERRIDE_PUSHED_IMAGE="true"
-              ;;
-          esac
-
           docker manifest inspect $image_name:$IMAGE_TAG
           exit_status=$?
           if [ $exit_status -eq 0 ]; then
