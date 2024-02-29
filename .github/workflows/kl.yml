@@ -100,7 +100,7 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
-          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" kl
+          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" kl/main.go
 
       - name: Build Windows
         if: matrix.goos == 'windows'
@@ -115,7 +115,7 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
-          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" kl
+          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" kl/main.go
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
