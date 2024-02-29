@@ -73,11 +73,18 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          name: release
-          path: ci-artifacts
+          name: k3s-runner
+          path: k3s-runner-artifacts
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kl
+          path: kl-artifacts
 
       - run: |+
-          ls ci-artifacts/*
+          ls k3s-runner-artifacts/*
+          ls kl-artifacts/*
 
       - name: Create Release Tag from branch name
         id: gitref_branch
@@ -113,4 +120,5 @@ jobs:
           release_tag: ${{ env.release_tag }}
           github_ref: ${GITHUB_REF}
           files: |+
-            ci-artifacts/**
+            k3s-runner-artifacts/**
+            kl-artifacts/**
