@@ -122,7 +122,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tmp-${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
+          name: tmp/${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: kl/bin/*
 
   release:
@@ -162,7 +162,7 @@ jobs:
           out_dir=${{ github.workspace }}/out
           mkdir -p $out_dir
 
-          cd ${{ github.workspace }}/artifacts
+          cd ${{ github.workspace }}/artifacts/tmp
           for f in *; do
             if [ -d "$f" ]; then
               zip -r "$out_dir/$f.zip" "$f"
@@ -170,14 +170,11 @@ jobs:
             fi
           done
 
-          rm -rf tmp*
-
-
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          path: out/**
+          path: ${{ github.workspace }}/out/**
 
       # - name: Create Release
       #   uses: softprops/action-gh-release@v1
