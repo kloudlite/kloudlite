@@ -100,6 +100,7 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
+          cd kl
           go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" kl/main.go
 
       - name: Build Windows
@@ -115,13 +116,14 @@ jobs:
           echo "Building for ${{ matrix.goos }}, ${{ matrix.arch }}"
           mkdir bin
           mkdir out
+          cd kl
           go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" kl/main.go
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
-          path: bin/*
+          path: kl/bin/*
 
   release:
     needs: build
