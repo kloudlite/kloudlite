@@ -202,8 +202,12 @@ export const useAppState = () => {
   const getRepoName = (imageUrl: string) => {
     const parts: string[] = imageUrl.split(':');
     const repoParts: string[] = parts[0].split('/');
-    console.log("repo name", repoParts[repoParts.length - 1])
-    return repoParts[repoParts.length - 1];
+    if (repoParts.length == 1) {
+      return repoParts[repoParts.length - 1];
+    } else {
+      const repoSlicePart: string[] = repoParts.slice(2)
+      return repoSlicePart.join("/")
+    }
   }
 
   const getImageTag = (imageUrl: string) => {
