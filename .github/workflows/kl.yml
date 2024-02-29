@@ -101,7 +101,7 @@ jobs:
           mkdir bin
           mkdir out
           cd kl
-          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" kl/main.go
+          go build -o bin/${{ matrix.app }} -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Build Windows
         if: matrix.goos == 'windows'
@@ -117,7 +117,7 @@ jobs:
           mkdir bin
           mkdir out
           cd kl
-          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" kl/main.go
+          go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
