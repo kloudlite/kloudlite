@@ -1,13 +1,13 @@
-name: build-apis
+name: build-infrastructure-as-code
 on:
   workflow_call:
 
 jobs:
-  api-go-modules-cache:
+  infrastructure-as-code-go-modules-cache:
     runs-on: ubuntu-latest
-    name: API go modules cache
+    name: IAC go modules cache
     env:
-      SUBMODULE: api
+      SUBMODULE: infrastructure-as-code
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,31 +36,31 @@ jobs:
           go mod download
           popd
 
-  api:
-    needs: api-go-modules-cache
+  infrastructure-as-code:
+    needs: infrastructure-as-code-go-modules-cache
     strategy:
       matrix:
-        app:
-          # golang builds
-          - accounts
-          - auth
-          - comms
-          - console
-          - container-registry
-          - iam
-          - infra
-          - worker-audit-logging
-          - webhook
-          - websocket-server
-          - message-office
-          - tenant-agent
+        name:
+          - iac-job
+          - aws-spot-k3s-terminator
+          - k3s-runner
+        include:
+          - name: iac-job
+            build_dir: .
+            container_image: true
 
-          - gateway # nodejs process
+          - name: aws-spot-k3s-terminator
+            build_dir: cmd/aws-spot-k3s-terminator
+            container_image: true
+
+          - name: k3s-runner
+            build_dir: cmd/k3s-runner
+            github_release: true
 
     runs-on: ubuntu-latest
-    name: kloudlite API
+    name: IAC
     env:
-      SUBMODULE: api
+      SUBMODULE: infrastructure-as-code
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,28 +72,29 @@ jobs:
         uses: ./.github/actions/setup/
         with:
           github_token: "${{ secrets.GITHUB_TOKEN }}"
-
           enable_go: true
           go_mod_file: ${{ env.SUBMODULE }}/go.mod
           go_sum_file: ${{ env.SUBMODULE }}/go.sum
-
-          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.app}}
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
 
           enable_task: true
           enable_upx: true
-          enable_docker: true
 
-      - name: Build & Push Container Images
+          enable_docker: ${{ matrix.container_image }}
+
+      - name: Build & Push Image
+        if: matrix.container_image
         env:
           IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
           OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
         run: |
           pushd $SUBMODULE
-          ls -al .
-
           set +e
-          image="ghcr.io/${{ github.repository }}/$SUBMODULE/${{ matrix.app }}:$IMAGE_TAG"
-          echo "image is $image"
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}:$IMAGE_TAG
+          echo "building image: $image"
+
           docker manifest inspect $image
           exit_status=$?
           if [ $exit_status -eq 0 ]; then
@@ -103,8 +104,28 @@ jobs:
 
           set -e
 
-          pushd apps/${{ matrix.app }}
-          task container:build-and-push Image="$image"
+          task container:build-n-push Image=$image
           popd
 
+      - name: Release Artifact
+        if: matrix.github_release
+        run: |
+          pushd $SUBMODULE
+          set +e
+          pushd ${{matrix.build_dir}}
+          echo "building ${{ matrix.name }}"
+          task build
+
+          curl -L0 "https://github.com/k3s-io/k3s/releases/download/$K3S_RELEASE/k3s" > bin/k3s
+
+          echo "k3s_runner_path=$PWD/bin/*" >> $GITHUB_ENV
+
           popd
+          popd
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        if: matrix.github_release
+        with:
+          name: k3s-runner
+          path: ${{ env.k3s_runner_path }}

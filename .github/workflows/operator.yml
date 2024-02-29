@@ -1,13 +1,13 @@
-name: build-apis
+name: build-operators
 on:
   workflow_call:
 
 jobs:
-  api-go-modules-cache:
+  operator-go-modules-cache:
     runs-on: ubuntu-latest
-    name: API go modules cache
+    name: Operator go modules cache
     env:
-      SUBMODULE: api
+      SUBMODULE: operator
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,31 +36,34 @@ jobs:
           go mod download
           popd
 
-  api:
-    needs: api-go-modules-cache
+  operator:
+    needs: operator-go-modules-cache
     strategy:
       matrix:
-        app:
-          # golang builds
-          - accounts
-          - auth
-          - comms
-          - console
-          - container-registry
-          - iam
-          - infra
-          - worker-audit-logging
-          - webhook
-          - websocket-server
-          - message-office
-          - tenant-agent
+        name:
+          - platform
+          - agent
+          - wireguard
 
-          - gateway # nodejs process
+          - helm-charts
+          - helm-job-runner
+        include:
+          - name: platform
+            build_dir: cmd/platform-operator
+          - name: agent
+            build_dir: cmd/agent-operator
+          - name: wireguard
+            build_dir: operators/wireguard
 
+          - name: helm-charts
+            build_dir: operators/helm-charts
+          - name: helm-job-runner
+            image_prefix: "workers"
+            build_dir: operators/helm-charts/needs-images/helm-job-runner
     runs-on: ubuntu-latest
-    name: kloudlite API
+    name: kloudlite operator
     env:
-      SUBMODULE: api
+      SUBMODULE: operator
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -76,11 +79,11 @@ jobs:
           enable_go: true
           go_mod_file: ${{ env.SUBMODULE }}/go.mod
           go_sum_file: ${{ env.SUBMODULE }}/go.sum
-
-          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.app}}
+          go_build_cache_key: ${{env.SUBMODULE}}/${{matrix.name}}
 
           enable_task: true
           enable_upx: true
+
           enable_docker: true
 
       - name: Build & Push Container Images
@@ -89,11 +92,15 @@ jobs:
           OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
         run: |
           pushd $SUBMODULE
-          ls -al .
-
           set +e
-          image="ghcr.io/${{ github.repository }}/$SUBMODULE/${{ matrix.app }}:$IMAGE_TAG"
-          echo "image is $image"
+          pushd ${{matrix.build_dir}}
+
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}:$IMAGE_TAG
+          if [ ! -z "${{ matrix.image_prefix }}" ]; then
+            image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.image_prefix}}/${{matrix.name}}:$IMAGE_TAG
+          fi
+          echo "building image: $image"
+
           docker manifest inspect $image
           exit_status=$?
           if [ $exit_status -eq 0 ]; then
@@ -103,8 +110,12 @@ jobs:
 
           set -e
 
-          pushd apps/${{ matrix.app }}
           task container:build-and-push Image="$image"
-          popd
+          # task build Out=$PWD/.github/workflows/container-build/app CWD=${{matrix.build_dir}}
+          #
+          # pushd .github/workflows/container-build
+          # upx ./app
+          # task go-container-build Image="$image_name:$IMAGE_TAG"
+          # popd
 
           popd
