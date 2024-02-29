@@ -120,7 +120,7 @@ jobs:
           go build -o bin/${{ matrix.app }}.exe -ldflags "${{ env.FLAGS }}" main.go
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.app }}-${{ steps.tag_name.outputs.TAG_NAME }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: kl/bin/*
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: ${{ github.workspace }}/artifacts
 
@@ -171,7 +171,7 @@ jobs:
           done
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kl-binaries
           path: out/**
