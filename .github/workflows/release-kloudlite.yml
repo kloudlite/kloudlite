@@ -81,6 +81,9 @@ jobs:
       - run: |+
           rm -rf tmp*
 
+      - run: |+
+          ls ci-artifacts/*
+
       - name: Create Release Tag from branch name
         id: gitref_branch
         if: startsWith(github.ref, 'refs/heads/release')
