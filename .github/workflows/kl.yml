@@ -60,7 +60,7 @@ jobs:
           echo "[PRE] GOOS: $(go env GOOS) GOARCH: $(go env GOARCH)"
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
