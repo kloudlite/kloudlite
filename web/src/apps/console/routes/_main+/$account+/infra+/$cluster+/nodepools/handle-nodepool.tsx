@@ -221,24 +221,16 @@ const Root = (props: IDialog) => {
               <Select
                 label="Provision Mode"
                 // eslint-disable-next-line react-hooks/rules-of-hooks
-                value={useMemo(() => {
-                  const mode = provisionTypes.find(
-                    (v) => v.value === values.poolType
-                  );
-                  return mode;
-                }, [values.poolType])}
+                value={values.poolType}
                 options={async () => provisionTypes}
-                onChange={(value) => {
-                  handleChange('poolType')(dummyEvent(value.value));
+                onChange={(_, value) => {
+                  handleChange('poolType')(dummyEvent(value));
                 }}
               />
 
               <Select
                 label="Availability Zone"
-                value={{
-                  value: values.awsAvailabilityZone,
-                  label: values.awsAvailabilityZone,
-                }}
+                value={values.awsAvailabilityZone}
                 options={async () =>
                   mapper(
                     awsRegions.find((v) => v.Name === clusterRegion)?.Zones ||
@@ -249,8 +241,8 @@ const Root = (props: IDialog) => {
                     })
                   )
                 }
-                onChange={(v) => {
-                  handleChange('awsAvailabilityZone')(dummyEvent(v.value));
+                onChange={(_, v) => {
+                  handleChange('awsAvailabilityZone')(dummyEvent(v));
                 }}
               />
 
@@ -258,7 +250,7 @@ const Root = (props: IDialog) => {
                 // eslint-disable-next-line react-hooks/rules-of-hooks
                 value={useMemo(() => {
                   const plan = findNodePlan(values.instanceType);
-                  return plan;
+                  return plan?.value;
                 }, [values.instanceType])}
                 label="Node plan"
                 options={async () => nodePlans}

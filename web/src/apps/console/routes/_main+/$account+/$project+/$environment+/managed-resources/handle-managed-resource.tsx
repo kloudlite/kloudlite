@@ -226,60 +226,59 @@ const Root = (props: IDialog) => {
 
   const { project, environment } = useParams();
 
-  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
-    useForm({
-      initialValues: isUpdate
-        ? {
-            name: parseName(props.data),
-            displayName: props.data.displayName,
-            isNameError: false,
-            res: {
-              ...props.data.spec?.resourceTemplate.spec,
-            },
-          }
-        : {
-            name: '',
-            displayName: '',
-            res: {},
-            isNameError: false,
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: isUpdate
+      ? {
+          name: parseName(props.data),
+          displayName: props.data.displayName,
+          isNameError: false,
+          res: {
+            ...props.data.spec?.resourceTemplate.spec,
           },
-      validationSchema: Yup.object({}),
-      onSubmit: async (val) => {
-        if (isUpdate) {
-          try {
-            if (!project || !environment) {
-              throw new Error('Project and environment is required!.');
-            }
-            const { errors: e } = await api.updateManagedResource({
-              projectName: project,
-              envName: environment,
-              mres: {
-                displayName: val.displayName,
-                metadata: {
-                  name: val.name,
-                },
+        }
+      : {
+          name: '',
+          displayName: '',
+          res: {},
+          isNameError: false,
+        },
+    validationSchema: Yup.object({}),
+    onSubmit: async (val) => {
+      if (isUpdate) {
+        try {
+          if (!project || !environment) {
+            throw new Error('Project and environment is required!.');
+          }
+          const { errors: e } = await api.updateManagedResource({
+            projectName: project,
+            envName: environment,
+            mres: {
+              displayName: val.displayName,
+              metadata: {
+                name: val.name,
+              },
 
-                spec: {
-                  resourceTemplate: {
-                    ...props.data.spec.resourceTemplate,
-                    spec: {
-                      ...val.res,
-                    },
+              spec: {
+                resourceTemplate: {
+                  ...props.data.spec.resourceTemplate,
+                  spec: {
+                    ...val.res,
                   },
                 },
               },
-            });
-            if (e) {
-              throw e[0];
-            }
-            setVisible(false);
-            reload();
-          } catch (err) {
-            handleError(err);
+            },
+          });
+          if (e) {
+            throw e[0];
           }
+          setVisible(false);
+          reload();
+        } catch (err) {
+          handleError(err);
         }
-      },
-    });
+      }
+    },
+  });
 
   const getResources = () => {
     if (isUpdate)

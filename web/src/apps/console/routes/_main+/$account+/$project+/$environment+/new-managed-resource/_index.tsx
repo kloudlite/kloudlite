@@ -251,7 +251,7 @@ const TemplateView = ({
         label="Service"
         size="lg"
         placeholder="Select service"
-        value={{ label: '', value: values.selectedService?.value || '' }}
+        value={values.selectedService?.value}
         searchable
         onChange={(val) => {
           handleChange('selectedService')(dummyEvent(val));
@@ -272,11 +272,7 @@ const TemplateView = ({
         label="Resource type"
         size="lg"
         placeholder="Select resource type"
-        value={
-          values.selectedResource?.value
-            ? { label: '', value: values.selectedResource?.value || '' }
-            : undefined
-        }
+        value={values.selectedResource?.value}
         searchable
         onChange={(val) => {
           handleChange('selectedResource')(dummyEvent(val));
