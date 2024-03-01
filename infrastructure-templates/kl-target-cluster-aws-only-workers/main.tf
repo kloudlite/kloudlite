@@ -10,6 +10,6 @@ module "kl-worker-nodes-on-aws" {
   extra_agent_args           = var.extra_agent_args
   save_ssh_key_to_path       = var.save_ssh_key_to_path
   tags                       = var.tags
-  vpc                        = var.vpc
   kloudlite_release          = var.kloudlite_release
+  vpc_id                     = var.vpc_id
 }

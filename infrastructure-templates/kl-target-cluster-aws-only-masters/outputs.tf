@@ -24,11 +24,3 @@ output "kubeconfig" {
 output "kloudlite-k3s-params" {
   value = module.kl-master-nodes-on-aws.k3s-params
 }
-
-output "vpc_id" {
-  value = module.kl-master-nodes-on-aws.vpc_id
-}
-
-output "vpc_public_subnets" {
-  value = module.kl-master-nodes-on-aws.vpc_public_subnets
-}

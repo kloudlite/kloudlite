@@ -9,7 +9,7 @@ module "kl-master-nodes-on-aws" {
   save_ssh_key_to_path      = var.save_ssh_key_to_path
   extra_server_args         = var.extra_server_args
   tags                      = var.tags
-  vpc                       = var.vpc
+  vpc_id                    = var.vpc_id
 }
 
 module "kl-worker-nodes-on-aws" {
@@ -25,9 +25,6 @@ module "kl-worker-nodes-on-aws" {
   save_ssh_key_to_path       = var.save_worker_ssh_key_to_path
   extra_agent_args           = var.extra_agent_args
   tags                       = var.tags
-  vpc                        = {
-    vpc_id                = module.kl-master-nodes-on-aws.vpc_id
-    vpc_public_subnet_ids = module.kl-master-nodes-on-aws.vpc_public_subnets
-  }
-  kloudlite_release = var.kloudlite_params.release
+  kloudlite_release          = var.kloudlite_params.release
+  vpc_id                     = var.vpc_id
 }

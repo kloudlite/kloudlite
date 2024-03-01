@@ -10,7 +10,7 @@ aws_assume_role:
   external_id: "${AWS_ASSUME_ROLE_PARAM_EXTERNAL_ID}"
 
 vpc:
-  name: test-vpc
+  name: test-vpc2
 
 k3s_masters:
   # image_id: ami-06d146e85d1709abb

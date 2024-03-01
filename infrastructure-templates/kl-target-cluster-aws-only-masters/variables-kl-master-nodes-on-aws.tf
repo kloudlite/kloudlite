@@ -14,22 +14,14 @@ variable "tracker_id" {
   type        = string
 }
 
-variable "vpc" {
-  type = object({
-    name = string
-    #    cidr           = string
-    #    public_subnets = list(object({
-    #      availability_zone = string
-    #      cidr              = string
-    #    }))
-  })
+variable "vpc_id" {
+  description = "AWs VPC Id"
+  type        = string
 }
 
 variable "k3s_masters" {
   description = "k3s masters configuration"
   type        = object({
-    #    image_id             = string
-    #    image_ssh_username   = string
     instance_type        = string
     nvidia_gpu_enabled   = optional(bool)
     root_volume_size     = string
@@ -62,6 +54,7 @@ variable "k3s_masters" {
     nodes = map(object({
       role              = string
       availability_zone = string
+      vpc_subnet_id     = string
       last_recreated_at = optional(number)
       kloudlite_release = string
     }))

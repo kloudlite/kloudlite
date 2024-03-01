@@ -68,7 +68,7 @@ module "aws-security-groups" {
   depends_on = [null_resource.variable_validations]
 
   tracker_id = var.tracker_id
-  vpc_id     = var.vpc.vpc_id
+  vpc_id     = var.vpc_id
 
   create_for_k3s_workers = true
 
@@ -85,9 +85,9 @@ module "aws-amis" {
   source = "../../modules/aws/AMIs"
 }
 
-module "availability_zones" {
-  source = "../../modules/aws/availability-zones"
-}
+#module "availability_zones" {
+#  source = "../../modules/aws/availability-zones"
+#}
 
 module "aws-ec2-nodepool" {
   source     = "../../modules/aws/aws-ec2-nodepool"
@@ -96,7 +96,7 @@ module "aws-ec2-nodepool" {
 
   tracker_id           = "${var.tracker_id}-${each.key}"
   ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone    = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]
+  availability_zone    = each.value.availability_zone
   iam_instance_profile = each.value.iam_instance_profile
   instance_type        = each.value.instance_type
   nvidia_gpu_enabled   = each.value.nvidia_gpu_enabled
@@ -106,7 +106,7 @@ module "aws-ec2-nodepool" {
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   tags                 = var.tags
   vpc                  = {
-    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]]
+    subnet_id              = each.value.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
   nodes = {
@@ -128,10 +128,10 @@ module "aws-ec2-nodepool" {
         tf_node_labels = jsonencode(merge(
           local.common_node_labels,
           {
-            (module.constants.node_labels.provider_az)   = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0],
+            (module.constants.node_labels.provider_az)   = each.value.availability_zone
             (module.constants.node_labels.node_has_role) = "agent"
-            (module.constants.node_labels.nodepool_name) : each.key,
-            (module.constants.node_labels.provider_aws_instance_profile_name) : each.value.iam_instance_profile,
+            (module.constants.node_labels.nodepool_name) : each.key
+            (module.constants.node_labels.provider_aws_instance_profile_name) : each.value.iam_instance_profile
           },
           each.value.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
         ))
@@ -150,7 +150,7 @@ module "aws-spot-nodepool" {
   for_each                     = {for np_name, np_config in var.spot_nodepools : np_name => np_config}
   tracker_id                   = "${var.tracker_id}-${each.key}"
   ami                          = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone            = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]
+  availability_zone            = each.value.availability_zone
   root_volume_size             = each.value.root_volume_size
   root_volume_type             = each.value.root_volume_type
   security_groups              = module.aws-security-groups.sg_for_k3s_agents_ids
@@ -160,7 +160,7 @@ module "aws-spot-nodepool" {
   cpu_node                     = each.value.cpu_node
   gpu_node                     = each.value.gpu_node
   vpc                          = {
-    subnet_id              = var.vpc.vpc_public_subnet_ids[each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0]]
+    subnet_id              = each.value.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
   nodes = {
@@ -182,11 +182,11 @@ module "aws-spot-nodepool" {
         tf_node_labels = jsonencode(merge(
           local.common_node_labels,
           {
-            (module.constants.node_labels.provider_az)   = each.value.availability_zone != "" ? each.value.availability_zone : module.availability_zones.names[0],
-            (module.constants.node_labels.node_has_role) = "agent"
-            (module.constants.node_labels.node_is_spot)  = "true"
-            (module.constants.node_labels.nodepool_name) : each.key,
-            (module.constants.node_labels.provider_aws_instance_profile_name) : each.value.iam_instance_profile,
+            (module.constants.node_labels.provider_az)                        = each.value.availability_zone
+            (module.constants.node_labels.node_has_role)                      = "agent"
+            (module.constants.node_labels.node_is_spot)                       = "true"
+            (module.constants.node_labels.nodepool_name)                      = each.key
+            (module.constants.node_labels.provider_aws_instance_profile_name) = each.value.iam_instance_profile
           },
           each.value.gpu_node != null ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
         ))

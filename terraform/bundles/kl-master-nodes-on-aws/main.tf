@@ -43,19 +43,19 @@ resource "aws_key_pair" "k3s_nodes_ssh_key" {
   depends_on = [null_resource.variable_validations]
 }
 
-module "aws-vpc" {
-  source     = "../../modules/aws/vpc"
-  tags       = var.tags
-  tracker_id = var.tracker_id
-  vpc_name   = var.vpc.name
-}
+#module "aws-vpc" {
+#  source     = "../../modules/aws/vpc2"
+#  tags       = var.tags
+#  tracker_id = var.tracker_id
+#  vpc_name   = var.vpc.name
+#}
 
 module "aws-security-groups" {
   source     = "../../modules/aws/security-groups"
   depends_on = [null_resource.variable_validations]
 
   tracker_id = var.tracker_id
-  vpc_id     = module.aws-vpc.vpc_id
+  vpc_id     = var.vpc_id
 
   create_for_k3s_masters = true
 
@@ -72,12 +72,10 @@ module "aws-amis" {
 }
 
 module "k3s-master-instances" {
-  source     = "../../modules/aws/ec2-node"
-  depends_on = [module.aws-vpc]
-
+  source               = "../../modules/aws/ec2-node"
   for_each             = {for name, cfg in var.k3s_masters.nodes : name => cfg}
   ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone    = each.value.availability_zone != "" ? each.value.availability_zone : module.aws-vpc.vpc_availability_zones[0]
+  availability_zone    = each.value.availability_zone
   instance_type        = var.k3s_masters.instance_type
   iam_instance_profile = var.k3s_masters.iam_instance_profile
   is_nvidia_gpu_node   = var.enable_nvidia_gpu_support
@@ -94,7 +92,7 @@ module "k3s-master-instances" {
     kloudlite_config_directory = module.kloudlite-k3s-templates.kloudlite_config_directory
   }))
   vpc = {
-    subnet_id              = module.aws-vpc.vpc_public_subnets[each.value.availability_zone != "" ? each.value.availability_zone : module.aws-vpc.vpc_availability_zones[0]]
+    subnet_id              = each.value.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_masters_ids
   }
 }
@@ -114,7 +112,7 @@ module "kloudlite-k3s-masters" {
         (module.constants.node_labels.kloudlite_release) : cfg.kloudlite_release,
         (module.constants.node_labels.provider_name) : "aws",
         (module.constants.node_labels.provider_region) : var.aws_region,
-        (module.constants.node_labels.provider_az) : cfg.availability_zone != "" ? cfg.availability_zone : module.aws-vpc.vpc_availability_zones[0]
+        (module.constants.node_labels.provider_az) : cfg.availability_zone,
         (module.constants.node_labels.node_has_role) : cfg.role,
         (module.constants.node_labels.provider_aws_instance_profile_name) : var.k3s_masters.iam_instance_profile,
         (module.constants.node_labels.provider_instance_type) : var.k3s_masters.instance_type,
@@ -135,33 +133,33 @@ module "kloudlite-k3s-masters" {
   cloudprovider_region         = var.aws_region
 }
 
-module "kloudlite-aws-secret" {
-  source     = "../../modules/kloudlite/execute_command_over_ssh"
-  depends_on = [
-    module.kloudlite-k3s-masters
-  ]
-  pre_command = <<EOF
-cat > /tmp/kloudlite-aws-settings.yml <<EOF2
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kloudlite-aws-settings
-  namespace: kube-system
-data:
-  vpc_id: ${base64encode(module.aws-vpc.vpc_id)}
-  vpc_public_subnets: ${base64encode(jsonencode(module.aws-vpc.vpc_public_subnets))}
-EOF2
-
-kubectl apply -f /tmp/kloudlite-aws-settings.yml
-EOF
-
-  command = <<EOF
-cat /tmp/kloudlite-aws-settings.yml
-EOF
-
-  ssh_params = {
-    public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
-    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
-    private_key = module.ssh-rsa-key.private_key
-  }
-}
+#module "kloudlite-aws-secret" {
+#  source     = "../../modules/kloudlite/execute_command_over_ssh"
+#  depends_on = [
+#    module.kloudlite-k3s-masters
+#  ]
+#  pre_command = <<EOF
+#cat > /tmp/kloudlite-aws-settings.yml <<EOF2
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: kloudlite-aws-settings
+#  namespace: kube-system
+#data:
+#  vpc_id: ${base64encode(var.vpc_id)}
+#  vpc_public_subnets: ${base64encode(jsonencode(module.aws-vpc.vpc_public_subnets))}
+#EOF2
+#
+#kubectl apply -f /tmp/kloudlite-aws-settings.yml
+#EOF
+#
+#  command = <<EOF
+#cat /tmp/kloudlite-aws-settings.yml
+#EOF
+#
+#  ssh_params = {
+#    public_ip   = module.kloudlite-k3s-masters.k3s_primary_master_public_ip
+#    username    = module.aws-amis.ubuntu_amd64_cpu_ami_ssh_username
+#    private_key = module.ssh-rsa-key.private_key
+#  }
+#}

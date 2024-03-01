@@ -1,0 +1,14 @@
+# AWS specific vars
+variable "aws_access_key" { type = string }
+variable "aws_secret_key" { type = string }
+
+variable "aws_region" { type = string }
+
+variable "aws_assume_role" {
+  type = object({
+    enabled     = bool
+    role_arn    = optional(string, null)
+    external_id = optional(string, null)
+  })
+  default = { enabled = false }
+}
