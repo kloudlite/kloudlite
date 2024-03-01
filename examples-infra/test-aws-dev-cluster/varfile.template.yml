@@ -10,7 +10,7 @@ aws_assume_role:
   external_id: "${AWS_ASSUME_ROLE_PARAM_EXTERNAL_ID}"
 
 vpc:
-  name: test-vpc
+  name: test-vpc2
   cidr: 10.0.0.0/16
   public_subnets:
     - availability_zone: ap-south-1a

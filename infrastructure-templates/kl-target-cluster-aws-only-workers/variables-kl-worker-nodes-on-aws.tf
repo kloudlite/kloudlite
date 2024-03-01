@@ -26,21 +26,28 @@ variable "kloudlite_release" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "vpc id"
+  type        = string
+}
+
 variable "ec2_nodepools" {
   type = map(object({
-    # image_id             = string
-    # image_ssh_username   = string
-    availability_zone    = optional(string)
+    availability_zone = string
+    vpc_subnet_id     = string
+
     instance_type        = string
     nvidia_gpu_enabled   = optional(bool)
     root_volume_size     = string
     root_volume_type     = string
     iam_instance_profile = optional(string)
-    node_taints = optional(list(object({
+    node_taints          = optional(list(object({
       key    = string
       value  = optional(string)
       effect = string
     })))
+
+
     nodes = map(object({
       last_recreated_at = optional(number)
     }))
@@ -49,9 +56,9 @@ variable "ec2_nodepools" {
 
 variable "spot_nodepools" {
   type = map(object({
-    # image_id                     = string
-    # image_ssh_username           = string
-    availability_zone            = optional(string)
+    availability_zone            = string
+    vpc_subnet_id                = string
+
     root_volume_size             = string
     root_volume_type             = string
     iam_instance_profile         = optional(string)
@@ -85,7 +92,7 @@ variable "spot_nodepools" {
 
   validation {
     error_message = "a nodepool can be either a cpu_node or a gpu_node, only one of them can be set at once"
-    condition = alltrue([
+    condition     = alltrue([
       for name, config in var.spot_nodepools :
       ((config.cpu_node == null && config.gpu_node != null) || (config.cpu_node != null && config.gpu_node == null))
     ])
@@ -108,10 +115,10 @@ variable "tags" {
   default     = {}
 }
 
-variable "vpc" {
-  description = "VPC related params, vpc_public_subnet_ids is a map of availability zone to subnet id"
-  type = object({
-    vpc_id                = string
-    vpc_public_subnet_ids = map(string)
-  })
-}
+#variable "vpc" {
+#  description = "VPC related params, vpc_public_subnet_ids is a map of availability zone to subnet id"
+#  type        = object({
+#    vpc_id                = string
+#    vpc_public_subnet_ids = map(string)
+#  })
+#}
