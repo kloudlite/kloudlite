@@ -1,4 +1,4 @@
-package router
+package router_controller
 
 import (
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"

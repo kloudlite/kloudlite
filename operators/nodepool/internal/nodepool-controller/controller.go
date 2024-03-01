@@ -25,6 +25,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kubernetes/pkg/util/taints"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
@@ -89,6 +90,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.updateNodeTaintsAndLabels(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -163,6 +168,55 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 			return fail(err)
 		}
 		return req.Done()
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "node-taints-and-labels"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	nodes, err := realNodesBelongingToNodepool(ctx, r.Client, obj.Name)
+	if err != nil {
+		return fail(err)
+	}
+
+	for _, node := range nodes {
+		for _, taint := range obj.Spec.NodeTaints {
+			if !taints.TaintExists(node.Spec.Taints, &taint) {
+				node.Spec.Taints = append(node.Spec.Taints, taint)
+			}
+		}
+
+		if node.Labels == nil {
+			node.Labels = map[string]string{}
+		}
+
+		for k, v := range obj.Spec.NodeLabels {
+			node.Labels[k] = v
+		}
+
+		if err := r.Update(ctx, &node); err != nil {
+			return fail(err).RequeueAfter(200 * time.Millisecond)
+		}
 	}
 
 	check.Status = true
@@ -353,7 +407,7 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	return req.Next()
 }
 
-func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string]clustersv1.NodeProps) (string, error) {
+func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps) (string, error) {
 	if obj.Spec.AWS == nil {
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
@@ -365,8 +419,8 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 	case clustersv1.AWSPoolTypeEC2:
 		{
 			ec2Nodepools[obj.Name] = map[string]any{
-				"image_id":             obj.Spec.AWS.ImageId,
-				"image_ssh_username":   obj.Spec.AWS.ImageSSHUsername,
+				"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
+
 				"availability_zone":    obj.Spec.AWS.AvailabilityZone,
 				"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
 				"root_volume_type":     obj.Spec.AWS.RootVolumeType,
@@ -383,8 +437,8 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 			}
 
 			spotNodepools[obj.Name] = map[string]any{
-				"image_id":                     obj.Spec.AWS.ImageId,
-				"image_ssh_username":           obj.Spec.AWS.ImageSSHUsername,
+				"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
+
 				"availability_zone":            obj.Spec.AWS.AvailabilityZone,
 				"nvidia_gpu_enabled":           obj.Spec.AWS.NvidiaGpuEnabled,
 				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
@@ -424,10 +478,10 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 		// INFO: there will be no aws_access_key, aws_secret_key thing, as we expect this autoscaler to run on AWS instances configured with proper IAM instance profile
 		// "aws_access_key":             nil,
 		// "aws_secret_key":             nil,
-		"aws_region":                 ev.CloudProviderRegion,
-		"tracker_id":                 fmt.Sprintf("cluster-%s", ev.ClusterName),
-		"k3s_join_token":             ev.K3sJoinToken,
-		"k3s_server_public_dns_host": ev.K3sServerPublicHost,
+		"aws_region":                 r.Env.CloudProviderRegion,
+		"tracker_id":                 fmt.Sprintf("cluster-%s", r.Env.ClusterName),
+		"k3s_join_token":             r.Env.K3sJoinToken,
+		"k3s_server_public_dns_host": r.Env.K3sServerPublicHost,
 		"ec2_nodepools":              ec2Nodepools,
 		"spot_nodepools":             spotNodepools,
 		"extra_agent_args": []string{
@@ -436,9 +490,12 @@ func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string
 		},
 		"save_ssh_key_to_path": "",
 		"tags": map[string]string{
-			"kloudlite-account": ev.AccountName,
-			"kloudlite-cluster": ev.ClusterName,
+			"kloudlite-account": r.Env.AccountName,
+			"kloudlite-cluster": r.Env.ClusterName,
 		},
+
+		"vpc_id":            obj.Spec.AWS.VPCId,
+		"kloudlite_release": r.Env.KloudliteRelease,
 	}
 
 	b, err := json.Marshal(variables)
@@ -475,9 +532,8 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
-		return toAWSVarfileJson(obj, r.Env, nodesMap)
+		return r.toAWSVarfileJson(obj, nodesMap)
 	default:
-		// accessKey, secretKey, err := r.getAccessAndSecretKey(ctx, obj)
 		return "", fmt.Errorf("unsupported cloud provider: %s", obj.Spec.CloudProvider)
 	}
 }
