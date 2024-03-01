@@ -10,7 +10,6 @@ spec:
   tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
   nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
 
-
   services:
     - port: 80
       targetPort: 3000
@@ -72,7 +71,6 @@ spec:
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.global.cookieDomain}}"
-
 
         {{- if .Values.oAuth.providers.github.enabled }}
         - key: GITHUB_APP_PK_FILE

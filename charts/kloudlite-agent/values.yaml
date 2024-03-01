@@ -30,6 +30,9 @@ kloudliteRelease: ""
 
 jobsNamespace: "kloudlite-jobs"
 
+# -- should be one of aws|gcp|azure, check kloudlite docs for more details
+cloudProvider: ""
+
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -38,7 +41,7 @@ agent:
   name: kl-agent
   # -- kloudlite agent image name and tag
   image: 
-    repository: ghcr.io/kloudlite/api/tenant-agent
+    repository: ghcr.io/kloudlite/kloudlite/api/tenant-agent
     # -- image tag for kloudlite agent, by default uses kloudlite_release
     tag: ""
     # -- image pull policy for kloudlite agent, default is .imagePullPolicy
@@ -56,7 +59,7 @@ operators:
     name: kl-agent-operator
     # -- kloudlite resource watcher image name and tag
     image: 
-      repository: ghcr.io/kloudlite/operator/agent
+      repository: ghcr.io/kloudlite/kloudlite/operator/agent
       # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
       tag: ""
       # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
@@ -81,12 +84,12 @@ operators:
                 vpcPublicSubnets: "vpc_public_subnets"
 
         iacJobImage:
-          repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
+          repository: ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job
           tag: ""
 
       helmCharts:
         jobImage:
-          repository: ghcr.io/kloudlite/operator/workers/helm-runner
+          repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
           tag: ""
 
       wireguard:
@@ -96,6 +99,12 @@ operators:
         deviceNamespace: kl-vpn-devices
 
 helmCharts:
+  kloudliteAddons:
+    enabled: true
+    name: "kloudlite-addons"
+    configuration:
+      chartVersion: ""
+
   ingressNginx:
     enabled: true
     name: "ingress-nginx"
@@ -131,7 +140,7 @@ helmCharts:
           repository: "ghcr.io/kloudlite/kubelet-metrics-reexporter"
           tag: ""
 
-  clusterAutoscaler:
-    enabled: true
-    configuration:
-      chartVersion: ""
+  # clusterAutoscaler:
+  #   enabled: true
+  #   configuration:
+  #     chartVersion: ""

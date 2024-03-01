@@ -1,5 +1,4 @@
-{{- $chartOpts := index .Values.clusterAutoscaler }}
-{{- if $chartOpts.enabled }}
+{{- if .Values.common.clusterAutoscaler.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
@@ -8,7 +7,7 @@ metadata:
 spec:
   chartRepoURL: https://kloudlite.github.io/helm-charts
   chartName: "kloudlite-autoscalers"
-  chartVersion: {{ .Values.clusterAutoscaler.configuration.chartVersion | default ( include "image-tag" .)}}
+  chartVersion: {{ .Values.common.clusterAutoscaler.configuration.chartVersion | default .Chart.AppVersion }}
   jobVars:
     tolerations:
       - operator: Exists
@@ -20,5 +19,5 @@ spec:
       tolerations:
         - operator: Exists
       configuration:
-        scaleDownUnneededTime: 1m
+        scaleDownUnneededTime: {{.Values.common.clusterAutoscaler.configuration.scaleDownUnneededTime}}
 {{- end }}

@@ -9,11 +9,15 @@ spec:
   tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
   nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
 
-
   services:
     - port: 80
       targetPort: 3000
       name: http
+      type: tcp
+
+    - port: 3001
+      targetPort: 3001
+      name: grpc
       type: tcp
 
     - port: 4000
@@ -39,6 +43,9 @@ spec:
       env:
         - key: PORT
           value: "3000"
+
+        - key: GRPC_PORT
+          value: "3001"
 
         - key: COOKIE_DOMAIN
           value: {{.Values.global.cookieDomain}}
@@ -117,7 +124,7 @@ spec:
           refKey: GITLAB_SCOPES
 
         - key: GITLAB_WEBHOOK_URL
-          value: https://webhooks.{{.Values.global.baseDomain}}/git/gitlab
+          value: https://webhooks.{{include "router-domain" .}}/git/gitlab
 
         - key: GITLAB_WEBHOOK_AUTHZ_SECRET
           value: {{.Values.webhookSecrets.gitlabSecret}}
@@ -129,7 +136,7 @@ spec:
           value: {{.Values.apps.containerRegistryApi.configuration.buildClusterName}}
 
         - key: REGISTRY_HOST
-          value: registry.{{ .Values.global.baseDomain }}
+          value: registry.{{include "router-domain" .}}
 
         - key: REGISTRY_SECRET_KEY
           value: {{.Values.apps.containerRegistryApi.configuration.registrySecret | squote}}

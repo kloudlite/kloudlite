@@ -1,0 +1,55 @@
+podLabels: {}
+
+# -- cloudprovider, should be one of the supported ones [aws]
+cloudprovider: "aws"
+
+aws:
+  ebs_csi_driver:
+    enabled: true
+
+  spot_node_terminator:
+    enabled: true
+    configuration:
+      chartVersion: ""
+
+common:
+  clusterAutoscaler:
+    enabled: true
+    description: "cluster autoscaler is useful for autoscaling nodepools in a cluster"
+    configuration:
+      chartVersion: ""
+      # -- time in golang time.Duration format like `1m or 5m` 
+      scaleDownUnneededTime: 1m
+
+  certManager:
+    enabled: false
+    configuration:
+      nodeSelector: {}
+      tolerations: []
+
+      defaultClusterIssuer: letsencrypt-prod
+      clusterIssuers:
+        - name: letsencrypt-prod
+          default: true
+          acme:
+            email: "support@kloudlite.io"
+            server: https://acme-v02.api.letsencrypt.org/directory
+
+  velero:
+    enabled: false
+    description: "velero is useful for cluster backup and restore"
+    configuration:
+      backupStorage:
+        bucket: ""
+        path: ""
+        region: ""
+        s3Url: ""
+
+      useS3Credentials:
+        # -- if not enabled, fallsback on IAM instance profile
+        enabled: "true"
+        # -- required when s3Provider is not 'aws' or pods, are not configured with Aws IAM Instance Profile
+        creds:
+          accessKey: ""
+          secretKey: ""
+
