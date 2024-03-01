@@ -357,7 +357,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
