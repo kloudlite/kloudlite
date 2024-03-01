@@ -1,10 +1,10 @@
 {{- $jobName := get . "job-name" }}
 {{- $jobNamespace := get . "job-namespace" }}
-
-{{- $labels := get . "labels" | default dict }}
-
+{{- $jobImage := get . "job-image" }}
 {{- $jobTolerations := get . "job-tolerations" | default list }}
 {{- $jobNodeSelector := get . "job-node-selector"  | default dict }}
+
+{{- $labels := get . "labels" | default dict }}
 
 {{- $podAnnotations := get . "pod-annotations" | default dict }}
 
@@ -12,11 +12,7 @@
 
 {{- $serviceAccountName := get . "service-account-name" }} 
 
-{{- $kubeconfigSecretName := get . "kubeconfig-secret-name" }}
-{{- $kubeconfigSecretNamespace := get . "kubeconfig-secret-namespace" }}
-{{- $kubeconfigSecreAnnotations := get . "kubeconfig-secret-annotations" }}
-
-{{- $clusterName := get . "cluster-name" }}
+{{- $tfStateSecretName := get . "tf-state-secret-name" }}
 {{- $tfStateSecretNamespace := get . "tf-state-secret-namespace" }}
 
 {{- $awsAccessKeyId := get . "aws-access-key-id" }}
@@ -29,7 +25,8 @@
 
 {{- $valuesJson := get . "values.json" }} 
 
-{{- $jobImage := get . "job-image" }}
+{{- $vpcOutputSecretName := get . "vpc-output-secret-name" }}
+{{- $vpcOutputSecretNamespace := get . "vpc-output-secret-namespace" }}
 
 apiVersion: batch/v1
 kind: Job
@@ -52,12 +49,18 @@ spec:
         imagePullPolicy: Always
 
         resources:
+          {{- /* requests: */}}
+          {{- /*   cpu: 500m */}}
+          {{- /*   memory: 1000Mi */}}
+          {{- /* limits: */}}
+          {{- /*   cpu: 500m */}}
+          {{- /*   memory: 1000Mi */}}
           requests:
-            cpu: 500m
-            memory: 1000Mi
+            cpu: 400m
+            memory: 400Mi
           limits:
-            cpu: 500m
-            memory: 1000Mi
+            cpu: 400m
+            memory: 400Mi
 
         env:
           - name: KUBE_IN_CLUSTER_CONFIG
@@ -81,11 +84,12 @@ spec:
 
             unzip $TERRAFORM_ZIPFILE
 
-            pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-masters"
+            pushd "$TEMPLATES_DIR/aws-vpc"
+
             envsubst < state-backend.tf.tpl > state-backend.tf
 
             terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
-            terraform workspace select --or-create {{$clusterName}} 
+            terraform workspace select --or-create {{$tfStateSecretName}} 
             
             cat > values.json <<EOF
             {{$valuesJson}}
@@ -95,26 +99,23 @@ spec:
               {{- /* terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log */}}
               terraform plan --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
               terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
-              kubectl delete secret/{{$kubeconfigSecretName}} -n {{$kubeconfigSecretNamespace}} --ignore-not-found=true
+
+              kubectl delete secret/{{$vpcOutputSecretName}} -n {{$vpcOutputSecretNamespace}} --ignore-not-found
             else
               terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
 
               terraform state pull | jq '.outputs' -r > outputs.json
-              
-              cat outputs.json
 
               kubectl apply -f - <<EOF
               apiVersion: v1
               kind: Secret
               metadata:
-                name: {{$kubeconfigSecretName}}
-                namespace: {{$kubeconfigSecretNamespace}}
-                annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
+                name: {{$vpcOutputSecretName}}
+                namespace: {{$vpcOutputSecretNamespace}}
               data:
-                kubeconfig: $(cat outputs.json | jq '.kubeconfig.value')
-                k3s_params: $(cat outputs.json | jq -r '."kloudlite-k3s-params".value' | base64 | tr -d '\n')
-                k3s_agent_token: $(cat outputs.json | jq -r '.k3s_agent_token.value' | base64 | tr -d '\n')
+                vpc_id: $(cat outputs.json | jq -r '.vpc_id.value' | base64 | tr -d '\n')
+                vpc_public_subnets: $(cat outputs.json | jq -r '.vpc_public_subnets.value' |base64| tr -d '\n')
             EOF
             fi
             exit 0

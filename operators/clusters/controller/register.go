@@ -8,7 +8,9 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operator"
+
 	// account_s3_bucket "github.com/kloudlite/operator/operators/clusters/internal/controllers/account-s3-bucket"
+	aws_vpc "github.com/kloudlite/operator/operators/clusters/internal/controllers/aws-vpc"
 	"github.com/kloudlite/operator/operators/clusters/internal/controllers/target"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -58,6 +60,10 @@ func RegisterInto(mgr operator.Operator) {
 	}
 
 	mgr.RegisterControllers(
+		&aws_vpc.AwsVPCReconciler{
+			Env:  ev,
+			Name: "aws-vpc:controller",
+		},
 		&target.ClusterReconciler{
 			Env:  ev,
 			Name: "clusters:target",
