@@ -2927,6 +2927,7 @@ type Mutation {
   infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
+  infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean!
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
 }
@@ -3222,6 +3223,7 @@ scalar ProviderDetail
 
 type Query {
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput!
+  accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean!
   accounts_getAccount(accountName: String!): Account
   accounts_getAccountMembership(accountName: String!): AccountMembership
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation
