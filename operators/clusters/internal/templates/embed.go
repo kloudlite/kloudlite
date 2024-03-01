@@ -16,6 +16,8 @@ const (
 	ClusterJobTemplate        templateFile = "./cluster-job.yml.tpl"
 	S3BucketJobTemplate       templateFile = "./s3-bucket-job.yml.tpl"
 	RBACForClusterJobTemplate templateFile = "./rbac-for-cluster-job.yml.tpl"
+
+	AwsVPCJob templateFile = "./aws-vpc-job.yml.tpl"
 )
 
 func Read(t templateFile) ([]byte, error) {

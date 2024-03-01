@@ -1,11 +1,13 @@
 package target
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	common_types "github.com/kloudlite/operator/apis/common-types"
 	ct "github.com/kloudlite/operator/apis/common-types"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -20,6 +22,7 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -75,6 +78,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// if req.Object.Namespace != "kl-account-dev-team" || req.Object.Name != "testing-nxtcoder17" {
+	// 	return ctrl.Result{}, nil
+	// }
+
 	req.PreReconcile()
 	defer req.PostReconcile()
 
@@ -110,6 +117,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	if step := r.ensureJobRBAC(req); !step.ShouldProceed() {
 		return notifyAndExit(step)
+	}
+
+	if step := r.ensureCloudproviderStuffs(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
 	}
 
 	if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
@@ -247,6 +258,103 @@ func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]
 	return req.Next()
 }
 
+func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "kloudlite-vpc"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	switch obj.Spec.CloudProvider {
+	case common_types.CloudProviderAWS:
+		{
+			if obj.Spec.AWS.VPC == nil {
+				namespace := obj.Namespace
+				name := fmt.Sprintf("vpc-%s", obj.Spec.AWS.Region)
+				awsvpc, err := rApi.Get(ctx, r.Client, fn.NN(namespace, name), &clustersv1.AwsVPC{})
+				if err != nil {
+					if !apiErrors.IsNotFound(err) {
+						return fail(err)
+					}
+					// create vpc
+					awsvpc = &clustersv1.AwsVPC{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "AwsVPC",
+							APIVersion: "clusters.kloudlite.io/v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      name,
+							Namespace: namespace,
+						},
+						Spec: clustersv1.AwsVPCSpec{
+							CredentialsRef: obj.Spec.CredentialsRef,
+							CredentialKeys: *obj.Spec.CredentialKeys,
+							Region:         obj.Spec.AWS.Region,
+						},
+					}
+					if err := r.Create(ctx, awsvpc); err != nil {
+						return fail(err)
+					}
+				}
+
+				if !awsvpc.Status.IsReady {
+					return fail(fmt.Errorf("aws vpc (%s) is not ready", name))
+				}
+
+				secret, err := rApi.Get(ctx, r.Client, fn.NN(awsvpc.Spec.Output.Namespace, awsvpc.Spec.Output.Name), &corev1.Secret{})
+				if err != nil {
+					return fail(err)
+				}
+
+				var m []map[string]string
+
+				if err := json.Unmarshal(secret.Data["vpc_public_subnets"], &m); err != nil {
+					return fail(err)
+				}
+
+				vpcPublicSubnets := make([]clustersv1.AwsSubnetWithID, 0, len(m))
+				for _, v := range m {
+					vpcPublicSubnets = append(vpcPublicSubnets, clustersv1.AwsSubnetWithID{
+						AvailabilityZone: clustersv1.AwsAZ(v["availability_zone"]),
+						ID:               v["id"],
+					})
+				}
+
+				obj.Spec.AWS.VPC = &clustersv1.AwsVPCParams{
+					ID:            string(bytes.Trim(bytes.TrimSpace(secret.Data["vpc_id"]), "\n")),
+					PublicSubnets: vpcPublicSubnets,
+				}
+
+				if err := r.Update(ctx, obj); err != nil {
+					return fail(err).RequeueAfter(500 * time.Millisecond)
+				}
+
+				return req.Done().RequeueAfter(500 * time.Millisecond)
+			}
+		}
+	default:
+		{
+			return fail(fmt.Errorf("unsupported cloudprovider %s", obj.Spec.CloudProvider))
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
 func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, providerCreds *corev1.Secret) (string, error) {
 	if providerCreds == nil {
 		return "", fmt.Errorf("providerCreds is nil")
@@ -266,6 +374,10 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 			}
 
 			isAssumeRole := providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey] == nil || providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey] == nil
+			azToSubnetId := make(map[clustersv1.AwsAZ]string, len(obj.Spec.AWS.VPC.PublicSubnets))
+			for _, v := range obj.Spec.AWS.VPC.PublicSubnets {
+				azToSubnetId[v.AvailabilityZone] = v.ID
+			}
 
 			valuesBytes, err := json.Marshal(map[string]any{
 				"tracker_id": fmt.Sprintf("cluster-%s", obj.Name),
@@ -296,13 +408,11 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 
 				"enable_nvidia_gpu_support": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
 
-				"vpc": map[string]any{
-					"name": obj.Name,
-				},
+				"vpc_id": obj.Spec.AWS.VPC.ID,
 
 				"k3s_masters": map[string]any{
-					"image_id":           obj.Spec.AWS.K3sMasters.ImageId,
-					"image_ssh_username": obj.Spec.AWS.K3sMasters.ImageSSHUsername,
+					// "image_id":           obj.Spec.AWS.K3sMasters.ImageId,
+					// "image_ssh_username": obj.Spec.AWS.K3sMasters.ImageSSHUsername,
 					"instance_type":      obj.Spec.AWS.K3sMasters.InstanceType,
 					"nvidia_gpu_enabled": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
 
@@ -319,14 +429,24 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 					},
 					"taint_master_nodes": obj.Spec.TaintMasterNodes,
 					"backup_to_s3": map[string]any{
-						"enabled": obj.Spec.BackupToS3Enabled,
+						"enabled": false,
 					},
 					"nodes": func() map[string]any {
 						nodes := make(map[string]any, len(obj.Spec.AWS.K3sMasters.Nodes))
 						for k, v := range obj.Spec.AWS.K3sMasters.Nodes {
+							az := v.AvailabilityZone
+							if az == "" {
+								zones, ok := clustersv1.AwsRegionToAZs[obj.Spec.AWS.Region]
+								if !ok {
+									continue
+								}
+								az = zones[0]
+							}
+
 							nodes[k] = map[string]any{
 								"role":              v.Role,
-								"availability_zone": v.AvaialbilityZone,
+								"availability_zone": az,
+								"vpc_subnet_id":     azToSubnetId[az],
 								"last_recreated_at": v.LastRecreatedAt,
 								"kloudlite_release": v.KloudliteRelease,
 							}
@@ -363,8 +483,14 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(clusterApplyJob)
-	defer req.LogPostCheck(clusterApplyJob)
+	checkName := "checkName"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
@@ -449,18 +575,16 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 		return req.CheckFailed(clusterApplyJob, check, "waiting for job to finish execution").Err(nil)
 	}
 
-	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	check.Status = job.Status.Succeeded > 0
+	if job.Status.Succeeded == 0 {
+		return fail(fmt.Errorf("cluster creation job did not succeed"))
+	}
+
+	check.Status = true
 	if check != obj.Status.Checks[clusterApplyJob] {
 		obj.Status.Checks[clusterApplyJob] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
-	}
-
-	if !check.Status {
-		req.Logger.Infof("job failed")
-		return req.Done()
 	}
 
 	return req.Next()
@@ -582,6 +706,31 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
 	builder.Owns(&batchv1.Job{})
+	builder.Watches(&clustersv1.AwsVPC{}, handler.EnqueueRequestsFromMapFunc(
+		func(ctx context.Context, obj client.Object) []reconcile.Request {
+			if v, ok := obj.GetLabels()[constants.RegionKey]; ok {
+				var clist clustersv1.ClusterList
+				if err := r.List(ctx, &clist, &client.ListOptions{
+					LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+						constants.RegionKey: v,
+					}),
+					Namespace: obj.GetNamespace(),
+				}); err != nil {
+					return nil
+				}
+
+				rr := make([]reconcile.Request, 0, len(clist.Items))
+				for i := range clist.Items {
+					rr = append(rr, reconcile.Request{
+						NamespacedName: fn.NN(clist.Items[i].GetNamespace(), clist.Items[i].GetName()),
+					})
+				}
+
+				return rr
+			}
+			return nil
+		},
+	))
 
 	builder.Watches(&clustersv1.AccountS3Bucket{}, handler.EnqueueRequestsFromMapFunc(
 		func(ctx context.Context, obj client.Object) []reconcile.Request {

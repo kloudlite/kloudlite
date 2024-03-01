@@ -326,6 +326,7 @@ func (r *Request[T]) Finalize() stepResult.Result {
 	controllerutil.RemoveFinalizer(r.Object, constants.CommonFinalizer)
 	controllerutil.RemoveFinalizer(r.Object, constants.ForegroundFinalizer)
 	controllerutil.RemoveFinalizer(r.Object, "finalizers.kloudlite.io")
+	controllerutil.RemoveFinalizer(r.Object, "finalizers.kloudlite.io/watch") // Keep till all clusters are updated to v1.0.4
 	return stepResult.New().Err(r.client.Update(r.ctx, r.Object))
 }
 
