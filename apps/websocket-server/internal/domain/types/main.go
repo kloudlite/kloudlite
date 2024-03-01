@@ -4,8 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/gofiber/websocket/v2"
 	"github.com/kloudlite/api/common"
+	"github.com/kloudlite/api/pkg/logging"
 )
 
 type For string
@@ -38,8 +38,10 @@ type Message struct {
 }
 
 type Context struct {
-	Context    context.Context
-	Session    *common.AuthSession
-	Connection *websocket.Conn
-	Mutex      *sync.Mutex
+	Logger  logging.Logger
+	Context context.Context
+	Session *common.AuthSession
+	// Connection *websocket.Conn
+	Mutex     *sync.Mutex
+	WriteJSON func(interface{}) error
 }

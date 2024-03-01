@@ -50,6 +50,7 @@ func (d *domain) checkAccess(ctx context.Context, rdata *res_watch.ReqData, user
 }
 
 func (d *domain) handleResWatchMsg(ctx types.Context, resources *res_watch.ResWatchSubsMap, msgAny map[string]any) error {
+
 	var msg res_watch.Message
 	b, err := json.Marshal(msgAny)
 	if err != nil {
@@ -81,7 +82,18 @@ func (d *domain) handleResWatchMsg(ctx types.Context, resources *res_watch.ResWa
 				return fmt.Errorf("resource already subscribed")
 			}
 
-			s, err := d.natsClient.Conn.Subscribe(rd.Topic, func(m *mnats.Msg) {})
+			s, err := d.natsClient.Conn.Subscribe(rd.Topic, func(m *mnats.Msg) {
+				if err := ctx.WriteJSON(types.Response[res_watch.Response]{
+					Type:    types.MessageTypeResponse,
+					For:     types.ForResourceUpdate,
+					Data:    res_watch.Response{},
+					Message: "update",
+					Id:      msg.Id,
+				}); err != nil {
+					utils.WriteError(ctx, err, msg.Id, types.ForResourceUpdate)
+				}
+			})
+
 			if err != nil {
 				return err
 			}
