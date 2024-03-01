@@ -15,7 +15,7 @@ global:
   # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
   cookieDomain: '.kloudlite.io'
 
-  # -- base domain for all routers exposed through this cluster
+  # -- base domain for all routers exposed through this culuster
   baseDomain: 'platform.kloudlite.io'
   secondaryDomain: 'khost.dev'
 
@@ -85,10 +85,11 @@ nodepools:
     max: 2
     labels:
       kloudlite.io/nodepool.role: "stateless"
-    taints:
-      - key: "kloudlite.io/nodepool.role"
-        value: "stateless"
-        effect: "NoExecute"
+    taints: []
+    # taints:
+    #   - key: "kloudlite.io/nodepool.role"
+    #     value: "stateless"
+    #     effect: "NoExecute"
     tolerations:
       - key: "kloudlite.io/nodepool.role"
         operator: "Equal"
@@ -128,21 +129,15 @@ nodepools:
 descheduler:
   enabled: true
 
-clusterAutoscaler:
-  enabled: true
-  configuration:
-    chartVersion: ""
+# clusterAutoscaler:
+#   enabled: true
+#   configuration:
+#     chartVersion: ""
 
 vectorAgent:
   enabled: true
   name: vector-agent
   description: "vector agent for shipping logs to centralized vector aggregator"
-
-  # configuration:
-  #   kubeletMetricsReExporter:
-  #     image:
-  #       repository: "ghcr.io/kloudlite/kubelet-metrics-reexporter"
-  #       tag: ""
 
 cloudflareWildCardCert:
   enabled: true
@@ -320,13 +315,14 @@ apps:
   websocketApi:
     # -- image (with tag) for websocket-server api
     image: 
-      repository: ghcr.io/kloudlite/api/websocket-server
+      # repository: ghcr.io/kloudlite/api/websocket-server
+      repository: ghcr.io/kloudlite/kloudlite/api/websocket-server
       tag: ""
 
   authApi:
     # -- image (with tag) for auth api
     image: 
-      repository: ghcr.io/kloudlite/api/auth
+      repository: ghcr.io/kloudlite/kloudlite/api/auth
       tag: ""
 
   klInstaller:
@@ -337,13 +333,13 @@ apps:
   commsApi:
     # -- image (with tag) for comms api
     image:
-      repository: ghcr.io/kloudlite/api/comms
+      repository: ghcr.io/kloudlite/kloudlite/api/comms
       tag: ""
 
   consoleApi:
     # -- image (with tag) for console api
     image:
-      repository: ghcr.io/kloudlite/api/console
+      repository: ghcr.io/kloudlite/kloudlite/api/console
       tag: ""
     configuration:
       logsAndMetricsHttpPort: 9100
@@ -352,18 +348,18 @@ apps:
   accountsApi:
     # -- image (with tag) for accounts api
     image: 
-      repository: ghcr.io/kloudlite/api/accounts
+      repository: ghcr.io/kloudlite/kloudlite/api/accounts
       tag: ""
 
   iamApi:
     image:
-      repository: ghcr.io/kloudlite/api/iam
+      repository: ghcr.io/kloudlite/kloudlite/api/iam
       tag: ""
 
   infraApi:
     # -- image (with tag) for infra api
     image:
-      repository: ghcr.io/kloudlite/api/infra
+      repository: ghcr.io/kloudlite/kloudlite/api/infra
       tag: ""
 
     configuration:
@@ -371,13 +367,13 @@ apps:
 
   gatewayApi:
     image:
-      repository: ghcr.io/kloudlite/api/gateway
+      repository: ghcr.io/kloudlite/kloudlite/api/gateway
       tag: ""
 
   containerRegistryApi:
     # -- image (with tag) for container registry api
     image:
-      repository: ghcr.io/kloudlite/api/container-registry
+      repository: ghcr.io/kloudlite/kloudlite/api/container-registry
       tag: ""
 
     configuration:
@@ -394,19 +390,19 @@ apps:
 
   auditLoggingWorker:
     image: 
-      repository: ghcr.io/kloudlite/api/worker-audit-logging
+      repository: ghcr.io/kloudlite/kloudlite/api/worker-audit-logging
       tag: ""
 
   webhooksApi:
     # -- image (with tag) for webhooks api
     image: 
-      repository: ghcr.io/kloudlite/api/webhook
+      repository: ghcr.io/kloudlite/kloudlite/api/webhook
       tag: ""
 
   messageOfficeApi:
     # -- image (with tag) for message office api
     image:
-      repository: ghcr.io/kloudlite/api/message-office
+      repository: ghcr.io/kloudlite/kloudlite/api/message-office
       tag: ""
 
     configuration:
@@ -442,16 +438,27 @@ operators:
     enabled: true
     # -- image (with tag) for platform operator
     image: 
-      repository: ghcr.io/kloudlite/operator/platform
+      repository: ghcr.io/kloudlite/kloudlite/operator/platform
       tag: ""
 
     configuration:
-      nodepool:
+      nodepools:
+        enabled: true
         extractFromCluster: true
 
         # if extractFromCluster is true, the following values are ignored, as these values are referred from `kube-system/k3s-params` namespace
         cloudProviderName: "aws"
         cloudProviderRegion: "ap-south-1"
+
+        aws:
+          vpc_params:
+            readFromCluster: true
+            secret:
+              name: "kloudlite-aws-settings"
+              namespace: "kube-system"
+              keys:
+                vpcId: "vpc_id"
+                vpcPublicSubnets: "vpc_public_subnets"
 
         # -- k3s agent join token, as nodepools are effectively agent nodes
         k3sAgentJoinToken: ""
@@ -469,12 +476,12 @@ operators:
 
       helmCharts:
         jobImage:
-          repository: ghcr.io/kloudlite/operator/workers/helm-runner
+          repository: ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner
           tag: ""
 
       cluster:
         jobImage:
-          repository: ghcr.io/kloudlite/infrastructure-as-code/iac-job
+          repository: ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job
           tag: ""
         cloudflare:
           # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters

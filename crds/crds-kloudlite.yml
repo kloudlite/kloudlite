@@ -94,7 +94,177 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: awsvpcs.clusters.kloudlite.io
+spec:
+  group: clusters.kloudlite.io
+  names:
+    kind: AwsVPC
+    listKind: AwsVPCList
+    plural: awsvpcs
+    singular: awsvpc
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.labels.kloudlite\.io\/region
+      name: AwsRegion
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: AwsVPC is the Schema for the awsvpcs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AwsVPCSpec defines the desired state of AwsVPC
+            properties:
+              cidr:
+                type: string
+              credentialKeys:
+                properties:
+                  keyAWSAccountId:
+                    type: string
+                  keyAWSAssumeRoleExternalID:
+                    type: string
+                  keyAWSAssumeRoleRoleARN:
+                    type: string
+                  keyAccessKey:
+                    type: string
+                  keyIAMInstanceProfileRole:
+                    type: string
+                  keySecretKey:
+                    type: string
+                required:
+                - keyAWSAccountId
+                - keyAWSAssumeRoleExternalID
+                - keyAWSAssumeRoleRoleARN
+                - keyAccessKey
+                - keyIAMInstanceProfileRole
+                - keySecretKey
+                type: object
+              credentialsRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
+              output:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
+              publicSubnets:
+                items:
+                  properties:
+                    availabilityZone:
+                      type: string
+                    cidr:
+                      type: string
+                  required:
+                  - availabilityZone
+                  - cidr
+                  type: object
+                type: array
+              region:
+                type: string
+            required:
+            - credentialKeys
+            - credentialsRef
+            - region
+            type: object
+          status:
+            properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
                       type: string
                     status:
                       type: boolean
@@ -212,16 +382,17 @@ spec:
                     properties:
                       iamInstanceProfileRole:
                         type: string
-                      imageId:
-                        type: string
-                      imageSSHUsername:
-                        type: string
                       instanceType:
+                        description: ImageId                string                     `json:"imageId"
+                          graphql:"noinput"` ImageSSHUsername       string                     `json:"imageSSHUsername"
+                          graphql:"noinput"`
                         type: string
                       nodes:
                         additionalProperties:
                           properties:
                             availabilityZone:
+                              type: string
+                            kloudliteRelease:
                               type: string
                             lastRecreatedAt:
                               format: date-time
@@ -233,6 +404,7 @@ spec:
                               type: string
                           required:
                           - availabilityZone
+                          - kloudliteRelease
                           - role
                           type: object
                         type: object
@@ -243,8 +415,6 @@ spec:
                       rootVolumeType:
                         type: string
                     required:
-                    - imageId
-                    - imageSSHUsername
                     - instanceType
                     - nvidiaGpuEnabled
                     - rootVolumeSize
@@ -268,9 +438,6 @@ spec:
                       type: object
                     type: object
                   region:
-                    description: AWSAccountId                 string                     `json:"awsAccountId"
-                      graphql:"noinput"` AssumeRoleParamExternalIdRef *common_types.SecretKeyRef
-                      `json:"awsAssumeRoleParamExternalIdRef,omitempty" graphql:"noinput"`
                     type: string
                   spotNodePools:
                     additionalProperties:
@@ -326,6 +493,26 @@ spec:
                       required:
                       - spotFleetTaggingRoleName
                       type: object
+                    type: object
+                  vpc:
+                    properties:
+                      id:
+                        type: string
+                      publicSubnets:
+                        items:
+                          properties:
+                            availabilityZone:
+                              type: string
+                            id:
+                              type: string
+                          required:
+                          - availabilityZone
+                          - id
+                          type: object
+                        type: array
+                    required:
+                    - id
+                    - publicSubnets
                     type: object
                 required:
                 - region
@@ -402,6 +589,10 @@ spec:
                     type: string
                   jobNamespace:
                     type: string
+                  keyAWSVPCId:
+                    type: string
+                  keyAWSVPCPublicSubnets:
+                    type: string
                   keyK3sAgentJoinToken:
                     type: string
                   keyK3sServerJoinToken:
@@ -443,7 +634,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -568,10 +758,6 @@ spec:
                     type: object
                   iamInstanceProfileRole:
                     type: string
-                  imageId:
-                    type: string
-                  imageSSHUsername:
-                    type: string
                   nvidiaGpuEnabled:
                     type: boolean
                   poolType:
@@ -636,14 +822,18 @@ spec:
                     required:
                     - spotFleetTaggingRoleName
                     type: object
+                  vpcId:
+                    type: string
+                  vpcSubnetCIDR:
+                    type: string
                 required:
                 - availabilityZone
-                - imageId
-                - imageSSHUsername
                 - nvidiaGpuEnabled
                 - poolType
                 - rootVolumeSize
                 - rootVolumeType
+                - vpcId
+                - vpcSubnetCIDR
                 type: object
               cloudProvider:
                 enum:
@@ -702,7 +892,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -813,7 +1002,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -922,7 +1110,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -1332,7 +1519,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -1470,7 +1656,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -1600,7 +1785,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -2662,7 +2846,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -2823,7 +3006,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -2954,7 +3136,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3092,7 +3273,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3205,7 +3385,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3285,6 +3464,9 @@ spec:
       type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -3399,7 +3581,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3553,7 +3734,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3738,7 +3918,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -3906,7 +4085,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -4111,7 +4289,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -4512,7 +4689,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -4722,7 +4898,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5110,7 +5285,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5261,7 +5435,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5478,7 +5651,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5674,7 +5846,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -5806,7 +5977,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6008,7 +6178,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6204,7 +6373,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6303,7 +6471,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6436,7 +6603,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6545,7 +6711,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6800,7 +6965,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -6923,7 +7087,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7056,7 +7219,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7230,7 +7392,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7342,7 +7503,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7448,7 +7608,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -7794,7 +7953,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -8279,7 +8437,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
@@ -8472,7 +8629,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
