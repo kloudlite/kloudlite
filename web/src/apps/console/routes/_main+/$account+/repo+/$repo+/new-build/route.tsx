@@ -1,5 +1,5 @@
-import { ArrowRight } from '@jengaicons/react';
 import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
+import { ArrowRight } from '~/console/components/icons';
 import { Button } from '~/components/atoms/button';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -14,6 +14,7 @@ import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import logger from '~/root/lib/client/helpers/log';
 import Git from '~/console/components/git';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
+import { BottomNavigation } from '~/console/components/commons';
 import ReviewBuild from './review-build';
 import BuildDetails from './build-details';
 
@@ -135,7 +136,7 @@ const NewBuild = () => {
                 registry: {
                   repo: {
                     name: val.repository || '',
-                    tags: val.tags.map((t: any) => t.value),
+                    tags: val.tags,
                   },
                 },
                 resource: {
@@ -200,13 +201,12 @@ const NewBuild = () => {
                     (values.source.provider as IGIT_PROVIDERS) || 'github',
                 }}
               />
-              <Button
-                content="Next"
-                variant="primary"
-                type="submit"
-                size="lg"
-                disabled={!values.source.branch}
-                suffix={<ArrowRight />}
+              <BottomNavigation
+                primaryButton={{
+                  type: 'submit',
+                  disabled: !values.source.branch,
+                  content: 'Next',
+                }}
               />
             </div>
           </MultiStepProgress.Step>
@@ -217,25 +217,24 @@ const NewBuild = () => {
                 values={values}
                 handleChange={handleChange}
               />
-              <Button
-                content="Next"
-                variant="primary"
-                type="submit"
-                size="lg"
-                suffix={<ArrowRight />}
+              <BottomNavigation
+                primaryButton={{
+                  type: 'submit',
+                  disabled: !values.source.branch,
+                  content: 'Next',
+                }}
               />
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step label="Review" step={3}>
             <div className="flex flex-col gap-3xl">
               <ReviewBuild values={values} onEdit={(step) => jumpStep(step)} />
-              <Button
-                content="Create"
-                variant="primary"
-                type="submit"
-                size="lg"
-                loading={isLoading}
-                suffix={<ArrowRight />}
+              <BottomNavigation
+                primaryButton={{
+                  type: 'submit',
+                  content: 'Create',
+                  loading: isLoading,
+                }}
               />
             </div>
           </MultiStepProgress.Step>

@@ -10,11 +10,13 @@ import {
 } from '~/root/src/generated/gql/server';
 import Tooltip from '~/components/atoms/tooltip';
 import { Link } from '@remix-run/react';
+import { Button, IButton } from '~/components/atoms/button';
 import { ListItem } from './console-list-components';
 import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '../server/r-utils/common';
+import { ArrowLeft, ArrowRight } from './icons';
 
 export const BlackProdLogo = ({ size = 16 }) => {
   return <ProdLogo color="currentColor" size={size} />;
@@ -229,6 +231,39 @@ export const SubHeaderTitle = ({
         {toTitle}
       </Link>
       <span>{title}</span>
+    </div>
+  );
+};
+
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
+
+export const BottomNavigation = ({
+  primaryButton,
+  secondaryButton,
+}: {
+  primaryButton?: Optional<IButton, 'content'>;
+  secondaryButton?: Optional<IButton, 'content'>;
+}) => {
+  return (
+    <div className="flex flex-row gap-3xl items-center">
+      {secondaryButton && (
+        <Button
+          prefix={<ArrowLeft />}
+          variant="outline"
+          content="Back"
+          size="lg"
+          {...{ ...secondaryButton }}
+        />
+      )}
+      {primaryButton && (
+        <Button
+          suffix={<ArrowRight />}
+          variant="primary"
+          content="Next"
+          size="lg"
+          {...primaryButton}
+        />
+      )}
     </div>
   );
 };

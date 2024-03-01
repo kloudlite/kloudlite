@@ -1,5 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { useEffect, useRef } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
@@ -20,6 +20,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useAppend, useMapper } from '~/components/utils';
+import { IAppContext } from '../app+/$app+/_layout';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
 
@@ -29,6 +30,8 @@ const Root = (props: IDialog) => {
   const reloadPage = useReload();
 
   const { project: projectName, environment: envName } = useParams();
+
+  const { cluster } = useOutletContext<IAppContext>();
 
   const {
     data,
@@ -133,8 +136,6 @@ const Root = (props: IDialog) => {
       : []
   );
 
-  console.log(combinedDomains);
-
   useEffect(() => {
     if (isUpdate) {
       const d = combinedDomains
@@ -172,6 +173,13 @@ const Root = (props: IDialog) => {
           nameErrorLabel="isNameError"
           isUpdate={isUpdate}
         />
+
+        <div className="flex flex-col gap-md">
+          <span className="bodyMd-medium text-text-default">Cluster DNS</span>
+          <span className="bodyMd text-text-soft">
+            {cluster.spec.publicDNSHost}
+          </span>
+        </div>
         <Select
           creatable
           size="lg"
