@@ -12,4 +12,6 @@
 - name: DEFAULT_INGRESS_CLASS
   value: {{.Values.global.ingressClassName}}
 
+- name: CERTIFICATE_NAMESPACE
+  value: {{.Release.Namespace}}
 {{- end -}}

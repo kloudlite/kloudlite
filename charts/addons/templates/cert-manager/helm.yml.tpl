@@ -1,10 +1,12 @@
-{{- $chartOpts :=  .Values.helmCharts.certManager}} 
-{{- if $chartOpts.enabled }}
+{{- if .Values.common.certManager.enabled }}
+
+{{- $tolerations := .Values.common.certManager.configuration.tolerations | toYaml }}
+{{- $nodeSelector := .Values.common.certManager.configuration.nodeSelector | toYaml }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$chartOpts.name}}
+  name: "cert-manager"
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://charts.jetstack.io
@@ -13,12 +15,17 @@ spec:
 
   jobVars:
     backOffLimit: 1
-    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toYaml | nindent 6 }}
-    tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toYaml | nindent 6 }}
+    nodeSelector: {{ $nodeSelector | nindent 6 }}
+    tolerations: {{ $tolerations | nindent 6 }}
 
   preInstall: |+
-    # install cert-manager CRDs
+    echo installing cert-manager CRDs
     kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.3/cert-manager.crds.yaml
+    echo installed cert-manager CRDs
+
+  {{- /* postInstall: |+ */}}
+  {{- /*   {{}} */}}
+
 
   values:
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
@@ -27,14 +34,11 @@ spec:
       - "--dns01-recursive-nameservers-only"
       - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
-    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toYaml | nindent 6}}
-    tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toYaml | nindent 6}}
+    nodeSelector: {{ .Values.common.certManager.configuration.nodeSelector | toYaml | nindent 6 }}
+    tolerations: {{ .Values.common.certManager.configuration.tolerations | toYaml | nindent 6 }}
 
     # -- cert-manager pod affinity
-    affinity:
-      nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 8 }}
-
-    podLabels: {{ include "pod-labels" . | nindent 6 }}
+    podLabels: {{ .Values.podLabels | toYaml | nindent 6 }}
 
     startupapicheck:
       # -- whether to enable startupapicheck, disabling it by default as it unnecessarily increases chart installation time
@@ -54,12 +58,10 @@ spec:
         memory: 120Mi
 
     webhook:
-      podLabels: {{ include "pod-labels" . | nindent 8 }}
+      podLabels: {{ .Values.podLabels | toYaml | nindent 8 }}
 
-      tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toYaml | nindent 8}}
-
-      affinity:
-        nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}
+      nodeSelector: {{ $nodeSelector | nindent 8 }}
+      tolerations: {{ $tolerations | nindent 8 }}
 
       # -- resource limits for cert-manager webhook pods
       resources:
@@ -76,12 +78,10 @@ spec:
           memory: 60Mi
 
     cainjector:
-      podLabels: {{ include "pod-labels" . | nindent 8 }}
+      podLabels: {{ .Values.podLabels | toYaml | nindent 8 }}
 
-      tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toYaml | nindent 8}}
-
-      affinity:
-        nodeAffinity: {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}
+      nodeSelector: {{ $nodeSelector | nindent 8 }}
+      tolerations: {{ $tolerations | nindent 8 }}
 
       # -- resource limits for cert-manager cainjector pods
       resources:
@@ -98,4 +98,3 @@ spec:
           memory: 200Mi
 
 {{- end }}
-

@@ -100,6 +100,15 @@ requiredDuringSchedulingIgnoredDuringExecution:
             - "true"
 {{- end }}
 
+{{- define "masters-node-selector" -}}
+node-role.kubernetes.io/master: "true"
+{{- end -}}
+
+{{- define "masters-tolerations" -}}
+- key: node-role.kubernetes.io/master
+  operator: Exists
+{{- end -}}
+
 {{- define "router-domain" -}}
 {{ .Values.global.routerDomain | default .Values.global.baseDomain }}
 {{- end -}}
@@ -118,4 +127,8 @@ requiredDuringSchedulingIgnoredDuringExecution:
 {{- "IfNotPresent" }}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "has-aws-vpc" -}}
+{{ and .Values.operators.platformOperator.configuration.nodepools.aws.vpc_params.readFromCluster (eq .Values.operators.platformOperator.configuration.nodepools.cloudproviderName "aws") }}
 {{- end -}}
