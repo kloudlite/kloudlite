@@ -43,6 +43,14 @@ spec:
       nodeSelector: {{$jobNodeSelector | toYAML | nindent 10}}
       serviceAccountName: "kloudlite-jobs"
 
+      resources:
+        requests:
+          cpu: 500m
+          memory: 1000Mi
+        limits:
+          cpu: 500m
+          memory: 1000Mi
+
       containers:
       - name: main
         image: {{$iacJobImage}}
@@ -79,6 +87,7 @@ spec:
             else
               terraform plan --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
             fi
-            terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+            
+            terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
       restartPolicy: Never
   backoffLimit: 1

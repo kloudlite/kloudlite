@@ -53,11 +53,11 @@ spec:
 
         resources:
           requests:
-            cpu: 800m
-            memory: 1200Mi
+            cpu: 500m
+            memory: 1000Mi
           limits:
-            cpu: 800m
-            memory: 1200Mi
+            cpu: 500m
+            memory: 1000Mi
 
         env:
           - name: KUBE_IN_CLUSTER_CONFIG
@@ -82,7 +82,6 @@ spec:
             unzip $TERRAFORM_ZIPFILE
 
             pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-masters"
-
             envsubst < state-backend.tf.tpl > state-backend.tf
 
             terraform init -reconfigure -no-color 2>&1 | tee /dev/termination-log
@@ -93,18 +92,17 @@ spec:
             EOF
 
             if [ "{{$action}}" = "delete" ]; then
-              terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log
+              {{- /* terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log */}}
+              terraform plan --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
+              terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
               kubectl delete secret/{{$kubeconfigSecretName}} -n {{$kubeconfigSecretNamespace}} --ignore-not-found=true
             else
               terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
-              terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+              terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
 
               terraform state pull | jq '.outputs' -r > outputs.json
               
               cat outputs.json
-
-              {{- /* terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig */}}
-              {{- /* terraform state pull | jq '.outputs."kloudlite-k3s-params".value' -r > k3s-params */}}
 
               kubectl apply -f - <<EOF
               apiVersion: v1
@@ -116,10 +114,7 @@ spec:
               data:
                 kubeconfig: $(cat outputs.json | jq '.kubeconfig.value')
                 k3s_params: $(cat outputs.json | jq -r '."kloudlite-k3s-params".value' | base64 | tr -d '\n')
-                {{- /* output: $(cat outputs.json | base64 | tr -d '\n') */}}
                 k3s_agent_token: $(cat outputs.json | jq -r '.k3s_agent_token.value' | base64 | tr -d '\n')
-                aws_vpc_id: $(cat outputs.json | jq -r '.vpc_id.value'  | base64 | tr -d '\n') 
-                aws_vpc_public_subnets: $(cat outputs.json | jq -r '.vpc_public_subnets.value' | base64 | tr -d '\n')
             EOF
             fi
             exit 0

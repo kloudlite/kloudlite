@@ -19,7 +19,7 @@ type AwsSpotGpuNode struct {
 type MasterNodeProps struct {
 	// +kubebuilder:validation:Enum=primary-master;secondary-master;
 	Role             string `json:"role"`
-	AvaialbilityZone string `json:"availabilityZone"`
+	AvailabilityZone AwsAZ  `json:"availabilityZone"`
 	KloudliteRelease string `json:"kloudliteRelease"`
 	NodeProps        `json:",inline"`
 }
@@ -29,8 +29,8 @@ type NodeProps struct {
 }
 
 type AWSK3sMastersConfig struct {
-	ImageId                string                     `json:"imageId" graphql:"noinput"`
-	ImageSSHUsername       string                     `json:"imageSSHUsername" graphql:"noinput"`
+	// ImageId                string                     `json:"imageId" graphql:"noinput"`
+	// ImageSSHUsername       string                     `json:"imageSSHUsername" graphql:"noinput"`
 	InstanceType           string                     `json:"instanceType"`
 	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled"`
 	RootVolumeType         string                     `json:"rootVolumeType" graphql:"noinput"`
@@ -48,15 +48,38 @@ type CloudProviderCredentialKeys struct {
 	KeySecretKey                 string `json:"keySecretKey"`
 }
 
+type AwsSubnetWithID struct {
+	AvailabilityZone AwsAZ  `json:"availabilityZone"`
+	ID               string `json:"id"`
+}
+
+type AwsVPCParams struct {
+	ID            string            `json:"id"`
+	PublicSubnets []AwsSubnetWithID `json:"publicSubnets"`
+}
+
 type AWSClusterConfig struct {
-	// AWSAccountId                 string                     `json:"awsAccountId" graphql:"noinput"`
-	// AssumeRoleParamExternalIdRef *common_types.SecretKeyRef `json:"awsAssumeRoleParamExternalIdRef,omitempty" graphql:"noinput"`
-	//
-	Region     string              `json:"region"`
+	VPC *AwsVPCParams `json:"vpc,omitempty" graphql:"noinput"`
+
+	Region     AwsRegion           `json:"region"`
 	K3sMasters AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 
 	NodePools     map[string]AwsEC2PoolConfig  `json:"nodePools,omitempty" graphql:"noinput"`
 	SpotNodePools map[string]AwsSpotPoolConfig `json:"spotNodePools,omitempty" graphql:"noinput"`
+}
+
+func (avp *AwsVPCParams) GetSubnetId(az AwsAZ) string {
+	if avp == nil {
+		return ""
+	}
+
+	for _, v := range avp.PublicSubnets {
+		if v.AvailabilityZone == az {
+			return v.ID
+		}
+	}
+
+	return ""
 }
 
 type DigitalOceanConfig struct{}
@@ -137,6 +160,12 @@ func (b *Cluster) GetStatus() *rApi.Status {
 func (b *Cluster) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		constants.AccountNameKey: b.Spec.AccountName,
+		constants.RegionKey: func() string {
+			if b.Spec.AWS != nil {
+				return string(b.Spec.AWS.Region)
+			}
+			return ""
+		}(),
 	}
 }
 
