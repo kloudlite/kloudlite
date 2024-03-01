@@ -274,7 +274,11 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 
 		// "release-name": obj.Name,
 
-		"labels":     obj.GetLabels(),
+		"labels":                      obj.GetLabels(),
+		"node-selector":               obj.Spec.NodeSelector,
+		"tolerations":                 obj.Spec.Tolerations,
+		"topology-spread-constraints": obj.Spec.TopologySpreadConstraints,
+
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 		"storage-class": obj.Spec.Resources.Storage.StorageClass,

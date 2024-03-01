@@ -2,6 +2,8 @@
 {{- $namespace := get . "namespace" }}
 {{- $labels := get . "labels" | default dict }}
 {{- $annotations := get . "annotations" | default dict}}
+{{- $tolerations := get . "tolerations" | default list }}
+
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $nodeSelector := get . "node-selector" | default dict }}
@@ -31,6 +33,10 @@ spec:
   chartVersion: 13.18.1
   chartName: mongodb
 
+  jobVars:
+    nodeSelector: {{$nodeSelector | toYAML | nindent 6 }}
+    tolerations: {{$tolerations | toYAML | nindent 6 }}
+
   values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/mongodb/
     global:
@@ -49,6 +55,7 @@ spec:
     commonLabels: {{$labels | toYAML | nindent 6}}
     podLabels: {{$labels | toYAML | nindent 6}}
     nodeSelector: {{$nodeSelector | toYAML | nindent 6 }}
+    tolerations: {{$tolerations | toYAML | nindent 6 }}
 
     auth:
       enabled: true

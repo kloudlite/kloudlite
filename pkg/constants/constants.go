@@ -9,8 +9,7 @@ const (
 )
 
 const (
-	CommonFinalizer        string = "finalizers.kloudlite.io/watch"
-	CommonFinalizer2       string = "kloudlite.io/finalizer"
+	CommonFinalizer        string = "kloudlite.io/finalizer"
 	ForegroundFinalizer    string = "foregroundDeletion"
 	BillingFinalizer       string = "finalizers.kloudlite.io/billing-watcher"
 	StatusWatcherFinalizer string = "finalizers.kloudlite.io/status-watcher"
@@ -118,6 +117,20 @@ const (
 
 	ObservabilityAccountNameKey string = "kloudlite.io/observability.account.name"
 	ObservabilityClusterNameKey string = "kloudlite.io/observability.cluster.name"
+)
+
+// ConfigSecretReplicator
+const (
+	ReplicationEnableKey        string = "kloudlite.io/replication.enable"
+	ReplicationEnableValueTrue  string = "true"
+	ReplicationEnableValueFalse string = "false"
+
+	ReplicationFromNameKey      string = "kloudlite.io/replication.from-name"
+	ReplicationFromNamespaceKey string = "kloudlite.io/replication.from-namespace"
+
+	// it should me comma separated list of namespaces to exclude
+	ReplicationExcludeNsKey string = "kloudlite.io/replication.exclude-ns"
+	ReplicationIncludeNsKey string = "kloudlite.io/replication.include-ns"
 )
 
 // distribution constants

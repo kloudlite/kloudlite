@@ -233,8 +233,6 @@ tasks:
         podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
         # podman push {{.Image}}
 
-
-
   build:operator:
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'

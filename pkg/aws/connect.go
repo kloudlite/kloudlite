@@ -7,7 +7,7 @@ import (
 func newSession() (*session.Session, error) {
 	return session.NewSessionWithOptions(
 		session.Options{
-			SharedConfigState: session.SharedConfigEnable,
+			CredentialsProviderOptions: &session.CredentialsProviderOptions{},
 		},
 	)
 }

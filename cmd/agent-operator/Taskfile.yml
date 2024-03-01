@@ -1,25 +1,37 @@
 version: 3
 
-dotenv:
-  - .secrets/env
+includes:
+  go: ../../.tools/taskfiles/go-build.Taskfile.yml
+
+vars:
+  app: agent-operator
 
 tasks:
   run:
+    dotenv:
+      - .secrets/env
     cmds:
       - go run . --dev
 
   build:
-    env:
-      CGO_ENABLED: 0
-    vars:
-      BuiltAt:
-        sh: date | sed 's/\s/_/g'
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-      - sh: '[ -n "{{.CWD}}" ]'
-        msg: var CWD must have a value
-    dir: "{{.CWD}}"
     cmds:
-      - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
-      - upx {{.Out}}
+      - task: go:build
+        vars:
+          Out: "./bin/{{.app}}"
+
+  local:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
+      - nerdctl push {{.Image}}
+
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - docker buildx build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}} --push
