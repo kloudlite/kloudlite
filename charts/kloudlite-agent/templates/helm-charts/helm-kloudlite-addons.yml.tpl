@@ -1,20 +1,18 @@
-{{- $chartOpts :=  .Values.helmCharts.certManager}} 
-{{- if $chartOpts.enabled }}
-
+{{- if .Values.helmCharts.kloudliteAddons.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$chartOpts.name}}
+  name: "kloudlite-addons"
   namespace: {{.Release.Namespace}}
 spec:
   chartRepoURL: https://kloudlite.github.io/helm-charts
-  chartName: kloudlite-addons
+  chartName: addons
   chartVersion: {{.Values.helmCharts.kloudliteAddons.configuration.chartVersion | default (include "image-tag" .) }}
 
   jobVars:
     backOffLimit: 1
-    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.nodeSelector | toYaml | nindent 8 }}
-    tolerations: {{ $chartOpts.tolerations | default .Values.tolerations | toYaml | nindent 8 }}
+    nodeSelector: {{ .Values.helmCharts.kloudliteAddons.configuration.nodeSelector | default .Values.nodeSelector | toYaml | nindent 8 }}
+    tolerations: {{ .Values.helmCharts.kloudliteAddons.configuration.tolerations | default .Values.tolerations | toYaml | nindent 8 }}
 
   values:
     cloudprovider: "{{.Values.cloudProvider}}"
@@ -31,6 +29,7 @@ spec:
         enabled: true
         configuration:
           scaleDownUnneededTime: 3m
+
       velero:
         enabled: false
 

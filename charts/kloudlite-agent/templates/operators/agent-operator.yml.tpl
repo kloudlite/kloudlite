@@ -17,24 +17,24 @@ data: {{ $k3sParams.data | toYaml | nindent 2 }}
 
 ---
 
-{{- $hasAwsVPC := and (.Values.operators.agentOperator.configuration.nodepools.enabled) (eq .Values.operators.agentOperator.configuration.nodepools.cloudprovider "aws") .Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.readFromCluster }}
-
-{{- if $hasAwsVPC }}
-
-{{- $awsSettings := (lookup "v1" "Secret" .Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.namespace .Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name ) -}}
-
-{{- if not $awsSettings }}
-{{ fail "secret kloudlite-aws-settings is not present in namespace kube-system, could not proceed with helm installation" }}
-{{- end }}
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name}}
-  namespace: {{.Release.Namespace}}
-data: {{ $awsSettings.data | toYaml | nindent 2 }}
-
-{{- end }}
+{{- /* {{- $hasAwsVPC := and (.Values.operators.agentOperator.configuration.nodepools.enabled) (eq .Values.operators.agentOperator.configuration.nodepools.cloudprovider "aws") .Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.readFromCluster }} */}}
+{{- /**/}}
+{{- /* {{- if $hasAwsVPC }} */}}
+{{- /**/}}
+{{- /* {{- $awsSettings := (lookup "v1" "Secret" .Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.namespace .Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name ) -}} */}}
+{{- /**/}}
+{{- /* {{- if not $awsSettings }} */}}
+{{- /* {{ fail "secret kloudlite-aws-settings is not present in namespace kube-system, could not proceed with helm installation" }} */}}
+{{- /* {{- end }} */}}
+{{- /**/}}
+{{- /* apiVersion: v1 */}}
+{{- /* kind: Secret */}}
+{{- /* metadata: */}}
+{{- /*   name: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name}} */}}
+{{- /*   namespace: {{.Release.Namespace}} */}}
+{{- /* data: {{ $awsSettings.data | toYaml | nindent 2 }} */}}
+{{- /**/}}
+{{- /* {{- end }} */}}
 
 ---
 
@@ -178,19 +178,19 @@ spec:
             - name: ENABLE_NODEPOOLS
               value: {{.Values.operators.agentOperator.configuration.nodepools.enabled | squote }}
 
-            {{- if $hasAwsVPC }}
-            - name: AWS_VPC_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name}}
-                  key: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcId}}
-
-            - name: AWS_VPC_PUBLIC_SUBNETS
-              valueFrom:
-                secretKeyRef:
-                  name: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name}}
-                  key: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcPublicSubnets}}
-            {{- end }}
+            {{- /* {{- if $hasAwsVPC }} */}}
+            {{- /* - name: AWS_VPC_ID */}}
+            {{- /*   valueFrom: */}}
+            {{- /*     secretKeyRef: */}}
+            {{- /*       name: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name}} */}}
+            {{- /*       key: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcId}} */}}
+            {{- /**/}}
+            {{- /* - name: AWS_VPC_PUBLIC_SUBNETS */}}
+            {{- /*   valueFrom: */}}
+            {{- /*     secretKeyRef: */}}
+            {{- /*       name: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name}} */}}
+            {{- /*       key: {{.Values.operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcPublicSubnets}} */}}
+            {{- /* {{- end }} */}}
 
             - name: KLOUDLITE_RELEASE
               value: {{include "image-tag" .}}
@@ -207,6 +207,9 @@ spec:
 
             - name: DEFAULT_INGRESS_CLASS
               value: "{{.Values.helmCharts.ingressNginx.configuration.ingressClassName}}"
+
+            - name: CERTIFICATE_NAMESPACE
+              value: {{.Release.Namespace}}
 
             {{- /* for buildrun */}}
             - name: BUILD_NAMESPACE

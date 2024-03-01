@@ -104,6 +104,8 @@ helmCharts:
     name: "kloudlite-addons"
     configuration:
       chartVersion: ""
+      nodeSelector: {}
+      tolerations: {}
 
   ingressNginx:
     enabled: true
