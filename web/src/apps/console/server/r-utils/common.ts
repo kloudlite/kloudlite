@@ -116,7 +116,6 @@ export const parseFromAnn = (resource: parseFromAnnResource, key: string) =>
 
 export const validateClusterCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
-    case 'do':
     case 'aws':
     case 'azure':
     case 'gcp':
@@ -128,7 +127,6 @@ export const validateClusterCloudProvider = (v: string): CloudProvider => {
 
 export const validateCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
-    case 'do':
     case 'aws':
     case 'azure':
     case 'gcp':
