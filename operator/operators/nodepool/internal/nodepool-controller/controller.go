@@ -419,8 +419,8 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 	case clustersv1.AWSPoolTypeEC2:
 		{
 			ec2Nodepools[obj.Name] = map[string]any{
-				// "image_id":             obj.Spec.AWS.ImageId,
-				// "image_ssh_username":   obj.Spec.AWS.ImageSSHUsername,
+				"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
+
 				"availability_zone":    obj.Spec.AWS.AvailabilityZone,
 				"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
 				"root_volume_type":     obj.Spec.AWS.RootVolumeType,
@@ -437,8 +437,8 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 			}
 
 			spotNodepools[obj.Name] = map[string]any{
-				// "image_id":                     obj.Spec.AWS.ImageId,
-				// "image_ssh_username":           obj.Spec.AWS.ImageSSHUsername,
+				"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
+
 				"availability_zone":            obj.Spec.AWS.AvailabilityZone,
 				"nvidia_gpu_enabled":           obj.Spec.AWS.NvidiaGpuEnabled,
 				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
@@ -474,15 +474,6 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 		}
 	}
 
-	if r.Env.AWSVpcId == "" || r.Env.AWSVpcPublicSubnets == "" {
-		return "", fmt.Errorf("env-var AWS_VPC_ID or AWS_VPC_PUBLIC_SUBNETS is not set, aborting nodepool job")
-	}
-
-	var publicsubnets map[string]any
-	if err := json.Unmarshal([]byte(r.Env.AWSVpcPublicSubnets), &publicsubnets); err != nil {
-		return "", err
-	}
-
 	variables := map[string]any{
 		// INFO: there will be no aws_access_key, aws_secret_key thing, as we expect this autoscaler to run on AWS instances configured with proper IAM instance profile
 		// "aws_access_key":             nil,
@@ -503,11 +494,7 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 			"kloudlite-cluster": r.Env.ClusterName,
 		},
 
-		"vpc": map[string]any{
-			"vpc_id":                r.Env.AWSVpcId,
-			"vpc_public_subnet_ids": publicsubnets,
-		},
-
+		"vpc_id":            obj.Spec.AWS.VPCId,
 		"kloudlite_release": r.Env.KloudliteRelease,
 	}
 
@@ -547,7 +534,6 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 	case ct.CloudProviderAWS:
 		return r.toAWSVarfileJson(obj, nodesMap)
 	default:
-		// accessKey, secretKey, err := r.getAccessAndSecretKey(ctx, obj)
 		return "", fmt.Errorf("unsupported cloud provider: %s", obj.Spec.CloudProvider)
 	}
 }
