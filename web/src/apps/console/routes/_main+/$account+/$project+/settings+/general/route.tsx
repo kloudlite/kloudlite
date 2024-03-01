@@ -8,7 +8,6 @@ import {
   Box,
   DeleteContainer,
 } from '~/console/components/common-console-components';
-import SubNavAction from '~/console/components/sub-nav-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProject } from '~/console/server/gql/queries/project-queries';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';

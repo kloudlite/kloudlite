@@ -31,12 +31,7 @@ import HandleManagedResources from './handle-managed-resource';
 const RESOURCE_NAME = 'managed resource';
 type BaseType = ExtractNodeType<IManagedResources>;
 
-const parseItem = (item: BaseType, templates: IMSvTemplates) => {
-  // const template = getManagedTemplate({
-  //   templates,
-  //   kind: item.spec?.msvcSpec?.serviceTemplate.kind || '',
-  //   apiVersion: item.spec?.msvcSpec?.serviceTemplate.apiVersion || '',
-  // });
+const parseItem = (item: BaseType) => {
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -86,15 +81,14 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
 
 interface IResource {
   items: BaseType[];
-  templates: IMSvTemplates;
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], templates = [], onAction }: IResource) => {
+const GridView = ({ items = [], onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item, templates);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -127,11 +121,11 @@ const GridView = ({ items = [], templates = [], onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], templates = [], onAction }: IResource) => {
+const ListView = ({ items = [], onAction }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item, templates);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
@@ -185,7 +179,6 @@ const ManagedResourceResources = ({
 
   const props: IResource = {
     items,
-    templates,
     onAction: ({ action, item }) => {
       switch (action) {
         case 'delete':

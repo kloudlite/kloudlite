@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
-import { useParams } from '@remix-run/react';
-import { useEffect, useRef, useState } from 'react';
+import { useOutletContext, useParams } from '@remix-run/react';
+import { useEffect, useRef } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import {
@@ -20,6 +20,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useAppend, useMapper } from '~/components/utils';
+import { IAppContext } from '../app+/$app+/_layout';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
 
@@ -29,9 +30,8 @@ const Root = (props: IDialog) => {
   const reloadPage = useReload();
 
   const { project: projectName, environment: envName } = useParams();
-  const [selectedDomains, setSelectedDomains] = useState<
-    { label: string; value: string }[]
-  >([]);
+
+  const { cluster } = useOutletContext<IAppContext>();
 
   const {
     data,
@@ -45,32 +45,27 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-          name: parseName(props.data),
-          displayName: props.data.displayName,
-          domains: [],
-          isNameError: false,
-        }
+            name: parseName(props.data),
+            displayName: props.data.displayName,
+            domains: [],
+            isNameError: false,
+          }
         : {
-          name: '',
-          displayName: '',
-          domains: [],
-          isNameError: false,
-        },
+            name: '',
+            displayName: '',
+            domains: [],
+            isNameError: false,
+          },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
         name: Yup.string().required(),
         domains: Yup.array().test('required', 'domain is required', (val) => {
           return val && val?.length > 0;
         }),
-        // .test('is-valid', 'invalid domain names', (val) => {
-        //   console.log('vals', val);
-
-        //   return val?.every((v) => v.endsWith('.com'));
-        // }),
       }),
 
       onSubmit: async (val) => {
-        if (!projectName || !envName || selectedDomains?.length === 0) {
+        if (!projectName || !envName || val.domains.length === 0) {
           throw new Error('Project, Environment and Domain is required!.');
         }
         try {
@@ -84,7 +79,7 @@ const Root = (props: IDialog) => {
                   name: val.name,
                 },
                 spec: {
-                  domains: selectedDomains.map((sd) => sd.value),
+                  domains: val.domains,
                   https: {
                     enabled: true,
                   },
@@ -106,7 +101,7 @@ const Root = (props: IDialog) => {
                 },
                 spec: {
                   ...props.data.spec,
-                  domains: selectedDomains.map((sd) => sd.value),
+                  domains: val.domains,
                   https: {
                     enabled: true,
                   },
@@ -136,20 +131,17 @@ const Root = (props: IDialog) => {
     domains,
     isUpdate
       ? props.data.spec.domains
-        .filter((d) => !domains.find((f) => f.value === d))
-        .map((d) => ({ label: d, value: d }))
+          .filter((d) => !domains.find((f) => f.value === d))
+          .map((d) => ({ label: d, value: d }))
       : []
   );
 
-  console.log(combinedDomains);
-
   useEffect(() => {
     if (isUpdate) {
-      const d = combinedDomains.filter((d) =>
-        props.data.spec.domains.includes(d.value)
-      );
-      setSelectedDomains(d);
-      handleChange('domains')(dummyEvent([...d.map((v) => v.value)]));
+      const d = combinedDomains
+        .filter((d) => props.data.spec.domains.includes(d.value))
+        .map((x) => x.value);
+      handleChange('domains')(dummyEvent(d));
     }
   }, [data]);
 
@@ -181,16 +173,22 @@ const Root = (props: IDialog) => {
           nameErrorLabel="isNameError"
           isUpdate={isUpdate}
         />
+
+        <div className="flex flex-col gap-md">
+          <span className="bodyMd-medium text-text-default">Cluster DNS</span>
+          <span className="bodyMd text-text-soft">
+            {cluster.spec.publicDNSHost}
+          </span>
+        </div>
         <Select
           creatable
           size="lg"
           label="Domains"
           multiple
-          value={selectedDomains}
+          value={values.domains}
           options={async () => [...combinedDomains]}
-          onChange={(val) => {
-            setSelectedDomains(val);
-            handleChange('domains')(dummyEvent([...val.map((v) => v.value)]));
+          onChange={(val, v) => {
+            handleChange('domains')(dummyEvent(v));
           }}
           error={!!errors.domains || !!domainLoadingError}
           message={

@@ -1,7 +1,7 @@
-import { ArrowLeft } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
+import { ArrowLeft } from '~/console/components/icons';
 
 type ITitleSection = {
   title: ReactNode;

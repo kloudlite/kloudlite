@@ -16,7 +16,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { memo, useState } from 'react';
+import { useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { HighlightJsLogs } from 'react-highlightjs-logs';
 import { yamlDump } from '~/console/components/diff-viewer';
@@ -32,13 +32,13 @@ import AnimateHide from '~/components/atoms/animate-hide';
 import { ISetState } from '~/console/page-components/app-states';
 import { Button } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
+import LogComp from '~/root/lib/client/components/logger';
 import HandleNodePool from './handle-nodepool';
 import {
   findNodePlanWithCategory,
   findNodePlanWithSpec,
 } from './nodepool-utils';
 import { IAccountContext } from '../../../_layout';
-import LogComp from '~/root/lib/client/components/logger';
 
 const RESOURCE_NAME = 'nodepool';
 type BaseType = ExtractNodeType<INodepools>;
@@ -186,7 +186,6 @@ const ListDetail = (
           </div>
         );
       case 'azure':
-      case 'do':
       case 'gcp':
       default:
         return null;

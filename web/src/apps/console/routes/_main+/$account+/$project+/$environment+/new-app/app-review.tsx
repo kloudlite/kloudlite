@@ -1,6 +1,6 @@
-import { ArrowLeft, ArrowRight, PencilLine } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { useAppState } from '~/console/page-components/app-states';
@@ -11,34 +11,8 @@ import { handleError } from '~/root/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
+import { ReviewComponent } from '~/console/components/commons';
 
-interface IReviewComponent {
-  title: string;
-  children: ReactNode;
-  onEdit: () => void;
-}
-export const ReviewComponent = ({
-  title = '',
-  children,
-  onEdit,
-}: IReviewComponent) => {
-  return (
-    <div className="flex flex-col gap-2xl pb-3xl">
-      <div className="flex flex-row items-center">
-        <span className="text-text-soft bodyMd flex-1">{title}</span>
-        <button
-          type="button"
-          aria-label="edit"
-          className="text-icon-soft"
-          onClick={onEdit}
-        >
-          <PencilLine size={16} />
-        </button>
-      </div>
-      {children}
-    </div>
-  );
-};
 const AppReview = () => {
   const { app, setPage, resetState } = useAppState();
 

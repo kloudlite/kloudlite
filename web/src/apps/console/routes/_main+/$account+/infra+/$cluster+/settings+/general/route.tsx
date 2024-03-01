@@ -12,7 +12,6 @@ import {
   DeleteContainer,
 } from '~/console/components/common-console-components';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import SubNavAction from '~/console/components/sub-nav-action';
 import { awsRegions } from '~/console/dummy/consts';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ICluster } from '~/console/server/gql/queries/cluster-queries';
@@ -22,7 +21,6 @@ import {
 } from '~/console/server/gql/saved-queries';
 import {
   ExtractNodeType,
-  ensureResource,
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
@@ -211,7 +209,7 @@ const Layout = ({
                 label="Cloud Provider"
                 placeholder="Select cloud provider"
                 disabled
-                value={defaultProvider}
+                value={defaultProvider?.value}
                 options={async () => providerSecrets}
               />
             </div>
@@ -220,11 +218,7 @@ const Layout = ({
                 disabled
                 label="Region"
                 placeholder="Select region"
-                value={{
-                  value: defaultRegion?.Name || '',
-                  label: defaultRegion?.Name || '',
-                  region: defaultRegion as any,
-                }}
+                value={defaultRegion?.Name}
                 options={async () =>
                   mapper(awsRegions, (v) => {
                     return {

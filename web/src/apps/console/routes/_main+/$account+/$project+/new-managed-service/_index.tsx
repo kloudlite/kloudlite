@@ -22,8 +22,8 @@ import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
+import { ReviewComponent } from '~/console/components/commons';
 import { IProjectContext } from '../_layout';
-import { ReviewComponent } from '../$environment+/new-app/app-review';
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
   return (
@@ -189,11 +189,7 @@ const TemplateView = ({
         label="Template"
         size="lg"
         placeholder="Select templates"
-        value={
-          values.selectedTemplate
-            ? { label: '', value: values.selectedTemplate?.template.name || '' }
-            : undefined
-        }
+        value={values.selectedTemplate?.template.name}
         valueRender={valueRender}
         searchable
         error={!!errors.selectedTemplate}

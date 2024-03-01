@@ -11,6 +11,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import Tools from './tools';
 import HelmChartResources from './helm-chart-resources';
 import HandleHelmChart from './handle-helm-chart';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = (ctx: IRemixCtx) => {
   const { cluster } = ctx.params;
@@ -36,7 +37,12 @@ const HelmCharts = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+          data={promise}
+          skeletonData={{
+            helmChartData: fake.ConsoleListHelmChartQuery.infra_listHelmReleases as any,
+          }}
+      >
         {({ helmChartData }) => {
           const helmCharts = parseNodes(helmChartData);
 

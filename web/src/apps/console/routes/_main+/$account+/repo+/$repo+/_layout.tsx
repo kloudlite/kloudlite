@@ -1,4 +1,10 @@
-import { Link, Outlet, useOutletContext, useParams } from '@remix-run/react';
+import {
+  Link,
+  Outlet,
+  useLoaderData,
+  useOutletContext,
+  useParams,
+} from '@remix-run/react';
 import {
   ChevronRight,
   GearSix,
@@ -9,10 +15,19 @@ import {
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 
-import { IProjectContext } from '../../$project+/_layout';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import logger from '~/root/lib/client/helpers/log';
+import { ILoginUrls, ILogins } from '~/console/server/gql/queries/git-queries';
+import { IPackageContext } from '~/console/routes/_main+/$account+/packages+/_layout';
 
+export interface IRepoContext extends IPackageContext {
+  logins: ILogins;
+  loginUrls: ILoginUrls;
+}
 const LocalBreadcrum = () => {
   const { repo, account } = useParams();
+  const repoName = atob(repo || '');
   return (
     <div className="flex flex-row items-center">
       <Breadcrum.Button
@@ -29,9 +44,9 @@ const LocalBreadcrum = () => {
         }
       />
       <Breadcrum.Button
-        to={`/${account}/repo/${repo}`}
+        to={`/${account}/repo/${repoName}`}
         LinkComponent={Link}
-        content={<span>{repo}</span>}
+        content={<span>{repoName}</span>}
       />
     </div>
   );
@@ -95,9 +110,40 @@ export const handle = () => {
   };
 };
 
+export const loader = async (ctx: IRemixCtx) => {
+  try {
+    const { data, errors } = await GQLServerHandler(ctx.request).getLogins({});
+
+    if (errors) {
+      throw errors[0];
+    }
+
+    const { data: e, errors: dErrors } = await GQLServerHandler(
+      ctx.request
+    ).loginUrls({});
+
+    if (dErrors) {
+      throw dErrors[0];
+    }
+
+    return {
+      loginUrls: e,
+      logins: data,
+    };
+  } catch (err) {
+    logger.error(err);
+  }
+
+  return {
+    logins: {},
+    loginUrls: {},
+  };
+};
+
 const Repo = () => {
-  const rootContext = useOutletContext<IProjectContext>();
-  return <Outlet context={{ ...rootContext }} />;
+  const rootContext = useOutletContext<IPackageContext>();
+  const { logins, loginUrls } = useLoaderData<typeof loader>();
+  return <Outlet context={{ ...rootContext, logins, loginUrls }} />;
 };
 
 export default Repo;

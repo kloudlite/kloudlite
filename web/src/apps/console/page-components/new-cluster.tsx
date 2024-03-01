@@ -2,7 +2,6 @@ import { ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import { mapper, useMapper } from '~/components/utils';
@@ -24,22 +23,22 @@ import {
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { NameIdView } from '../components/name-id-view';
-import { ReviewComponent } from '../routes/_main+/$account+/$project+/$environment+/new-app/app-review';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '../components/multi-step-progress';
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
+import { ReviewComponent } from '../components/commons';
 
 type props =
   | {
-    providerSecrets: IProviderSecrets;
-    cloudProvider?: IProviderSecret;
-  }
+      providerSecrets: IProviderSecrets;
+      cloudProvider?: IProviderSecret;
+    }
   | {
-    providerSecrets?: IProviderSecrets;
-    cloudProvider: IProviderSecret;
-  };
+      providerSecrets?: IProviderSecrets;
+      cloudProvider: IProviderSecret;
+    };
 
 export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
@@ -76,11 +75,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const [selectedProvider, setSelectedProvider] = useState<
     | {
-      label: string;
-      value: string;
-      provider: ExtractNodeType<IProviderSecrets>;
-      render: () => JSX.Element;
-    }
+        label: string;
+        value: string;
+        provider: ExtractNodeType<IProviderSecrets>;
+        render: () => JSX.Element;
+      }
     | undefined
   >(options.length === 1 ? options[0] : undefined);
 
@@ -196,17 +195,13 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 label="Cloud Provider"
                 size="lg"
                 placeholder="Select cloud provider"
-                value={selectedProvider}
+                value={values.credentialsRef}
                 options={async () => options}
-                onChange={(value) => {
-                  handleChange('credentialsRef')({
-                    target: { value: parseName(value.provider) },
-                  });
-                  handleChange('cloudProvider')({
-                    target: {
-                      value: value.provider?.cloudProviderName || '',
-                    },
-                  });
+                onChange={(value, v) => {
+                  handleChange('credentialsRef')(dummyEvent(v));
+                  handleChange('cloudProvider')(
+                    dummyEvent(value.provider?.cloudProviderName || '')
+                  );
                   setSelectedProvider(value);
                 }}
               />
@@ -215,11 +210,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               label="Region"
               size="lg"
               placeholder="Select region"
-              value={{
-                label: selectedRegion?.Name || '',
-                value: selectedRegion?.Name || '',
-                region: selectedRegion,
-              }}
+              value={selectedRegion?.Name}
               options={async () =>
                 mapper(awsRegions, (v) => {
                   return {
@@ -239,17 +230,14 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               label="Availabity"
               size="lg"
               placeholder="Select availability mode"
-              value={selectedAvailabilityMode}
+              value={values.availabilityMode}
               error={!!errors.availabilityMode}
               message={
                 errors.availabilityMode ? 'Availability mode is required' : null
               }
               options={async () => constDatas.availabilityModes}
-              onChange={(availabilityMode) => {
-                handleChange('availabilityMode')(
-                  dummyEvent(availabilityMode.value)
-                );
-                setSelectedAvailabilityMode(availabilityMode);
+              onChange={(_, v) => {
+                handleChange('availabilityMode')(dummyEvent(v));
               }}
             />
           </div>
@@ -295,11 +283,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         {...(isOnboarding
           ? {}
           : {
-            backButton: {
-              content: 'Back to clusters',
-              to: rootUrl,
-            },
-          })}
+              backButton: {
+                content: 'Back to clusters',
+                to: rootUrl,
+              },
+            })}
       >
         <MultiStepProgress.Root
           noJump={(step) => isOnboarding || !(step < currentStep)}

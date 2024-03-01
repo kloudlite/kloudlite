@@ -34,7 +34,7 @@ import MultiStepProgressWrapper from '~/console/components/multi-step-progress-w
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
-import { ReviewComponent } from '../new-app/app-review';
+import { ReviewComponent } from '~/console/components/commons';
 import { IProjectContext } from '../../_layout';
 
 export const loader = (ctx: IRemixCtx) => {
@@ -251,7 +251,7 @@ const TemplateView = ({
         label="Service"
         size="lg"
         placeholder="Select service"
-        value={{ label: '', value: values.selectedService?.value || '' }}
+        value={values.selectedService?.value}
         searchable
         onChange={(val) => {
           handleChange('selectedService')(dummyEvent(val));
@@ -272,11 +272,7 @@ const TemplateView = ({
         label="Resource type"
         size="lg"
         placeholder="Select resource type"
-        value={
-          values.selectedResource?.value
-            ? { label: '', value: values.selectedResource?.value || '' }
-            : undefined
-        }
+        value={values.selectedResource?.value}
         searchable
         onChange={(val) => {
           handleChange('selectedResource')(dummyEvent(val));

@@ -9,6 +9,7 @@ import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import Tools from './tools';
 import BackendServicesResources from './backend-services-resources';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = (ctx: IRemixCtx) => {
   const { project } = ctx.params;
@@ -40,7 +41,13 @@ const KlOperatorServices = () => {
   const { promise } = useLoaderData<typeof loader>();
 
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp
+        data={promise}
+        skeletonData={{
+          managedServices: fake.ConsoleListProjectMSvsQuery.core_listProjectManagedServices as any,
+          templates: fake.ConsoleListMSvTemplatesQuery.infra_listManagedServiceTemplates as any
+        }}
+    >
       {({ managedServices, templates: templatesData }) => {
         const backendServices = parseNodes(managedServices);
 

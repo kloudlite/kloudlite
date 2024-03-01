@@ -4,8 +4,6 @@ import { TextArea, TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { useMapper } from '~/components/utils';
 import KeyValuePair from '~/console/components/key-value-pair';
-import { NameIdView } from '~/console/components/name-id-view';
-import { TitleBox } from '~/console/components/raw-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
@@ -104,6 +102,10 @@ const BuildDetails = ({
     ref.current?.focus();
   }, [ref.current]);
 
+  useEffect(() => {
+    console.log(values.tags);
+  }, [values.tags]);
+
   return (
     <div className="flex flex-col gap-3xl">
       <TextInput
@@ -122,8 +124,11 @@ const BuildDetails = ({
         creatable
         multiple
         value={values.tags}
-        options={async () => values.tags}
-        onChange={(val) => {
+        options={async () =>
+          values.tags.map((t: string) => ({ label: t, value: t }))
+        }
+        onChange={(_, val) => {
+          console.log(val);
           handleChange('tags')(dummyEvent(val));
         }}
         error={!!errors.tags}
@@ -133,10 +138,10 @@ const BuildDetails = ({
         label="Clusters"
         placeholder="Choose a cluster"
         size="lg"
-        value={clusterData.find((cd) => cd.value === values.buildClusterName)}
+        value={values.buildClusterName}
         options={async () => clusterData}
-        onChange={(val) => {
-          handleChange('buildClusterName')(dummyEvent(val.value));
+        onChange={(_, val) => {
+          handleChange('buildClusterName')(dummyEvent(val));
         }}
         error={!!errors.buildClusterName || !!errorCluster}
         message={

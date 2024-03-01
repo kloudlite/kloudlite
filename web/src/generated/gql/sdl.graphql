@@ -814,6 +814,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
   nodePools: Map
   region: String!
   spotNodePools: Map
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
@@ -833,8 +834,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfi
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig {
   iamInstanceProfileRole: String
-  imageId: String!
-  imageSSHUsername: String!
   instanceType: String!
   nodes: Map
   nvidiaGpuEnabled: Boolean!
@@ -851,13 +850,13 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfi
   availabilityZone: String!
   ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
   iamInstanceProfileRole: String
-  imageId: String!
-  imageSSHUsername: String!
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
   rootVolumeSize: Int!
   rootVolumeType: String!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
+  vpcId: String!
+  vpcSubnetId: String!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
@@ -904,6 +903,16 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConf
   nodes: Map
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID {
+  availabilityZone: String!
+  id: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams {
+  id: String!
+  publicSubnets: [Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID!]!
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys {
   keyAccessKey: String!
   keyAWSAccountId: String!
@@ -916,6 +925,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCre
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput {
   jobName: String!
   jobNamespace: String!
+  keyAWSVPCId: String
+  keyAWSVPCPublicSubnets: String
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
   keyKubeconfig: String!
@@ -954,18 +965,9 @@ input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
-type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode {
-  cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
-  cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
-  jobName: String
-  jobNamespace: String
-  stateS3BucketFilePath: String!
-  stateS3BucketName: String!
-  stateS3BucketRegion: String!
-}
-
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps {
   availabilityZone: String!
+  kloudliteRelease: String!
   lastRecreatedAt: Date
   role: String!
 }
@@ -973,7 +975,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
-  iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
   maxCount: Int!
   minCount: Int!
   nodeLabels: Map
@@ -1008,7 +1009,7 @@ input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn {
 enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
   aws
   azure
-  do
+  digitalocean
   gcp
 }
 
@@ -1247,6 +1248,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec {
   postUninstall: String
   preInstall: String
   preUninstall: String
+  releaseName: String
   values: Map!
 }
 
@@ -2927,6 +2929,7 @@ type Mutation {
   infra_updateHelmRelease(clusterName: String!, release: HelmReleaseIn!): HelmRelease
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
+  infra_upgradeHelmKloudliteAgent(clusterName: String!): Boolean!
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
   oAuth_login(code: String!, provider: String!, state: String): Session!
 }
@@ -3222,6 +3225,7 @@ scalar ProviderDetail
 
 type Query {
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput!
+  accounts_ensureKloudliteRegistryPullSecrets(accountName: String!): Boolean!
   accounts_getAccount(accountName: String!): Account
   accounts_getAccountMembership(accountName: String!): AccountMembership
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation
