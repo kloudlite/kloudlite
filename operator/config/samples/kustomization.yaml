@@ -89,4 +89,5 @@ resources:
 - wireguard_v1_dns.yaml
 - crds_v1_projectmanagedservice.yaml
 - crds_v1_clustermanagedservice.yaml
+- clusters_v1_awsvpc.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

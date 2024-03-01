@@ -149,7 +149,7 @@ func FilterObservabilityAnnotations(ann map[string]string) map[string]string {
 	return m
 }
 
-func DeleteAndWait(ctx context.Context, logger logging.Logger, kcli client.Client, resources ...client.Object) error {
+func DeleteAndWait[T client.Object](ctx context.Context, logger logging.Logger, kcli client.Client, resources ...T) error {
 	deletionStatus := make(map[string]bool)
 
 	for i := range resources {

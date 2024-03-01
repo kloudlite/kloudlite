@@ -34,6 +34,7 @@
             # k9s
             kubectl
             kubernetes-helm
+            velero
 
             # grpc tools
             protobuf

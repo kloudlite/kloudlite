@@ -67,16 +67,17 @@ spec:
                     properties:
                       iamInstanceProfileRole:
                         type: string
-                      imageId:
-                        type: string
-                      imageSSHUsername:
-                        type: string
                       instanceType:
+                        description: ImageId                string                     `json:"imageId"
+                          graphql:"noinput"` ImageSSHUsername       string                     `json:"imageSSHUsername"
+                          graphql:"noinput"`
                         type: string
                       nodes:
                         additionalProperties:
                           properties:
                             availabilityZone:
+                              type: string
+                            kloudliteRelease:
                               type: string
                             lastRecreatedAt:
                               format: date-time
@@ -88,6 +89,7 @@ spec:
                               type: string
                           required:
                           - availabilityZone
+                          - kloudliteRelease
                           - role
                           type: object
                         type: object
@@ -98,8 +100,6 @@ spec:
                       rootVolumeType:
                         type: string
                     required:
-                    - imageId
-                    - imageSSHUsername
                     - instanceType
                     - nvidiaGpuEnabled
                     - rootVolumeSize
@@ -123,9 +123,6 @@ spec:
                       type: object
                     type: object
                   region:
-                    description: AWSAccountId                 string                     `json:"awsAccountId"
-                      graphql:"noinput"` AssumeRoleParamExternalIdRef *common_types.SecretKeyRef
-                      `json:"awsAssumeRoleParamExternalIdRef,omitempty" graphql:"noinput"`
                     type: string
                   spotNodePools:
                     additionalProperties:
@@ -181,6 +178,26 @@ spec:
                       required:
                       - spotFleetTaggingRoleName
                       type: object
+                    type: object
+                  vpc:
+                    properties:
+                      id:
+                        type: string
+                      publicSubnets:
+                        items:
+                          properties:
+                            availabilityZone:
+                              type: string
+                            id:
+                              type: string
+                          required:
+                          - availabilityZone
+                          - id
+                          type: object
+                        type: array
+                    required:
+                    - id
+                    - publicSubnets
                     type: object
                 required:
                 - region
@@ -257,6 +274,10 @@ spec:
                     type: string
                   jobNamespace:
                     type: string
+                  keyAWSVPCId:
+                    type: string
+                  keyAWSVPCPublicSubnets:
+                    type: string
                   keyK3sAgentJoinToken:
                     type: string
                   keyK3sServerJoinToken:
@@ -298,7 +319,6 @@ spec:
                       format: int64
                       type: integer
                     message:
-                      description: State      State  `json:"state"`
                       type: string
                     status:
                       type: boolean
