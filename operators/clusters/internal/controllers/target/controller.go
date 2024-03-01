@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	common_types "github.com/kloudlite/operator/apis/common-types"
 	ct "github.com/kloudlite/operator/apis/common-types"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -78,9 +77,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// if req.Object.Namespace != "kl-account-dev-team" || req.Object.Name != "testing-nxtcoder17" {
-	// 	return ctrl.Result{}, nil
-	// }
+	if req.Object.Namespace != "kl-account-dev-team" || req.Object.Name != "testing-nxtcoder17" {
+		return ctrl.Result{}, nil
+	}
 
 	req.PreReconcile()
 	defer req.PostReconcile()
@@ -272,7 +271,7 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 	}
 
 	switch obj.Spec.CloudProvider {
-	case common_types.CloudProviderAWS:
+	case ct.CloudProviderAWS:
 		{
 			if obj.Spec.AWS.VPC == nil {
 				namespace := obj.Namespace
@@ -321,7 +320,7 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 				vpcPublicSubnets := make([]clustersv1.AwsSubnetWithID, 0, len(m))
 				for _, v := range m {
 					vpcPublicSubnets = append(vpcPublicSubnets, clustersv1.AwsSubnetWithID{
-						AvailabilityZone: clustersv1.AwsAZ(v["availability_zone"]),
+						AvailabilityZone: v["availability_zone"],
 						ID:               v["id"],
 					})
 				}
@@ -374,7 +373,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 			}
 
 			isAssumeRole := providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey] == nil || providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey] == nil
-			azToSubnetId := make(map[clustersv1.AwsAZ]string, len(obj.Spec.AWS.VPC.PublicSubnets))
+			azToSubnetId := make(map[string]string, len(obj.Spec.AWS.VPC.PublicSubnets))
 			for _, v := range obj.Spec.AWS.VPC.PublicSubnets {
 				azToSubnetId[v.AvailabilityZone] = v.ID
 			}
@@ -434,11 +433,11 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 						for k, v := range obj.Spec.AWS.K3sMasters.Nodes {
 							az := v.AvailabilityZone
 							if az == "" {
-								zones, ok := clustersv1.AwsRegionToAZs[obj.Spec.AWS.Region]
+								zones, ok := clustersv1.AwsRegionToAZs[clustersv1.AwsRegion(obj.Spec.AWS.Region)]
 								if !ok {
 									continue
 								}
-								az = zones[0]
+								az = string(zones[0])
 							}
 
 							nodes[k] = map[string]any{
