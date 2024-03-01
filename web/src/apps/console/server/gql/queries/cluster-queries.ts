@@ -143,7 +143,6 @@ export const clusterQueries = (executor: IExecutor) => ({
                     instanceType
                     nodes
                     nvidiaGpuEnabled
-
                     rootVolumeSize
                     rootVolumeType
                   }

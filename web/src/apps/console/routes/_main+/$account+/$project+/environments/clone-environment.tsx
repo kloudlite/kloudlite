@@ -1,5 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import { useParams } from '@remix-run/react';
+import { Checkbox } from '~/components/atoms/checkbox';
 import { Switch } from '~/components/atoms/switch';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
@@ -85,7 +86,7 @@ const Root = (props: IDialog) => {
             handleChange={handleChange}
             nameErrorLabel="isNameError"
           />
-          <Switch
+          <Checkbox
             label="Public"
             checked={values.environmentRoutingMode}
             onChange={(val) => {

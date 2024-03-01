@@ -2,25 +2,24 @@ import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { Switch } from '~/components/atoms/switch';
+import { Checkbox } from '~/components/atoms/checkbox';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { DIALOG_TYPE } from '../utils/commons';
 import { IEnvironment } from '../server/gql/queries/environment-queries';
 import { NameIdView } from '../components/name-id-view';
 
-const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
+const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
   const { project: projectName } = useParams();
-  const project = useDataFromMatches('project', {});
 
   const [validationSchema, setValidationSchema] = useState<any>(
     Yup.object({
@@ -149,7 +148,7 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null> & {}) => {
               nameErrorLabel="isNameError"
               isUpdate={show?.type !== DIALOG_TYPE.ADD}
             />
-            <Switch
+            <Checkbox
               label="Public"
               checked={values.environmentRoutingMode}
               onChange={(val) => {

@@ -773,6 +773,11 @@ query consoleGetEnvironment($projectName: String!, $name: String!) {
     projectName
     spec {
       projectName
+      routing {
+        mode
+        privateIngressClass
+        publicIngressClass
+      }
       targetNamespace
     }
     status {

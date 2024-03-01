@@ -23,22 +23,22 @@ import {
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { NameIdView } from '../components/name-id-view';
-import { ReviewComponent } from '../routes/_main+/$account+/$project+/$environment+/new-app/app-review';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '../components/multi-step-progress';
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
+import { ReviewComponent } from '../components/commons';
 
 type props =
   | {
-    providerSecrets: IProviderSecrets;
-    cloudProvider?: IProviderSecret;
-  }
+      providerSecrets: IProviderSecrets;
+      cloudProvider?: IProviderSecret;
+    }
   | {
-    providerSecrets?: IProviderSecrets;
-    cloudProvider: IProviderSecret;
-  };
+      providerSecrets?: IProviderSecrets;
+      cloudProvider: IProviderSecret;
+    };
 
 export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
@@ -75,11 +75,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const [selectedProvider, setSelectedProvider] = useState<
     | {
-      label: string;
-      value: string;
-      provider: ExtractNodeType<IProviderSecrets>;
-      render: () => JSX.Element;
-    }
+        label: string;
+        value: string;
+        provider: ExtractNodeType<IProviderSecrets>;
+        render: () => JSX.Element;
+      }
     | undefined
   >(options.length === 1 ? options[0] : undefined);
 
@@ -283,11 +283,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         {...(isOnboarding
           ? {}
           : {
-            backButton: {
-              content: 'Back to clusters',
-              to: rootUrl,
-            },
-          })}
+              backButton: {
+                content: 'Back to clusters',
+                to: rootUrl,
+              },
+            })}
       >
         <MultiStepProgress.Root
           noJump={(step) => isOnboarding || !(step < currentStep)}

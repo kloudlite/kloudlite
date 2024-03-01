@@ -2,8 +2,10 @@ import { Outlet, useOutletContext } from '@remix-run/react';
 import SidebarLayout from '~/console/components/sidebar-layout';
 import { IAccountContext } from '../_layout';
 
+export interface IPackageContext extends IAccountContext {}
+
 const ContainerRegistry = () => {
-  const rootContext = useOutletContext<IAccountContext>();
+  const rootContext = useOutletContext<IPackageContext>();
 
   return (
     <SidebarLayout

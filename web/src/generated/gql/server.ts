@@ -2189,7 +2189,15 @@ export type ConsoleGetEnvironmentQuery = {
       name: string;
       namespace?: string;
     };
-    spec?: { projectName: string; targetNamespace?: string };
+    spec?: {
+      projectName: string;
+      targetNamespace?: string;
+      routing?: {
+        mode?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvironmentRoutingMode;
+        privateIngressClass?: string;
+        publicIngressClass?: string;
+      };
+    };
     status?: {
       checks?: any;
       isReady: boolean;

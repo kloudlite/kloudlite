@@ -32,11 +32,13 @@ import {
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { cn } from '~/components/utils';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import { IAccountContext } from '../_layout';
 
 export interface IProjectContext extends IAccountContext {
   project: IProject;
   msvtemplates: IMSvTemplates;
+  cluster: ICluster;
 }
 const iconSize = tabIconSize;
 const tabs = [
@@ -75,10 +77,10 @@ const tabs = [
 
 const Project = () => {
   const rootContext = useOutletContext<IAccountContext>();
-  const { project, msvtemplates } = useLoaderData();
+  const { project, msvtemplates, cluster } = useLoaderData();
   return (
     <SubNavDataProvider>
-      <Outlet context={{ ...rootContext, project, msvtemplates }} />
+      <Outlet context={{ ...rootContext, project, msvtemplates, cluster }} />
     </SubNavDataProvider>
   );
 };
@@ -154,6 +156,16 @@ export const loader = async (ctx: IRemixCtx) => {
       ctx.request
     ).listMSvTemplates({});
 
+    if (!data.clusterName) {
+      throw new Error('No cluster in project.');
+    }
+
+    const { data: clusterData, errors: clusterError } = await GQLServerHandler(
+      ctx.request
+    ).getCluster({
+      name: data.clusterName,
+    });
+
     if (errors) {
       throw errors[0];
     }
@@ -162,9 +174,14 @@ export const loader = async (ctx: IRemixCtx) => {
       throw msvError[0];
     }
 
+    if (clusterError) {
+      throw clusterError[0];
+    }
+
     return {
       project: data || {},
       msvtemplates: msvTemplates || {},
+      cluster: clusterData,
     };
   } catch (err) {
     logger.log(err);

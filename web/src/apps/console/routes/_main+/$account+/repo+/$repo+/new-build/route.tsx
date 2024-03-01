@@ -1,6 +1,4 @@
-import { ArrowRight } from '@jengaicons/react';
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -9,46 +7,15 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IRemixCtx } from '~/root/lib/types/common';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import logger from '~/root/lib/client/helpers/log';
 import Git from '~/console/components/git';
 import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
+import { BottomNavigation } from '~/console/components/commons';
 import ReviewBuild from './review-build';
 import BuildDetails from './build-details';
-
-export const loader = async (ctx: IRemixCtx) => {
-  try {
-    const { data, errors } = await GQLServerHandler(ctx.request).getLogins({});
-
-    if (errors) {
-      throw errors[0];
-    }
-
-    const { data: e, errors: dErrors } = await GQLServerHandler(
-      ctx.request
-    ).loginUrls({});
-
-    if (dErrors) {
-      throw dErrors[0];
-    }
-
-    return {
-      loginUrls: e,
-      logins: data,
-    };
-  } catch (err) {
-    logger.error(err);
-  }
-
-  return {
-    logins: {},
-    loginUrls: {},
-  };
-};
+import { IRepoContext } from '../_layout';
 
 const NewBuild = () => {
-  const { loginUrls, logins } = useLoaderData();
+  const { loginUrls, logins } = useOutletContext<IRepoContext>();
 
   const navigate = useNavigate();
 
@@ -121,21 +88,21 @@ const NewBuild = () => {
                 ...{
                   ...(val.advanceOptions
                     ? {
-                      buildOptions: {
-                        buildArgs: val.buildArgs,
-                        buildContexts: val.buildContexts,
-                        contextDir: val.contextDir,
-                        dockerfileContent: val.dockerfileContent,
-                        dockerfilePath: val.dockerfilePath,
-                        targetPlatforms: [],
-                      },
-                    }
+                        buildOptions: {
+                          buildArgs: val.buildArgs,
+                          buildContexts: val.buildContexts,
+                          contextDir: val.contextDir,
+                          dockerfileContent: val.dockerfileContent,
+                          dockerfilePath: val.dockerfilePath,
+                          targetPlatforms: [],
+                        },
+                      }
                     : {}),
                 },
                 registry: {
                   repo: {
                     name: val.repository || '',
-                    tags: val.tags.map((t: any) => t.value),
+                    tags: val.tags,
                   },
                 },
                 resource: {
@@ -200,13 +167,12 @@ const NewBuild = () => {
                     (values.source.provider as IGIT_PROVIDERS) || 'github',
                 }}
               />
-              <Button
-                content="Next"
-                variant="primary"
-                type="submit"
-                size="lg"
-                disabled={!values.source.branch}
-                suffix={<ArrowRight />}
+              <BottomNavigation
+                primaryButton={{
+                  type: 'submit',
+                  disabled: !values.source.branch,
+                  content: 'Next',
+                }}
               />
             </div>
           </MultiStepProgress.Step>
@@ -217,25 +183,24 @@ const NewBuild = () => {
                 values={values}
                 handleChange={handleChange}
               />
-              <Button
-                content="Next"
-                variant="primary"
-                type="submit"
-                size="lg"
-                suffix={<ArrowRight />}
+              <BottomNavigation
+                primaryButton={{
+                  type: 'submit',
+                  disabled: !values.source.branch,
+                  content: 'Next',
+                }}
               />
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step label="Review" step={3}>
             <div className="flex flex-col gap-3xl">
               <ReviewBuild values={values} onEdit={(step) => jumpStep(step)} />
-              <Button
-                content="Create"
-                variant="primary"
-                type="submit"
-                size="lg"
-                loading={isLoading}
-                suffix={<ArrowRight />}
+              <BottomNavigation
+                primaryButton={{
+                  type: 'submit',
+                  content: 'Create',
+                  loading: isLoading,
+                }}
               />
             </div>
           </MultiStepProgress.Step>
