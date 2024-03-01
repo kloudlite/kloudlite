@@ -35,6 +35,9 @@ type ReqData struct {
 	ReqTopic string `json:"req_topic"`
 }
 
+type Response struct{
+}
+
 func ParseReq(rt string) (*ReqData, error) {
 
 	entriesStrs := strings.Split(rt, ".")
