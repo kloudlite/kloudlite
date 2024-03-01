@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
 	iamT "github.com/kloudlite/api/apps/iam/types"
@@ -104,20 +105,15 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 	if err := validateBuild(build); err != nil {
 		return nil, errors.NewE(err)
 	}
-	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
-		Spec: func() dbv1.BuildRunSpec {
-			build.Spec.AccountName = ctx.AccountName
-			return build.Spec
-		}(),
-		Name:             build.Name,
-		BuildClusterName: build.BuildClusterName,
-		CreatedBy:        common.CreatedOrUpdatedBy{},
-		LastUpdatedBy:    common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
-		Source:           build.Source,
-		CredUser:         common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
-		ErrorMessages:    map[string]string{},
-		Status:           build.Status,
-	})
+
+	patchDoc := repos.Document{
+		fc.BuildName:             build.Name,
+		fc.BuildBuildClusterName: build.BuildClusterName,
+		fields.LastUpdatedBy:     common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		fc.BuildSource:           build.Source,
+	}
+
+	return d.buildRepo.Patch(ctx, repos.Filter{fields.Id: id}, patchDoc)
 }
 
 func (d *Impl) UpdateBuildInternal(ctx context.Context, build *entities.Build) (*entities.Build, error) {
