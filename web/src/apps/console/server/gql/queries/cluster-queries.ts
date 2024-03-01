@@ -32,7 +32,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateClusterMutation) =>
         data.infra_createCluster,
-      vars(_: ConsoleCreateClusterMutationVariables) { },
+      vars(_: ConsoleCreateClusterMutationVariables) {},
     }
   ),
   deleteCluster: executor(
@@ -44,7 +44,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteClusterMutation) =>
         data.infra_deleteCluster,
-      vars(_: ConsoleDeleteClusterMutationVariables) { },
+      vars(_: ConsoleDeleteClusterMutationVariables) {},
     }
   ),
   clustersCount: executor(
@@ -57,7 +57,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleClustersCountQuery) => data.infra_listClusters,
-      vars(_: ConsoleClustersCountQueryVariables) { },
+      vars(_: ConsoleClustersCountQueryVariables) {},
     }
   ),
 
@@ -143,7 +143,6 @@ export const clusterQueries = (executor: IExecutor) => ({
                     instanceType
                     nodes
                     nvidiaGpuEnabled
-
                     rootVolumeSize
                     rootVolumeType
                   }
@@ -171,7 +170,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListClustersQuery) => data.infra_listClusters,
-      vars(_: ConsoleListClustersQueryVariables) { },
+      vars(_: ConsoleListClustersQueryVariables) {},
     }
   ),
   getCluster: executor(
@@ -212,8 +211,6 @@ export const clusterQueries = (executor: IExecutor) => ({
             aws {
               k3sMasters {
                 iamInstanceProfileRole
-                imageId
-                imageSSHUsername
                 instanceType
                 nodes
                 nvidiaGpuEnabled
@@ -283,7 +280,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetClusterQuery) => data.infra_getCluster,
-      vars(_: ConsoleGetClusterQueryVariables) { },
+      vars(_: ConsoleGetClusterQueryVariables) {},
     }
   ),
   getKubeConfig: executor(
@@ -299,7 +296,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetKubeConfigQuery) => data.infra_getCluster,
-      vars(_: ConsoleGetClusterQueryVariables) { },
+      vars(_: ConsoleGetClusterQueryVariables) {},
     }
   ),
   updateCluster: executor(
@@ -313,7 +310,7 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateClusterMutation) =>
         data.infra_updateCluster,
-      vars(_: ConsoleUpdateClusterMutationVariables) { },
+      vars(_: ConsoleUpdateClusterMutationVariables) {},
     }
   ),
 });

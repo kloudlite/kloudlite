@@ -238,7 +238,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
   'dev' | 'HA';
 
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider =
-  'aws' | 'azure' | 'do' | 'gcp';
+  'aws' | 'azure' | 'digitalocean' | 'gcp';
 
 export type K8s__Io___Api___Core___V1__NodeSelectorOperator =
   | 'DoesNotExist'
@@ -1857,8 +1857,6 @@ export type ConsoleGetClusterQuery = {
         spotNodePools?: any;
         k3sMasters?: {
           iamInstanceProfileRole?: string;
-          imageId: string;
-          imageSSHUsername: string;
           instanceType: string;
           nodes?: any;
           nvidiaGpuEnabled: boolean;
@@ -2037,8 +2035,6 @@ export type ConsoleGetNodePoolQuery = {
       aws?: {
         availabilityZone: string;
         iamInstanceProfileRole?: string;
-        imageId: string;
-        imageSSHUsername: string;
         nvidiaGpuEnabled: boolean;
         poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType;
         rootVolumeSize: number;

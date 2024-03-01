@@ -12,12 +12,12 @@ import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { INewProjectFromAccountLoader } from '../routes/_a+/$a+/new-project';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { NameIdView } from '../components/name-id-view';
-import { ReviewComponent } from '../routes/_main+/$account+/$project+/$environment+/new-app/app-review';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '../components/multi-step-progress';
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
+import { ReviewComponent } from '../components/commons';
 
 const NewProject = () => {
   const { clustersData } = useLoaderData<INewProjectFromAccountLoader>();

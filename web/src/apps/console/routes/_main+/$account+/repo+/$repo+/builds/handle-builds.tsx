@@ -1,12 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
 import { IDialogBase } from '~/console/components/types.d';
-
-import {
-  GitBranch,
-  GithubLogoFill,
-  GitlabLogoFill,
-  PencilSimple,
-} from '@jengaicons/react';
 import { useOutletContext, useParams } from '@remix-run/react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
@@ -16,9 +9,6 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useEffect, useState } from 'react';
-import { TextArea, TextInput } from '~/components/atoms/input';
-import { Button } from '~/components/atoms/button';
-import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import Popup from '~/components/molecule/popup';
@@ -31,14 +21,12 @@ import {
 } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import KeyValuePair from '~/console/components/key-value-pair';
-import { useLog } from '~/root/lib/client/hooks/use-log';
-import { IAccountContext } from '../../../_layout';
-
-interface ISource {
-  repo: string;
-  branch: string;
-  provider: 'github' | 'gitlab';
-}
+import Git from '~/console/components/git';
+import { IGIT_PROVIDERS } from '~/console/hooks/use-git';
+import MultiStep, { useMultiStep } from '~/console/components/multi-step';
+import { TextArea, TextInput } from '~/components/atoms/input';
+import { GitDetail } from '~/console/components/commons';
+import { IRepoContext } from '../_layout';
 
 const BuildPlatforms = ({
   value,
@@ -105,18 +93,15 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
-  const { user } = useOutletContext<IAccountContext>();
+  const { loginUrls, logins } = useOutletContext<IRepoContext>();
 
-  useLog(user);
-
-  const { data: clusters, error: errorCluster } = useCustomSwr(
-    '/clusters',
-    async () => api.listClusters({})
-  );
+  const {
+    data: clusters,
+    error: errorCluster,
+    isLoading: clusterLoading,
+  } = useCustomSwr('/clusters', async () => api.listClusters({}));
 
   const clusterData = useMapper(parseNodes(clusters), (item) => {
-    console.log(errorCluster);
-
     return {
       label: item.displayName,
       value: parseName(item),
@@ -129,21 +114,7 @@ const Root = (props: IDialog) => {
     };
   });
 
-  useEffect(() => {
-    if (errorCluster) {
-      toast.error('Error loading clusters.');
-    }
-  }, [errorCluster]);
-
-  const [source, setSource] = useState<ISource | null>(null);
-
-  useEffect(() => {
-    if (isUpdate) {
-      setSource({ ...props.data.source, repo: props.data.source.repository });
-    }
-  }, [isUpdate]);
-
-  const { currentStep, onPrevious } = useMultiStep({
+  const { currentStep, onPrevious, onNext } = useMultiStep({
     defaultStep: isUpdate ? 2 : 1,
     totalSteps: 2,
   });
@@ -161,131 +132,75 @@ const Root = (props: IDialog) => {
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: isUpdate
       ? {
-        name: props.data.name,
-        tags:
-          props.data.spec.registry.repo.tags.map((t) => ({
-            label: t,
-            value: t,
-          })) || [],
-        buildClusterName: '',
-        repository: repo,
-        advanceOptions: isAdvanceOptions(props.data.spec.buildOptions),
-        ...props.data.spec.buildOptions,
-        ...(props.data.spec.buildOptions?.buildArgs || props),
-      }
-      : {
-        name: '',
-        tags: [],
-        buildClusterName: '',
-        advanceOptions: false,
-        repository: repo,
-        buildArgs: {},
-        buildContexts: {},
-        contextDir: '',
-        dockerfilePath: '',
-        dockerfileContent: '',
-      },
+          name: props.data.name,
+          source: {
+            branch: props.data.source.branch,
+            repository: props.data.source.repository,
+            provider: props.data.source.provider,
+          },
+          tags: props.data.spec.registry.repo.tags,
+          buildClusterName: props.data.buildClusterName,
+          repository: props.data.spec.registry.repo.name,
+          advanceOptions: isAdvanceOptions(props.data.spec.buildOptions),
+          ...props.data.spec.buildOptions,
+          ...(props.data.spec.buildOptions?.buildArgs || props),
+        }
+      : {},
     validationSchema: Yup.object({
-      name: Yup.string().required(),
-      buildClusterName: Yup.string().required(),
-      tags: Yup.array()
-        .required()
-        .test('is-valid', 'Tags is required', (value) => {
-          return value.length > 0;
-        }),
-      // buildArgs: Yup.object().when('advanceOptions', {
-      //   is: true,
-      //   then: (schema) =>
-      //     schema
-      //       .required()
-      //       .test('is-valid', 'Build args is required', (value) => {
-      //         return Object.keys(value).length > 0;
-      //       }),
-      // }),
-      // buildContexts: Yup.object().when('advanceOptions', {
-      //   is: true,
-      //   then: (schema) =>
-      //     schema
-      //       .required()
-      //       .test('is-valid', 'Build contexts is required', (value) => {
-      //         return Object.keys(value).length > 0;
-      //       }),
-      // }),
+      source: Yup.object()
+        .shape({
+          branch: Yup.string().required('Branch is required'),
+        })
+        .required('Branch is required'),
+      name: Yup.string().test('required', 'Name is required', (v) => {
+        return !(currentStep === 2 && !v);
+      }),
+      buildClusterName: Yup.string().test(
+        'required',
+        'Build cluster name is required',
+        (v) => {
+          return !(currentStep === 2 && !v);
+        }
+      ),
+      tags: Yup.array().test('required', 'Tags is required', (value = []) => {
+        return !(currentStep === 2 && !(value.length > 0));
+      }),
     }),
+
     onSubmit: async (val) => {
-      if (source) {
+      const submit = async () => {
         try {
-          if (!isUpdate) {
-            const { errors: e } = await api.createBuild({
-              build: {
-                name: val.name,
-                buildClusterName: val.buildClusterName,
-                source: {
-                  branch: source.branch!,
-                  repository: source.repo!,
-                  provider: source.provider!,
-                },
-                spec: {
-                  ...{
-                    ...(val.advanceOptions
-                      ? {
-                        buildOptions: {
-                          buildArgs: val.buildArgs,
-                          buildContexts: val.buildContexts,
-                          contextDir: val.contextDir,
-                          dockerfileContent: val.dockerfileContent,
-                          dockerfilePath: val.dockerfilePath,
-                          targetPlatforms: [],
-                        },
-                      }
-                      : {}),
-                  },
-                  registry: {
-                    repo: {
-                      name: val.repository || '',
-                      tags: val.tags.map((t: any) => t.value),
-                    },
-                  },
-                  resource: {
-                    cpu: 500,
-                    memoryInMb: 1000,
-                  },
-                },
-              },
-            });
-            if (e) {
-              throw e[0];
-            }
-          } else {
+          if (isUpdate) {
             const { errors: e } = await api.updateBuild({
               crUpdateBuildId: props.data.id,
               build: {
                 name: val.name,
                 buildClusterName: val.buildClusterName,
                 source: {
-                  branch: source.branch!,
-                  repository: source.repo!,
-                  provider: source.provider!,
+                  branch: val.source.branch,
+                  provider:
+                    val.source.provider === 'github' ? 'github' : 'gitlab',
+                  repository: val.source.repository,
                 },
                 spec: {
                   ...{
                     ...(val.advanceOptions
                       ? {
-                        buildOptions: {
-                          buildArgs: val.buildArgs,
-                          buildContexts: val.buildContexts,
-                          contextDir: val.contextDir,
-                          dockerfileContent: val.dockerfileContent,
-                          dockerfilePath: val.dockerfilePath,
-                          targetPlatforms: [],
-                        },
-                      }
+                          buildOptions: {
+                            buildArgs: val.buildArgs,
+                            buildContexts: val.buildContexts,
+                            contextDir: val.contextDir,
+                            dockerfileContent: val.dockerfileContent,
+                            dockerfilePath: val.dockerfilePath,
+                            targetPlatforms: [],
+                          },
+                        }
                       : {}),
                   },
                   registry: {
                     repo: {
-                      name: val.repository || '',
-                      tags: val.tags.map((t: any) => t.value),
+                      name: val.repository,
+                      tags: val.tags,
                     },
                   },
                   resource: {
@@ -308,64 +223,55 @@ const Root = (props: IDialog) => {
         } catch (err) {
           handleError(err);
         }
+      };
+      switch (currentStep) {
+        case 1:
+          onNext();
+          break;
+        case 2:
+          await submit();
+          break;
+        default:
+          break;
       }
     },
   });
-
-  const getProviderLogo = (provider: string) => {
-    const logoSize = 24;
-    switch (provider) {
-      case 'github':
-        return <GithubLogoFill size={logoSize} />;
-      case 'gitlab':
-        return <GitlabLogoFill size={logoSize} />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content>
         <MultiStep.Root currentStep={currentStep}>
           <MultiStep.Step step={1}>
-            <div className="p-xl !pt-0">
-              {/* <GitRepoSelector
-                onImport={(val) => {
-                  setSource({ ...val, branch: val.branch! });
-                  onNext();
-                }}
-              /> */}
-            </div>
+            <Git
+              logins={logins}
+              loginUrls={loginUrls}
+              error={errors?.['source.branch'] || ''}
+              onChange={(git) => {
+                handleChange('source')(
+                  dummyEvent({
+                    branch: git.branch,
+                    repository: git.repo,
+                    provider: git.provider,
+                  })
+                );
+              }}
+              value={{
+                branch: values.source.branch,
+                repo: values.source.repository,
+                provider:
+                  (values.source.provider as IGIT_PROVIDERS) || 'github',
+              }}
+            />
           </MultiStep.Step>
           <MultiStep.Step step={2}>
             <div className="flex flex-col gap-2xl">
+              <GitDetail
+                provider={values.source.provider}
+                repository={values.source.repository}
+                branch={values.source.branch}
+                onEdit={onPrevious}
+              />
               <div className="flex flex-col gap-xl rounded border border-border-default p-xl">
-                <div className="flex flex-row gap-3xl items-center justify-between">
-                  <div className="flex flex-row items-center gap-lg">
-                    {getProviderLogo(source?.provider || '')}{' '}
-                    <div className="bodyMd-medium">{source?.repo}</div>
-                  </div>
-                  <div className="flex flex-row items-center gap-lg">
-                    <GitBranch size={16} />{' '}
-                    <div className="bodyMd-medium">{source?.branch}</div>
-                  </div>
-
-                  <div className="self-end pt-lg">
-                    <Button
-                      content="Change"
-                      variant="basic"
-                      prefix={<PencilSimple />}
-                      size="sm"
-                      onClick={() => {
-                        onPrevious();
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-xl rounded border border-border-default p-xl">
-                <div className="headingXl text-text-default">Target</div>
                 <div className="flex flex-col gap-xl">
                   <TextInput
                     label="Name"
@@ -380,8 +286,10 @@ const Root = (props: IDialog) => {
                     creatable
                     multiple
                     value={values.tags}
-                    options={async () => values.tags}
-                    onChange={(val) => {
+                    options={async () =>
+                      values.tags.map((t: string) => ({ label: t, value: t }))
+                    }
+                    onChange={(_, val) => {
                       handleChange('tags')(dummyEvent(val));
                     }}
                     error={!!errors.tags}
@@ -396,8 +304,15 @@ const Root = (props: IDialog) => {
                     onChange={(_, val) => {
                       handleChange('buildClusterName')(dummyEvent(val));
                     }}
-                    error={!!errors.buildClusterName}
-                    message={errors.buildClusterName}
+                    error={!!errors.buildClusterName || !!errorCluster}
+                    message={
+                      errors.buildClusterName
+                        ? errors.buildClusterName
+                        : errorCluster
+                        ? 'Error loading clusters.'
+                        : ''
+                    }
+                    loading={clusterLoading}
                   />
 
                   <Checkbox
@@ -463,13 +378,11 @@ const Root = (props: IDialog) => {
       </Popup.Content>
       <Popup.Footer>
         <Popup.Button closable content="Cancel" variant="basic" />
-        {currentStep > 1 && (
-          <Popup.Button
-            type="submit"
-            content={!isUpdate ? 'Create' : 'Update'}
-            variant="primary"
-          />
-        )}
+        <Popup.Button
+          type="submit"
+          content={currentStep === 1 ? 'Continue' : 'Update'}
+          variant="primary"
+        />
       </Popup.Footer>
     </Popup.Form>
   );

@@ -16,7 +16,15 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '../server/r-utils/common';
-import { ArrowLeft, ArrowRight } from './icons';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Pencil,
+  GitBranchFill,
+  GitlabLogoFill,
+  GithubLogoFill,
+} from './icons';
+import { IGIT_PROVIDERS } from '../hooks/use-git';
 
 export const BlackProdLogo = ({ size = 16 }) => {
   return <ProdLogo color="currentColor" size={size} />;
@@ -265,5 +273,76 @@ export const BottomNavigation = ({
         />
       )}
     </div>
+  );
+};
+
+interface IReviewComponent {
+  title: string;
+  children: ReactNode;
+  onEdit: () => void;
+  canEdit?: boolean;
+}
+export const ReviewComponent = ({
+  title = '',
+  children,
+  onEdit,
+  canEdit = true,
+}: IReviewComponent) => {
+  return (
+    <div className="flex flex-col gap-2xl pb-3xl">
+      <div className="flex flex-row items-center">
+        <span className="text-text-soft bodyMd flex-1">{title}</span>
+        {canEdit && (
+          <button
+            type="button"
+            aria-label="edit"
+            className="text-icon-soft"
+            onClick={onEdit}
+          >
+            <Pencil size={16} />
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+};
+
+export const GitDetail = ({
+  provider,
+  repository,
+  branch,
+  onEdit,
+}: {
+  provider: IGIT_PROVIDERS;
+  repository: string;
+  branch: string;
+  onEdit?: (step?: number) => void;
+}) => {
+  const gitIconSize = 16;
+  return (
+    <ReviewComponent title="Source details" onEdit={() => onEdit?.(1)}>
+      <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+        <div className="flex flex-col gap-md">
+          <div className="bodyMd-medium text-text-default">Source</div>
+          <div className="flex flex-row items-center gap-3xl bodySm">
+            <div className="flex flex-row items-center gap-xl">
+              {provider === 'github' ? (
+                <GithubLogoFill size={gitIconSize} />
+              ) : (
+                <GitlabLogoFill size={gitIconSize} />
+              )}
+              <span>
+                {repository.replace('https://', '').replace('.git', '')}
+              </span>
+            </div>
+            <div className="flex flex-row items-center gap-xl">
+              <GitBranchFill size={gitIconSize} />
+              <span>{branch}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ReviewComponent>
   );
 };

@@ -34,7 +34,7 @@ import MultiStepProgressWrapper from '~/console/components/multi-step-progress-w
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
-import { ReviewComponent } from '../new-app/app-review';
+import { ReviewComponent } from '~/console/components/commons';
 import { IProjectContext } from '../../_layout';
 
 export const loader = (ctx: IRemixCtx) => {

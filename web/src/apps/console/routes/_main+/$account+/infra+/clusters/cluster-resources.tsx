@@ -38,7 +38,6 @@ const getProvider = (item: ExtractNodeType<IClusters>) => {
           <span>({item.spec.aws?.region})</span>
         </div>
       );
-    case 'do':
     case 'gcp':
     case 'azure':
       return (

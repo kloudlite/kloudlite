@@ -3,7 +3,7 @@ import {
   GithubLogoFill,
   GitlabLogoFill,
 } from '@jengaicons/react';
-import { ReviewComponent } from '../../../$project+/$environment+/new-app/app-review';
+import { ReviewComponent } from '~/console/components/commons';
 
 interface IReviewBuild {
   name: string;
