@@ -111,30 +111,25 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 
 				if err := jc.Consume(
 					func(m *msg_types.ConsumeMsg) error {
-						if ctx.Connection != nil {
-							var data logs.Response
-							var resp types.Response[logs.Response]
-							if err := json.Unmarshal(m.Payload, &data); err != nil {
-								return err
-							}
 
-							resp.Type = types.MessageTypeResponse
-							resp.Id = msg.Id
-							sp := strings.Split(m.Subject, ".")
+						var data logs.Response
+						var resp types.Response[logs.Response]
+						if err := json.Unmarshal(m.Payload, &data); err != nil {
+							return err
+						}
 
-							data.PodName = sp[len(sp)-2]
-							data.ContainerName = sp[len(sp)-1]
+						resp.Type = types.MessageTypeResponse
+						resp.Id = msg.Id
+						sp := strings.Split(m.Subject, ".")
 
-							resp.Data = data
-							resp.For = types.ForLogs
+						data.PodName = sp[len(sp)-2]
+						data.ContainerName = sp[len(sp)-1]
 
-							ctx.Mutex.Lock()
-							if ctx.Connection != nil {
-								if err := ctx.Connection.WriteJSON(resp); err != nil {
-									log.Warnf("websocket write: %w", err)
-								}
-							}
-							ctx.Mutex.Unlock()
+						resp.Data = data
+						resp.For = types.ForLogs
+
+						if err := ctx.WriteJSON(resp); err != nil {
+							log.Warnf("websocket write: %w", err)
 						}
 
 						return nil

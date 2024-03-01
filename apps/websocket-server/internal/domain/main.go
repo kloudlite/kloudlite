@@ -27,6 +27,19 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 	logsSubs := &logs.LogsSubsMap{}
 	rWatchSubs := &res_watch.ResWatchSubsMap{}
 
+	write := func(msg interface{}) error {
+		if c != nil {
+			mu.Lock()
+			if err := c.WriteJSON(msg); err != nil {
+				d.logger.Warnf("websocket write: %w", err)
+			}
+			mu.Unlock()
+			return nil
+		}
+
+		return fmt.Errorf("connection is closed")
+	}
+
 	defer func() {
 		if err := c.Close(); err != nil {
 			d.logger.Warnf("websocket close: %w", err)
@@ -63,10 +76,10 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 	})
 
 	sc := types.Context{
-		Context:    ctx,
-		Session:    sess,
-		Connection: c,
-		Mutex:      &mu,
+		Context: ctx,
+		Session: sess,
+		// Connection: c,
+		Mutex: &mu,
 	}
 
 	for {
@@ -90,10 +103,12 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 		switch msg.For {
 		case types.ForLogs:
 			if err := d.handleLogsMsg(types.Context{
-				Context:    ctx,
-				Session:    sess,
-				Connection: c,
-				Mutex:      &mu,
+				Context: ctx,
+				Session: sess,
+				// Connection: c,
+				Mutex:     &mu,
+				Logger:    d.logger,
+				WriteJSON: write,
 			}, logsSubs, msg.Data); err != nil {
 				utils.WriteError(sc, err, "", types.ForLogs)
 			}
@@ -101,8 +116,11 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 		case types.ForResourceUpdate:
 			if err := d.handleResWatchMsg(types.Context{
 				Context: ctx,
-				Session: sess,
-				Mutex:   &mu,
+				// Connection: c,
+				Session:   sess,
+				Mutex:     &mu,
+				Logger:    d.logger,
+				WriteJSON: write,
 			}, rWatchSubs, msg.Data); err != nil {
 				utils.WriteError(sc, err, "", types.ForResourceUpdate)
 			}
