@@ -13,6 +13,7 @@ import { Button } from '~/components/atoms/button';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
 import Tools from './tools';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
@@ -42,7 +43,12 @@ const Builds = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+          data={promise}
+          skeletonData={{
+            buildData: fake.ConsoleListBuildsQuery.cr_listBuilds as any,
+          }}
+      >
         {({ buildData }) => {
           const builds = buildData.edges?.map(({ node }) => node);
 

@@ -36,7 +36,7 @@ const BuildRuns = () => {
     <LoadingComp
       data={promise}
       skeletonData={{
-        buildRunData: fake.ConsoleListNodePoolsQuery.infra_listNodePools as any,
+        buildRunData: fake.ConsoleListBuildRunsQuery.cr_listBuildRuns as any,
       }}
     >
       {({ buildRunData }) => {

@@ -28,22 +28,19 @@ const NewCloudProvider = () => {
     initialValues: {
       displayName: '',
       name: '',
-      provider: providers[0],
+      provider: providers[0].value,
       awsAccountId: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
-      provider: Yup.object({
-        label: Yup.string().required(),
-        value: Yup.string().required(),
-      }).required(),
+      provider: Yup.string().required(),
       awsAccountId: Yup.string().required('AccountId is required.'),
     }),
     onSubmit: async (val) => {
       const addProvider = async () => {
-        switch (val.provider.value) {
+        switch (val.provider) {
           case 'aws':
             return api.createProviderSecret({
               secret: {
@@ -54,7 +51,7 @@ const NewCloudProvider = () => {
                 aws: {
                   awsAccountId: val.awsAccountId,
                 },
-                cloudProviderName: validateCloudProvider(val.provider.value),
+                cloudProviderName: validateCloudProvider(val.provider),
               },
             });
 
@@ -131,13 +128,13 @@ const NewCloudProvider = () => {
                     value={values.provider}
                     size="lg"
                     label="Provider"
-                    onChange={(value) => {
+                    onChange={(_, value) => {
                       handleChange('provider')(dummyEvent(value));
                     }}
                     options={async () => providers}
                   />
 
-                  {values.provider.value === 'aws' && (
+                  {values.provider === 'aws' && (
                     <TextInput
                       name="awsAccountId"
                       onChange={handleChange('awsAccountId')}

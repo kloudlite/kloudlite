@@ -16,6 +16,7 @@ import { useState } from 'react';
 import Tools from './tools';
 import HandleRouter from './handle-router';
 import RouterResources from './router-resources';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -44,7 +45,12 @@ const Routers = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+          data={promise}
+          skeletonData={{
+            routersData: fake.ConsoleListRoutersQuery.core_listRouters as any,
+          }}
+      >
         {({ routersData }) => {
           const routers = parseNodes(routersData);
           if (!routers) {

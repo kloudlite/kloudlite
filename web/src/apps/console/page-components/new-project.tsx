@@ -9,7 +9,6 @@ import { handleError } from '~/root/lib/utils/common';
 import Select from '~/components/atoms/select';
 import { listStatus, parseStatus } from '~/console/components/sync-status';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
-import * as cluster from 'cluster';
 import {
   ExtractNodeType,
   parseName,
@@ -138,12 +137,7 @@ const NewProject = () => {
               <Select
                 label="Cluster"
                 placeholder="Select a cluster"
-                value={{
-                  label:
-                    clusters.find((c) => parseName(c) === values.clusterName)
-                      ?.displayName || values.clusterName,
-                  value: values.clusterName,
-                }}
+                value={values.clusterName}
                 options={async () => [
                   ...clusters
                     .filter(

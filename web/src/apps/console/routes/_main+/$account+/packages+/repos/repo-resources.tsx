@@ -141,7 +141,7 @@ const ListView = ({ items, onDelete }: IResource) => {
         return (
           <List.Row
             key={id}
-            to={`/${account}/repo/${name}`}
+            to={`/${account}/repo/${btoa(name)}`}
             className="!p-3xl"
             columns={[
               {

@@ -9,7 +9,6 @@ import {
   SmileySad,
   X,
 } from '@jengaicons/react';
-import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
@@ -23,14 +22,11 @@ import QRCode from '~/console/components/qr-code';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
-  ensureResource,
   parseName,
   parseNodes,
 } from '~/console/server/r-utils/common';
-import { ensureClusterClientSide } from '~/console/server/utils/auth-utils';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import { ENV_NAMESPACE } from '~/root/lib/configs/env';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IDialogBase } from '~/console/components/types.d';
@@ -446,32 +442,32 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            displayName: props.data.displayName,
-            name: parseName(props.data),
-            ports: props.data.spec?.ports || [],
-            isNameError: false,
-            projectName: props.data.projectName,
-            environmentName: props.data.environmentName,
-          }
+          displayName: props.data.displayName,
+          name: parseName(props.data),
+          ports: props.data.spec?.ports || [],
+          isNameError: false,
+          projectName: props.data.projectName,
+          environmentName: props.data.environmentName,
+        }
         : {
-            displayName: '',
-            name: '',
-            ports: [],
-            isNameError: false,
-            projectName: '',
-            environmentName: '',
-          },
+          displayName: '',
+          name: '',
+          ports: [],
+          isNameError: false,
+          projectName: '',
+          environmentName: '',
+        },
       validationSchema: isUpdate
         ? Yup.object({
-            name: Yup.string().required(),
-            displayName: Yup.string().required(),
-            projectName: Yup.string().required(),
-            environmentName: Yup.string().required(),
-          })
+          name: Yup.string().required(),
+          displayName: Yup.string().required(),
+          projectName: Yup.string().required(),
+          environmentName: Yup.string().required(),
+        })
         : Yup.object({
-            name: Yup.string().required(),
-            displayName: Yup.string().required(),
-          }),
+          name: Yup.string().required(),
+          displayName: Yup.string().required(),
+        }),
       onSubmit: async (val) => {
         try {
           if (!isUpdate) {
@@ -523,19 +519,14 @@ const Root = (props: IDialog) => {
     }
   }, []);
 
-  const {
-    data: projectData,
-    error: projectError,
-    isLoading: projectIsLoading,
-  } = useCustomSwr('/projects', async () => {
-    return api.listProjects({});
-  });
+  const { data: projectData, isLoading: projectIsLoading } = useCustomSwr(
+    '/projects',
+    async () => {
+      return api.listProjects({});
+    }
+  );
 
-  const {
-    data: envData,
-    error: envError,
-    isLoading: envLoading,
-  } = useCustomSwr(
+  const { data: envData, isLoading: envLoading } = useCustomSwr(
     () => (values.projectName ? `/environments-${values.projectName}` : null),
     async () => {
       if (!values.projectName) {
@@ -612,14 +603,7 @@ const Root = (props: IDialog) => {
                     message={errors.projectName}
                     disableWhileLoading
                     options={async () => [...projects]}
-                    value={
-                      values.projectName
-                        ? {
-                            label: values.projectName,
-                            value: values.projectName,
-                          }
-                        : undefined
-                    }
+                    value={values.projectName}
                     onChange={(val) => {
                       handleChange('projectName')(dummyEvent(val.value));
                     }}
@@ -636,14 +620,7 @@ const Root = (props: IDialog) => {
                     disableWhileLoading
                     loading={projectIsLoading || envLoading}
                     options={async () => [...environments]}
-                    value={
-                      values.environmentName
-                        ? {
-                            label: values.environmentName,
-                            value: values.environmentName,
-                          }
-                        : undefined
-                    }
+                    value={values.environmentName}
                     onChange={(val) => {
                       handleChange('environmentName')(dummyEvent(val.value));
                     }}

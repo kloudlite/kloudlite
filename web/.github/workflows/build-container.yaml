@@ -25,14 +25,14 @@ jobs:
         app:
           - auth
           - console
-          - website
+          #- website
         include:
           - app: auth
             dockerFile: Dockerfile
           - app: console
             dockerFile: Dockerfile
-          - app: website
-            dockerFile: Dockerfile.devdoc
+          #- app: website
+            #dockerFile: Dockerfile.devdoc
 
     runs-on: ubuntu-latest
     name: Deploy to Docker Image

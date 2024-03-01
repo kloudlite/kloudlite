@@ -391,12 +391,10 @@ const Root = (props: IDialog) => {
                   <Select
                     label="Clusters"
                     size="md"
-                    value={clusterData.find(
-                      (cd) => cd.value === values.buildClusterName
-                    )}
+                    value={values.buildClusterName}
                     options={async () => clusterData}
-                    onChange={(val) => {
-                      handleChange('buildClusterName')(dummyEvent(val.value));
+                    onChange={(_, val) => {
+                      handleChange('buildClusterName')(dummyEvent(val));
                     }}
                     error={!!errors.buildClusterName}
                     message={errors.buildClusterName}

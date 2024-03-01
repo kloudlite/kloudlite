@@ -1,5 +1,5 @@
 import { GearSix } from '@jengaicons/react';
-import { Link, useParams } from '@remix-run/react';
+import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -20,6 +20,8 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
+import { IAccountContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IProjects>;
 const RESOURCE_NAME = 'project';
@@ -156,6 +158,8 @@ const ListView = ({ items }: { items: BaseType[] }) => {
 };
 
 const ProjectResources = ({ items = [] }: { items: BaseType[] }) => {
+  const { account } = useOutletContext<IAccountContext>();
+  useWatchReload(`account:${parseName(account)}`);
   return (
     <ListGridView
       listView={<ListView items={items} />}

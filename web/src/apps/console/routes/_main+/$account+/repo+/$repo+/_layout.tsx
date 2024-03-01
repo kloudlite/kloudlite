@@ -13,6 +13,7 @@ import { IProjectContext } from '../../$project+/_layout';
 
 const LocalBreadcrum = () => {
   const { repo, account } = useParams();
+  const repoName = atob(repo ? repo : "")
   return (
     <div className="flex flex-row items-center">
       <Breadcrum.Button
@@ -29,9 +30,9 @@ const LocalBreadcrum = () => {
         }
       />
       <Breadcrum.Button
-        to={`/${account}/repo/${repo}`}
+        to={`/${account}/repo/${repoName}`}
         LinkComponent={Link}
-        content={<span>{repo}</span>}
+        content={<span>{repoName}</span>}
       />
     </div>
   );

@@ -1,28 +1,19 @@
 /* eslint-disable guard-for-in */
 /* eslint-disable react/destructuring-assignment */
-import { ArrowRight, Search, Check } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import { useEffect, useRef, useState } from 'react';
-import ActionList from '~/components/atoms/action-list';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
-import { ListTitle } from '~/console/components/console-list-components';
-import { IdSelector } from '~/console/components/id-selector';
-import List from '~/console/components/list';
-import NoResultsFound from '~/console/components/no-results-found';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useInputSearch } from '~/root/lib/client/helpers/search-filter';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NN } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { Switch } from '~/components/atoms/switch';
-import { cn } from '~/components/utils';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { NameIdView } from '~/console/components/name-id-view';
@@ -216,8 +207,6 @@ const Fill = ({
           return acc[curr];
         }, null);
 
-        console.log('x', x);
-
         return (
           <RenderField
             errors={errors}
@@ -235,75 +224,70 @@ const Fill = ({
 
 const Root = (props: IDialog) => {
   const { isUpdate, setVisible, templates } = props;
-  const [selectedService, setSelectedService] =
-    useState<ISelectedService>(null);
 
   const api = useConsoleApi();
   const reload = useReload();
 
   const { project } = useParams();
-  const [step, setStep] = useState<'choose' | 'fill'>('choose');
 
-  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
-    useForm({
-      initialValues: isUpdate
-        ? {
-            name: parseName(props.data),
-            displayName: props.data.displayName,
-            isNameError: false,
-            res: {
-              ...props.data.spec?.msvcSpec.serviceTemplate.spec,
-            },
-          }
-        : {
-            name: '',
-            displayName: '',
-            res: {},
-            isNameError: false,
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: isUpdate
+      ? {
+          name: parseName(props.data),
+          displayName: props.data.displayName,
+          isNameError: false,
+          res: {
+            ...props.data.spec?.msvcSpec.serviceTemplate.spec,
           },
-      validationSchema: Yup.object({}),
-      onSubmit: async (val) => {
-        if (isUpdate) {
-          try {
-            if (!project) {
-              throw new Error('Project is required!.');
-            }
-            const { errors: e } = await api.updateProjectMSv({
-              projectName: project,
-              pmsvc: {
-                displayName: val.displayName,
-                metadata: {
-                  name: val.name,
-                },
+        }
+      : {
+          name: '',
+          displayName: '',
+          res: {},
+          isNameError: false,
+        },
+    validationSchema: Yup.object({}),
+    onSubmit: async (val) => {
+      if (isUpdate) {
+        try {
+          if (!project) {
+            throw new Error('Project is required!.');
+          }
+          const { errors: e } = await api.updateProjectMSv({
+            projectName: project,
+            pmsvc: {
+              displayName: val.displayName,
+              metadata: {
+                name: val.name,
+              },
 
-                spec: {
-                  msvcSpec: {
-                    serviceTemplate: {
-                      apiVersion:
-                        props.data.spec?.msvcSpec.serviceTemplate.apiVersion ||
-                        '',
-                      kind:
-                        props.data.spec?.msvcSpec.serviceTemplate.kind || '',
-                      spec: {
-                        ...val.res,
-                      },
+              spec: {
+                msvcSpec: {
+                  serviceTemplate: {
+                    apiVersion:
+                      props.data.spec?.msvcSpec.serviceTemplate.apiVersion ||
+                      '',
+                    kind: props.data.spec?.msvcSpec.serviceTemplate.kind || '',
+                    spec: {
+                      ...val.res,
                     },
                   },
-                  targetNamespace: '',
                 },
+                targetNamespace: '',
               },
-            });
-            if (e) {
-              throw e[0];
-            }
-            setVisible(false);
-            reload();
-          } catch (err) {
-            handleError(err);
+            },
+          });
+          if (e) {
+            throw e[0];
           }
+          setVisible(false);
+          reload();
+        } catch (err) {
+          handleError(err);
         }
-      },
-    });
+      }
+    },
+  });
 
   const getService = () => {
     if (isUpdate)
@@ -321,14 +305,7 @@ const Root = (props: IDialog) => {
   return (
     <Popup.Form
       onSubmit={(e) => {
-        console.log('name error..', values.isNameError);
-
         handleSubmit(e);
-        // if (!values.isNameError) {
-        //   handleSubmit(e);
-        // } else {
-        //   e.preventDefault();
-        // }
       }}
     >
       <Popup.Content className="!min-h-[500px] !max-h-[500px]">

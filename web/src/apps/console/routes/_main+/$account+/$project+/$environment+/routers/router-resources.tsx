@@ -25,6 +25,8 @@ import { listStatus } from '~/console/components/sync-status';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
+import { Button } from '~/components/atoms/button';
+import Tooltip from '~/components/atoms/tooltip';
 import HandleRouter from './handle-router';
 
 const RESOURCE_NAME = 'domain';
@@ -52,6 +54,11 @@ type OnAction = ({
 type IExtraButton = {
   onAction: OnAction;
   item: BaseType;
+};
+
+const formatDomain = (domain: string) => {
+  const d = domain.startsWith('https://') ? domain : `https://${domain}`;
+  return { full: d, short: d.replace('https://', '') };
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
@@ -90,6 +97,7 @@ const GridView = ({ items, onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const firstDomain = item.spec.domains?.[0];
         return (
           <Grid.Column
             key={id}
@@ -101,6 +109,53 @@ const GridView = ({ items, onAction }: IResource) => {
                   <ListTitle
                     title={name}
                     action={<ExtraButton onAction={onAction} item={item} />}
+                  />
+                ),
+              },
+              {
+                key: generateKey(keyPrefix, 'extra_domain'),
+                render: () => (
+                  <ListItem
+                    data={
+                      <div className="flex flex-row items-center gap-md">
+                        <Button
+                          LinkComponent={Link}
+                          target="_blank"
+                          size="sm"
+                          content={formatDomain(firstDomain).short}
+                          variant="primary-plain"
+                          to={formatDomain(firstDomain).full}
+                        />
+
+                        {item.spec.domains.length > 1 && (
+                          <Tooltip.Root
+                            content={
+                              <div className="flex flex-col gap-md">
+                                {item.spec.domains
+                                  .filter((d) => d !== firstDomain)
+                                  .map((d) => (
+                                    <Button
+                                      key={d}
+                                      LinkComponent={Link}
+                                      target="_blank"
+                                      size="sm"
+                                      content={formatDomain(d).short}
+                                      variant="primary-plain"
+                                      to={formatDomain(d).full}
+                                    />
+                                  ))}
+                              </div>
+                            }
+                          >
+                            <Button
+                              content={`+${item.spec.domains.length - 1} more`}
+                              variant="plain"
+                              size="sm"
+                            />
+                          </Tooltip.Root>
+                        )}
+                      </div>
+                    }
                   />
                 ),
               },
@@ -129,6 +184,7 @@ const ListView = ({ items, onAction }: IResource) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         const status = listStatus({ key: `${keyPrefix}status`, item });
+        const firstDomain = item.spec.domains?.[0];
         return (
           <List.Row
             key={id}
@@ -141,6 +197,53 @@ const ListView = ({ items, onAction }: IResource) => {
                 render: () => <ListTitle title={name} />,
               },
               status,
+              {
+                key: generateKey(keyPrefix, 'extra_domain'),
+                render: () => (
+                  <ListItem
+                    data={
+                      <div className="flex flex-row items-center gap-md">
+                        <Button
+                          LinkComponent={Link}
+                          target="_blank"
+                          size="sm"
+                          content={formatDomain(firstDomain).short}
+                          variant="primary-plain"
+                          to={formatDomain(firstDomain).full}
+                        />
+
+                        {item.spec.domains.length > 1 && (
+                          <Tooltip.Root
+                            content={
+                              <div className="flex flex-col gap-md">
+                                {item.spec.domains
+                                  .filter((d) => d !== firstDomain)
+                                  .map((d) => (
+                                    <Button
+                                      key={d}
+                                      LinkComponent={Link}
+                                      target="_blank"
+                                      size="sm"
+                                      content={formatDomain(d).short}
+                                      variant="primary-plain"
+                                      to={formatDomain(d).full}
+                                    />
+                                  ))}
+                              </div>
+                            }
+                          >
+                            <Button
+                              content={`+${item.spec.domains.length - 1} more`}
+                              variant="plain"
+                              size="sm"
+                            />
+                          </Tooltip.Root>
+                        )}
+                      </div>
+                    }
+                  />
+                ),
+              },
               listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),

@@ -189,11 +189,7 @@ const TemplateView = ({
         label="Template"
         size="lg"
         placeholder="Select templates"
-        value={
-          values.selectedTemplate
-            ? { label: '', value: values.selectedTemplate?.template.name || '' }
-            : undefined
-        }
+        value={values.selectedTemplate?.template.name}
         valueRender={valueRender}
         searchable
         error={!!errors.selectedTemplate}

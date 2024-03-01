@@ -17,8 +17,6 @@ import { useAppend, useMapper } from '~/components/utils';
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '~/components/atoms/button';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useLocation } from '@remix-run/react';
 import { ILoginUrls, ILogins } from '../server/gql/queries/git-queries';
 import Pulsable from './pulsable';
 import useGit, { IGIT_PROVIDERS } from '../hooks/use-git';
@@ -320,7 +318,7 @@ const Git = ({
                   size="lg"
                   valueRender={valueRender}
                   options={async () => accountsModified}
-                  value={{ label: org, value: org }}
+                  value={org}
                   onChange={(res) => {
                     switch (res.value) {
                       case extraAddOption:
@@ -434,14 +432,7 @@ const Git = ({
             <Select
               label="Select branch"
               size="lg"
-              value={
-                branch && !showProviderOverlay
-                  ? {
-                    label: branch,
-                    value: branch,
-                  }
-                  : undefined
-              }
+              value={branch && !showProviderOverlay ? branch : undefined}
               disabled={!repo || showProviderOverlay}
               placeholder="Select a branch"
               options={async () => [

@@ -21,6 +21,7 @@ import { NN } from '~/root/lib/types/common';
 import { TextInput } from '~/components/atoms/input';
 import { useEffect, useState } from 'react';
 import { IApps } from '~/console/server/gql/queries/app-queries';
+import { Switch } from '~/components/atoms/switch';
 import { ModifiedRouter } from './_index';
 
 type IDialog = IDialogBase<
@@ -50,18 +51,20 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            path:
-              props.data.path?.[0] === '/'
-                ? props.data.path.substring(1)
-                : props.data.path,
-            app: props.data.app || '',
-            port: `${props.data.port}`,
-          }
+          path:
+            props.data.path?.[0] === '/'
+              ? props.data.path.substring(1)
+              : props.data.path,
+          app: props.data.app || '',
+          port: `${props.data.port}`,
+          reWrite: false,
+        }
         : {
-            path: '',
-            app: '',
-            port: '',
-          },
+          path: '',
+          app: '',
+          port: '',
+          reWrite: false,
+        },
       validationSchema: Yup.object({
         path: Yup.string().test(
           'is-valid',
@@ -93,11 +96,13 @@ const Root = (props: IDialog) => {
                       path: r.path,
                       app: r.app,
                       port: r.port,
+                      rewrite: r.rewrite,
                     })) || []),
                     {
                       path: `/${val.path}`,
                       app: val.app,
                       port: parseInt(val.port, 10),
+                      rewrite: val.reWrite,
                     },
                   ],
                 },
@@ -132,7 +137,7 @@ const Root = (props: IDialog) => {
                         port: route.port,
                       })) || []),
                     {
-                      path: val.path,
+                      path: `/${val.path}`,
                       app: val.app,
                       port: parseInt(val.port, 10),
                     },
@@ -185,21 +190,42 @@ const Root = (props: IDialog) => {
   return (
     <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content className="flex flex-col gap-3xl">
-        <TextInput
-          label="Path"
-          size="lg"
-          value={values.path}
-          onChange={(e) => {
-            handleChange('path')(dummyEvent(e.target.value.toLowerCase()));
-          }}
-          error={!!errors.path}
-          message={errors.path}
-          prefix="/"
-        />
+        <div className="flex flex-row gap-xl items-end">
+          <div className="flex flex-row gap-xl items-end flex-1">
+            <div className="flex-1">
+              <TextInput
+                label="Path"
+                size="lg"
+                value={values.path}
+                onChange={(e) => {
+                  handleChange('path')(
+                    dummyEvent(e.target.value.toLowerCase())
+                  );
+                }}
+                error={!!errors.path}
+                message={errors.path}
+                prefix="/"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-md ">
+            <div className="bodyMd-medium text-text-default">Rewrite</div>
+            <div className="flex items-center h-6xl">
+              <Switch
+                label=""
+                checked={values.reWrite}
+                onChange={(val) => {
+                  handleChange('reWrite')(dummyEvent(val));
+                }}
+              />
+            </div>
+          </div>
+        </div>
         <Select
           size="lg"
           label="App"
-          value={{ label: '', value: values.app }}
+          value={values.app}
           options={async () => [...apps]}
           onChange={(val) => {
             handleChange('app')(dummyEvent(val.value));
@@ -213,15 +239,15 @@ const Root = (props: IDialog) => {
           size="lg"
           label="Port"
           disabled={!values.app}
-          value={{ label: '', value: values.port }}
+          value={values.port}
           options={async () => [
             ...(selectedApp?.spec.services?.map((svc) => ({
               label: `${svc.port}`,
               value: `${svc.port}`,
             })) || []),
           ]}
-          onChange={(val) => {
-            handleChange('port')(dummyEvent(val.value));
+          onChange={(_, val) => {
+            handleChange('port')(dummyEvent(val));
           }}
           error={!!errors.port}
           message={errors.port}

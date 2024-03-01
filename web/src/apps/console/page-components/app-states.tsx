@@ -6,6 +6,8 @@ import {
   AppIn,
   Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn as AppSpecContainersIn,
 } from '~/root/src/generated/gql/server';
+import {useMapper} from "~/components/utils";
+import {parseNodes} from "~/console/server/r-utils/common";
 
 const defaultApp: AppIn = {
   metadata: {
@@ -185,6 +187,35 @@ export const useAppState = () => {
     });
   };
 
+  type IparseNodes = {
+    edges: Array<{ node: any }>;
+  };
+
+  const getRepoMapper = (resources: IparseNodes | undefined) => {
+    return useMapper(parseNodes(resources), (val) => ({
+      label: val.name,
+      value: val.name,
+      accName: val.accountName
+    }))
+  }
+
+  const getRepoName = (imageUrl: string) => {
+    const parts: string[] = imageUrl.split(':');
+    const repoParts: string[] = parts[0].split('/');
+    if (repoParts.length == 1) {
+      return repoParts[repoParts.length - 1];
+    } else {
+      const repoSlicePart: string[] = repoParts.slice(2)
+      return repoSlicePart.join("/")
+    }
+  }
+
+  const getImageTag = (imageUrl: string) => {
+    const parts: string[] = imageUrl.split(':');
+    console.log("image tag", parts[1])
+    return parts[1];
+  }
+
   return {
     resetState,
     completePages,
@@ -203,6 +234,9 @@ export const useAppState = () => {
     activeContIndex: activeContIndex || 0,
     services: app.spec.services || [],
     setServices,
+    getRepoMapper,
+    getRepoName,
+    getImageTag
   };
 };
 

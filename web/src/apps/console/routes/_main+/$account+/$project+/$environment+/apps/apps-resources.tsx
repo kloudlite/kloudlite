@@ -22,7 +22,7 @@ import ResourceExtraAction, {
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
 import {
-  ExtractNodeType,
+  ExtractNodeType, parseName,
   parseName as pn,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
@@ -62,13 +62,14 @@ type IExtraButton = {
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
+  const { account, project, environment } = useParams();
   const iconSize = 16;
   let options: IResourceExtraItem[] = [
     {
       label: 'Settings',
       icon: <GearSix size={iconSize} />,
       type: 'item',
-      to: `settings/general`,
+      to: `/${account}/${project}/${environment}/app/${parseName(item)}/settings/general`,
       key: 'settings',
     },
   ];
