@@ -1,11 +1,9 @@
 /* eslint-disable react/destructuring-assignment */
 import { ReactNode } from 'react';
-import * as Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { IdSelector } from '~/console/components/id-selector';
 import { NameIdView } from '~/console/components/name-id-view';
 import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -64,16 +62,14 @@ const Root = (props: IDialog) => {
         ? {
             displayName: props.data.displayName,
             name: parseName(props.data),
-            provider: providers.find(
-              (p) => p.value === props.data.cloudProviderName
-            ),
+            provider: props.data.cloudProviderName as string,
             awsAccountId: '',
             isNameError: false,
           }
         : {
             displayName: '',
             name: '',
-            provider: providers[0],
+            provider: providers[0].value,
             awsAccountId: '',
             isNameError: false,
           },
@@ -85,10 +81,7 @@ const Root = (props: IDialog) => {
         : Yup.object({
             displayName: Yup.string().required(),
             name: Yup.string().required(),
-            provider: Yup.object({
-              label: Yup.string().required(),
-              value: Yup.string().required(),
-            }).required(),
+            provider: Yup.string().required(),
             awsAccountId: Yup.string().test(
               'provider',
               'Account id is required',
@@ -98,7 +91,7 @@ const Root = (props: IDialog) => {
                   // eslint-disable-next-line react/no-this-in-sfc
                   this.parent.provider &&
                   // eslint-disable-next-line react/no-this-in-sfc
-                  this.parent.provider.value === 'aws' &&
+                  this.parent.provider === 'aws' &&
                   item
                 );
               }
@@ -137,7 +130,7 @@ const Root = (props: IDialog) => {
         // };
 
         const addProvider = async () => {
-          switch (val?.provider?.value) {
+          switch (val?.provider) {
             case 'aws':
               // return validateAccountIdAndPerform(async () => {
               // });
@@ -151,7 +144,7 @@ const Root = (props: IDialog) => {
                   aws: {
                     awsAccountId: val.awsAccountId,
                   },
-                  cloudProviderName: validateCloudProvider(val.provider.value),
+                  cloudProviderName: validateCloudProvider(val.provider),
                 },
               });
 
@@ -165,7 +158,7 @@ const Root = (props: IDialog) => {
             throw new Error("data can't be null");
           }
 
-          switch (val?.provider?.value) {
+          switch (val?.provider) {
             case 'aws':
               return api.updateProviderSecret({
                 secret: {
@@ -263,14 +256,14 @@ const Root = (props: IDialog) => {
               message={errors.provider}
               value={values.provider}
               label="Provider"
-              onChange={(value) => {
+              onChange={(_, value) => {
                 handleChange('provider')(dummyEvent(value));
               }}
               options={async () => providers}
             />
           )}
 
-          {!isUpdate && values?.provider?.value === 'aws' && (
+          {!isUpdate && values?.provider === 'aws' && (
             <TextInput
               name="awsAccountId"
               onChange={handleChange('awsAccountId')}

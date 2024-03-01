@@ -123,12 +123,7 @@ const NewProject = () => {
               <Select
                 label="Cluster"
                 placeholder="Select a cluster"
-                value={{
-                  label:
-                    clusters.find((c) => parseName(c) === values.clusterName)
-                      ?.displayName || values.clusterName,
-                  value: values.clusterName,
-                }}
+                value={values.clusterName}
                 options={async () => [
                   ...clusters.map((clster) => ({
                     label: clster.displayName,
@@ -144,8 +139,8 @@ const NewProject = () => {
                     ),
                   })),
                 ]}
-                onChange={(v) => {
-                  handleChange('clusterName')(dummyEvent(v.value));
+                onChange={(_, v) => {
+                  handleChange('clusterName')(dummyEvent(v));
                 }}
               />
               <div className="flex flex-row justify-start">

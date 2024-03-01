@@ -90,6 +90,7 @@ const Root = (props: IDialog) => {
     { label: string; value: string } | undefined
   >(undefined);
   const [isRepoCreatable, setIsRepoCreatable] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<string>('');
   const [repoErrors, setRepoErrors] = useState(false);
 
   useEffect(() => {
@@ -169,6 +170,7 @@ const Root = (props: IDialog) => {
             ts_query_web: text,
           },
         });
+
         setRepos(
           r.data.packages.map(
             (hc: {
@@ -184,7 +186,7 @@ const Root = (props: IDialog) => {
               };
             }) => ({
               label: hc.name,
-              value: hc.repository.url,
+              value: hc.package_id,
               repoUrl: hc.repository.url,
               render: () => (
                 <div className="flex flex-row gap-xl items-center">
@@ -271,26 +273,26 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: !isUpdate
         ? {
-            displayName: '',
-            name: '',
-            namespace: '',
-            chartName: '',
-            chartRepoURL: '',
-            values: '',
-            isNameError: false,
-          }
+          displayName: '',
+          name: '',
+          namespace: '',
+          chartName: '',
+          chartRepoURL: '',
+          values: '',
+          isNameError: false,
+        }
         : {
-            isNameError: false,
-            displayName: props.data.displayName,
-            name: props.data.metadata?.name || '',
-            values:
-              Object.keys(props.data.spec?.values).length > 0
-                ? yaml.dump(props.data.spec?.values)
-                : '',
-            namespace: props.data.metadata?.namespace,
-            chartName: props.data.spec?.chartName,
-            chartRepoURL: props.data.spec?.chartRepoURL,
-          },
+          isNameError: false,
+          displayName: props.data.displayName,
+          name: props.data.metadata?.name || '',
+          values:
+            Object.keys(props.data.spec?.values).length > 0
+              ? yaml.dump(props.data.spec?.values)
+              : '',
+          namespace: props.data.metadata?.namespace,
+          chartName: props.data.spec?.chartName,
+          chartRepoURL: props.data.spec?.chartRepoURL,
+        },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
         name: Yup.string().required(),
@@ -423,21 +425,17 @@ const Root = (props: IDialog) => {
               options={async () =>
                 isUpdate
                   ? [
-                      {
-                        label: values.namespace || '',
-                        value: values.namespace || '',
-                      },
-                    ]
+                    {
+                      label: values.namespace || '',
+                      value: values.namespace || '',
+                    },
+                  ]
                   : namespaces
               }
-              value={
-                values.namespace
-                  ? { label: values.namespace, value: values.namespace }
-                  : undefined
-              }
+              value={values.namespace}
               creatable={!isUpdate}
-              onChange={(val) => {
-                handleChange('namespace')(dummyEvent(val.value.toLowerCase()));
+              onChange={(_, val) => {
+                handleChange('namespace')(dummyEvent(val.toLowerCase()));
               }}
               noOptionMessage={
                 <div className="p-2xl bodyMd text-center">
@@ -455,17 +453,14 @@ const Root = (props: IDialog) => {
                 searchable
                 creatable={isRepoCreatable}
                 options={async () => repos}
-                value={{
-                  label: values.chartRepoURL || '',
-                  value: values.chartRepoURL || '',
-                }}
+                value={selectedRepo}
                 onChange={(value) => {
                   if (!repoSearchText.startsWith('https://')) {
                     handleChange('chartRepoURL')(dummyEvent(value.repoUrl));
                   } else {
                     handleChange('chartRepoURL')(dummyEvent(value.value));
                   }
-                  console.log(value.repoUrl, values.chartRepoURL);
+                  setSelectedRepo(value.value);
                   setHelmCharts([]);
                 }}
                 onSearch={(text) => {
@@ -495,7 +490,7 @@ const Root = (props: IDialog) => {
                 placeholder="Chart name"
                 searchable
                 disabled={hemlCharts.length === 0 || reposLoading || repoErrors}
-                value={chartName}
+                value={chartName?.value}
                 options={async () => hemlCharts}
                 loading={!repoErrors && helmChartsLoading}
                 onChange={(val) => {
@@ -519,7 +514,7 @@ const Root = (props: IDialog) => {
                     repoErrors)) ||
                 (isUpdate && helmChartsLoading)
               }
-              value={chartVersion}
+              value={chartVersion?.value}
               options={async () => [
                 ...chartVersions.map((cv) => ({
                   label: cv.version,

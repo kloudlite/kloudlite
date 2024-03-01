@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
-import { NumberInput, TextInput } from '~/components/atoms/input';
+import { useEffect } from 'react';
+import { NumberInput } from '~/components/atoms/input';
 import Slider from '~/components/atoms/slider';
 import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-
-import { InfoLabel } from '~/console/components/commons';
 import { parseValue } from '~/console/page-components/util';
 import Select from '~/components/atoms/select';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
@@ -16,9 +14,8 @@ import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseNodes } from '~/console/server/r-utils/common';
+import { registryHost } from '~/lib/configs/base-url.cjs';
 import { plans } from '../../../../new-app/datas';
-import {registryHost} from "~/lib/configs/base-url.cjs";
-
 
 const valueRender = ({
   label,
@@ -42,8 +39,15 @@ const valueRender = ({
 };
 
 const SettingCompute = () => {
-  const { app, setApp, getContainer, activeContIndex, getRepoMapper , getRepoName, getImageTag} =
-    useAppState();
+  const {
+    app,
+    setApp,
+    getContainer,
+    activeContIndex,
+    getRepoMapper,
+    getRepoName,
+    getImageTag,
+  } = useAppState();
   const { setPerformAction, hasChanges, loading } = useUnsavedChanges();
 
   const api = useConsoleApi();
@@ -63,9 +67,14 @@ const SettingCompute = () => {
       cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
       memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || 1,
 
-      repoName: getContainer(0)?.image ? getRepoName(app.spec.containers[activeContIndex]?.image) : '',
-      repoImageTag: getContainer(0)?.image ? getImageTag(app.spec.containers[activeContIndex]?.image) : '',
-      repoAccountName: app.metadata?.annotations?.[keyconstants.repoAccountName] || '',
+      repoName: getContainer(0)?.image
+        ? getRepoName(app.spec.containers[activeContIndex]?.image)
+        : '',
+      repoImageTag: getContainer(0)?.image
+        ? getImageTag(app.spec.containers[activeContIndex]?.image)
+        : '',
+      repoAccountName:
+        app.metadata?.annotations?.[keyconstants.repoAccountName] || '',
 
       cpu: parseValue(
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
@@ -116,30 +125,34 @@ const SettingCompute = () => {
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
-              image: values.repoAccountName == undefined || values.repoAccountName == ''  ? `${values.repoName}:${values.repoImageTag}` : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
+              image:
+                values.repoAccountName === undefined ||
+                  values.repoAccountName === ''
+                  ? `${values.repoName}:${values.repoImageTag}`
+                  : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {
-                      max: `${val.cpu}m`,
-                      min: `${val.cpu}m`,
-                    }
+                    max: `${val.cpu}m`,
+                    min: `${val.cpu}m`,
+                  }
                   : {
-                      max: `${val.manualCpuMax}m`,
-                      min: `${val.manualCpuMin}m`,
-                    },
+                    max: `${val.manualCpuMax}m`,
+                    min: `${val.manualCpuMin}m`,
+                  },
               resourceMemory:
                 val.selectionMode === 'quick'
                   ? {
-                      max: `${(
-                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
-                      ).toFixed(2)}Mi`,
-                      min: `${val.cpu}Mi`,
-                    }
+                    max: `${(
+                      (values.cpu || 1) * parseValue(values.memPerCpu, 4)
+                    ).toFixed(2)}Mi`,
+                    min: `${val.cpu}Mi`,
+                  }
                   : {
-                      max: `${val.manualMemMax}Mi`,
-                      min: `${val.manualMemMin}Mi`,
-                    },
+                    max: `${val.manualMemMax}Mi`,
+                    min: `${val.manualMemMin}Mi`,
+                  },
             },
           ],
         },
@@ -200,70 +213,59 @@ const SettingCompute = () => {
         }}
       >
         <div className="flex flex-col gap-3xl">
+          <Select
+            label="Repository Name"
+            size="lg"
+            placeholder="Select Repo"
+            value={values.repoName}
+            creatable
+            onChange={(val) => {
+              handleChange('repoName')(dummyEvent(val.value));
+              if (val.accName === undefined || val.accName === '') {
+                handleChange('repoAccountName')(dummyEvent(''));
+              } else {
+                handleChange('repoAccountName')(dummyEvent(val.accName));
+              }
+            }}
+            options={async () => [...repos]}
+            error={!!errors.repos || !!repoLoadingError}
+            message={
+              repoLoadingError ? 'Error fetching repositories.' : errors.app
+            }
+            loading={repoLoading}
+          />
 
-              <Select
-                  label="Repository Name"
-                  size="lg"
-                  placeholder="Select Repo"
-                  value={
-                      values.repoName
-                          ? { label: values.repoName, value: values.repoName }
-                          :undefined
-                  }
-                  creatable={true}
-                  onChange={(val) => {
-                    handleChange('repoName')(dummyEvent(val.value));
-                      if (val.accName == undefined || val.accName == ''){
-                          handleChange('repoAccountName')(dummyEvent(''));
-                      }
-                      else {
-                          handleChange('repoAccountName')(dummyEvent(val.accName));
-                      }
-                  }}
-                  options={async () => [...repos]}
-                  error={!!errors.repos || !!repoLoadingError}
-                  message={
-                    repoLoadingError ? 'Error fetching repositories.' : errors.app
-                  }
-                  loading={repoLoading}
-              />
-
-              <Select
-                  label="Image Tag"
-                  size="lg"
-                  placeholder="Select Image Tag"
-                  value={
-                      values.repoImageTag
-                          ? { label: values.repoImageTag, value: values.repoImageTag }
-                          :undefined
-                  }
-                  creatable={true}
-                  onChange={(val) => {
-                    handleChange('repoImageTag')(dummyEvent(val.value));
-                  }}
-                  options={async () =>
-                      [
-                        ...new Set(
-                            parseNodes(digestData)
-                                .map((item) => item.tags)
-                                .flat()
-                        ),
-                      ].map((item) => ({
-                        label: item,
-                        value: item,
-                      }))
-                  }
-                  error={!!errors.repoImageTag || !!digestError}
-                  message={
-                    errors.repoImageTag
-                        ? errors.repoImageTag
-                        : digestError
-                            ? 'Failed to load Image tags.'
-                            : ''
-                  }
-                  loading={digestLoading}
-              />
-
+          <Select
+            label="Image Tag"
+            size="lg"
+            placeholder="Select Image Tag"
+            value={values.repoImageTag}
+            creatable
+            onChange={(_, val) => {
+              handleChange('repoImageTag')(dummyEvent(val));
+            }}
+            options={async () =>
+              [
+                ...new Set(
+                  parseNodes(digestData)
+                    .map((item) => item.tags)
+                    .flat()
+                ),
+              ].map((item) => ({
+                label: item,
+                value: item,
+              }))
+            }
+            error={!!errors.repoImageTag || !!digestError}
+            message={
+              errors.repoImageTag
+                ? errors.repoImageTag
+                : digestError
+                  ? 'Failed to load Image tags.'
+                  : ''
+            }
+            loading={digestLoading}
+          />
         </div>
         {/* <div className="flex flex-col border border-border-default bg-surface-basic-default rounded overflow-hidden">
         <div className="p-2xl gap-2xl flex flex-row items-center border-b border-border-disabled bg-surface-basic-subdued">
@@ -384,7 +386,7 @@ const SettingCompute = () => {
           {values.selectionMode === 'quick' ? (
             <div className="flex flex-col gap-3xl">
               <Select
-                value={{ label: '', value: values.selectedPlan }}
+                value={values.selectedPlan}
                 label="Plan"
                 size="lg"
                 options={async () => [
