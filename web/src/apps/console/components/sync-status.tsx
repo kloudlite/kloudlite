@@ -163,7 +163,7 @@ const SyncStatus = ({ item }: { item: IStatusMeta }) => {
   return null;
 };
 
-export type IStatus = 'deleting' | 'notready' | 'syncing' | 'none';
+export type IStatus = 'deleting' | 'notready' | 'syncing' | 'ready';
 type IResourceType = 'nodepool';
 
 export const parseStatus = ({
@@ -173,7 +173,7 @@ export const parseStatus = ({
   item: IStatusMeta;
   type?: IResourceType;
 }) => {
-  let status: IStatus = 'none';
+  let status: IStatus = 'ready';
 
   if (item.markedForDeletion) {
     status = 'deleting';

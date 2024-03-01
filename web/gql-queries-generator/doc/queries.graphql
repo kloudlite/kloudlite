@@ -379,8 +379,6 @@ query consoleGetCluster($name: String!) {
       aws {
         k3sMasters {
           iamInstanceProfileRole
-          imageId
-          imageSSHUsername
           instanceType
           nodes
           nvidiaGpuEnabled
@@ -590,8 +588,6 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
           nodes
         }
         iamInstanceProfileRole
-        imageId
-        imageSSHUsername
         nvidiaGpuEnabled
         poolType
         rootVolumeSize

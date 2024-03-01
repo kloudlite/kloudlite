@@ -53,8 +53,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                 nodes
               }
               iamInstanceProfileRole
-              imageId
-              imageSSHUsername
               nvidiaGpuEnabled
               poolType
               rootVolumeSize

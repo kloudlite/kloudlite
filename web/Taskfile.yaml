@@ -40,8 +40,11 @@ tasks:
 
           "vision")
             URL_SUFFIX="-vision"
-            ;;
-          
+            ;;        
+          "nxtcoder17")
+            URL_SUFFIX="-mohit"   
+          ;;
+        
           "piyush")
             URL_SUFFIX="-piyush"
             ;;
