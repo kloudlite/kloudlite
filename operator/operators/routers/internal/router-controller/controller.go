@@ -7,6 +7,7 @@ import (
 	"time"
 
 	certmanagerv1 "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	certmanagermetav1 "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -100,7 +101,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensuringTLSCertSecretsAreReplicated(req); !step.ShouldProceed() {
+	if step := r.EnsuringHttpsCerts(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -109,10 +110,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.ensureIngresses(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.checkHttpsCert(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -210,6 +207,115 @@ func (r *Reconciler) isInProjectNamespace(ctx context.Context, obj client.Object
 		return true
 	}
 	return false
+}
+
+var genTLSCertName = func(domain string) string {
+	return fmt.Sprintf("%s-tls", domain)
+}
+
+func (r *Reconciler) getRouterClusterIssuer(req *rApi.Request[*crdsv1.Router]) string {
+	https := req.Object.Spec.Https
+	if https != nil && https.ClusterIssuer != "" {
+		return https.ClusterIssuer
+	}
+
+	return r.Env.DefaultClusterIssuer
+}
+
+func (r *Reconciler) EnsuringHttpsCerts(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "ensuring-https-certs"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	_, nonWildcardDomains, err := r.parseAndExtractDomains(req)
+	if err != nil {
+		return fail(err)
+	}
+
+	for _, domain := range nonWildcardDomains {
+		cert, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &certmanagerv1.Certificate{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return fail(err)
+			}
+			cert = nil
+		}
+
+		if cert == nil {
+			cert := &certmanagerv1.Certificate{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Certificate",
+					APIVersion: certmanagerv1.SchemeGroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      genTLSCertName(domain),
+					Namespace: r.Env.CertificateNamespace,
+				},
+				Spec: certmanagerv1.CertificateSpec{
+					DNSNames: []string{domain},
+					IssuerRef: certmanagermetav1.ObjectReference{
+						Name:  r.getRouterClusterIssuer(req),
+						Kind:  "ClusterIssuer",
+						Group: certmanagerv1.SchemeGroupVersion.Group,
+					},
+					RenewBefore: &metav1.Duration{
+						Duration: 15 * 24 * time.Hour, // 15 days prior
+					},
+					SecretName: genTLSCertName(domain),
+					Usages: []certmanagerv1.KeyUsage{
+						certmanagerv1.UsageDigitalSignature,
+						certmanagerv1.UsageKeyEncipherment,
+					},
+				},
+			}
+			if err := r.Create(ctx, cert); err != nil {
+				return fail(err)
+			}
+		}
+
+		// FIXME: wait for these CERTIFICATES to be READY, and once they are copy their credentials from `env.CertificateNamespace` to `obj.Namespace`
+		if _, err := IsHttpsCertReady(cert); err != nil {
+			return fail(err)
+		}
+
+		certSecret, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.CertificateNamespace, genTLSCertName(domain)), &corev1.Secret{})
+		if err != nil {
+			return fail(err)
+		}
+
+		copyTLSSecret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: genTLSCertName(domain), Namespace: obj.Namespace}, Type: corev1.SecretTypeTLS}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, copyTLSSecret, func() error {
+			if copyTLSSecret.Annotations == nil {
+				copyTLSSecret.Annotations = make(map[string]string, 1)
+			}
+			copyTLSSecret.Annotations["kloudlite.io/secret.cloned-by"] = "router"
+			// copyTLSSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+			copyTLSSecret.Data = certSecret.Data
+			copyTLSSecret.StringData = certSecret.StringData
+			return nil
+		}); err != nil {
+			return fail(err)
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
@@ -480,109 +586,6 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	return req.Next()
 }
 
-func (r *Reconciler) ensuringTLSCertSecretsAreReplicated(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "tls-secrets-are-replicated"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	scrtlist, err := r.yamlClient.Client().CoreV1().Secrets(obj.Namespace).List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("type=%s", corev1.SecretTypeTLS),
-	})
-	if err != nil {
-		return fail(err)
-	}
-
-	for _, scrt := range scrtlist.Items {
-		if v, ok := scrt.Annotations[constants.ReplicationEnableKey]; !ok || v != constants.ReplicationEnableValueTrue {
-			if scrt.Annotations == nil {
-				scrt.Annotations = make(map[string]string, 1)
-			}
-			scrt.Annotations[constants.ReplicationEnableKey] = constants.ReplicationEnableValueTrue
-			if err := r.Update(ctx, &scrt); err != nil {
-				return fail(err).RequeueAfter(100 * time.Millisecond)
-			}
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
-func (r *Reconciler) checkHttpsCert(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := CheckHttpsCerteady
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
-
-	if obj.Spec.Https == nil || !obj.Spec.Https.Enabled {
-		return req.Done()
-	}
-
-	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
-	}
-
-	var certlist certmanagerv1.CertificateList
-	if err := r.List(ctx, &certlist, &client.ListOptions{
-		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
-			constants.RouterNameKey: obj.GetName(),
-		}),
-		Namespace: obj.GetNamespace(),
-	}); err != nil {
-		return fail(err)
-	}
-
-	for _, cert := range certlist.Items {
-		errmsg := ""
-		for _, cond := range cert.Status.Conditions {
-			if cond.Type == certmanagerv1.CertificateConditionReady {
-				check.Status = metav1.ConditionStatus(cond.Status) == metav1.ConditionTrue
-				if !check.Status {
-					errmsg = fmt.Sprintf("HTTPS Certificate is not ready yet. cert-manager says '%s'.", cond.Message)
-				}
-			}
-		}
-
-		if !check.Status {
-			for _, cond := range cert.Status.Conditions {
-				if cond.Type == certmanagerv1.CertificateConditionIssuing {
-					errmsg = fmt.Sprintf("%s It also says '%s'", errmsg, check.Message)
-				}
-			}
-
-			return fail(fmt.Errorf(errmsg))
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
@@ -597,13 +600,24 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})
-
-	builder.Watches(&certmanagerv1.Certificate{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
-		if v, ok := obj.GetLabels()[constants.RouterNameKey]; ok {
-			return []reconcile.Request{{fn.NN(obj.GetNamespace(), v)}}
+	builder.Owns(&certmanagerv1.Certificate{})
+	builder.Watches(&certmanagerv1.Certificate{}, handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
+		if obj.GetNamespace() != r.Env.CertificateNamespace {
+			return nil
 		}
 
-		return nil
+		rlist, err := kubectl.PaginatedList[*crdsv1.Router](ctx, r.Client, &crdsv1.RouterList{}, &client.ListOptions{Limit: 10})
+		if err != nil {
+			return nil
+		}
+
+		reqs := make([]reconcile.Request, 0, 10)
+
+		for router := range rlist {
+			reqs = append(reqs, reconcile.Request{NamespacedName: fn.NN(router.Namespace, router.Name)})
+		}
+
+		return reqs
 	}))
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})

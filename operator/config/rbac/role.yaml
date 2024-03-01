@@ -6,6 +6,32 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - clusters
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - clusters
+  resources:
+  - clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - clusters
+  resources:
+  - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - clusters.kloudlite.io
   resources:
   - clusters
