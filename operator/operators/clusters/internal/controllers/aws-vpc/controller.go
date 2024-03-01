@@ -152,7 +152,7 @@ func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) 
 		if obj.Spec.PublicSubnets == nil {
 			hasUpdated = true
 
-			zones, ok := clustersv1.AwsRegionToAZs[obj.Spec.Region]
+			zones, ok := clustersv1.AwsRegionToAZs[clustersv1.AwsRegion(obj.Spec.Region)]
 			if !ok {
 				return fail(fmt.Errorf("invalid region (%s), no Availability zones defined for it", obj.Spec.Region)).Err(nil)
 			}
@@ -163,7 +163,7 @@ func (r *AwsVPCReconciler) patchDefaults(req *rApi.Request[*clustersv1.AwsVPC]) 
 
 			for i := range zones {
 				obj.Spec.PublicSubnets[i] = clustersv1.AwsSubnet{
-					AvailabilityZone: zones[i],
+					AvailabilityZone: string(zones[i]),
 					CIDR:             genSubnetCIDR(i),
 				}
 			}
