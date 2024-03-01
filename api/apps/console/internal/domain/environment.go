@@ -471,7 +471,7 @@ func (d *domain) UpdateEnvironment(ctx ConsoleContext, projectName string, env e
 		&env,
 		common.PatchOpts{
 			XPatch: repos.Document{
-				fc.EnvironmentSpec: env.Spec,
+				fc.EnvironmentSpecRouting: env.Spec.Routing,
 			},
 		},
 	)

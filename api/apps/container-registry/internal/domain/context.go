@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/pkg/repos"
 )
 
@@ -13,6 +14,16 @@ type RegistryContext struct {
 	UserEmail   string
 }
 
-func (c *RegistryContext) GetAccountName() string {
+func (c RegistryContext) GetAccountName() string {
 	return c.AccountName
+}
+
+func (c RegistryContext) GetUserId() repos.ID {
+	return c.UserId
+}
+func (c RegistryContext) GetUserEmail() string {
+	return c.UserEmail
+}
+func (c RegistryContext) GetUserName() string {
+	return c.UserName
 }
