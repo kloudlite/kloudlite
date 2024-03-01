@@ -8,15 +8,13 @@ vars:
 
 tasks:
   docker-build:
-    vars:
-      Image: "{{.ImagePrefix}}:{{.Tag}}"
     preconditions:
-      - sh: '[[ -n "{{.Tag}}" ]]'
-        msg: 'var Tag must have a value'
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
     silent: true
     cmds:
-      - podman buildx build -t {{.Image}} .
-      - podman push {{.Image}}
+      - nerdctl build -t {{.Image}} .
+      # - podman push {{.Image}}
 
   container:build-n-push:
     preconditions:
@@ -25,10 +23,12 @@ tasks:
     vars:
       Push: true
     cmds:
-      - docker build -t {{.Image}} .
+      - nerdctl build -t {{.Image}} .
+          # --cache-from=type=local,src=.dump/buildx-cache
+          # --cache-to=type=local,dest=.dump/buildx-cache
       - |+
         if [ "{{.Push}}" == "true" ]; then
-          docker push {{.Image}}
+          nerdctl push {{.Image}}
         fi
 
   tf:download:kubeconfig:dev:

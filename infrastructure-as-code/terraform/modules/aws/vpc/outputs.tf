@@ -3,9 +3,11 @@ output "vpc_id" {
 }
 
 output "vpc_public_subnets" {
-  value = {for idx, subnet in aws_subnet.public_subnets : subnet.availability_zone => subnet.id}
-}
-
-output "vpc_availability_zones" {
-  value = module.availability_zones.names
+  value = [
+    for idx, subnet in aws_subnet.public_subnets : {
+      id                = subnet.id
+      availability_zone = subnet.availability_zone
+      cidr              = subnet.cidr_block
+    }
+  ]
 }

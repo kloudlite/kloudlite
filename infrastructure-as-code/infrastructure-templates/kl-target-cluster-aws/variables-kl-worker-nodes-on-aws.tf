@@ -6,19 +6,20 @@ If you want to create new variables, please create them in other files
 
 variable "ec2_nodepools" {
   type = map(object({
-    # image_id             = string
-    # image_ssh_username   = string
-    availability_zone    = optional(string)
+    availability_zone = string
+    vpc_subnet_id     = string
+
     instance_type        = string
     nvidia_gpu_enabled   = optional(bool)
     root_volume_size     = string
     root_volume_type     = string
     iam_instance_profile = optional(string)
-    node_taints = optional(list(object({
+    node_taints          = optional(list(object({
       key    = string
       value  = optional(string)
       effect = string
     })))
+
     nodes = map(object({
       last_recreated_at = optional(number)
     }))
@@ -27,9 +28,9 @@ variable "ec2_nodepools" {
 
 variable "spot_nodepools" {
   type = map(object({
-    # image_id                     = string
-    # image_ssh_username           = string
-    availability_zone            = optional(string)
+    availability_zone = string
+    vpc_subnet_id     = string
+
     root_volume_size             = string
     root_volume_type             = string
     iam_instance_profile         = optional(string)
@@ -63,7 +64,7 @@ variable "spot_nodepools" {
 
   validation {
     error_message = "a nodepool can be either a cpu_node or a gpu_node, only one of them can be set at once"
-    condition = alltrue([
+    condition     = alltrue([
       for name, config in var.spot_nodepools :
       ((config.cpu_node == null && config.gpu_node != null) || (config.cpu_node != null && config.gpu_node == null))
     ])
@@ -78,4 +79,10 @@ variable "extra_agent_args" {
 variable "save_worker_ssh_key_to_path" {
   description = "save ssh key to this path"
   type        = string
+}
+
+variable "worker_tags" {
+  description = "a map of key values , that will be attached to cloud provider resources, for easier referencing"
+  type        = map(string)
+  default     = {}
 }

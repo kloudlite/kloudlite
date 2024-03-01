@@ -55,8 +55,8 @@ resource "aws_launch_template" "spot_template" {
 
   #  network_interfaces {
   #    associate_public_ip_address = true
-  #    security_groups             = var.vpc == null ?  var.security_groups : null
-  #    subnet_id                   = var.vpc != null ? var.vpc.subnet_id : null
+  #    security_groups             = var.vpc2 == null ?  var.security_groups : null
+  #    subnet_id                   = var.vpc2 != null ? var.vpc2.subnet_id : null
   #  }
 
   tag_specifications {

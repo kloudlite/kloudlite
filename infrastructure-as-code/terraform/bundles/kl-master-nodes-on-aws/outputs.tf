@@ -11,14 +11,6 @@ output "k3s_public_dns_host" {
   value = var.k3s_masters.public_dns_host
 }
 
-output "vpc_id" {
-  value = module.aws-vpc.vpc_id
-}
-
-output "vpc_public_subnets" {
-  value = module.aws-vpc.vpc_public_subnets
-}
-
 output "k3s_server_token" {
   sensitive = true
   value     = module.kloudlite-k3s-masters.k3s_server_token
