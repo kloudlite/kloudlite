@@ -24,7 +24,7 @@ export interface ISocketResp<T = any> {
 }
 
 type IData = {
-  event?: string;
+  event?: 'subscribe' | 'unsubscribe';
   id: string;
 };
 

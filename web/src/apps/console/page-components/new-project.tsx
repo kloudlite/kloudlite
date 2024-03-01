@@ -7,7 +7,13 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import Select from '~/components/atoms/select';
-import { parseName, parseNodes } from '../server/r-utils/common';
+import { listStatus, parseStatus } from '~/console/components/sync-status';
+import { IClusters } from '~/console/server/gql/queries/cluster-queries';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { INewProjectFromAccountLoader } from '../routes/_a+/$a+/new-project';
 import { useConsoleApi } from '../server/gql/api-provider';
@@ -18,6 +24,14 @@ import MultiStepProgress, {
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
 import { ReviewComponent } from '../components/commons';
+
+const statusRender = (item: ExtractNodeType<IClusters>) => {
+  return listStatus({
+    key: parseName(item),
+    item,
+    className: 'text-center',
+  });
+};
 
 const NewProject = () => {
   const { clustersData } = useLoaderData<INewProjectFromAccountLoader>();
@@ -125,22 +139,49 @@ const NewProject = () => {
                 placeholder="Select a cluster"
                 value={values.clusterName}
                 options={async () => [
-                  ...clusters.map((clster) => ({
-                    label: clster.displayName,
-                    value: parseName(clster),
-                    cluster: clster,
-                    render: () => (
-                      <div className="flex flex-col">
-                        <div>{clster.displayName}</div>
-                        <div className="bodySm text-text-soft">
-                          {parseName(clster)}
+                  ...clusters
+                    .filter(
+                      (clster) => parseStatus({ item: clster }) !== 'deleting'
+                    )
+                    .map((clster) => ({
+                      label: clster.displayName,
+                      value: parseName(clster),
+                      cluster: clster,
+                      render: () => (
+                        <div>
+                          {parseStatus({ item: clster }) === 'ready' ? (
+                            <div className="flex flex-col">
+                              <div>{clster.displayName}</div>
+                              <div className="bodySm text-text-soft">
+                                {parseName(clster)}
+                              </div>
+                            </div>
+                          ) : (
+                            // parseStatus({ item: clster }) === 'syncing' ||
+                            // parseStatus({ item: clster }) === 'notready' ?
+                            <div className="flex text-text-disabled">
+                              <div className="flex-grow">
+                                <div className="flex flex-col">
+                                  <div>{clster.displayName}</div>
+                                  <div className="bodySm">
+                                    {parseName(clster)}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex flex-grow-0 items-center">
+                                {statusRender(
+                                  clster as ExtractNodeType<IClusters>
+                                ).render()}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ),
-                  })),
+                      ),
+                    })),
                 ]}
-                onChange={(_, v) => {
-                  handleChange('clusterName')(dummyEvent(v));
+                onChange={(v) => {
+                  if (parseStatus({ item: v.cluster }) === 'ready')
+                    handleChange('clusterName')(dummyEvent(v.value));
                 }}
               />
               <div className="flex flex-row justify-start">
