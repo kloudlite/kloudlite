@@ -1,0 +1,9 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: AwsVPC
+metadata:
+  name: "sample"
+  namespace: "default"
+  labels: 
+    kloudlite: "true"
+spec:
+  region: "ap-south-1"
