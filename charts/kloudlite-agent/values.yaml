@@ -139,7 +139,7 @@ helmCharts:
     configuration:
       kubeletMetricsReexporter:
         image:
-          repository: "ghcr.io/kloudlite/kubelet-metrics-reexporter"
+          repository: "ghcr.io/kloudlite/kloudlite/kubelet-metrics-reexporter"
           tag: ""
 
   # clusterAutoscaler:
