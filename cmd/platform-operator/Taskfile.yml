@@ -20,6 +20,14 @@ tasks:
         vars:
           Out: "./bin/{{.app}}"
 
+  local:build:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task: build
+      - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
+
   container:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
