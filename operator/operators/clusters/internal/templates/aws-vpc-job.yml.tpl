@@ -82,7 +82,7 @@ spec:
             set -o pipefail
             set -o errexit
 
-            unzip $TERRAFORM_ZIPFILE
+            eval $DECOMPRESS_CMD
 
             pushd "$TEMPLATES_DIR/aws-vpc"
 

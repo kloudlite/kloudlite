@@ -68,14 +68,12 @@ spec:
                       iamInstanceProfileRole:
                         type: string
                       instanceType:
-                        description: ImageId                string                     `json:"imageId"
-                          graphql:"noinput"` ImageSSHUsername       string                     `json:"imageSSHUsername"
-                          graphql:"noinput"`
                         type: string
                       nodes:
                         additionalProperties:
                           properties:
                             availabilityZone:
+                              description: AvailabilityZone AwsAZ  `json:"availabilityZone"`
                               type: string
                             kloudliteRelease:
                               type: string
@@ -123,6 +121,7 @@ spec:
                       type: object
                     type: object
                   region:
+                    description: Region     AwsRegion           `json:"region"`
                     type: string
                   spotNodePools:
                     additionalProperties:
