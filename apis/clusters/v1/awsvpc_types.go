@@ -8,7 +8,7 @@ import (
 )
 
 type AwsSubnet struct {
-	AvailabilityZone AwsAZ  `json:"availabilityZone"`
+	AvailabilityZone string `json:"availabilityZone"`
 	CIDR             string `json:"cidr"`
 }
 
@@ -17,7 +17,8 @@ type AwsVPCSpec struct {
 	CredentialsRef common_types.SecretRef      `json:"credentialsRef"`
 	CredentialKeys CloudProviderCredentialKeys `json:"credentialKeys" graphql:"noinput"`
 
-	Region AwsRegion `json:"region"`
+	// Region AwsAZ `json:"region"`
+	Region string `json:"region"`
 
 	CIDR          string      `json:"cidr,omitempty"`
 	PublicSubnets []AwsSubnet `json:"publicSubnets,omitempty"`
