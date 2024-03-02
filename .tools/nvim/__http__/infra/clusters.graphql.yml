@@ -1,16 +1,7 @@
 ---
-global:
-  clusterName: sample-cluster3
-
-  # providerSecretName: "aws-283277"
-  # providerSecretNamespace: "kl-account-new-prod-team"
-
-  providerSecretName: "aws-creds2"
-  providerSecretNamespace: "kl-account-ab-641330"
----
 
 label: Create Cluster
-query: |+
+query: |+ #graphql
   mutation Infra_createCluster($cluster: ClusterIn!) {
     infra_createCluster(cluster: $cluster) {
       metadata {
@@ -34,15 +25,15 @@ variables:
         namespace: "{{.providerSecretNamespace}}"
       cloudProvider: aws
       aws:
-        region: ap-south-1
+        region: eu-north-1
         k3sMasters:
-          instanceType: c6a.large
+          instanceType: c5a.large
           nvidiaGpuEnabled: false
 
 ---
 
 label: List Clusters
-query: |+
+query: |+ #graphql
   query Infra_listClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
     infra_listClusters(search: $search, pagination: $pagination) {
       edges {
@@ -70,10 +61,10 @@ query: |+
             syncScheduledAt
             recordVersion
           }
-          adminKubeconfig {
-            value
-            encoding
-          }
+          # adminKubeconfig {
+          #   value
+          #   encoding
+          # }
         }
       }
     }
@@ -89,7 +80,7 @@ variables:
 ---
 
 label: Get Cluster
-query: |+
+query: |+ #graphql
   query Query($name: String!) {
     infra_getCluster(name: $name) {
       kind
@@ -113,7 +104,7 @@ variables:
 ---
 
 label: Update Cluster
-query: |+
+query: |+ #graphql
   mutation Infra_updateCluster($cluster: ClusterIn!) {
     infra_updateCluster(cluster: $cluster) {
       metadata {
@@ -140,16 +131,16 @@ variables:
         region: ap-south-1
         k3sMasters:
           instanceType: c6a.large
-          iamInstanceProfileRole: "EC2StorageAccess"
+          iamInstanceProfileRole: ""
 
 ---
 label: Upgrade Helm Kloudlite Agent
-query: |+
+query: |+ #graphql
   mutation Infra_upgradeHelmKloudliteAgent($clusterName: String!) {
     infra_upgradeHelmKloudliteAgent(clusterName: $clusterName)
   }
 variables:
-  clusterName: "ab-cluster-3"
+  clusterName: "{{.clusterName}}"
 ---
 
 label: Delete Cluster
