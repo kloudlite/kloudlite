@@ -9,6 +9,11 @@ on:
     tags:
       - '*'
     paths:
+      - api
+      - operator
+      - infrastructure-as-code
+      - kubelet-metrics-reexporter
+      - autoscaler
       - "api/**"
       - "operator/**"
       - "infrastructure-as-code/**"

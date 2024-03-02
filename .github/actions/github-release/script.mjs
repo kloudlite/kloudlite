@@ -22,7 +22,7 @@ async function main() {
 
   if (await checkReleaseExists(githubRepo, releaseTag)) {
     if (!isReleaseFromBranch) {
-      console.log(`RELEASE (${releaseTag}) already for git tag (${githubRef})`)
+      console.log(`RELEASE (${releaseTag}) already for git tag (${githubRef}). If it is a dummy github release (created by default, delete it first)`)
       process.exit(1)
     }
     console.log("RELEASE exists, need to delete current release, first")
