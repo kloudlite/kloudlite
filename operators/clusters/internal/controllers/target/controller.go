@@ -214,11 +214,7 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 		return req.Done().Err(nil)
 	}
 
-	if obj.Status.Checks[clusterDestroyJob].Status {
-		return req.Finalize()
-	}
-
-	return req.Done()
+	return req.Finalize()
 }
 
 func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
@@ -587,8 +583,14 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(clusterDestroyJob)
-	defer req.LogPostCheck(clusterDestroyJob)
+	checkName := clusterDestroyJob
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
@@ -598,12 +600,12 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	if job == nil {
 		credsSecret := &corev1.Secret{}
 		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
-			return req.CheckFailed(clusterDestroyJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		valuesJson, err := r.parseSpecToVarFileJson(obj, credsSecret)
 		if err != nil {
-			return req.CheckFailed(clusterDestroyJob, check, err.Error())
+			return fail(err).Err(nil)
 		}
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
@@ -634,12 +636,12 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			"job-image": r.Env.IACJobImage,
 		})
 		if err != nil {
-			return req.CheckFailed(clusterDestroyJob, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 
 		rr, err := r.yamlClient.ApplyYAML(ctx, b)
 		if err != nil {
-			return req.CheckFailed(clusterDestroyJob, check, err.Error()).Err(nil)
+			return fail(err)
 		}
 		req.AddToOwnedResources(rr...)
 		req.Logger.Infof("waiting for job to be created")
@@ -650,31 +652,33 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(clusterDestroyJob, check, "waiting for previous jobs to finish execution")
+			return fail(fmt.Errorf("waiting for previous jobs to finish execution"))
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
-			return req.CheckFailed(clusterDestroyJob, check, err.Error())
+			return fail(err)
 		}
 
 		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(clusterDestroyJob, check, "waiting for job to finish execution").Err(nil)
+		return fail(fmt.Errorf("waiting for job to finish execution"))
 	}
 
-	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
-	check.Status = job.Status.Succeeded > 0
+	if job.Status.Succeeded < 1 {
+		// means job failed
+		return fail(fmt.Errorf("job failed, checkout logs for more details")).Err(nil)
+	}
+
+	// check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
+
+	check.Status = true
 	if check != obj.Status.Checks[clusterDestroyJob] {
 		obj.Status.Checks[clusterDestroyJob] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
-	}
-
-	if !check.Status {
-		return req.Done()
 	}
 
 	return req.Next()
