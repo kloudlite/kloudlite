@@ -43,13 +43,6 @@ resource "aws_key_pair" "k3s_nodes_ssh_key" {
   depends_on = [null_resource.variable_validations]
 }
 
-#module "aws-vpc" {
-#  source     = "../../modules/aws/vpc2"
-#  tags       = var.tags
-#  tracker_id = var.tracker_id
-#  vpc_name   = var.vpc.name
-#}
-
 module "aws-security-groups" {
   source     = "../../modules/aws/security-groups"
   depends_on = [null_resource.variable_validations]

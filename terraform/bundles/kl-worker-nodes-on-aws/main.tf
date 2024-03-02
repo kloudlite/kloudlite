@@ -21,6 +21,23 @@ resource "null_resource" "variable_validations" {
       error_message = local.check_k3s_server_public_dns_host_is_set.error_message
       condition     = local.check_k3s_server_public_dns_host_is_set.condition
     }
+
+    precondition {
+      error_message = "either ec2_nodepool or spot_nodepool must be set"
+      condition     = anytrue([
+        var.ec2_nodepool == null || var.spot_nodepool != null,
+        var.ec2_nodepool != null || var.spot_nodepool == null,
+      ])
+    }
+
+    precondition {
+      error_message = "a spot nodepool can only consist of one kind of node either cpu only or gpu only"
+      condition     = anytrue([
+        var.spot_nodepool == null,
+        var.spot_nodepool == null ? false : var.spot_nodepool.cpu_node == null && var.spot_nodepool.gpu_node != null,
+        var.spot_nodepool == null ? false : var.spot_nodepool.cpu_node != null && var.spot_nodepool.gpu_node == null,
+      ])
+    }
   }
 }
 
@@ -85,32 +102,27 @@ module "aws-amis" {
   source = "../../modules/aws/AMIs"
 }
 
-#module "availability_zones" {
-#  source = "../../modules/aws/availability-zones"
-#}
-
 module "aws-ec2-nodepool" {
-  source     = "../../modules/aws/aws-ec2-nodepool"
-  depends_on = [null_resource.variable_validations]
-  for_each   = {for np_name, np_config in var.ec2_nodepools : np_name => np_config}
-
-  tracker_id           = "${var.tracker_id}-${each.key}"
+  count                = var.ec2_nodepool != null ? 1 : 0
+  source               = "../../modules/aws/aws-ec2-nodepool"
+  depends_on           = [null_resource.variable_validations, module.aws-security-groups.sg_for_k3s_agents_ids]
+  tracker_id           = "${var.tracker_id}-${var.nodepool_name}"
   ami                  = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone    = each.value.availability_zone
-  iam_instance_profile = each.value.iam_instance_profile
-  instance_type        = each.value.instance_type
-  nvidia_gpu_enabled   = each.value.nvidia_gpu_enabled
-  root_volume_size     = each.value.root_volume_size
-  root_volume_type     = each.value.root_volume_type
+  availability_zone    = var.availability_zone
+  iam_instance_profile = var.iam_instance_profile
+  instance_type        = var.ec2_nodepool.instance_type
+  nvidia_gpu_enabled   = var.nvidia_gpu_enabled
+  root_volume_size     = var.ec2_nodepool.root_volume_size
+  root_volume_type     = var.ec2_nodepool.root_volume_type
   security_groups      = module.aws-security-groups.sg_for_k3s_agents_names
   ssh_key_name         = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
   tags                 = var.tags
   vpc                  = {
-    subnet_id              = each.value.vpc_subnet_id
+    subnet_id              = var.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
   nodes = {
-    for name, cfg in each.value.nodes : name => {
+    for name, cfg in var.ec2_nodepool.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
@@ -122,20 +134,20 @@ module "aws-ec2-nodepool" {
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
         tf_node_taints          = concat([],
-          each.value.node_taints != null ? each.value.node_taints : [],
-          each.value.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
+          var.node_taints != null ? var.node_taints : [],
+          var.nvidia_gpu_enabled == true ? module.constants.gpu_node_taints : [],
         )
         tf_node_labels = jsonencode(merge(
           local.common_node_labels,
           {
-            (module.constants.node_labels.provider_az)   = each.value.availability_zone
+            (module.constants.node_labels.provider_az)   = var.availability_zone
             (module.constants.node_labels.node_has_role) = "agent"
-            (module.constants.node_labels.nodepool_name) : each.key
-            (module.constants.node_labels.provider_aws_instance_profile_name) : each.value.iam_instance_profile
+            (module.constants.node_labels.nodepool_name) : var.nodepool_name
+            (module.constants.node_labels.provider_aws_instance_profile_name) : var.iam_instance_profile
           },
-          each.value.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
+          var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
         ))
-        tf_node_name                 = "${each.key}-${name}"
+        tf_node_name                 = "${var.nodepool_name}-${name}"
         tf_use_cloudflare_nameserver = true
         tf_extra_agent_args          = var.extra_agent_args
       }))
@@ -145,26 +157,28 @@ module "aws-ec2-nodepool" {
 }
 
 module "aws-spot-nodepool" {
-  source                       = "../../modules/aws/aws-spot-nodepool"
-  depends_on                   = [null_resource.variable_validations]
-  for_each                     = {for np_name, np_config in var.spot_nodepools : np_name => np_config}
-  tracker_id                   = "${var.tracker_id}-${each.key}"
+  source     = "../../modules/aws/aws-spot-nodepool"
+  depends_on = [
+    null_resource.variable_validations, module.aws-security-groups.sg_for_k3s_agents_ids
+  ]
+  count                        = var.spot_nodepool != null ? 1 : 0
+  tracker_id                   = "${var.tracker_id}-${var.nodepool_name}"
   ami                          = module.aws-amis.ubuntu_amd64_cpu_ami_id
-  availability_zone            = each.value.availability_zone
-  root_volume_size             = each.value.root_volume_size
-  root_volume_type             = each.value.root_volume_type
+  availability_zone            = var.availability_zone
+  root_volume_size             = var.spot_nodepool.root_volume_size
+  root_volume_type             = var.spot_nodepool.root_volume_type
   security_groups              = module.aws-security-groups.sg_for_k3s_agents_ids
-  iam_instance_profile         = each.value.iam_instance_profile
-  spot_fleet_tagging_role_name = each.value.spot_fleet_tagging_role_name
+  iam_instance_profile         = var.iam_instance_profile
+  spot_fleet_tagging_role_name = var.spot_nodepool.spot_fleet_tagging_role_name
   ssh_key_name                 = aws_key_pair.k3s_worker_nodes_ssh_key.key_name
-  cpu_node                     = each.value.cpu_node
-  gpu_node                     = each.value.gpu_node
+  cpu_node                     = var.spot_nodepool.cpu_node
+  gpu_node                     = var.spot_nodepool.gpu_node
   vpc                          = {
-    subnet_id              = each.value.vpc_subnet_id
+    subnet_id              = var.vpc_subnet_id
     vpc_security_group_ids = module.aws-security-groups.sg_for_k3s_agents_ids
   }
   nodes = {
-    for name, cfg in each.value.nodes : name => {
+    for name, cfg in var.spot_nodepool.nodes : name => {
       user_data_base64 = base64encode(templatefile(module.k3s-templates.k3s-agent-template-path, {
         kloudlite_config_directory = module.k3s-templates.kloudlite_config_directory
 
@@ -176,21 +190,21 @@ module "aws-spot-nodepool" {
         tf_k3s_masters_dns_host = var.k3s_server_public_dns_host
         tf_k3s_token            = var.k3s_join_token
         tf_node_taints          = concat([],
-          each.value.node_taints != null ? each.value.node_taints : [],
-          each.value.gpu_node != null ? module.constants.gpu_node_taints : [],
+          var.node_taints != null ? var.node_taints : [],
+          var.spot_nodepool.gpu_node != null ? module.constants.gpu_node_taints : [],
         )
         tf_node_labels = jsonencode(merge(
           local.common_node_labels,
           {
-            (module.constants.node_labels.provider_az)                        = each.value.availability_zone
+            (module.constants.node_labels.provider_az)                        = var.availability_zone
             (module.constants.node_labels.node_has_role)                      = "agent"
             (module.constants.node_labels.node_is_spot)                       = "true"
-            (module.constants.node_labels.nodepool_name)                      = each.key
-            (module.constants.node_labels.provider_aws_instance_profile_name) = each.value.iam_instance_profile
+            (module.constants.node_labels.nodepool_name)                      = var.nodepool_name
+            (module.constants.node_labels.provider_aws_instance_profile_name) = var.iam_instance_profile
           },
-          each.value.gpu_node != null ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
+          var.spot_nodepool.gpu_node != null ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
         ))
-        tf_node_name                 = "${each.key}-${name}"
+        tf_node_name                 = "${var.nodepool_name}-${name}"
         tf_use_cloudflare_nameserver = true
         tf_extra_agent_args          = var.extra_agent_args
       }))
