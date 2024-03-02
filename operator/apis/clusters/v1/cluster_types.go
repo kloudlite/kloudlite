@@ -18,8 +18,9 @@ type AwsSpotGpuNode struct {
 
 type MasterNodeProps struct {
 	// +kubebuilder:validation:Enum=primary-master;secondary-master;
-	Role             string `json:"role"`
-	AvailabilityZone AwsAZ  `json:"availabilityZone"`
+	Role string `json:"role"`
+	// AvailabilityZone AwsAZ  `json:"availabilityZone"`
+	AvailabilityZone string `json:"availabilityZone"`
 	KloudliteRelease string `json:"kloudliteRelease"`
 	NodeProps        `json:",inline"`
 }
@@ -29,8 +30,6 @@ type NodeProps struct {
 }
 
 type AWSK3sMastersConfig struct {
-	// ImageId                string                     `json:"imageId" graphql:"noinput"`
-	// ImageSSHUsername       string                     `json:"imageSSHUsername" graphql:"noinput"`
 	InstanceType           string                     `json:"instanceType"`
 	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled"`
 	RootVolumeType         string                     `json:"rootVolumeType" graphql:"noinput"`
@@ -49,7 +48,7 @@ type CloudProviderCredentialKeys struct {
 }
 
 type AwsSubnetWithID struct {
-	AvailabilityZone AwsAZ  `json:"availabilityZone"`
+	AvailabilityZone string `json:"availabilityZone"`
 	ID               string `json:"id"`
 }
 
@@ -61,14 +60,15 @@ type AwsVPCParams struct {
 type AWSClusterConfig struct {
 	VPC *AwsVPCParams `json:"vpc,omitempty" graphql:"noinput"`
 
-	Region     AwsRegion           `json:"region"`
+	// Region     AwsRegion           `json:"region"`
+	Region     string              `json:"region"`
 	K3sMasters AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 
 	NodePools     map[string]AwsEC2PoolConfig  `json:"nodePools,omitempty" graphql:"noinput"`
 	SpotNodePools map[string]AwsSpotPoolConfig `json:"spotNodePools,omitempty" graphql:"noinput"`
 }
 
-func (avp *AwsVPCParams) GetSubnetId(az AwsAZ) string {
+func (avp *AwsVPCParams) GetSubnetId(az string) string {
 	if avp == nil {
 		return ""
 	}
