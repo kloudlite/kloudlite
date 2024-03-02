@@ -1,14 +1,4 @@
 ---
-global:
-  accountName: kloudlite-dev
-  providerName: sample 
-  providerNamespace: s1
-  providerSecretName: provider-sample
-
-  clusterName: sample-cluster3
-  # clusterName: teshdhr-797053
----
-
 label: Create Nodepool
 query: |+
   mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
@@ -39,10 +29,11 @@ variables:
       # targetCount: 1
       cloudProvider: "aws"
       aws:
-        availabilityZone: ap-south-1a
+        availabilityZone: eu-north-1a
         poolType: "ec2"
         ec2Pool:
-          instanceType: c6a.large
+          # instanceType: c6a.large
+          instanceType: c5.large
         nvidiaGpuEnabled: false
 
 ---
@@ -131,7 +122,7 @@ variables:
 ---
 
 label: Update Nodepool
-query: |+
+query: |+ #graphql
   mutation Infra_updateNodePool($clusterName: String!, $pool: NodePoolIn!) {
     infra_updateNodePool(clusterName: $clusterName, pool: $pool) {
       id
@@ -240,6 +231,6 @@ query: |+ #graphql
   }
 variables:
   clusterName: "{{.clusterName}}"
-  poolName: first
+  poolName: np
 
 ---
