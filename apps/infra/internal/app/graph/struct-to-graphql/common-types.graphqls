@@ -71,12 +71,11 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
   nodePools: Map
   region: String!
   spotNodePools: Map
+  vpc: Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig @shareable {
   iamInstanceProfileRole: String
-  imageId: String!
-  imageSSHUsername: String!
   instanceType: String!
   nodes: Map
   nvidiaGpuEnabled: Boolean!
@@ -88,13 +87,13 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfi
   availabilityZone: String!
   ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
   iamInstanceProfileRole: String
-  imageId: String!
-  imageSSHUsername: String!
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
   rootVolumeSize: Int!
   rootVolumeType: String!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
+  vpcId: String!
+  vpcSubnetId: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig @shareable {
@@ -116,6 +115,16 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfi
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
   nodes: Map
   spotFleetTaggingRoleName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID @shareable {
+  availabilityZone: String!
+  id: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams @shareable {
+  id: String!
+  publicSubnets: [Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID!]!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys @shareable {

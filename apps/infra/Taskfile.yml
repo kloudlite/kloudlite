@@ -47,6 +47,7 @@ tasks:
 
   build:
     cmds:
+      - go generate ./internal/entities/field-constants/gen.go
       - task: go:build 
         vars: 
           Out: ./bin/{{.app}}
