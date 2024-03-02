@@ -7,34 +7,31 @@ vars:
   ImagePrefix: ghcr.io/kloudlite/infrastructure-as-code
 
 tasks:
-  docker-build:
+  local-build:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: 'var Image must have a value'
     silent: true
     cmds:
       - nerdctl build -t {{.Image}} .
-      # - podman push {{.Image}}
 
-  container:build-n-push:
+  container:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: 'var Image must have a value'
     vars:
       Push: true
+      DockerArgs: ""
     cmds:
-      - nerdctl build -t {{.Image}} .
-          # --cache-from=type=local,src=.dump/buildx-cache
-          # --cache-to=type=local,dest=.dump/buildx-cache
+      - docker build -t {{.Image}} . {{.DockerArgs}}
       - |+
         if [ "{{.Push}}" == "true" ]; then
-          nerdctl push {{.Image}}
+          docker push {{.Image}}
         fi
 
   tf:download:kubeconfig:dev:
     vars:
       AuthToken: "{{.TF_TOKEN_app_terraform_io}}"
-      # WorkspaceId: "${TF_CLOUD_DEV_WORKSPACE_ID}"
       WorkspaceId: "{{.TF_CLOUD_DEV_WORKSPACE_ID}}"
     cmds:
       - |+
