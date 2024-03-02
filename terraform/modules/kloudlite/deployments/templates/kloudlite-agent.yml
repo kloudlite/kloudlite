@@ -28,7 +28,7 @@ spec:
 
       containers:
         - name: main
-          image: ghcr.io/kloudlite/api/tenant-agent:${kloudlite_release}
+          image: ghcr.io/kloudlite/kloudlite/api/tenant-agent:${kloudlite_release}
           imagePullPolicy: Always
           env:
             - name: GRPC_ADDR

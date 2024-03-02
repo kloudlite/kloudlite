@@ -45,7 +45,7 @@ resource "ssh_resource" "install-kloudlite-agent" {
       controller_name      = "helm-charts-controller"
       controller_namespace = var.release_namespace
 
-      image = "ghcr.io/kloudlite/operator/helm-charts:${var.kloudlite_release}"
+      image = "ghcr.io/kloudlite/kloudlite/operator/helm-charts:${var.kloudlite_release}"
 
       service_account_name = local.service_account_name
       kloudlite_release    = var.kloudlite_release
