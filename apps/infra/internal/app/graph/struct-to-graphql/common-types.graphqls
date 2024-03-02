@@ -724,8 +724,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersCo
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
   availabilityZone: String!
   ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
-  imageId: String!
-  imageSSHUsername: String!
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn

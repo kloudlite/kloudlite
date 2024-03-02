@@ -7778,8 +7778,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersCo
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
   availabilityZone: String!
   ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
-  imageId: String!
-  imageSSHUsername: String!
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
@@ -46925,7 +46923,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"availabilityZone", "ec2Pool", "imageId", "imageSSHUsername", "nvidiaGpuEnabled", "poolType", "spotPool"}
+	fieldsInOrder := [...]string{"availabilityZone", "ec2Pool", "nvidiaGpuEnabled", "poolType", "spotPool"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -46945,22 +46943,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ec2Pool"))
 			it.Ec2Pool, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "imageId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageId"))
-			it.ImageID, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "imageSSHUsername":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageSSHUsername"))
-			it.ImageSSHUsername, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
