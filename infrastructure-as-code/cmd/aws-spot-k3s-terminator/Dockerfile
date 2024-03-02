@@ -1,3 +1,4 @@
+#syntax=docker/dockerfile:1.4
 FROM alpine:3.16
 WORKDIR /app
 RUN apk add bash curl jq coreutils && rm -rf /var/cache/apk/*
