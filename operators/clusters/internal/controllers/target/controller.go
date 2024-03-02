@@ -77,10 +77,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if req.Object.Namespace != "kl-account-dev-team" || req.Object.Name != "testing-nxtcoder17" {
-		return ctrl.Result{}, nil
-	}
-
 	req.PreReconcile()
 	defer req.PostReconcile()
 
