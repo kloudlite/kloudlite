@@ -118,6 +118,7 @@ type GithubComKloudliteOperatorApisClustersV1AWSClusterConfig struct {
 	NodePools     map[string]interface{}                                       `json:"nodePools,omitempty"`
 	Region        string                                                       `json:"region"`
 	SpotNodePools map[string]interface{}                                       `json:"spotNodePools,omitempty"`
+	Vpc           *GithubComKloudliteOperatorApisClustersV1AwsVPCParams        `json:"vpc,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn struct {
@@ -127,8 +128,6 @@ type GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn struct {
 
 type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig struct {
 	IamInstanceProfileRole *string                `json:"iamInstanceProfileRole,omitempty"`
-	ImageID                string                 `json:"imageId"`
-	ImageSSHUsername       string                 `json:"imageSSHUsername"`
 	InstanceType           string                 `json:"instanceType"`
 	Nodes                  map[string]interface{} `json:"nodes,omitempty"`
 	NvidiaGpuEnabled       bool                   `json:"nvidiaGpuEnabled"`
@@ -145,13 +144,13 @@ type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
 	AvailabilityZone       string                                                     `json:"availabilityZone"`
 	Ec2Pool                *GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig  `json:"ec2Pool,omitempty"`
 	IamInstanceProfileRole *string                                                    `json:"iamInstanceProfileRole,omitempty"`
-	ImageID                string                                                     `json:"imageId"`
-	ImageSSHUsername       string                                                     `json:"imageSSHUsername"`
 	NvidiaGpuEnabled       bool                                                       `json:"nvidiaGpuEnabled"`
 	PoolType               GithubComKloudliteOperatorApisClustersV1AWSPoolType        `json:"poolType"`
 	RootVolumeSize         int                                                        `json:"rootVolumeSize"`
 	RootVolumeType         string                                                     `json:"rootVolumeType"`
 	SpotPool               *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig `json:"spotPool,omitempty"`
+	VpcID                  string                                                     `json:"vpcId"`
+	VpcSubnetID            string                                                     `json:"vpcSubnetId"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn struct {
@@ -203,6 +202,16 @@ type GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn struct {
 	CPUNode *GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn `json:"cpuNode,omitempty"`
 	GpuNode *GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn `json:"gpuNode,omitempty"`
 	Nodes   map[string]interface{}                                    `json:"nodes,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID struct {
+	AvailabilityZone string `json:"availabilityZone"`
+	ID               string `json:"id"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1AwsVPCParams struct {
+	ID            string                                                     `json:"id"`
+	PublicSubnets []*GithubComKloudliteOperatorApisClustersV1AwsSubnetWithID `json:"publicSubnets"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys struct {
@@ -1311,9 +1320,8 @@ type SearchCluster struct {
 }
 
 type SearchClusterManagedService struct {
-	IsReady    *repos.MatchFilter `json:"isReady,omitempty"`
-	Text       *repos.MatchFilter `json:"text,omitempty"`
-	IsStateful *repos.MatchFilter `json:"isStateful,omitempty"`
+	IsReady *repos.MatchFilter `json:"isReady,omitempty"`
+	Text    *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchDomainEntry struct {
@@ -1331,7 +1339,8 @@ type SearchNamespaces struct {
 }
 
 type SearchNodepool struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text       *repos.MatchFilter `json:"text,omitempty"`
+	IsStateful *repos.MatchFilter `json:"isStateful,omitempty"`
 }
 
 type SearchPersistentVolumeClaims struct {
