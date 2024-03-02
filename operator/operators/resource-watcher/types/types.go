@@ -34,7 +34,7 @@ func HasOtherKloudliteFinalizers(obj client.Object) bool {
 	hasOtherKloudliteFinalizers := false
 
 	for _, f := range obj.GetFinalizers() {
-		if strings.Contains(f, ".kloudlite.io") {
+		if strings.Contains(f, "kloudlite.io") {
 			if f == constants.StatusWatcherFinalizer {
 				continue
 			}
