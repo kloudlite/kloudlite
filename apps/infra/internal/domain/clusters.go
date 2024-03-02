@@ -194,8 +194,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 			return &clustersv1.AWSClusterConfig{
 				Region: cluster.Spec.AWS.Region,
 				K3sMasters: clustersv1.AWSK3sMastersConfig{
-					ImageId:          d.env.AWSAMI,
-					ImageSSHUsername: "ubuntu",
 					InstanceType:     cluster.Spec.AWS.K3sMasters.InstanceType,
 					NvidiaGpuEnabled: cluster.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
 					RootVolumeType:   "gp3",
@@ -505,6 +503,7 @@ func (d *domain) OnClusterUpdateMessage(ctx InfraContext, cluster entities.Clust
 			MessageTimestamp: opts.MessageTimestamp,
 			XPatch: repos.Document{
 				fc.ClusterSpecOutput: cluster.Spec.Output,
+				fc.ClusterSpecAwsVpc: cluster.Spec.AWS.VPC,
 			},
 		}))
 	d.resourceEventPublisher.PublishInfraEvent(ctx, ResourceTypeCluster, uCluster.GetName(), PublishUpdate)
