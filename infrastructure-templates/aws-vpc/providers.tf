@@ -3,9 +3,9 @@ terraform {
 }
 
 provider "aws" {
+  region     = var.aws_region
   access_key = var.aws_access_key
   secret_key = var.aws_secret_key
-  region     = var.aws_region
 
   dynamic "assume_role" {
     for_each = {for idx, config in [var.aws_assume_role] : idx => config if config.enabled == true}
@@ -16,3 +16,4 @@ provider "aws" {
     }
   }
 }
+

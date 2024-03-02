@@ -55,7 +55,7 @@ spec:
             - name: MAX_CONCURRENT_RECONCILES
               value: "1"
             - name: HELM_JOB_RUNNER_IMAGE
-              value: "ghcr.io/kloudlite/operator/workers/helm-runner:${kloudlite_release}"
+              value: "ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner:${kloudlite_release}"
           name: manager
           securityContext:
             runAsNonRoot: true
