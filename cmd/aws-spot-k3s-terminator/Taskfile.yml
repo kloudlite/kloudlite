@@ -7,8 +7,9 @@ tasks:
         msg: 'var Image must have a value'
     vars:
       Push: true
+      DockerArgs: ""
     cmds:
-      - docker build -t {{.Image}} . --cache-from="type=registry,ref={{.Image}}:buildcache" --cache-to="type=registry,ref={{.Image}}:buildcache,mode=max"
+      - docker build -t {{.Image}} . {{.DockerArgs}}
       - |+
         if [ "{{.Push}}" == "true" ]; then
           docker push {{.Image}}
