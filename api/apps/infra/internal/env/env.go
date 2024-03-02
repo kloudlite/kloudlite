@@ -34,16 +34,15 @@ type Env struct {
 	AWSAccessKey string `env:"AWS_ACCESS_KEY" required:"true"`
 	AWSSecretKey string `env:"AWS_SECRET_KEY" required:"true"`
 
-	AWSAMI string `env:"AWS_AMI_ID" required:"true" default:"ami-0ec149e1e8b76e957"`
-
 	PublicDNSHostSuffix string `env:"PUBLIC_DNS_HOST_SUFFIX" required:"true"`
 	SessionKVBucket     string `env:"SESSION_KV_BUCKET" required:"true"`
-	IsDev               bool
-	KubernetesApiProxy  string `env:"KUBERNETES_API_PROXY"`
 
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 
 	KloudliteRelease string `env:"KLOUDLITE_RELEASE" required:"true"`
+
+	IsDev              bool
+	KubernetesApiProxy string `env:"KUBERNETES_API_PROXY"`
 }
 
 func LoadEnv() (*Env, error) {

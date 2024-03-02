@@ -164,6 +164,8 @@ models:
   Github__com___kloudlite___api___pkg___types__SyncState:
     model: github.com/kloudlite/api/pkg/types.SyncState
 
+  # Github__com___kloudlite___operator___apis___clusters___v1__AwsRegion:
+  #   model: github.com/kloudlite/operator/apis/clusters/v1.AwsRegion
 
   # CheckAwsAccessOutput:
   #   model: github.com/kloudlite/api/apps/infra/internal/domain.AWSAccessValidationOutput

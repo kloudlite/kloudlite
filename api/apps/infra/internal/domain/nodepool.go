@@ -46,9 +46,15 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 	switch nodepool.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
+
+			awsSubnetID := cluster.Spec.AWS.VPC.GetSubnetId(nodepool.Spec.AWS.AvailabilityZone)
+			if awsSubnetID == "" {
+				return nil, errors.Newf("kloudlite VPC has no subnet configured for this availability zone (%s), please select another availability zone in your cluster's region (%s)", nodepool.Spec.AWS.AvailabilityZone, cluster.Spec.AWS.Region)
+			}
+
 			nodepool.Spec.AWS = &clustersv1.AWSNodePoolConfig{
-				ImageId:          d.env.AWSAMI,
-				ImageSSHUsername: "ubuntu",
+				VPCId:       cluster.Spec.AWS.VPC.ID,
+				VPCSubnetID: awsSubnetID,
 
 				AvailabilityZone: nodepool.Spec.AWS.AvailabilityZone,
 				NvidiaGpuEnabled: nodepool.Spec.AWS.NvidiaGpuEnabled,
