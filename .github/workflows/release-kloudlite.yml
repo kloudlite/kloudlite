@@ -54,6 +54,9 @@ jobs:
   autoscaler:
     uses: ./.github/workflows/autoscaler.yml
 
+  kubelet-metrics-reexporter:
+    uses: ./.github/workflows/kubelet-metrics-reexporter.yml
+
   k3s:
     runs-on: ubuntu-latest
     name: supported k3s binary
@@ -78,6 +81,7 @@ jobs:
       - autoscaler
       - web
       - kl
+      - kubelet-metrics-reexporter
     runs-on: ubuntu-latest
     name: Creating a Github Release
     steps:

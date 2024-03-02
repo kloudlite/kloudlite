@@ -1,0 +1,54 @@
+name: build kubelet metrics reexporter
+on:
+  workflow_call:
+
+jobs:
+  kubelet-metrics-reexporter:
+    runs-on: ubuntu-latest
+    name: kubelet-metrics-reexporter
+    env:
+      SUBMODULE: kubelet-metrics-reexporter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Build Environment
+        id: setup
+        uses: ./.github/actions/setup/
+        with:
+          github_token: "${{ secrets.GITHUB_TOKEN }}"
+
+          enable_go: true
+          go_mod_file: ${{ env.SUBMODULE }}/go.mod
+          go_sum_file: ${{ env.SUBMODULE }}/go.sum
+          go_build_cache_key: ${{env.SUBMODULE}}
+
+          enable_task: true
+          enable_upx: true
+
+          enable_docker: true
+
+      - name: Build & Push Kubelet Metrics ReExporter
+        env:
+          IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
+          OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+        run: |
+          pushd $SUBMODULE
+          set +e
+          image=ghcr.io/${{ github.repository }}/$SUBMODULE:$IMAGE_TAG
+          echo "building image: $image"
+
+          docker manifest inspect $image
+          exit_status=$?
+          if [ $exit_status -eq 0 ]; then
+            [ "$OVERRIDE_PUSHED_IMAGE" = "false" ] && echo "image ($image) already exists, and override image is disable, exiting" && exit 0
+            echo "image exists, but override pushed image is set to true. proceeding with building image"
+          fi
+
+          set -e
+
+          task docker:build-n-push Image="$image"
+          popd
+
