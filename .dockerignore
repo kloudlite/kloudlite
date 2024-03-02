@@ -3,3 +3,4 @@
 !build-scripts
 !infrastructure-templates
 !.ci
+!.terraform.d.zip

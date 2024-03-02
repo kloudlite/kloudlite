@@ -3,8 +3,7 @@ version: 3
 tasks:
   create-diff-patch:
     vars:
-      bundleName:
-        sh: ls ../../terraform/bundles | fzf
+      bundleName: kl-worker-nodes-on-aws
     cmds:
       - |+
         diff -u ../../terraform/bundles/{{.bundleName}}/variables.tf ./variables-{{.bundleName}}.tf > ./variables-{{.bundleName}}.tf.diff.patch

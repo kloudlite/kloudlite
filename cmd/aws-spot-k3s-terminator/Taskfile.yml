@@ -1,14 +1,14 @@
 version: 3
 
 tasks:
-  container:build-n-push:
+  container:build-and-push:
     preconditions:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: 'var Image must have a value'
     vars:
       Push: true
     cmds:
-      - docker build -t {{.Image}} .
+      - docker build -t {{.Image}} . --cache-from="type=registry,ref={{.Image}}:buildcache" --cache-to="type=registry,ref={{.Image}}:buildcache,mode=max"
       - |+
         if [ "{{.Push}}" == "true" ]; then
           docker push {{.Image}}
@@ -24,5 +24,4 @@ tasks:
       Image: "{{.ImagePrefix}}/{{.Name}}:{{.Tag}}"
     cmds:
       - docker build -t {{.Image}} .
-      - docker push {{.Image}}
 
