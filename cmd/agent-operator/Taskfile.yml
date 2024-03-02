@@ -26,7 +26,7 @@ tasks:
     cmds:
       - task: build
       - nerdctl build -f ./Containerfile -t {{.Image}} . --build-arg BINARY={{.app}}
-      - nerdctl push {{.Image}}
+      # - nerdctl push {{.Image}}
 
   container:build-and-push:
     preconditions:

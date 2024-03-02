@@ -315,9 +315,14 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 		job = nil
 	}
 
+	action := "apply"
+	if obj.GetDeletionTimestamp() != nil {
+		action = "delete"
+	}
+
 	if job == nil {
 		b, err := templates.ParseBytes(r.templateNodePoolJob, map[string]any{
-			"action": "apply",
+			"action": action,
 
 			"job-name":      jobName,
 			"job-namespace": jobNamespace,
@@ -412,23 +417,22 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
 
-	ec2Nodepools := make(map[string]any, 1)
-	spotNodepools := make(map[string]any, 1)
+	// ec2Nodepools := make(map[string]any, 1)
+	// spotNodepools := make(map[string]any, 1)
+
+	ec2Nodepool := map[string]any{}
+	spotNodepool := map[string]any{}
 
 	switch obj.Spec.AWS.PoolType {
 	case clustersv1.AWSPoolTypeEC2:
 		{
-			ec2Nodepools[obj.Name] = map[string]any{
-				"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
-
-				"availability_zone":    obj.Spec.AWS.AvailabilityZone,
-				"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
-				"root_volume_type":     obj.Spec.AWS.RootVolumeType,
-				"root_volume_size":     obj.Spec.AWS.RootVolumeSize,
-				"iam_instance_profile": obj.Spec.AWS.IAMInstanceProfileRole,
-				"instance_type":        obj.Spec.AWS.EC2Pool.InstanceType,
-				"nodes":                nodesMap,
+			ec2Nodepool = map[string]any{
+				"root_volume_type": obj.Spec.AWS.RootVolumeType,
+				"root_volume_size": obj.Spec.AWS.RootVolumeSize,
+				"instance_type":    obj.Spec.AWS.EC2Pool.InstanceType,
+				"nodes":            nodesMap,
 			}
+			spotNodepool = nil
 		}
 	case clustersv1.AWSPoolTypeSpot:
 		{
@@ -436,14 +440,9 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 				return "", fmt.Errorf(".spec.aws.spotPool is nil")
 			}
 
-			spotNodepools[obj.Name] = map[string]any{
-				"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
-
-				"availability_zone":            obj.Spec.AWS.AvailabilityZone,
-				"nvidia_gpu_enabled":           obj.Spec.AWS.NvidiaGpuEnabled,
+			spotNodepool = map[string]any{
 				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
 				"root_volume_size":             obj.Spec.AWS.RootVolumeSize,
-				"iam_instance_profile":         obj.Spec.AWS.IAMInstanceProfileRole,
 				"spot_fleet_tagging_role_name": obj.Spec.AWS.SpotPool.SpotFleetTaggingRoleName,
 				"cpu_node": func() map[string]any {
 					if obj.Spec.AWS.SpotPool.CpuNode == nil {
@@ -471,6 +470,7 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 				}(),
 				"nodes": nodesMap,
 			}
+			ec2Nodepool = nil
 		}
 	}
 
@@ -480,21 +480,26 @@ func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[str
 		// "aws_secret_key":             nil,
 		"aws_region":                 r.Env.CloudProviderRegion,
 		"tracker_id":                 fmt.Sprintf("cluster-%s", r.Env.ClusterName),
+		"nodepool_name":              obj.Name,
 		"k3s_join_token":             r.Env.K3sJoinToken,
 		"k3s_server_public_dns_host": r.Env.K3sServerPublicHost,
-		"ec2_nodepools":              ec2Nodepools,
-		"spot_nodepools":             spotNodepools,
-		"extra_agent_args": []string{
-			"--snapshotter",
-			"stargz",
-		},
+
+		"vpc_id":        obj.Spec.AWS.VPCId,
+		"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
+
+		"availability_zone":    obj.Spec.AWS.AvailabilityZone,
+		"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
+		"iam_instance_profile": obj.Spec.AWS.IAMInstanceProfileRole,
+
+		"ec2_nodepool":  ec2Nodepool,
+		"spot_nodepool": spotNodepool,
+
+		"extra_agent_args":     []string{"--snapshotter", "stargz"},
 		"save_ssh_key_to_path": "",
 		"tags": map[string]string{
 			"kloudlite-account": r.Env.AccountName,
 			"kloudlite-cluster": r.Env.ClusterName,
 		},
-
-		"vpc_id":            obj.Spec.AWS.VPCId,
 		"kloudlite_release": r.Env.KloudliteRelease,
 	}
 

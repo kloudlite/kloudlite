@@ -79,7 +79,7 @@ spec:
             set -o pipefail
             set -o errexit
 
-            unzip $TERRAFORM_ZIPFILE
+            eval $DECOMPRESS_CMD
 
             pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-masters"
             envsubst < state-backend.tf.tpl > state-backend.tf
