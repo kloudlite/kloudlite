@@ -21,6 +21,7 @@ variables:
   clusterName: "{{.clusterName}}"
   pool:
     displayName: sample
+    stateful: false
     metadata:
       name: first
     spec:
@@ -29,11 +30,12 @@ variables:
       # targetCount: 1
       cloudProvider: "aws"
       aws:
-        availabilityZone: eu-north-1a
+        # availabilityZone: eu-north-1a
+        availabilityZone: ap-south-1a
         poolType: "ec2"
         ec2Pool:
-          # instanceType: c6a.large
-          instanceType: c5.large
+          instanceType: c6a.large
+          # instanceType: c5.large
         nvidiaGpuEnabled: false
 
 ---
@@ -60,12 +62,12 @@ variables:
   clusterName: "{{.clusterName}}"
   pool:
     displayName: sample
+    stateful: false
     metadata:
       name: spot-cpu
     spec:
       minCount: 1
       maxCount: 2
-      targetCount: 1
       cloudProvider: "aws"
       aws:
         availabilityZone: ap-south-1a
@@ -231,6 +233,6 @@ query: |+ #graphql
   }
 variables:
   clusterName: "{{.clusterName}}"
-  poolName: np
+  poolName: first
 
 ---
