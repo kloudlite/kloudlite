@@ -50,13 +50,11 @@ spec:
         operator: "Exists"
         effect: "NoSchedule"
 
+    cloudProvider: "aws"
+
     agent:
       enabled: true
       name: kl-agent
-      image:
-        repository: ghcr.io/kloudlite/api/tenant-agent
-        tag: ""
-        pullPolicy: ""
       nodeSelector: {}
       tolerations: []
 
@@ -65,10 +63,6 @@ spec:
       agentOperator:
         enabled: true
         name: kl-agent-operator
-        image:
-          repository: ghcr.io/kloudlite/operator/agent
-          tag: ""
-          pullPolicy: ""
 
         tolerations: []
         nodeSelector: {}

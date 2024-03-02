@@ -156,8 +156,6 @@ type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn struct {
 	AvailabilityZone string                                                       `json:"availabilityZone"`
 	Ec2Pool          *GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn  `json:"ec2Pool,omitempty"`
-	ImageID          string                                                       `json:"imageId"`
-	ImageSSHUsername string                                                       `json:"imageSSHUsername"`
 	NvidiaGpuEnabled bool                                                         `json:"nvidiaGpuEnabled"`
 	PoolType         GithubComKloudliteOperatorApisClustersV1AWSPoolType          `json:"poolType"`
 	SpotPool         *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn `json:"spotPool,omitempty"`
