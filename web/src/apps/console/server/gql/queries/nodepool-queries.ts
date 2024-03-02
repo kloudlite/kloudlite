@@ -29,6 +29,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
           }
           creationTime
           displayName
+          stateful
           kind
           lastUpdatedBy {
             userEmail
@@ -157,6 +158,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
+              stateful
               lastUpdatedBy {
                 userEmail
                 userId

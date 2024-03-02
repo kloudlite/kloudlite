@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { NumberInput } from '~/components/atoms/input';
+import {NumberInput, TextInput} from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -53,6 +53,7 @@ const Root = (props: IDialog) => {
             taints: [],
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
+            stateful: props.data.stateful || false
           }
         : {
             nvidiaGpuEnabled: false,
@@ -72,6 +73,7 @@ const Root = (props: IDialog) => {
             labels: [],
             taints: [],
             isNameError: false,
+            stateful: false
           },
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
@@ -155,6 +157,7 @@ const Root = (props: IDialog) => {
                   cloudProvider: 'aws',
                   ...getNodeConf(),
                 },
+                stateful: val.stateful || false
               },
             });
             if (e) {
@@ -174,6 +177,7 @@ const Root = (props: IDialog) => {
                   minCount: Number.parseInt(val.minimum, 10),
                   ...getNodeConf(),
                 },
+                stateful: val.stateful || false
               },
             });
             if (e) {
@@ -217,79 +221,98 @@ const Root = (props: IDialog) => {
           />
 
           {cloudProvider === 'aws' && (
-            <>
-              <Select
-                label="Provision Mode"
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                value={values.poolType}
-                options={async () => provisionTypes}
-                onChange={(_, value) => {
-                  handleChange('poolType')(dummyEvent(value));
-                }}
-              />
+              <>
+                <Select
+                    label="Provision Mode"
+                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                    value={values.poolType}
+                    options={async () => provisionTypes}
+                    onChange={(_, value) => {
+                      handleChange('poolType')(dummyEvent(value));
+                    }}
+                />
 
-              <Select
-                label="Availability Zone"
-                value={values.awsAvailabilityZone}
-                options={async () =>
-                  mapper(
-                    awsRegions.find((v) => v.Name === clusterRegion)?.Zones ||
-                      [],
-                    (v) => ({
-                      value: v,
-                      label: v,
-                    })
-                  )
-                }
-                onChange={(_, v) => {
-                  handleChange('awsAvailabilityZone')(dummyEvent(v));
-                }}
-              />
+                <Select
+                    label="Availability Zone"
+                    value={values.awsAvailabilityZone}
+                    options={async () =>
+                        mapper(
+                            awsRegions.find((v) => v.Name === clusterRegion)?.Zones ||
+                            [],
+                            (v) => ({
+                              value: v,
+                              label: v,
+                            })
+                        )
+                    }
+                    onChange={(_, v) => {
+                      handleChange('awsAvailabilityZone')(dummyEvent(v));
+                    }}
+                />
 
-              <Select
-                // eslint-disable-next-line react-hooks/rules-of-hooks
-                value={useMemo(() => {
-                  const plan = findNodePlan(values.instanceType);
-                  return plan?.value;
-                }, [values.instanceType])}
-                label="Node plan"
-                options={async () => nodePlans}
-                onChange={(value) => {
-                  handleChange('instanceType')(dummyEvent(value.value));
-                  handleChange('nvidiaGpuEnabled')(
-                    dummyEvent(!!value.gpuEnabled)
-                  );
-                }}
-              />
-            </>
+                <div className="flex flex-row gap-xl items-end">
+                  <div className="flex flex-row gap-xl items-end flex-1">
+                    <div className="flex-1">
+                      <Select
+                        // eslint-disable-next-line react-hooks/rules-of-hooks
+                        value={useMemo(() => {
+                          const plan = findNodePlan(values.instanceType);
+                          return plan?.value;
+                        }, [values.instanceType])}
+                        label="Node plan"
+                        options={async () => nodePlans}
+                        onChange={(value) => {
+                          handleChange('instanceType')(dummyEvent(value.value));
+                          handleChange('nvidiaGpuEnabled')(
+                            dummyEvent(!!value.gpuEnabled)
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-md ">
+                    <div className="bodyMd-medium text-text-default">Stateful</div>
+                    <div className="flex items-center h-6xl">
+                      <Switch
+                          label=""
+                          checked={values.stateful}
+                          onChange={(val) => {
+                            handleChange('stateful')(dummyEvent(val));
+                          }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
           )}
 
           <div className="flex flex-row gap-xl items-end">
             <div className="flex flex-row gap-xl items-end flex-1 ">
               <div className="flex-1">
                 <NumberInput
-                  label={values.autoScale ? 'Min Node Count' : `Node Count`}
-                  placeholder="Minimum"
-                  value={values.minimum}
-                  error={!!errors.minimum}
-                  message={errors.minimum}
-                  onChange={(e) => {
-                    handleChange('minimum')(e);
-                    if (!values.autoScale) {
-                      handleChange('maximum')(e);
-                    }
-                  }}
+                    label={values.autoScale ? 'Min Node Count' : `Node Count`}
+                    placeholder="Minimum"
+                    value={values.minimum}
+                    error={!!errors.minimum}
+                    message={errors.minimum}
+                    onChange={(e) => {
+                      handleChange('minimum')(e);
+                      if (!values.autoScale) {
+                        handleChange('maximum')(e);
+                      }
+                    }}
                 />
               </div>
               {values.autoScale && (
-                <div className="flex-1">
-                  <NumberInput
-                    error={!!errors.maximum}
-                    message={errors.maximum}
-                    label="Max Node Count"
-                    placeholder="Maximum"
-                    value={values.maximum}
-                    onChange={handleChange('maximum')}
+                  <div className="flex-1">
+                    <NumberInput
+                        error={!!errors.maximum}
+                        message={errors.maximum}
+                        label="Max Node Count"
+                        placeholder="Maximum"
+                        value={values.maximum}
+                        onChange={handleChange('maximum')}
                   />
                 </div>
               )}

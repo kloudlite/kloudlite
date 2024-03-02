@@ -318,6 +318,7 @@ export type SearchNamespaces = {
 };
 
 export type SearchNodepool = {
+  isStateful?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -961,6 +962,7 @@ export type NodePoolIn = {
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata?: InputMaybe<MetadataIn>;
   spec: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolSpecIn;
+  stateful: Scalars['Boolean']['input'];
 };
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolSpecIn =
@@ -2014,6 +2016,7 @@ export type ConsoleGetNodePoolQuery = {
     clusterName: string;
     creationTime: any;
     displayName: string;
+    stateful: boolean;
     kind?: string;
     markedForDeletion?: boolean;
     updateTime: any;
@@ -2101,6 +2104,7 @@ export type ConsoleListNodePoolsQuery = {
         clusterName: string;
         creationTime: any;
         displayName: string;
+        stateful: boolean;
         markedForDeletion?: boolean;
         recordVersion: number;
         updateTime: any;
