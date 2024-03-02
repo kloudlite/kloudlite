@@ -19,8 +19,8 @@ spec:
         - operator: Exists
       containers:
       - name: main
-        image: {{.Values.image.name}}:{{.Values.kloudliteRelease | default .Chart.AppVersion}}
-        imagePullPolicy: {{.Values.imagePullPolicy}}
+        image: {{.Values.image.repository}}:{{ .Values.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{.Values.image.pullPolicy | default "IfNotPresent"}}
         env:
          - name: NODE_NAME
            valueFrom:

@@ -11,7 +11,7 @@ serviceAccount:
 clusterAutoscaler:
   enabled: true
   image:
-    repository: "ghcr.io/kloudlite/autoscaler/cluster-autoscaler"
+    repository: "ghcr.io/kloudlite/kloudlite/autoscaler/cluster-autoscaler"
     tag: ""
   nodeSelector: {}
   tolerations: []

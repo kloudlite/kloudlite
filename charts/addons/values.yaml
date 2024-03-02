@@ -1,5 +1,9 @@
 podLabels: {}
 
+serviceAccount:
+  create: true
+  name: "addons-sa"
+
 # -- cloudprovider, should be one of the supported ones [aws]
 cloudprovider: "aws"
 
