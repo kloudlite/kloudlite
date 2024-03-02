@@ -106,6 +106,7 @@ spec:
                   type: object
                 type: array
               region:
+                description: Region AwsAZ `json:"region"`
                 type: string
             required:
             - credentialKeys

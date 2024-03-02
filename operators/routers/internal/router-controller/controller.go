@@ -149,14 +149,16 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	if controllerutil.RemoveFinalizer(obj, constants.ForegroundFinalizer) {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
-		}
-		return req.Done().RequeueAfter(1 * time.Second)
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
 	var ingList networkingv1.IngressList
@@ -164,33 +166,24 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Resu
 		LabelSelector: apiLabels.SelectorFromValidatedSet(obj.GetEnsuredLabels()),
 		Namespace:     obj.Namespace,
 	}); err != nil {
-		return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	for i := range ingList.Items {
 		if err := r.Delete(ctx, &ingList.Items[i]); err != nil {
-			return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
-		}
-	}
-
-	if len(ingList.Items) != 0 {
-		return req.CheckFailed(Finalizing, check, "waiting for k8s ingress resources to be deleted")
-	}
-
-	if controllerutil.RemoveFinalizer(obj, constants.CommonFinalizer) {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(Finalizing, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
 	}
 
 	check.Status = true
-	if check != checks[Finalizing] {
-		checks[Finalizing] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
 	}
-	return req.Next()
+
+	return req.Finalize()
 }
 
 func (r *Reconciler) isInProjectNamespace(ctx context.Context, obj client.Object) bool {
