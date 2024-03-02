@@ -87,12 +87,14 @@ jobs:
         env:
           IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
           OVERRIDE_PUSHED_IMAGE: ${{ steps.setup.outputs.override_pushed_image }}
+          DOCKER_BUILDKIT: "1" 
         run: |
           pushd $SUBMODULE
           set +e
           pushd ${{matrix.build_dir}}
 
-          image=ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}:$IMAGE_TAG
+          image_name="ghcr.io/${{ github.repository }}/$SUBMODULE/${{matrix.name}}"
+          image="$image_name:$IMAGE_TAG"
           echo "building image: $image"
 
           docker manifest inspect $image
@@ -104,7 +106,7 @@ jobs:
 
           set -e
 
-          task container:build-n-push Image=$image
+          task container:build-and-push Image=$image
           popd
 
       - name: Release Artifact
