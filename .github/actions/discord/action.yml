@@ -8,9 +8,9 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Read Changelog from changelog/${{ inputs.release }}.md
+    - name: Read Changelog from changelog
       run: |+
-        contents=$(cat changelog/${{ inputs.release }}.md)
+        contents=$(cat changelog/${{ env.release_tag }}.md)
         echo "::set-output name=changelog::$contents"
         echo "::set-output name=release::${{ env.release_tag }}"
       id: changelog
