@@ -20,8 +20,8 @@ spec:
       namespace: {{.Release.Namespace}}
       key: secretKey
   aws:
-    imageId: "ami-0ec149e1e8b76e957"
-    imageSSHUsername: ubuntu
+    vpcId: {{.Values.nodepools.stateful.aws.vpcId}}
+    vpcSubnetId: {{.Values.nodepools.stateful.aws.vpcSubnetId}}
     availabilityZone: ap-south-1a
     nvidiaGpuEnabled: false
     rootVolumeSize: 50
