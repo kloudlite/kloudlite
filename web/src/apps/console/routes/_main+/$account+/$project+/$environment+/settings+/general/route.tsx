@@ -139,17 +139,21 @@ const EnvironmentSettingsGeneral = () => {
             />
             <InfoLabel
               info={
-                <div>
-                  <div className="bodyMd-medium">Public:</div>
-                  <p>
-                    Public environments will expose services to the public
-                    internet.
-                  </p>
-                  <div className="bodyMd-medium">Private:</div>
-                  <p>
-                    Private environments will be accessible when Kloudlite VPN
-                    is active.
-                  </p>
+                <div className="flex flex-col gap-2xl">
+                  <div>
+                    <div className="bodyMd-medium">Public</div>
+                    <p>
+                      Public environments will expose services to the public
+                      internet.
+                    </p>
+                  </div>
+                  <div>
+                    <div className="bodyMd-medium">Private</div>
+                    <p>
+                      Private environments will be accessible when Kloudlite VPN
+                      is active.
+                    </p>
+                  </div>
                 </div>
               }
             />
