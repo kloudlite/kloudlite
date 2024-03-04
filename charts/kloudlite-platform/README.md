@@ -70,37 +70,38 @@ helm show values kloudlite/kloudlite-platform
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| apps.accountsApi.image | object | `{"repository":"ghcr.io/kloudlite/api/accounts","tag":""}` | image (with tag) for accounts api |
-| apps.auditLoggingWorker.image.repository | string | `"ghcr.io/kloudlite/api/worker-audit-logging"` |  |
+| apps.accountsApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/accounts","tag":""}` | image (with tag) for accounts api |
+| apps.auditLoggingWorker.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/worker-audit-logging"` |  |
 | apps.auditLoggingWorker.image.tag | string | `""` |  |
-| apps.authApi.image | object | `{"repository":"ghcr.io/kloudlite/api/auth","tag":""}` | image (with tag) for auth api |
+| apps.authApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/auth","tag":""}` | image (with tag) for auth api |
 | apps.authWeb.enabled | bool | `true` |  |
-| apps.authWeb.image | object | `{"repository":"ghcr.io/kloudlite/web/auth","tag":""}` | image (with tag) for auth web |
-| apps.commsApi.image | object | `{"repository":"ghcr.io/kloudlite/api/comms","tag":""}` | image (with tag) for comms api |
+| apps.authWeb.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/web/auth","tag":""}` | image (with tag) for auth web |
+| apps.commsApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/comms","tag":""}` | image (with tag) for comms api |
 | apps.consoleApi.configuration.logsAndMetricsHttpPort | int | `9100` |  |
 | apps.consoleApi.configuration.vpnDeviceNamespace | string | `"kl-vpn-devices"` |  |
-| apps.consoleApi.image | object | `{"repository":"ghcr.io/kloudlite/api/console","tag":""}` | image (with tag) for console api |
+| apps.consoleApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/console","tag":""}` | image (with tag) for console api |
 | apps.consoleWeb.enabled | bool | `true` |  |
-| apps.consoleWeb.image | object | `{"repository":"ghcr.io/kloudlite/web/console","tag":""}` | image (with tag) for console web |
+| apps.consoleWeb.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/web/console","tag":""}` | image (with tag) for console web |
 | apps.containerRegistryApi.configuration.authorizerPort | int | `4000` |  |
 | apps.containerRegistryApi.configuration.buildClusterAccountName | string | `""` |  |
 | apps.containerRegistryApi.configuration.buildClusterName | string | `""` |  |
 | apps.containerRegistryApi.configuration.eventListenerPort | number | `4001` | port on which container registry event listener should listen |
 | apps.containerRegistryApi.configuration.jobBuildNamespace | string | `"kloudlite"` | namespace, in which build runs should be created |
 | apps.containerRegistryApi.configuration.registrySecret | string | `""` |  |
-| apps.containerRegistryApi.image | object | `{"repository":"ghcr.io/kloudlite/api/container-registry","tag":""}` | image (with tag) for container registry api |
-| apps.gatewayApi.image.repository | string | `"ghcr.io/kloudlite/api/gateway"` |  |
+| apps.containerRegistryApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/container-registry","tag":""}` | image (with tag) for container registry api |
+| apps.gatewayApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/gateway"` |  |
 | apps.gatewayApi.image.tag | string | `""` |  |
-| apps.iamApi.image.repository | string | `"ghcr.io/kloudlite/api/iam"` |  |
+| apps.iamApi.image.repository | string | `"ghcr.io/kloudlite/kloudlite/api/iam"` |  |
 | apps.iamApi.image.tag | string | `""` |  |
-| apps.infraApi.image | object | `{"repository":"ghcr.io/kloudlite/api/infra","tag":""}` | image (with tag) for infra api |
-| apps.klInstaller.image.repository | string | `"ghcr.io/kloudlite/kl/installer"` |  |
+| apps.infraApi.configuration.kloudliteRelease | string | `""` |  |
+| apps.infraApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/infra","tag":""}` | image (with tag) for infra api |
+| apps.klInstaller.image.repository | string | `"ghcr.io/kloudlite/bin-installer"` |  |
 | apps.klInstaller.image.tag | string | `""` |  |
 | apps.messageOfficeApi.configuration.platformAccessToken | string | `"sample"` |  |
 | apps.messageOfficeApi.configuration.tokenHashingSecret | string | `""` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
-| apps.messageOfficeApi.image | object | `{"repository":"ghcr.io/kloudlite/api/message-office","tag":""}` | image (with tag) for message office api |
-| apps.webhooksApi.image | object | `{"repository":"ghcr.io/kloudlite/api/webhook","tag":""}` | image (with tag) for webhooks api |
-| apps.websocketApi.image | object | `{"repository":"ghcr.io/kloudlite/api/websocket-server","tag":""}` | image (with tag) for websocket-server api |
+| apps.messageOfficeApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/message-office","tag":""}` | image (with tag) for message office api |
+| apps.webhooksApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/webhook","tag":""}` | image (with tag) for webhooks api |
+| apps.websocketApi.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/api/websocket-server","tag":""}` | image (with tag) for websocket-server api |
 | aws.accessKey | string | `""` |  |
 | aws.cloudformation.instanceProfileNamePrefix | string | `"kloudlite-instance-profile"` |  |
 | aws.cloudformation.params.trustedARN | string | `"arn:aws:iam::855999427630:root"` |  |
@@ -110,8 +111,6 @@ helm show values kloudlite/kloudlite-platform
 | aws.secretKey | string | `""` |  |
 | certManager.certIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with lets-encrypt services |
 | certManager.certIssuer.name | string | `"kloudlite-cluster-issuer"` |  |
-| certManager.configuration.nodeSelector | object | `{}` |  |
-| certManager.configuration.tolerations | list | `[]` |  |
 | certManager.enabled | bool | `true` | whether to enable cert-manager |
 | certManager.name | string | `"cert-manager"` |  |
 | cloudflareWildCardCert.certificateName | string | `"cloudflare-wildcard-cert"` |  |
@@ -122,8 +121,6 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains[0] | string | `"*.platform.kloudlite.io"` | should default to basedomain |
 | cloudflareWildCardCert.enabled | bool | `true` |  |
 | cloudflareWildCardCert.tlsSecretName | string | `"kl-cert-wildcard-tls"` |  |
-| clusterAutoscaler.configuration.chartVersion | string | `""` |  |
-| clusterAutoscaler.enabled | bool | `true` |  |
 | descheduler.enabled | bool | `true` |  |
 | distribution.domain | string | `"cr.khost.dev"` |  |
 | distribution.s3.accessKey | string | `""` |  |
@@ -164,7 +161,7 @@ helm show values kloudlite/kloudlite-platform
 | envVars.nats.streams.resourceSync.subjects | string | `"resource-sync.>"` |  |
 | envVars.nats.url | string | `"nats://nats:4222"` |  |
 | global.accountName | string | `"kloudlite"` | kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name |
-| global.baseDomain | string | `"platform.kloudlite.io"` | base domain for all routers exposed through this cluster |
+| global.baseDomain | string | `"platform.kloudlite.io"` | base domain for all routers exposed through this culuster |
 | global.clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS name |
 | global.clusterName | string | `"platform"` | kloudlite cluster name, required only for labelling purposes, does not need to be a real kloudlite cluster name |
 | global.clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
@@ -208,6 +205,41 @@ helm show values kloudlite/kloudlite-platform
 | nats.configuration.volumeSize | string | `"10Gi"` |  |
 | nats.replicas | int | `3` |  |
 | nats.runAsCluster | bool | `false` |  |
+| nodepools.iac.aws.vpcId | string | `""` |  |
+| nodepools.iac.aws.vpcSubnetId | string | `""` |  |
+| nodepools.iac.enabled | bool | `true` |  |
+| nodepools.iac.labels."kloudlite.io/nodepool.role" | string | `"iac"` |  |
+| nodepools.iac.max | int | `10` |  |
+| nodepools.iac.min | int | `2` |  |
+| nodepools.iac.taints[0].effect | string | `"NoExecute"` |  |
+| nodepools.iac.taints[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| nodepools.iac.taints[0].value | string | `"iac"` |  |
+| nodepools.iac.tolerations[0].effect | string | `"NoExecute"` |  |
+| nodepools.iac.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| nodepools.iac.tolerations[0].operator | string | `"Equal"` |  |
+| nodepools.iac.tolerations[0].value | string | `"iac"` |  |
+| nodepools.stateful.aws.vpcId | string | `""` |  |
+| nodepools.stateful.aws.vpcSubnetId | string | `""` |  |
+| nodepools.stateful.labels."kloudlite.io/nodepool.role" | string | `"stateful"` |  |
+| nodepools.stateful.max | int | `2` |  |
+| nodepools.stateful.min | int | `2` |  |
+| nodepools.stateful.taints[0].effect | string | `"NoExecute"` |  |
+| nodepools.stateful.taints[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| nodepools.stateful.taints[0].value | string | `"stateful"` |  |
+| nodepools.stateful.tolerations[0].effect | string | `"NoExecute"` |  |
+| nodepools.stateful.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| nodepools.stateful.tolerations[0].operator | string | `"Equal"` |  |
+| nodepools.stateful.tolerations[0].value | string | `"stateful"` |  |
+| nodepools.stateless.aws.vpcId | string | `""` |  |
+| nodepools.stateless.aws.vpcSubnetId | string | `""` |  |
+| nodepools.stateless.labels."kloudlite.io/nodepool.role" | string | `"stateless"` |  |
+| nodepools.stateless.max | int | `2` |  |
+| nodepools.stateless.min | int | `2` |  |
+| nodepools.stateless.taints | list | `[]` |  |
+| nodepools.stateless.tolerations[0].effect | string | `"NoExecute"` |  |
+| nodepools.stateless.tolerations[0].key | string | `"kloudlite.io/nodepool.role"` |  |
+| nodepools.stateless.tolerations[0].operator | string | `"Equal"` |  |
+| nodepools.stateless.tolerations[0].value | string | `"stateless"` |  |
 | oAuth.enabled | bool | `true` |  |
 | oAuth.providers.github.appId | string | `""` | GitHub app id |
 | oAuth.providers.github.appPrivateKey | string | `""` | GitHub app private key (base64 encoded) |
@@ -227,20 +259,26 @@ helm show values kloudlite/kloudlite-platform
 | oAuth.secretName | string | `"oauth-secrets"` | secret where all oauth credentials should be |
 | operators.platformOperator.configuration.cluster.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created |
 | operators.platformOperator.configuration.cluster.cloudflare.zoneId | string | `""` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
-| operators.platformOperator.configuration.cluster.jobImage.repository | string | `"ghcr.io/kloudlite/infrastructure-as-code/iac-job"` |  |
+| operators.platformOperator.configuration.cluster.jobImage.repository | string | `"ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job"` |  |
 | operators.platformOperator.configuration.cluster.jobImage.tag | string | `""` |  |
-| operators.platformOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/operator/workers/helm-runner"` |  |
+| operators.platformOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner"` |  |
 | operators.platformOperator.configuration.helmCharts.jobImage.tag | string | `""` |  |
-| operators.platformOperator.configuration.nodepool.cloudProviderName | string | `"aws"` |  |
-| operators.platformOperator.configuration.nodepool.cloudProviderRegion | string | `"ap-south-1"` |  |
-| operators.platformOperator.configuration.nodepool.extractFromCluster | bool | `true` |  |
-| operators.platformOperator.configuration.nodepool.k3sAgentJoinToken | string | `""` | k3s agent join token, as nodepools are effectively agent nodes |
-| operators.platformOperator.configuration.nodepool.k3sServerPublicHost | string | `""` | k3s masters public DNS Host |
+| operators.platformOperator.configuration.nodepools.aws.vpc_params.readFromCluster | bool | `true` |  |
+| operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcId | string | `"vpc_id"` |  |
+| operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcPublicSubnets | string | `"vpc_public_subnets"` |  |
+| operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.name | string | `"kloudlite-aws-settings"` |  |
+| operators.platformOperator.configuration.nodepools.aws.vpc_params.secret.namespace | string | `"kube-system"` |  |
+| operators.platformOperator.configuration.nodepools.cloudProviderName | string | `"aws"` |  |
+| operators.platformOperator.configuration.nodepools.cloudProviderRegion | string | `"ap-south-1"` |  |
+| operators.platformOperator.configuration.nodepools.enabled | bool | `true` |  |
+| operators.platformOperator.configuration.nodepools.extractFromCluster | bool | `true` |  |
+| operators.platformOperator.configuration.nodepools.k3sAgentJoinToken | string | `""` | k3s agent join token, as nodepools are effectively agent nodes |
+| operators.platformOperator.configuration.nodepools.k3sServerPublicHost | string | `""` | k3s masters public DNS Host |
 | operators.platformOperator.configuration.wireguard.enableExamples | bool | `true` |  |
 | operators.platformOperator.configuration.wireguard.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.platformOperator.configuration.wireguard.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.platformOperator.enabled | bool | `true` | whether to enable platform operator |
-| operators.platformOperator.image | object | `{"repository":"ghcr.io/kloudlite/operator/platform","tag":""}` | image (with tag) for platform operator |
+| operators.platformOperator.image | object | `{"repository":"ghcr.io/kloudlite/kloudlite/operator/platform","tag":""}` | image (with tag) for platform operator |
 | operators.preferOperatorsOnMasterNodes | bool | `true` |  |
 | persistence.storageClasses.ext4 | string | `"sc-ext4"` | ext4 storage class name |
 | persistence.storageClasses.xfs | string | `"sc-xfs"` | xfs storage class name |

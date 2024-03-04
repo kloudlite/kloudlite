@@ -85,8 +85,12 @@ nodepools:
     max: 2
     labels:
       kloudlite.io/nodepool.role: "stateless"
+    aws:
+      vpcId: ""
+      vpcSubnetId: ""
+
     taints: []
-    # taints:
+    # taints
     #   - key: "kloudlite.io/nodepool.role"
     #     value: "stateless"
     #     effect: "NoExecute"
@@ -101,6 +105,9 @@ nodepools:
     max: 2
     labels:
       kloudlite.io/nodepool.role: "stateful"
+    aws:
+      vpcId: ""
+      vpcSubnetId: ""
     taints:
       - key: "kloudlite.io/nodepool.role"
         value: "stateful"
@@ -114,6 +121,9 @@ nodepools:
     enabled: true
     min: 2
     max: 10
+    aws:
+      vpcId: ""
+      vpcSubnetId: ""
     labels:
       kloudlite.io/nodepool.role: "iac"
     taints:
@@ -421,14 +431,14 @@ apps:
     enabled: true
     # -- image (with tag) for console web
     image: 
-      repository: ghcr.io/kloudlite/web/console
+      repository: ghcr.io/kloudlite/kloudlite/web/console
       tag: ""
 
   authWeb:
     enabled: true
     # -- image (with tag) for auth web
     image:
-      repository: ghcr.io/kloudlite/web/auth
+      repository: ghcr.io/kloudlite/kloudlite/web/auth
       tag: ""
 
 operators:
