@@ -8,41 +8,56 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Read Changelog from changelog
+    - name: Push Notification To Discord
+      env:
+        DISCORD_WEBHOOK_URL: ${{ inputs.webhook_url }}
       run: |
-        contents=$(cat changelog/${{ env.release_tag }}.md)
-        echo "::set-output name=changelog::$contents"
-        echo "::set-output name=release::${{ env.release_tag }}"
-      id: changelog
-      shell: bash
+        import os
+        import requests
 
+        webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
+        rTag = os.environ.get('release_tag')
 
-    - name: Test Success
-      uses: rjstone/discord-webhook-notify@v1
-      if: success()
-      with:
-          severity: info
-          username: Release Bot
-          color: '#aaff00'
-          description: "${{ steps.changelog.outputs.changelog }}"
-          details: "${{ steps.changelog.outputs.changelog }}"
-          footer: Released by ${{ github.actor }}
-          text: 'Release ${{ steps.changelog.outputs.release }}'
+        if rTag is None:
+            exit("The release_tag environment variable is not set.")
 
-          webhookUrl: ${{ inputs.webhook_url }}
+        if webhook_url is None:
+            exit("The DISCORD_WEBHOOK_URL environment variable is not set.")
 
-    # - name: Test Failure
-    #   uses: rjstone/discord-webhook-notify@v1
-    #   if: failure()
-    #   with:
-    #       severity: error
-    #       details: Test Failed!
-    #       webhookUrl: ${{ inputs.webhook_url }}
-    #
-    # - name: Test Cancelled
-    #   uses: rjstone/discord-webhook-notify@v1
-    #   if: cancelled()
-    #   with:
-    #       severity: warn
-    #       details: Test Cancelled!
-    #       webhookUrl: ${{ inputs.webhook_url }}
+        changelog_file_path = f"changelog/{rTag}.md"
+
+        if changelog_file_path and os.path.exists(changelog_file_path):
+            with open(changelog_file_path, 'r') as file:
+                changelog_content = file.read()
+        else:
+            changelog_content = ""
+
+        changelog_content =f"""# Release {rTag}
+        {changelog_content}
+        """ 
+
+        payload = {
+            "content": "New release available!",
+            "username": "Release Bot",
+            "avatar_url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
+            "embeds": [
+                {
+                    "description": changelog_content,
+                    "color": 3447003,
+                    "footer": {
+                        "text": "Powered by Kloudlite",
+                        "icon_url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+                    },
+                }
+            ]
+        }
+
+        response = requests.post(webhook_url, json=payload)
+
+        if response.status_code == 204:
+            print("Successfully sent the changelog to Discord.")
+        else:
+            print(f"Failed to send the changelog. Status code: {response.status_code}")
+
+      id: discord
+      shell: python
