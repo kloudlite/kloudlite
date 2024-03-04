@@ -24,8 +24,8 @@ runs:
           severity: info
           username: Release Bot
           color: '#aaff00'
-          description: Changelog
-          details: ${{ steps.changelog.outputs.changelog }}
+          description: "${{ steps.changelog.outputs.changelog }}"
+          details: "${{ steps.changelog.outputs.changelog }}"
           footer: Released by ${{ github.actor }}
           text: 'Release ${{ steps.changelog.outputs.release }}'
 
