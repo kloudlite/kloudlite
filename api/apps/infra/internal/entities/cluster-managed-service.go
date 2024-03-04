@@ -23,11 +23,11 @@ type ClusterManagedService struct {
 }
 
 func (c *ClusterManagedService) GetDisplayName() string {
-	return c.ResourceMetadata.DisplayName
+	return c.DisplayName
 }
 
 func (c *ClusterManagedService) GetStatus() operator.Status {
-	return c.ClusterManagedService.Status
+	return c.Status
 }
 
 var ClusterManagedServiceIndices = []repos.IndexField{
