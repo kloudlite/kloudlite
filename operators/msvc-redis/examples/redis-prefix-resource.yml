@@ -1,0 +1,12 @@
+apiVersion: redis.msvc.kloudlite.io/v1
+kind: Prefix
+metadata:
+  name: auth-keys
+  namespace: default
+spec:
+  msvcRef:
+    apiVersion: redis.msvc.kloudlite.io/v1
+    kind: StandaloneService
+    name: redis-standalone
+    namespace: default
+  prefixKey: "auth:"

@@ -1,19 +1,20 @@
 {{- $name := get . "name" }}
 {{- $namespace := get . "namespace" }}
+
 {{- $labels := get . "labels" | default dict }}
 {{- $ownerRefs := get . "owner-refs" | default list }}
+
+{{- $nodeSelector := get . "node-selector" | default dict }}
+{{- $tolerations := get . "tolerations" | default list }}
 
 {{- $storageSize := get . "storage-size" }}
 {{- $storageClass := get . "storage-class" }}
 
-{{- $nodeSelector := get . "node-selector" | default dict }}
-
 {{- $requestsCpu := get . "requests-cpu" }}
 {{- $requestsMem := get . "requests-mem" }}
+
 {{- $limitsCpu := get . "limits-cpu" }}
 {{- $limitsMem := get . "limits-mem" }}
-
-{{- $obj := get . "object"}}
 
 {{/*{{- $freeze := get . "freeze" | default false}}*/}}
 {{- /* {{- $aclConfigmapName := get . "acl-configmap-name"  -}} */}}
@@ -28,11 +29,9 @@ metadata:
   labels: {{ $labels | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4 }}
 spec:
-  chartRepo:
-    url: https://charts.bitnami.com/bitnami
-    name: bitnami
+  chartRepoURL: https://charts.bitnami.com/bitnami
   chartVersion: 18.0.2
-  chartName: bitnami/redis
+  chartName: redis
 
   values:
     # source: https://github.com/bitnami/charts/tree/main/bitnami/redis/
@@ -74,7 +73,7 @@ spec:
         enabled: true
         size: {{$storageSize}}
 
-      podLabels: {}
+      podLabels: {{$labels | toYAML | nindent 8 }}
 
     priorityClassName: {{$priorityClassName}}
 

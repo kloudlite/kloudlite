@@ -6,6 +6,9 @@
 {{- $labels := get . "labels" }}
 {{- $ownerRefs := get . "owner-refs" }}
 
+{{- $nodeSelector := get . "node-selector" }}
+{{- $tolerations := get . "tolerations" }}
+
 {{- $serviceTemplateSpec := get . "service-template-spec" }}
 
 apiVersion: {{$apiVersion}}
@@ -15,4 +18,7 @@ metadata:
   namespace: {{$namespace}}
   labels: {{ $labels | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
-spec: {{$serviceTemplateSpec | toYAML | nindent 2 }}
+spec: 
+  nodeSelector: {{$nodeSelector |toYAML | nindent 2}}
+  tolerations: {{$tolerations |toYAML | nindent 2}}
+  {{$serviceTemplateSpec | toYAML | nindent 2 }}

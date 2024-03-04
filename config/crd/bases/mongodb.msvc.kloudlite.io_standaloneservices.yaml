@@ -70,10 +70,7 @@ spec:
                     - name
                     type: object
                 type: object
-              region:
-                type: string
               resources:
-                description: Storage      ct.Storage   `json:"storage"`
                 properties:
                   cpu:
                     properties:

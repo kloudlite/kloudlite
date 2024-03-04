@@ -52,8 +52,6 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              region:
-                type: string
               replicaCount:
                 default: 1
                 type: integer
@@ -137,7 +135,6 @@ spec:
                   type: object
                 type: array
             required:
-            - region
             - resources
             type: object
           status:
