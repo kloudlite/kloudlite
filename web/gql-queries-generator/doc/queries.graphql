@@ -564,7 +564,6 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
     }
     creationTime
     displayName
-    stateful
     kind
     lastUpdatedBy {
       userEmail
@@ -614,6 +613,7 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
       cloudProvider
       maxCount
       minCount
+      nodeLabels
     }
     status {
       checks
@@ -664,7 +664,6 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
         }
         creationTime
         displayName
-        stateful
         lastUpdatedBy {
           userEmail
           userId
@@ -707,6 +706,7 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
           cloudProvider
           maxCount
           minCount
+          nodeLabels
         }
         status {
           checks

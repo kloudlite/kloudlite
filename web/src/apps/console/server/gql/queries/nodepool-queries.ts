@@ -29,7 +29,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
           }
           creationTime
           displayName
-          stateful
           kind
           lastUpdatedBy {
             userEmail
@@ -79,6 +78,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
             cloudProvider
             maxCount
             minCount
+            nodeLabels
           }
           status {
             checks
@@ -158,7 +158,6 @@ export const nodepoolQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
-              stateful
               lastUpdatedBy {
                 userEmail
                 userId
@@ -201,6 +200,7 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                 cloudProvider
                 maxCount
                 minCount
+                nodeLabels
               }
               status {
                 checks
