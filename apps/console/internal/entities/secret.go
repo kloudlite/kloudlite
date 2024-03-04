@@ -19,6 +19,8 @@ type Secret struct {
 
 	common.ResourceMetadata `json:",inline"`
 	SyncStatus              t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	IsReadOnly bool `json:"isReadyOnly" graphql:"noinput"`
 }
 
 func (s *Secret) GetDisplayName() string {

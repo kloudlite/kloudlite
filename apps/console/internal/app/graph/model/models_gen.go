@@ -319,11 +319,15 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
+	NodeSelector    map[string]interface{}                               `json:"nodeSelector,omitempty"`
 	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplate `json:"serviceTemplate"`
+	Tolerations     []*K8sIoAPICoreV1Toleration                          `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
+	NodeSelector    map[string]interface{}                                 `json:"nodeSelector,omitempty"`
 	ServiceTemplate *GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn `json:"serviceTemplate"`
+	Tolerations     []*K8sIoAPICoreV1TolerationIn                          `json:"tolerations,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1MresResourceTemplate struct {

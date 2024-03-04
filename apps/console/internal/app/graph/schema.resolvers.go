@@ -354,7 +354,6 @@ func (r *mutationResolver) CoreUpdateVPNDeviceEnv(ctx context.Context, deviceNam
 
 // CoreUpdateVpnDeviceNs is the resolver for the core_updateVpnDeviceNs field.
 func (r *mutationResolver) CoreUpdateVpnDeviceNs(ctx context.Context, deviceName string, ns string) (bool, error) {
-
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
@@ -369,7 +368,6 @@ func (r *mutationResolver) CoreUpdateVpnDeviceNs(ctx context.Context, deviceName
 
 // CoreUpdateVpnClusterName is the resolver for the core_updateVpnClusterName field.
 func (r *mutationResolver) CoreUpdateVpnClusterName(ctx context.Context, deviceName string, clusterName string) (bool, error) {
-
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
 		return false, errors.NewE(err)
