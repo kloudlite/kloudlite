@@ -20,6 +20,7 @@ import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import Wrapper from '~/console/components/wrapper';
 import { Checkbox } from '~/components/atoms/checkbox';
+import { InfoLabel } from '~/console/components/commons';
 import { IEnvironmentContext } from '../../_layout';
 
 const EnvironmentSettingsGeneral = () => {
@@ -128,13 +129,35 @@ const EnvironmentSettingsGeneral = () => {
             value={values.displayName}
             onChange={handleChange('displayName')}
           />
-          <Checkbox
-            label="Public"
-            checked={values.environmentRoutingMode}
-            onChange={(checked) => {
-              handleChange('environmentRoutingMode')(dummyEvent(checked));
-            }}
-          />
+          <div className="flex flex-row items-center gap-lg">
+            <Checkbox
+              label="Public"
+              checked={values.environmentRoutingMode}
+              onChange={(checked) => {
+                handleChange('environmentRoutingMode')(dummyEvent(checked));
+              }}
+            />
+            <InfoLabel
+              info={
+                <div className="flex flex-col gap-2xl">
+                  <div>
+                    <div className="bodyMd-medium">Public</div>
+                    <p>
+                      Public environments will expose services to the public
+                      internet.
+                    </p>
+                  </div>
+                  <div>
+                    <div className="bodyMd-medium">Private</div>
+                    <p>
+                      Private environments will be accessible when Kloudlite VPN
+                      is active.
+                    </p>
+                  </div>
+                </div>
+              }
+            />
+          </div>
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput
