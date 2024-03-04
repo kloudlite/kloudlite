@@ -140,7 +140,9 @@ type Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec 
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpec @shareable {
+  nodeSelector: Map
   serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate!
+  tolerations: [K8s__io___api___core___v1__Toleration!]
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplate @shareable {
@@ -407,7 +409,9 @@ input Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__ManagedServiceSpecIn {
+  nodeSelector: Map
   serviceTemplate: Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplateIn!
+  tolerations: [K8s__io___api___core___v1__TolerationIn!]
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__MresResourceTemplateIn {
