@@ -232,7 +232,6 @@ const (
 	NodePoolSpecMinCount                            = "spec.minCount"
 	NodePoolSpecNodeLabels                          = "spec.nodeLabels"
 	NodePoolSpecNodeTaints                          = "spec.nodeTaints"
-	NodePoolStateful                                = "stateful"
 )
 
 // constant vars generated for struct OutputField
