@@ -478,7 +478,6 @@ const ManagedServiceLayout = () => {
   } = useCustomSwr('/nodepools', async () => {
     return api.listNodePools({clusterName: parseName(cluster)})
   })
-  console.log("np", nodepoolData)
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
