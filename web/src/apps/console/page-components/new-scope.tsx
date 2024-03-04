@@ -157,7 +157,22 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
                   handleChange('environmentRoutingMode')(dummyEvent(val));
                 }}
               />
-              <InfoLabel info="Routers inside public environments will expose services to public internet. Private environments routers will only work when Kloudlite VPN is active." />
+              <InfoLabel
+                info={
+                  <div>
+                    <div className="bodyMd-medium">Public:</div>
+                    <p>
+                      Public environments will expose services to the public
+                      internet.
+                    </p>
+                    <div className="bodyMd-medium">Private:</div>
+                    <p>
+                      Private environments will be accessible when Kloudlite VPN
+                      is active.
+                    </p>
+                  </div>
+                }
+              />
             </div>
           </div>
         </Popup.Content>

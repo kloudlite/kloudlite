@@ -137,7 +137,22 @@ const EnvironmentSettingsGeneral = () => {
                 handleChange('environmentRoutingMode')(dummyEvent(checked));
               }}
             />
-            <InfoLabel info="Routers inside public environments will expose services to public internet. Private environments routers will only work when Kloudlite VPN is active." />
+            <InfoLabel
+              info={
+                <div>
+                  <div className="bodyMd-medium">Public:</div>
+                  <p>
+                    Public environments will expose services to the public
+                    internet.
+                  </p>
+                  <div className="bodyMd-medium">Private:</div>
+                  <p>
+                    Private environments will be accessible when Kloudlite VPN
+                    is active.
+                  </p>
+                </div>
+              }
+            />
           </div>
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
