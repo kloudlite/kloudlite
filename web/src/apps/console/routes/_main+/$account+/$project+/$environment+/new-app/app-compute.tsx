@@ -51,7 +51,6 @@ const AppCompute = () => {
   const api = useConsoleApi();
   const {cluster} = useOutletContext<IAppContext>()
 
-  console.log("cluster", parseName(cluster))
 
   const {
     data,
@@ -69,7 +68,6 @@ const AppCompute = () => {
     return api.listNodePools({clusterName: parseName(cluster)})
   })
 
-  console.log("np", nodepoolData)
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
       imageUrl: app.spec.containers[activeContIndex]?.image || '',
