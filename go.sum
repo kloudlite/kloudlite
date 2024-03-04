@@ -176,6 +176,8 @@ github.com/kloudlite/operator v1.0.4-0.20240301102315-eaaca2bf5858 h1:9xwI6Kg3ny
 github.com/kloudlite/operator v1.0.4-0.20240301102315-eaaca2bf5858/go.mod h1:kMXogvCB4qSG56WlJ5lhyL6JVeVLJ+IyyE18g/1FF1I=
 github.com/kloudlite/operator v1.0.4-0.20240302150206-a2acd5f489a9 h1:53uXx3WcoxUDr+niHvABk/0Wgo6i5AvjG93Mhs5RCjw=
 github.com/kloudlite/operator v1.0.4-0.20240302150206-a2acd5f489a9/go.mod h1:kMXogvCB4qSG56WlJ5lhyL6JVeVLJ+IyyE18g/1FF1I=
+github.com/kloudlite/operator v1.0.4-0.20240304120205-71b62093a405 h1:JOLs3M3kx3xRjQkCpEIkh2I+qfUd2HRVYZ1g7saw3Nk=
+github.com/kloudlite/operator v1.0.4-0.20240304120205-71b62093a405/go.mod h1:kMXogvCB4qSG56WlJ5lhyL6JVeVLJ+IyyE18g/1FF1I=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.2.1/go.mod h1:ipq/a2n7PKx3OHsz4KJII5eveXtPO4qwEXGdVfWzfnI=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
