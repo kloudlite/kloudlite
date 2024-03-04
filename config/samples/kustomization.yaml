@@ -90,4 +90,5 @@ resources:
 - crds_v1_projectmanagedservice.yaml
 - crds_v1_clustermanagedservice.yaml
 - clusters_v1_awsvpc.yaml
+- redis.msvc_v1_prefix.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

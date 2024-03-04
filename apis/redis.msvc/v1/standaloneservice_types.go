@@ -4,27 +4,31 @@ import (
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type StandaloneServiceOutput struct {
+	Credentials ct.SecretRef `json:"credentials,omitempty"`
+}
+
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	Region       string              `json:"region,omitempty"`
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	ct.NodeSelectorAndTolerations `json:",inline"`
+	Resources                     ct.Resources `json:"resources"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default=1
-	ReplicaCount int          `json:"replicaCount,omitempty"`
-	Resources    ct.Resources `json:"resources"`
+	ReplicaCount int `json:"replicaCount,omitempty"`
+
+	Output StandaloneServiceOutput `json:"output,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="Cloud",type="string",JSONPath=".spec.cloudProvider.cloud"
-// +kubebuilder:printcolumn:name="ReplicaCount",type="integer",JSONPath=".spec.replicaCount"
-// +kubebuilder:printcolumn:name="Status",type="boolean",JSONPath=".status.isReady"
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/checks",name=Checks,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // StandaloneService is the Schema for the standaloneservices API
 type StandaloneService struct {
@@ -52,9 +56,7 @@ func (ss *StandaloneService) GetEnsuredLabels() map[string]string {
 }
 
 func (ss *StandaloneService) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("StandaloneService").String(),
-	}
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true
