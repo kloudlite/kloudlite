@@ -11,6 +11,7 @@ export const keyconstants = {
   repoName: 'kloudlite.io/ui-repoName',
   imageTag: 'kloudlite.io/ui-imageTag',
   repoAccountName: 'kloudlite.io/ui-repoAccountName',
+  nodepoolName: 'kloudlite.io/nodepool.name',
 
-  nodepoolStateType: 'kloudlite.io/ui/pool.app-state-type'
+  nodepoolStateType: 'kloudlite.io/ui-pool.app-state-type'
 };

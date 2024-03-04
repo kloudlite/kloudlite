@@ -7,13 +7,15 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { FadeIn, parseValue } from '~/console/page-components/util';
 import Select from '~/components/atoms/select';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { parseNodes } from '~/console/server/r-utils/common';
+import {parseName, parseNodes} from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { BottomNavigation } from '~/console/components/commons';
 import { plans } from './datas';
+import {useOutletContext } from '@remix-run/react';
+import {IAppContext} from "~/console/routes/_main+/$account+/$project+/$environment+/app+/$app+/_layout";
 
 const valueRender = ({
   label,
@@ -47,6 +49,9 @@ const AppCompute = () => {
     getImageTag,
   } = useAppState();
   const api = useConsoleApi();
+  const {cluster} = useOutletContext<IAppContext>()
+
+  console.log("cluster", parseName(cluster))
 
   const {
     data,
@@ -56,6 +61,15 @@ const AppCompute = () => {
     return api.listRepo({});
   });
 
+  const {
+    data: nodepoolData,
+    isLoading: nodepoolLoading,
+    error: nodepoolLoadingError,
+  } = useCustomSwr('/nodepools', async () => {
+    return api.listNodePools({clusterName: parseName(cluster)})
+  })
+
+  console.log("np", nodepoolData)
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
       imageUrl: app.spec.containers[activeContIndex]?.image || '',
@@ -97,6 +111,8 @@ const AppCompute = () => {
         app.spec.containers[activeContIndex].resourceMemory?.max,
         0
       ),
+
+      nodepoolName: app.spec.nodeSelector?.[keyconstants.nodepoolName] || ''
     },
     validationSchema: Yup.object({
       pullSecret: Yup.string(),
@@ -121,6 +137,10 @@ const AppCompute = () => {
         },
         spec: {
           ...s.spec,
+          nodeSelector: {
+            ...(s.spec.nodeSelector || {}),
+            [keyconstants.nodepoolName]: val.nodepoolName
+          },
           containers: [
             {
               ...(s.spec.containers?.[0] || {}),
@@ -166,6 +186,11 @@ const AppCompute = () => {
     accName: val.accountName,
   }));
 
+  const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
+    label: val.metadata?.name || '',
+    value: val.metadata?.name || '',
+  }))
+
   const {
     data: digestData,
     isLoading: digestLoading,
@@ -196,6 +221,24 @@ const AppCompute = () => {
         manipulation and calculations in a system.
       </div>
       <div className="flex flex-col gap-3xl">
+
+        <Select
+            label="Nodepool Name"
+            size="lg"
+            placeholder="Select Nodepool"
+            value={values.nodepoolName}
+            creatable
+            onChange={(val) => {
+              handleChange('nodepoolName')(dummyEvent(val.value));
+            }}
+            options={async () => [...nodepools]}
+            error={!!errors.repos || !!nodepoolLoadingError}
+            message={
+              nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
+            }
+            loading={nodepoolLoading}
+        />
+
         <Select
           label="Repo Name"
           size="lg"
