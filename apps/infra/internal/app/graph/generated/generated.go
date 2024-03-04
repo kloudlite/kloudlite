@@ -1046,7 +1046,6 @@ type ComplexityRoot struct {
 		CreationTime      func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
-		IsStateful        func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
@@ -5749,13 +5748,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NodePool.ID(childComplexity), true
 
-	case "NodePool.stateful":
-		if e.complexity.NodePool.IsStateful == nil {
-			break
-		}
-
-		return e.complexity.NodePool.IsStateful(childComplexity), true
-
 	case "NodePool.kind":
 		if e.complexity.NodePool.Kind == nil {
 			break
@@ -6818,7 +6810,6 @@ input SearchClusterManagedService {
 
 input SearchNodepool {
     text: MatchFilterIn
-    isStateful: MatchFilterIn
 }
 
 input SearchHelmRelease {
@@ -8617,7 +8608,6 @@ input NodeIn {
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec!
-  stateful: Boolean!
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
@@ -8640,7 +8630,6 @@ input NodePoolIn {
   kind: String
   metadata: MetadataIn
   spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn!
-  stateful: Boolean!
 }
 
 `, BuiltIn: false},
@@ -35069,8 +35058,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_createNodePool(ctx conte
 				return ec.fieldContext_NodePool_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_NodePool_spec(ctx, field)
-			case "stateful":
-				return ec.fieldContext_NodePool_stateful(ctx, field)
 			case "status":
 				return ec.fieldContext_NodePool_status(ctx, field)
 			case "syncStatus":
@@ -35183,8 +35170,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateNodePool(ctx conte
 				return ec.fieldContext_NodePool_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_NodePool_spec(ctx, field)
-			case "stateful":
-				return ec.fieldContext_NodePool_stateful(ctx, field)
 			case "status":
 				return ec.fieldContext_NodePool_status(ctx, field)
 			case "syncStatus":
@@ -38468,50 +38453,6 @@ func (ec *executionContext) fieldContext_NodePool_spec(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _NodePool_stateful(ctx context.Context, field graphql.CollectedField, obj *entities.NodePool) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NodePool_stateful(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsStateful, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NodePool_stateful(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NodePool",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _NodePool_status(ctx context.Context, field graphql.CollectedField, obj *entities.NodePool) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NodePool_status(ctx, field)
 	if err != nil {
@@ -38778,8 +38719,6 @@ func (ec *executionContext) fieldContext_NodePoolEdge_node(ctx context.Context, 
 				return ec.fieldContext_NodePool_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_NodePool_spec(ctx, field)
-			case "stateful":
-				return ec.fieldContext_NodePool_stateful(ctx, field)
 			case "status":
 				return ec.fieldContext_NodePool_status(ctx, field)
 			case "syncStatus":
@@ -41672,8 +41611,6 @@ func (ec *executionContext) fieldContext_Query_infra_getNodePool(ctx context.Con
 				return ec.fieldContext_NodePool_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_NodePool_spec(ctx, field)
-			case "stateful":
-				return ec.fieldContext_NodePool_stateful(ctx, field)
 			case "status":
 				return ec.fieldContext_NodePool_status(ctx, field)
 			case "syncStatus":
@@ -50988,7 +50925,7 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec", "stateful"}
+	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -51039,14 +50976,6 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 				return it, err
 			}
 			if err = ec.resolvers.NodePoolIn().Spec(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "stateful":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateful"))
-			it.IsStateful, err = ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
 				return it, err
 			}
 		}
@@ -51319,7 +51248,7 @@ func (ec *executionContext) unmarshalInputSearchNodepool(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text", "isStateful"}
+	fieldsInOrder := [...]string{"text"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -51331,14 +51260,6 @@ func (ec *executionContext) unmarshalInputSearchNodepool(ctx context.Context, ob
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "isStateful":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isStateful"))
-			it.IsStateful, err = ec.unmarshalOMatchFilterIn2ᚖgithubᚗcomᚋkloudliteᚋapiᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -58046,13 +57967,6 @@ func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet,
 				return innerFunc(ctx)
 
 			})
-		case "stateful":
-
-			out.Values[i] = ec._NodePool_stateful(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "status":
 
 			out.Values[i] = ec._NodePool_status(ctx, field, obj)
@@ -61936,7 +61850,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -61944,7 +61858,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
