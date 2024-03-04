@@ -13,21 +13,28 @@ runs:
       if: success()
       with:
           severity: info
-          details: Test Succeeded!
+          username: Nightly Bot
+          color: '#aaff00'
+          # avatarUrl: https://github.githubassets.com/images/modules/logos_page/Octocat.png
+          description: This is a custom description.
+          details: 'Custom details: Somebody set up us the bomb.'
+          footer: This is a footer.
+          text: This is where text goes.
+
           webhookUrl: ${{ inputs.webhook_url }}
 
-    - name: Test Failure
-      uses: rjstone/discord-webhook-notify@v1
-      if: failure()
-      with:
-          severity: error
-          details: Test Failed!
-          webhookUrl: ${{ inputs.webhook_url }}
-
-    - name: Test Cancelled
-      uses: rjstone/discord-webhook-notify@v1
-      if: cancelled()
-      with:
-          severity: warn
-          details: Test Cancelled!
-          webhookUrl: ${{ inputs.webhook_url }}
+    # - name: Test Failure
+    #   uses: rjstone/discord-webhook-notify@v1
+    #   if: failure()
+    #   with:
+    #       severity: error
+    #       details: Test Failed!
+    #       webhookUrl: ${{ inputs.webhook_url }}
+    #
+    # - name: Test Cancelled
+    #   uses: rjstone/discord-webhook-notify@v1
+    #   if: cancelled()
+    #   with:
+    #       severity: warn
+    #       details: Test Cancelled!
+    #       webhookUrl: ${{ inputs.webhook_url }}

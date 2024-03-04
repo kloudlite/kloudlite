@@ -80,13 +80,13 @@ jobs:
 
   github_release:
     needs:
-      - api
-      - operator
-      - infrastructure-as-code
-      - autoscaler
-      - web
-      - kl
-      - kubelet-metrics-reexporter
+      # - api
+      # - operator
+      # - infrastructure-as-code
+      # - autoscaler
+      # - web
+      # - kl
+      # - kubelet-metrics-reexporter
     runs-on: ubuntu-latest
     name: Creating a Github Release
     steps:
@@ -95,85 +95,66 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: k3s-runner
-          path: k3s-runner-artifacts
+      # - name: Download all artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: k3s-runner
+      #     path: k3s-runner-artifacts
+      #
+      # - name: Download all artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: kl
+      #     path: kl-artifacts
+      #
+      # - name: Download all artifacts
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: k3s
+      #     path: k3s
+      #
+      # - run: |+
+      #     ls k3s-runner-artifacts/*
+      #     ls kl-artifacts/*
+      #     ls k3s/*
+      #
+      # - name: Create Release Tag from branch name
+      #   id: gitref_branch
+      #   if: startsWith(github.ref, 'refs/heads/release')
+      #   shell: bash
+      #   run: |
+      #     set +e
+      #     RELEASE_TAG=${GITHUB_REF#refs/heads/release-}
+      #     echo "$RELEASE_TAG" | grep -i '\-nightly$'
+      #     if [ $? -ne 0 ]; then
+      #       RELEASE_TAG="$RELEASE_TAG-nightly"
+      #     fi
+      #     set -e
+      #
+      #     echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
+      #     echo "override_release_assets=true" >> $GITHUB_ENV
+      #     echo "github_branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      #
+      # - name: Create Release Tag from git tag
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   id: gitref_tag
+      #   shell: bash
+      #   run: |
+      #     RELEASE_TAG=$(echo ${GITHUB_REF#refs/tags/})
+      #
+      #     echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
+      #     echo "override_release_assets=false" >> $GITHUB_ENV
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: kl
-          path: kl-artifacts
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: k3s
-          path: k3s
-
-      - run: |+
-          ls k3s-runner-artifacts/*
-          ls kl-artifacts/*
-          ls k3s/*
-
-      - name: Create Release Tag from branch name
-        id: gitref_branch
-        if: startsWith(github.ref, 'refs/heads/release')
-        shell: bash
-        run: |
-          set +e
-          RELEASE_TAG=${GITHUB_REF#refs/heads/release-}
-          echo "$RELEASE_TAG" | grep -i '\-nightly$'
-          if [ $? -ne 0 ]; then
-            RELEASE_TAG="$RELEASE_TAG-nightly"
-          fi
-          set -e
-
-          echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
-          echo "override_release_assets=true" >> $GITHUB_ENV
-          echo "github_branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-
-      - name: Create Release Tag from git tag
-        if: startsWith(github.ref, 'refs/tags/')
-        id: gitref_tag
-        shell: bash
-        run: |
-          RELEASE_TAG=$(echo ${GITHUB_REF#refs/tags/})
-
-          echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
-          echo "override_release_assets=false" >> $GITHUB_ENV
-
-      - name: Github Release
-        uses: ./.github/actions/github-release/
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release_tag: ${{ env.release_tag }}
-          github_ref: ${GITHUB_REF}
-          files: |+
-            k3s-runner-artifacts/**
-            kl-artifacts/**
-            k3s/**
-
-      - name: Notify Discord
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          curl -H "Content-Type: application/json" \
-              -X POST \
-              -d '{"content": "Released ${{ env.release_tag }}"}' \
-              $DISCORD_WEBHOOK
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
-
-      - name: Notify Discord Nightly
-        run: |
-          curl -H "Content-Type: application/json" \
-              -X POST \
-              -d '{"content": "Released ${{ env.release_tag }}"}' \
-              $DISCORD_WEBHOOK
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
+      # - name: Github Release
+      #   uses: ./.github/actions/github-release/
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     release_tag: ${{ env.release_tag }}
+      #     github_ref: ${GITHUB_REF}
+      #     files: |+
+      #       k3s-runner-artifacts/**
+      #       kl-artifacts/**
+      #       k3s/**
 
       - name: Push Nightly Release To Discord
         uses: ./.github/actions/discord/
@@ -181,6 +162,7 @@ jobs:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
 
       - name: Push Release To Discord
+        if: startsWith(github.ref, 'refs/tags/')
         uses: ./.github/actions/discord/
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
