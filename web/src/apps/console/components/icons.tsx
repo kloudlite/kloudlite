@@ -13,6 +13,10 @@ import {
   ChevronRight,
   X,
   SmileySad,
+  InfoFill,
+  CheckCircleFill,
+  WarningFill,
+  WarningOctagonFill,
 } from '@jengaicons/react';
 
 export {
@@ -30,4 +34,8 @@ export {
   ChevronRight,
   X,
   SmileySad,
+  InfoFill,
+  CheckCircleFill,
+  WarningFill,
+  WarningOctagonFill,
 };

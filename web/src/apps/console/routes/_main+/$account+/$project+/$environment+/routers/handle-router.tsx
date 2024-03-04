@@ -21,6 +21,7 @@ import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useAppend, useMapper } from '~/components/utils';
 import { Checkbox } from '~/components/atoms/checkbox';
+import Banner from '~/components/molecule/banner';
 import { IAppContext } from '../app+/$app+/_layout';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
@@ -183,13 +184,6 @@ const Root = (props: IDialog) => {
           nameErrorLabel="isNameError"
           isUpdate={isUpdate}
         />
-
-        <div className="flex flex-col gap-md">
-          <span className="bodyMd-medium text-text-default">Cluster DNS</span>
-          <span className="bodyMd text-text-soft">
-            {cluster.spec.publicDNSHost}
-          </span>
-        </div>
         <Select
           creatable
           size="lg"
@@ -209,11 +203,23 @@ const Root = (props: IDialog) => {
           disableWhileLoading
         />
         <Checkbox
-          label="enable TLS"
+          label="Enable TLS"
           checked={values.isTlsEnabled}
           onChange={(val) => {
             handleChange('isTlsEnabled')(dummyEvent(val));
           }}
+        />
+        <Banner
+          type="info"
+          body={
+            <span>
+              Note: All the domain CNames should be pointed to following Cluster
+              DNS Name{' '}
+              <span className="bodyMd-medium">
+                `{cluster.spec.publicDNSHost}`
+              </span>
+            </span>
+          }
         />
       </Popup.Content>
       <Popup.Footer>
