@@ -9,11 +9,12 @@ runs:
   using: 'composite'
   steps:
     - name: Read Changelog from changelog
-      run: |+
+      run: |
         contents=$(cat changelog/${{ env.release_tag }}.md)
         echo "::set-output name=changelog::$contents"
         echo "::set-output name=release::${{ env.release_tag }}"
       id: changelog
+      shell: bash
 
 
     - name: Test Success
