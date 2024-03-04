@@ -286,8 +286,54 @@ func (d *domain) OnManagedResourceUpdateMessage(ctx ResourceContext, mres entiti
 	if err != nil {
 		return err
 	}
+
 	d.resourceEventPublisher.PublishResourceEvent(ctx, umres.GetResourceType(), umres.GetName(), PublishUpdate)
-	return errors.NewE(err)
+
+	if mres.SyncedOutputSecretRef != nil {
+		if mres.SyncedOutputSecretRef.Labels == nil {
+			mres.SyncedOutputSecretRef.Labels = map[string]string{}
+		}
+		mres.SyncedOutputSecretRef.Labels["kloudlite.io/secret.synced-by"] = fmt.Sprintf("%s/%s", umres.GetNamespace(), umres.GetName())
+
+		secretData := make(map[string]string, len(mres.SyncedOutputSecretRef.Data))
+
+		for k, v := range mres.SyncedOutputSecretRef.Data {
+			secretData[k] = string(v)
+		}
+
+		mres.SyncedOutputSecretRef.Data = nil
+		mres.SyncedOutputSecretRef.StringData = secretData
+
+		if _, err = d.secretRepo.Upsert(ctx, repos.Filter{
+			fc.AccountName:       ctx.AccountName,
+			fc.ProjectName:       ctx.ProjectName,
+			fc.EnvironmentName:   ctx.EnvironmentName,
+			fc.MetadataName:      mres.SyncedOutputSecretRef.GetName(),
+			fc.MetadataNamespace: mres.SyncedOutputSecretRef.GetNamespace(),
+		}, &entities.Secret{
+			Secret:          *mres.SyncedOutputSecretRef,
+			AccountName:     ctx.AccountName,
+			ProjectName:     ctx.ProjectName,
+			EnvironmentName: ctx.EnvironmentName,
+			ResourceMetadata: common.ResourceMetadata{
+				DisplayName:   umres.GetName(),
+				CreatedBy:     common.CreatedOrUpdatedByResourceSync,
+				LastUpdatedBy: common.CreatedOrUpdatedByResourceSync,
+			},
+			SyncStatus: t.SyncStatus{
+				LastSyncedAt:  opts.MessageTimestamp,
+				Action:        t.SyncActionApply,
+				RecordVersion: recordVersion,
+				State:         t.SyncStateUpdatedAtAgent,
+				Error:         nil,
+			},
+			IsReadOnly: true,
+		}); err != nil {
+			return errors.NewE(err)
+		}
+	}
+
+	return nil
 }
 
 func (d *domain) OnManagedResourceApplyError(ctx ResourceContext, errMsg string, name string, opts UpdateAndDeleteOpts) error {

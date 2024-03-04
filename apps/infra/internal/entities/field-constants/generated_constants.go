@@ -85,10 +85,12 @@ const (
 const (
 	ClusterManagedServiceSpec                                                    = "spec"
 	ClusterManagedServiceSpecMsvcSpec                                            = "spec.msvcSpec"
+	ClusterManagedServiceSpecMsvcSpecNodeSelector                                = "spec.msvcSpec.nodeSelector"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplate                             = "spec.msvcSpec.serviceTemplate"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateApiVersion                   = "spec.msvcSpec.serviceTemplate.apiVersion"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateKind                         = "spec.msvcSpec.serviceTemplate.kind"
 	ClusterManagedServiceSpecMsvcSpecServiceTemplateSpec                         = "spec.msvcSpec.serviceTemplate.spec"
+	ClusterManagedServiceSpecMsvcSpecTolerations                                 = "spec.msvcSpec.tolerations"
 	ClusterManagedServiceSpecTargetNamespace                                     = "spec.targetNamespace"
 	ClusterManagedServiceSyncedOutputSecretRef                                   = "syncedOutputSecretRef"
 	ClusterManagedServiceSyncedOutputSecretRefApiVersion                         = "syncedOutputSecretRef.apiVersion"
