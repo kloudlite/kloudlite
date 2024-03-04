@@ -241,6 +241,7 @@ const AppCompute = () => {
           }
           error={!!errors.repoImageTag || !!digestError}
           message={
+            // eslint-disable-next-line no-nested-ternary
             errors.repoImageTag
               ? errors.repoImageTag
               : digestError

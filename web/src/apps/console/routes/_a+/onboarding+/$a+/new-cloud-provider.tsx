@@ -14,6 +14,7 @@ import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
+import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -87,6 +88,7 @@ const NewCloudProvider = () => {
   return (
     <form onSubmit={handleSubmit}>
       <MultiStepProgressWrapper
+        fillerImage={<FillerCloudProvider />}
         title="Setup your account!"
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"

@@ -600,7 +600,9 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectManage
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
   {
+    nodeSelector?: InputMaybe<Scalars['Map']['input']>;
     serviceTemplate: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn;
+    tolerations?: InputMaybe<Array<K8s__Io___Api___Core___V1__TolerationIn>>;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ServiceTemplateIn =
