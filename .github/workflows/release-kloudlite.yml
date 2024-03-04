@@ -174,3 +174,13 @@ jobs:
               $DISCORD_WEBHOOK
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
+
+      - name: Push Nightly Release To Discord
+        uses: ./.github/actions/discord/
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
+
+      - name: Push Release To Discord
+        uses: ./.github/actions/discord/
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
