@@ -157,6 +157,7 @@ jobs:
             k3s/**
 
       - name: Notify Discord
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           curl -H "Content-Type: application/json" \
               -X POST \
@@ -164,3 +165,12 @@ jobs:
               $DISCORD_WEBHOOK
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Discord Nightly
+        run: |
+          curl -H "Content-Type: application/json" \
+              -X POST \
+              -d '{"content": "Released ${{ env.release_tag }}"}' \
+              $DISCORD_WEBHOOK
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
