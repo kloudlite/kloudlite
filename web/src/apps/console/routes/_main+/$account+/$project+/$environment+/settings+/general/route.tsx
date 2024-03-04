@@ -21,6 +21,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import Wrapper from '~/console/components/wrapper';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { InfoLabel } from '~/console/components/commons';
+import Banner from '~/components/molecule/banner';
 import { IEnvironmentContext } from '../../_layout';
 
 const EnvironmentSettingsGeneral = () => {
@@ -129,35 +130,23 @@ const EnvironmentSettingsGeneral = () => {
             value={values.displayName}
             onChange={handleChange('displayName')}
           />
-          <div className="flex flex-row items-center gap-lg">
-            <Checkbox
-              label="Public"
-              checked={values.environmentRoutingMode}
-              onChange={(checked) => {
-                handleChange('environmentRoutingMode')(dummyEvent(checked));
-              }}
-            />
-            <InfoLabel
-              info={
-                <div className="flex flex-col gap-2xl">
-                  <div>
-                    <div className="bodyMd-medium">Public</div>
-                    <p>
-                      Public environments will expose services to the public
-                      internet.
-                    </p>
-                  </div>
-                  <div>
-                    <div className="bodyMd-medium">Private</div>
-                    <p>
-                      Private environments will be accessible when Kloudlite VPN
-                      is active.
-                    </p>
-                  </div>
-                </div>
-              }
-            />
-          </div>
+          <Checkbox
+            label="Public"
+            checked={values.environmentRoutingMode}
+            onChange={(checked) => {
+              handleChange('environmentRoutingMode')(dummyEvent(checked));
+            }}
+          />
+          <Banner
+            type="info"
+            body={
+              <span>
+                Public environments will expose services to the public internet.
+                Private environments will be accessible when Kloudlite VPN is
+                active.
+              </span>
+            }
+          />
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput
