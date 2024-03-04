@@ -11,8 +11,9 @@ spec:
   
   cloudProvider: aws
   aws:
-    imageId: "ami-0ec149e1e8b76e957"
-    imageSSHUsername: ubuntu
+    vpcId: {{.Values.nodepools.stateless.aws.vpcId}}
+    vpcSubnetId: {{.Values.nodepools.stateless.aws.vpcSubnetId}}
+
     availabilityZone: ap-south-1a
     nvidiaGpuEnabled: false
     rootVolumeSize: 80

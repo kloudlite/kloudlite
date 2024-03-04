@@ -238,25 +238,6 @@ data:
               inputType: String
               required: false
 
-          inputMiddleware: |+
-            const inputMiddleware =  (inputs) => {
-              return {
-                annotation: {},
-                inputs: inputs,
-                error: null,
-              };
-            }
-
-          estimator: |+
-            function (inputs, plans) {
-              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
-              return {
-                totalPrice: storagePrice,
-                error: null,
-                properties: [],
-              };
-            }
-
           output:
             - name: AWS_ACCESS_KEY_ID
               label: AWS Access Key ID
@@ -280,6 +261,7 @@ data:
           displayName: Redis Cluster
           description: Redis Cluster
           active: false
+
         - apiVersion: redis.msvc.kloudlite.io/v1
           kind: StandaloneService
           name: redis_standalone
@@ -287,67 +269,40 @@ data:
           displayName: Redis Standalone
           description: Redis Standalone
           fields:
-            - name: cpu
-              inputType: Number
-              required: true
-              min: 0.2
+            - name: resources.cpu
+              label: CPU
+              inputType: Resource
+              defaultValue: 0.4
+              min: 0.4
+              step: 0.1
               max: 2
-              default: 0.2
-              unit: vCpu
-
-            - name: size
-              label: Capacity in GB
-              inputType: Number
               required: true
-              default: 5
-              min: 1
+              displayUnit: vCPU
+              multiplier: 1000
+              unit: "m"
+
+            - name: resources.memory
+              label: Memory
+              inputType: Resource
+              defaultValue: 0.4
+              min: 0.4
+              step: 0.1
+              max: 2
+              required: true
+              multiplier: 1000
+              displayUnit: GB
+              unit: "Mi"
+
+            - name: resources.storage.size
+              label: Storage
+              inputType: Number
+              defaultValue: 0.4
+              min: 0.1
+              step: 0.1
+              max: 1000
+              required: true
+              displayUnit: GB
               unit: Gi
-
-          inputMiddleware: |+
-            const inputMiddleware = (inputs) => {
-              const defaultPlan = "General"
-              return {
-                annotation: {
-                  "kloudlite.io/billing-plan": defaultPlan,
-                  "kloudlite.io/billable-quantity": inputs.cpu,
-                  "kloudlite.io/is-shared": true,
-                },
-                inputs: {
-                  resources: {
-                    cpu: {
-                      min: `${inputs.cpu * 1000/2}m`,
-                      max: `${inputs.cpu * 1000}m`,
-                    },
-                    memory: `${inputs.cpu * 2 * 1000}Mi`,
-                  },
-                  storage:{
-                    size: `${inputs.size}Gi`,
-                  },
-                },
-                error: null,
-              };
-            }
-
-          estimator: |+
-            function (inputs, plans) {
-              const defaultPlan = "General"
-              var computePrice = plans.compute[defaultPlan].sharedPrice * inputs.cpu;
-              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
-              var totalPrice = computePrice + storagePrice;
-              var numberOfSupportedConnections = inputs.cpu * 40;
-              return {
-                totalPrice: totalPrice,
-                error: null,
-                properties: [
-                    {
-                      name: "capacity",
-                      items:[
-                          "Supports around "  + numberOfSupportedConnections + " connections",
-                      ]
-                    }
-                ]
-              };
-            }
 
           outputs:
             - name: HOSTS
@@ -385,11 +340,13 @@ data:
                   label: Redis User Password
 
           active: true
+
         - name: memcached_cluster
           logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
           displayName: Memcached Cluster
           description: Memcached Cluster
           active: false
+
         - name: memcached_standalone
           logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
           displayName: Memcached Standalone
