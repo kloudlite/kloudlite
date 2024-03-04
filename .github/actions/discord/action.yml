@@ -8,6 +8,9 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: setup python
+      uses: actions/setup-python@v5
+
     - name: Push Notification To Discord
       env:
         DISCORD_WEBHOOK_URL: ${{ inputs.webhook_url }}
