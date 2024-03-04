@@ -155,3 +155,12 @@ jobs:
             k3s-runner-artifacts/**
             kl-artifacts/**
             k3s/**
+
+      - name: Notify Discord
+        run: |
+          curl -H "Content-Type: application/json" \
+              -X POST \
+              -d '{"content": "Released ${{ env.release_tag }}"}' \
+              ${{ secrets.DISCORD_WEBHOOK }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
