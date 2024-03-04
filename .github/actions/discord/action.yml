@@ -4,22 +4,31 @@ inputs:
   webhook_url:
     description: 'discord webhook url'
     required: true
+  release:
+    description: 'release name'
+    required: true
 
 runs:
   using: 'composite'
   steps:
+    - name: Read Changelog from changelog/${{ inputs.release }}.md
+      run: |+
+        contents=$(cat changelog/${{ inputs.release }}.md)
+        echo "::set-output name=changelog::$contents"
+      id: changelog
+
+
     - name: Test Success
       uses: rjstone/discord-webhook-notify@v1
       if: success()
       with:
           severity: info
-          username: Nightly Bot
+          username: Release Bot
           color: '#aaff00'
-          # avatarUrl: https://github.githubassets.com/images/modules/logos_page/Octocat.png
-          description: This is a custom description.
-          details: 'Custom details: Somebody set up us the bomb.'
-          footer: This is a footer.
-          text: This is where text goes.
+          description: Changelog
+          details: ${{ steps.changelog.outputs.changelog }}
+          footer: Released ${{ inputs.release }}
+          text: 'Release Bot'
 
           webhookUrl: ${{ inputs.webhook_url }}
 
