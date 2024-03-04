@@ -3,6 +3,7 @@ package common_types
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -136,3 +137,9 @@ const (
 	CloudProviderAzure        CloudProvider = "azure"
 	CloudProviderGCP          CloudProvider = "gcp"
 )
+
+// +kubebuilder:object:generate=true
+type NodeSelectorAndTolerations struct {
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+}
