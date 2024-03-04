@@ -1,4 +1,4 @@
-name: 'kloudlite build setup'
+name: 'checkout github'
 description: 'sets up kloudlite build environment'
 
 inputs:
