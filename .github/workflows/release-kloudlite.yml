@@ -160,11 +160,9 @@ jobs:
         uses: ./.github/actions/discord/
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
-          release: ${{ env.release_tag }}
 
       - name: Push Release To Discord
         if: startsWith(github.ref, 'refs/tags/')
         uses: ./.github/actions/discord/
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          release: ${{ env.release_tag }}

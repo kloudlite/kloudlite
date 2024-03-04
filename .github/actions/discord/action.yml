@@ -4,9 +4,6 @@ inputs:
   webhook_url:
     description: 'discord webhook url'
     required: true
-  release:
-    description: 'release name'
-    required: true
 
 runs:
   using: 'composite'
@@ -15,6 +12,7 @@ runs:
       run: |+
         contents=$(cat changelog/${{ inputs.release }}.md)
         echo "::set-output name=changelog::$contents"
+        echo "::set-output name=release::${{ env.release_tag }}"
       id: changelog
 
 
@@ -27,8 +25,8 @@ runs:
           color: '#aaff00'
           description: Changelog
           details: ${{ steps.changelog.outputs.changelog }}
-          footer: Released ${{ inputs.release }}
-          text: 'Release Bot'
+          footer: Released by ${{ github.actor }}
+          text: 'Release ${{ steps.changelog.outputs.release }}'
 
           webhookUrl: ${{ inputs.webhook_url }}
 
