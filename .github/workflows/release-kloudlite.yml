@@ -79,14 +79,14 @@ jobs:
           path: ./k3s
 
   github_release:
-    # needs:
-      # - api
-      # - operator
-      # - infrastructure-as-code
-      # - autoscaler
-      # - web
-      # - kl
-      # - kubelet-metrics-reexporter
+    needs:
+      - api
+      - operator
+      - infrastructure-as-code
+      - autoscaler
+      - web
+      - kl
+      - kubelet-metrics-reexporter
     runs-on: ubuntu-latest
     name: Creating a Github Release
     steps:
@@ -95,29 +95,29 @@ jobs:
         with:
           submodules: recursive
 
-      # - name: Download all artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: k3s-runner
-      #     path: k3s-runner-artifacts
-      #
-      # - name: Download all artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: kl
-      #     path: kl-artifacts
-      #
-      # - name: Download all artifacts
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: k3s
-      #     path: k3s
-      #
-      # - run: |+
-      #     ls k3s-runner-artifacts/*
-      #     ls kl-artifacts/*
-      #     ls k3s/*
-      #
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: k3s-runner
+          path: k3s-runner-artifacts
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kl
+          path: kl-artifacts
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: k3s
+          path: k3s
+
+      - run: |+
+          ls k3s-runner-artifacts/*
+          ls kl-artifacts/*
+          ls k3s/*
+
       - name: Create Release Tag from branch name
         id: gitref_branch
         if: startsWith(github.ref, 'refs/heads/release')
@@ -145,16 +145,16 @@ jobs:
           echo "release_tag=$RELEASE_TAG" >> $GITHUB_ENV
           echo "override_release_assets=false" >> $GITHUB_ENV
 
-      # - name: Github Release
-      #   uses: ./.github/actions/github-release/
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     release_tag: ${{ env.release_tag }}
-      #     github_ref: ${GITHUB_REF}
-      #     files: |+
-      #       k3s-runner-artifacts/**
-      #       kl-artifacts/**
-      #       k3s/**
+      - name: Github Release
+        uses: ./.github/actions/github-release/
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_tag: ${{ env.release_tag }}
+          github_ref: ${GITHUB_REF}
+          files: |+
+            k3s-runner-artifacts/**
+            kl-artifacts/**
+            k3s/**
 
       - name: Push Nightly Release To Discord
         uses: ./.github/actions/discord/
