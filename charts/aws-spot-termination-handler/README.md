@@ -65,9 +65,9 @@ helm show values kloudlite/aws-spot-termination-handler
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| image.name | string | `"ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler"` | kloudlite image repository, tag will be dervied from {{.kloudliteRelease}} |
-| imagePullPolicy | string | `"IfNotPresent"` |  |
-| kloudliteRelease | string | `"v1.0.5-nightly"` | kloudlite release identifier |
+| image.pullPolicy | string | `"IfNotPresent"` |  |
+| image.repository | string | `"ghcr.io/kloudlite/kloudlite/infrastructure-as-code/aws-spot-k3s-terminator"` | kloudlite image repository, tag will be dervied from {{.kloudliteRelease}} |
+| image.tag | string | `""` |  |
 | name | string | `"aws-spot-termination-handler"` |  |
 | nodeSelector | object | `{}` | node selector for the spot termination handler, it is required because it must be running only on aws spot instances |
 | tolerations | list | `[{"operator":"Exists"}]` | tolerations for the spot termination handler, it is required because it must be running only on aws spot instances |
