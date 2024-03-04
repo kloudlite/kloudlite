@@ -4,7 +4,6 @@ import (
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,11 +14,8 @@ type StandaloneServiceOutput struct {
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	Region       string              `json:"region,omitempty"`
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	ct.NodeSelectorAndTolerations `json:",inline"`
 
-	// Storage      ct.Storage   `json:"storage"`
 	Resources ct.Resources `json:"resources"`
 
 	Output StandaloneServiceOutput `json:"output,omitempty" graphql:"noinput"`
@@ -55,9 +51,7 @@ func (s *StandaloneService) GetEnsuredLabels() map[string]string {
 }
 
 func (s *StandaloneService) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("StandaloneService").String(),
-	}
+	return map[string]string{}
 }
 
 // +kubebuilder:object:root=true

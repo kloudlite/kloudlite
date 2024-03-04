@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/kloudlite/operator/pkg/kubectl"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	redisMsvcv1 "github.com/kloudlite/operator/apis/redis.msvc/v1"
@@ -14,8 +12,8 @@ import (
 	"github.com/kloudlite/operator/operators/msvc-redis/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-redis/internal/types"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
@@ -89,11 +87,15 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconACLConfigmap(req); !step.ShouldProceed() {
+	// if step := r.reconACLConfigmap(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
+
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -117,62 +119,107 @@ func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	return req.Finalize()
 }
 
-func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+// func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+// 	ctx, obj := req.Context(), req.Object
+// 	check := rApi.Check{Generation: obj.Generation}
+//
+// 	req.LogPreCheck(ACLConfigMapReady)
+// 	defer req.LogPostCheck(ACLConfigMapReady)
+//
+// 	aclConfigmapName := "msvc-" + obj.Name + "-acl"
+//
+// 	aclCfgMap, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, aclConfigmapName), &redisMsvcv1.ACLConfigMap{})
+// 	if err != nil {
+// 		if !apiErrors.IsNotFound(err) {
+// 			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
+// 		}
+// 		req.Logger.Infof("acl configmap (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+// 	}
+//
+// 	if aclCfgMap == nil {
+// 		if err := r.Create(
+// 			ctx, &redisMsvcv1.ACLConfigMap{
+// 				TypeMeta: metav1.TypeMeta{
+// 					Kind:       "ACLConfigMap",
+// 					APIVersion: "redis.msvc.kloudlite.io/v1",
+// 				},
+// 				ObjectMeta: metav1.ObjectMeta{
+// 					Name:            aclConfigmapName,
+// 					Namespace:       obj.Namespace,
+// 					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+// 				},
+// 				Spec: redisMsvcv1.ACLConfigMapSpec{
+// 					MsvcName: obj.Name,
+// 				},
+// 			},
+// 		); err != nil {
+// 			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
+// 		}
+// 	}
+//
+// 	if !aclCfgMap.Status.IsReady {
+// 		if aclCfgMap.Status.Message == nil {
+// 			return req.CheckFailed(ACLConfigMapReady, check, "waiting for acl config map to reconcile").Err(nil)
+// 		}
+// 		b, err := json.Marshal(aclCfgMap.Status.Message)
+// 		if err != nil {
+// 			return req.CheckFailed(ACLConfigMapReady, check, err.Error()).Err(nil)
+// 		}
+// 		return req.CheckFailed(ACLConfigMapReady, check, string(b)).Err(nil)
+// 	}
+//
+// 	check.Status = true
+// 	if check != obj.Status.Checks[ACLConfigMapReady] {
+// 		obj.Status.Checks[ACLConfigMapReady] = check
+// 		req.UpdateStatus()
+// 	}
+//
+// 	rApi.SetLocal(req, KeyAclConfigMapName, aclCfgMap.Name)
+// 	return req.Next()
+// }
+
+func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(ACLConfigMapReady)
-	defer req.LogPostCheck(ACLConfigMapReady)
+	checkName := "defaults-patched"
 
-	aclConfigmapName := "msvc-" + obj.Name + "-acl"
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
 
-	aclCfgMap, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, aclConfigmapName), &redisMsvcv1.ACLConfigMap{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
-		}
-		req.Logger.Infof("acl configmap (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	if aclCfgMap == nil {
-		if err := r.Create(
-			ctx, &redisMsvcv1.ACLConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "ACLConfigMap",
-					APIVersion: "redis.msvc.kloudlite.io/v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            aclConfigmapName,
-					Namespace:       obj.Namespace,
-					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				},
-				Spec: redisMsvcv1.ACLConfigMapSpec{
-					MsvcName: obj.Name,
-				},
-			},
-		); err != nil {
-			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
-		}
+	hasPatched := false
+
+	// function-body
+	if obj.Spec.Output.Credentials.Name == "" {
+		hasPatched = true
+		obj.Spec.Output.Credentials.Name = fmt.Sprintf("msvc-%s-creds", obj.Name)
 	}
 
-	if !aclCfgMap.Status.IsReady {
-		if aclCfgMap.Status.Message == nil {
-			return req.CheckFailed(ACLConfigMapReady, check, "waiting for acl config map to reconcile").Err(nil)
+	if obj.Spec.Output.Credentials.Namespace == "" {
+		hasPatched = true
+		obj.Spec.Output.Credentials.Namespace = obj.Namespace
+	}
+
+	if hasPatched {
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
 		}
-		b, err := json.Marshal(aclCfgMap.Status.Message)
-		if err != nil {
-			return req.CheckFailed(ACLConfigMapReady, check, err.Error()).Err(nil)
-		}
-		return req.CheckFailed(ACLConfigMapReady, check, string(b)).Err(nil)
+
+		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[ACLConfigMapReady] {
-		obj.Status.Checks[ACLConfigMapReady] = check
-		req.UpdateStatus()
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
-	rApi.SetLocal(req, KeyAclConfigMapName, aclCfgMap.Name)
 	return req.Next()
 }
 
@@ -180,11 +227,18 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(AccessCredsReady)
-	defer req.LogPostCheck(AccessCredsReady)
+	checkName := "access-creds-ready"
 
-	accessCreds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "msvc-" + obj.Name, Namespace: obj.Namespace}}
-	controllerutil.CreateOrUpdate(ctx, r.Client, accessCreds, func() error {
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	accessCreds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.Output.Credentials.Name, Namespace: obj.Spec.Output.Credentials.Namespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, accessCreds, func() error {
 		obj.SetLabels(obj.GetLabels())
 		obj.SetOwnerReferences(obj.GetOwnerReferences())
 
@@ -198,39 +252,38 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 		var m map[string]string
 
 		out := types.MsvcOutput{
+			RootUsername: "",
 			RootPassword: rootPassword,
 			Hosts:        host,
 			Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
 		}
 
-		b, err := json.Marshal(out)
+		m, err := out.ToMap()
 		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(b, &m); err != nil {
 			return err
 		}
 
 		accessCreds.StringData = m
 
 		return nil
-	})
+	}); err != nil {
+		return fail(err)
+	}
+
+	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](accessCreds)
+	if err != nil {
+		return fail(err).Err(nil)
+	}
+	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
 
 	check.Status = true
-	if check != obj.Status.Checks[AccessCredsReady] {
-		obj.Status.Checks[AccessCredsReady] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
 	}
 
-	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](accessCreds)
-	if err != nil {
-		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
-	}
-
-	rApi.SetLocal(req, KeyMsvcOutput, *msvcOutput)
 	return req.Next()
 }
 
@@ -238,13 +291,20 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(HelmReady)
-	defer req.LogPostCheck(HelmReady)
+	checkName := "helm-ready"
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
 
 	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
 	if !ok {
-		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyRootPassword).Error())
+		return fail(rApi.ErrNotInReqLocals(KeyMsvcOutput))
 	}
+
 	// aclConfigmapName, ok := rApi.GetLocal[string](req, KeyAclConfigMapName)
 	// if !ok {
 	// 	return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
@@ -253,37 +313,39 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	b, err := templates.ParseBytes(r.templateHelmRedisStandalone, map[string]any{
 		"name":      obj.Name,
 		"namespace": obj.Namespace,
-		"labels": map[string]string{
-			constants.MsvcNameKey: obj.Name,
-		},
+
+		"labels":     map[string]string{constants.MsvcNameKey: obj.Name},
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
 
-		"storage-class": obj.Spec.Resources.Storage.StorageClass,
+		"node-selector": obj.Spec.NodeSelector,
+		"tolerations":   obj.Spec.Tolerations,
+
 		"storage-size":  obj.Spec.Resources.Storage.Size,
+		"storage-class": obj.Spec.Resources.Storage.StorageClass,
 
 		"requests-cpu": obj.Spec.Resources.Cpu.Min,
-		"requests-mem": obj.Spec.Resources.Memory,
+		"requests-mem": obj.Spec.Resources.Memory.Min,
 
 		"limits-cpu": obj.Spec.Resources.Cpu.Min,
-		"limits-mem": obj.Spec.Resources.Memory,
+		"limits-mem": obj.Spec.Resources.Memory.Max,
 
 		// "acl-configmap-name": aclConfigmapName,
-		"root-password": msvcOutput.RootPassword,
+		"root-password": msvcOutput.RootUsername,
 	})
 	if err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+		return fail(err)
 	}
 
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != obj.Status.Checks[HelmReady] {
-		obj.Status.Checks[HelmReady] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -300,12 +362,18 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(StsReady)
-	defer req.LogPostCheck(StsReady)
+	checkName := "sts-ready"
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
 
 	sts, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getStsName(obj.Name)), &appsv1.StatefulSet{})
 	if err != nil {
-		return req.CheckFailed(StsReady, check, err.Error())
+		return fail(err)
 	}
 
 	if sts.Status.AvailableReplicas != sts.Status.Replicas {
@@ -319,23 +387,23 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 				),
 			},
 		); err != nil {
-			return req.CheckFailed(StsReady, check, err.Error())
+			return fail(err)
 		}
 
 		messages := rApi.GetMessagesFromPods(podsList.Items...)
 		if len(messages) > 0 {
 			b, err := json.Marshal(messages)
 			if err != nil {
-				return req.CheckFailed(StsReady, check, err.Error())
+				return fail(err)
 			}
-			return req.CheckFailed(StsReady, check, string(b))
+			return fail(fmt.Errorf(string(b)))
 		}
-		return req.CheckFailed(StsReady, check, "waiting for pods to start ...")
+		return fail(fmt.Errorf("waiting for statefulset pods to kick in"))
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[StsReady] {
-		obj.Status.Checks[StsReady] = check
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -363,7 +431,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 
 	builder.Watches(
 		&appsv1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(
-			func(ctx context.Context, obj client.Object) []reconcile.Request {
+			func(_ context.Context, obj client.Object) []reconcile.Request {
 				value, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {
 					return nil

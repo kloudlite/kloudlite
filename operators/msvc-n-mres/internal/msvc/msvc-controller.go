@@ -3,6 +3,7 @@ package msvc
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
@@ -113,8 +114,14 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(RealMsvcCreated)
-	defer req.LogPostCheck(RealMsvcCreated)
+	checkName := "real-managed-resource-created"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	b, err := templates.ParseBytes(r.templateCommonMsvc, map[string]any{
 		"api-version": obj.Spec.ServiceTemplate.APIVersion,
@@ -125,21 +132,23 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 		"labels":     obj.GetLabels(),
 		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
+		"node-selector":         obj.Spec.NodeSelector,
+		"tolerations":           obj.Spec.Tolerations,
 		"service-template-spec": obj.Spec.ServiceTemplate.Spec,
 	})
 	if err != nil {
-		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
-		return req.CheckFailed(RealMsvcCreated, check, err.Error()).Err(nil)
+		return fail(err)
 	}
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != obj.Status.Checks[RealMsvcCreated] {
-		fn.MapSet(&obj.Status.Checks, RealMsvcCreated, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -152,26 +161,32 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(RealMsvcReady)
-	defer req.LogPostCheck(RealMsvcReady)
+	checkName := "real-managed-resource-ready"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	uobj := fn.NewUnstructured(metav1.TypeMeta{APIVersion: obj.Spec.ServiceTemplate.APIVersion, Kind: obj.Spec.ServiceTemplate.Kind})
 
 	realMsvc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), uobj)
 	if err != nil {
-		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	b, err := json.Marshal(realMsvc)
 	if err != nil {
-		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	var realMsvcObj struct {
 		Status rApi.Status `json:"status"`
 	}
 	if err := json.Unmarshal(b, &realMsvcObj); err != nil {
-		return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
+		return fail(err).Err(nil)
 	}
 
 	if !realMsvcObj.Status.IsReady {
@@ -180,18 +195,19 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 		}
 		b, err := realMsvcObj.Status.Message.MarshalJSON()
 		if err != nil {
-			return req.CheckFailed(RealMsvcReady, check, err.Error()).Err(nil)
+			return fail(err).Err(nil)
 		}
-		return req.CheckFailed(RealMsvcReady, check, string(b)).Err(nil)
+		return fail(fmt.Errorf("%s", b)).Err(nil)
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[RealMsvcReady] {
-		fn.MapSet(&obj.Status.Checks, RealMsvcReady, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
 	}
+
 	return req.Next()
 }
 
@@ -226,7 +242,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		builder.Watches(
 			obj,
 			handler.EnqueueRequestsFromMapFunc(
-				func(ctx context.Context, obj client.Object) []reconcile.Request {
+				func(_ context.Context, obj client.Object) []reconcile.Request {
 					if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 					}
