@@ -22,6 +22,7 @@ import MultiStepProgress, {
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
 import { BottomNavigation, ReviewComponent } from '../components/commons';
+import FillerProject from '../assets/filler-project';
 
 const statusRender = (item: ExtractNodeType<IClusters>) => {
   return listStatus({
@@ -111,6 +112,7 @@ const NewProject = () => {
       }}
     >
       <MultiStepProgressWrapper
+        fillerImage={<FillerProject />}
         title="Let’s create new project."
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite teams"
         backButton={{

@@ -6,7 +6,12 @@ import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
-import { useEffect } from 'react';
+import { ReactNode, useCallback, useEffect } from 'react';
+import FillerAppDetail from '~/console/assets/app/filler-details';
+import FillerAppCompute from '~/console/assets/app/filler-compute';
+import FillerAppEnv from '~/console/assets/app/filler-env';
+import FillerAppNetwork from '~/console/assets/app/filler-network';
+import FillerAppReview from '~/console/assets/app/filler-review';
 import AppCompute from './app-compute';
 import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
@@ -25,8 +30,26 @@ const AppComp = () => {
     jumpStep(page);
   }, [page]);
 
+  const getFiller = useCallback((): ReactNode => {
+    switch (currentStep) {
+      case 1:
+        return <FillerAppDetail />;
+      case 2:
+        return <FillerAppCompute />;
+      case 3:
+        return <FillerAppEnv />;
+      case 4:
+        return <FillerAppNetwork />;
+      case 5:
+        return <FillerAppReview />;
+      default:
+        return null;
+    }
+  }, [currentStep]);
+
   return (
     <MultiStepProgressWrapper
+      fillerImage={getFiller()}
       title="Let’s create new application."
       subTitle="Create your application under project effortlessly."
       backButton={{

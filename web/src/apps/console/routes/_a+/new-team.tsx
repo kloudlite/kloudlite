@@ -12,6 +12,7 @@ import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
 import { BottomNavigation } from '~/console/components/commons';
+import FillerCreateTeam from '~/console/assets/filler-create-team';
 
 const NewAccount = () => {
   const api = useConsoleApi();
@@ -55,6 +56,7 @@ const NewAccount = () => {
   return (
     <form onSubmit={handleSubmit}>
       <MultiStepProgressWrapper
+        fillerImage={<FillerCreateTeam />}
         title="Setup your account!"
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"

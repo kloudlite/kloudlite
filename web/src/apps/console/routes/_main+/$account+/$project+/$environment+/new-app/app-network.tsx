@@ -230,7 +230,7 @@ export const ExposedPorts = () => {
 const AppNetwork = () => {
   const { setPage, markPageAsCompleted } = useAppState();
   return (
-    <FadeIn>
+    <FadeIn notForm>
       <div className="bodyMd text-text-soft">
         Expose service ports that need to be exposed from container
       </div>

@@ -27,7 +27,7 @@ import MultiStepProgress, {
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
 import { BottomNavigation, ReviewComponent } from '../components/commons';
-import { ArrowRight } from '../components/icons';
+import FillerCluster from '../assets/filler-cluster';
 
 type props =
   | {
@@ -259,6 +259,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
       }}
     >
       <MultiStepProgressWrapper
+        fillerImage={<FillerCluster />}
         title={
           isOnboarding ? 'Setup your account!' : 'Let’s create new cluster.'
         }

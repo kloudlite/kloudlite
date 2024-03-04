@@ -24,6 +24,8 @@ import List from '~/console/components/list';
 import { parseName } from '~/console/server/r-utils/common';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import { ArrowRight, Users } from '~/console/components/icons';
+import SplitWrapper from '~/console/components/split-wrapper';
+import FillerTeam from '~/console/assets/filler-team';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;
@@ -176,9 +178,8 @@ const Accounts = () => {
     });
   };
 
-  console.log('accounts', accounts, page);
   return (
-    <div className="min-h-screen max-w-[1024px] bg-surface-basic-default p-10xl">
+    <SplitWrapper fillerImage={<FillerTeam />}>
       <div className="max-w-[568px] flex flex-col gap-7xl">
         <div className="flex flex-col gap-xl">
           <div className="heading3xl text-text-default">
@@ -322,7 +323,7 @@ const Accounts = () => {
           </div>
         </div>
       </div>
-    </div>
+    </SplitWrapper>
   );
 };
 

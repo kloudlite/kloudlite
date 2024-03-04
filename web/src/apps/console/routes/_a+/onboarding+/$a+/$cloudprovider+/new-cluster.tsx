@@ -6,7 +6,6 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { NewCluster } from '~/console/page-components/new-cluster';
 
-
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
