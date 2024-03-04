@@ -16,15 +16,18 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.cloudProvider.cloud
-      name: Cloud
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
       type: string
-    - jsonPath: .spec.replicaCount
-      name: ReplicaCount
-      type: integer
-    - jsonPath: .status.isReady
-      name: Status
-      type: boolean
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1
     schema:
       openAPIV3Schema:
@@ -49,8 +52,18 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              region:
-                type: string
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
               replicaCount:
                 default: 1
                 type: integer

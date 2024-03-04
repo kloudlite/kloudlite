@@ -364,6 +364,10 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 				return "", fmt.Errorf("when cloudprovider is set to aws, aws config must be provided")
 			}
 
+			if obj.Spec.AWS.VPC == nil {
+				return "", fmt.Errorf(".spec.aws.vpc must be provided")
+			}
+
 			isAssumeRole := providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey] == nil || providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey] == nil
 			azToSubnetId := make(map[string]string, len(obj.Spec.AWS.VPC.PublicSubnets))
 			for _, v := range obj.Spec.AWS.VPC.PublicSubnets {
@@ -390,8 +394,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 						return nil
 					}
 					return map[string]any{
-						"enabled": true,
-						// "role_arn":    fmt.Sprintf(r.Env.AWSAssumeTenantRoleFormatString, string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAccountId])),
+						"enabled":     true,
 						"role_arn":    string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
 						"external_id": string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
 					}

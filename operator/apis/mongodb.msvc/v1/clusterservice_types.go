@@ -15,9 +15,8 @@ type ClusterServiceOutput struct {
 
 // ClusterServiceSpec defines the desired state of ClusterService
 type ClusterServiceSpec struct {
-	NodeSelector              map[string]string                 `json:"nodeSelector,omitempty"`
-	Tolerations               []corev1.Toleration               `json:"tolerations,omitempty"`
-	TopologySpreadConstraints []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
+	ct.NodeSelectorAndTolerations `json:",inline"`
+	TopologySpreadConstraints     []corev1.TopologySpreadConstraint `json:"topologySpreadConstraints,omitempty"`
 
 	Replicas  int                  `json:"replicas"`
 	Resources ct.Resources         `json:"resources"`

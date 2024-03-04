@@ -4,12 +4,22 @@ metadata:
   name: redis-standalone
   namespace: default
 spec:
-  replicaCount: 1
+  # replicaCount: 1
+  nodeSelector:
+    kloudlite.io/nodepool.role: "stateful"
+  tolerations:
+    - key: kloudlite.io/nodepool.role
+      operator: "Equal"
+      effect: "NoExecute"
+      value: "true"
+
   resources:
     cpu:
       min: 200m
       max: 200m
-    memory: 200Mi
+    memory: 
+      min: 200Mi
+      max: 200Mi
     storage:
       size: 1Gi
       storageClass: sc-xfs
