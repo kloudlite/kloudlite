@@ -456,11 +456,11 @@ func (r *queryResolver) InfraListDomainEntries(ctx context.Context, search *mode
 
 	if search != nil {
 		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
+			filter["domainName"] = *search.Text
 		}
 
 		if search.ClusterName != nil {
-			filter["spec.clusterName"] = *search.ClusterName
+			filter["clusterName"] = *search.ClusterName
 		}
 	}
 
