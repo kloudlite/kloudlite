@@ -250,6 +250,7 @@ spec:
                   type: object
                 type: array
               region:
+                description: Region AwsAZ `json:"region"`
                 type: string
             required:
             - credentialKeys
@@ -383,14 +384,12 @@ spec:
                       iamInstanceProfileRole:
                         type: string
                       instanceType:
-                        description: ImageId                string                     `json:"imageId"
-                          graphql:"noinput"` ImageSSHUsername       string                     `json:"imageSSHUsername"
-                          graphql:"noinput"`
                         type: string
                       nodes:
                         additionalProperties:
                           properties:
                             availabilityZone:
+                              description: AvailabilityZone AwsAZ  `json:"availabilityZone"`
                               type: string
                             kloudliteRelease:
                               type: string
@@ -438,6 +437,7 @@ spec:
                       type: object
                     type: object
                   region:
+                    description: Region     AwsRegion           `json:"region"`
                     type: string
                   spotNodePools:
                     additionalProperties:
@@ -740,6 +740,7 @@ spec:
               aws:
                 properties:
                   availabilityZone:
+                    description: AvailabilityZone AwsAZ `json:"availabilityZone"`
                     type: string
                   ec2Pool:
                     properties:
@@ -1623,6 +1624,10 @@ spec:
               msvcSpec:
                 description: ManagedServiceSpec defines the desired state of ManagedService
                 properties:
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   serviceTemplate:
                     properties:
                       apiVersion:
@@ -1638,6 +1643,46 @@ spec:
                     - kind
                     - spec
                     type: object
+                  tolerations:
+                    items:
+                      description: The pod this Toleration is attached to tolerates
+                        any taint that matches the triple <key,value,effect> using
+                        the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects. When specified, allowed
+                            values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to. Empty means match all taint keys. If the key is empty,
+                            operator must be Exists; this combination means to match
+                            all values and all keys.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value. Valid operators are Exists and Equal. Defaults
+                            to Equal. Exists is equivalent to wildcard for value,
+                            so that a pod can tolerate all taints of a particular
+                            category.
+                          type: string
+                        tolerationSeconds:
+                          description: TolerationSeconds represents the period of
+                            time the toleration (which must be of effect NoExecute,
+                            otherwise this field is ignored) tolerates the taint.
+                            By default, it is not set, which means tolerate the taint
+                            forever (do not evict). Zero and negative values will
+                            be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to. If the operator is Exists, the value should be empty,
+                            otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
                 required:
                 - serviceTemplate
                 type: object
@@ -3109,6 +3154,10 @@ spec:
           spec:
             description: ManagedServiceSpec defines the desired state of ManagedService
             properties:
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                type: object
               serviceTemplate:
                 properties:
                   apiVersion:
@@ -3124,6 +3173,45 @@ spec:
                 - kind
                 - spec
                 type: object
+              tolerations:
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
             required:
             - serviceTemplate
             type: object
@@ -3240,6 +3328,10 @@ spec:
               msvcSpec:
                 description: ManagedServiceSpec defines the desired state of ManagedService
                 properties:
+                  nodeSelector:
+                    additionalProperties:
+                      type: string
+                    type: object
                   serviceTemplate:
                     properties:
                       apiVersion:
@@ -3255,6 +3347,46 @@ spec:
                     - kind
                     - spec
                     type: object
+                  tolerations:
+                    items:
+                      description: The pod this Toleration is attached to tolerates
+                        any taint that matches the triple <key,value,effect> using
+                        the matching operator <operator>.
+                      properties:
+                        effect:
+                          description: Effect indicates the taint effect to match.
+                            Empty means match all taint effects. When specified, allowed
+                            values are NoSchedule, PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Key is the taint key that the toleration applies
+                            to. Empty means match all taint keys. If the key is empty,
+                            operator must be Exists; this combination means to match
+                            all values and all keys.
+                          type: string
+                        operator:
+                          description: Operator represents a key's relationship to
+                            the value. Valid operators are Exists and Equal. Defaults
+                            to Equal. Exists is equivalent to wildcard for value,
+                            so that a pod can tolerate all taints of a particular
+                            category.
+                          type: string
+                        tolerationSeconds:
+                          description: TolerationSeconds represents the period of
+                            time the toleration (which must be of effect NoExecute,
+                            otherwise this field is ignored) tolerates the taint.
+                            By default, it is not set, which means tolerate the taint
+                            forever (do not evict). Zero and negative values will
+                            be treated as 0 (evict immediately) by the system.
+                          format: int64
+                          type: integer
+                        value:
+                          description: Value is the taint value the toleration matches
+                            to. If the operator is Exists, the value should be empty,
+                            otherwise just a regular string.
+                          type: string
+                      type: object
+                    type: array
                 required:
                 - serviceTemplate
                 type: object
@@ -5557,10 +5689,7 @@ spec:
                     - name
                     type: object
                 type: object
-              region:
-                type: string
               resources:
-                description: Storage      ct.Storage   `json:"storage"`
                 properties:
                   cpu:
                     properties:
@@ -6081,8 +6210,6 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              region:
-                type: string
               replicaCount:
                 default: 1
                 type: integer
@@ -6166,7 +6293,6 @@ spec:
                   type: object
                 type: array
             required:
-            - region
             - resources
             type: object
           status:
@@ -6825,6 +6951,157 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
+  name: prefixes.redis.msvc.kloudlite.io
+spec:
+  group: redis.msvc.kloudlite.io
+  names:
+    kind: Prefix
+    listKind: PrefixList
+    plural: prefixes
+    singular: prefix
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/credentials-ref
+      name: Credentials
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
+      type: string
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: Prefix is the Schema for the prefixes API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PrefixSpec defines the desired state of Prefix
+            properties:
+              msvcRef:
+                properties:
+                  apiVersion:
+                    description: 'APIVersion defines the versioned schema of this
+                      representation of an object. Servers should convert recognized
+                      schemas to the latest internal value, and may reject unrecognized
+                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                    type: string
+                  kind:
+                    description: 'Kind is a string value representing the REST resource
+                      this object represents. Servers may infer this from the endpoint
+                      the client submits requests to. Cannot be updated. In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - credentials
+                type: object
+              prefixKey:
+                type: string
+            required:
+            - msvcRef
+            type: object
+          status:
+            properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
   name: standaloneservices.redis.msvc.kloudlite.io
 spec:
   group: redis.msvc.kloudlite.io
@@ -6836,15 +7113,18 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.cloudProvider.cloud
-      name: Cloud
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/checks
+      name: Checks
       type: string
-    - jsonPath: .spec.replicaCount
-      name: ReplicaCount
-      type: integer
-    - jsonPath: .status.isReady
-      name: Status
-      type: boolean
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1
     schema:
       openAPIV3Schema:
@@ -6869,8 +7149,18 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
-              region:
-                type: string
+              output:
+                properties:
+                  credentials:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
               replicaCount:
                 default: 1
                 type: integer

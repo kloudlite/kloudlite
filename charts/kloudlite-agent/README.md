@@ -78,11 +78,12 @@ helm show values kloudlite/kloudlite-agent
 | accessToken | string | `""` | kloudlite issued access token (if already have) |
 | accountName | string REQUIRED | `""` | kloudlite account name |
 | agent.enabled | bool | `true` | enable/disable kloudlite agent |
-| agent.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/agents/kl-agent","tag":""}` | kloudlite agent image name and tag |
+| agent.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/kloudlite/api/tenant-agent","tag":""}` | kloudlite agent image name and tag |
 | agent.image.pullPolicy | string | `""` | image pull policy for kloudlite agent, default is .imagePullPolicy |
 | agent.image.tag | string | `""` | image tag for kloudlite agent, by default uses kloudlite_release |
 | agent.nodeSelector | object | `{}` |  |
 | agent.tolerations | list | `[]` |  |
+| cloudProvider | string | `""` | should be one of aws|gcp|azure, check kloudlite docs for more details |
 | clusterIdentitySecretName | string | `"kl-cluster-identity"` | cluster identity secret name, which keeps cluster token and access token |
 | clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS, like 'cluster.local' |
 | clusterName | string REQUIRED | `""` | kloudlite cluster name |
@@ -97,13 +98,19 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.certManager.name | string | `"cert-manager"` |  |
 | helmCharts.certManager.nodeSelector | object | `{}` |  |
 | helmCharts.certManager.tolerations | list | `[]` |  |
-| helmCharts.clusterAutoscaler.enabled | bool | `true` |  |
 | helmCharts.ingressNginx.configuration.controllerKind | string | `"DaemonSet"` |  |
 | helmCharts.ingressNginx.configuration.ingressClassName | string | `"nginx"` |  |
 | helmCharts.ingressNginx.enabled | bool | `true` |  |
 | helmCharts.ingressNginx.name | string | `"ingress-nginx"` |  |
 | helmCharts.ingressNginx.nodeSelector | object | `{}` |  |
 | helmCharts.ingressNginx.tolerations | list | `[]` |  |
+| helmCharts.kloudliteAddons.configuration.chartVersion | string | `""` |  |
+| helmCharts.kloudliteAddons.configuration.nodeSelector | object | `{}` |  |
+| helmCharts.kloudliteAddons.configuration.tolerations | object | `{}` |  |
+| helmCharts.kloudliteAddons.enabled | bool | `true` |  |
+| helmCharts.kloudliteAddons.name | string | `"kloudlite-addons"` |  |
+| helmCharts.vector.configuration.kubeletMetricsReexporter.image.repository | string | `"ghcr.io/kloudlite/kloudlite/kubelet-metrics-reexporter"` |  |
+| helmCharts.vector.configuration.kubeletMetricsReexporter.image.tag | string | `""` |  |
 | helmCharts.vector.debugOnStdout | bool | `false` |  |
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
@@ -112,16 +119,22 @@ helm show values kloudlite/kloudlite-agent
 | jobsNamespace | string | `"kloudlite-jobs"` |  |
 | kloudliteRelease | string | `""` | kloudlite release version |
 | messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
-| operators.agentOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/operator/workers/helm-runner"` |  |
+| operators.agentOperator.configuration.helmCharts.jobImage.repository | string | `"ghcr.io/kloudlite/kloudlite/operator/workers/helm-job-runner"` |  |
 | operators.agentOperator.configuration.helmCharts.jobImage.tag | string | `""` |  |
-| operators.agentOperator.configuration.iacJobImage.repository | string | `"ghcr.io/kloudlite/infrastructure-as-code/iac-job"` |  |
-| operators.agentOperator.configuration.iacJobImage.tag | string | `""` |  |
-| operators.agentOperator.configuration.letsEncryptSupportEmail | string | `"support@kloudlite.io"` |  |
+| operators.agentOperator.configuration.nodepools.aws.vpc_params.readFromCluster | bool | `true` |  |
+| operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcId | string | `"vpc_id"` |  |
+| operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.keys.vpcPublicSubnets | string | `"vpc_public_subnets"` |  |
+| operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.name | string | `"kloudlite-aws-settings"` |  |
+| operators.agentOperator.configuration.nodepools.aws.vpc_params.secret.namespace | string | `"kube-system"` |  |
+| operators.agentOperator.configuration.nodepools.cloudprovider | string | `""` |  |
+| operators.agentOperator.configuration.nodepools.enabled | bool | `true` |  |
+| operators.agentOperator.configuration.nodepools.iacJobImage.repository | string | `"ghcr.io/kloudlite/kloudlite/infrastructure-as-code/iac-job"` |  |
+| operators.agentOperator.configuration.nodepools.iacJobImage.tag | string | `""` |  |
 | operators.agentOperator.configuration.wireguard.deviceNamespace | string | `"kl-vpn-devices"` |  |
 | operators.agentOperator.configuration.wireguard.podCIDR | string | `"10.42.0.0/16"` |  |
 | operators.agentOperator.configuration.wireguard.svcCIDR | string | `"10.43.0.0/16"` |  |
 | operators.agentOperator.enabled | bool | `true` | enable/disable kloudlite agent operator |
-| operators.agentOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operator/agent","tag":""}` | kloudlite resource watcher image name and tag |
+| operators.agentOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/kloudlite/operator/agent","tag":""}` | kloudlite resource watcher image name and tag |
 | operators.agentOperator.image.pullPolicy | string | `""` | image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion |
 | operators.agentOperator.image.tag | string | `""` | image tag for kloudlite resource watcher, by default uses .Chart.AppVersion |
 | operators.agentOperator.name | string | `"kl-agent-operator"` | workload name for kloudlite agent operator |
