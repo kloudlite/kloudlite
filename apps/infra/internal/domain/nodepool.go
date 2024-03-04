@@ -123,15 +123,6 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePoolIn
 		return nil, errors.NewE(err)
 	}
 
-	np, err := d.findNodePool(ctx, clusterName, nodePoolIn.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if np.IsStateful != nodePoolIn.IsStateful {
-		return nil, errors.Newf("You can't change stateful value, aborting update")
-	}
-
 	patchForUpdate := common.PatchForUpdate(
 		ctx,
 		&nodePoolIn,
