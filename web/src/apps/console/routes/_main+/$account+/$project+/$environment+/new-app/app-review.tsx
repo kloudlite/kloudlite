@@ -1,7 +1,5 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { useAppState } from '~/console/page-components/app-states';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -11,7 +9,10 @@ import { handleError } from '~/root/lib/utils/common';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
-import { ReviewComponent } from '~/console/components/commons';
+import {
+  BottomNavigation,
+  ReviewComponent,
+} from '~/console/components/commons';
 
 const AppReview = () => {
   const { app, setPage, resetState } = useAppState();
@@ -54,10 +55,17 @@ const AppReview = () => {
   }, []);
 
   return (
-    <FadeIn onSubmit={handleSubmit} className="py-3xl">
-      <div>An assessment of the work, product, or performance.</div>
+    <FadeIn onSubmit={handleSubmit}>
+      <div className="bodyMd text-text-soft">
+        An assessment of the work, product, or performance.
+      </div>
       <div className="flex flex-col gap-3xl">
-        <ReviewComponent title="Application detail" onEdit={() => {}}>
+        <ReviewComponent
+          title="Application detail"
+          onEdit={() => {
+            setPage(1);
+          }}
+        >
           <div className="flex flex-col p-xl gap-md rounded border border-border-default">
             <div className="bodyMd-semibold text-text-default">
               {app.displayName}
@@ -66,7 +74,12 @@ const AppReview = () => {
           </div>
         </ReviewComponent>
 
-        <ReviewComponent title="Compute" onEdit={() => {}}>
+        <ReviewComponent
+          title="Compute"
+          onEdit={() => {
+            setPage(2);
+          }}
+        >
           <div className="flex flex-row gap-3xl">
             <div className="flex flex-col rounded border border-border-default flex-1 overflow-hidden">
               <div className="px-xl py-lg bg-surface-basic-subdued">
@@ -101,7 +114,12 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Environment" onEdit={() => {}}>
+        <ReviewComponent
+          title="Environment"
+          onEdit={() => {
+            setPage(3);
+          }}
+        >
           <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
             <div className="flex flex-row items-center gap-lg pb-xl border-b border-border-default">
               <div className="flex-1 bodyMd-medium text-text-default">
@@ -121,7 +139,12 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Network" onEdit={() => {}}>
+        <ReviewComponent
+          title="Network"
+          onEdit={() => {
+            setPage(4);
+          }}
+        >
           <div className="flex flex-row gap-xl p-xl rounded border border-border-default">
             <div className="text-text-default bodyMd flex-1">
               Ports exposed from the app
@@ -145,27 +168,23 @@ const AppReview = () => {
           })}
         </div>
       )}
-      <div className="flex flex-row gap-xl items-center">
-        <Button
-          content="Networks"
-          prefix={<ArrowLeft />}
-          variant="outline"
-          onClick={() => {
+
+      <BottomNavigation
+        primaryButton={{
+          type: 'submit',
+          content: 'Create App',
+          variant: 'primary',
+          disabled: errors.length !== 0,
+          loading: isLoading,
+        }}
+        secondaryButton={{
+          content: 'Network',
+          variant: 'outline',
+          onClick: () => {
             setPage(4);
-          }}
-        />
-
-        <div className="text-surface-primary-subdued">|</div>
-
-        <Button
-          disabled={errors.length !== 0}
-          content="Create App"
-          suffix={<ArrowRight />}
-          variant="primary"
-          type="submit"
-          loading={isLoading}
-        />
-      </div>
+          },
+        }}
+      />
     </FadeIn>
   );
 };

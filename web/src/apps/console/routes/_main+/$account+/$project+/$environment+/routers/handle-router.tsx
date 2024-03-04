@@ -39,7 +39,14 @@ const Root = (props: IDialog) => {
     isLoading: domainLoading,
     error: domainLoadingError,
   } = useCustomSwr('/domains', async () => {
-    return api.listDomains({});
+    return api.listDomains({
+      search: {
+        clusterName: {
+          matchType: 'exact',
+          exact: parseName(cluster),
+        },
+      },
+    });
   });
 
   const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =

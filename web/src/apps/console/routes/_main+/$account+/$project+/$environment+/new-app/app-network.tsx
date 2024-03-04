@@ -1,11 +1,3 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  SmileySad,
-  X,
-} from '@jengaicons/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
@@ -14,11 +6,16 @@ import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { useAppState } from '~/console/page-components/app-states';
-import { InfoLabel } from '~/console/components/commons';
+import { BottomNavigation, InfoLabel } from '~/console/components/commons';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { FadeIn, parseValue } from '../../../../../../page-components/util';
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  SmileySad,
+  X,
+} from '~/console/components/icons';
+import { FadeIn, parseValue } from '~/console/page-components/util';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -87,7 +84,7 @@ const ExposedPortList = ({
                       <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
                         <span>Service: </span>
                         {ep.port}
-                        <ArrowRight size={16} weight={1} />
+                        <ArrowRight size={16} />
                         <span>Container: </span>
                         {ep.targetPort}
                       </div>
@@ -198,8 +195,6 @@ export const ExposedPorts = () => {
             variant="basic"
             disabled={!port || !targetPort}
             onClick={() => {
-              console.log('here');
-
               if (services?.find((ep) => ep.port && ep.port === port)) {
                 setPortError('Port is already exposed.');
               } else {
@@ -241,29 +236,25 @@ const AppNetwork = () => {
       </div>
 
       <ExposedPorts />
-      <div className="flex flex-row gap-xl items-center">
-        <Button
-          content="Environments"
-          prefix={<ArrowLeft />}
-          variant="outline"
-          onClick={() => {
-            setPage(3);
-          }}
-        />
-
-        <div className="text-surface-primary-subdued">|</div>
-
-        <Button
-          content="Save & Continue"
-          suffix={<ArrowRight />}
-          variant="primary"
-          onClick={() => {
+      <BottomNavigation
+        primaryButton={{
+          type: 'submit',
+          content: 'Save & Continue',
+          variant: 'primary',
+          onClick: () => {
             setPage(5);
             markPageAsCompleted(4);
             markPageAsCompleted(5);
-          }}
-        />
-      </div>
+          },
+        }}
+        secondaryButton={{
+          content: 'Environments',
+          variant: 'outline',
+          onClick: () => {
+            setPage(3);
+          },
+        }}
+      />
     </FadeIn>
   );
 };

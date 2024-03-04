@@ -1,13 +1,11 @@
 /* eslint-disable guard-for-in */
 
-import { ArrowRight } from '@jengaicons/react';
 import {
   useLoaderData,
   useNavigate,
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
 import Select from '~/components/atoms/select';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -34,7 +32,10 @@ import MultiStepProgressWrapper from '~/console/components/multi-step-progress-w
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
-import { ReviewComponent } from '~/console/components/commons';
+import {
+  BottomNavigation,
+  ReviewComponent,
+} from '~/console/components/commons';
 import { IProjectContext } from '../../_layout';
 
 export const loader = (ctx: IRemixCtx) => {
@@ -281,16 +282,14 @@ const TemplateView = ({
         error={!!values.selectedService && !!errors.selectedResource}
         message={values.selectedService ? errors.selectedResource : null}
       />
-
-      <div className="flex flex-row justify-start">
-        <Button
-          loading={isLoading}
-          variant="primary"
-          content="Next"
-          suffix={<ArrowRight />}
-          type="submit"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          loading: isLoading,
+          variant: 'primary',
+          content: 'Next',
+          type: 'submit',
+        }}
+      />
     </form>
   );
 };
@@ -349,14 +348,13 @@ const FieldView = ({
           />
         );
       })}
-      <div className="flex flex-row justify-start">
-        <Button
-          variant="primary"
-          content="Next"
-          suffix={<ArrowRight />}
-          type="submit"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          variant: 'primary',
+          content: 'Next',
+          type: 'submit',
+        }}
+      />
     </form>
   );
 };
@@ -456,16 +454,14 @@ const ReviewView = ({
         )}
         {renderFieldView()}
       </div>
-
-      <div className="flex flex-row justify-start">
-        <Button
-          variant="primary"
-          content="Create"
-          loading={isLoading}
-          suffix={<ArrowRight />}
-          type="submit"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          variant: 'primary',
+          content: 'Create',
+          loading: isLoading,
+          type: 'submit',
+        }}
+      />
     </form>
   );
 };

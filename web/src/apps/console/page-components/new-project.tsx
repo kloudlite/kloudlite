@@ -1,7 +1,5 @@
 /* eslint-disable no-nested-ternary */
-import { ArrowRight } from '@jengaicons/react';
 import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -23,7 +21,7 @@ import MultiStepProgress, {
 } from '../components/multi-step-progress';
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
-import { ReviewComponent } from '../components/commons';
+import { BottomNavigation, ReviewComponent } from '../components/commons';
 
 const statusRender = (item: ExtractNodeType<IClusters>) => {
   return listStatus({
@@ -157,8 +155,6 @@ const NewProject = () => {
                               </div>
                             </div>
                           ) : (
-                            // parseStatus({ item: clster }) === 'syncing' ||
-                            // parseStatus({ item: clster }) === 'notready' ?
                             <div className="flex text-text-disabled">
                               <div className="flex-grow">
                                 <div className="flex flex-col">
@@ -184,14 +180,13 @@ const NewProject = () => {
                     handleChange('clusterName')(dummyEvent(v.value));
                 }}
               />
-              <div className="flex flex-row justify-start">
-                <Button
-                  variant="primary"
-                  content="Next"
-                  suffix={<ArrowRight />}
-                  type="submit"
-                />
-              </div>
+              <BottomNavigation
+                primaryButton={{
+                  variant: 'primary',
+                  content: 'Next',
+                  type: 'submit',
+                }}
+              />
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step step={2} label="Review">
@@ -218,15 +213,14 @@ const NewProject = () => {
                 </div>
               </div>
             </ReviewComponent>
-            <div className="flex flex-row justify-start">
-              <Button
-                loading={isLoading}
-                variant="primary"
-                content="Create"
-                suffix={<ArrowRight />}
-                type="submit"
-              />
-            </div>
+            <BottomNavigation
+              primaryButton={{
+                loading: isLoading,
+                variant: 'primary',
+                content: 'Create',
+                type: 'submit',
+              }}
+            />
           </MultiStepProgress.Step>
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>

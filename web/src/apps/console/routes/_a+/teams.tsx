@@ -1,4 +1,3 @@
-import { ArrowRight, Users } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
   Link,
@@ -24,6 +23,7 @@ import DynamicPagination from '~/console/components/dynamic-pagination';
 import List from '~/console/components/list';
 import { parseName } from '~/console/server/r-utils/common';
 import ConsoleAvatar from '~/console/components/console-avatar';
+import { ArrowRight, Users } from '~/console/components/icons';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;

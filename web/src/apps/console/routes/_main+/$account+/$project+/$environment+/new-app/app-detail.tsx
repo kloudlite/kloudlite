@@ -8,6 +8,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { parseName } from '~/console/server/r-utils/common';
 import { FadeIn } from '~/console/page-components/util';
 import { NameIdView } from '~/console/components/name-id-view';
+import { BottomNavigation } from '~/console/components/commons';
 
 const AppDetail = () => {
   const { app, setApp, setPage, markPageAsCompleted } = useAppState();
@@ -80,15 +81,14 @@ const AppDetail = () => {
           onChange={handleChange('description')}
         />
       </div>
-      <div className="flex flex-row gap-xl items-center">
-        <Button
-          loading={isLoading}
-          type="submit"
-          content="Save & Continue"
-          suffix={<ArrowRight />}
-          variant="primary"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          loading: isLoading,
+          type: 'submit',
+          content: 'Save & Continue',
+          variant: 'primary',
+        }}
+      />
     </FadeIn>
   );
 };

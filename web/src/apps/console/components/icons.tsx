@@ -4,9 +4,15 @@ import {
   Plus,
   Trash,
   PencilLine,
+  Check,
   GithubLogoFill,
   GitBranchFill,
   GitlabLogoFill,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  SmileySad,
 } from '@jengaicons/react';
 
 export {
@@ -18,4 +24,10 @@ export {
   GithubLogoFill,
   GitlabLogoFill,
   GitBranchFill,
+  Users,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  SmileySad,
 };

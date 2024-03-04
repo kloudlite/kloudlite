@@ -6,6 +6,7 @@ import {
   createAppEnvPage,
   useAppState,
 } from '~/console/page-components/app-states';
+import { BottomNavigation } from '~/console/components/commons';
 import { FadeIn } from '../../../../../../page-components/util';
 import { EnvironmentVariables } from './app-environment-variables';
 import { ConfigMounts } from './app-environment-mounts';
@@ -55,28 +56,24 @@ const AppEnvironment = () => {
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex flex-row gap-xl items-center">
-        <Button
-          content="Compute"
-          prefix={<ArrowLeft />}
-          variant="outline"
-          onClick={() => {
-            setPage(2);
-          }}
-        />
-
-        <div className="text-surface-primary-subdued">|</div>
-
-        <Button
-          content="Save & Continue"
-          suffix={<ArrowRight />}
-          variant="primary"
-          onClick={() => {
+      <BottomNavigation
+        primaryButton={{
+          type: 'submit',
+          content: 'Save & Continue',
+          variant: 'primary',
+          onClick: () => {
             setPage(4);
             markPageAsCompleted(3);
-          }}
-        />
-      </div>
+          },
+        }}
+        secondaryButton={{
+          content: 'Compute',
+          variant: 'outline',
+          onClick: () => {
+            setPage(2);
+          },
+        }}
+      />
     </FadeIn>
   );
 };

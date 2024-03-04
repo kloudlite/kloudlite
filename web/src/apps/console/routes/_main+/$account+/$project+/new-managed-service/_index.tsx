@@ -1,8 +1,6 @@
 /* eslint-disable react/no-this-in-sfc */
 /* eslint-disable guard-for-in */
-import { ArrowRight } from '@jengaicons/react';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
 import Select from '~/components/atoms/select';
 import { NameIdView } from '~/console/components/name-id-view';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -22,7 +20,10 @@ import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
-import { ReviewComponent } from '~/console/components/commons';
+import {
+  BottomNavigation,
+  ReviewComponent,
+} from '~/console/components/commons';
 import { IProjectContext } from '../_layout';
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
@@ -225,16 +226,13 @@ const TemplateView = ({
           }))
         }
       />
-
-      <div className="flex flex-row justify-start">
-        <Button
-          loading={isLoading}
-          variant="primary"
-          content="Next"
-          suffix={<ArrowRight />}
-          type="submit"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          type: 'submit',
+          loading: isLoading,
+          content: 'Next',
+        }}
+      />
     </form>
   );
 };
@@ -297,14 +295,12 @@ const FieldView = ({
           />
         );
       })}
-      <div className="flex flex-row justify-start">
-        <Button
-          variant="primary"
-          content="Next"
-          suffix={<ArrowRight />}
-          type="submit"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          type: 'submit',
+          content: 'Next',
+        }}
+      />
     </form>
   );
 };
@@ -421,16 +417,13 @@ const ReviewView = ({
           </ReviewComponent>
         )}
       </div>
-
-      <div className="flex flex-row justify-start">
-        <Button
-          variant="primary"
-          content="Create"
-          loading={isLoading}
-          suffix={<ArrowRight />}
-          type="submit"
-        />
-      </div>
+      <BottomNavigation
+        primaryButton={{
+          type: 'submit',
+          loading: isLoading,
+          content: 'Create',
+        }}
+      />
     </form>
   );
 };
