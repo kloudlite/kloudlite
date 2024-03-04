@@ -20,6 +20,7 @@ import { Switch } from '~/components/atoms/switch';
 import { NameIdView } from '~/console/components/name-id-view';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_layout';
+import {keyconstants} from "~/console/server/r-utils/key-constants";
 
 type IDialog = IDialogBase<ExtractNodeType<INodepools>>;
 
@@ -53,7 +54,7 @@ const Root = (props: IDialog) => {
             taints: [],
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
-            stateful: props.data.stateful || false
+            stateful: props.data.spec.nodeLabels[keyconstants.nodepoolStateType] || false
           }
         : {
             nvidiaGpuEnabled: false,
@@ -155,9 +156,11 @@ const Root = (props: IDialog) => {
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
                   cloudProvider: 'aws',
+                  nodeLabels: {
+                    [keyconstants.nodepoolStateType]: val.stateful ? "stateful" : "stateless"
+                  },
                   ...getNodeConf(),
                 },
-                stateful: val.stateful || false
               },
             });
             if (e) {
@@ -173,11 +176,14 @@ const Root = (props: IDialog) => {
                 },
                 spec: {
                   ...props.data.spec,
+                  nodeLabels: {
+                    ...(props.data.spec.nodeLabels || {}),
+                    [keyconstants.nodepoolStateType]: val.stateful ? "stateful" : "stateless"
+                  },
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
                   ...getNodeConf(),
                 },
-                stateful: val.stateful || false
               },
             });
             if (e) {
