@@ -14,9 +14,11 @@ runs:
       run: |
         import os
         import requests
+        import datetime
 
         webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
         rTag = os.environ.get('release_tag')
+        actor = os.environ.get('GITHUB_ACTOR')
 
         if rTag is None:
             exit("The release_tag environment variable is not set.")
@@ -33,20 +35,23 @@ runs:
             changelog_content = ""
 
         changelog_content =f"""# Release {rTag}
+
         {changelog_content}
+
         """ 
 
         payload = {
             "content": "New release available!",
             "username": "Release Bot",
+            # github release bot
             "avatar_url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
             "embeds": [
                 {
                     "description": changelog_content,
                     "color": 3447003,
                     "footer": {
-                        "text": "Powered by Kloudlite",
-                        "icon_url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+                        "text": f"Released by: {actor} at {datetime.datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}",
+                        "icon_url": f"https://github.com/{actor}.png"
                     },
                 }
             ]
@@ -58,4 +63,5 @@ runs:
             print("Successfully sent the changelog to Discord.")
         else:
             print(f"Failed to send the changelog. Status code: {response.status_code}")
+
       shell: python
