@@ -79,7 +79,7 @@ jobs:
           path: ./k3s
 
   github_release:
-    needs:
+    # needs:
       # - api
       # - operator
       # - infrastructure-as-code
