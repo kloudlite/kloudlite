@@ -8,7 +8,6 @@ spec:
 
   tolerations: {{.Values.nodepools.stateless.tolerations | toYaml | nindent 4}}
   nodeSelector: {{.Values.nodepools.stateless.labels | toYaml | nindent 4}}
-
   
   services:
     - port: 80
