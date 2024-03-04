@@ -24,9 +24,11 @@ jobs:
     name: Deploy to Docker Image
     steps:
       - name: Checkout
-        uses: ./.github/actions/checkout/
-        with:
-          submodule: web
+        uses: actions/checkout@v4
+
+      - name: Initialize and update submodule web 
+        run: |
+          git submodule update --init --depth 1 web
 
       - name: Setup Build Environment
         id: setup
