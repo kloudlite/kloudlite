@@ -18,7 +18,6 @@ type NodePool struct {
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
-	IsStateful bool         `json:"stateful"`
 }
 
 func (n *NodePool) GetDisplayName() string {

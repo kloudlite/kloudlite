@@ -1337,8 +1337,7 @@ type SearchNamespaces struct {
 }
 
 type SearchNodepool struct {
-	Text       *repos.MatchFilter `json:"text,omitempty"`
-	IsStateful *repos.MatchFilter `json:"isStateful,omitempty"`
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchPersistentVolumeClaims struct {
