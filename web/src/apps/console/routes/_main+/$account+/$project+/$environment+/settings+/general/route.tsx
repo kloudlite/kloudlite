@@ -20,6 +20,7 @@ import DeleteDialog from '~/console/components/delete-dialog';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import Wrapper from '~/console/components/wrapper';
 import { Checkbox } from '~/components/atoms/checkbox';
+import { InfoLabel } from '~/console/components/commons';
 import { IEnvironmentContext } from '../../_layout';
 
 const EnvironmentSettingsGeneral = () => {
@@ -128,13 +129,16 @@ const EnvironmentSettingsGeneral = () => {
             value={values.displayName}
             onChange={handleChange('displayName')}
           />
-          <Checkbox
-            label="Public"
-            checked={values.environmentRoutingMode}
-            onChange={(checked) => {
-              handleChange('environmentRoutingMode')(dummyEvent(checked));
-            }}
-          />
+          <div className="flex flex-row items-center gap-lg">
+            <Checkbox
+              label="Public"
+              checked={values.environmentRoutingMode}
+              onChange={(checked) => {
+                handleChange('environmentRoutingMode')(dummyEvent(checked));
+              }}
+            />
+            <InfoLabel info="Routers inside public environments will expose services to public internet. Private environments routers will only work when Kloudlite VPN is active." />
+          </div>
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput

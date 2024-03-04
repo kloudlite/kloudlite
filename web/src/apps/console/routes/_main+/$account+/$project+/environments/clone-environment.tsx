@@ -14,6 +14,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { InfoLabel } from '~/console/components/commons';
 
 type IDialog = IDialogBase<ExtractNodeType<IEnvironments>>;
 
@@ -86,13 +87,16 @@ const Root = (props: IDialog) => {
             handleChange={handleChange}
             nameErrorLabel="isNameError"
           />
-          <Checkbox
-            label="Public"
-            checked={values.environmentRoutingMode}
-            onChange={(val) => {
-              handleChange('environmentRoutingMode')(dummyEvent(val));
-            }}
-          />
+          <div className="flex flex-row items-center gap-lg">
+            <Checkbox
+              label="Public"
+              checked={values.environmentRoutingMode}
+              onChange={(val) => {
+                handleChange('environmentRoutingMode')(dummyEvent(val));
+              }}
+            />
+            <InfoLabel info="Routers inside public environments will expose services to public internet. Private environments routers will only work when Kloudlite VPN is active." />
+          </div>
         </div>
       </Popup.Content>
       <Popup.Footer>

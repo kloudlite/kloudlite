@@ -51,14 +51,14 @@ export const DetailItem = ({
 
 interface InfoLabelProps {
   info: ReactNode;
-  label: ReactNode;
+  label?: ReactNode;
   title?: ReactNode;
 }
 
 export const InfoLabel = ({ info, title, label }: InfoLabelProps) => {
   return (
     <span className="flex items-center gap-lg">
-      {label}{' '}
+      {label}
       <Tooltip.Root
         content={
           <div className="p-md text-xs flex flex-col gap-md">
