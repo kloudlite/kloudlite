@@ -25,10 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Initialize and update submodule web 
-        run: |
-          git submodule update --init --depth 1 web
+        with:
+          submodules: recursive
 
       - name: Setup Build Environment
         id: setup
