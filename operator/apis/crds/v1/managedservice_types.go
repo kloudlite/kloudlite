@@ -4,6 +4,7 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +23,8 @@ func (s *ServiceTemplate) GroupVersionKind() schema.GroupVersionKind {
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	ServiceTemplate ServiceTemplate `json:"serviceTemplate"`
+	ct.NodeSelectorAndTolerations `json:",inline"`
+	ServiceTemplate               ServiceTemplate `json:"serviceTemplate"`
 }
 
 // +kubebuilder:object:root=true
