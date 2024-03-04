@@ -9,7 +9,7 @@ type InputField struct {
 	Max          *float64 `json:"max,omitempty"`
 	Required     *bool    `json:"required,omitempty"`
 	Unit         *string  `json:"unit,omitempty"`
-	DisplayUnit         *string  `json:"displayUnit,omitempty"`
+	DisplayUnit  *string  `json:"displayUnit,omitempty"`
 	Multiplier   *float64 `json:"multiplier,omitempty"`
 }
 

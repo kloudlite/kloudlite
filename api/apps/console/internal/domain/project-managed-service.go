@@ -149,7 +149,7 @@ func (d *domain) UpdateProjectManagedService(ctx ConsoleContext, projectName str
 		return nil, errors.Newf("no project manage service found")
 	}
 
-	service.Namespace = "trest"
+	service.Namespace = "trest" // this is just to make it pass validation
 	service.EnsureGVK()
 	if err := d.k8sClient.ValidateObject(ctx, &service.ProjectManagedService); err != nil {
 		return nil, errors.NewE(err)
