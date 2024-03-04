@@ -1,5 +1,3 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
 import Slider from '~/components/atoms/slider';
 import { useAppState } from '~/console/page-components/app-states';
@@ -14,6 +12,7 @@ import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
 import { registryHost } from '~/lib/configs/base-url.cjs';
+import { BottomNavigation } from '~/console/components/commons';
 import { plans } from './datas';
 
 const valueRender = ({
@@ -100,11 +99,11 @@ const AppCompute = () => {
       ),
     },
     validationSchema: Yup.object({
-      // imageUrl: Yup.string().required(),
       pullSecret: Yup.string(),
+      repoName: Yup.string().required(),
+      repoImageTag: Yup.string().required(),
       cpuMode: Yup.string().required(),
       selectedPlan: Yup.string().required(),
-      // cpu: Yup.number().required().min(100).max(8000),
     }),
     onSubmit: (val) => {
       setApp((s) => ({
@@ -128,32 +127,32 @@ const AppCompute = () => {
               // image: val.image === '' ? val.repoImageUrl : val.imageUrl,
               image:
                 values.repoAccountName === undefined ||
-                  values.repoAccountName === ''
+                values.repoAccountName === ''
                   ? `${values.repoName}:${values.repoImageTag}`
                   : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {
-                    max: `${val.cpu}m`,
-                    min: `${val.cpu}m`,
-                  }
+                      max: `${val.cpu}m`,
+                      min: `${val.cpu}m`,
+                    }
                   : {
-                    max: `${val.manualCpuMax}m`,
-                    min: `${val.manualCpuMin}m`,
-                  },
+                      max: `${val.manualCpuMax}m`,
+                      min: `${val.manualCpuMin}m`,
+                    },
               resourceMemory:
                 val.selectionMode === 'quick'
                   ? {
-                    max: `${(
-                      (values.cpu || 1) * parseValue(values.memPerCpu, 4)
-                    ).toFixed(2)}Mi`,
-                    min: `${val.cpu}Mi`,
-                  }
+                      max: `${(
+                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
+                      ).toFixed(2)}Mi`,
+                      min: `${val.cpu}Mi`,
+                    }
                   : {
-                    max: `${val.manualMemMax}Mi`,
-                    min: `${val.manualMemMin}Mi`,
-                  },
+                      max: `${val.manualMemMax}Mi`,
+                      min: `${val.manualMemMin}Mi`,
+                    },
             },
           ],
         },
@@ -201,9 +200,7 @@ const AppCompute = () => {
           label="Repo Name"
           size="lg"
           placeholder="Select Repo"
-          // value={{ label: '', value: values.repoName }}
           value={values.repoName}
-          // searchable
           creatable
           onChange={(val) => {
             handleChange('repoName')(dummyEvent(val.value));
@@ -214,7 +211,7 @@ const AppCompute = () => {
             }
           }}
           options={async () => [...repos]}
-          error={!!errors.repos || !!repoLoadingError}
+          error={!!errors.repoName || !!repoLoadingError}
           message={
             repoLoadingError ? 'Error fetching repositories.' : errors.app
           }
@@ -247,8 +244,8 @@ const AppCompute = () => {
             errors.repoImageTag
               ? errors.repoImageTag
               : digestError
-                ? 'Failed to load Image tags.'
-                : ''
+              ? 'Failed to load Image tags.'
+              : ''
           }
           loading={digestLoading}
         />
@@ -386,149 +383,27 @@ const AppCompute = () => {
         )}
       </div>
 
-      {/* <div className="flex flex-col border border-border-default rounded overflow-hidden">
-        <div className="p-2xl gap-2xl flex flex-row items-center border-b border-border-disabled bg-surface-basic-subdued">
-          <div className="flex-1 bodyMd-medium text-text-default">
-            Select plan
-          </div>
-          <ExtendedFilledTab
-            size="sm"
-            items={[
-              {
-                value: 'shared',
-                label: (
-                  <InfoLabel label="Shared" info="some usefull information" />
-                ),
-              },
-
-              {
-                value: 'dedicated',
-                label: (
-                  <InfoLabel
-                    label="Dedicated"
-                    info="some usefull information"
-                  />
-                ),
-              },
-            ]}
-            value={values.cpuMode}
-            onChange={(v) => {
-              handleChange('cpuMode')(dummyEvent(v));
-            }}
-          />
-        </div>
-
-        <div className="flex flex-row">
-          <div className="flex-1 flex flex-col border-r border-border-disabled">
-            <Radio.Root
-              withBounceEffect={false}
-              className="gap-y-0"
-              value={values.selectedPlan}
-              onChange={(v) => {
-                handleChange('selectedPlan')(dummyEvent(v));
-              }}
-            >
-              {[...(plans[values.cpuMode as IcpuMode] || [])].map(
-                ({ name, memoryPerCpu, description }) => {
-                  return (
-                    <Radio.Item
-                      key={`${memoryPerCpu}`}
-                      className="p-2xl"
-                      value={`${memoryPerCpu}`}
-                    >
-                      <div className="flex flex-col pl-xl">
-                        <div className="headingMd text-text-default">
-                          {name}
-                        </div>
-                        <div className="bodySm text-text-soft">
-                          {description}
-                        </div>
-                      </div>
-                    </Radio.Item>
-                  );
-                }
-              )}
-            </Radio.Root>
-          </div>
-          {getActivePlan() ? (
-            <div className="flex-1 py-2xl">
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  {getActivePlan()?.name}
-                </div>
-                <div className="bodyMd text-text-soft">{values.cpuMode}</div>
-              </div>
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  Compute
-                </div>
-                <div className="bodyMd text-text-soft">{1}vCPU</div>
-              </div>
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  Memory
-                </div>
-                <div className="bodyMd text-text-soft">
-                  {getActivePlan()?.memoryPerCpu}GB
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 py-2xl">
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  Please Select any plan
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div> */}
-
-      <div className="flex flex-row gap-xl items-center">
-        <Button
-          content="App Info"
-          prefix={<ArrowLeft />}
-          variant="outline"
-          onClick={() => {
+      <BottomNavigation
+        primaryButton={{
+          loading: isLoading,
+          type: 'submit',
+          content: 'Save & Continue',
+          variant: 'primary',
+        }}
+        secondaryButton={{
+          content: 'App Info',
+          variant: 'outline',
+          onClick: () => {
             (async () => {
               const res = await submit();
               if (res) {
                 setPage(1);
               }
             })();
-          }}
-        />
-
-        <div className="text-surface-primary-subdued">|</div>
-
-        <Button
-          loading={isLoading}
-          type="submit"
-          content="Save & Continue"
-          suffix={<ArrowRight />}
-          variant="primary"
-        />
-      </div>
+          },
+        }}
+      />
     </FadeIn>
   );
 };
-
-// const ContainerRepoLayout = () => {
-//   const { promise } = useLoaderData<typeof Reposloader>();
-//   return (
-//       <LoadingComp data={promise}>
-//         {({ repository }) => {
-//           const repoList = parseNodes(repository);
-//           return <AppCompute services={repoList} />;
-//         }}
-//       </LoadingComp>
-//   );
-// };
-//
-// const NewContainerRepo = () => {
-//   return <ContainerRepoLayout />;
-// };
-
 export default AppCompute;
-//  export default NewContainerRepo

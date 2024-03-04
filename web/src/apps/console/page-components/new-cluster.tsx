@@ -1,7 +1,5 @@
-import { ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import { mapper, useMapper } from '~/components/utils';
@@ -28,7 +26,8 @@ import MultiStepProgress, {
 } from '../components/multi-step-progress';
 import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper';
 import { TitleBox } from '../components/raw-wrapper';
-import { ReviewComponent } from '../components/commons';
+import { BottomNavigation, ReviewComponent } from '../components/commons';
+import { ArrowRight } from '../components/icons';
 
 type props =
   | {
@@ -86,10 +85,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const [selectedRegion, setSelectedRegion] = useState<
     (typeof awsRegions)[number]
   >(awsRegions[0]);
-
-  const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
-    (typeof constDatas.availabilityModes)[number] | undefined
-  >();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -242,26 +237,14 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             />
           </div>
         </div>
-        {isOnboarding ? (
-          <div className="flex flex-row gap-xl justify-start">
-            <Button
-              variant="primary"
-              content="Create"
-              suffix={<ArrowRight />}
-              type="submit"
-              loading={isLoading}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-row justify-start">
-            <Button
-              variant="primary"
-              content="Continue"
-              suffix={<ArrowRight />}
-              type="submit"
-            />
-          </div>
-        )}
+        <BottomNavigation
+          primaryButton={{
+            loading: isLoading,
+            variant: 'primary',
+            content: isOnboarding ? 'Create' : 'Next',
+            type: 'submit',
+          }}
+        />
       </div>
     );
   };
@@ -344,15 +327,14 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                     </div>
                   </div>
                 </ReviewComponent>
-                <div className="flex flex-row justify-start">
-                  <Button
-                    loading={isLoading}
-                    variant="primary"
-                    content="Create"
-                    suffix={<ArrowRight />}
-                    type="submit"
-                  />
-                </div>
+                <BottomNavigation
+                  primaryButton={{
+                    loading: isLoading,
+                    variant: 'primary',
+                    content: 'Create',
+                    type: 'submit',
+                  }}
+                />
               </MultiStepProgress.Step>
             </>
           ) : (

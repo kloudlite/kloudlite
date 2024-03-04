@@ -1,6 +1,4 @@
-import { ArrowRight } from '@jengaicons/react';
 import { useNavigate } from '@remix-run/react';
-import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -13,6 +11,7 @@ import MultiStepProgressWrapper from '~/console/components/multi-step-progress-w
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
+import { BottomNavigation } from '~/console/components/commons';
 
 const NewAccount = () => {
   const api = useConsoleApi();
@@ -77,16 +76,14 @@ const NewAccount = () => {
                 handleChange={handleChange}
                 nameErrorLabel="isNameError"
               />
-              <div className="flex flex-row gap-xl justify-start">
-                <Button
-                  variant="primary"
-                  content="Continue"
-                  suffix={<ArrowRight />}
-                  size="md"
-                  loading={isLoading}
-                  type="submit"
-                />
-              </div>
+              <BottomNavigation
+                primaryButton={{
+                  variant: 'primary',
+                  content: 'Next',
+                  loading: isLoading,
+                  type: 'submit',
+                }}
+              />
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step step={2} label="Add your cloud provider" />

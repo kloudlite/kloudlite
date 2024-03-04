@@ -1,8 +1,6 @@
-import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -18,9 +16,23 @@ import Tools from './tools';
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
+    const { cluster } = ctx.params;
+    console.log({
+      ...getSearch(ctx),
+      clusterName: {
+        matchType: 'exact',
+        exact: cluster,
+      },
+    });
     const { data, errors } = await GQLServerHandler(ctx.request).listDomains({
       pagination: getPagination(ctx),
-      search: getSearch(ctx),
+      search: {
+        ...getSearch(ctx),
+        clusterName: {
+          matchType: 'exact',
+          exact: cluster,
+        },
+      },
     });
     if (errors) {
       logger.error(errors[0]);

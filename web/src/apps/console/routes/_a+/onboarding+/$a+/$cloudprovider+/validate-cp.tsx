@@ -1,11 +1,9 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable no-nested-ternary */
 import { IRemixCtx } from '~/root/lib/types/common';
-import { ArrowRight, Check } from '@jengaicons/react';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { defer } from '@remix-run/node';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
@@ -18,11 +16,12 @@ import { parseName } from '~/console/server/r-utils/common';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import CodeView from '~/console/components/code-view';
 import { asyncPopupWindow } from '~/console/utils/commons';
-import ProgressWrapper from '~/console/components/progress-wrapper';
 import MultiStepProgressWrapper from '~/console/components/multi-step-progress-wrapper';
 import MultiStepProgress, {
   useMultiStepProgress,
 } from '~/console/components/multi-step-progress';
+import { Check } from '~/console/components/icons';
+import { BottomNavigation } from '~/console/components/commons';
 import { IAccountContext } from '../../../../_main+/$account+/_layout';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -164,20 +163,19 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
                   </div>
                 </div>
               )}
-              <div className="flex flex-row gap-xl justify-start">
-                <Button
-                  variant="primary"
-                  content={data?.result ? 'Next' : 'Skip'}
-                  suffix={<ArrowRight />}
-                  onClick={() => {
+              <BottomNavigation
+                primaryButton={{
+                  variant: 'primary',
+                  content: data?.result ? 'Next' : 'Skip',
+                  onClick: () => {
                     navigate(
                       `/onboarding/${parseName(account)}/${parseName(
                         cloudProvider
                       )}/new-cluster`
                     );
-                  }}
-                />
-              </div>
+                  },
+                }}
+              />
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
