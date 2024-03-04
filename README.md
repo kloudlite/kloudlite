@@ -1,5 +1,5 @@
 # KloudLite
-a DevOps and InfraOps automation company.
+an opensource platform engineering system for developers
 
 ## Objective
 To develop an intuitive, versatile platform focused on Infrastructure and 
