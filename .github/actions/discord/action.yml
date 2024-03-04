@@ -1,0 +1,67 @@
+name: 'push notification to discord'
+
+inputs:
+  webhook_url:
+    description: 'discord webhook url'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Push Notification To Discord
+      env:
+        DISCORD_WEBHOOK_URL: ${{ inputs.webhook_url }}
+      run: |
+        import os
+        import requests
+        import datetime
+
+        webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
+        rTag = os.environ.get('release_tag')
+        actor = os.environ.get('GITHUB_ACTOR')
+
+        if rTag is None:
+            exit("The release_tag environment variable is not set.")
+
+        if webhook_url is None:
+            exit("The DISCORD_WEBHOOK_URL environment variable is not set.")
+
+        changelog_file_path = f"changelog/{rTag}.md"
+
+        if changelog_file_path and os.path.exists(changelog_file_path):
+            with open(changelog_file_path, 'r') as file:
+                changelog_content = file.read()
+        else:
+            changelog_content = ""
+
+        changelog_content =f"""# Release {rTag}
+
+        {changelog_content}
+
+        """ 
+
+        payload = {
+            "content": "New release available!",
+            "username": "Release Bot",
+            # github release bot
+            "avatar_url": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png",
+            "embeds": [
+                {
+                    "description": changelog_content,
+                    "color": 3447003,
+                    "footer": {
+                        "text": f"Released by: {actor} at {datetime.datetime.now().strftime('%Y-%m-%d %I:%M:%S %p')}",
+                        "icon_url": f"https://github.com/{actor}.png"
+                    },
+                }
+            ]
+        }
+
+        response = requests.post(webhook_url, json=payload)
+
+        if response.status_code == 204:
+            print("Successfully sent the changelog to Discord.")
+        else:
+            print(f"Failed to send the changelog. Status code: {response.status_code}")
+
+      shell: python

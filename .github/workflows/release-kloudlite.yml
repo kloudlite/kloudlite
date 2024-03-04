@@ -155,3 +155,14 @@ jobs:
             k3s-runner-artifacts/**
             kl-artifacts/**
             k3s/**
+
+      - name: Push Nightly Release To Discord
+        uses: ./.github/actions/discord/
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL_NIGHTLY }}
+
+      - name: Push Release To Discord
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: ./.github/actions/discord/
+        with:
+          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
