@@ -20,6 +20,7 @@ import { NameIdView } from '~/console/components/name-id-view';
 import Select from '~/components/atoms/select';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useAppend, useMapper } from '~/components/utils';
+import { Checkbox } from '~/components/atoms/checkbox';
 import { IAppContext } from '../app+/$app+/_layout';
 
 type IDialog = IDialogBase<ExtractNodeType<IRouters>>;
@@ -49,12 +50,14 @@ const Root = (props: IDialog) => {
             displayName: props.data.displayName,
             domains: [],
             isNameError: false,
+            isTlsEnabled: props.data.spec.https?.enabled || false,
           }
         : {
             name: '',
             displayName: '',
             domains: [],
             isNameError: false,
+            isTlsEnabled: false,
           },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
@@ -81,7 +84,7 @@ const Root = (props: IDialog) => {
                 spec: {
                   domains: val.domains,
                   https: {
-                    enabled: true,
+                    enabled: val.isTlsEnabled,
                   },
                 },
               },
@@ -103,7 +106,7 @@ const Root = (props: IDialog) => {
                   ...props.data.spec,
                   domains: val.domains,
                   https: {
-                    enabled: true,
+                    enabled: val.isTlsEnabled,
                   },
                 },
               },
@@ -197,6 +200,13 @@ const Root = (props: IDialog) => {
           }
           loading={domainLoading}
           disableWhileLoading
+        />
+        <Checkbox
+          label="enable TLS"
+          checked={values.isTlsEnabled}
+          onChange={(val) => {
+            handleChange('isTlsEnabled')(dummyEvent(val));
+          }}
         />
       </Popup.Content>
       <Popup.Footer>
