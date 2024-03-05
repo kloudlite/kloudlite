@@ -35,7 +35,7 @@ type ReqData struct {
 	ReqTopic string `json:"req_topic"`
 }
 
-type Response struct{
+type Response struct {
 }
 
 func ParseReq(rt string) (*ReqData, error) {
