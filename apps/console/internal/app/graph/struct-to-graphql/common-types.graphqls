@@ -110,7 +110,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @sha
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
-  enabled: Boolean
+  enabled: Boolean!
   maxReplicas: Int
   minReplicas: Int
   thresholdCpu: Int
@@ -379,7 +379,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
-  enabled: Boolean
+  enabled: Boolean!
   maxReplicas: Int
   minReplicas: Int
   thresholdCpu: Int

@@ -794,6 +794,7 @@ type ComplexityRoot struct {
 		EnvironmentName   func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Immutable         func(childComplexity int) int
+		IsReadyOnly       func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
@@ -1018,6 +1019,8 @@ type SecretResolver interface {
 	Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error)
 
 	ID(ctx context.Context, obj *entities.Secret) (string, error)
+
+	IsReadyOnly(ctx context.Context, obj *entities.Secret) (bool, error)
 
 	StringData(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error)
 
@@ -4764,6 +4767,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Secret.Immutable(childComplexity), true
 
+	case "Secret.isReadyOnly":
+		if e.complexity.Secret.IsReadyOnly == nil {
+			break
+		}
+
+		return e.complexity.Secret.IsReadyOnly(childComplexity), true
+
 	case "Secret.kind":
 		if e.complexity.Secret.Kind == nil {
 			break
@@ -5383,7 +5393,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpec @sha
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HPA @shareable {
-  enabled: Boolean
+  enabled: Boolean!
   maxReplicas: Int
   minReplicas: Int
   thresholdCpu: Int
@@ -5652,7 +5662,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__EnvironmentSpecIn {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
-  enabled: Boolean
+  enabled: Boolean!
   maxReplicas: Int
   minReplicas: Int
   thresholdCpu: Int
@@ -6305,6 +6315,7 @@ scalar Date
   environmentName: String!
   id: String!
   immutable: Boolean
+  isReadyOnly: Boolean!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -16531,11 +16542,14 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___crds___v1__HPA_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -24950,6 +24964,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createSecret(ctx context.
 				return ec.fieldContext_Secret_id(ctx, field)
 			case "immutable":
 				return ec.fieldContext_Secret_immutable(ctx, field)
+			case "isReadyOnly":
+				return ec.fieldContext_Secret_isReadyOnly(ctx, field)
 			case "kind":
 				return ec.fieldContext_Secret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -25068,6 +25084,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateSecret(ctx context.
 				return ec.fieldContext_Secret_id(ctx, field)
 			case "immutable":
 				return ec.fieldContext_Secret_immutable(ctx, field)
+			case "isReadyOnly":
+				return ec.fieldContext_Secret_isReadyOnly(ctx, field)
 			case "kind":
 				return ec.fieldContext_Secret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -30964,6 +30982,8 @@ func (ec *executionContext) fieldContext_Query_core_getSecret(ctx context.Contex
 				return ec.fieldContext_Secret_id(ctx, field)
 			case "immutable":
 				return ec.fieldContext_Secret_immutable(ctx, field)
+			case "isReadyOnly":
+				return ec.fieldContext_Secret_isReadyOnly(ctx, field)
 			case "kind":
 				return ec.fieldContext_Secret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -34194,6 +34214,50 @@ func (ec *executionContext) fieldContext_Secret_immutable(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Secret_isReadyOnly(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Secret_isReadyOnly(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Secret().IsReadyOnly(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Secret_isReadyOnly(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Secret",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Secret_kind(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Secret_kind(ctx, field)
 	if err != nil {
@@ -34758,6 +34822,8 @@ func (ec *executionContext) fieldContext_SecretEdge_node(ctx context.Context, fi
 				return ec.fieldContext_Secret_id(ctx, field)
 			case "immutable":
 				return ec.fieldContext_Secret_immutable(ctx, field)
+			case "isReadyOnly":
+				return ec.fieldContext_Secret_isReadyOnly(ctx, field)
 			case "kind":
 				return ec.fieldContext_Secret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -38163,7 +38229,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			it.Enabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			it.Enabled, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -42222,6 +42288,9 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___crds___
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HPA_enabled(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "maxReplicas":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___crds___v1__HPA_maxReplicas(ctx, field, obj)
@@ -46026,6 +46095,26 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = ec._Secret_immutable(ctx, field, obj)
 
+		case "isReadyOnly":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Secret_isReadyOnly(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "kind":
 
 			out.Values[i] = ec._Secret_kind(ctx, field, obj)
@@ -48363,7 +48452,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -48371,7 +48460,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
