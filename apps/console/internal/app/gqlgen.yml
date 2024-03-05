@@ -184,6 +184,9 @@ models:
     model: github.com/kloudlite/api/pkg/types.SyncStatus
   Github__com___kloudlite___api___pkg___types__SyncStatusIn: *sync-status-model
 
+  K8s__io___api___core___v1__Secret:
+    model: k8s.io/api/core/v1.Secret
+
   Github__com___kloudlite___operator___apis___crds___v1__EnvironmentRoutingMode:
     model: github.com/kloudlite/operator/apis/crds/v1.EnvironmentRoutingMode
 
