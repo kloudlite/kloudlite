@@ -43,6 +43,7 @@ jobs:
         name:
           - platform
           - agent
+
           - wireguard
 
           - helm-charts
