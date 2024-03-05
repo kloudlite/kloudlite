@@ -43,9 +43,8 @@ func clusterBuildRunUpdateSubject(buildRun *entities.BuildRun) string {
 }
 
 func clusterBuildCacheUpdateSubject(buildCache *entities.BuildCacheKey) string {
-	return fmt.Sprintf("res-updates.account.%s.displayName.%s.name.%s",
+	return fmt.Sprintf("res-updates.account.%s.id.%s",
 		buildCache.AccountName,
-		buildCache.DisplayName,
-		buildCache.Name,
+		buildCache.Id,
 	)
 }
