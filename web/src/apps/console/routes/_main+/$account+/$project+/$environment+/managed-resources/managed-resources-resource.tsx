@@ -27,6 +27,7 @@ import { Link, useParams } from '@remix-run/react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { listStatus } from '~/console/components/sync-status';
 import { Button } from '~/components/atoms/button';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import HandleManagedResources from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
@@ -192,6 +193,16 @@ const ManagedResourceResources = ({
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
+
+  const { environment, project, account } = useParams();
+
+  useWatchReload(
+    items.map((i) => {
+      return `account:${account}.project:${project}.environment:${environment}.managed_resource:${parseName(
+        i
+      )}`;
+    })
+  );
 
   const props: IResource = {
     items,

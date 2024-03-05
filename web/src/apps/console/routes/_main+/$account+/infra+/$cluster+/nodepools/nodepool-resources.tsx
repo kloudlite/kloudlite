@@ -33,6 +33,8 @@ import { ISetState } from '~/console/page-components/app-states';
 import { Button } from '~/components/atoms/button';
 import { dayjs } from '~/components/molecule/dayjs';
 import LogComp from '~/root/lib/client/components/logger';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
 import HandleNodePool from './handle-nodepool';
 import {
   findNodePlanWithCategory,
@@ -403,6 +405,16 @@ const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
   );
   const [showHandleNodepool, setShowHandleNodepool] = useState<BaseType | null>(
     null
+  );
+
+  const { account } = useOutletContext<IAccountContext>();
+  const { cluster } = useOutletContext<IClusterContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.cluster:${parseName(
+        cluster
+      )}.nodepool:${parseName(i)}`;
+    })
   );
 
   const reload = useReload();

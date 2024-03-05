@@ -18,10 +18,13 @@ import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useState } from 'react';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 
 const RESOURCE_NAME = 'storage';
 type BaseType = ExtractNodeType<IPvs>;
@@ -175,6 +178,15 @@ const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
   const { cluster } = useParams();
   const reloadPage = useReload();
   const api = useConsoleApi();
+
+  const { account } = useOutletContext<IAccountContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(
+        account
+      )}.cluster:${cluster}.persistance_volume:${parseName(i)}`;
+    })
+  );
 
   const props: IResource = {
     items,

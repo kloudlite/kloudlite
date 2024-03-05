@@ -24,9 +24,12 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
 import { listStatus } from '~/console/components/sync-status';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import HandleBackendService from './handle-backend-service';
 
 const RESOURCE_NAME = 'managed service';
@@ -197,6 +200,16 @@ const BackendServicesResources = ({
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
+
+  const { account } = useOutletContext<IAccountContext>();
+  const { project } = useOutletContext<IProjectContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.project:${parseName(
+        project
+      )}.project_managed_service:${parseName(i)}`;
+    })
+  );
 
   const props: IResource = {
     items,

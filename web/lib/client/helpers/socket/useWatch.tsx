@@ -1,19 +1,29 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ISocketResp, useSubscribe } from './context';
 import { useReload } from '../reloader';
 
 export const useSocketWatch = (
   onUpdate: (v: ISocketResp<any>[]) => void,
-  topic: string
+  topic: string | string[]
 ) => {
   const { responses, subscribed } = useSubscribe(
-    {
-      for: 'resource-update',
-      data: {
-        id: topic,
-        respath: topic,
-      },
-    },
+    Array.isArray(topic)
+      ? topic.map((t) => {
+          return {
+            for: 'resource-update',
+            data: {
+              id: t,
+              respath: t,
+            },
+          };
+        })
+      : {
+          for: 'resource-update',
+          data: {
+            id: topic,
+            respath: topic,
+          },
+        },
     []
   );
 
@@ -24,12 +34,23 @@ export const useSocketWatch = (
   }, [responses]);
 };
 
-export const useWatchReload = (topic: string) => {
+export const useWatchReload = (topic: string | string[]) => {
   const reloadPage = useReload();
+  const topicMap: {
+    [key: string]: boolean;
+  } = useCallback(
+    () =>
+      Array.isArray(topic)
+        ? topic.reduce((acc, curr) => {
+            return { ...acc, [curr]: true };
+          }, {})
+        : { [topic]: true },
+    [topic]
+  )();
+
   useSocketWatch((rd) => {
-    console.log(rd);
-    if (rd.find((v) => v.id === topic)) {
-      console.log('reloading due to watch event', rd);
+    if (rd.find((v) => topicMap[v.id])) {
+      console.log('reloading due to watch event');
       reloadPage();
     }
   }, topic);

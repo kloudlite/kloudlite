@@ -27,6 +27,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { Button } from '~/components/atoms/button';
 import Tooltip from '~/components/atoms/tooltip';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import HandleRouter from './handle-router';
 
 const RESOURCE_NAME = 'domain';
@@ -274,7 +275,15 @@ const RouterResources = ({ items = [] }: { items: BaseType[] }) => {
   const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { environment, project } = useParams();
+  const { environment, project, account } = useParams();
+
+  useWatchReload(
+    items.map((i) => {
+      return `account:${account}.project:${project}.environment:${environment}.router:${parseName(
+        i
+      )}`;
+    })
+  );
 
   const props: IResource = {
     items,
