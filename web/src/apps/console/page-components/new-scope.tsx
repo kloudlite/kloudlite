@@ -9,7 +9,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { Switch } from '~/components/atoms/switch';
 import { Checkbox } from '~/components/atoms/checkbox';
-import { InfoLabel } from '~/console/components/commons';
+import Banner from '~/components/molecule/banner';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { DIALOG_TYPE } from '../utils/commons';
@@ -149,35 +149,23 @@ const HandleScope = ({ show, setShow }: IDialog<IEnvironment | null>) => {
               nameErrorLabel="isNameError"
               isUpdate={show?.type !== DIALOG_TYPE.ADD}
             />
-            <div className="flex flex-row items-center gap-lg">
-              <Checkbox
-                label="Public"
-                checked={values.environmentRoutingMode}
-                onChange={(val) => {
-                  handleChange('environmentRoutingMode')(dummyEvent(val));
-                }}
-              />
-              <InfoLabel
-                info={
-                  <div className="flex flex-col gap-2xl">
-                    <div>
-                      <div className="bodyMd-medium">Public</div>
-                      <p>
-                        Public environments will expose services to the public
-                        internet.
-                      </p>
-                    </div>
-                    <div>
-                      <div className="bodyMd-medium">Private</div>
-                      <p>
-                        Private environments will be accessible when Kloudlite
-                        VPN is active.
-                      </p>
-                    </div>
-                  </div>
-                }
-              />
-            </div>
+            <Checkbox
+              label="Public"
+              checked={values.environmentRoutingMode}
+              onChange={(val) => {
+                handleChange('environmentRoutingMode')(dummyEvent(val));
+              }}
+            />
+            <Banner
+              type="info"
+              body={
+                <span>
+                  Public environments will expose services to the public
+                  internet. Private environments will be accessible when
+                  Kloudlite VPN is active.
+                </span>
+              }
+            />
           </div>
         </Popup.Content>
         <Popup.Footer>
