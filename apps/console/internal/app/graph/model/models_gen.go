@@ -259,19 +259,19 @@ type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1Hpa struct {
-	Enabled         *bool `json:"enabled,omitempty"`
-	MaxReplicas     *int  `json:"maxReplicas,omitempty"`
-	MinReplicas     *int  `json:"minReplicas,omitempty"`
-	ThresholdCPU    *int  `json:"thresholdCpu,omitempty"`
-	ThresholdMemory *int  `json:"thresholdMemory,omitempty"`
+	Enabled         bool `json:"enabled"`
+	MaxReplicas     *int `json:"maxReplicas,omitempty"`
+	MinReplicas     *int `json:"minReplicas,omitempty"`
+	ThresholdCPU    *int `json:"thresholdCpu,omitempty"`
+	ThresholdMemory *int `json:"thresholdMemory,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HPAIn struct {
-	Enabled         *bool `json:"enabled,omitempty"`
-	MaxReplicas     *int  `json:"maxReplicas,omitempty"`
-	MinReplicas     *int  `json:"minReplicas,omitempty"`
-	ThresholdCPU    *int  `json:"thresholdCpu,omitempty"`
-	ThresholdMemory *int  `json:"thresholdMemory,omitempty"`
+	Enabled         bool `json:"enabled"`
+	MaxReplicas     *int `json:"maxReplicas,omitempty"`
+	MinReplicas     *int `json:"minReplicas,omitempty"`
+	ThresholdCPU    *int `json:"thresholdCpu,omitempty"`
+	ThresholdMemory *int `json:"thresholdMemory,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HTTPGetProbe struct {
