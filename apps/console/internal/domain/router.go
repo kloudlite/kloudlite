@@ -78,8 +78,8 @@ func (d *domain) CreateRouter(ctx ResourceContext, router entities.Router) (*ent
 	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.RecordVersion)
 
 	router.Spec.Https = &crdsv1.Https{
-		Enabled:       true,
-		ForceRedirect: true,
+		Enabled:       router.Spec.Https.Enabled,
+		ForceRedirect: router.Spec.Https.Enabled,
 	}
 
 	return d.createAndApplyRouter(ctx, &router)
@@ -118,12 +118,12 @@ func (d *domain) UpdateRouter(ctx ResourceContext, router entities.Router) (*ent
 		return nil, errors.NewE(err)
 	}
 
-	if router.Spec.Https == nil {
-		router.Spec.Https = &crdsv1.Https{
-			Enabled:       true,
-			ForceRedirect: true,
-		}
-	}
+	// if router.Spec.Https != nil {
+	// 	router.Spec.Https = &crdsv1.Https{
+	// 		Enabled:       true,
+	// 		ForceRedirect: true,
+	// 	}
+	// }
 
 	patchForUpdate := common.PatchForUpdate(
 		ctx,
