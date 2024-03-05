@@ -14,7 +14,7 @@ import {
 import { Switch } from '~/components/atoms/switch';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { handleError } from '~/root/lib/utils/common';
-import {titleCase, useMapper} from '~/components/utils';
+import { titleCase, useMapper } from '~/components/utils';
 import { flatMapValidations, flatM } from '~/console/utils/commons';
 import MultiStepProgress, {
   useMultiStepProgress,
@@ -24,11 +24,11 @@ import {
   BottomNavigation,
   ReviewComponent,
 } from '~/console/components/commons';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
+import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { IProjectContext } from '../_layout';
-import {parseName, parseNodes} from "~/console/server/r-utils/common";
-import useCustomSwr from "~/lib/client/hooks/use-custom-swr";
-import {INodepools} from "~/console/server/gql/queries/nodepool-queries";
-import {keyconstants} from "~/console/server/r-utils/key-constants";
 
 const valueRender = ({ label, icon }: { label: string; icon: string }) => {
   return (
@@ -254,7 +254,7 @@ const FieldView = ({
   values: Record<string, any>;
   errors: Record<string, any>;
   selectedTemplate: ISelectedTemplate | null;
-  nodepools: {label: string, value: string}[]
+  nodepools: { label: string; value: string }[];
 }) => {
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -284,17 +284,17 @@ const FieldView = ({
       />
 
       <Select
-          label="Nodepool Name"
-          size="lg"
-          placeholder="Select Nodepool"
-          value={values.nodepoolName}
-          creatable
-          onChange={(val) => {
-            handleChange('nodepoolName')(dummyEvent(val.value));
-          }}
-          options={async () => [...nodepools]}
-          error={!!errors.nodepoolName}
-          message={errors.nodepoolName}
+        label="Nodepool Name"
+        size="lg"
+        placeholder="Select Nodepool"
+        value={values.nodepoolName}
+        creatable
+        onChange={(val) => {
+          handleChange('nodepoolName')(dummyEvent(val.value));
+        }}
+        options={async () => [...nodepools]}
+        error={!!errors.nodepoolName}
+        message={errors.nodepoolName}
       />
 
       {selectedTemplate?.template.fields?.map((field) => {
@@ -391,10 +391,11 @@ const ReviewView = ({
         </ReviewComponent>
 
         <ReviewComponent
-            title="Service details"
-            onEdit={() => {
-              onEdit(1);
-            }}>
+          title="Service details"
+          onEdit={() => {
+            onEdit(1);
+          }}
+        >
           <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
             <div className="flex flex-col gap-lg pb-xl border-b border-border-default">
               <div className="flex-1 bodyMd-medium text-text-default">
@@ -408,9 +409,7 @@ const ReviewView = ({
               <div className="flex-1 bodyMd-medium text-text-default">
                 Node Selector
               </div>
-              <div className="text-text-soft bodyMd">
-                {values.nodepoolName}
-              </div>
+              <div className="text-text-soft bodyMd">{values.nodepoolName}</div>
             </div>
           </div>
         </ReviewComponent>
@@ -469,15 +468,15 @@ const ManagedServiceLayout = () => {
   const rootUrl = `/${account}/${project}/managed-services`;
 
   const { cluster } = useOutletContext<IProjectContext>();
-  console.log("cluster", parseName(cluster))
+  console.log('cluster', parseName(cluster));
 
   const {
     data: nodepoolData,
     isLoading: nodepoolLoading,
     error: nodepoolLoadingError,
   } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({clusterName: parseName(cluster)})
-  })
+    return api.listNodePools({ clusterName: parseName(cluster) });
+  });
 
   const { currentStep, jumpStep, nextStep } = useMultiStepProgress({
     defaultStep: 1,
@@ -492,7 +491,7 @@ const ManagedServiceLayout = () => {
         res: {},
         selectedTemplate: null,
         isNameError: false,
-        nodepoolName: ''
+        nodepoolName: '',
       },
       validationSchema: Yup.object().shape({
         name: Yup.string().test('required', 'Name is required', (v) => {
@@ -558,7 +557,7 @@ const ManagedServiceLayout = () => {
                 spec: {
                   msvcSpec: {
                     nodeSelector: {
-                      [keyconstants.nodepoolName]: val.nodepoolName
+                      [keyconstants.nodepoolName]: val.nodepoolName,
                     },
                     serviceTemplate: {
                       apiVersion: selectedTemplate.template.apiVersion,
@@ -600,10 +599,12 @@ const ManagedServiceLayout = () => {
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
     value: val.metadata?.name || '',
-    nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType]
-  }))
+    nodepoolStateType: val.spec.nodeLabels[keyconstants.nodepoolStateType],
+  }));
 
-  const statefulNodepools = nodepools.filter((np) => np.nodepoolStateType == 'stateful')
+  const statefulNodepools = nodepools.filter(
+    (np) => np.nodepoolStateType == 'stateful'
+  );
 
   useEffect(() => {
     const selectedTemplate =

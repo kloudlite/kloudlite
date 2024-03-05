@@ -6,8 +6,9 @@ import {
   AppIn,
   Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn as AppSpecContainersIn,
 } from '~/root/src/generated/gql/server';
-import {useMapper} from "~/components/utils";
-import {parseNodes} from "~/console/server/r-utils/common";
+import { mapper } from '~/components/utils';
+import { parseNodes } from '~/console/server/r-utils/common';
+// import logger from '~/root/lib/client/helpers/log';
 
 const defaultApp: AppIn = {
   metadata: {
@@ -192,29 +193,28 @@ export const useAppState = () => {
   };
 
   const getRepoMapper = (resources: IparseNodes | undefined) => {
-    return useMapper(parseNodes(resources), (val) => ({
+    return mapper(parseNodes(resources), (val) => ({
       label: val.name,
       value: val.name,
-      accName: val.accountName
-    }))
-  }
+      accName: val.accountName,
+    }));
+  };
 
   const getRepoName = (imageUrl: string) => {
     const parts: string[] = imageUrl.split(':');
     const repoParts: string[] = parts[0].split('/');
-    if (repoParts.length == 1) {
+    if (repoParts.length === 1) {
       return repoParts[repoParts.length - 1];
-    } else {
-      const repoSlicePart: string[] = repoParts.slice(2)
-      return repoSlicePart.join("/")
     }
-  }
+    const repoSlicePart: string[] = repoParts.slice(2);
+    return repoSlicePart.join('/');
+  };
 
   const getImageTag = (imageUrl: string) => {
     const parts: string[] = imageUrl.split(':');
-    console.log("image tag", parts[1])
+    // logger.log('image tag', parts[1]);
     return parts[1];
-  }
+  };
 
   return {
     resetState,
@@ -236,7 +236,7 @@ export const useAppState = () => {
     setServices,
     getRepoMapper,
     getRepoName,
-    getImageTag
+    getImageTag,
   };
 };
 
@@ -278,7 +278,7 @@ export const AppContextProvider = ({
 
   useEffect(() => {
     if (typeof window === 'undefined' || initialAppState) return;
-    console.log(initialAppState, 'hrere');
+    // logger.log(initialAppState, 'hrere');
     sessionStorage.setItem('state', JSON.stringify(state || {}));
   }, [state]);
 
