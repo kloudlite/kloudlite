@@ -264,6 +264,16 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type K8s__io___api___core___v1__Secret @shareable {
+  apiVersion: String
+  data: Map
+  immutable: Boolean
+  kind: String
+  metadata: Metadata @goField(name: "objectMeta")
+  stringData: Map
+  type: K8s__io___api___core___v1__SecretType
+}
+
 type K8s__io___api___core___v1__Toleration @shareable {
   effect: K8s__io___api___core___v1__TaintEffect
   key: String
