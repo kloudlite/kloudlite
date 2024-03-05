@@ -132,7 +132,7 @@ const ListTitle = ({
 
 const listFlex = ({ key }: { key: string }) => ({
   key,
-  className: 'basis-full',
+  className: 'flex-1',
   render: () => <div />,
 });
 

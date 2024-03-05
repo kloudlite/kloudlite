@@ -3250,8 +3250,6 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         creationTime
         displayName
-        enabled
-        environmentName
         lastUpdatedBy {
           userEmail
           userId
@@ -3259,13 +3257,17 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
-        projectName
         recordVersion
         spec {
+          resourceName
           resourceTemplate {
             apiVersion
             kind
@@ -3289,6 +3291,12 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
           resources {
             apiVersion
             kind
+            name
+            namespace
+          }
+        }
+        syncedOutputSecretRef {
+          metadata {
             name
             namespace
           }

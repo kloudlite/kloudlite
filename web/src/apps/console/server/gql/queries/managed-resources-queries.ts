@@ -64,7 +64,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetManagedResourceQuery) {
         return data.core_getManagedResource;
       },
-      vars(_: ConsoleGetManagedResourceQueryVariables) { },
+      vars(_: ConsoleGetManagedResourceQueryVariables) {},
     }
   ),
   createManagedResource: executor(
@@ -86,7 +86,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateManagedResourceMutation) =>
         data.core_createManagedResource,
-      vars(_: ConsoleCreateManagedResourceMutationVariables) { },
+      vars(_: ConsoleCreateManagedResourceMutationVariables) {},
     }
   ),
   updateManagedResource: executor(
@@ -108,7 +108,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateManagedResourceMutation) =>
         data.core_updateManagedResource,
-      vars(_: ConsoleUpdateManagedResourceMutationVariables) { },
+      vars(_: ConsoleUpdateManagedResourceMutationVariables) {},
     }
   ),
   listManagedResources: executor(
@@ -135,8 +135,6 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
-              enabled
-              environmentName
               lastUpdatedBy {
                 userEmail
                 userId
@@ -144,13 +142,17 @@ export const managedResourceQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
                 generation
+                labels
                 name
                 namespace
               }
-              projectName
               recordVersion
               spec {
+                resourceName
                 resourceTemplate {
                   apiVersion
                   kind
@@ -174,6 +176,12 @@ export const managedResourceQueries = (executor: IExecutor) => ({
                 resources {
                   apiVersion
                   kind
+                  name
+                  namespace
+                }
+              }
+              syncedOutputSecretRef {
+                metadata {
                   name
                   namespace
                 }
@@ -202,7 +210,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListManagedResourcesQuery) =>
         data.core_listManagedResources,
-      vars(_: ConsoleListManagedResourcesQueryVariables) { },
+      vars(_: ConsoleListManagedResourcesQueryVariables) {},
     }
   ),
   deleteManagedResource: executor(
@@ -222,7 +230,7 @@ export const managedResourceQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteManagedResourceMutation) =>
         data.core_deleteManagedResource,
-      vars(_: ConsoleDeleteManagedResourceMutationVariables) { },
+      vars(_: ConsoleDeleteManagedResourceMutationVariables) {},
     }
   ),
 });

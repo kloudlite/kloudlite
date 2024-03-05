@@ -7,9 +7,9 @@ import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
 import ManagedResourceResources from './managed-resources-resource';
-import fake from "~/root/fake-data-generator/fake";
 
 export const loader = (ctx: IRemixCtx) => {
   const { project, environment } = ctx.params;
@@ -34,10 +34,11 @@ const KlOperatorServices = () => {
 
   return (
     <LoadingComp
-        data={promise}
-        skeletonData={{
-          managedResourcesData: fake.ConsoleListManagedResourcesQuery.core_listManagedResources as any,
-        }}
+      data={promise}
+      skeletonData={{
+        managedResourcesData: fake.ConsoleListManagedResourcesQuery
+          .core_listManagedResources as any,
+      }}
     >
       {({ managedResourcesData }) => {
         const managedResources = parseNodes(managedResourcesData);
