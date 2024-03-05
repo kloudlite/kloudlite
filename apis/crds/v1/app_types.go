@@ -195,7 +195,7 @@ type AppSvc struct {
 }
 
 type HPA struct {
-	Enabled bool `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled"`
 	// +kubebuilder:default=1
 	MinReplicas int `json:"minReplicas,omitempty"`
 	// +kubebuilder:default=5
