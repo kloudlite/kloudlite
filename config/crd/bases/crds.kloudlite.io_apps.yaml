@@ -267,6 +267,8 @@ spec:
                   thresholdMemory:
                     default: 75
                     type: integer
+                required:
+                - enabled
                 type: object
               intercept:
                 properties:
