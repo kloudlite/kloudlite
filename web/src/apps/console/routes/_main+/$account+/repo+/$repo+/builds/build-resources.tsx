@@ -17,12 +17,15 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IBuilds } from '~/console/server/gql/queries/build-queries';
 import {
   ExtractNodeType,
+  parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { Link } from '@remix-run/react';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import { useOutletContext } from '@remix-run/react';
 import HandleBuild from './handle-builds';
 
 type BaseType = ExtractNodeType<IBuilds>;
@@ -186,6 +189,13 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
 
   const api = useConsoleApi();
   const reloadPage = useReload();
+
+  const { account } = useOutletContext<IAccountContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.id:${i.id}`;
+    })
+  );
 
   const props: IResource = {
     items,

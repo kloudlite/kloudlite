@@ -159,7 +159,12 @@ const ListView = ({ items }: { items: BaseType[] }) => {
 
 const ProjectResources = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
-  useWatchReload(`account:${parseName(account)}`);
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.project:${parseName(i)}`;
+    })
+  );
+  // n account:acc1.project:pro1.environment:env1.
   return (
     <ListGridView
       listView={<ListView items={items} />}

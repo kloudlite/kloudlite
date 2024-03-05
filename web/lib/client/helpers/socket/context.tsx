@@ -56,7 +56,7 @@ const Context = createContext<{
 });
 
 export const useSubscribe = <T extends IData>(
-  msg: ISocketMsg<T>,
+  msg: ISocketMsg<T> | ISocketMsg<T>[],
   dep: never[]
 ) => {
   const {
@@ -74,8 +74,31 @@ export const useSubscribe = <T extends IData>(
 
   useEffect(() => {
     (async () => {
-      setResp(responses[msg.for]?.[msg.data.id || 'default'] || []);
+      if (Array.isArray(msg)) {
+        setResp(resp);
 
+        const tr: ISocketResp[] = [];
+        const terr: ISocketResp[] = [];
+        const ti: ISocketResp[] = [];
+
+        for (let k = 0; k < msg.length; k += 1) {
+          const m = msg[k];
+
+          tr.push(...(responses[m.for]?.[m.data.id || 'default'] || []));
+          terr.push(...(e[m.for]?.[m.data.id || 'default'] || []));
+          ti.push(...(i[m.for]?.[m.data.id || 'default'] || []));
+        }
+        setResp(tr);
+        setErrors(terr);
+        setInfos(ti);
+
+        if (tr.length || ti.length) {
+          setSubscribed(true);
+        }
+        return;
+      }
+
+      setResp(responses[msg.for]?.[msg.data.id || 'default'] || []);
       setErrors(e[msg.for]?.[msg.data.id || 'default'] || []);
       setInfos(i[msg.for]?.[msg.data.id || 'default'] || []);
 
@@ -88,10 +111,25 @@ export const useSubscribe = <T extends IData>(
   useDebounce(
     () => {
       console.log('subscribing');
-      sendMsg({ ...msg, data: { ...msg.data, event: 'subscribe' } });
+      if (Array.isArray(msg)) {
+        msg.forEach((m) => {
+          sendMsg({ ...m, data: { ...m.data, event: 'subscribe' } });
+        });
+      } else {
+        sendMsg({ ...msg, data: { ...msg.data, event: 'subscribe' } });
+      }
 
       return () => {
         console.log('unsubscribing');
+        if (Array.isArray(msg)) {
+          msg.forEach((m) => {
+            clear(m);
+            setSubscribed(false);
+            sendMsg({ ...m, data: { ...m.data, event: 'unsubscribe' } });
+          });
+          return;
+        }
+
         clear(msg);
         setSubscribed(false);
         sendMsg({ ...msg, data: { ...msg.data, event: 'unsubscribe' } });

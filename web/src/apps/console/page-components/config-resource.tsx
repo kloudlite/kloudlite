@@ -6,6 +6,7 @@ import { generateKey, titleCase } from '~/components/utils';
 import List from '~/console/components/list';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import {
   ListBody,
   ListItem,
@@ -224,7 +225,16 @@ const ConfigResources = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { project, environment } = useParams();
+  const { project, environment, account } = useParams();
+
+  useWatchReload(
+    items.map((i) => {
+      return `account:${account}.project:${project}.environment:${environment}.config:${parseName(
+        i
+      )}`;
+    })
+  );
+
   const props: IResource = {
     items,
     hasActions,

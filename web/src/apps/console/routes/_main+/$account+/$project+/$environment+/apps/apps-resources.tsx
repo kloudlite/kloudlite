@@ -22,7 +22,8 @@ import ResourceExtraAction, {
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IApps } from '~/console/server/gql/queries/app-queries';
 import {
-  ExtractNodeType, parseName,
+  ExtractNodeType,
+  parseName,
   parseName as pn,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
@@ -31,6 +32,9 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { listStatus } from '~/console/components/sync-status';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IEnvironmentContext } from '../_layout';
 
 const RESOURCE_NAME = 'app';
@@ -69,7 +73,9 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
       label: 'Settings',
       icon: <GearSix size={iconSize} />,
       type: 'item',
-      to: `/${account}/${project}/${environment}/app/${parseName(item)}/settings/general`,
+      to: `/${account}/${project}/${environment}/app/${parseName(
+        item
+      )}/settings/general`,
       key: 'settings',
     },
   ];
@@ -232,6 +238,14 @@ const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   const { environment, project, account } = useParams();
   const { devicesForUser } = useOutletContext<IEnvironmentContext>();
   const reload = useReload();
+
+  useWatchReload(
+    items.map((i) => {
+      return `account:${account}.project:${project}.environment:${environment}.app:${parseName(
+        i
+      )}`;
+    })
+  );
 
   // useWatchItems(items, (item) => ({
   //   account,
