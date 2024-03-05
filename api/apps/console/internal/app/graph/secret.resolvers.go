@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"github.com/kloudlite/api/pkg/errors"
 	"time"
 
@@ -43,6 +44,11 @@ func (r *secretResolver) ID(ctx context.Context, obj *entities.Secret) (string, 
 		return "", errNilSecret
 	}
 	return string(obj.Id), nil
+}
+
+// IsReadyOnly is the resolver for the isReadyOnly field.
+func (r *secretResolver) IsReadyOnly(ctx context.Context, obj *entities.Secret) (bool, error) {
+	panic(fmt.Errorf("not implemented: IsReadyOnly - isReadyOnly"))
 }
 
 // StringData is the resolver for the stringData field.
