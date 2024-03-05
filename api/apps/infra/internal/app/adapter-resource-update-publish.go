@@ -14,7 +14,7 @@ type ResourceEventPublisherImpl struct {
 
 func (r *ResourceEventPublisherImpl) PublishInfraEvent(ctx domain.InfraContext, resourceType domain.ResourceType, resName string, update domain.PublishMsg) {
 	subject := fmt.Sprintf(
-		"res-updates.account.%s.resourceType.%s.%s",
+		"res-updates.account.%s.%s.%s",
 		ctx.AccountName, resourceType, resName,
 	)
 

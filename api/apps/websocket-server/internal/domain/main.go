@@ -79,7 +79,8 @@ func (d *domain) HandleWebSocket(ctx context.Context, c *websocket.Conn) error {
 		Context: ctx,
 		Session: sess,
 		// Connection: c,
-		Mutex: &mu,
+		Mutex:     &mu,
+		WriteJSON: write,
 	}
 
 	for {
