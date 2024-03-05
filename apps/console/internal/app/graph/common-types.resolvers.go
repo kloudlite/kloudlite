@@ -7,8 +7,9 @@ package graph
 import (
 	"context"
 	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -16,6 +17,7 @@ import (
 	fn "github.com/kloudlite/api/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 	"github.com/kloudlite/operator/pkg/operator"
+	v11 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -76,6 +78,43 @@ func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Re
 		return nil, errors.NewE(err)
 	}
 	return m, nil
+}
+
+// Data is the resolver for the data field.
+func (r *k8s__io___api___core___v1__SecretResolver) Data(ctx context.Context, obj *v11.Secret) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, errNilSecret
+	}
+
+	m := make(map[string]any, len(obj.Data))
+	if err := fn.JsonConversion(obj.Data, &m); err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+// StringData is the resolver for the stringData field.
+func (r *k8s__io___api___core___v1__SecretResolver) StringData(ctx context.Context, obj *v11.Secret) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, errNilSecret
+	}
+
+	m := make(map[string]any, len(obj.StringData))
+	if err := fn.JsonConversion(obj.StringData, &m); err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+// Type is the resolver for the type field.
+func (r *k8s__io___api___core___v1__SecretResolver) Type(ctx context.Context, obj *v11.Secret) (*model.K8sIoAPICoreV1SecretType, error) {
+	if obj == nil {
+		return nil, errNilSecret
+	}
+
+	return fn.New(model.K8sIoAPICoreV1SecretType(obj.Type)), nil
 }
 
 // Annotations is the resolver for the annotations field.
@@ -152,14 +191,22 @@ func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status()
 	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
 }
 
+// K8s__io___api___core___v1__Secret returns generated.K8s__io___api___core___v1__SecretResolver implementation.
+func (r *Resolver) K8s__io___api___core___v1__Secret() generated.K8s__io___api___core___v1__SecretResolver {
+	return &k8s__io___api___core___v1__SecretResolver{r}
+}
+
 // Metadata returns generated.MetadataResolver implementation.
 func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResolver{r} }
 
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
-type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
-type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
-type metadataResolver struct{ *Resolver }
-type metadataInResolver struct{ *Resolver }
+type (
+	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver  struct{ *Resolver }
+	github__com___kloudlite___api___pkg___types__SyncStatusResolver     struct{ *Resolver }
+	github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
+	k8s__io___api___core___v1__SecretResolver                           struct{ *Resolver }
+	metadataResolver                                                    struct{ *Resolver }
+	metadataInResolver                                                  struct{ *Resolver }
+)

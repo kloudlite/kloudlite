@@ -15,6 +15,7 @@ type ManagedResource @shareable {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncedOutputSecretRef: K8s__io___api___core___v1__Secret
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }

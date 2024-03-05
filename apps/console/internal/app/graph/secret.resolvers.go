@@ -6,9 +6,9 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"github.com/kloudlite/api/pkg/errors"
 	"time"
+
+	"github.com/kloudlite/api/pkg/errors"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -48,7 +48,11 @@ func (r *secretResolver) ID(ctx context.Context, obj *entities.Secret) (string, 
 
 // IsReadyOnly is the resolver for the isReadyOnly field.
 func (r *secretResolver) IsReadyOnly(ctx context.Context, obj *entities.Secret) (bool, error) {
-	panic(fmt.Errorf("not implemented: IsReadyOnly - isReadyOnly"))
+	if obj == nil {
+		return false, errNilSecret
+	}
+
+	return obj.IsReadOnly, nil
 }
 
 // StringData is the resolver for the stringData field.
@@ -115,5 +119,7 @@ func (r *Resolver) Secret() generated.SecretResolver { return &secretResolver{r}
 // SecretIn returns generated.SecretInResolver implementation.
 func (r *Resolver) SecretIn() generated.SecretInResolver { return &secretInResolver{r} }
 
-type secretResolver struct{ *Resolver }
-type secretInResolver struct{ *Resolver }
+type (
+	secretResolver   struct{ *Resolver }
+	secretInResolver struct{ *Resolver }
+)
