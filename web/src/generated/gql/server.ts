@@ -4573,16 +4573,22 @@ export type ConsoleListManagedResourcesQuery = {
       node: {
         creationTime: any;
         displayName: string;
-        enabled?: boolean;
-        environmentName: string;
         markedForDeletion?: boolean;
-        projectName: string;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { generation: number; name: string; namespace?: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec: {
+          resourceName?: string;
           resourceTemplate: {
             apiVersion: string;
             kind: string;
@@ -4607,6 +4613,9 @@ export type ConsoleListManagedResourcesQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncedOutputSecretRef?: {
+          metadata?: { name: string; namespace?: string };
         };
         syncStatus: {
           action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;

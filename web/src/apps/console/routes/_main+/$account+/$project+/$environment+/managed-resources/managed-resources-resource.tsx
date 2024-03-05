@@ -23,9 +23,10 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { useParams } from '@remix-run/react';
+import { Link, useParams } from '@remix-run/react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { listStatus } from '~/console/components/sync-status';
+import { Button } from '~/components/atoms/button';
 import HandleManagedResources from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
@@ -122,6 +123,8 @@ const GridView = ({ items = [], onAction }: IResource) => {
 };
 
 const ListView = ({ items = [], onAction }: IResource) => {
+  const { environment, project, account } = useParams();
+  const preUrl = `/${account}/${project}/${environment}/secret/`;
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -139,6 +142,19 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
               status,
+              item.syncedOutputSecretRef
+                ? {
+                    key: generateKey(keyPrefix, 'secret'),
+                    render: () => (
+                      <Button
+                        content="View secrets"
+                        variant="plain"
+                        LinkComponent={Link}
+                        to={`${preUrl}${item.syncedOutputSecretRef?.metadata?.name}`}
+                      />
+                    ),
+                  }
+                : {},
               listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, 'author'),

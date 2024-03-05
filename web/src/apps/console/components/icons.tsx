@@ -17,6 +17,9 @@ import {
   CheckCircleFill,
   WarningFill,
   WarningOctagonFill,
+  LockSimple,
+  XCircleFill,
+  LockSimpleOpen,
 } from '@jengaicons/react';
 
 export {
@@ -38,4 +41,7 @@ export {
   CheckCircleFill,
   WarningFill,
   WarningOctagonFill,
+  LockSimple,
+  XCircleFill,
+  LockSimpleOpen,
 };

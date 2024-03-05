@@ -89,14 +89,14 @@ const handleKeyNavigation = (
 
 interface IColumn {
   render?: () => ReactNode;
-  key: Key;
+  key?: Key;
   className?: string;
   width?: string;
   label?: ReactNode;
 }
 
 interface IMain {
-  columns: IColumn[];
+  columns?: IColumn[];
   className?: string;
   onClick?: ((item?: IColumn[]) => void) | null;
   pressed?: boolean;

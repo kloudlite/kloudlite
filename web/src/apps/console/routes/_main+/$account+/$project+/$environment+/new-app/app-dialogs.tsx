@@ -1,16 +1,8 @@
 /* eslint-disable no-nested-ternary */
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowUp,
-  ArrowsDownUp,
-  Spinner,
-} from '@jengaicons/react';
+import { Spinner } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
-import OptionList from '~/components/atoms/option-list';
-import Toolbar from '~/components/atoms/toolbar';
 import Popup from '~/components/molecule/popup';
 import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import NoResultsFound from '~/console/components/no-results-found';
@@ -27,66 +19,9 @@ import {
 } from '~/console/server/r-utils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { handleError } from '~/root/lib/utils/common';
+import { ArrowLeft } from '~/console/components/icons';
 import { IAppDialogValue } from './app-environment';
 import CSComponent, { ICSComponent } from './cs-item';
-
-const SortbyOptionList = () => {
-  const [orderBy, _setOrderBy] = useState('updateTime');
-  return (
-    <OptionList.Root>
-      <OptionList.Trigger>
-        <div>
-          <div className="hidden md:flex">
-            <Toolbar.Button
-              content="Sortby"
-              variant="basic"
-              prefix={<ArrowsDownUp />}
-            />
-          </div>
-
-          <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
-          </div>
-        </div>
-      </OptionList.Trigger>
-      <OptionList.Content>
-        <OptionList.RadioGroup>
-          <OptionList.RadioGroupItem
-            value="metadata.name"
-            onClick={(e) => e.preventDefault()}
-          >
-            Name
-          </OptionList.RadioGroupItem>
-          <OptionList.RadioGroupItem
-            value="updateTime"
-            onClick={(e) => e.preventDefault()}
-          >
-            Updated
-          </OptionList.RadioGroupItem>
-        </OptionList.RadioGroup>
-        <OptionList.Separator />
-        <OptionList.RadioGroup>
-          <OptionList.RadioGroupItem
-            showIndicator={false}
-            value="ASC"
-            onClick={(e) => e.preventDefault()}
-          >
-            <ArrowUp size={16} />
-            {orderBy === 'updateTime' ? 'Oldest' : 'Ascending'}
-          </OptionList.RadioGroupItem>
-          <OptionList.RadioGroupItem
-            value="DESC"
-            showIndicator={false}
-            onClick={(e) => e.preventDefault()}
-          >
-            <ArrowDown size={16} />
-            {orderBy === 'updateTime' ? 'Newest' : 'Descending'}
-          </OptionList.RadioGroupItem>
-        </OptionList.RadioGroup>
-      </OptionList.Content>
-    </OptionList.Root>
-  );
-};
 
 const AppDialog = ({
   show,
