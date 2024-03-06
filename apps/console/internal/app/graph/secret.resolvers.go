@@ -6,9 +6,8 @@ package graph
 
 import (
 	"context"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -119,7 +118,5 @@ func (r *Resolver) Secret() generated.SecretResolver { return &secretResolver{r}
 // SecretIn returns generated.SecretInResolver implementation.
 func (r *Resolver) SecretIn() generated.SecretInResolver { return &secretInResolver{r} }
 
-type (
-	secretResolver   struct{ *Resolver }
-	secretInResolver struct{ *Resolver }
-)
+type secretResolver struct{ *Resolver }
+type secretInResolver struct{ *Resolver }
