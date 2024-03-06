@@ -1276,7 +1276,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HPA {
-  enabled: Boolean
+  enabled: Boolean!
   maxReplicas: Int
   minReplicas: Int
   thresholdCpu: Int
@@ -1284,7 +1284,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HPA {
 }
 
 input Github__com___kloudlite___operator___apis___crds___v1__HPAIn {
-  enabled: Boolean
+  enabled: Boolean!
   maxReplicas: Int
   minReplicas: Int
   thresholdCpu: Int
@@ -2507,16 +2507,6 @@ input K8s__io___api___core___v1__ScaleIOPersistentVolumeSourceIn {
   volumeName: String
 }
 
-type K8s__io___api___core___v1__Secret {
-  apiVersion: String
-  data: Map
-  immutable: Boolean
-  kind: String
-  metadata: Metadata
-  stringData: Map
-  type: K8s__io___api___core___v1__SecretType
-}
-
 type K8s__io___api___core___v1__SecretReference {
   name: String
   namespace: String
@@ -2759,7 +2749,6 @@ type ManagedResource {
   recordVersion: Int!
   spec: Github__com___kloudlite___operator___apis___crds___v1__ManagedResourceSpec!
   status: Github__com___kloudlite___operator___pkg___operator__Status
-  syncedOutputSecretRef: K8s__io___api___core___v1__Secret
   syncStatus: Github__com___kloudlite___api___pkg___types__SyncStatus!
   updateTime: Date!
 }
@@ -3549,7 +3538,6 @@ type Secret {
   environmentName: String!
   id: String!
   immutable: Boolean
-  isReadyOnly: Boolean!
   kind: String
   lastUpdatedBy: Github__com___kloudlite___api___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean

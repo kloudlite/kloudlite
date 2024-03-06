@@ -20,6 +20,7 @@ import {
   LockSimple,
   XCircleFill,
   LockSimpleOpen,
+  MinusCircle,
 } from '@jengaicons/react';
 
 export {
@@ -44,4 +45,5 @@ export {
   LockSimple,
   XCircleFill,
   LockSimpleOpen,
+  MinusCircle,
 };

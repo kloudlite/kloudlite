@@ -1,9 +1,9 @@
-import { MinusCircle } from '@jengaicons/react';
 import { ReactNode, useEffect, useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { cn, uuid } from '~/components/utils';
+import { MinusCircle, Plus } from '~/console/components/icons';
 
 interface IKeyValuePair {
   onChange?(
@@ -15,6 +15,7 @@ interface IKeyValuePair {
   message?: ReactNode;
   error?: boolean;
   size?: 'lg' | 'md';
+  addText?: string;
 }
 const KeyValuePair = ({
   onChange,
@@ -23,6 +24,7 @@ const KeyValuePair = ({
   message,
   error,
   size,
+  addText,
 }: IKeyValuePair) => {
   const newItem = [{ key: '', value: '', id: uuid() }];
   const [items, setItems] = useState<Array<Record<string, any>>>(newItem);
@@ -121,8 +123,9 @@ const KeyValuePair = ({
         <div className="pt-xl">
           <Button
             variant="basic"
-            content="Add arg"
+            content={addText || 'Add'}
             size="sm"
+            prefix={<Plus />}
             onClick={() => {
               setItems([...items, { ...newItem[0], id: uuid() }]);
             }}
