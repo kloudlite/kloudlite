@@ -7,15 +7,15 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { FadeIn, parseValue } from '~/console/page-components/util';
 import Select from '~/components/atoms/select';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import {parseName, parseNodes} from '~/console/server/r-utils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useMapper } from '~/components/utils';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { BottomNavigation } from '~/console/components/commons';
+import { useOutletContext } from '@remix-run/react';
+import { IAppContext } from '~/console/routes/_main+/$account+/$project+/$environment+/app+/$app+/_layout';
 import { plans } from './datas';
-import {useOutletContext } from '@remix-run/react';
-import {IAppContext} from "~/console/routes/_main+/$account+/$project+/$environment+/app+/$app+/_layout";
 
 const valueRender = ({
   label,
@@ -49,8 +49,7 @@ const AppCompute = () => {
     getImageTag,
   } = useAppState();
   const api = useConsoleApi();
-  const {cluster} = useOutletContext<IAppContext>()
-
+  const { cluster } = useOutletContext<IAppContext>();
 
   const {
     data,
@@ -65,8 +64,8 @@ const AppCompute = () => {
     isLoading: nodepoolLoading,
     error: nodepoolLoadingError,
   } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({clusterName: parseName(cluster)})
-  })
+    return api.listNodePools({ clusterName: parseName(cluster) });
+  });
 
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
@@ -110,7 +109,7 @@ const AppCompute = () => {
         0
       ),
 
-      nodepoolName: app.spec.nodeSelector?.[keyconstants.nodepoolName] || ''
+      nodepoolName: app.spec.nodeSelector?.[keyconstants.nodepoolName] || '',
     },
     validationSchema: Yup.object({
       pullSecret: Yup.string(),
@@ -127,7 +126,7 @@ const AppCompute = () => {
           annotations: {
             ...(s.metadata?.annotations || {}),
             [keyconstants.cpuMode]: val.cpuMode,
-            [keyconstants.memPerCpu]: val.memPerCpu,
+            [keyconstants.memPerCpu]: `${val.memPerCpu}`,
             [keyconstants.selectionModeKey]: val.selectionMode,
             [keyconstants.selectedPlan]: val.selectedPlan,
             [keyconstants.repoAccountName]: val.repoAccountName,
@@ -137,7 +136,7 @@ const AppCompute = () => {
           ...s.spec,
           nodeSelector: {
             ...(s.spec.nodeSelector || {}),
-            [keyconstants.nodepoolName]: val.nodepoolName
+            [keyconstants.nodepoolName]: val.nodepoolName,
           },
           containers: [
             {
@@ -187,7 +186,7 @@ const AppCompute = () => {
   const nodepools = useMapper(parseNodes(nodepoolData), (val) => ({
     label: val.metadata?.name || '',
     value: val.metadata?.name || '',
-  }))
+  }));
 
   const {
     data: digestData,
@@ -219,22 +218,21 @@ const AppCompute = () => {
         manipulation and calculations in a system.
       </div>
       <div className="flex flex-col gap-3xl">
-
         <Select
-            label="Nodepool Name"
-            size="lg"
-            placeholder="Select Nodepool"
-            value={values.nodepoolName}
-            creatable
-            onChange={(val) => {
-              handleChange('nodepoolName')(dummyEvent(val.value));
-            }}
-            options={async () => [...nodepools]}
-            error={!!errors.repos || !!nodepoolLoadingError}
-            message={
-              nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
-            }
-            loading={nodepoolLoading}
+          label="Nodepool Name"
+          size="lg"
+          placeholder="Select Nodepool"
+          value={values.nodepoolName}
+          creatable
+          onChange={(val) => {
+            handleChange('nodepoolName')(dummyEvent(val.value));
+          }}
+          options={async () => [...nodepools]}
+          error={!!errors.repos || !!nodepoolLoadingError}
+          message={
+            nodepoolLoadingError ? 'Error fetching nodepools.' : errors.app
+          }
+          loading={nodepoolLoading}
         />
 
         <Select

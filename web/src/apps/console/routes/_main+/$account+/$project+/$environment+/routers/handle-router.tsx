@@ -213,8 +213,8 @@ const Root = (props: IDialog) => {
           type="info"
           body={
             <span>
-              Note: All the domain CNames should be pointed to following Cluster
-              DNS Name{' '}
+              All the domain CNames should be pointed to following Cluster DNS
+              Name{' '}
               <span className="bodyMd-medium">
                 `{cluster.spec.publicDNSHost}`
               </span>
