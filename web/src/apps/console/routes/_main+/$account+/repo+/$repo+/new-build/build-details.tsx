@@ -102,10 +102,6 @@ const BuildDetails = ({
     ref.current?.focus();
   }, [ref.current]);
 
-  useEffect(() => {
-    console.log(values.tags);
-  }, [values.tags]);
-
   return (
     <div className="flex flex-col gap-3xl">
       <TextInput
@@ -128,7 +124,6 @@ const BuildDetails = ({
           values.tags.map((t: string) => ({ label: t, value: t }))
         }
         onChange={(_, val) => {
-          console.log(val);
           handleChange('tags')(dummyEvent(val));
         }}
         error={!!errors.tags}
