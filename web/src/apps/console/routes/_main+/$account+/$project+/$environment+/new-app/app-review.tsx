@@ -13,7 +13,7 @@ import {
   BottomNavigation,
   ReviewComponent,
 } from '~/console/components/commons';
-import {keyconstants} from "~/console/server/r-utils/key-constants";
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const AppReview = () => {
   const { app, setPage, resetState } = useAppState();
@@ -120,14 +120,17 @@ const AppReview = () => {
             <div className="bodyMd-semibold text-text-default">
               Nodepool Selector
             </div>
-            <div className="bodySm text-text-soft">{app.spec.nodeSelector[keyconstants.nodepoolName]}</div>
+            <div className="bodySm text-text-soft">
+              {app.spec.nodeSelector[keyconstants.nodepoolName]}
+            </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent 
-          title="Environment" 
+        <ReviewComponent
+          title="Environment"
           onEdit={() => {
             setPage(3);
-        }}>
+          }}
+        >
           <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
             <div className="flex flex-row items-center gap-lg pb-xl border-b border-border-default">
               <div className="flex-1 bodyMd-medium text-text-default">

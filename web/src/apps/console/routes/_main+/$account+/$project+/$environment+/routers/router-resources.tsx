@@ -204,12 +204,17 @@ const ListView = ({ items, onAction }: IResource) => {
                     data={
                       <div className="flex flex-row items-center gap-md">
                         <Button
-                          LinkComponent={Link}
-                          target="_blank"
                           size="sm"
                           content={formatDomain(firstDomain).short}
                           variant="primary-plain"
-                          to={formatDomain(firstDomain).full}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            window.open(
+                              formatDomain(firstDomain).full,
+                              '_blank',
+                              'noopener,noreferrer'
+                            );
+                          }}
                         />
 
                         {item.spec.domains.length > 1 && (
@@ -221,12 +226,17 @@ const ListView = ({ items, onAction }: IResource) => {
                                   .map((d) => (
                                     <Button
                                       key={d}
-                                      LinkComponent={Link}
-                                      target="_blank"
                                       size="sm"
                                       content={formatDomain(d).short}
                                       variant="primary-plain"
-                                      to={formatDomain(d).full}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        window.open(
+                                          formatDomain(d).full,
+                                          '_blank',
+                                          'noopener,noreferrer'
+                                        );
+                                      }}
                                     />
                                   ))}
                               </div>
