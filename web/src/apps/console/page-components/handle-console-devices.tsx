@@ -442,32 +442,32 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-          displayName: props.data.displayName,
-          name: parseName(props.data),
-          ports: props.data.spec?.ports || [],
-          isNameError: false,
-          projectName: props.data.projectName,
-          environmentName: props.data.environmentName,
-        }
+            displayName: props.data.displayName,
+            name: parseName(props.data),
+            ports: props.data.spec?.ports || [],
+            isNameError: false,
+            projectName: props.data.projectName,
+            environmentName: props.data.environmentName,
+          }
         : {
-          displayName: '',
-          name: '',
-          ports: [],
-          isNameError: false,
-          projectName: '',
-          environmentName: '',
-        },
+            displayName: '',
+            name: '',
+            ports: [],
+            isNameError: false,
+            projectName: '',
+            environmentName: '',
+          },
       validationSchema: isUpdate
         ? Yup.object({
-          name: Yup.string().required(),
-          displayName: Yup.string().required(),
-          projectName: Yup.string().required(),
-          environmentName: Yup.string().required(),
-        })
+            name: Yup.string().required(),
+            displayName: Yup.string().required(),
+            projectName: Yup.string().required(),
+            environmentName: Yup.string().required(),
+          })
         : Yup.object({
-          name: Yup.string().required(),
-          displayName: Yup.string().required(),
-        }),
+            name: Yup.string().required(),
+            displayName: Yup.string().required(),
+          }),
       onSubmit: async (val) => {
         try {
           if (!isUpdate) {

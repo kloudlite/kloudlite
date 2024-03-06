@@ -10,8 +10,8 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import ProjectResources from './project-resources';
 import Tools from './tools';
+import ProjectResourcesV2 from './project-resources-v2';
 
 export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -189,7 +189,7 @@ const Projects = () => {
             })}
             tools={<Tools />}
           >
-            <ProjectResources items={projects} />
+            <ProjectResourcesV2 items={projects} />
           </Wrapper>
         );
       }}
