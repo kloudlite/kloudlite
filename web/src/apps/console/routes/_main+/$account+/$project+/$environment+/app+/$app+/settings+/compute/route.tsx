@@ -127,44 +127,38 @@ const SettingCompute = () => {
               ...(s.spec.containers?.[0] || {}),
               image:
                 values.repoAccountName === undefined ||
-                  values.repoAccountName === ''
+                values.repoAccountName === ''
                   ? `${values.repoName}:${values.repoImageTag}`
                   : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {
-                    max: `${val.cpu}m`,
-                    min: `${val.cpu}m`,
-                  }
+                      max: `${val.cpu}m`,
+                      min: `${val.cpu}m`,
+                    }
                   : {
-                    max: `${val.manualCpuMax}m`,
-                    min: `${val.manualCpuMin}m`,
-                  },
+                      max: `${val.manualCpuMax}m`,
+                      min: `${val.manualCpuMin}m`,
+                    },
               resourceMemory:
                 val.selectionMode === 'quick'
                   ? {
-                    max: `${(
-                      (values.cpu || 1) * parseValue(values.memPerCpu, 4)
-                    ).toFixed(2)}Mi`,
-                    min: `${val.cpu}Mi`,
-                  }
+                      max: `${(
+                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
+                      ).toFixed(2)}Mi`,
+                      min: `${val.cpu}Mi`,
+                    }
                   : {
-                    max: `${val.manualMemMax}Mi`,
-                    min: `${val.manualMemMin}Mi`,
-                  },
+                      max: `${val.manualMemMax}Mi`,
+                      min: `${val.manualMemMin}Mi`,
+                    },
             },
           ],
         },
       }));
     },
   });
-
-  // const getActivePlan = useCallback(() => {
-  //   return plans[values.cpuMode as IcpuMode].find(
-  //     (v) => v.memoryPerCpu === parseValue(values.selectedPlan, 4)
-  //   );
-  // }, [values.cpuMode, values.selectedPlan]);
 
   const repos = getRepoMapper(data);
 
@@ -261,110 +255,12 @@ const SettingCompute = () => {
               errors.repoImageTag
                 ? errors.repoImageTag
                 : digestError
-                  ? 'Failed to load Image tags.'
-                  : ''
+                ? 'Failed to load Image tags.'
+                : ''
             }
             loading={digestLoading}
           />
         </div>
-        {/* <div className="flex flex-col border border-border-default bg-surface-basic-default rounded overflow-hidden">
-        <div className="p-2xl gap-2xl flex flex-row items-center border-b border-border-disabled bg-surface-basic-subdued">
-          <div className="flex-1 bodyMd-medium text-text-default">
-            Select plan
-          </div>
-          <ExtendedFilledTab
-            size="sm"
-            items={[
-              {
-                value: 'shared',
-                label: (
-                  <InfoLabel label="Shared" info="some usefull information" />
-                ),
-              },
-
-              {
-                value: 'dedicated',
-                label: (
-                  <InfoLabel
-                    label="Dedicated"
-                    info="some usefull information"
-                  />
-                ),
-              },
-            ]}
-            value={values.cpuMode}
-            onChange={(v) => {
-              handleChange('cpuMode')(dummyEvent(v));
-            }}
-          />
-        </div>
-
-        <div className="flex flex-row">
-          <div className="flex-1 flex flex-col border-r border-border-disabled">
-            <Radio.Root
-              withBounceEffect={false}
-              className="gap-y-0"
-              value={values.selectedPlan}
-              onChange={(v) => {
-                handleChange('selectedPlan')(dummyEvent(v));
-              }}
-            >
-              {[...(plans[values.cpuMode as IcpuMode] || [])].map(
-                ({ name, memoryPerCpu, description }) => {
-                  return (
-                    <Radio.Item
-                      key={`${memoryPerCpu}`}
-                      className="p-2xl"
-                      value={`${memoryPerCpu}`}
-                    >
-                      <div className="flex flex-col pl-xl">
-                        <div className="headingMd text-text-default">
-                          {name}
-                        </div>
-                        <div className="bodySm text-text-soft">
-                          {description}
-                        </div>
-                      </div>
-                    </Radio.Item>
-                  );
-                }
-              )}
-            </Radio.Root>
-          </div>
-          {getActivePlan() ? (
-            <div className="flex-1 py-2xl">
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  {getActivePlan()?.name}
-                </div>
-                <div className="bodyMd text-text-soft">{values.cpuMode}</div>
-              </div>
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  Compute
-                </div>
-                <div className="bodyMd text-text-soft">{1}vCPU</div>
-              </div>
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  Memory
-                </div>
-                <div className="bodyMd text-text-soft">
-                  {getActivePlan()?.memoryPerCpu}GB
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 py-2xl">
-              <div className="flex flex-row items-center gap-lg py-lg px-2xl">
-                <div className="bodyMd-medium text-text-strong flex-1">
-                  Please Select any plan
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div> */}
         <div className="flex flex-col">
           <div className="flex flex-row gap-lg items-center pb-3xl">
             <div className="flex-1">
@@ -496,28 +392,6 @@ const SettingCompute = () => {
             </div>
           )}
         </div>
-        {/* <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default">
-        <div className="flex flex-row gap-lg items-center">
-          <div className="bodyMd-medium text-text-default">Select CPU</div>
-          <code className="bodySm text-text-soft flex-1 text-end">
-            {((values.cpu || 1) / 1000).toFixed(2)}vCPU &{' '}
-            {(
-              ((values.cpu || 1) * parseValue(values.selectedPlan, 4)) /
-              1000
-            ).toFixed(2)}
-            GB Memory
-          </code>
-        </div>
-        <Slider
-          step={25}
-          min={100}
-          max={8000}
-          value={values.cpu}
-          onChange={(value) => {
-            handleChange('cpu')(dummyEvent(value));
-          }}
-        />
-      </div> */}
       </Wrapper>
     </div>
   );

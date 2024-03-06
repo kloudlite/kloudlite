@@ -144,32 +144,32 @@ const AppCompute = () => {
               // image: val.image === '' ? val.repoImageUrl : val.imageUrl,
               image:
                 values.repoAccountName === undefined ||
-                  values.repoAccountName === ''
+                values.repoAccountName === ''
                   ? `${values.repoName}:${values.repoImageTag}`
                   : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {
-                    max: `${val.cpu}m`,
-                    min: `${val.cpu}m`,
-                  }
+                      max: `${val.cpu}m`,
+                      min: `${val.cpu}m`,
+                    }
                   : {
-                    max: `${val.manualCpuMax}m`,
-                    min: `${val.manualCpuMin}m`,
-                  },
+                      max: `${val.manualCpuMax}m`,
+                      min: `${val.manualCpuMin}m`,
+                    },
               resourceMemory:
                 val.selectionMode === 'quick'
                   ? {
-                    max: `${(
-                      (values.cpu || 1) * parseValue(values.memPerCpu, 4)
-                    ).toFixed(2)}Mi`,
-                    min: `${val.cpu}Mi`,
-                  }
+                      max: `${(
+                        (values.cpu || 1) * parseValue(values.memPerCpu, 4)
+                      ).toFixed(2)}Mi`,
+                      min: `${val.cpu}Mi`,
+                    }
                   : {
-                    max: `${val.manualMemMax}Mi`,
-                    min: `${val.manualMemMin}Mi`,
-                  },
+                      max: `${val.manualMemMax}Mi`,
+                      min: `${val.manualMemMin}Mi`,
+                    },
             },
           ],
         },
@@ -198,8 +198,6 @@ const AppCompute = () => {
       return api.listDigest({ repoName: values.repoName });
     }
   );
-
-  console.log('vau', values);
 
   return (
     <FadeIn
@@ -286,8 +284,8 @@ const AppCompute = () => {
             errors.repoImageTag
               ? errors.repoImageTag
               : digestError
-                ? 'Failed to load Image tags.'
-                : ''
+              ? 'Failed to load Image tags.'
+              : ''
           }
           loading={digestLoading}
         />
