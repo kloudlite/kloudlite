@@ -13,7 +13,11 @@ const SplitWrapper = ({
         {children}
       </div>
       {fillerImage ? (
-        <div className="flex items-center pr-8xl">{fillerImage}</div>
+        <div className="flex mr-8xl w-[477px]">
+          <div className="fixed top-0 h-screen flex items-center">
+            {fillerImage}
+          </div>
+        </div>
       ) : (
         <div className="w-[5rem]" />
       )}
