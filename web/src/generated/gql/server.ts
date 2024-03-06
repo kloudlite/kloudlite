@@ -471,7 +471,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerVolu
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn = {
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  enabled: Scalars['Boolean']['input'];
   maxReplicas?: InputMaybe<Scalars['Int']['input']>;
   minReplicas?: InputMaybe<Scalars['Int']['input']>;
   thresholdCpu?: InputMaybe<Scalars['Int']['input']>;
@@ -2430,7 +2430,7 @@ export type ConsoleGetAppQuery = {
         }>;
       }>;
       hpa?: {
-        enabled?: boolean;
+        enabled: boolean;
         maxReplicas?: number;
         minReplicas?: number;
         thresholdCpu?: number;
@@ -2526,7 +2526,7 @@ export type ConsoleListAppsQuery = {
             resourceMemory?: { max?: string; min?: string };
           }>;
           hpa?: {
-            enabled?: boolean;
+            enabled: boolean;
             maxReplicas?: number;
             minReplicas?: number;
             thresholdCpu?: number;
