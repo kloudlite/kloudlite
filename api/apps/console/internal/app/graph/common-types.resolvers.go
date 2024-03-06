@@ -7,9 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/kloudlite/api/pkg/errors"
+	"time"
 
 	"github.com/kloudlite/api/apps/console/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/console/internal/app/graph/model"
@@ -202,11 +201,9 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type (
-	github__com___kloudlite___api___common__CreatedOrUpdatedByResolver  struct{ *Resolver }
-	github__com___kloudlite___api___pkg___types__SyncStatusResolver     struct{ *Resolver }
-	github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
-	k8s__io___api___core___v1__SecretResolver                           struct{ *Resolver }
-	metadataResolver                                                    struct{ *Resolver }
-	metadataInResolver                                                  struct{ *Resolver }
-)
+type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
+type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
+type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
+type k8s__io___api___core___v1__SecretResolver struct{ *Resolver }
+type metadataResolver struct{ *Resolver }
+type metadataInResolver struct{ *Resolver }
