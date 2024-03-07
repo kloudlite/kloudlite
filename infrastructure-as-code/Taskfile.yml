@@ -4,35 +4,55 @@ dotenv:
   - .secrets/env
 
 vars:
-  ImagePrefix: ghcr.io/kloudlite/infrastructure-as-code
+  Varsfile: ".secrets/varfile.json"
 
 tasks:
-  local-build:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: 'var Image must have a value'
+  sync-from-template:
+    vars:
+      InfrastructureTemplate: 
+    env:
+      SHELL: bash
     silent: true
     cmds:
-      - nerdctl build -t {{.Image}} .
+      - chmod -f 600 ./*.tf | true
+      - cp {{.InfrastructureTemplate}}/*.tf ./
+      - chmod 400 ./*.tf
+      - echo "sync complete"
 
-  container:build-and-push:
-    preconditions:
-      - sh: '[[ -n "{{.Image}}" ]]'
-        msg: 'var Image must have a value'
-    vars:
-      Push: true
-      DockerArgs: ""
+  init:
     cmds:
-      - docker build -t {{.Image}} . {{.DockerArgs}}
-      - |+
-        if [ "{{.Push}}" == "true" ]; then
-          docker push {{.Image}}
-        fi
+      - terraform init
+    silent: true
 
-  tf:download:kubeconfig:dev:
+  plan:
+    dir: ./
     vars:
-      AuthToken: "{{.TF_TOKEN_app_terraform_io}}"
-      WorkspaceId: "{{.TF_CLOUD_DEV_WORKSPACE_ID}}"
+      PlanOutput: ".secrets/plan.out"
     cmds:
-      - |+
-        curl --silent -H "Authorization: Bearer {{.AuthToken}}" 'https://app.terraform.io/api/v2/workspaces/{{.WorkspaceId}}/current-state-version?include=outputs' | jq '.included[] | select(.attributes.name == "kubeconfig") | .attributes.value' -r | base64 -d
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan --var-file "{{.Varsfile}}" --out "{{.PlanOutput}}"
+
+  apply:
+    dir: ./
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: ".secrets/plan.out"
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  validate:
+    dir: ./
+    cmds:
+      - terraform validate  -var-file={{.Varsfile}}
+
+  destroy:
+    dir: ./
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: ".secrets/plan.destroy.out"
+    cmds:
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.PlanOutput}}"
+      - terraform apply "{{.PlanOutput}}"
