@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from '@remix-run/react';
-import { TextInput } from '~/components/atoms/input';
+import { PasswordInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -29,14 +29,42 @@ const NewCloudProvider = () => {
       displayName: '',
       name: '',
       provider: providers[0].value,
-      awsAccountId: '',
+      accessKey: '',
+      secretKey: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
       provider: Yup.string().required(),
-      awsAccountId: Yup.string().required('AccountId is required.'),
+      accessKey: Yup.string().test(
+        'provider',
+        'access key is required',
+        function (item) {
+          return (
+            // @ts-ignores
+            // eslint-disable-next-line react/no-this-in-sfc
+            this.parent.provider &&
+            // eslint-disable-next-line react/no-this-in-sfc
+            this.parent.provider === 'aws' &&
+            item
+          );
+        }
+      ),
+      secretKey: Yup.string().test(
+        'provider',
+        'secret key is required',
+        function (item) {
+          return (
+            // @ts-ignores
+            // eslint-disable-next-line react/no-this-in-sfc
+            this.parent.provider &&
+            // eslint-disable-next-line react/no-this-in-sfc
+            this.parent.provider === 'aws' &&
+            item
+          );
+        }
+      ),
     }),
     onSubmit: async (val) => {
       const addProvider = async () => {
@@ -49,7 +77,8 @@ const NewCloudProvider = () => {
                   name: val.name,
                 },
                 aws: {
-                  awsAccountId: val.awsAccountId,
+                  secretKey: val.secretKey,
+                  accessKey: val.accessKey,
                 },
                 cloudProviderName: validateCloudProvider(val.provider),
               },
@@ -73,7 +102,7 @@ const NewCloudProvider = () => {
 
         toast.success('provider secret created successfully');
 
-        navigate(`/onboarding/${accountName}/${val.name}/validate-cp`);
+        navigate(`/onboarding/${accountName}/${values.name}/new-cluster`);
       } catch (err) {
         handleError(err);
       }
@@ -136,15 +165,25 @@ const NewCloudProvider = () => {
                   />
 
                   {values.provider === 'aws' && (
-                    <TextInput
-                      name="awsAccountId"
-                      onChange={handleChange('awsAccountId')}
-                      error={!!errors.awsAccountId}
-                      message={errors.awsAccountId}
-                      value={values.awsAccountId}
-                      label="Account ID"
-                      size="lg"
-                    />
+                    <>
+                      <PasswordInput
+                        name="accessKey"
+                        onChange={handleChange('accessKey')}
+                        error={!!errors.accessKey}
+                        message={errors.accessKey}
+                        value={values.accessKey}
+                        label="Access Key"
+                      />
+
+                      <PasswordInput
+                        name="secretKey"
+                        onChange={handleChange('secretKey')}
+                        error={!!errors.secretKey}
+                        message={errors.secretKey}
+                        value={values.secretKey}
+                        label="Secret Key"
+                      />
+                    </>
                   )}
                 </div>
               </div>
@@ -158,7 +197,7 @@ const NewCloudProvider = () => {
               />
             </div>
           </MultiStepProgress.Step>
-          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
+          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" /> */}
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>

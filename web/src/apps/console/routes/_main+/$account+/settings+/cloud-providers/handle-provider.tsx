@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import { ReactNode } from 'react';
-import { TextInput } from '~/components/atoms/input';
+import { PasswordInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
@@ -63,14 +63,16 @@ const Root = (props: IDialog) => {
             displayName: props.data.displayName,
             name: parseName(props.data),
             provider: props.data.cloudProviderName as string,
-            awsAccountId: '',
+            accessKey: '',
+            secretKey: '',
             isNameError: false,
           }
         : {
             displayName: '',
             name: '',
             provider: providers[0].value,
-            awsAccountId: '',
+            accessKey: '',
+            secretKey: '',
             isNameError: false,
           },
       validationSchema: isUpdate
@@ -82,9 +84,23 @@ const Root = (props: IDialog) => {
             displayName: Yup.string().required(),
             name: Yup.string().required(),
             provider: Yup.string().required(),
-            awsAccountId: Yup.string().test(
+            accessKey: Yup.string().test(
               'provider',
-              'Account id is required',
+              'access key is required',
+              function (item) {
+                return (
+                  // @ts-ignores
+                  // eslint-disable-next-line react/no-this-in-sfc
+                  this.parent.provider &&
+                  // eslint-disable-next-line react/no-this-in-sfc
+                  this.parent.provider === 'aws' &&
+                  item
+                );
+              }
+            ),
+            secretKey: Yup.string().test(
+              'provider',
+              'secret key is required',
               function (item) {
                 return (
                   // @ts-ignores
@@ -99,42 +115,9 @@ const Root = (props: IDialog) => {
           }),
 
       onSubmit: async (val) => {
-        // const validateAccountIdAndPerform = async <T,>(
-        //   fn: () => T
-        // ): Promise<T> => {
-        //   const { data, errors } = await api.checkAwsAccess({
-        //     accountId: val.accountId,
-        //   });
-        //
-        //   if (errors) {
-        //     throw errors[0];
-        //   }
-        //
-        //   if (!data.result) {
-        //     await asyncPopupWindow({
-        //       url: data.installationUrl || '',
-        //     });
-        //
-        //     const { data: d2 } = await api.checkAwsAccess({
-        //       accountId: val.accountId,
-        //     });
-        //
-        //     if (!d2.result) {
-        //       throw new Error('invalid account id');
-        //     }
-        //
-        //     return fn();
-        //   }
-        //
-        //   return fn();
-        // };
-
         const addProvider = async () => {
           switch (val?.provider) {
             case 'aws':
-              // return validateAccountIdAndPerform(async () => {
-              // });
-
               return api.createProviderSecret({
                 secret: {
                   displayName: val.displayName,
@@ -142,7 +125,8 @@ const Root = (props: IDialog) => {
                     name: val.name,
                   },
                   aws: {
-                    awsAccountId: val.awsAccountId,
+                    secretKey: val.secretKey,
+                    accessKey: val.accessKey,
                   },
                   cloudProviderName: validateCloudProvider(val.provider),
                 },
@@ -209,35 +193,6 @@ const Root = (props: IDialog) => {
     >
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
-          {/* {isUpdate && (
-            <Chips.Chip
-              {...{
-                item: { id: parseName(props.data) },
-                label: parseName(props.data),
-                prefix: 'Id:',
-                disabled: true,
-                type: 'BASIC',
-              }}
-            />
-          )} */}
-
-          {/* <TextInput
-            label="Name"
-            onChange={handleChange('displayName')}
-            error={!!errors.displayName}
-            message={errors.displayName}
-            value={values.displayName}
-            name="provider-secret-name"
-          />
-          {!isUpdate && (
-            <IdSelector
-              name={values.displayName}
-              resType="providersecret"
-              onChange={(id) => {
-                handleChange('name')({ target: { value: id } });
-              }}
-            />
-          )} */}
           <NameIdView
             resType="providersecret"
             displayName={values.displayName}
@@ -264,14 +219,25 @@ const Root = (props: IDialog) => {
           )}
 
           {!isUpdate && values?.provider === 'aws' && (
-            <TextInput
-              name="awsAccountId"
-              onChange={handleChange('awsAccountId')}
-              error={!!errors.awsAccountId}
-              message={errors.awsAccountId}
-              value={values.awsAccountId}
-              label="Aws Account ID"
-            />
+            <>
+              <PasswordInput
+                name="accessKey"
+                onChange={handleChange('accessKey')}
+                error={!!errors.accessKey}
+                message={errors.accessKey}
+                value={values.accessKey}
+                label="Access Key"
+              />
+
+              <PasswordInput
+                name="secretKey"
+                onChange={handleChange('secretKey')}
+                error={!!errors.secretKey}
+                message={errors.secretKey}
+                value={values.secretKey}
+                label="Secret Key"
+              />
+            </>
           )}
         </div>
       </Popup.Content>
