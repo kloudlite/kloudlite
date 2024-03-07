@@ -2,7 +2,6 @@ import {
   BackingServices,
   ChevronDown,
   CirclesFour,
-  Database,
   GearSix,
   Plus,
   Search,
@@ -235,6 +234,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
     </>
   );
 };
+
 export const handle = ({ environment }: any) => {
   return {
     navbar: <EnvironmentTabs />,
