@@ -38,7 +38,7 @@ import {
   Container as ContainerIcon,
   GearSix,
   Project,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import HandleProfile from './handle-profile';
 
 const restActions = (ctx: IExtRemixCtx) => {
