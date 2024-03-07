@@ -24,6 +24,8 @@
 
             terraform
             packer
+            pulumi
+            pulumiPackages.pulumi-language-go
 
             # source version control
             git
@@ -34,6 +36,8 @@
             # build tools
             podman
             upx
+
+            nmap
 
             # # custom
             # packages.new-infra
