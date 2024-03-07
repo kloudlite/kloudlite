@@ -4,11 +4,13 @@ destination_path=$(realpath "$1")
 
 SCRIPT_DIR=$(realpath $(dirname $0))
 
-templates_dir="$SCRIPT_DIR/../infrastructure-templates"
+infra_template=$INFRA_TEMPLATE
+if [ -z "$infra_template" ]; then
+	templates_dir="$SCRIPT_DIR/../infrastructure-templates"
+	infra_template=$(ls "$templates_dir" | fzf --prompt "Choose An Infrastructure template")
+fi
 
 [ -d "$destination_path" ] && echo "Directory $destination_path already exists" && exit 1
-
-infra_template=$(ls "$templates_dir" | fzf --prompt "Choose An Infrastructure template")
 
 mkdir -p "$destination_path"
 
@@ -26,10 +28,13 @@ dotenv:
 vars:
   Varsfile: ".secrets/varfile.json"
 
+  ApplyPlan: "./secrets/apply.plan"
+  DestroyPlan: "./secrets/destroy.plan"
+
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: $(realpath $SCRIPT_DIR/../infrastructure-templates/${infra_template} --relative-to=$destination_path)
+      InfrastructureTemplate: $(realpath "${infra_template}" --relative-to="$destination_path")
     env:
       SHELL: bash
     silent: true
@@ -46,36 +51,36 @@ tasks:
 
   plan:
     dir: ./
-    vars:
-      PlanOutput: ".secrets/plan.out"
     cmds:
       - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
-      - terraform plan --var-file "{{.Varsfile}}" --out "{{.PlanOutput}}"
+      - terraform plan --var-file "{{.Varsfile}}" --out "{{.ApplyPlan}}"
 
   apply:
     dir: ./
     dotenv:
       - .secrets/env
-    vars:
-      PlanOutput: ".secrets/plan.out"
     cmds:
-      - terraform apply "{{.PlanOutput}}"
+      - terraform apply "{{.ApplyPlan}}"
 
   validate:
     dir: ./
     cmds:
       - terraform validate  -var-file={{.Varsfile}}
 
-  destroy:
+  destroy:plan:
     dir: ./
     dotenv:
       - .secrets/env
-    vars:
-      PlanOutput: ".secrets/plan.destroy.out"
     cmds:
       - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
-      - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.PlanOutput}}"
-      - terraform apply "{{.PlanOutput}}"
+      - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.DestroyPlan}}"
+
+  destroy:apply:
+    dir: ./
+    dotenv:
+      - .secrets/env
+    cmds:
+      - terraform apply "{{.DestroyPlan}}"
 EOF
 
 popd

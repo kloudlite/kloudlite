@@ -9,7 +9,7 @@ vars:
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: 
+      InfrastructureTemplate: ../../infrastructure-templates/gcp/master-nodes
     env:
       SHELL: bash
     silent: true
@@ -17,6 +17,7 @@ tasks:
       - chmod -f 600 ./*.tf | true
       - cp {{.InfrastructureTemplate}}/*.tf ./
       - chmod 400 ./*.tf
+      - sed -i "s|../../../terraform/bundles/gcp/master-nodes|../../terraform/bundles/gcp/master-nodes|" ./main.tf 
       - echo "sync complete"
 
   init:
@@ -46,7 +47,8 @@ tasks:
     cmds:
       - terraform validate  -var-file={{.Varsfile}}
 
-  destroy:
+
+  destroy:plan:
     dir: ./
     dotenv:
       - .secrets/env
@@ -55,4 +57,12 @@ tasks:
     cmds:
       - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
       - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.PlanOutput}}"
+
+  destroy:apply:
+    dir: ./
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: ".secrets/plan.destroy.out"
+    cmds:
       - terraform apply "{{.PlanOutput}}"
