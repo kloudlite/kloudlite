@@ -9,7 +9,7 @@ vars:
 tasks:
   sync-from-template:
     vars:
-      InfrastructureTemplate: 
+      InfrastructureTemplate: ../../../infrastructure-templates/gcp/master-and-worker-nodes
     env:
       SHELL: bash
     silent: true
