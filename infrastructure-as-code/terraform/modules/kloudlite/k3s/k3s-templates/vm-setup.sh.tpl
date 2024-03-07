@@ -37,12 +37,12 @@ BASE_URL="https://github.com/kloudlite/kloudlite/releases/download/$KLOUDLITE_RE
 echo "[#] downloading from kloudlite release $KLOUDLITE_RELEASE: k3s binary"
 curl -L0 "$BASE_URL/k3s" >$k3s_bin_path
 chmod +x $k3s_bin_path
-echo "[#] downloaded @ $k3s_k3s_bin_path"
+echo "[#] downloaded @ $k3s__bin_path"
 
 echo "[#] downloading from kloudlite release $KLOUDLITE_RELEASE: kloudlite runner binary"
 curl -L0 "$BASE_URL/runner-amd64" >$kloudlite_runner_bin_path
 chmod +x $kloudlite_runner_bin_path
-debug "[#] downloaded @ $kloudlite_runner_bin_path"
+echo "[#] downloaded @ $kloudlite_runner_bin_path"
 
 EOF
 
