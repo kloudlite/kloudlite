@@ -69,9 +69,16 @@ resource "ssh_resource" "k3s_primary_master" {
     random_password.k3s_agent_token,
   ]
 
+  triggers = {
+    always_run = sha1(join(",", [
+      jsonencode(each.value.node_labels), jsonencode(local.k3s_server_extra_args[each.key])
+    ]))
+  }
+
   timeout     = "3m"
   retry_delay = "5s"
 
+  #  when = "create"
   when = "create"
 
   file {
@@ -113,7 +120,7 @@ resource "ssh_resource" "k3s_primary_master_upgrade" {
 
   depends_on = [ssh_resource.k3s_primary_master]
 
-  when = "create"
+  when     = "create"
   triggers = {
     when_kloudlite_release_changes = each.value.kloudlite_release
   }
@@ -216,6 +223,12 @@ resource "ssh_resource" "k3s_secondary_masters" {
 
   depends_on = [ssh_resource.k3s_primary_master]
 
+  triggers = {
+    always_run = sha1(join(",", [
+      jsonencode(each.value.node_labels), jsonencode(local.k3s_server_extra_args[each.key])
+    ]))
+  }
+
   when = "create"
 
   timeout     = "2m"
@@ -257,7 +270,7 @@ resource "ssh_resource" "k3s_secondary_masters_upgrade" {
 
   depends_on = [ssh_resource.k3s_secondary_masters]
 
-  when = "create"
+  when     = "create"
   triggers = {
     when_kloudlite_release_changes = each.value.kloudlite_release
   }
