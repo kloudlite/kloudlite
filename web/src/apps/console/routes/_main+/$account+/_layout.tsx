@@ -1,5 +1,6 @@
 import {
   ArrowsCounterClockwise,
+  Buildings,
   Check,
   ChevronUpDown,
   Copy,
@@ -55,7 +56,6 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { cn } from '~/components/utils';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
@@ -380,7 +380,7 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
       <Button
         prefix={
           <span className="p-md flex items-center justify-center rounded-full border border-border-default text-text-soft">
-            <ProfileIcon />
+            <Buildings size={16} />
           </span>
         }
         content={account.displayName}
@@ -393,9 +393,9 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
         <OptionList.Trigger>
           <button
             ref={buttonRef}
-            aria-label="accounts "
+            aria-label="accounts"
             className={cn(
-              'outline-none rounded py-lg px-md mx-md',
+              'outline-none rounded py-lg px-md mx-md bg-surface-basic-hovered',
               open || isMouseOver ? 'bg-surface-basic-pressed' : ''
             )}
             onMouseOver={() => {
@@ -404,13 +404,19 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
             onMouseOut={() => {
               setIsMouseOver(false);
             }}
+            onFocus={() => {
+              //
+            }}
+            onBlur={() => {
+              //
+            }}
           >
             <div className="flex flex-row items-center gap-md">
               <ChevronUpDown size={16} />
             </div>
           </button>
         </OptionList.Trigger>
-        <OptionList.Content className="!pt-0 !pb-md" align="center">
+        <OptionList.Content className="!pt-0 !pb-md" align="end">
           <div className="p-[3px] pb-0">
             <OptionList.TextInput
               value={searchText}
@@ -424,7 +430,10 @@ const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
           </div>
           <OptionList.Separator />
 
-          <div className="bodyMd text-text-soft pt-xl pb-md px-xl">Teams</div>
+          {/* <div className="bodySm-medium text-text-soft py-md px-xl">Teams</div> */}
+
+          {/* <OptionList.Separator /> */}
+
           {searchResp?.map((item) => {
             return (
               <OptionList.Link
