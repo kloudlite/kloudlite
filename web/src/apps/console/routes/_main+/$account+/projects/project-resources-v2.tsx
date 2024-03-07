@@ -3,11 +3,8 @@ import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
-  ListBody,
   ListItem,
   ListTitle,
-  listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
