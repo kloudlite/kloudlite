@@ -21,6 +21,14 @@ import {
   XCircleFill,
   LockSimpleOpen,
   MinusCircle,
+  Search,
+  ArrowsCounterClockwise,
+  Copy,
+  GearSix,
+  QrCode,
+  WireGuardlogo,
+  ChevronUpDown,
+  ChevronDown,
 } from '@jengaicons/react';
 
 export {
@@ -46,4 +54,12 @@ export {
   XCircleFill,
   LockSimpleOpen,
   MinusCircle,
+  Search,
+  ArrowsCounterClockwise,
+  Copy,
+  GearSix,
+  QrCode,
+  WireGuardlogo,
+  ChevronUpDown,
+  ChevronDown,
 };
