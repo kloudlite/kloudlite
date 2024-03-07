@@ -82,10 +82,11 @@ const useGit = ({
 
   const revalidate = (prov?: IGIT_PROVIDERS) => {
     if (prov) {
-      setProvider(prov);
+      console.log('here');
       if (provider === prov) {
         setRevalidate((prev) => prev + 1);
       }
+      setProvider(prov);
     } else {
       setRevalidate((prev) => prev + 1);
     }
@@ -102,7 +103,7 @@ const useGit = ({
   );
 
   const repos = useCustomSwr(
-    () => (org ? `${data[provider].repoKey}_${org}_${debouncedSearch}` : null),
+    () => (org ? `repos_${org}_${debouncedSearch}` : null),
     async () => {
       switch (provider) {
         case 'github':
@@ -136,7 +137,7 @@ const useGit = ({
     }
   );
   const branches = useCustomSwr(
-    () => (repo ? `${data[provider].branchKey}_${repo}` : null),
+    () => (repo ? `branches_${repo}` : null),
     async () => {
       switch (provider) {
         case 'github':
