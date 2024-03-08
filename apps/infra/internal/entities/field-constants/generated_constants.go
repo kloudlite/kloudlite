@@ -684,6 +684,7 @@ const (
 	StatusAttached                     = "status.attached"
 	StatusAttachmentMetadata           = "status.attachmentMetadata"
 	StatusCapacity                     = "status.capacity"
+	StatusCheckList                    = "status.checkList"
 	StatusChecks                       = "status.checks"
 	StatusConditions                   = "status.conditions"
 	StatusDetachError                  = "status.detachError"

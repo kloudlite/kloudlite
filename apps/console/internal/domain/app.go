@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/kloudlite/api/apps/console/internal/entities"
 	fc "github.com/kloudlite/api/apps/console/internal/entities/field-constants"
 	"github.com/kloudlite/api/common"
@@ -200,6 +202,7 @@ func (d *domain) RestartApp(ctx ResourceContext, appName string) error {
 }
 
 func (d *domain) OnAppUpdateMessage(ctx ResourceContext, app entities.App, status types.ResourceStatus, opts UpdateAndDeleteOpts) error {
+	fmt.Printf("OnAppUpdateMessage: %v\n", app)
 	xApp, err := d.findApp(ctx, app.Name)
 	if err != nil {
 		return errors.NewE(err)

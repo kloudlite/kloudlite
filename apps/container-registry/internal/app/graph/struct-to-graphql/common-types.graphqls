@@ -92,9 +92,20 @@ type Github__com___kloudlite___operator___apis___distribution___v1__Resource @sh
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
+  debug: String
+  error: String
   generation: Int
+  info: String
   message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
   status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
+  description: String
+  displayName: String!
+  name: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
@@ -105,6 +116,7 @@ type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
@@ -184,17 +196,31 @@ input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn 
 }
 
 input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  debug: String
+  error: String
   generation: Int
+  info: String
   message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
   status: Boolean!
 }
 
+input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
+  description: String
+  displayName: String!
+  name: String!
+}
+
 input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
   name: String!
   namespace: String!
 }
 
 input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMetaIn!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
@@ -254,7 +280,13 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
   UPDATED_AT_AGENT
+}
+
+enum Github__com___kloudlite___operator___pkg___operator__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
 }
 
