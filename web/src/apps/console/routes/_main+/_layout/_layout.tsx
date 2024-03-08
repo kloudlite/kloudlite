@@ -1,11 +1,12 @@
 import {
+  Link,
   Outlet,
   ShouldRevalidateFunction,
   useLoaderData,
   useLocation,
   useParams,
 } from '@remix-run/react';
-import { SetStateAction, cloneElement, useCallback, useState } from 'react';
+import { cloneElement, useCallback } from 'react';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -15,12 +16,10 @@ import { generateKey, titleCase } from '~/components/utils';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import LogoWrapper from '~/console/components/logo-wrapper';
-import { IShowDialog } from '~/console/components/types.d';
 import { ViewModeProvider } from '~/console/components/view-mode';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
 import { setupAccountContext } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
@@ -39,7 +38,6 @@ import {
   GearSix,
   Project,
 } from '~/console/components/icons';
-import HandleProfile from './handle-profile';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -130,27 +128,26 @@ export const handle = () => {
 };
 
 // OptionList for various actions
-const ProfileMenu = ({
-  setShowProfileDialog,
-}: {
-  setShowProfileDialog: React.Dispatch<
-    SetStateAction<IShowDialog<UserMe | null>>
-  >;
-}) => {
+const ProfileMenu = ({ hideProfileName }: { hideProfileName: boolean }) => {
   const { user } = useLoaderData();
   const cookie = getCookie();
   const { pathname } = useLocation();
   const eNavigate = useExternalRedirect();
+  const { account } = useParams();
 
   return (
     <OptionList.Root>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Profile name={titleCase(user.name)} size="xs" />
+            {!hideProfileName ? (
+              <Profile name={titleCase(user.name)} size="xs" />
+            ) : (
+              <Profile size="xs" />
+            )}
           </div>
           <div className="flex md:hidden">
-            <Profile name={user.name} size="xs" />
+            <Profile size="xs" />
           </div>
         </div>
       </OptionList.Trigger>
@@ -163,13 +160,12 @@ const ProfileMenu = ({
             <span className="bodySm text-text-soft">{user.email}</span>
           </div>
         </OptionList.Item>
-        <OptionList.Item
-          onClick={() => {
-            setShowProfileDialog({ type: DIALOG_TYPE.NONE, data: user });
-          }}
+        <OptionList.Link
+          LinkComponent={Link}
+          to={`/${account}/user-profile/account`}
         >
           Profile Settings
-        </OptionList.Item>
+        </OptionList.Link>
 
         <OptionList.Item>Notifications</OptionList.Item>
         <OptionList.Item>Support</OptionList.Item>
@@ -189,8 +185,6 @@ const ProfileMenu = ({
 
 const Console = () => {
   const loaderData = useLoaderData<typeof loader>();
-  const [showProfileDialog, setShowProfileDialog] =
-    useState<IShowDialog<UserMe | null>>(null);
 
   const matches = useMatches();
 
@@ -200,6 +194,8 @@ const Console = () => {
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
   const _devicesMenu = useHandleFromMatches('devicesMenu', null);
+  const noBreadCrum = useHandleFromMatches('noBreadCrum', false);
+  const hideProfileName = useHandleFromMatches('hideProfileName', false);
 
   const headerExtra = useHandleFromMatches('headerExtra', null);
 
@@ -222,13 +218,15 @@ const Console = () => {
       <TopBar
         fixed
         breadcrum={
-          <Breadcrum.Root>
-            {breadcrum.map((bc: any, index) =>
-              cloneElement(bc.handle.breadcrum(bc), {
-                key: generateKey(index),
-              })
-            )}
-          </Breadcrum.Root>
+          noBreadCrum ? null : (
+            <Breadcrum.Root>
+              {breadcrum.map((bc: any, index) =>
+                cloneElement(bc.handle.breadcrum(bc), {
+                  key: generateKey(index),
+                })
+              )}
+            </Breadcrum.Root>
+          )
         }
         logo={logo ? cloneElement(logo, { size: 24 }) : null}
         // tabs={navbar === constants.nan ? null : navbar}
@@ -237,7 +235,7 @@ const Console = () => {
           <div className="flex flex-row gap-2xl items-center">
             {/* {!!devicesMenu && devicesMenu()} */}
             {!!headerExtra && headerExtra()}
-            <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
+            <ProfileMenu hideProfileName={hideProfileName} />
           </div>
         }
       />
@@ -254,7 +252,6 @@ const Console = () => {
           </UnsavedChangesProvider>
         </SubNavDataProvider>
       </ViewModeProvider>
-      <HandleProfile show={showProfileDialog} setShow={setShowProfileDialog} />
     </div>
   );
 };
