@@ -88,6 +88,34 @@ func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) SyncSc
 	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
 }
 
+// StartedAt is the resolver for the startedAt field.
+func (r *github__com___kloudlite___operator___pkg___operator__CheckResolver) StartedAt(ctx context.Context, obj *operator.Check) (*string, error) {
+	if obj == nil {
+		return nil, errors.Newf("check is nil")
+	}
+
+	if obj.StartedAt == nil {
+		return nil, nil
+	}
+
+	sa := obj.StartedAt.Format(time.RFC3339)
+	return &sa, nil
+}
+
+// State is the resolver for the state field.
+func (r *github__com___kloudlite___operator___pkg___operator__CheckResolver) State(ctx context.Context, obj *operator.Check) (*model.GithubComKloudliteOperatorPkgOperatorState, error) {
+	if obj == nil {
+		return nil, errors.Newf("check is nil")
+	}
+
+	return fn.JsonConvert[*model.GithubComKloudliteOperatorPkgOperatorState](obj.State)
+}
+
+// CheckList is the resolver for the checkList field.
+func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) CheckList(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta, error) {
+	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta](obj.CheckList)
+}
+
 // Checks is the resolver for the checks field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
@@ -195,6 +223,11 @@ func (r *Resolver) Github__com___kloudlite___api___pkg___types__SyncStatus() gen
 	return &github__com___kloudlite___api___pkg___types__SyncStatusResolver{r}
 }
 
+// Github__com___kloudlite___operator___pkg___operator__Check returns generated.Github__com___kloudlite___operator___pkg___operator__CheckResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Check() generated.Github__com___kloudlite___operator___pkg___operator__CheckResolver {
+	return &github__com___kloudlite___operator___pkg___operator__CheckResolver{r}
+}
+
 // Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
 func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
 	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
@@ -209,6 +242,7 @@ func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataI
 type github__com___kloudlite___api___apps___infra___internal___entities__MsvcTemplateEntryResolver struct{ *Resolver }
 type github__com___kloudlite___api___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type github__com___kloudlite___api___pkg___types__SyncStatusResolver struct{ *Resolver }
+type github__com___kloudlite___operator___pkg___operator__CheckResolver struct{ *Resolver }
 type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

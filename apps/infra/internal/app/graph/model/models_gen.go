@@ -362,14 +362,15 @@ type GithubComKloudliteOperatorApisCrdsV1HelmChartSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisCrdsV1HelmChartStatus struct {
-	Checks              map[string]interface{}                       `json:"checks,omitempty"`
-	IsReady             bool                                         `json:"isReady"`
-	LastReadyGeneration *int                                         `json:"lastReadyGeneration,omitempty"`
-	LastReconcileTime   *string                                      `json:"lastReconcileTime,omitempty"`
-	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON `json:"message,omitempty"`
-	ReleaseNotes        string                                       `json:"releaseNotes"`
-	ReleaseStatus       string                                       `json:"releaseStatus"`
-	Resources           []*operator.ResourceRef                      `json:"resources,omitempty"`
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta `json:"checkList,omitempty"`
+	Checks              map[string]interface{}                            `json:"checks,omitempty"`
+	IsReady             bool                                              `json:"isReady"`
+	LastReadyGeneration *int                                              `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                           `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSON      `json:"message,omitempty"`
+	ReleaseNotes        string                                            `json:"releaseNotes"`
+	ReleaseStatus       string                                            `json:"releaseStatus"`
+	Resources           []*operator.ResourceRef                           `json:"resources,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1JobVars struct {
@@ -408,6 +409,12 @@ type GithubComKloudliteOperatorApisCrdsV1ServiceTemplateIn struct {
 	APIVersion string                 `json:"apiVersion"`
 	Kind       string                 `json:"kind"`
 	Spec       map[string]interface{} `json:"spec"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
@@ -1496,6 +1503,51 @@ func (e *GithubComKloudliteOperatorApisCommonTypesCloudProvider) UnmarshalGQL(v 
 }
 
 func (e GithubComKloudliteOperatorApisCommonTypesCloudProvider) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteOperatorPkgOperatorState string
+
+const (
+	GithubComKloudliteOperatorPkgOperatorStateErroredDuringReconcilation GithubComKloudliteOperatorPkgOperatorState = "errored____during____reconcilation"
+	GithubComKloudliteOperatorPkgOperatorStateFinishedReconcilation      GithubComKloudliteOperatorPkgOperatorState = "finished____reconcilation"
+	GithubComKloudliteOperatorPkgOperatorStateUnderReconcilation         GithubComKloudliteOperatorPkgOperatorState = "under____reconcilation"
+	GithubComKloudliteOperatorPkgOperatorStateYetToBeReconciled          GithubComKloudliteOperatorPkgOperatorState = "yet____to____be____reconciled"
+)
+
+var AllGithubComKloudliteOperatorPkgOperatorState = []GithubComKloudliteOperatorPkgOperatorState{
+	GithubComKloudliteOperatorPkgOperatorStateErroredDuringReconcilation,
+	GithubComKloudliteOperatorPkgOperatorStateFinishedReconcilation,
+	GithubComKloudliteOperatorPkgOperatorStateUnderReconcilation,
+	GithubComKloudliteOperatorPkgOperatorStateYetToBeReconciled,
+}
+
+func (e GithubComKloudliteOperatorPkgOperatorState) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorPkgOperatorStateErroredDuringReconcilation, GithubComKloudliteOperatorPkgOperatorStateFinishedReconcilation, GithubComKloudliteOperatorPkgOperatorStateUnderReconcilation, GithubComKloudliteOperatorPkgOperatorStateYetToBeReconciled:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorPkgOperatorState) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorPkgOperatorState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorPkgOperatorState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___pkg___operator__State", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorPkgOperatorState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
