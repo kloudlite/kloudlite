@@ -104,8 +104,8 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   description: String
-  displayName: String!
   name: String!
+  title: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
@@ -208,8 +208,8 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
   description: String
-  displayName: String!
   name: String!
+  title: String!
 }
 
 input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {

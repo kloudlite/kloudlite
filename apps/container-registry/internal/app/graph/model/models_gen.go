@@ -231,14 +231,14 @@ type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
 
 type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
 	Description *string `json:"description,omitempty"`
-	DisplayName string  `json:"displayName"`
 	Name        string  `json:"name"`
+	Title       string  `json:"title"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckMetaIn struct {
 	Description *string `json:"description,omitempty"`
-	DisplayName string  `json:"displayName"`
 	Name        string  `json:"name"`
+	Title       string  `json:"title"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
