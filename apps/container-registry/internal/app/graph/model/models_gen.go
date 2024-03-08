@@ -208,15 +208,37 @@ type GithubComKloudliteOperatorApisDistributionV1ResourceIn struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
-	Generation *int    `json:"generation,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Status     bool    `json:"status"`
+	Debug      *string                                     `json:"debug,omitempty"`
+	Error      *string                                     `json:"error,omitempty"`
+	Generation *int                                        `json:"generation,omitempty"`
+	Info       *string                                     `json:"info,omitempty"`
+	Message    *string                                     `json:"message,omitempty"`
+	StartedAt  *string                                     `json:"startedAt,omitempty"`
+	State      *GithubComKloudliteOperatorPkgOperatorState `json:"state,omitempty"`
+	Status     bool                                        `json:"status"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
-	Generation *int    `json:"generation,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Status     bool    `json:"status"`
+	Debug      *string                                     `json:"debug,omitempty"`
+	Error      *string                                     `json:"error,omitempty"`
+	Generation *int                                        `json:"generation,omitempty"`
+	Info       *string                                     `json:"info,omitempty"`
+	Message    *string                                     `json:"message,omitempty"`
+	StartedAt  *string                                     `json:"startedAt,omitempty"`
+	State      *GithubComKloudliteOperatorPkgOperatorState `json:"state,omitempty"`
+	Status     bool                                        `json:"status"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorCheckMeta struct {
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorCheckMetaIn struct {
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+	Title       string  `json:"title"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
@@ -227,11 +249,14 @@ type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorResourceRefIn struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorStatus struct {
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMeta   `json:"checkList,omitempty"`
 	Checks              map[string]interface{}                              `json:"checks,omitempty"`
 	IsReady             bool                                                `json:"isReady"`
 	LastReadyGeneration *int                                                `json:"lastReadyGeneration,omitempty"`
@@ -241,6 +266,7 @@ type GithubComKloudliteOperatorPkgOperatorStatus struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
+	CheckList           []*GithubComKloudliteOperatorPkgOperatorCheckMetaIn   `json:"checkList,omitempty"`
 	Checks              map[string]interface{}                                `json:"checks,omitempty"`
 	IsReady             bool                                                  `json:"isReady"`
 	LastReadyGeneration *int                                                  `json:"lastReadyGeneration,omitempty"`
@@ -530,14 +556,13 @@ func (e GithubComKloudliteAPIPkgTypesSyncAction) MarshalGQL(w io.Writer) {
 type GithubComKloudliteAPIPkgTypesSyncState string
 
 const (
-	GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "APPLIED_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "DELETED_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent         GithubComKloudliteAPIPkgTypesSyncState = "DELETING_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "ERRORED_AT_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStateIDLe                    GithubComKloudliteAPIPkgTypesSyncState = "IDLE"
-	GithubComKloudliteAPIPkgTypesSyncStateInQueue                 GithubComKloudliteAPIPkgTypesSyncState = "IN_QUEUE"
-	GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent GithubComKloudliteAPIPkgTypesSyncState = "RECEIVED_UPDATE_FROM_AGENT"
-	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent          GithubComKloudliteAPIPkgTypesSyncState = "UPDATED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "APPLIED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "DELETED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent GithubComKloudliteAPIPkgTypesSyncState = "DELETING_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "ERRORED_AT_AGENT"
+	GithubComKloudliteAPIPkgTypesSyncStateIDLe            GithubComKloudliteAPIPkgTypesSyncState = "IDLE"
+	GithubComKloudliteAPIPkgTypesSyncStateInQueue         GithubComKloudliteAPIPkgTypesSyncState = "IN_QUEUE"
+	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent  GithubComKloudliteAPIPkgTypesSyncState = "UPDATED_AT_AGENT"
 )
 
 var AllGithubComKloudliteAPIPkgTypesSyncState = []GithubComKloudliteAPIPkgTypesSyncState{
@@ -547,13 +572,12 @@ var AllGithubComKloudliteAPIPkgTypesSyncState = []GithubComKloudliteAPIPkgTypesS
 	GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent,
 	GithubComKloudliteAPIPkgTypesSyncStateIDLe,
 	GithubComKloudliteAPIPkgTypesSyncStateInQueue,
-	GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent,
 	GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent,
 }
 
 func (e GithubComKloudliteAPIPkgTypesSyncState) IsValid() bool {
 	switch e {
-	case GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent, GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStateIDLe, GithubComKloudliteAPIPkgTypesSyncStateInQueue, GithubComKloudliteAPIPkgTypesSyncStateReceivedUpdateFromAgent, GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent:
+	case GithubComKloudliteAPIPkgTypesSyncStateAppliedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletedAtAgent, GithubComKloudliteAPIPkgTypesSyncStateDeletingAtAgent, GithubComKloudliteAPIPkgTypesSyncStateErroredAtAgent, GithubComKloudliteAPIPkgTypesSyncStateIDLe, GithubComKloudliteAPIPkgTypesSyncStateInQueue, GithubComKloudliteAPIPkgTypesSyncStateUpdatedAtAgent:
 		return true
 	}
 	return false
@@ -577,5 +601,50 @@ func (e *GithubComKloudliteAPIPkgTypesSyncState) UnmarshalGQL(v interface{}) err
 }
 
 func (e GithubComKloudliteAPIPkgTypesSyncState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteOperatorPkgOperatorState string
+
+const (
+	GithubComKloudliteOperatorPkgOperatorStateErroredDuringReconcilation GithubComKloudliteOperatorPkgOperatorState = "errored____during____reconcilation"
+	GithubComKloudliteOperatorPkgOperatorStateFinishedReconcilation      GithubComKloudliteOperatorPkgOperatorState = "finished____reconcilation"
+	GithubComKloudliteOperatorPkgOperatorStateUnderReconcilation         GithubComKloudliteOperatorPkgOperatorState = "under____reconcilation"
+	GithubComKloudliteOperatorPkgOperatorStateYetToBeReconciled          GithubComKloudliteOperatorPkgOperatorState = "yet____to____be____reconciled"
+)
+
+var AllGithubComKloudliteOperatorPkgOperatorState = []GithubComKloudliteOperatorPkgOperatorState{
+	GithubComKloudliteOperatorPkgOperatorStateErroredDuringReconcilation,
+	GithubComKloudliteOperatorPkgOperatorStateFinishedReconcilation,
+	GithubComKloudliteOperatorPkgOperatorStateUnderReconcilation,
+	GithubComKloudliteOperatorPkgOperatorStateYetToBeReconciled,
+}
+
+func (e GithubComKloudliteOperatorPkgOperatorState) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorPkgOperatorStateErroredDuringReconcilation, GithubComKloudliteOperatorPkgOperatorStateFinishedReconcilation, GithubComKloudliteOperatorPkgOperatorStateUnderReconcilation, GithubComKloudliteOperatorPkgOperatorStateYetToBeReconciled:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorPkgOperatorState) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorPkgOperatorState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorPkgOperatorState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___pkg___operator__State", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorPkgOperatorState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

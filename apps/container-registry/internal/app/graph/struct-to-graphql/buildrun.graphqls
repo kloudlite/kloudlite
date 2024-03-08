@@ -1,11 +1,11 @@
 type BuildRun @shareable {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   buildName: String!
   clusterName: String!
   creationTime: Date!
   id: String!
-  kind: String!
+  kind: String
   markedForDeletion: Boolean
   metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!

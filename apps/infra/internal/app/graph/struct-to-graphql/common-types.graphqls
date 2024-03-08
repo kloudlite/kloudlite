@@ -225,6 +225,7 @@ type Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpec @share
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus @shareable {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
@@ -255,9 +256,20 @@ type Github__com___kloudlite___operator___apis___crds___v1__ServiceTemplate @sha
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
+  debug: String
+  error: String
   generation: Int
+  info: String
   message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
   status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
+  description: String
+  name: String!
+  title: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
@@ -268,6 +280,7 @@ type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
@@ -1269,6 +1282,13 @@ enum Github__com___kloudlite___operator___apis___common____types__CloudProvider 
   azure
   digitalocean
   gcp
+}
+
+enum Github__com___kloudlite___operator___pkg___operator__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
 }
 
 enum K8s__io___api___core___v1__ConditionStatus {

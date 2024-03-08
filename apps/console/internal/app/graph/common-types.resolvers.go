@@ -38,6 +38,15 @@ func (r *github__com___kloudlite___api___pkg___types__SyncStatusResolver) SyncSc
 	return fn.New(obj.SyncScheduledAt.Format(time.RFC3339)), nil
 }
 
+// CheckList is the resolver for the checkList field.
+func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) CheckList(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta, error) {
+	if obj == nil {
+		return nil, errors.Newf("obj is nil")
+	}
+
+	return fn.JsonConvert[[]*model.GithubComKloudliteOperatorPkgOperatorCheckMeta](obj.CheckList)
+}
+
 // Checks is the resolver for the checks field.
 func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	if obj == nil {
