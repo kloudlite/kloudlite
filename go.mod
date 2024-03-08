@@ -42,7 +42,7 @@ require (
 
 require (
 	github.com/kloudlite/container-registry-authorizer v0.0.0-20231021122509-161dc30fde55
-	github.com/kloudlite/operator v1.0.4-0.20240305112630-9048b76e9997
+	github.com/kloudlite/operator v1.0.4-0.20240308095549-4095d51d810a
 	github.com/nats-io/nats.go v1.31.0
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
