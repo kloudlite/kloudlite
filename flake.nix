@@ -14,7 +14,8 @@
             allowUnfree = true;
           };
         };
-      in {
+      in
+      {
         devShells.default = pkgs.mkShell {
           # hardeningDisable = [ "all" ];
           buildInputs = with pkgs; [
@@ -38,6 +39,7 @@
             upx
 
             nmap
+            zx
 
             # # custom
             # packages.new-infra
