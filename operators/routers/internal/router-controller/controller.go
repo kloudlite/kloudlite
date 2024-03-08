@@ -57,6 +57,12 @@ const (
 	CheckHttpsCerteady string = "https-cert-ready"
 )
 
+var (
+	R_CHECKLIST = []rApi.CheckMeta{}
+
+	R_DESTROY_CHECKLIST = []rApi.CheckMeta{}
+)
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
@@ -82,6 +88,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureCheckList(R_CHECKLIST); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 

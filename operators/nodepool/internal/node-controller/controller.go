@@ -2,6 +2,7 @@ package node_controller
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/kloudlite/operator/operators/nodepool/internal/env"
@@ -45,6 +46,18 @@ const (
 
 	nodeFinalizer = "finalizers.kloudlite.io/node"
 	selfFinalizer = "kloudlite.io/node-controller-finalizer"
+
+	finalizingNode = "finalizing-node"
+)
+
+var (
+	N_CHECKLIST = []rApi.CheckMeta{
+		{Name: trackCorev1Node, Title: "Update node status"},
+	}
+
+	N_DESTROY_CHECKLIST = []rApi.CheckMeta{
+		{Name: finalizingNode, Title: "cleaning up resources"},
+	}
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -71,6 +84,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureCheckList(N_CHECKLIST); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(trackCorev1Node); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -89,7 +110,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	req.LogPreCheck(trackCorev1Node)
 	defer req.LogPostCheck(trackCorev1Node)
@@ -122,6 +143,8 @@ func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) 
 		}
 	}
 
+	check.State = rApi.RunningState
+	check.Status = true
 	if check != obj.Status.Checks[trackCorev1Node] {
 		obj.Status.Checks[trackCorev1Node] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -134,15 +157,20 @@ func (r *Reconciler) keepTrackOfCorev1Node(req *rApi.Request[*clustersv1.Node]) 
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "finalizing"
+	if !slices.Equal(obj.Status.CheckList, N_DESTROY_CHECKLIST) {
+		req.Object.Status.CheckList = N_DESTROY_CHECKLIST
+		if step := req.UpdateStatus(); !step.ShouldProceed() {
+			return step
+		}
+	}
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(finalizingNode)
+	defer req.LogPostCheck(finalizingNode)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(finalizingNode, check, err.Error())
 	}
 
 	// function-body

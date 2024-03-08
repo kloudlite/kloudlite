@@ -136,13 +136,38 @@ spec:
             type: object
           status:
             properties:
+              checkList:
+                items:
+                  properties:
+                    description:
+                      type: string
+                    name:
+                      type: string
+                    title:
+                      type: string
+                  required:
+                  - name
+                  - title
+                  type: object
+                type: array
               checks:
                 additionalProperties:
                   properties:
+                    debug:
+                      type: string
+                    error:
+                      type: string
                     generation:
                       format: int64
                       type: integer
+                    info:
+                      type: string
                     message:
+                      type: string
+                    startedAt:
+                      format: date-time
+                      type: string
+                    state:
                       type: string
                     status:
                       type: boolean

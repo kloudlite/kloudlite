@@ -3,6 +3,7 @@ package environment
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -42,6 +43,30 @@ func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
+const (
+	patchDefaults        string = "patch-defaults"
+	ensureNamespace      string = "ensure-namespace"
+	ensureNamespaceRBACs string = "ensure-namespace-rbac"
+	setupEnvIngress      string = "setup-env-ingress"
+	updateRouterIngress  string = "update-router-ingress"
+
+	envFinalizing string = "env-finalizing"
+)
+
+var (
+	ENV_CHECKLIST = []rApi.CheckMeta{
+		{Name: patchDefaults, Title: "Patching Defaults"},
+		{Name: ensureNamespace, Title: "Ensuring Namespace"},
+		{Name: ensureNamespaceRBACs, Title: "Ensuring Namespace RBACs"},
+		{Name: setupEnvIngress, Title: "Setting up Environment Ingress"},
+		{Name: updateRouterIngress, Title: "Updating Router Ingress"},
+	}
+
+	ENV_DESTROY_CHECKLIST = []rApi.CheckMeta{
+		{Name: envFinalizing, Title: "Finalizing Environment"},
+	}
+)
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/finalizers,verbs=update
@@ -63,6 +88,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureCheckList(ENV_CHECKLIST); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -100,15 +133,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "finalizing"
+	if !slices.Equal(obj.Status.CheckList, ENV_DESTROY_CHECKLIST) {
+		req.Object.Status.CheckList = ENV_DESTROY_CHECKLIST
+		if step := req.UpdateStatus(); !step.ShouldProceed() {
+			return step
+		}
+	}
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(envFinalizing)
+	defer req.LogPostCheck(envFinalizing)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error()).RequeueAfter(2 * time.Second) // during finalizing, there is no need to wait for changes to happen, we are doing aggressive polling
+		return req.CheckFailed(envFinalizing, check, err.Error()).RequeueAfter(2 * time.Second) // during finalizing, there is no need to wait for changes to happen, we are doing aggressive polling
 	}
 
 	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
@@ -194,8 +232,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[envFinalizing] {
+		fn.MapSet(&obj.Status.Checks, envFinalizing, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -206,15 +245,13 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Environment]) stepResult
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "patch-defaults"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(patchDefaults)
+	defer req.LogPostCheck(patchDefaults)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(patchDefaults, check, err.Error())
 	}
 
 	hasUpdated := false
@@ -248,8 +285,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[patchDefaults] {
+		fn.MapSet(&obj.Status.Checks, patchDefaults, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -260,14 +298,13 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Environment]) stepR
 
 func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-	checkName := "namespace"
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(ensureNamespace)
+	defer req.LogPostCheck(ensureNamespace)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(ensureNamespace, check, err.Error())
 	}
 
 	var project crdsv1.Project
@@ -296,8 +333,9 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[ensureNamespace] {
+		fn.MapSet(&obj.Status.Checks, ensureNamespace, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -307,15 +345,13 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Environment]) ste
 
 func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "namespace-rbac"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPreCheck(checkName)
+	req.LogPreCheck(ensureNamespaceRBACs)
+	defer req.LogPreCheck(ensureNamespaceRBACs)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(ensureNamespaceRBACs, check, err.Error())
 	}
 
 	var pullSecrets corev1.SecretList
@@ -348,8 +384,9 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[ensureNamespaceRBACs] {
+		fn.MapSet(&obj.Status.Checks, ensureNamespaceRBACs, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -360,15 +397,13 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Environment]
 
 func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "env-ingress-controller"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(setupEnvIngress)
+	defer req.LogPostCheck(setupEnvIngress)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(setupEnvIngress, check, err.Error())
 	}
 
 	// releaseName := fmt.Sprintf("%s-env-ingress-%s", obj.Spec.TargetNamespace, obj.Name)
@@ -411,8 +446,9 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[setupEnvIngress] {
+		fn.MapSet(&obj.Status.Checks, setupEnvIngress, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -423,15 +459,13 @@ func (r *Reconciler) setupEnvIngressController(req *rApi.Request[*crdsv1.Environ
 
 func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Environment]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "router-ingress-updates"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(updateRouterIngress)
+	defer req.LogPostCheck(updateRouterIngress)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(updateRouterIngress, check, err.Error())
 	}
 
 	var routers crdsv1.RouterList
@@ -459,8 +493,9 @@ func (r *Reconciler) updateRouterIngressClasses(req *rApi.Request[*crdsv1.Enviro
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[updateRouterIngress] {
+		fn.MapSet(&obj.Status.Checks, updateRouterIngress, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -61,6 +62,25 @@ const (
 	annNodepoolJobRef = "kloudlite.io/nodepool.job-ref"
 )
 
+const (
+	updateNodeTaintsAndLabels = "update-node-taints-and-labels"
+	ensureJobNamespaceRBACs   = "ensure-job-namespace-rbacs"
+	syncNodepool              = "sync-nodepool"
+
+	finalizeNodepool = "finalize-nodepool"
+)
+
+var (
+	NP_CHECKLIST = []rApi.CheckMeta{
+		{Name: updateNodeTaintsAndLabels, Title: "Update Node Taints and Labels"},
+		{Name: ensureJobNamespaceRBACs, Title: "Configure Job Namespace RBACs"},
+		{Name: syncNodepool, Title: "Syncing Nodepool"},
+	}
+	NP_DESTROY_CHECKLIST = []rApi.CheckMeta{
+		{Name: finalizeNodepool, Title: "Finalizing Nodepool"},
+	}
+)
+
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &clustersv1.NodePool{})
 	if err != nil {
@@ -89,6 +109,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureCheckList(NP_CHECKLIST); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(updateNodeTaintsAndLabels, ensureJobNamespaceRBACs, syncNodepool); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -111,15 +139,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "finalizing"
+	if !slices.Equal(obj.Status.CheckList, NP_DESTROY_CHECKLIST) {
+		req.Object.Status.CheckList = NP_DESTROY_CHECKLIST
+		if step := req.UpdateStatus(); !step.ShouldProceed() {
+			return step
+		}
+	}
 
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(finalizeNodepool)
+	defer req.LogPostCheck(finalizeNodepool)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(finalizeNodepool, check, err.Error())
 	}
 
 	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
@@ -171,6 +204,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 	}
 
 	check.Status = true
+	check.State = rApi.CompletedState
 	if check != obj.Status.Checks[checkName] {
 		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -183,15 +217,13 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) step
 
 func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "node-taints-and-labels"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(updateNodeTaintsAndLabels)
+	defer req.LogPostCheck(updateNodeTaintsAndLabels)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(updateNodeTaintsAndLabels, check, err.Error())
 	}
 
 	nodes, err := realNodesBelongingToNodepool(ctx, r.Client, obj.Name)
@@ -220,8 +252,9 @@ func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.Nod
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[updateNodeTaintsAndLabels] {
+		fn.MapSet(&obj.Status.Checks, updateNodeTaintsAndLabels, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -232,15 +265,13 @@ func (r *Reconciler) updateNodeTaintsAndLabels(req *rApi.Request[*clustersv1.Nod
 
 func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "nodepool-job-namespace"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(ensureJobNamespaceRBACs)
+	defer req.LogPostCheck(ensureJobNamespaceRBACs)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(ensureJobNamespaceRBACs, check, err.Error())
 	}
 
 	b, err := templates.ParseBytes(r.templateNamespaceRBAC, map[string]any{
@@ -256,8 +287,9 @@ func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodeP
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		fn.MapSet(&obj.Status.Checks, checkName, check)
+	check.State = rApi.CompletedState
+	if check != obj.Status.Checks[ensureJobNamespaceRBACs] {
+		fn.MapSet(&obj.Status.Checks, ensureJobNamespaceRBACs, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -268,15 +300,13 @@ func (r *Reconciler) ensureJobNamespaceRBACs(req *rApi.Request[*clustersv1.NodeP
 
 func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "sync-nodepool"
-
-	req.LogPreCheck(checkName)
-	defer req.LogPostCheck(checkName)
+	req.LogPreCheck(syncNodepool)
+	defer req.LogPostCheck(syncNodepool)
 
 	fail := func(err error) stepResult.Result {
-		return req.CheckFailed(checkName, check, err.Error())
+		return req.CheckFailed(syncNodepool, check, err.Error())
 	}
 
 	nodes, err := nodesBelongingToNodepool(ctx, r.Client, obj.Name)
@@ -394,12 +424,15 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	}
 
 	check.Status = jobSucceeded
+	check.State = rApi.CompletedState
 
 	if !check.Status {
+		check.State = rApi.ErroredState
 		check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
+		check.Error = check.Message
 	}
-	if check != obj.Status.Checks[checkName] {
-		obj.Status.Checks[checkName] = check
+	if check != obj.Status.Checks[syncNodepool] {
+		obj.Status.Checks[syncNodepool] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

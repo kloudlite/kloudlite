@@ -2,10 +2,12 @@ package account
 
 import (
 	"context"
+	"errors"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/account/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -77,13 +79,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) ensureAccountNamespace(req *rApi.Request[*crdsv1.Account]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	req.LogPreCheck(ensureAccountNamespace)
 	defer req.LogPostCheck(ensureAccountNamespace)
 
+	failed := func(err error) stepResult.Result {
+		check.State = rApi.ErroredState
+		return req.CheckFailed(ensureAccountNamespace, check, err.Error())
+	}
+
 	if obj.Spec.TargetNamespace == nil {
-		return req.CheckFailed(ensureAccountNamespace, check, ".spec.targetNamespace is nil, it must be non-nil")
+		return failed(errors.New(".spec.targetNamespace is nil, it must be non-nil"))
 	}
 
 	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.TargetNamespace}}
@@ -99,12 +106,14 @@ func (r *Reconciler) ensureAccountNamespace(req *rApi.Request[*crdsv1.Account]) 
 		ns.Annotations[constants.DescriptionKey] = "namespace to hold resources, only for account: " + obj.Name
 		return nil
 	}); err != nil {
-		req.CheckFailed(ensureAccountNamespace, check, err.Error())
+		return failed(err)
 	}
 
 	check.Status = true
+	check.State = rApi.CompletedState
+	check.Message = "namespace exists"
 	if check != obj.Status.Checks[ensureAccountNamespace] {
-		obj.Status.Checks[ensureAccountNamespace] = check
+		fn.MapSet(&obj.Status.Checks, ensureAccountNamespace, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}

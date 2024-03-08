@@ -220,3 +220,7 @@ func JsonConvert[T any](from any) (T, error) {
 	}
 	return to, nil
 }
+
+func Ptr[T any](v T) *T {
+	return &v
+}

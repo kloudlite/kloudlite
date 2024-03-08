@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -157,6 +158,18 @@ func (r *Request[T]) ShouldReconcile() bool {
 	return r.Object.GetLabels()[constants.ShouldReconcile] != "false"
 }
 
+func (r *Request[T]) EnsureCheckList(expected []CheckMeta) stepResult.Result {
+	if slices.Equal(expected, r.Object.GetStatus().CheckList) {
+		return stepResult.New().Continue(true)
+	}
+
+	r.Object.GetStatus().CheckList = expected
+	if err := r.client.Status().Update(r.ctx, r.Object); err != nil {
+		return stepResult.New().Err(err)
+	}
+	return stepResult.New().RequeueAfter(1 * time.Second)
+}
+
 func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 	obj, ctx, checks := r.Object, r.Context(), r.Object.GetStatus().Checks
 	nChecks := len(checks)
@@ -167,7 +180,9 @@ func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 
 	for i := range names {
 		if _, ok := checks[names[i]]; !ok {
-			checks[names[i]] = Check{}
+			checks[names[i]] = Check{
+				State: WaitingState,
+			}
 		}
 	}
 
@@ -268,9 +283,12 @@ func (r *Request[T]) EnsureFinalizers(finalizers ...string) stepResult.Result {
 func (r *Request[T]) CheckFailed(name string, check Check, msg string) stepResult.Result {
 	check.Status = false
 	check.Message = msg
+	check.Error = msg
+	check.State = ErroredState
 	if r.Object.GetStatus().Checks == nil {
 		r.Object.GetStatus().Checks = make(map[string]Check, 1)
 	}
+
 	r.Object.GetStatus().Checks[name] = check
 	r.Object.GetStatus().Message.Set(name, check.Message)
 	r.Object.GetStatus().IsReady = false
