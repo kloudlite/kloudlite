@@ -37,13 +37,25 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	CredsAvailable string = "creds-available"
+	// CredsAvailable string = "creds-available"
 
 	PVCReady     string = "pvc-ready"
 	JobCreated   string = "job-created"
 	JobCompleted string = "job-completed"
 	JobFailed    string = "job-failed"
 	JobDeleted   string = "job-deleted"
+)
+
+var (
+	B_CHECKLIST = []rApi.CheckMeta{
+		{Name: PVCReady, Title: "PVC ready for cache"},
+		{Name: JobCreated, Title: "Job created for build"},
+		{Name: JobCompleted, Title: "Job completed"},
+		// {Name: CredsAvailable, Title: "credentials available"},
+	}
+	B_DESTROY_CHECKLIST = []rApi.CheckMeta{
+		{Name: JobDeleted, Title: "Cleaning up resources"},
+	}
 )
 
 // +kubebuilder:rbac:groups=distribution.kloudlite.io,resources=devices,verbs=get;list;watch;create;update;patch;delete
@@ -70,7 +82,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(CredsAvailable, PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
+	if step := req.EnsureChecks(PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -100,7 +112,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(PVCReady, check, err.Error())
@@ -109,6 +121,8 @@ func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 	if obj.Spec.CacheKeyName == nil {
 		check.Status = true
 		check.Message = "no cache key name specified, so not required"
+		check.State = rApi.CompletedState
+		check.Info = check.Message
 		if check != obj.Status.Checks[PVCReady] {
 			fn.MapSet(&obj.Status.Checks, PVCReady, check)
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -127,6 +141,7 @@ func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 	}
 
 	check.Status = true
+	check.State = rApi.CompletedState
 	if check != obj.Status.Checks[PVCReady] {
 		fn.MapSet(&obj.Status.Checks, PVCReady, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -138,7 +153,7 @@ func (r *Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 
 func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(JobCreated, check, err.Error())
@@ -180,6 +195,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 	req.AddToOwnedResources(rr...)
 
 	check.Status = true
+	check.State = rApi.CompletedState
 	if check != obj.Status.Checks[JobCreated] {
 		fn.MapSet(&obj.Status.Checks, JobCreated, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -192,7 +208,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 
 func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(JobCompleted, check, err.Error())
@@ -213,6 +229,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 
 	if j.Status.Succeeded > 0 {
 		check.Status = true
+		check.State = rApi.CompletedState
 		if check != obj.Status.Checks[JobCompleted] {
 			fn.MapSet(&obj.Status.Checks, JobCompleted, check)
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -223,6 +240,9 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 
 	if j.Status.Failed > 0 {
 		check.Status = true
+		check.State = rApi.ErroredState
+		check.Error = "job failed, please check logs"
+		check.Message = "job failed, please check logs"
 		if check != obj.Status.Checks[JobFailed] {
 			fn.MapSet(&obj.Status.Checks, JobFailed, check)
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
@@ -236,7 +256,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 
 func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(JobDeleted, check, err.Error())

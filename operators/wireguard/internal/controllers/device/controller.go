@@ -1,12 +1,10 @@
 package device
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"net/http"
+	"slices"
 	"strings"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +51,7 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	NSReady        string = "namespace-ready"
+	// NSReady        string = "namespace-ready"
 	DnsConfigReady string = "dns-config-ready"
 
 	KeysAndSecretReady string = "keys-and-secret-ready"
@@ -63,6 +61,21 @@ const (
 	ServerReady        string = "server-ready"
 
 	DeviceDeleted string = "device-deleted"
+)
+
+var (
+	DEV_CHECKLIST = []rApi.CheckMeta{
+		{Name: ServerSvcReady, Title: "Ensuring server service is created"},
+		{Name: DnsConfigReady, Title: "Ensuring DNS config is ready"},
+		{Name: KeysAndSecretReady, Title: "Ensuring keys and secret are ready"},
+		{Name: ConfigReady, Title: "Ensuring device config is ready"},
+		{Name: ServicesSynced, Title: "Ensuring services are synced"},
+		{Name: ServerReady, Title: "Ensuring server is ready"},
+	}
+
+	DEV_DESTROY_CHECKLIST = []rApi.CheckMeta{
+		{Name: DeviceDeleted, Title: "Cleaning up device resources"},
+	}
 )
 
 // +kubebuilder:rbac:groups=wireguard.kloudlite.io,resources=devices,verbs=get;list;watch;create;update;patch;delete
@@ -79,6 +92,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
+
 		return ctrl.Result{}, nil
 	}
 
@@ -89,7 +103,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(NSReady, DnsConfigReady, KeysAndSecretReady, ConfigReady, ServerSvcReady, ServicesSynced, ServerReady, DeviceDeleted); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(DEV_CHECKLIST); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureChecks(DnsConfigReady, KeysAndSecretReady, ConfigReady, ServerSvcReady, ServicesSynced, ServerReady, DeviceDeleted); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -129,56 +147,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) rolloutWireguard(req *rApi.Request[*wgv1.Device]) error {
-	ctx, obj := req.Context(), req.Object
-	depName := fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)
-	deployment, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, depName), &appsv1.Deployment{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return err
-		}
-		return nil
-	}
-
-	if deployment.Spec.Template.Annotations == nil {
-		deployment.Spec.Template.Annotations = make(map[string]string, 1)
-	}
-	deployment.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
-
-	if err := r.Update(ctx, deployment); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *Reconciler) rolloutCoreDNS(req *rApi.Request[*wgv1.Device], corefileConfig string) error {
-	ctx, obj := req.Context(), req.Object
-
-	hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("http://%s.%s.svc.cluster.local:17171/resync", obj.Name, obj.Namespace), bytes.NewBuffer([]byte(corefileConfig)))
-	if err != nil {
-		return err
-	}
-
-	logger := r.logger.WithName("rollout-coredns")
-
-	logger.Infof("making request to resync coredns configuration")
-	resp, err := http.DefaultClient.Do(hreq)
-	if err != nil {
-		return err
-	}
-
-	logger.Infof("completed request to resync coredns configuration, with status code: %d", resp.StatusCode)
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status code, received: %d, corefile not synced", resp.StatusCode)
-	}
-
-	return nil
-}
-
 func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(DnsConfigReady, check, err.Error())
@@ -302,16 +273,20 @@ func (r *Reconciler) ensureDnsConfig(req *rApi.Request[*wgv1.Device]) stepResult
 	}
 
 	check.Status = true
-	if check != checks[DnsConfigReady] {
-		checks[DnsConfigReady] = check
-		req.UpdateStatus()
+	check.State = rApi.CompletedState
+	if check != req.Object.Status.Checks[DnsConfigReady] {
+		fn.MapSet(&req.Object.Status.Checks, DnsConfigReady, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(KeysAndSecretReady, check, err.Error())
 	}
@@ -322,8 +297,6 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	name := fmt.Sprint(DEVICE_KEY_PREFIX, obj.Name)
 
 	if err := func() error {
-		// body
-
 		if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, name), &corev1.Secret{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
@@ -379,112 +352,20 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	}
 
 	check.Status = true
-	if check != checks[KeysAndSecretReady] {
-		checks[KeysAndSecretReady] = check
-		req.UpdateStatus()
+	check.State = rApi.CompletedState
+	if check != req.Object.Status.Checks[KeysAndSecretReady] {
+		fn.MapSet(&req.Object.Status.Checks, KeysAndSecretReady, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
-func (r *Reconciler) generateDeviceConfig(req *rApi.Request[*wgv1.Device]) (devConfig []byte, serverConfig []byte, errr error) {
-	ctx, obj := req.Context(), req.Object
-
-	secName := fmt.Sprint(DEVICE_KEY_PREFIX, obj.Name)
-
-	if err := func() error {
-		wgService, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.Service{})
-		if err != nil {
-			return err
-		}
-
-		sec, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secName), &corev1.Secret{})
-		if err != nil {
-			return err
-		}
-
-		pub, priv, ip, err := parseDeviceSec(sec)
-		if err != nil {
-			return err
-		}
-
-		serverPublicKey, sPriv, sIp, err := parseServerSec(sec)
-		if err != nil {
-			return err
-		}
-
-		out, err := templates.Parse(templates.Wireguard.DeviceConfig, deviceConfig{
-			DeviceIp:        string(ip),
-			DevicePvtKey:    string(priv),
-			ServerPublicKey: string(serverPublicKey),
-			ServerEndpoint:  fmt.Sprintf("%s:%d", r.Env.DnsHostedZone, wgService.Spec.Ports[0].NodePort),
-			DNS:             "10.13.0.3",
-			PodCidr:         r.Env.ClusterPodCidr,
-			SvcCidr:         r.Env.ClusterServiceCidr,
-		})
-		if err != nil {
-			return err
-		}
-
-		// setting devConfig
-		devConfig = out
-
-		data := Data{
-			ServerIp:         string(sIp) + "/32",
-			ServerPrivateKey: string(sPriv),
-			DNS:              "127.0.0.1",
-			Peers: []Peer{
-				{
-					PublicKey:  string(pub),
-					AllowedIps: string(ip),
-				},
-			},
-		}
-
-		conf, err := templates.Parse(templates.Wireguard.Config, data)
-		if err != nil {
-			return err
-		}
-
-		serverConfig = conf
-		return nil
-	}(); err != nil {
-		return nil, nil, err
-	}
-
-	return devConfig, serverConfig, nil
-}
-
-func (r *Reconciler) applyDeviceConfig(req *rApi.Request[*wgv1.Device], deviceConfig []byte, serverConfig []byte) error {
-	ctx, obj := req.Context(), req.Object
-	configName := fmt.Sprint(DEVICE_CONFIG_PREFIX, obj.Name)
-
-	if err := fn.KubectlApply(ctx, r.Client, &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: configName, Namespace: obj.Namespace,
-			Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
-			OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		},
-		Data: map[string][]byte{"config": deviceConfig, "server-config": serverConfig, "sysctl": []byte(`
-net.ipv4.ip_forward=1
-				`)},
-	}); err != nil {
-		return err
-	}
-
-	if err := r.rolloutWireguard(req); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(ServerSvcReady, check, err.Error())
 	}
@@ -517,16 +398,21 @@ func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResul
 	}
 
 	check.Status = true
-	if check != checks[ServerSvcReady] {
-		checks[ServerSvcReady] = check
+	check.State = rApi.CompletedState
+	if check != req.Object.Status.Checks[ServerSvcReady] {
+		fn.MapSet(&req.Object.Status.Checks, ServerSvcReady, check)
 		req.UpdateStatus()
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{
+		Generation: obj.Generation,
+		State:      rApi.RunningState,
+	}
+
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(ConfigReady, check, err.Error())
 	}
@@ -557,8 +443,9 @@ func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	}
 
 	check.Status = true
-	if check != checks[ConfigReady] {
-		checks[ConfigReady] = check
+	check.State = rApi.CompletedState
+	if check != req.Object.Status.Checks[ConfigReady] {
+		fn.MapSet(&req.Object.Status.Checks, ConfigReady, check)
 		return req.UpdateStatus()
 	}
 
@@ -566,8 +453,8 @@ func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Re
 }
 
 func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
 	req.LogPreCheck(ServicesSynced)
 	defer req.LogPostCheck(ServicesSynced)
@@ -727,17 +614,21 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 	}
 
 	check.Status = true
-	if check != checks[ServicesSynced] {
-		checks[ServicesSynced] = check
-		return req.UpdateStatus()
+	check.State = rApi.CompletedState
+	if check != req.Object.Status.Checks[ServicesSynced] {
+		fn.MapSet(&req.Object.Status.Checks, ServicesSynced, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
 }
 
 func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(ServerReady, check, err.Error())
 	}
@@ -784,18 +675,28 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	}
 
 	check.Status = true
-	if check != checks[ServerReady] {
-		checks[ServerReady] = check
-		return req.UpdateStatus()
+	if check != req.Object.Status.Checks[ServerReady] {
+		fn.MapSet(&req.Object.Status.Checks, ServerReady, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	if !slices.Equal(obj.Status.CheckList, DEV_DESTROY_CHECKLIST) {
+		req.Object.Status.CheckList = DEV_DESTROY_CHECKLIST
+		if step := req.UpdateStatus(); !step.ShouldProceed() {
+			return step
+		}
+	}
 
 	failed := func(err error) stepResult.Result {
+		check.State = rApi.ErroredState
 		return req.CheckFailed(DeviceDeleted, check, err.Error())
 	}
 
