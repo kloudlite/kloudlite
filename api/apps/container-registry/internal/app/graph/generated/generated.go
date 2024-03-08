@@ -356,8 +356,8 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___pkg___operator__CheckMeta struct {
 		Description func(childComplexity int) int
-		DisplayName func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Title       func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___pkg___operator__ResourceRef struct {
@@ -1942,19 +1942,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Description(childComplexity), true
 
-	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.displayName":
-		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.DisplayName == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.DisplayName(childComplexity), true
-
 	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.name":
 		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Name == nil {
 			break
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Name(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__CheckMeta.title":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Title == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__CheckMeta.Title(childComplexity), true
 
 	case "Github__com___kloudlite___operator___pkg___operator__ResourceRef.apiVersion":
 		if e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.APIVersion == nil {
@@ -3214,8 +3214,8 @@ type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
 
 type Github__com___kloudlite___operator___pkg___operator__CheckMeta @shareable {
   description: String
-  displayName: String!
   name: String!
+  title: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
@@ -3318,8 +3318,8 @@ input Github__com___kloudlite___operator___pkg___operator__CheckIn {
 
 input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
   description: String
-  displayName: String!
   name: String!
+  title: String!
 }
 
 input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
@@ -12742,50 +12742,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_displayName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_displayName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
 	if err != nil {
@@ -12818,6 +12774,50 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 }
 
 func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgOperatorCheckMeta) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Github__com___kloudlite___operator___pkg___operator__CheckMeta",
 		Field:      field,
@@ -13044,10 +13044,10 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 			switch field.Name {
 			case "description":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field)
-			case "displayName":
-				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_displayName(ctx, field)
 			case "name":
 				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field)
+			case "title":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__CheckMeta", field.Name)
 		},
@@ -21415,7 +21415,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"description", "displayName", "name"}
+	fieldsInOrder := [...]string{"description", "name", "title"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21430,19 +21430,19 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___p
 			if err != nil {
 				return it, err
 			}
-		case "displayName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
-			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -24079,16 +24079,16 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_description(ctx, field, obj)
 
-		case "displayName":
+		case "name":
 
-			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_displayName(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "name":
+		case "title":
 
-			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_name(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__CheckMeta_title(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
