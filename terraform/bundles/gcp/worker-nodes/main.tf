@@ -27,6 +27,8 @@ locals {
   k3s_worker_tags = ["${var.name_prefix}-k3s-worker"]
 }
 
+data "google_compute_default_service_account" "default" {}
+
 module "worker-nodes-firewall" {
   source = "../../../modules/gcp/firewall"
 
@@ -43,11 +45,16 @@ module "worker-nodes" {
 
   for_each = {for name, cfg in var.nodes : name => cfg}
 
-  machine_type      = var.machine_type
+  machine_type    = var.machine_type
+  service_account = {
+    email  = data.google_compute_default_service_account.default.email
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
   name              = "${var.name_prefix}-${each.key}"
   provision_mode    = var.provision_mode
   ssh_key           = module.ssh-rsa-key.public_key
   availability_zone = var.availability_zone
+
 
   tags = concat(flatten([for k, v in var.tags : [k, v]]), local.k3s_worker_tags)
 

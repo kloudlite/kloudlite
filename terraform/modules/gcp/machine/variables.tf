@@ -26,6 +26,14 @@ variable "machine_type" {
   description = "machine type"
 }
 
+variable "service_account" {
+  type = object({
+    email  = string
+    scopes = list(string)
+  })
+  default = null
+}
+
 variable "startup_script" {
   type        = string
   description = "startup script"

@@ -93,6 +93,14 @@ resource "google_compute_instance" "standard" {
       metadata_startup_script
     ]
   }
+
+  dynamic "service_account" {
+    for_each = {for k, v in (var.service_account != null? [var.service_account] : []) : k => v}
+    content {
+      email  = service_account.value.email
+      scopes = service_account.value.scopes
+    }
+  }
 }
 
 resource "google_compute_instance" "spot" {
@@ -104,11 +112,15 @@ resource "google_compute_instance" "spot" {
 
   tags = local.tags
 
-  metadata_startup_script = var.startup_script
+  metadata_startup_script = <<EOMSS
+  mkdir -p /tmp/preemption # needed for preemption handlers to work
+  ${var.startup_script}
+  EOMSS
 
   metadata = {
     block-project-ssh-keys = "TRUE"
     enable-oslogin         = "TRUE"
+    shutdown-script        = "#! /usr/bin/env bash touch /tmp/preemption/about-to-be-deleted"
   }
 
   boot_disk {
@@ -130,5 +142,13 @@ resource "google_compute_instance" "spot" {
     automatic_restart           = false
     provisioning_model          = local.PROVISION_SPOT
     instance_termination_action = "DELETE"
+  }
+
+  dynamic "service_account" {
+    for_each = {for k, v in (var.service_account != null? [var.service_account] : []) : k => v}
+    content {
+      email  = service_account.value.email
+      scopes = service_account.value.scopes
+    }
   }
 }
