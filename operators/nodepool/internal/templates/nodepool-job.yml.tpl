@@ -22,6 +22,8 @@
 
 {{- $valuesJson := get . "values.json" }} 
 
+{{- $cloudprovider := get . "cloudprovider" }}
+
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -70,7 +72,15 @@ spec:
 
             eval $DECOMPRESS_CMD
 
-            pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-workers"
+            tdir=""
+            if [ "{{$cloudprovider}}" = "aws" ]; then
+              tdir="$TEMPLATES_DIR/kl-target-cluster-aws-only-workers"
+            fi
+            if [ "{{$cloudprovider}}" = "gcp" ]; then
+              tdir="$TEMPLATES_DIR/gcp/worker-nodes"
+            fi
+
+            pushd "$tdir"
 
             envsubst < state-backend.tf.tpl > state-backend.tf
 
