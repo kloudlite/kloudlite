@@ -2,7 +2,6 @@ package nodepool_controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -378,7 +377,8 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 
 			"iac-job-image": r.Env.IACJobImage,
 
-			"values.json": string(varfileJson),
+			"values.json":   string(varfileJson),
+			"cloudprovider": obj.Spec.CloudProvider,
 		})
 		if err != nil {
 			return fail(err).Err(nil)
@@ -445,105 +445,6 @@ func (r *Reconciler) syncNodepool(req *rApi.Request[*clustersv1.NodePool]) stepR
 	return req.Next()
 }
 
-func (r *Reconciler) toAWSVarfileJson(obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps) (string, error) {
-	if obj.Spec.AWS == nil {
-		return "", fmt.Errorf(".spec.aws is nil")
-	}
-
-	// ec2Nodepools := make(map[string]any, 1)
-	// spotNodepools := make(map[string]any, 1)
-
-	ec2Nodepool := map[string]any{}
-	spotNodepool := map[string]any{}
-
-	switch obj.Spec.AWS.PoolType {
-	case clustersv1.AWSPoolTypeEC2:
-		{
-			ec2Nodepool = map[string]any{
-				"root_volume_type": obj.Spec.AWS.RootVolumeType,
-				"root_volume_size": obj.Spec.AWS.RootVolumeSize,
-				"instance_type":    obj.Spec.AWS.EC2Pool.InstanceType,
-				"nodes":            nodesMap,
-			}
-			spotNodepool = nil
-		}
-	case clustersv1.AWSPoolTypeSpot:
-		{
-			if obj.Spec.AWS.SpotPool == nil {
-				return "", fmt.Errorf(".spec.aws.spotPool is nil")
-			}
-
-			spotNodepool = map[string]any{
-				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
-				"root_volume_size":             obj.Spec.AWS.RootVolumeSize,
-				"spot_fleet_tagging_role_name": obj.Spec.AWS.SpotPool.SpotFleetTaggingRoleName,
-				"cpu_node": func() map[string]any {
-					if obj.Spec.AWS.SpotPool.CpuNode == nil {
-						return nil
-					}
-					return map[string]any{
-						"vcpu": map[string]any{
-							"min": obj.Spec.AWS.SpotPool.CpuNode.VCpu.Min,
-							"max": obj.Spec.AWS.SpotPool.CpuNode.VCpu.Max,
-						},
-						"memory_per_vcpu": map[string]any{
-							"min": obj.Spec.AWS.SpotPool.CpuNode.MemoryPerVCpu.Min,
-							"max": obj.Spec.AWS.SpotPool.CpuNode.MemoryPerVCpu.Max,
-						},
-					}
-				}(),
-				"gpu_node": func() map[string]any {
-					if obj.Spec.AWS.SpotPool.GpuNode == nil {
-						return nil
-					}
-
-					return map[string]any{
-						"instance_types": obj.Spec.AWS.SpotPool.GpuNode.InstanceTypes,
-					}
-				}(),
-				"nodes": nodesMap,
-			}
-			ec2Nodepool = nil
-		}
-	}
-
-	variables := map[string]any{
-		// INFO: there will be no aws_access_key, aws_secret_key thing, as we expect this autoscaler to run on AWS instances configured with proper IAM instance profile
-		// "aws_access_key":             nil,
-		// "aws_secret_key":             nil,
-		"aws_region":                 r.Env.CloudProviderRegion,
-		"tracker_id":                 fmt.Sprintf("cluster-%s", r.Env.ClusterName),
-		"nodepool_name":              obj.Name,
-		"k3s_join_token":             r.Env.K3sJoinToken,
-		"k3s_server_public_dns_host": r.Env.K3sServerPublicHost,
-
-		"vpc_id":        obj.Spec.AWS.VPCId,
-		"vpc_subnet_id": obj.Spec.AWS.VPCSubnetID,
-
-		"availability_zone":    obj.Spec.AWS.AvailabilityZone,
-		"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
-		"iam_instance_profile": obj.Spec.AWS.IAMInstanceProfileRole,
-
-		"ec2_nodepool":  ec2Nodepool,
-		"spot_nodepool": spotNodepool,
-
-		"extra_agent_args":     []string{"--snapshotter", "stargz"},
-		"save_ssh_key_to_path": "",
-		"tags": map[string]string{
-			"kloudlite-account": r.Env.AccountName,
-			"kloudlite-cluster": r.Env.ClusterName,
-		},
-		"kloudlite_release": r.Env.KloudliteRelease,
-	}
-
-	b, err := json.Marshal(variables)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), nil
-}
-
 // func (r *Reconciler) getAccessAndSecretKey(ctx context.Context, obj *clustersv1.NodePool) (accessKey string, secretKey string, err error) {
 // 	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.AccessKey.Namespace, obj.Spec.IAC.AccessKey.Name), &corev1.Secret{})
 // 	if err != nil {
@@ -570,7 +471,10 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
-		return r.toAWSVarfileJson(obj, nodesMap)
+		return r.AwsJobValuesJson(obj, nodesMap)
+		// return r.toAWSVarfileJson(obj, nodesMap)
+	case ct.CloudProviderGCP:
+		return r.GCPJobValuesJson(obj, nodesMap)
 	default:
 		return "", fmt.Errorf("unsupported cloud provider: %s", obj.Spec.CloudProvider)
 	}

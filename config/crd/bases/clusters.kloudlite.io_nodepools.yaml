@@ -156,6 +156,51 @@ spec:
                 - azure
                 - gcp
                 type: string
+              gcp:
+                properties:
+                  availabilityZone:
+                    type: string
+                  bootVolumeSize:
+                    type: integer
+                  bootVolumeType:
+                    type: string
+                  credentials:
+                    description: this secret's `.data` will be unmarshaled into type
+                      `GCPCredentials`
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  machineType:
+                    type: string
+                  nodes:
+                    additionalProperties:
+                      properties:
+                        lastRecreatedAt:
+                          format: date-time
+                          type: string
+                      type: object
+                    type: object
+                  poolType:
+                    enum:
+                    - STANDARD
+                    - SPOT
+                    type: string
+                  region:
+                    type: string
+                required:
+                - availabilityZone
+                - bootVolumeSize
+                - bootVolumeType
+                - credentials
+                - machineType
+                - poolType
+                - region
+                type: object
               maxCount:
                 minimum: 0
                 type: integer
