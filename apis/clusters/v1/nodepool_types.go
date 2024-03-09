@@ -19,6 +19,14 @@ const (
 	AWSPoolTypeSpot AWSPoolType = "spot"
 )
 
+// +kubebuilder:validation:Enum=STANDARD;SPOT;
+type GCPPoolType string
+
+const (
+	GCPPoolTypeStandard GCPPoolType = "STANDARD"
+	GCPPoolTypeSpot     GCPPoolType = "SPOT"
+)
+
 type AwsEC2PoolConfig struct {
 	InstanceType string               `json:"instanceType"`
 	Nodes        map[string]NodeProps `json:"nodes,omitempty"`
@@ -53,6 +61,27 @@ type AWSNodePoolConfig struct {
 	SpotPool *AwsSpotPoolConfig `json:"spotPool,omitempty"`
 }
 
+type GCPCredentials struct {
+	ProjectID          string `json:"projectID"`
+	ServiceAccountJSON string `json:"serviceAccountJSON"`
+}
+
+type GCPNodePoolConfig struct {
+	Region           string `json:"region"`
+	AvailabilityZone string `json:"availabilityZone"`
+
+	// this secret's `.data` will be unmarshaled into type `GCPCredentials`
+	Credentials ct.SecretRef `json:"credentials"`
+
+	PoolType GCPPoolType `json:"poolType"`
+
+	MachineType    string `json:"machineType"`
+	BootVolumeType string `json:"bootVolumeType"`
+	BootVolumeSize int    `json:"bootVolumeSize"`
+
+	Nodes map[string]NodeProps `json:"nodes,omitempty"`
+}
+
 type Credentials struct {
 	AccessKey ct.SecretKeyRef `json:"accessKey"`
 	SecretKey ct.SecretKeyRef `json:"secretKey"`
@@ -75,7 +104,7 @@ type NodePoolSpec struct {
 	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	AWS *AWSNodePoolConfig `json:"aws,omitempty"`
-	// GCP *GCPNodePoolConfig `json:"gcp,omitempty"`
+	GCP *GCPNodePoolConfig `json:"gcp,omitempty"`
 	// Azure *AzureNodePoolConfig `json:"azure,omitempty"`
 	// DigitalOcean *DigitalOceanNodePoolConfig `json:"digitalocean,omitempty"`
 }
