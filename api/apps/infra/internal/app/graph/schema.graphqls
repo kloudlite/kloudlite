@@ -86,6 +86,8 @@ type Query {
     infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
 
+    # infra_getAwsCloudformationStackURL: String
+
     infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
     infra_listClusterManagedServices(clusterName: String!, search: SearchClusterManagedService, pagination: CursorPaginationIn): ClusterManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccount

@@ -67,7 +67,7 @@ query: |
     }
   }
 variables:
-  code: "**************"
+  code: "8f8d545cf4ca374813e8"
   provider: github
   state: "************"
 ---

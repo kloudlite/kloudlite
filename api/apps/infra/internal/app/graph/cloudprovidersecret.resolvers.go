@@ -12,7 +12,6 @@ import (
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/infra/internal/app/graph/model"
 	"github.com/kloudlite/api/apps/infra/internal/entities"
-	"github.com/kloudlite/api/cmd/struct-to-graphql/pkg/parser"
 	fn "github.com/kloudlite/api/pkg/functions"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,16 +22,8 @@ func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.Clo
 	if obj == nil || obj.CreationTime.IsZero() {
 		return nil, errors.Newf("CloudProviderSecret object is nil")
 	}
-	return &model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials{
-		AccessKey:                  obj.AWS.AccessKey,
-		AwsAccountID:               obj.AWS.AWSAccountId,
-		CfParamExternalID:          &obj.AWS.CfParamExternalID,
-		CfParamInstanceProfileName: &obj.AWS.CfParamInstanceProfileName,
-		CfParamRoleName:            &obj.AWS.CfParamRoleName,
-		CfParamStackName:           &obj.AWS.CfParamStackName,
-		CfParamTrustedArn:          &obj.AWS.CfParamTrustedARN,
-		SecretKey:                  obj.AWS.SecretKey,
-	}, nil
+
+	return fn.JsonConvertP[model.GithubComKloudliteAPIAppsInfraInternalEntitiesAWSSecretCredentials](obj.AWS)
 }
 
 // CloudProviderName is the resolver for the cloudProviderName field.
@@ -76,7 +67,8 @@ func (r *cloudProviderSecretInResolver) CloudProviderName(ctx context.Context, o
 	if !data.IsValid() {
 		return errors.Newf("invalid cloud provider name")
 	}
-	obj.CloudProviderName = ct.CloudProvider(parser.RestoreSanitizedPackagePath(data.String()))
+	// obj.CloudProviderName = ct.CloudProvider(parser.RestoreSanitizedPackagePath(data.String()))
+	obj.CloudProviderName = ct.CloudProvider(data)
 	return nil
 }
 
