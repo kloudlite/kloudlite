@@ -38,14 +38,14 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool e
 		return nil, errors.NewE(err)
 	}
 
-	ps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
 	switch nodepool.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
+
+			ps, err := d.findProviderSecret(ctx, cluster.Spec.AWS.Credentials.SecretRef.Name)
+			if err != nil {
+				return nil, errors.NewE(err)
+			}
 
 			awsSubnetID := cluster.Spec.AWS.VPC.GetSubnetId(nodepool.Spec.AWS.AvailabilityZone)
 			if awsSubnetID == "" {
