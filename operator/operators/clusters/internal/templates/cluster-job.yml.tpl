@@ -93,11 +93,11 @@ spec:
 
             if [ "{{$action}}" = "delete" ]; then
               {{- /* terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log */}}
-              terraform plan --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
+              terraform plan -parallelism=2 --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
               terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
               kubectl delete secret/{{$kubeconfigSecretName}} -n {{$kubeconfigSecretNamespace}} --ignore-not-found=true
             else
-              terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
+              terraform plan -parallelism=2 -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
 
               terraform state pull | jq '.outputs' -r > outputs.json

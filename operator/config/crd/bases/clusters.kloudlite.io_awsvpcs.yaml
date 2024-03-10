@@ -53,36 +53,25 @@ spec:
             properties:
               cidr:
                 type: string
-              credentialKeys:
+              credentials:
+                description: When - AuthMechanism == "secret_keys", Secret is unmarshalled
+                  as `AwsAuthSecretKeys` - AuthMechanism == "assume_role", Secret
+                  is unmarshalled as `AwsAssumeRoleParams`
                 properties:
-                  keyAWSAccountId:
+                  authMechanism:
                     type: string
-                  keyAWSAssumeRoleExternalID:
-                    type: string
-                  keyAWSAssumeRoleRoleARN:
-                    type: string
-                  keyAccessKey:
-                    type: string
-                  keyIAMInstanceProfileRole:
-                    type: string
-                  keySecretKey:
-                    type: string
+                  secretRef:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    type: object
                 required:
-                - keyAWSAccountId
-                - keyAWSAssumeRoleExternalID
-                - keyAWSAssumeRoleRoleARN
-                - keyAccessKey
-                - keyIAMInstanceProfileRole
-                - keySecretKey
-                type: object
-              credentialsRef:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
+                - authMechanism
+                - secretRef
                 type: object
               output:
                 properties:
@@ -109,8 +98,7 @@ spec:
                 description: Region AwsAZ `json:"region"`
                 type: string
             required:
-            - credentialKeys
-            - credentialsRef
+            - credentials
             - region
             type: object
           status:

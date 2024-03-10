@@ -1,15 +1,15 @@
 package v1
 
 import (
-	common_types "github.com/kloudlite/operator/apis/common-types"
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type AwsSpotCpuNode struct {
-	VCpu          common_types.MinMaxFloat `json:"vcpu"`
-	MemoryPerVCpu common_types.MinMaxFloat `json:"memoryPerVcpu,omitempty"`
+	VCpu          ct.MinMaxFloat `json:"vcpu"`
+	MemoryPerVCpu ct.MinMaxFloat `json:"memoryPerVcpu,omitempty"`
 }
 
 type AwsSpotGpuNode struct {
@@ -57,7 +57,36 @@ type AwsVPCParams struct {
 	PublicSubnets []AwsSubnetWithID `json:"publicSubnets"`
 }
 
+type AwsAuthMechanism string
+
+const (
+	AwsAuthMechanismSecretKeys AwsAuthMechanism = "secret_keys"
+	AwsAuthMechanismAssumeRole AwsAuthMechanism = "assume_role"
+)
+
+type AwsAuthSecretKeys struct {
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+}
+
+type AwsAssumeRoleParams struct {
+	RoleARN    string `json:"roleARN" graphql:"noinput"`
+	ExternalID string `json:"externalID" graphql:"noinput"`
+}
+
+/*
+When
+  - AuthMechanism == "secret_keys", Secret is unmarshalled as `AwsAuthSecretKeys`
+  - AuthMechanism == "assume_role", Secret is unmarshalled as `AwsAssumeRoleParams`
+*/
+type AwsCredentials struct {
+	AuthMechanism AwsAuthMechanism `json:"authMechanism"`
+	SecretRef     ct.SecretRef     `json:"secretRef"`
+}
+
 type AWSClusterConfig struct {
+	Credentials AwsCredentials `json:"credentials"`
+
 	VPC *AwsVPCParams `json:"vpc,omitempty" graphql:"noinput"`
 
 	// Region     AwsRegion           `json:"region"`
@@ -104,11 +133,9 @@ type ClusterOutput struct {
 // ClusterSpec defines the desired state of Cluster
 // For now considered basis on AWS Specific
 type ClusterSpec struct {
-	AccountName     string                       `json:"accountName" graphql:"noinput"`
-	AccountId       string                       `json:"accountId" graphql:"noinput"`
-	ClusterTokenRef common_types.SecretKeyRef    `json:"clusterTokenRef,omitempty" graphql:"noinput"`
-	CredentialsRef  common_types.SecretRef       `json:"credentialsRef"`
-	CredentialKeys  *CloudProviderCredentialKeys `json:"credentialKeys,omitempty" graphql:"noinput"`
+	AccountName     string          `json:"accountName" graphql:"noinput"`
+	AccountId       string          `json:"accountId" graphql:"noinput"`
+	ClusterTokenRef ct.SecretKeyRef `json:"clusterTokenRef,omitempty" graphql:"noinput"`
 
 	// +kubebuilder:validation:Enum=dev;HA
 	AvailabilityMode string `json:"availabilityMode" graphql:"enum=dev;HA"`
@@ -120,7 +147,7 @@ type ClusterSpec struct {
 	CloudflareEnabled      *bool   `json:"cloudflareEnabled,omitempty"`
 
 	// +kubebuilder:validation:Enum=aws;do;gcp;azure
-	CloudProvider common_types.CloudProvider `json:"cloudProvider"`
+	CloudProvider ct.CloudProvider `json:"cloudProvider"`
 
 	AWS *AWSClusterConfig `json:"aws,omitempty"`
 
