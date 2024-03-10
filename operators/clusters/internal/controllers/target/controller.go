@@ -13,6 +13,7 @@ import (
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/operators/clusters/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -265,6 +266,10 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
+			if obj.Spec.AWS == nil {
+				return fail(fmt.Errorf(".spec.aws must be set when cloudprovider is aws"))
+			}
+
 			if obj.Spec.AWS.VPC == nil {
 				namespace := obj.Namespace
 				name := fmt.Sprintf("vpc-%s", obj.Spec.AWS.Region)
@@ -284,9 +289,8 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 							Namespace: namespace,
 						},
 						Spec: clustersv1.AwsVPCSpec{
-							CredentialsRef: obj.Spec.CredentialsRef,
-							CredentialKeys: *obj.Spec.CredentialKeys,
-							Region:         obj.Spec.AWS.Region,
+							Credentials: obj.Spec.AWS.Credentials,
+							Region:      obj.Spec.AWS.Region,
 						},
 					}
 					if err := r.Create(ctx, awsvpc); err != nil {
@@ -346,11 +350,7 @@ func (r *ClusterReconciler) ensureCloudproviderStuffs(req *rApi.Request[*cluster
 	return req.Next()
 }
 
-func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, providerCreds *corev1.Secret) (string, error) {
-	if providerCreds == nil {
-		return "", fmt.Errorf("providerCreds is nil")
-	}
-
+func (r *ClusterReconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.Cluster) (string, error) {
 	clusterTokenScrt := &corev1.Secret{}
 	if err := r.Get(context.TODO(), fn.NN(obj.Namespace, obj.Spec.ClusterTokenRef.Name), clusterTokenScrt); err != nil {
 		clusterTokenScrt = nil
@@ -360,46 +360,51 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 	switch obj.Spec.CloudProvider {
 	case ct.CloudProviderAWS:
 		{
+
 			if obj.Spec.AWS == nil {
 				return "", fmt.Errorf("when cloudprovider is set to aws, aws config must be provided")
+			}
+
+			credsSecret := &corev1.Secret{}
+			if err := r.Get(ctx, fn.NN(obj.Spec.AWS.Credentials.SecretRef.Namespace, obj.Spec.AWS.Credentials.SecretRef.Name), credsSecret); err != nil {
+				return "", errors.NewEf(err, "failed to get aws credentials")
 			}
 
 			if obj.Spec.AWS.VPC == nil {
 				return "", fmt.Errorf(".spec.aws.vpc must be provided")
 			}
 
-			isAssumeRole := providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey] == nil || providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey] == nil
 			azToSubnetId := make(map[string]string, len(obj.Spec.AWS.VPC.PublicSubnets))
 			for _, v := range obj.Spec.AWS.VPC.PublicSubnets {
 				azToSubnetId[v.AvailabilityZone] = v.ID
 			}
 
-			valuesBytes, err := json.Marshal(map[string]any{
-				"tracker_id": fmt.Sprintf("cluster-%s", obj.Name),
-				"aws_region": obj.Spec.AWS.Region,
-				"aws_access_key": func() string {
-					if !isAssumeRole {
-						return string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey])
-					}
-					return r.Env.KlAwsAccessKey
-				}(),
-				"aws_secret_key": func() string {
-					if !isAssumeRole {
-						return string(providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey])
-					}
-					return r.Env.KlAwsSecretKey
-				}(),
-				"aws_assume_role": func() map[string]any {
-					if !isAssumeRole {
-						return nil
-					}
-					return map[string]any{
-						"enabled":     true,
-						"role_arn":    string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
-						"external_id": string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
-					}
-				}(),
+			values := map[string]any{
+				// "aws_access_key": func() string {
+				// 	if !isAssumeRole {
+				// 		return string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey])
+				// 	}
+				// 	return r.Env.KlAwsAccessKey
+				// }(),
+				// "aws_secret_key": func() string {
+				// 	if !isAssumeRole {
+				// 		return string(providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey])
+				// 	}
+				// 	return r.Env.KlAwsSecretKey
+				// }(),
+				// "aws_assume_role": func() map[string]any {
+				// 	if !isAssumeRole {
+				// 		return nil
+				// 	}
+				// 	return map[string]any{
+				// 		"enabled":     true,
+				// 		"role_arn":    string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
+				// 		"external_id": string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
+				// 	}
+				// }(),
 
+				"aws_region":                obj.Spec.AWS.Region,
+				"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
 				"enable_nvidia_gpu_support": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
 
 				"vpc_id": obj.Spec.AWS.VPC.ID,
@@ -460,7 +465,40 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, prov
 						"message_office_grpc_addr": r.Env.MessageOfficeGRPCAddr,
 					},
 				},
-			})
+			}
+
+			switch obj.Spec.AWS.Credentials.AuthMechanism {
+			case clustersv1.AwsAuthMechanismSecretKeys:
+				{
+					awscreds, err := fn.ParseFromSecret[clustersv1.AwsAuthSecretKeys](credsSecret)
+					if err != nil {
+						return "", err
+					}
+
+					values["aws_access_key"] = awscreds.AccessKey
+					values["aws_secret_key"] = awscreds.SecretKey
+					values["aws_assume_role"] = map[string]any{
+						"enabled": false,
+					}
+				}
+			case clustersv1.AwsAuthMechanismAssumeRole:
+				{
+					awscreds, err := fn.ParseFromSecret[clustersv1.AwsAssumeRoleParams](credsSecret)
+					if err != nil {
+						return "", err
+					}
+
+					values["aws_access_key"] = r.Env.KlAwsAccessKey
+					values["aws_secret_key"] = r.Env.KlAwsSecretKey
+					values["aws_assume_role"] = map[string]any{
+						"enabled":     true,
+						"role_arn":    awscreds.RoleARN,
+						"external_id": awscreds.ExternalID,
+					}
+				}
+			}
+
+			valuesBytes, err := json.Marshal(values)
 			if err != nil {
 				return "", err
 			}
@@ -490,12 +528,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	}
 
 	if job == nil {
-		credsSecret := &corev1.Secret{}
-		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error())
-		}
-
-		valuesJson, err := r.parseSpecToVarFileJson(obj, credsSecret)
+		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
 		if err != nil {
 			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
 		}
@@ -601,12 +634,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	}
 
 	if job == nil {
-		credsSecret := &corev1.Secret{}
-		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
-			return fail(err).Err(nil)
-		}
-
-		valuesJson, err := r.parseSpecToVarFileJson(obj, credsSecret)
+		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
 		if err != nil {
 			return fail(err).Err(nil)
 		}

@@ -93,9 +93,9 @@ spec:
             
             terraform init -no-color 2>&1 | tee /dev/termination-log
             if [ "{{$action}}" = "apply" ]; then
-              terraform plan --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
+              terraform plan -parallelism=2 --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
             else
-              terraform plan --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
+              terraform plan -parallelism=2 --destroy --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
             fi
             
             terraform apply -parallelism=2 -no-color tfplan 2>&1 | tee /dev/termination-log
