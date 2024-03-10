@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from '@remix-run/react';
-import { PasswordInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -29,42 +28,12 @@ const NewCloudProvider = () => {
       displayName: '',
       name: '',
       provider: providers[0].value,
-      accessKey: '',
-      secretKey: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
       provider: Yup.string().required(),
-      accessKey: Yup.string().test(
-        'provider',
-        'access key is required',
-        function (item) {
-          return (
-            // @ts-ignores
-            // eslint-disable-next-line react/no-this-in-sfc
-            this.parent.provider &&
-            // eslint-disable-next-line react/no-this-in-sfc
-            this.parent.provider === 'aws' &&
-            item
-          );
-        }
-      ),
-      secretKey: Yup.string().test(
-        'provider',
-        'secret key is required',
-        function (item) {
-          return (
-            // @ts-ignores
-            // eslint-disable-next-line react/no-this-in-sfc
-            this.parent.provider &&
-            // eslint-disable-next-line react/no-this-in-sfc
-            this.parent.provider === 'aws' &&
-            item
-          );
-        }
-      ),
     }),
     onSubmit: async (val) => {
       const addProvider = async () => {
@@ -77,8 +46,7 @@ const NewCloudProvider = () => {
                   name: val.name,
                 },
                 aws: {
-                  secretKey: val.secretKey,
-                  accessKey: val.accessKey,
+                  authMechanism: 'secret_keys',
                 },
                 cloudProviderName: validateCloudProvider(val.provider),
               },
@@ -102,7 +70,7 @@ const NewCloudProvider = () => {
 
         toast.success('provider secret created successfully');
 
-        navigate(`/onboarding/${accountName}/${values.name}/new-cluster`);
+        navigate(`/onboarding/${accountName}/${values.name}/validate-cp`);
       } catch (err) {
         handleError(err);
       }
@@ -163,28 +131,6 @@ const NewCloudProvider = () => {
                     }}
                     options={async () => providers}
                   />
-
-                  {values.provider === 'aws' && (
-                    <>
-                      <PasswordInput
-                        name="accessKey"
-                        onChange={handleChange('accessKey')}
-                        error={!!errors.accessKey}
-                        message={errors.accessKey}
-                        value={values.accessKey}
-                        label="Access Key"
-                      />
-
-                      <PasswordInput
-                        name="secretKey"
-                        onChange={handleChange('secretKey')}
-                        error={!!errors.secretKey}
-                        message={errors.secretKey}
-                        value={values.secretKey}
-                        label="Secret Key"
-                      />
-                    </>
-                  )}
                 </div>
               </div>
               <BottomNavigation

@@ -75,7 +75,6 @@ export const updateCluster = async ({
         },
         spec: {
           cloudProvider: data.spec.cloudProvider,
-          credentialsRef: data.spec.credentialsRef,
           availabilityMode: data.spec.availabilityMode,
         },
       },
@@ -138,9 +137,7 @@ const Layout = ({
     setHasChanges(values.displayName !== cluster.displayName);
   }, [values]);
 
-  const defaultProvider = providerSecrets.find(
-    (ps) => ps.value === cluster.spec?.credentialsRef.name
-  );
+  // const defaultProvider = providerSecrets.find((ps) => cluster.spec?.aws);
 
   const defaultRegion = awsRegions.find(
     (r) => r.Name === cluster.spec?.aws?.region
@@ -203,16 +200,16 @@ const Layout = ({
             </div>
           </div>
           <div className="flex flex-row items-center gap-3xl">
-            <div className="flex-1">
-              {' '}
-              <Select
-                label="Cloud Provider"
-                placeholder="Select cloud provider"
-                disabled
-                value={defaultProvider?.value}
-                options={async () => providerSecrets}
-              />
-            </div>
+            {/* <div className="flex-1"> */}
+            {/*   {' '} */}
+            {/*   <Select */}
+            {/*     label="Cloud Provider" */}
+            {/*     placeholder="Select cloud provider" */}
+            {/*     disabled */}
+            {/*     value={defaultProvider?.value} */}
+            {/*     options={async () => providerSecrets} */}
+            {/*   /> */}
+            {/* </div> */}
             <div className="flex-1">
               <Select
                 disabled

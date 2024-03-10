@@ -236,7 +236,7 @@ export const parseStatus = ({
     };
   }
 
-  if (status?.isReady && syncStatus?.state === 'RECEIVED_UPDATE_FROM_AGENT') {
+  if (status?.isReady && syncStatus?.state === 'UPDATED_AT_AGENT') {
     return {
       status: 'running',
     };

@@ -1,5 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable no-nested-ternary */
 import { IRemixCtx } from '~/root/lib/types/common';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { defer } from '@remix-run/node';
@@ -22,6 +20,10 @@ import MultiStepProgress, {
 } from '~/console/components/multi-step-progress';
 import { Check } from '~/console/components/icons';
 import { BottomNavigation } from '~/console/components/commons';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { PasswordInput } from '~/components/atoms/input';
+import FillerCloudProvider from '~/console/assets/filler-cloud-provider';
 import { IAccountContext } from '../../../../_main+/$account+/_layout';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -64,16 +66,80 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { data, isLoading: il } = useCustomSwr(
-    () => cloudProvider.metadata!.name + isLoading,
+    () => parseName(cloudProvider) + isLoading,
     async () => {
-      if (!cloudProvider.metadata!.name) {
+      if (!parseName(cloudProvider.metadata!.name)) {
         throw new Error('Invalid cloud provider name');
       }
       return api.checkAwsAccess({
-        cloudproviderName: cloudProvider.metadata.name,
+        cloudproviderName: parseName(cloudProvider),
       });
     }
   );
+
+  const { values, handleChange, errors, handleSubmit } = useForm({
+    initialValues: {
+      accessKey: '',
+      secretKey: '',
+    },
+    validationSchema: Yup.object({
+      accessKey: Yup.string().test(
+        'provider',
+        'access key is required',
+        // @ts-ignores
+        // eslint-disable-next-line react/no-this-in-sfc
+        function (item) {
+          return data?.result || item;
+        }
+      ),
+      secretKey: Yup.string().test(
+        'provider',
+        'secret key is required',
+        // eslint-disable-next-line func-names
+        // @ts-ignore
+        function (item) {
+          return data?.result || item;
+        }
+      ),
+    }),
+    onSubmit: async (val) => {
+      if (data?.result) {
+        navigate(
+          `/onboarding/${parseName(account)}/${parseName(
+            cloudProvider
+          )}/new-cluster`
+        );
+        return;
+      }
+
+      try {
+        const { errors } = await api.updateProviderSecret({
+          secret: {
+            metadata: {
+              name: parseName(cloudProvider),
+            },
+            cloudProviderName: cloudProvider.cloudProviderName,
+            displayName: cloudProvider.displayName,
+            aws: {
+              authMechanism: 'secret_keys',
+              authSecretKeys: {
+                accessKey: val.accessKey,
+                secretKey: val.secretKey,
+              },
+            },
+          },
+        });
+
+        if (errors) {
+          throw errors[0];
+        }
+
+        setIsLoading((s) => !s);
+      } catch (err) {
+        handleError(err);
+      }
+    },
+  });
 
   const { currentStep, jumpStep } = useMultiStepProgress({
     defaultStep: 3,
@@ -81,8 +147,9 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
   });
 
   return (
-    <form>
+    <div>
       <MultiStepProgressWrapper
+        fillerImage={<FillerCloudProvider />}
         title="Setup your account!"
         subTitle="Simplify Collaboration and Enhance Productivity with Kloudlite
   teams"
@@ -101,10 +168,11 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
           />
           <MultiStepProgress.Step step={2} label="Add your cloud provider" />
           <MultiStepProgress.Step step={3} label="Validate cloud provider">
-            <div className="flex flex-col gap-3xl">
+            <form className="flex flex-col gap-3xl" onSubmit={handleSubmit}>
               <div className="bodyMd text-text-soft">
-                Validate your cloud provider's credentials
+                Validate your cloud provider&apos;s credentials
               </div>
+              {/* eslint-disable-next-line no-nested-ternary */}
               {il ? (
                 <div className="py-2xl">
                   <LoadingPlaceHolder
@@ -121,9 +189,11 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
               ) : (
                 <div className="flex flex-col gap-3xl p-xl border border-border-default rounded">
                   <div className="flex gap-xl items-center">
-                    <span>Account ID</span>
+                    <span className="bodyLg-medium">
+                      {cloudProvider.displayName}
+                    </span>
                     <span className="bodyMd-semibold text-text-primary">
-                      {cloudProvider.aws?.awsAccountId}
+                      ({parseName(cloudProvider)})
                     </span>
                   </div>
                   <div className="flex flex-col gap-2xl text-start">
@@ -161,27 +231,65 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
                       to create AWS cloudformation stack
                     </span>
                   </div>
+
+                  {!data?.result && (
+                    <>
+                      <div className="">
+                        Once you have created the cloudformation stack, please
+                        enter the access key and secret key below to validate
+                        your cloud Provider, you can get the access key and
+                        secret key from the output of the cloudformation stack.
+                      </div>
+
+                      <PasswordInput
+                        name="accessKey"
+                        onChange={handleChange('accessKey')}
+                        error={!!errors.accessKey}
+                        message={errors.accessKey}
+                        value={values.accessKey}
+                        label="Access Key"
+                      />
+
+                      <PasswordInput
+                        name="secretKey"
+                        onChange={handleChange('secretKey')}
+                        error={!!errors.secretKey}
+                        message={errors.secretKey}
+                        value={values.secretKey}
+                        label="Secret Key"
+                      />
+                    </>
+                  )}
                 </div>
               )}
               <BottomNavigation
+                secondaryButton={
+                  data?.result
+                    ? undefined
+                    : {
+                        variant: 'primary',
+                        content: 'Skip',
+                        onClick: () => {
+                          navigate(
+                            `/onboarding/${parseName(account)}/${parseName(
+                              cloudProvider
+                            )}/new-cluster`
+                          );
+                        },
+                      }
+                }
                 primaryButton={{
                   variant: 'primary',
-                  content: data?.result ? 'Next' : 'Skip',
-                  onClick: () => {
-                    navigate(
-                      `/onboarding/${parseName(account)}/${parseName(
-                        cloudProvider
-                      )}/new-cluster`
-                    );
-                  },
+                  content: data?.result ? 'Continue' : 'Update',
+                  type: 'submit',
                 }}
               />
-            </div>
+            </form>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>
-    </form>
+    </div>
   );
 };
 

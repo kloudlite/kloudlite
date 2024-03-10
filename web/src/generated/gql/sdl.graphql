@@ -157,12 +157,12 @@ type BuildPaginatedRecords {
 
 type BuildRun {
   accountName: String!
-  apiVersion: String!
+  apiVersion: String
   buildName: String!
   clusterName: String!
   creationTime: Date!
   id: String!
-  kind: String!
+  kind: String
   markedForDeletion: Boolean
   metadata: Metadata
   recordVersion: Int!
@@ -714,21 +714,41 @@ enum Github__com___kloudlite___api___apps___iam___types__Role {
   resource_owner
 }
 
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams {
+  awsAccountId: String!
+  cfParamTrustedARN: String!
+  externalID: String!
+  roleARN: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn {
+  awsAccountId: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys {
+  accessKey: String!
+  cfParamUserName: String!
+  secretKey: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn {
+  accessKey: String!
+  secretKey: String!
+}
+
 type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials {
-  accessKey: String
-  awsAccountId: String
-  cfParamExternalID: String
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys
   cfParamInstanceProfileName: String
   cfParamRoleName: String
   cfParamStackName: String
-  cfParamTrustedARN: String
-  secretKey: String
 }
 
 input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn {
-  accessKey: String
-  awsAccountId: String
-  secretKey: String
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
 }
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__InputField {
@@ -796,7 +816,6 @@ enum Github__com___kloudlite___api___pkg___types__SyncState {
   ERRORED_AT_AGENT
   IDLE
   IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
   UPDATED_AT_AGENT
 }
 
@@ -809,7 +828,13 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus {
   syncScheduledAt: Date
 }
 
+enum Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism {
+  assume_role
+  secret_keys
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig {
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
   region: String!
@@ -818,8 +843,19 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
   region: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials {
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn {
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig {
@@ -913,15 +949,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams {
   publicSubnets: [Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID!]!
 }
 
-type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys {
-  keyAccessKey: String!
-  keyAWSAccountId: String!
-  keyAWSAssumeRoleExternalID: String!
-  keyAWSAssumeRoleRoleARN: String!
-  keyIAMInstanceProfileRole: String!
-  keySecretKey: String!
-}
-
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput {
   jobName: String!
   jobNamespace: String!
@@ -943,8 +970,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
-  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   kloudliteRelease: String!
   messageQueueTopicName: String!
   output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
@@ -962,7 +987,33 @@ input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
   cloudflareEnabled: Boolean
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig {
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn {
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType {
+  SPOT
+  STANDARD
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps {
@@ -975,6 +1026,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig
   maxCount: Int!
   minCount: Int!
   nodeLabels: Map
@@ -984,6 +1036,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
 input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn
   maxCount: Int!
   minCount: Int!
   nodeLabels: Map
@@ -1265,6 +1318,7 @@ input Github__com___kloudlite___operator___apis___crds___v1__HelmChartSpecIn {
 }
 
 type Github__com___kloudlite___operator___apis___crds___v1__HelmChartStatus {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
@@ -1606,15 +1660,37 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
 }
 
 type Github__com___kloudlite___operator___pkg___operator__Check {
+  debug: String
+  error: String
   generation: Int
+  info: String
   message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
   status: Boolean!
 }
 
 input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  debug: String
+  error: String
   generation: Int
+  info: String
   message: String
+  startedAt: Date
+  state: Github__com___kloudlite___operator___pkg___operator__State
   status: Boolean!
+}
+
+type Github__com___kloudlite___operator___pkg___operator__CheckMeta {
+  description: String
+  name: String!
+  title: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckMetaIn {
+  description: String
+  name: String!
+  title: String!
 }
 
 type Github__com___kloudlite___operator___pkg___operator__ResourceRef {
@@ -1625,11 +1701,21 @@ type Github__com___kloudlite___operator___pkg___operator__ResourceRef {
 }
 
 input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  apiVersion: String!
+  kind: String!
   name: String!
   namespace: String!
 }
 
+enum Github__com___kloudlite___operator___pkg___operator__State {
+  errored____during____reconcilation
+  finished____reconcilation
+  under____reconcilation
+  yet____to____be____reconciled
+}
+
 type Github__com___kloudlite___operator___pkg___operator__Status {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMeta!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int
@@ -1639,6 +1725,7 @@ type Github__com___kloudlite___operator___pkg___operator__Status {
 }
 
 input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checkList: [Github__com___kloudlite___operator___pkg___operator__CheckMetaIn!]
   checks: Map
   isReady: Boolean!
   lastReadyGeneration: Int

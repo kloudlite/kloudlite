@@ -63,27 +63,22 @@ const Root = (props: IDialog) => {
             displayName: props.data.displayName,
             name: parseName(props.data),
             provider: props.data.cloudProviderName as string,
+            isNameError: false,
             accessKey: '',
             secretKey: '',
-            isNameError: false,
           }
         : {
             displayName: '',
             name: '',
-            provider: providers[0].value,
             accessKey: '',
             secretKey: '',
+            provider: providers[0].value,
             isNameError: false,
           },
       validationSchema: isUpdate
         ? Yup.object({
             displayName: Yup.string().required(),
             name: Yup.string().required(),
-          })
-        : Yup.object({
-            displayName: Yup.string().required(),
-            name: Yup.string().required(),
-            provider: Yup.string().required(),
             accessKey: Yup.string().test(
               'provider',
               'access key is required',
@@ -112,6 +107,11 @@ const Root = (props: IDialog) => {
                 );
               }
             ),
+          })
+        : Yup.object({
+            displayName: Yup.string().required(),
+            name: Yup.string().required(),
+            provider: Yup.string().required(),
           }),
 
       onSubmit: async (val) => {
@@ -124,11 +124,10 @@ const Root = (props: IDialog) => {
                   metadata: {
                     name: val.name,
                   },
-                  aws: {
-                    secretKey: val.secretKey,
-                    accessKey: val.accessKey,
-                  },
                   cloudProviderName: validateCloudProvider(val.provider),
+                  aws: {
+                    authMechanism: 'secret_keys',
+                  },
                 },
               });
 
@@ -151,7 +150,13 @@ const Root = (props: IDialog) => {
                   metadata: {
                     name: parseName(props.data, true),
                   },
-                  aws: { ...props.data.aws },
+                  // aws: {
+                  //   authMechanism: 'secret_keys',
+                  //   authSecretKeys: {
+                  //     accessKey: val.accessKey,
+                  //     secretKey: val.secretKey,
+                  //   },
+                  // },
                 },
               });
             default:
@@ -204,6 +209,7 @@ const Root = (props: IDialog) => {
             nameErrorLabel="isNameError"
             isUpdate={isUpdate}
           />
+
           {!isUpdate && (
             <Select
               valueRender={valueRender}
@@ -218,7 +224,7 @@ const Root = (props: IDialog) => {
             />
           )}
 
-          {!isUpdate && values?.provider === 'aws' && (
+          {isUpdate && values?.provider === 'aws' && (
             <>
               <PasswordInput
                 name="accessKey"
