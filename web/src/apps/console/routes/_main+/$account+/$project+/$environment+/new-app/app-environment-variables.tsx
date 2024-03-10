@@ -1,13 +1,3 @@
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  LockSimple,
-  LockSimpleOpen,
-  SmileySad,
-  X,
-  XCircleFill,
-} from '@jengaicons/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { Chip, ChipGroup } from '~/components/atoms/chips';
@@ -22,6 +12,18 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  LockSimple,
+  LockSimpleOpen,
+  SmileySad,
+  X,
+  XCircleFill,
+} from '~/console/components/icons';
+import Tooltip from '~/components/atoms/tooltip';
+import { listFlex } from '~/console/components/console-list-components';
 import AppDialog from './app-dialogs';
 
 interface IEnvVariable {
@@ -63,7 +65,7 @@ const EnvironmentVariablesList = ({
         <List.Root
           className="min-h-[347px] !shadow-none"
           header={
-            <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center w-full">
               <div className="text-text-strong bodyMd flex-1">
                 Environment variable list
               </div>
@@ -110,7 +112,7 @@ const EnvironmentVariablesList = ({
                   },
                   {
                     key: `${index}-column-1`,
-                    className: 'flex-1',
+                    className: 'w-[80px]',
                     render: () => (
                       <div className="bodyMd-semibold text-text-default">
                         {ev.key}
@@ -119,20 +121,42 @@ const EnvironmentVariablesList = ({
                   },
                   {
                     key: `${index}-column-2`,
-                    className: 'flex-1',
                     render: () => (
-                      <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                        {!ev.type && ev.value}
-                        {!!ev.type && (
-                          <>
-                            {ev.refName}
-                            <ArrowRight size={16} weight={1} />
-                            {ev.refKey}
-                          </>
-                        )}
-                      </div>
+                      <Tooltip.Root
+                        className="!max-w-[400px]"
+                        content={
+                          <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
+                            {!ev.type && ev.value}
+                            {!!ev.type && (
+                              <>
+                                <span className="line-clamp-1">
+                                  {ev.refName}
+                                </span>
+                                <span>
+                                  <ArrowRight size={16} />
+                                </span>
+                                {ev.refKey}
+                              </>
+                            )}
+                          </div>
+                        }
+                      >
+                        <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
+                          {!ev.type && ev.value}
+                          {!!ev.type && (
+                            <>
+                              <span className="line-clamp-1">{ev.refName}</span>
+                              <span>
+                                <ArrowRight size={16} />
+                              </span>
+                              {ev.refKey}
+                            </>
+                          )}
+                        </div>
+                      </Tooltip.Root>
                     ),
                   },
+                  listFlex({ key: 'flex-1' }),
                   {
                     key: `${index}-column-3`,
                     render: () => (
@@ -182,16 +206,9 @@ export const EnvironmentVariables = () => {
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
     key: Yup.string().required(),
 
-    // value: Yup.string().when(['type'], ([type], schema) => {
-    //   if (type === undefined) {
-    //     return schema.required();
-    //   }
-    //   return schema;
-    // }),
     refKey: Yup.string()
       .when(['type'], ([type], schema) => {
         if (type === 'config' || type === 'secret') {
-          // console.log('here', type);
           return schema.required();
         }
         return schema;
@@ -211,7 +228,6 @@ export const EnvironmentVariables = () => {
     values,
     setValues,
     submit,
-    errors,
     resetValues: resetAppValue,
   } = useForm({
     initialValues: getContainer().env || [],
@@ -225,12 +241,6 @@ export const EnvironmentVariables = () => {
   });
 
   useEffect(() => {
-    console.log('errors ', errors);
-  }, [errors]);
-
-  useEffect(() => {
-    console.log('here values: ', values);
-
     submit();
   }, [values]);
 
@@ -262,12 +272,10 @@ export const EnvironmentVariables = () => {
   };
 
   const vSchema = Yup.object({
-    refKey: Yup.string().when('$textInputValue', ([v], schema) => {
-      // console.log(v, 'here');
+    refKey: Yup.string().when('$textInputValue', ([_v], schema) => {
       return schema;
     }),
-    refName: Yup.string().when('$textInputValue', ([v], schema) => {
-      // console.log(v);
+    refName: Yup.string().when('$textInputValue', ([_v], schema) => {
       return schema;
     }),
   });
@@ -354,7 +362,7 @@ export const EnvironmentVariables = () => {
             {eValues.value ? (
               <div className="flex flex-col gap-md">
                 <div className="bodyMd-medium text-text-default">Value</div>
-                <div className="flex flex-row items-center rounded border border-border-default bg-surface-basic-defaul">
+                <div className="flex flex-row items-center rounded border border-border-default bg-surface-basic-default line-clamp-1">
                   <span className="py-lg pl-lg pr-md text-text-default">
                     {eValues.value.type === 'config' ? (
                       <LockSimpleOpen
@@ -366,11 +374,30 @@ export const EnvironmentVariables = () => {
                       <LockSimple size={14} weight={2.5} color="currentColor" />
                     )}
                   </span>
-                  <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft">
-                    {eValues.value.refKey}
-                    <ArrowRight size={16} weight={1} />
-                    {eValues.value.refName}
-                  </div>
+                  <Tooltip.Root
+                    className="!max-w-[400px]"
+                    content={
+                      <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
+                        <span>{eValues.value.refKey}</span>
+                        <span>
+                          <ArrowRight size={16} />
+                        </span>
+                        <span className="line-clamp-1">
+                          {eValues.value.refName}
+                        </span>
+                      </div>
+                    }
+                  >
+                    <div className="flex-1 flex flex-row gap-md items-center py-xl px-lg bodyMd text-text-soft ">
+                      <span>{eValues.value.refKey}</span>
+                      <span>
+                        <ArrowRight size={16} />
+                      </span>
+                      <span className="line-clamp-1">
+                        {eValues.value.refName}
+                      </span>
+                    </div>
+                  </Tooltip.Root>
                   <button
                     aria-label="clear"
                     tabIndex={-1}
@@ -449,8 +476,6 @@ export const EnvironmentVariables = () => {
         show={showCSDialog}
         setShow={setShowCSDialog}
         onSubmit={(item) => {
-          console.log('items', item);
-
           eSetValues((v) => {
             return {
               ...v,

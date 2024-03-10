@@ -15,24 +15,39 @@ import {
 } from '~/console/server/gql/queries/project-queries';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {
+  ensureAccountClientSide,
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import Breadcrum from '~/console/components/breadcrum';
-import { Database, GearSix, VirtualMachine } from '@jengaicons/react';
-import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
+import {
+  Check,
+  ChevronUpDown,
+  Database,
+  GearSix,
+  Plus,
+  Search,
+  VirtualMachine,
+} from '~/console/components/icons';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import LogoWrapper from '~/console/components/logo-wrapper';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import {
-  BreadcrumButtonContent,
-  BreadcrumSlash,
-  tabIconSize,
-} from '~/console/utils/commons';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import { cn } from '~/components/utils';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
 import { ICluster } from '~/console/server/gql/queries/cluster-queries';
+import { useRef, useState } from 'react';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import { handleError } from '~/root/lib/utils/common';
+import { Button } from '~/components/atoms/button';
+import OptionList from '~/components/atoms/option-list';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { LoadingPlaceHolder } from '~/console/components/loading';
 import { IAccountContext } from '../_layout';
 
 export interface IProjectContext extends IAccountContext {
@@ -85,34 +100,147 @@ const Project = () => {
   );
 };
 
-const LocalBreadcrum = ({
+const CurrentBreadcrum = ({
   project,
 }: {
   project: ExtractNodeType<IProjects>;
 }) => {
-  const { account } = useParams();
-  const { activePath } = useActivePath({
-    parent: `/${account}/${parseName(project)}`,
-  });
+  const params = useParams();
+
+  // const api = useConsoleApi();
+  // const [search, setSearch] = useState('');
+  // const [searchText, setSearchText] = useState('');
+
+  const { account } = params;
+
+  // const { data: projects, isLoading } = useCustomSwr(
+  //   () => `/projects/${searchText}`,
+  //   async () =>
+  //     api.listProjects({
+  //       search: {
+  //         text: {
+  //           matchType: 'regex',
+  //           regex: searchText,
+  //         },
+  //       },
+  //     })
+  // );
+
+  // useDebounce(
+  //   async () => {
+  //     ensureAccountClientSide(params);
+  //     setSearchText(search);
+  //   },
+  //   300,
+  //   [search]
+  // );
+
+  // const [open, setOpen] = useState(false);
+  // const buttonRef = useRef<HTMLButtonElement>(null);
+  // const [isMouseOver, setIsMouseOver] = useState<boolean>(false);
 
   return (
-    <div className="flex flex-row items-center">
+    <>
       <BreadcrumSlash />
-      <Breadcrum.Button
-        to={`/${account}/${parseName(project)}/environments`}
+      <span className="mx-md" />
+      <Button
+        content={project.displayName}
+        size="sm"
+        variant="plain"
         LinkComponent={Link}
-        content={
-          <div
-            className={cn(
-              'flex flex-row items-center',
-              tabs.find((tab) => tab.to === activePath) ? 'bodyMd-semibold' : ''
-            )}
-          >
-            <BreadcrumButtonContent content={project.displayName} />
-          </div>
-        }
+        to={`/${account}/${parseName(project)}`}
       />
-    </div>
+      {/* <OptionList.Root open={open} onOpenChange={setOpen} modal={false}> */}
+      {/*   <OptionList.Trigger> */}
+      {/*     <button */}
+      {/*       ref={buttonRef} */}
+      {/*       aria-label="accounts" */}
+      {/*       className={cn( */}
+      {/*         'outline-none rounded py-lg px-md mx-md bg-surface-basic-hovered', */}
+      {/*         open || isMouseOver ? 'bg-surface-basic-pressed' : '' */}
+      {/*       )} */}
+      {/*       onMouseOver={() => { */}
+      {/*         setIsMouseOver(true); */}
+      {/*       }} */}
+      {/*       onMouseOut={() => { */}
+      {/*         setIsMouseOver(false); */}
+      {/*       }} */}
+      {/*       onFocus={() => { */}
+      {/*         // */}
+      {/*       }} */}
+      {/*       onBlur={() => { */}
+      {/*         // */}
+      {/*       }} */}
+      {/*     > */}
+      {/*       <div className="flex flex-row items-center gap-md"> */}
+      {/*         <ChevronUpDown size={16} /> */}
+      {/*       </div> */}
+      {/*     </button> */}
+      {/*   </OptionList.Trigger> */}
+      {/*   <OptionList.Content className="!pt-0 !pb-md" align="end"> */}
+      {/*     <div className="p-[3px] pb-0"> */}
+      {/*       <OptionList.TextInput */}
+      {/*         value={search} */}
+      {/*         onChange={(e) => setSearch(e.target.value)} */}
+      {/*         prefixIcon={<Search />} */}
+      {/*         focusRing={false} */}
+      {/*         placeholder="Search projects" */}
+      {/*         compact */}
+      {/*         className="border-0 rounded-none" */}
+      {/*       /> */}
+      {/*     </div> */}
+      {/*     <OptionList.Separator /> */}
+
+      {/*     {!isLoading && */}
+      {/*       (parseNodes(projects) || [])?.map((item) => { */}
+      {/*         return ( */}
+      {/*           <OptionList.Link */}
+      {/*             key={parseName(item)} */}
+      {/*             LinkComponent={Link} */}
+      {/*             to={`/${account}/${parseName(item)}/environments`} */}
+      {/*             className={cn( */}
+      {/*               'flex flex-row items-center justify-between', */}
+      {/*               parseName(item) === parseName(project) */}
+      {/*                 ? 'bg-surface-basic-pressed hover:!bg-surface-basic-pressed' */}
+      {/*                 : '' */}
+      {/*             )} */}
+      {/*           > */}
+      {/*             <span>{item.displayName}</span> */}
+      {/*             {parseName(item) === parseName(project) && ( */}
+      {/*               <span> */}
+      {/*                 <Check size={16} /> */}
+      {/*               </span> */}
+      {/*             )} */}
+      {/*           </OptionList.Link> */}
+      {/*         ); */}
+      {/*       })} */}
+
+      {/*     {parseNodes(projects).length === 0 && !isLoading && ( */}
+      {/*       <div className="flex flex-col gap-lg max-w-[198px] px-xl py-lg"> */}
+      {/*         <div className="bodyLg-medium text-text-default"> */}
+      {/*           No projects found */}
+      {/*         </div> */}
+      {/*         <div className="bodyMd text-text-soft"> */}
+      {/*           Your search for "{search}" did not match and projects. */}
+      {/*         </div> */}
+      {/*       </div> */}
+      {/*     )} */}
+
+      {/*     {isLoading && parseNodes(projects).length === 0 && ( */}
+      {/*       <div className="min-h-7xl" /> */}
+      {/*     )} */}
+
+      {/*     <OptionList.Separator /> */}
+      {/*     <OptionList.Link */}
+      {/*       LinkComponent={Link} */}
+      {/*       to={`/${account}/new-project`} */}
+      {/*       className="text-text-primary" */}
+      {/*     > */}
+      {/*       <Plus size={16} /> <span>Create project</span> */}
+      {/*     </OptionList.Link> */}
+      {/*   </OptionList.Content> */}
+      {/* </OptionList.Root> */}
+    </>
   );
 };
 
@@ -138,7 +266,7 @@ export const handle = ({
 }) => {
   return {
     navbar: <Tabs />,
-    breadcrum: () => <LocalBreadcrum project={project} />,
+    breadcrum: () => <CurrentBreadcrum project={project} />,
     logo: <Logo />,
   };
 };

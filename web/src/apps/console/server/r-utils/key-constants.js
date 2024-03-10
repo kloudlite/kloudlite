@@ -13,5 +13,5 @@ export const keyconstants = {
   repoAccountName: 'kloudlite.io/ui-repoAccountName',
   nodepoolName: 'kloudlite.io/nodepool.name',
 
-  nodepoolStateType: 'kloudlite.io/ui-pool.app-state-type'
+  nodepoolStateType: 'kloudlite.io/ui-pool.app-state-type',
 };

@@ -1,5 +1,3 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
 import {

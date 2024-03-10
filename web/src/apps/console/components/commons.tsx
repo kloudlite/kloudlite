@@ -1,21 +1,21 @@
-import { CopySimple, Question } from '@jengaicons/react';
-import { ReactNode, useState } from 'react';
-import { ProdLogo } from '~/components/branding/prod-logo';
-import { WorkspacesLogo } from '~/components/branding/workspace-logo';
-import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { generateKey, titleCase } from '~/components/utils';
+import { CopySimple, Question } from "@jengaicons/react";
+import { ReactNode, useState } from "react";
+import { ProdLogo } from "~/components/branding/prod-logo";
+import { WorkspacesLogo } from "~/components/branding/workspace-logo";
+import useClipboard from "~/root/lib/client/hooks/use-clipboard";
+import { generateKey, titleCase } from "~/components/utils";
 import {
   Github__Com___Kloudlite___Api___Pkg___Types__SyncState as SyncState,
   Github__Com___Kloudlite___Api___Pkg___Types__SyncAction as SyncAction,
-} from '~/root/src/generated/gql/server';
-import Tooltip from '~/components/atoms/tooltip';
-import { Link } from '@remix-run/react';
-import { Button, IButton } from '~/components/atoms/button';
-import { ListItem } from './console-list-components';
+} from "~/root/src/generated/gql/server";
+import Tooltip from "~/components/atoms/tooltip";
+import { Link } from "@remix-run/react";
+import { Button, IButton } from "~/components/atoms/button";
+import { ListItem } from "./console-list-components";
 import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
-} from '../server/r-utils/common';
+} from "../server/r-utils/common";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,8 +23,8 @@ import {
   GitBranchFill,
   GitlabLogoFill,
   GithubLogoFill,
-} from './icons';
-import { IGIT_PROVIDERS } from '../hooks/use-git';
+} from "./icons";
+import { IGIT_PROVIDERS } from "../hooks/use-git";
 
 export const BlackProdLogo = ({ size = 16 }) => {
   return <ProdLogo color="currentColor" size={size} />;
@@ -129,7 +129,7 @@ interface IUpdateMeta {
 }
 
 // Component for Status parsing
-export type IStatus = 'deleting' | 'notready' | 'syncing' | 'none';
+export type IStatus = "deleting" | "notready" | "syncing" | "none";
 
 interface IStatusMeta {
   markedForDeletion?: boolean;
@@ -145,17 +145,17 @@ interface IStatusMeta {
   };
 }
 
-type IResourceType = 'nodepool';
+type IResourceType = "nodepool";
 
 type ICommonMeta = IUpdateMeta & IStatusMeta;
 
 const parseStatusComponent = ({ status }: { status: IStatus }) => {
   switch (status) {
-    case 'deleting':
+    case "deleting":
       return <div className="bodyMd text-text-soft pulsable">Deleting...</div>;
-    case 'notready':
+    case "notready":
       return <div className="bodyMd text-text-soft pulsable">Not Ready</div>;
-    case 'syncing':
+    case "syncing":
       return <div className="bodyMd text-text-soft pulsable">Syncing</div>;
     default:
       return null;
@@ -169,17 +169,17 @@ export const parseStatus = ({
   item: IStatusMeta;
   type?: IResourceType;
 }) => {
-  let status: IStatus = 'none';
+  let status: IStatus = "none";
 
   if (item.markedForDeletion) {
-    status = 'deleting';
+    status = "deleting";
   } else if (!item.status?.isReady) {
     switch (type) {
-      case 'nodepool':
-        status = 'syncing';
+      case "nodepool":
+        status = "syncing";
         break;
       default:
-        status = 'notready';
+        status = "notready";
     }
   }
 
@@ -200,7 +200,7 @@ export const listRender = ({
         time: parseUpdateOrCreatedOn(resource),
       };
       return {
-        key: generateKey(keyPrefix, 'author'),
+        key: generateKey(keyPrefix, "author"),
         className,
         render: () => (
           <ListItem data={updateInfo.author} subtitle={updateInfo.time} />
@@ -215,7 +215,7 @@ export const listRender = ({
       type?: IResourceType;
     }) => {
       return {
-        key: generateKey(keyPrefix, 'status'),
+        key: generateKey(keyPrefix, "status"),
         className,
         render: () => parseStatus({ item: resource, type }).component,
         status: parseStatus({ item: resource, type }).status,
@@ -249,8 +249,8 @@ export const BottomNavigation = ({
   primaryButton,
   secondaryButton,
 }: {
-  primaryButton?: Optional<IButton, 'content'>;
-  secondaryButton?: Optional<IButton, 'content'>;
+  primaryButton?: Optional<IButton, "content">;
+  secondaryButton?: Optional<IButton, "content">;
 }) => {
   return (
     <div className="flex flex-row gap-3xl items-center">
@@ -283,7 +283,7 @@ interface IReviewComponent {
   canEdit?: boolean;
 }
 export const ReviewComponent = ({
-  title = '',
+  title = "",
   children,
   onEdit,
   canEdit = true,
@@ -327,13 +327,13 @@ export const GitDetail = ({
           <div className="bodyMd-medium text-text-default">Source</div>
           <div className="flex flex-row items-center gap-3xl bodySm">
             <div className="flex flex-row items-center gap-xl">
-              {provider === 'github' ? (
+              {provider === "github" ? (
                 <GithubLogoFill size={gitIconSize} />
               ) : (
                 <GitlabLogoFill size={gitIconSize} />
               )}
               <span>
-                {repository.replace('https://', '').replace('.git', '')}
+                {repository.replace("https://", "").replace(".git", "")}
               </span>
             </div>
             <div className="flex flex-row items-center gap-xl">

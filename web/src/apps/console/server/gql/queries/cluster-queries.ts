@@ -125,10 +125,6 @@ export const clusterQueries = (executor: IExecutor) => ({
                 messageQueueTopicName
                 kloudliteRelease
 
-                credentialsRef {
-                  namespace
-                  name
-                }
                 clusterTokenRef {
                   key
                   name
@@ -230,18 +226,7 @@ export const clusterQueries = (executor: IExecutor) => ({
               name
               namespace
             }
-            credentialKeys {
-              keyAccessKey
-              keyAWSAccountId
-              keyAWSAssumeRoleExternalID
-              keyAWSAssumeRoleRoleARN
-              keyIAMInstanceProfileRole
-              keySecretKey
-            }
-            credentialsRef {
-              name
-              namespace
-            }
+
             kloudliteRelease
             messageQueueTopicName
             output {

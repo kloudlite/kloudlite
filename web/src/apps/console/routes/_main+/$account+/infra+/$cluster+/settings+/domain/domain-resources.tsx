@@ -16,11 +16,16 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import {
   ExtractNodeType,
+  parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import { useOutletContext } from '@remix-run/react';
+import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
 import HandleDomain from './handle-domain';
 import DomainDetailPopup from './domain-detail';
 
@@ -169,6 +174,16 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
   const [domainDetail, setDomainDetail] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
+
+  const { account } = useOutletContext<IAccountContext>();
+  const { cluster } = useOutletContext<IClusterContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.cluster:${parseName(
+        cluster
+      )}.domain_entries:${i.domainName}`;
+    })
+  );
 
   const props: IResource = {
     items,

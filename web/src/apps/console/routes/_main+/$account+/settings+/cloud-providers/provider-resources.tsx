@@ -33,6 +33,10 @@ import Pulsable from '~/console/components/pulsable';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
+import Yup from '~/root/lib/server/helpers/yup';
+import { PasswordInput } from '~/components/atoms/input';
+import useForm from '~/root/lib/client/hooks/use-form';
+import { Badge } from '~/components/atoms/badge';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
@@ -50,59 +54,178 @@ const AwsValidationPopup = ({
   url: string;
 }) => {
   const api = useConsoleApi();
-  const checkAwsAccess = async () => {
-    const { data, errors } = await api.checkAwsAccess({
-      cloudproviderName: item.metadata?.name || '',
-    });
-    if (errors) {
-      throw errors[0];
-    }
-    return data;
-  };
+  // const checkAwsAccess = async () => {
+  //   const { data, errors } = await api.checkAwsAccess({
+  //     cloudproviderName: item.metadata?.name || '',
+  //   });
+  //   if (errors) {
+  //     throw errors[0];
+  //   }
+  //   return data;
+  // };
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const { data, isLoading: il } = useCustomSwr(
+    () => parseName(item) + isLoading,
+    async () => {
+      if (!parseName(item)) {
+        throw new Error('Invalid cloud provider name');
+      }
+      return api.checkAwsAccess({
+        cloudproviderName: parseName(item),
+      });
+    }
+  );
+
+  const { values, handleChange, errors, handleSubmit } = useForm({
+    initialValues: {
+      accessKey: '',
+      secretKey: '',
+    },
+    validationSchema: Yup.object({
+      accessKey: Yup.string().test(
+        'provider',
+        'access key is required',
+        // @ts-ignores
+        // eslint-disable-next-line react/no-this-in-sfc
+        function (item) {
+          return data?.result || item;
+        }
+      ),
+      secretKey: Yup.string().test(
+        'provider',
+        'secret key is required',
+        // eslint-disable-next-line func-names
+        // @ts-ignore
+        function (item) {
+          return data?.result || item;
+        }
+      ),
+    }),
+    onSubmit: async (val) => {
+      if (data?.result) {
+        // navigate(
+        //   `/onboarding/${parseName(account)}/${parseName(
+        //     cloudProvider
+        //   )}/new-cluster`
+        // );
+        toast.success('Provider validated successfully');
+
+        onClose();
+        return;
+      }
+
+      try {
+        const { errors } = await api.updateProviderSecret({
+          secret: {
+            metadata: {
+              name: parseName(item),
+            },
+            cloudProviderName: item.cloudProviderName,
+            displayName: item.displayName,
+            aws: {
+              authMechanism: 'secret_keys',
+              authSecretKeys: {
+                accessKey: val.accessKey,
+                secretKey: val.secretKey,
+              },
+            },
+          },
+        });
+
+        if (errors) {
+          throw errors[0];
+        }
+
+        setIsLoading((s) => !s);
+      } catch (err) {
+        handleError(err);
+      }
+    },
+  });
 
   return (
     <Popup.Root onOpenChange={onClose} show={show}>
       <Popup.Header>Validate Aws Provider</Popup.Header>
       <Popup.Content>
-        <div className="flex flex-col gap-2xl">
-          <div className="flex gap-xl items-center">
-            <span>Account ID</span>
-            <span>{item.aws?.awsAccountId}</span>
-          </div>
-          <div className="flex flex-col gap-xl text-start">
-            <CodeView copy data={url} />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2xl">
+          {/* <div className="flex gap-xl items-center"> */}
+          {/*   <span>Account ID</span> */}
+          {/*   <span>{item.aws?.awsAccountId}</span> */}
+          {/* </div> */}
+          {!data?.result && (
+            <div className="flex flex-col gap-xl text-start">
+              <CodeView copy data={url} />
 
-            <span className="flex flex-wrap items-center gap-md">
-              visit the link above and click on the button to validate your AWS
-              account, or
-              <Button
-                loading={isLoading}
-                variant="primary-plain"
-                onClick={async () => {
-                  setIsLoading(true);
-                  try {
-                    await asyncPopupWindow({ url });
+              <span className="flex flex-wrap items-center gap-md">
+                visit the link above and click on the button to validate your
+                AWS account, or
+                <Button
+                  loading={il}
+                  variant="primary-plain"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      await asyncPopupWindow({ url });
 
-                    const res = await checkAwsAccess();
-
-                    if (res.result) {
-                      toast.success('Aws account validated successfully');
-                    } else {
-                      toast.error('Aws account validation failed');
+                      setIsLoading((s) => !s);
+                    } catch (err) {
+                      handleError(err);
                     }
-                  } catch (err) {
-                    handleError(err);
-                  }
 
-                  setIsLoading(false);
-                }}
-                content="click here"
+                    setIsLoading(false);
+                  }}
+                  content="click here"
+                />
+              </span>
+            </div>
+          )}
+
+          {data?.result && (
+            <div className="py-2xl">
+              <Badge type="success" icon={<Check />}>
+                Your Credential is valid
+              </Badge>
+            </div>
+          )}
+
+          {!data?.result && (
+            <>
+              <div className="">
+                Once you have created the cloudformation stack, please enter the
+                access key and secret key below to validate your cloud Provider,
+                you can get the access key and secret key from the output of the
+                cloudformation stack.
+              </div>
+
+              <PasswordInput
+                name="accessKey"
+                onChange={handleChange('accessKey')}
+                error={!!errors.accessKey}
+                message={errors.accessKey}
+                value={values.accessKey}
+                label="Access Key"
               />
-            </span>
-          </div>
-        </div>
+
+              <PasswordInput
+                name="secretKey"
+                onChange={handleChange('secretKey')}
+                error={!!errors.secretKey}
+                message={errors.secretKey}
+                value={values.secretKey}
+                label="Secret Key"
+              />
+
+              <Button
+                loading={il}
+                variant="primary"
+                content="Update"
+                type="submit"
+              />
+            </>
+          )}
+        </form>
       </Popup.Content>
       <Popup.Footer>
         <Button variant="primary-outline" content="close" onClick={onClose} />
@@ -133,7 +256,7 @@ const AwsCheckBodyWithValidation = ({ item }: { item: BaseType }) => {
       <div className="pulsable">
         {data?.result ? (
           <div className="flex gap-xl items-center pulsable">
-            <span>{item.aws?.awsAccountId}</span>
+            {/* <span>{item.aws?.awsAccountId}</span> */}
             <Button
               size="sm"
               variant="primary-outline"
@@ -172,7 +295,7 @@ const AwsCheckBody = ({ item }: { item: BaseType }) => {
         <AwsCheckBodyWithValidation item={item} />
       ) : (
         <div className="flex gap-xl items-center pulsable">
-          <span>{item.aws?.awsAccountId}</span>
+          {/* <span>{item.aws?.awsAccountId}</span> */}
           <IconButton
             onClick={() => {
               setShow(true);
@@ -305,11 +428,7 @@ const ListView = ({ items = [], onDelete, onEdit }: IResource) => {
                 className: 'text-start mr-[50px]',
                 render: () => (
                   <ListBody
-                    data={
-                      item.aws?.awsAccountId ? (
-                        <AwsCheckBody item={item} />
-                      ) : null
-                    }
+                    data={item.aws ? <AwsCheckBody item={item} /> : null}
                   />
                 ),
               },

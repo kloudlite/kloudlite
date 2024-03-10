@@ -12,6 +12,7 @@ interface EmptyStateProps {
   shadow?: boolean;
   border?: boolean;
   compact?: boolean;
+  padding?: boolean;
 }
 
 export const EmptyState = ({
@@ -24,21 +25,24 @@ export const EmptyState = ({
   shadow = true,
   border = true,
   compact = false,
+  padding = true,
 }: EmptyStateProps) => {
   return (
     <div
       className={cn(
-        'flex flex-col items-center px-3xl py-8xl rounded bg-surface-basic-default',
+        'flex flex-col items-center justify-center px-3xl rounded bg-surface-basic-default',
         {
           'shadow-button': shadow,
           'border border-border-disabled': border,
           'gap-2xl': compact,
           'gap-5xl': !compact,
+          'py-8xl': padding,
+          'py-lg': !padding,
         }
       )}
     >
       {image && image}
-      <div className="flex flex-col gap-2xl pb-8xl">
+      <div className={cn('flex flex-col gap-2xl', padding ? 'pb-8xl' : '')}>
         {heading && <div className="headingLg text-center">{heading}</div>}
         {children && (
           <div className="text-text-strong bodyMd text-center">{children}</div>

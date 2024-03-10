@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from '@remix-run/react';
-import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -29,14 +28,12 @@ const NewCloudProvider = () => {
       displayName: '',
       name: '',
       provider: providers[0].value,
-      awsAccountId: '',
       isNameError: false,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
       provider: Yup.string().required(),
-      awsAccountId: Yup.string().required('AccountId is required.'),
     }),
     onSubmit: async (val) => {
       const addProvider = async () => {
@@ -49,7 +46,7 @@ const NewCloudProvider = () => {
                   name: val.name,
                 },
                 aws: {
-                  awsAccountId: val.awsAccountId,
+                  authMechanism: 'secret_keys',
                 },
                 cloudProviderName: validateCloudProvider(val.provider),
               },
@@ -73,7 +70,7 @@ const NewCloudProvider = () => {
 
         toast.success('provider secret created successfully');
 
-        navigate(`/onboarding/${accountName}/${val.name}/validate-cp`);
+        navigate(`/onboarding/${accountName}/${values.name}/validate-cp`);
       } catch (err) {
         handleError(err);
       }
@@ -134,18 +131,6 @@ const NewCloudProvider = () => {
                     }}
                     options={async () => providers}
                   />
-
-                  {values.provider === 'aws' && (
-                    <TextInput
-                      name="awsAccountId"
-                      onChange={handleChange('awsAccountId')}
-                      error={!!errors.awsAccountId}
-                      message={errors.awsAccountId}
-                      value={values.awsAccountId}
-                      label="Account ID"
-                      size="lg"
-                    />
-                  )}
                 </div>
               </div>
               <BottomNavigation
@@ -158,7 +143,7 @@ const NewCloudProvider = () => {
               />
             </div>
           </MultiStepProgress.Step>
-          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
+          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" /> */}
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>

@@ -10,6 +10,7 @@ export interface INoResultsFound {
   shadow?: boolean;
   border?: boolean;
   compact?: boolean;
+  padding?: boolean;
 }
 const NoResultsFound = ({
   title,
@@ -19,6 +20,7 @@ const NoResultsFound = ({
   shadow = true,
   border = true,
   compact = false,
+  padding = true,
 }: INoResultsFound) => {
   return (
     <EmptyState
@@ -28,6 +30,7 @@ const NoResultsFound = ({
       heading={title}
       image={image}
       action={action}
+      padding={padding}
     >
       {subtitle}
     </EmptyState>

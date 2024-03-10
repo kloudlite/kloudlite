@@ -58,14 +58,14 @@ export const providerSecretQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
-              aws {
-                awsAccountId
-              }
               cloudProviderName
               createdBy {
                 userEmail
                 userId
                 userName
+              }
+              aws {
+                authMechanism
               }
               creationTime
               displayName
@@ -139,9 +139,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
-          aws {
-            awsAccountId
-          }
           cloudProviderName
           createdBy {
             userEmail

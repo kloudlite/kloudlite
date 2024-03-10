@@ -74,7 +74,6 @@ export type Github__Com___Kloudlite___Api___Pkg___Types__SyncState =
   | 'ERRORED_AT_AGENT'
   | 'IDLE'
   | 'IN_QUEUE'
-  | 'RECEIVED_UPDATE_FROM_AGENT'
   | 'UPDATED_AT_AGENT';
 
 export type ConfigKeyRefIn = {
@@ -237,6 +236,9 @@ export type ResType =
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode =
   'dev' | 'HA';
 
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsAuthMechanism =
+  'assume_role' | 'secret_keys';
+
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider =
   'aws' | 'azure' | 'digitalocean' | 'gcp';
 
@@ -269,6 +271,9 @@ export type K8s__Io___Api___Core___V1__NamespacePhase =
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType =
   'ec2' | 'spot';
+
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType =
+  'SPOT' | 'STANDARD';
 
 export type K8s__Io___Api___Core___V1__PersistentVolumeReclaimPolicy =
   | 'Delete'
@@ -471,7 +476,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerVolu
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn = {
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
+  enabled: Scalars['Boolean']['input'];
   maxReplicas?: InputMaybe<Scalars['Int']['input']>;
   minReplicas?: InputMaybe<Scalars['Int']['input']>;
   thresholdCpu?: InputMaybe<Scalars['Int']['input']>;
@@ -807,25 +812,31 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
     aws?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsClusterConfigIn>;
     cloudflareEnabled?: InputMaybe<Scalars['Boolean']['input']>;
     cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
-    credentialsRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsClusterConfigIn =
   {
+    credentials: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsCredentialsIn;
     k3sMasters?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn>;
     region: Scalars['String']['input'];
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn =
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsCredentialsIn =
   {
-    instanceType: Scalars['String']['input'];
-    nvidiaGpuEnabled: Scalars['Boolean']['input'];
+    authMechanism: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsAuthMechanism;
+    secretRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn =
   {
     name: Scalars['String']['input'];
     namespace?: InputMaybe<Scalars['String']['input']>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn =
+  {
+    instanceType: Scalars['String']['input'];
+    nvidiaGpuEnabled: Scalars['Boolean']['input'];
   };
 
 export type ClusterManagedServiceIn = {
@@ -969,6 +980,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolS
   {
     aws?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsNodePoolConfigIn>;
     cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
+    gcp?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpNodePoolConfigIn>;
     maxCount: Scalars['Int']['input'];
     minCount: Scalars['Int']['input'];
     nodeLabels?: InputMaybe<Scalars['Map']['input']>;
@@ -1014,6 +1026,18 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGp
     instanceTypes: Array<Scalars['String']['input']>;
   };
 
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpNodePoolConfigIn =
+  {
+    availabilityZone: Scalars['String']['input'];
+    bootVolumeSize: Scalars['Int']['input'];
+    bootVolumeType: Scalars['String']['input'];
+    credentials: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
+    machineType: Scalars['String']['input'];
+    nodes?: InputMaybe<Scalars['Map']['input']>;
+    poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__GcpPoolType;
+    region: Scalars['String']['input'];
+  };
+
 export type K8s__Io___Api___Core___V1__TaintIn = {
   effect: K8s__Io___Api___Core___V1__TaintEffect;
   key: Scalars['String']['input'];
@@ -1030,9 +1054,20 @@ export type CloudProviderSecretIn = {
 
 export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn =
   {
-    accessKey?: InputMaybe<Scalars['String']['input']>;
-    awsAccountId?: InputMaybe<Scalars['String']['input']>;
-    secretKey?: InputMaybe<Scalars['String']['input']>;
+    assumeRoleParams?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsAssumeRoleParamsIn>;
+    authMechanism: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsAuthMechanism;
+    authSecretKeys?: InputMaybe<Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsAuthSecretKeysIn>;
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsAssumeRoleParamsIn =
+  {
+    awsAccountId: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Api___Apps___Infra___Internal___Entities__AwsAuthSecretKeysIn =
+  {
+    accessKey: Scalars['String']['input'];
+    secretKey: Scalars['String']['input'];
   };
 
 export type AccountMembershipIn = {
@@ -1066,19 +1101,41 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodeSpecI
     nodepoolName: Scalars['String']['input'];
   };
 
+export type Github__Com___Kloudlite___Operator___Pkg___Operator__State =
+  | 'errored____during____reconcilation'
+  | 'finished____reconcilation'
+  | 'under____reconcilation'
+  | 'yet____to____be____reconciled';
+
 export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckIn = {
+  debug?: InputMaybe<Scalars['String']['input']>;
+  error?: InputMaybe<Scalars['String']['input']>;
   generation?: InputMaybe<Scalars['Int']['input']>;
+  info?: InputMaybe<Scalars['String']['input']>;
   message?: InputMaybe<Scalars['String']['input']>;
+  startedAt?: InputMaybe<Scalars['Date']['input']>;
+  state?: InputMaybe<Github__Com___Kloudlite___Operator___Pkg___Operator__State>;
   status: Scalars['Boolean']['input'];
+};
+
+export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  title: Scalars['String']['input'];
 };
 
 export type Github__Com___Kloudlite___Operator___Pkg___Operator__ResourceRefIn =
   {
+    apiVersion: Scalars['String']['input'];
+    kind: Scalars['String']['input'];
     name: Scalars['String']['input'];
     namespace: Scalars['String']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Pkg___Operator__StatusIn = {
+  checkList?: InputMaybe<
+    Array<Github__Com___Kloudlite___Operator___Pkg___Operator__CheckMetaIn>
+  >;
   checks?: InputMaybe<Scalars['Map']['input']>;
   isReady: Scalars['Boolean']['input'];
   lastReadyGeneration?: InputMaybe<Scalars['Int']['input']>;
@@ -1568,6 +1625,7 @@ export type ConsoleGetAccountQueryVariables = Exact<{
 
 export type ConsoleGetAccountQuery = {
   accounts_getAccount?: {
+    targetNamespace?: string;
     updateTime: any;
     contactEmail?: string;
     displayName: string;
@@ -1788,7 +1846,6 @@ export type ConsoleListClustersQuery = {
           clusterInternalDnsHost?: string;
           publicDNSHost: string;
           taintMasterNodes: boolean;
-          credentialsRef: { namespace?: string; name: string };
           clusterTokenRef?: { key: string; name: string; namespace?: string };
           aws?: {
             nodePools?: any;
@@ -1867,15 +1924,6 @@ export type ConsoleGetClusterQuery = {
         };
       };
       clusterTokenRef?: { key: string; name: string; namespace?: string };
-      credentialKeys?: {
-        keyAccessKey: string;
-        keyAWSAccountId: string;
-        keyAWSAssumeRoleExternalID: string;
-        keyAWSAssumeRoleRoleARN: string;
-        keyIAMInstanceProfileRole: string;
-        keySecretKey: string;
-      };
-      credentialsRef: { name: string; namespace?: string };
       output?: {
         keyK3sAgentJoinToken: string;
         keyK3sServerJoinToken: string;
@@ -1950,8 +1998,10 @@ export type ConsoleListProviderSecretsQuery = {
         creationTime: any;
         displayName: string;
         updateTime: any;
-        aws?: { awsAccountId?: string };
         createdBy: { userEmail: string; userId: string; userName: string };
+        aws?: {
+          authMechanism: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsAuthMechanism;
+        };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata: {
           namespace?: string;
@@ -1998,7 +2048,6 @@ export type ConsoleGetProviderSecretQuery = {
     creationTime: any;
     displayName: string;
     updateTime: any;
-    aws?: { awsAccountId?: string };
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata: { namespace?: string; name: string; labels?: any };
@@ -2430,7 +2479,7 @@ export type ConsoleGetAppQuery = {
         }>;
       }>;
       hpa?: {
-        enabled?: boolean;
+        enabled: boolean;
         maxReplicas?: number;
         minReplicas?: number;
         thresholdCpu?: number;
@@ -2526,7 +2575,7 @@ export type ConsoleListAppsQuery = {
             resourceMemory?: { max?: string; min?: string };
           }>;
           hpa?: {
-            enabled?: boolean;
+            enabled: boolean;
             maxReplicas?: number;
             minReplicas?: number;
             thresholdCpu?: number;
@@ -4573,16 +4622,22 @@ export type ConsoleListManagedResourcesQuery = {
       node: {
         creationTime: any;
         displayName: string;
-        enabled?: boolean;
-        environmentName: string;
         markedForDeletion?: boolean;
-        projectName: string;
         recordVersion: number;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { generation: number; name: string; namespace?: string };
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec: {
+          resourceName?: string;
           resourceTemplate: {
             apiVersion: string;
             kind: string;
@@ -4607,6 +4662,9 @@ export type ConsoleListManagedResourcesQuery = {
             name: string;
             namespace: string;
           }>;
+        };
+        syncedOutputSecretRef?: {
+          metadata?: { name: string; namespace?: string };
         };
         syncStatus: {
           action: Github__Com___Kloudlite___Api___Pkg___Types__SyncAction;

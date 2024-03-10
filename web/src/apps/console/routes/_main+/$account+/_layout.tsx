@@ -1,14 +1,18 @@
 import {
   ArrowsCounterClockwise,
+  Buildings,
+  Check,
   ChevronUpDown,
   Copy,
   GearSix,
   Plus,
   QrCode,
+  Search,
   WireGuardlogo,
-} from '@jengaicons/react';
+} from '~/console/components/icons';
 import { redirect } from '@remix-run/node';
 import {
+  Link,
   Outlet,
   ShouldRevalidateFunction,
   useLoaderData,
@@ -16,7 +20,7 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
@@ -35,7 +39,10 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import MenuSelect, { SelectItem } from '~/console/components/menu-select';
-import { BreadcrumButtonContent } from '~/console/utils/commons';
+import {
+  BreadcrumButtonContent,
+  BreadcrumSlash,
+} from '~/console/utils/commons';
 import OptionList from '~/components/atoms/option-list';
 import { IConsoleDevicesForUser } from '~/console/server/gql/queries/console-vpn-queries';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -49,7 +56,28 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
+import { cn } from '~/components/utils';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { IConsoleRootContext } from '../_layout/_layout';
+
+const ProfileIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 42 49"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M21.0002 21.0714C26.5756 21.0714 31.0953 16.4664 31.0953 10.7857C31.0953 5.10507 26.5756 0.5 21.0002 0.5C15.4248 0.5 10.9051 5.10507 10.9051 10.7857C10.9051 16.4664 15.4248 21.0714 21.0002 21.0714ZM21.0002 48.5C29.4828 48.5 37.0619 44.4813 42 38.2145C37.062 31.9475 29.4826 27.9286 20.9998 27.9286C12.5172 27.9286 4.93805 31.9473 0 38.214C4.93804 44.4811 12.5174 48.5 21.0002 48.5Z"
+      />
+    </svg>
+  );
+};
 
 const AccountMenu = ({ account }: { account: IAccount }) => {
   const accounts = useDataFromMatches<IAccounts>('accounts', {});
@@ -256,7 +284,7 @@ const DevicesMenu = ({ devices }: { devices: IConsoleDevicesForUser }) => {
                   project &&
                   environment !== device.environmentName && (
                     <OptionList.Item
-                      onClick={async (e) => {
+                      onClick={async () => {
                         await switchEnvironment({
                           api,
                           device,
@@ -312,9 +340,140 @@ const DevicesMenu = ({ devices }: { devices: IConsoleDevicesForUser }) => {
   );
 };
 
+const CurrentBreadcrum = ({ account }: { account: IAccount }) => {
+  const api = useConsoleApi();
+
+  const { data: accounts } = useCustomSwr(
+    () => '/accounts',
+    async () => api.listAccounts({})
+  );
+
+  const [searchText, setSearchText] = useState('');
+
+  const searchResp = useSearch(
+    {
+      data:
+        accounts?.map((i) => {
+          return {
+            ...i,
+            searchField: i.displayName,
+          };
+        }) || [],
+      searchText,
+      keys: ['searchField'],
+    },
+    [searchText, accounts]
+  );
+
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isMouseOver, setIsMouseOver] = useState<boolean>(false);
+
+  useEffect(() => {
+    setSearchText('');
+  }, [open]);
+
+  return (
+    <>
+      <BreadcrumSlash />
+      <span className="mx-md" />
+      <Button
+        prefix={
+          <span className="p-md flex items-center justify-center rounded-full border border-border-default text-text-soft">
+            <Buildings size={16} />
+          </span>
+        }
+        content={account.displayName}
+        size="sm"
+        variant="plain"
+        LinkComponent={Link}
+        to={`/${account.metadata?.name}/projects`}
+      />
+      <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
+        <OptionList.Trigger>
+          <button
+            ref={buttonRef}
+            aria-label="accounts"
+            className={cn(
+              'outline-none rounded py-lg px-md mx-md bg-surface-basic-hovered',
+              open || isMouseOver ? 'bg-surface-basic-pressed' : ''
+            )}
+            onMouseOver={() => {
+              setIsMouseOver(true);
+            }}
+            onMouseOut={() => {
+              setIsMouseOver(false);
+            }}
+            onFocus={() => {
+              //
+            }}
+            onBlur={() => {
+              //
+            }}
+          >
+            <div className="flex flex-row items-center gap-md">
+              <ChevronUpDown size={16} />
+            </div>
+          </button>
+        </OptionList.Trigger>
+        <OptionList.Content className="!pt-0 !pb-md" align="end">
+          <div className="p-[3px] pb-0">
+            <OptionList.TextInput
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              prefixIcon={<Search />}
+              focusRing={false}
+              placeholder="Search teams"
+              compact
+              className="border-0 rounded-none"
+            />
+          </div>
+          <OptionList.Separator />
+
+          {/* <div className="bodySm-medium text-text-soft py-md px-xl">Teams</div> */}
+
+          {/* <OptionList.Separator /> */}
+
+          {searchResp?.map((item) => {
+            return (
+              <OptionList.Link
+                key={parseName(item)}
+                LinkComponent={Link}
+                to={`/${parseName(item)}/projects`}
+                className={cn(
+                  'flex flex-row items-center justify-between',
+                  parseName(item) === parseName(account)
+                    ? 'bg-surface-basic-pressed hover:!bg-surface-basic-pressed'
+                    : ''
+                )}
+              >
+                <span>{item.displayName}</span>
+                {parseName(item) === parseName(account) && (
+                  <span>
+                    <Check size={16} />
+                  </span>
+                )}
+              </OptionList.Link>
+            );
+          })}
+
+          <OptionList.Separator />
+          <OptionList.Link
+            LinkComponent={Link}
+            to="/new-team"
+            className="text-text-primary"
+          >
+            <Plus size={16} /> <span>Create team</span>
+          </OptionList.Link>
+        </OptionList.Content>
+      </OptionList.Root>
+    </>
+  );
+};
+
 export const handle = ({ account, devicesForUser }: any) => {
   return {
-    breadcrum: () => <AccountMenu account={account} />,
+    breadcrum: () => <CurrentBreadcrum account={account} />,
     devicesMenu: () => <DevicesMenu devices={devicesForUser} />,
   };
 };

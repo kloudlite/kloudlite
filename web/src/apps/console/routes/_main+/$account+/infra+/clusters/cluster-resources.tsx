@@ -1,5 +1,5 @@
 import { GearSix } from '@jengaicons/react';
-import { Link, useParams } from '@remix-run/react';
+import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { cn, generateKey, titleCase } from '~/components/utils';
 import { IStatus, listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
@@ -23,6 +23,8 @@ import {
 } from '~/console/server/r-utils/common';
 import { renderCloudProvider } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 
 const RESOURCE_NAME = 'cluster';
 
@@ -216,6 +218,13 @@ const ClusterResources = ({
 }: {
   items: ExtractNodeType<IClusters>[];
 }) => {
+  const { account } = useOutletContext<IAccountContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.cluster:${parseName(i)}`;
+    })
+  );
+
   return (
     <ListGridView
       gridView={<GridView {...{ items }} />}

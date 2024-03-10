@@ -1,7 +1,7 @@
 /* eslint-disable react/destructuring-assignment */
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-import {NumberInput, TextInput} from '~/components/atoms/input';
+import { NumberInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -18,9 +18,10 @@ import { mapper } from '~/components/utils';
 import { IDialogBase } from '~/console/components/types.d';
 import { Switch } from '~/components/atoms/switch';
 import { NameIdView } from '~/console/components/name-id-view';
-import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
+import KeyValuePair from '~/console/components/key-value-pair';
 import { IClusterContext } from '../_layout';
-import {keyconstants} from "~/console/server/r-utils/key-constants";
+import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 
 type IDialog = IDialogBase<ExtractNodeType<INodepools>>;
 
@@ -32,6 +33,18 @@ const Root = (props: IDialog) => {
   const { cluster } = useOutletContext<IClusterContext>();
   const clusterRegion = cluster.spec?.aws?.region;
   const cloudProvider = cluster.spec?.cloudProvider;
+
+  const filterLabels = (labels: Array<string>) => {
+    if (isUpdate) {
+      const org = props.data.spec.nodeLabels;
+      labels.forEach((label) => {
+        delete org[label];
+      });
+      return org;
+    }
+
+    return {};
+  };
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -50,11 +63,12 @@ const Root = (props: IDialog) => {
             instanceType:
               props.data.spec.aws?.ec2Pool?.instanceType || 'c6a.large',
 
-            labels: [],
-            taints: [],
+            labels: filterLabels([keyconstants.nodepoolStateType]),
             autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
             isNameError: false,
-            stateful: props.data.spec.nodeLabels[keyconstants.nodepoolStateType] || false
+            stateful:
+              props.data.spec.nodeLabels[keyconstants.nodepoolStateType] ||
+              false,
           }
         : {
             nvidiaGpuEnabled: false,
@@ -71,10 +85,9 @@ const Root = (props: IDialog) => {
             // onDemand specs
             instanceType: 'c6a.large',
 
-            labels: [],
-            taints: [],
+            labels: {},
             isNameError: false,
-            stateful: false
+            stateful: false,
           },
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
@@ -88,6 +101,7 @@ const Root = (props: IDialog) => {
         poolType: Yup.string().required().oneOf(['ec2', 'spot']),
       }),
       onSubmit: async (val) => {
+        console.log(val.labels);
         const getNodeConf = () => {
           const getAwsNodeSpecs = () => {
             switch (val.poolType) {
@@ -157,7 +171,11 @@ const Root = (props: IDialog) => {
                   minCount: Number.parseInt(val.minimum, 10),
                   cloudProvider: 'aws',
                   nodeLabels: {
-                    [keyconstants.nodepoolStateType]: val.stateful ? "stateful" : "stateless"
+                    ...val.labels,
+                    [keyconstants.nodepoolStateType]: val.stateful
+                      ? 'stateful'
+                      : 'stateless',
+                    // ...val.labels.map((l: any) => ({ [l.key]: l.value })),
                   },
                   ...getNodeConf(),
                 },
@@ -178,7 +196,9 @@ const Root = (props: IDialog) => {
                   ...props.data.spec,
                   nodeLabels: {
                     ...(props.data.spec.nodeLabels || {}),
-                    [keyconstants.nodepoolStateType]: val.stateful ? "stateful" : "stateless"
+                    [keyconstants.nodepoolStateType]: val.stateful
+                      ? 'stateful'
+                      : 'stateless',
                   },
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
@@ -227,98 +247,100 @@ const Root = (props: IDialog) => {
           />
 
           {cloudProvider === 'aws' && (
-              <>
-                <Select
-                    label="Provision Mode"
-                    // eslint-disable-next-line react-hooks/rules-of-hooks
-                    value={values.poolType}
-                    options={async () => provisionTypes}
-                    onChange={(_, value) => {
-                      handleChange('poolType')(dummyEvent(value));
-                    }}
-                />
+            <>
+              <Select
+                label="Provision Mode"
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                value={values.poolType}
+                options={async () => provisionTypes}
+                onChange={(_, value) => {
+                  handleChange('poolType')(dummyEvent(value));
+                }}
+              />
 
-                <Select
-                    label="Availability Zone"
-                    value={values.awsAvailabilityZone}
-                    options={async () =>
-                        mapper(
-                            awsRegions.find((v) => v.Name === clusterRegion)?.Zones ||
-                            [],
-                            (v) => ({
-                              value: v,
-                              label: v,
-                            })
-                        )
-                    }
-                    onChange={(_, v) => {
-                      handleChange('awsAvailabilityZone')(dummyEvent(v));
-                    }}
-                />
+              <Select
+                label="Availability Zone"
+                value={values.awsAvailabilityZone}
+                options={async () =>
+                  mapper(
+                    awsRegions.find((v) => v.Name === clusterRegion)?.Zones ||
+                      [],
+                    (v) => ({
+                      value: v,
+                      label: v,
+                    })
+                  )
+                }
+                onChange={(_, v) => {
+                  handleChange('awsAvailabilityZone')(dummyEvent(v));
+                }}
+              />
 
-                <div className="flex flex-row gap-xl items-end">
-                  <div className="flex flex-row gap-xl items-end flex-1">
-                    <div className="flex-1">
-                      <Select
-                        // eslint-disable-next-line react-hooks/rules-of-hooks
-                        value={useMemo(() => {
-                          const plan = findNodePlan(values.instanceType);
-                          return plan?.value;
-                        }, [values.instanceType])}
-                        label="Node plan"
-                        options={async () => nodePlans}
-                        onChange={(value) => {
-                          handleChange('instanceType')(dummyEvent(value.value));
-                          handleChange('nvidiaGpuEnabled')(
-                            dummyEvent(!!value.gpuEnabled)
-                          );
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-md ">
-                    <div className="bodyMd-medium text-text-default">Stateful</div>
-                    <div className="flex items-center h-6xl">
-                      <Switch
-                          label=""
-                          checked={values.stateful}
-                          onChange={(val) => {
-                            handleChange('stateful')(dummyEvent(val));
-                          }}
-                      />
-                    </div>
+              <div className="flex flex-row gap-xl items-end">
+                <div className="flex flex-row gap-xl items-end flex-1">
+                  <div className="flex-1">
+                    <Select
+                      // eslint-disable-next-line react-hooks/rules-of-hooks
+                      value={useMemo(() => {
+                        const plan = findNodePlan(values.instanceType);
+                        return plan?.value;
+                      }, [values.instanceType])}
+                      label="Node plan"
+                      options={async () => nodePlans}
+                      onChange={(value) => {
+                        handleChange('instanceType')(dummyEvent(value.value));
+                        handleChange('nvidiaGpuEnabled')(
+                          dummyEvent(!!value.gpuEnabled)
+                        );
+                      }}
+                    />
                   </div>
                 </div>
-              </>
+
+                <div className="flex flex-col gap-md ">
+                  <div className="bodyMd-medium text-text-default">
+                    Stateful
+                  </div>
+                  <div className="flex items-center h-6xl">
+                    <Switch
+                      label=""
+                      checked={values.stateful}
+                      onChange={(val) => {
+                        handleChange('stateful')(dummyEvent(val));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="flex flex-row gap-xl items-end">
             <div className="flex flex-row gap-xl items-end flex-1 ">
               <div className="flex-1">
                 <NumberInput
-                    label={values.autoScale ? 'Min Node Count' : `Node Count`}
-                    placeholder="Minimum"
-                    value={values.minimum}
-                    error={!!errors.minimum}
-                    message={errors.minimum}
-                    onChange={(e) => {
-                      handleChange('minimum')(e);
-                      if (!values.autoScale) {
-                        handleChange('maximum')(e);
-                      }
-                    }}
+                  label={values.autoScale ? 'Min Node Count' : `Node Count`}
+                  placeholder="Minimum"
+                  value={values.minimum}
+                  error={!!errors.minimum}
+                  message={errors.minimum}
+                  onChange={(e) => {
+                    handleChange('minimum')(e);
+                    if (!values.autoScale) {
+                      handleChange('maximum')(e);
+                    }
+                  }}
                 />
               </div>
               {values.autoScale && (
-                  <div className="flex-1">
-                    <NumberInput
-                        error={!!errors.maximum}
-                        message={errors.maximum}
-                        label="Max Node Count"
-                        placeholder="Maximum"
-                        value={values.maximum}
-                        onChange={handleChange('maximum')}
+                <div className="flex-1">
+                  <NumberInput
+                    error={!!errors.maximum}
+                    message={errors.maximum}
+                    label="Max Node Count"
+                    placeholder="Maximum"
+                    value={values.maximum}
+                    onChange={handleChange('maximum')}
                   />
                 </div>
               )}
@@ -334,23 +356,22 @@ const Root = (props: IDialog) => {
               </div>
             </div>
           </div>
-
-          {/* {show?.type === DIALOG_TYPE.ADD && ( */}
-          {/*   <> */}
-          {/*     <Labels */}
-          {/*       value={values.labels} */}
-          {/*       onChange={(value: any) => */}
-          {/*         handleChange('labels')({ target: { value } }) */}
-          {/*       } */}
-          {/*     /> */}
-          {/*     <Taints */}
-          {/*       value={[]} */}
-          {/*       onChange={(value: any) => */}
-          {/*         handleChange('taints')({ target: { value } }) */}
-          {/*       } */}
-          {/*     /> */}
-          {/*   </> */}
-          {/* )} */}
+          {!isUpdate && (
+            <KeyValuePair
+              addText="Add new"
+              label="Labels"
+              size="lg"
+              value={Object.entries(values.labels || {}).map(
+                ([key, value]) => ({
+                  key,
+                  value,
+                })
+              )}
+              onChange={(_, v) => {
+                handleChange('labels')(dummyEvent(v));
+              }}
+            />
+          )}
         </div>
       </Popup.Content>
       <Popup.Footer>

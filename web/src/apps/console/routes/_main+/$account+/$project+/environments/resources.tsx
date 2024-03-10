@@ -1,5 +1,5 @@
 import { Copy, GearSix } from '@jengaicons/react';
-import { Link, useParams } from '@remix-run/react';
+import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
@@ -21,6 +21,9 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { listStatus } from '~/console/components/sync-status';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import CloneEnvironment from './clone-environment';
 
 const RESOURCE_NAME = 'workspace';
@@ -166,6 +169,16 @@ const ListView = ({ items, onAction }: IResource) => {
 };
 
 const Resources = ({ items = [] }: { items: BaseType[] }) => {
+  const { account } = useOutletContext<IAccountContext>();
+  const { project } = useOutletContext<IProjectContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.project:${parseName(
+        project
+      )}.environment:${parseName(i)}`;
+    })
+  );
+
   const [visible, setVisible] = useState<BaseType | null>(null);
   const props: IResource = {
     items,

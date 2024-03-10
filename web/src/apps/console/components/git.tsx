@@ -17,6 +17,7 @@ import { useAppend, useMapper } from '~/components/utils';
 import { ReactNode, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '~/components/atoms/button';
+import { toast } from '~/components/molecule/toast';
 import { ILoginUrls, ILogins } from '../server/gql/queries/git-queries';
 import Pulsable from './pulsable';
 import useGit, { IGIT_PROVIDERS } from '../hooks/use-git';
@@ -286,7 +287,6 @@ const Git = ({
 
   useEffect(() => {
     window.addEventListener('message', (e) => {
-      console.log(e);
       if (e.data) {
         const { type, status, provider } = e.data;
         if (type === 'add-provider' && status === 'success') {
@@ -307,6 +307,12 @@ const Git = ({
     }
   }, [showProviderOverlay]);
 
+  useEffect(() => {
+    if (!!installations.error || !!repos.error || !!branches.error) {
+      toast.error(installations.error || repos.error || branches.error);
+    }
+  }, [installations.error, repos.error, branches.error]);
+
   return (
     <div>
       <div className="flex flex-col relative border border-border-default rounded px-2xl">
@@ -320,6 +326,7 @@ const Git = ({
                   options={async () => accountsModified}
                   value={org}
                   onChange={(res) => {
+                    console.log(res);
                     switch (res.value) {
                       case extraAddOption:
                         popupWindow({
@@ -330,7 +337,7 @@ const Git = ({
                         setShowProviderOverlay(true);
                         break;
                       default:
-                        setOrg(res.label);
+                        setOrg(res.value);
                         break;
                     }
                   }}
@@ -425,6 +432,9 @@ const Git = ({
             installations.isLoading ||
             repos.isLoading ||
             branches.isLoading ||
+            branches.error ||
+            repos.error ||
+            installations.error ||
             loading
           }
         >

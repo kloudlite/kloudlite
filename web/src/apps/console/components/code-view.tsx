@@ -14,7 +14,7 @@ interface ICodeView {
 const CodeView = ({
   data,
   copy,
-  showShellPrompt,
+  showShellPrompt: _,
   language = 'shell',
   title,
 }: ICodeView) => {
@@ -55,7 +55,7 @@ const CodeView = ({
           }}
           className="group/sha cursor-pointer p-lg rounded-md bodyMd flex flex-row gap-xl items-center hljs w-full"
         >
-          <pre className="flex-1">
+          <pre className="flex-1 overflow-auto">
             <code ref={ref}>{data}</code>
           </pre>
 

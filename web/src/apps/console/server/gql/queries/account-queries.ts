@@ -29,7 +29,7 @@ export const accountQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateAccountMutation) =>
         data.accounts_createAccount,
-      vars(_: ConsoleCreateAccountMutationVariables) { },
+      vars(_: ConsoleCreateAccountMutationVariables) {},
     }
   ),
 
@@ -50,7 +50,7 @@ export const accountQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListAccountsQuery) =>
         data.accounts_listAccounts,
-      vars(_: ConsoleListAccountsQueryVariables) { },
+      vars(_: ConsoleListAccountsQueryVariables) {},
     }
   ),
   updateAccount: executor(
@@ -64,7 +64,7 @@ export const accountQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateAccountMutation) =>
         data.accounts_updateAccount,
-      vars(_: ConsoleUpdateAccountMutationVariables) { },
+      vars(_: ConsoleUpdateAccountMutationVariables) {},
     }
   ),
   getAccount: executor(
@@ -75,6 +75,7 @@ export const accountQueries = (executor: IExecutor) => ({
             name
             annotations
           }
+          targetNamespace
           updateTime
           contactEmail
           displayName
@@ -83,7 +84,7 @@ export const accountQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetAccountQuery) => data.accounts_getAccount,
-      vars(_: ConsoleGetAccountQueryVariables) { },
+      vars(_: ConsoleGetAccountQueryVariables) {},
     }
   ),
   deleteAccount: executor(
@@ -95,7 +96,7 @@ export const accountQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteAccountMutation) =>
         data.accounts_deleteAccount,
-      vars(_: ConsoleDeleteAccountMutationVariables) { },
+      vars(_: ConsoleDeleteAccountMutationVariables) {},
     }
   ),
 });

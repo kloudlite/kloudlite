@@ -77,6 +77,7 @@ query consoleGetAccount($accountName: String!) {
       name
       annotations
     }
+    targetNamespace
     updateTime
     contactEmail
     displayName
@@ -300,10 +301,6 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         spec {
           messageQueueTopicName
           kloudliteRelease
-          credentialsRef {
-            namespace
-            name
-          }
           clusterTokenRef {
             key
             name
@@ -398,18 +395,6 @@ query consoleGetCluster($name: String!) {
         name
         namespace
       }
-      credentialKeys {
-        keyAccessKey
-        keyAWSAccountId
-        keyAWSAssumeRoleExternalID
-        keyAWSAssumeRoleRoleARN
-        keyIAMInstanceProfileRole
-        keySecretKey
-      }
-      credentialsRef {
-        name
-        namespace
-      }
       kloudliteRelease
       messageQueueTopicName
       output {
@@ -480,14 +465,14 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
     edges {
       cursor
       node {
-        aws {
-          awsAccountId
-        }
         cloudProviderName
         createdBy {
           userEmail
           userId
           userName
+        }
+        aws {
+          authMechanism
         }
         creationTime
         displayName
@@ -528,9 +513,6 @@ mutation consoleDeleteProviderSecret($secretName: String!) {
 
 query consoleGetProviderSecret($name: String!) {
   infra_getProviderSecret(name: $name) {
-    aws {
-      awsAccountId
-    }
     cloudProviderName
     createdBy {
       userEmail
@@ -3250,8 +3232,6 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         creationTime
         displayName
-        enabled
-        environmentName
         lastUpdatedBy {
           userEmail
           userId
@@ -3259,13 +3239,17 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
         }
         markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
           generation
+          labels
           name
           namespace
         }
-        projectName
         recordVersion
         spec {
+          resourceName
           resourceTemplate {
             apiVersion
             kind
@@ -3289,6 +3273,12 @@ query consoleListManagedResources($projectName: String!, $envName: String!, $sea
           resources {
             apiVersion
             kind
+            name
+            namespace
+          }
+        }
+        syncedOutputSecretRef {
+          metadata {
             name
             namespace
           }

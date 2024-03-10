@@ -21,9 +21,12 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
 import { listStatus } from '~/console/components/sync-status';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import HandleHelmChart from './handle-helm-chart';
 
 const RESOURCE_NAME = 'helm chart';
@@ -141,7 +144,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
               statusRender,
-              listFlex({key:"flex-1"}),
+              listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, 'author'),
                 className: 'w-[180px]',
@@ -172,6 +175,16 @@ const HelmChartResources = ({ items = [] }: { items: BaseType[] }) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
+
+  const { account } = useOutletContext<IAccountContext>();
+  const { cluster } = useOutletContext<IClusterContext>();
+  useWatchReload(
+    items.map((i) => {
+      return `account:${parseName(account)}.cluster:${parseName(
+        cluster
+      )}.helm_release:${parseName(i)}`;
+    })
+  );
 
   const props: IResource = {
     items,

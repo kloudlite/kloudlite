@@ -1,11 +1,5 @@
 import * as RovingFocusGroup from '@radix-ui/react-roving-focus';
-import React, {
-  Key,
-  KeyboardEvent,
-  ReactElement,
-  ReactNode,
-  useRef,
-} from 'react';
+import { KeyboardEvent, ReactNode, useRef } from 'react';
 import { cn } from '~/components/utils';
 import { LoadingPlaceHolder } from './loading';
 
@@ -87,18 +81,20 @@ const handleKeyNavigation = (
   }
 };
 
-interface IColumn {
-  render?: () => ReactNode;
-  key?: Key;
+type IHeader = {
   className?: string;
-  width?: string;
-  label?: ReactNode;
+  render: () => ReactNode;
+  name: string;
+};
+
+interface IColumn {
+  render: () => ReactNode;
 }
 
 interface IMain {
-  columns?: IColumn[];
+  columns?: Record<string, IColumn>;
   className?: string;
-  onClick?: ((item?: IColumn[]) => void) | null;
+  onClick?: ((item?: Record<string, IColumn>) => void) | null;
   pressed?: boolean;
   to?: string;
   plain?: boolean;
@@ -106,16 +102,18 @@ interface IMain {
 
 interface IRowBase extends IMain {
   linkComponent?: any;
+  headers?: IHeader[];
 }
 
 const RowBase = ({
-  columns = [],
+  columns,
   to = '',
   linkComponent = 'div',
   className = '',
   onClick = null,
   pressed = false,
   plain,
+  headers,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -160,23 +158,21 @@ const RowBase = ({
         }}
       >
         <Component {...(Component === 'a' ? { href: to } : { to })}>
-          {columns.map((item) => (
-            <div
-              key={item?.key}
-              className={cn('', item?.className, item?.width)}
-            >
-              {item?.render ? item.render() : item?.label}
+          {headers?.map((item) => (
+            <div key={item.name} className={cn(item.className)}>
+              {columns?.[item.name]?.render()}
             </div>
           ))}
         </Component>
       </RovingFocusGroup.Item>
     );
   }
+
   return (
     <div className={css} role="row">
-      {columns.map((item) => (
-        <div key={item?.key} className={cn('', item?.className, item?.width)}>
-          {item?.render ? item.render() : item?.label}
+      {headers?.map((item) => (
+        <div key={item.name} className={cn(item.className)}>
+          {columns?.[item.name]?.render()}
         </div>
       ))}
     </div>
@@ -186,7 +182,7 @@ const RowBase = ({
 type IRow = IMain;
 
 const Row = ({
-  columns = [],
+  columns,
   className = '',
   onClick,
   pressed = false,
@@ -206,23 +202,29 @@ const Row = ({
 };
 
 interface IRoot {
-  children: ReactNode;
   className?: string;
   linkComponent?: any;
-  header?: ReactNode;
   plain?: boolean;
   loading?: boolean;
+  data?: {
+    headers: IHeader[];
+    rows: Array<{ columns: Record<string, IColumn>; to?: string }>;
+    className?: Array<string>;
+  };
+  headerClassName?: string;
 }
 
 const Root = ({
-  children,
-  header,
   className = '',
   linkComponent,
   plain,
   loading = false,
+  data,
+  headerClassName,
 }: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
+
+  console.log(data);
   return (
     <>
       {!loading && (
@@ -255,18 +257,30 @@ const Root = ({
             handleKeyNavigation(e, ref.current);
           }}
         >
-          <div role="list" aria-label="list" className="w-full">
-            {header && (
-              <div
-                aria-label="list-header"
-                className="flex px-xl py-lg gap-lg bg-surface-basic-subdued rounded-t"
-              >
-                {header}
-              </div>
-            )}
-            {React.Children.map(children as ReactElement[], (child) => (
-              <RowBase {...child?.props} linkComponent={linkComponent} />
-            ))}
+          <div className="flex flex-col overflow-hidden">
+            <div
+              className={cn(
+                'text-text-strong flex flex-row items-center py-xl px-2xl gap-3xl bodyMd-medium bg-surface-basic-active',
+                headerClassName
+              )}
+            >
+              {data?.headers.map((h, index) => (
+                <div key={index} className={cn(h.className)}>
+                  {h.render()}
+                </div>
+              ))}
+            </div>
+            <div role="list" aria-label="list" className="w-full">
+              {data?.rows.map((r, index) => (
+                <RowBase
+                  linkComponent={linkComponent}
+                  key={index}
+                  columns={r.columns}
+                  to={r.to}
+                  headers={data.headers}
+                />
+              ))}
+            </div>
           </div>
         </RovingFocusGroup.Root>
       )}
@@ -287,9 +301,9 @@ const Root = ({
   );
 };
 
-const List = {
+const ListV2 = {
   Root,
   Row,
 };
 
-export default List;
+export default ListV2;

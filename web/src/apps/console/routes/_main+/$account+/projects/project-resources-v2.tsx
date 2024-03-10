@@ -5,11 +5,8 @@ import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListItem,
   ListTitle,
-  listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { listStatus } from '~/console/components/sync-status';
@@ -21,6 +18,7 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useWatchReload } from '~/root/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
 import { IAccountContext } from '../_layout';
 
 type BaseType = ExtractNodeType<IProjects>;
@@ -99,20 +97,51 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
 const ListView = ({ items }: { items: BaseType[] }) => {
   const { account } = useParams();
   return (
-    <List.Root linkComponent={Link}>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const status = listStatus({ item, key: `${keyPrefix}status` });
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            to={`/${account}/${id}/environments`}
-            columns={[
-              {
-                key: generateKey(keyPrefix, 0),
-                className: listClass.title,
+    <ListV2.Root
+      linkComponent={Link}
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Cluster',
+            name: 'cluster',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          const tempStatus = listStatus({
+            key: '',
+            item: i,
+            className: 'text-center',
+          });
+          return {
+            columns: {
+              name: {
                 render: () => (
                   <ListTitle
                     title={name}
@@ -121,23 +150,13 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
-              status,
-              listFlex({ key: `${keyPrefix}flex` }),
-              {
-                key: generateKey(keyPrefix, item.clusterName || ''),
-                className: '',
+              status: {
                 render: () => (
-                  <div className="flex whitespace-pre items-center gap-md">
-                    <span className="bodyMd-semibold">cluster:</span>{' '}
-                    <span className="bodyMd-medium text-text-soft">
-                      {item.clusterName}
-                    </span>
-                  </div>
+                  <div className="inline-block">{tempStatus.render()}</div>
                 ),
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: listClass.author,
+              cluster: { render: () => <ListItem data={i.clusterName} /> },
+              updated: {
                 render: () => (
                   <ListItem
                     data={`${updateInfo.author}`}
@@ -145,26 +164,21 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton project={item} />,
+              action: {
+                render: () => <ExtraButton project={i} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+            to: `/${account}/${id}/environments`,
+          };
+        }),
+      }}
+    />
   );
 };
 
-const ProjectResources = ({ items = [] }: { items: BaseType[] }) => {
+const ProjectResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
-  useWatchReload(
-    items.map((i) => {
-      return `account:${parseName(account)}.project:${parseName(i)}`;
-    })
-  );
-  // n account:acc1.project:pro1.environment:env1.
+  useWatchReload(`account:${parseName(account)}`);
   return (
     <ListGridView
       listView={<ListView items={items} />}
@@ -173,4 +187,4 @@ const ProjectResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default ProjectResources;
+export default ProjectResourcesV2;

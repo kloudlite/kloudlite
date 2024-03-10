@@ -2,16 +2,16 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
-    ConsoleCreateDomainMutation,
-    ConsoleCreateDomainMutationVariables,
-    ConsoleDeleteDomainMutation,
-    ConsoleDeleteDomainMutationVariables,
-    ConsoleGetDomainQuery,
-    ConsoleGetDomainQueryVariables,
-    ConsoleListDomainsQuery,
-    ConsoleListDomainsQueryVariables,
-    ConsoleUpdateDomainMutation,
-    ConsoleUpdateDomainMutationVariables,
+  ConsoleCreateDomainMutation,
+  ConsoleCreateDomainMutationVariables,
+  ConsoleDeleteDomainMutation,
+  ConsoleDeleteDomainMutationVariables,
+  ConsoleGetDomainQuery,
+  ConsoleGetDomainQueryVariables,
+  ConsoleListDomainsQuery,
+  ConsoleListDomainsQueryVariables,
+  ConsoleUpdateDomainMutation,
+  ConsoleUpdateDomainMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IDomain = NN<ConsoleGetDomainQuery['infra_getDomainEntry']>;

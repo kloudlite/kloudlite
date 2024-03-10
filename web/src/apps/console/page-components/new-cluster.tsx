@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from '@remix-run/react';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
@@ -28,6 +28,7 @@ import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper'
 import { TitleBox } from '../components/raw-wrapper';
 import { BottomNavigation, ReviewComponent } from '../components/commons';
 import FillerCluster from '../assets/filler-cluster';
+import { IAccountContext } from '../routes/_main+/$account+/_layout';
 
 type props =
   | {
@@ -49,6 +50,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
     () => parseNodes(providerSecrets!),
     [providerSecrets]
   );
+
+  const { account } = useOutletContext<IAccountContext>();
 
   const options = useMapper(cloudProviders, (provider) => ({
     value: parseName(provider),
@@ -122,14 +125,18 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               spec: {
                 cloudProvider: validateClusterCloudProvider(val.cloudProvider),
                 aws: {
+                  credentials: {
+                    authMechanism: 'secret_keys',
+                    secretRef: {
+                      name: val.credentialsRef,
+                      namespace: account.targetNamespace,
+                    },
+                  },
                   region: selectedRegion.Name,
                   k3sMasters: {
                     nvidiaGpuEnabled: true,
                     instanceType: 'c6a.xlarge',
                   },
-                },
-                credentialsRef: {
-                  name: val.credentialsRef,
                 },
                 availabilityMode: validateAvailabilityMode(
                   val.availabilityMode
@@ -345,10 +352,10 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 step={2}
                 label="Add your cloud provider"
               />
-              <MultiStepProgress.Step
-                step={3}
-                label="Validate cloud provider"
-              />
+              {/* <MultiStepProgress.Step */}
+              {/*   step={3} */}
+              {/*   label="Validate cloud provider" */}
+              {/* /> */}
               <MultiStepProgress.Step step={4} label="Setup first cluster">
                 {getView()}
               </MultiStepProgress.Step>

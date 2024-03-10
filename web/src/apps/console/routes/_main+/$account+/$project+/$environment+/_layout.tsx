@@ -1,14 +1,15 @@
 import {
   BackingServices,
-  ChevronDown,
   CirclesFour,
-  Database,
   GearSix,
   Plus,
   Search,
   File,
   TreeStructure,
-} from '@jengaicons/react';
+  Check,
+  ChevronUpDown,
+  ChevronDown,
+} from '~/console/components/icons';
 import { redirect } from '@remix-run/node';
 import {
   Link,
@@ -17,9 +18,8 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
-import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import HandleScope from '~/console/page-components/new-scope';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -39,17 +39,14 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import {
-  BreadcrumButtonContent,
-  BreadcrumSlash,
-  tabIconSize,
-} from '~/console/utils/commons';
+import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
 import {
   IEnvironment,
   IEnvironments,
 } from '~/console/server/gql/queries/environment-queries';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { cn } from '~/components/utils';
+import { Button } from '~/components/atoms/button';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { IProjectContext } from '../_layout';
 
 export interface IEnvironmentContext extends IProjectContext {
@@ -136,64 +133,50 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
   const params = useParams();
 
   const [showPopup, setShowPopup] = useState<any>(null);
-  const [environments, setEnvironments] = useState<
-    ExtractNodeType<IEnvironments>[]
-  >([]);
 
   const api = useConsoleApi();
   const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
 
   const { project, account } = params;
 
+  const { data: environments, isLoading } = useCustomSwr(
+    () => `/environments/${searchText}`,
+    async () =>
+      api.listEnvironments({
+        search: {
+          text: {
+            matchType: 'regex',
+            regex: searchText,
+          },
+        },
+        projectName: project || '',
+      })
+  );
+
   useDebounce(
-    async () => {
-      ensureClusterClientSide(params);
+    () => {
       ensureAccountClientSide(params);
-      if (!project) {
-        throw new Error('Project is required.!');
-      }
-      try {
-        const { data, errors } = await api.listEnvironments({
-          projectName: project,
-        });
-        if (errors) {
-          throw errors[0];
-        }
-        setEnvironments(parseNodes(data));
-      } catch (err) {
-        handleError(err);
-      }
+      setSearchText(search);
     },
     300,
     [search]
   );
 
-  const { activePath } = useActivePath({
-    parent: `/${account}/${project}/${parseName(environment)}`,
-  });
+  const [open, setOpen] = useState(false);
 
   return (
     <>
       <BreadcrumSlash />
-      <span className="mx-sm" />
-      <OptionList.Root>
+      <span className="mx-md" />
+
+      <OptionList.Root open={open} onOpenChange={setOpen} modal={false}>
         <OptionList.Trigger>
-          <Breadcrum.Button
-            variant="plain"
+          <Button
+            content={environment.displayName}
             size="sm"
-            content={
-              <div className="flex flex-row items-center gap-md">
-                <BreadcrumButtonContent
-                  className={cn(
-                    tabs.find((tab) => tab.to === activePath)
-                      ? 'bodyMd-semibold'
-                      : ''
-                  )}
-                  content={environment.displayName}
-                />
-                <ChevronDown size={12} />
-              </div>
-            }
+            variant="plain"
+            suffix={<ChevronDown />}
           />
         </OptionList.Trigger>
         <OptionList.Content className="!pt-0 !pb-md" align="center">
@@ -203,24 +186,49 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
               onChange={(e) => setSearch(e.target.value)}
               prefixIcon={<Search />}
               focusRing={false}
-              placeholder="Search"
+              placeholder="Search environments"
               compact
               className="border-0 rounded-none"
             />
           </div>
           <OptionList.Separator />
-
-          {environments.map((item) => {
+          {parseNodes(environments)?.map((item) => {
             return (
               <OptionList.Link
                 key={parseName(item)}
                 LinkComponent={Link}
                 to={`/${account}/${project}/${parseName(item)}`}
+                className={cn(
+                  'flex flex-row items-center justify-between',
+                  parseName(item) === parseName(environment)
+                    ? 'bg-surface-basic-pressed hover:!bg-surface-basic-pressed'
+                    : ''
+                )}
               >
-                {item.displayName}
+                <span>{item.displayName}</span>
+                {parseName(item) === parseName(environment) && (
+                  <span>
+                    <Check size={16} />
+                  </span>
+                )}
               </OptionList.Link>
             );
           })}
+
+          {parseNodes(environments).length === 0 && !isLoading && (
+            <div className="flex flex-col gap-lg max-w-[198px] px-xl py-lg">
+              <div className="bodyLg-medium text-text-default">
+                No environments found
+              </div>
+              <div className="bodyMd text-text-soft">
+                Your search for "{search}" did not match and environments.
+              </div>
+            </div>
+          )}
+
+          {isLoading && parseNodes(environments).length === 0 && (
+            <div className="min-h-7xl" />
+          )}
 
           <OptionList.Separator />
           <OptionList.Item
@@ -235,6 +243,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
     </>
   );
 };
+
 export const handle = ({ environment }: any) => {
   return {
     navbar: <EnvironmentTabs />,
