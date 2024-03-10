@@ -233,30 +233,72 @@ func (r *AwsVPCReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.AwsVPC]) 
 }
 
 func genTFValues(obj *clustersv1.AwsVPC, credsSecret *corev1.Secret, ev *env.Env) ([]byte, error) {
-	return json.Marshal(map[string]any{
-		"aws_access_key": ev.KlAwsAccessKey,
-		"aws_secret_key": ev.KlAwsSecretKey,
-		"aws_region":     obj.Spec.Region,
-		"aws_assume_role": map[string]any{
-			"enabled":     true,
-			"role_arn":    string(credsSecret.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
-			"external_id": string(credsSecret.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
-		},
-
-		"vpc_name": getPrefixedName(obj.Name),
-		"vpc_cidr": obj.Spec.CIDR,
-		"public_subnets": func() []map[string]any {
-			results := make([]map[string]any, len(obj.Spec.PublicSubnets))
-			for i := range obj.Spec.PublicSubnets {
-				results[i] = map[string]any{
-					"availability_zone": obj.Spec.PublicSubnets[i].AvailabilityZone,
-					"cidr":              obj.Spec.PublicSubnets[i].CIDR,
-				}
+	switch obj.Spec.Credentials.AuthMechanism {
+	case clustersv1.AwsAuthMechanismSecretKeys:
+		{
+			awscreds, err := fn.ParseFromSecret[clustersv1.AwsAuthSecretKeys](credsSecret)
+			if err != nil {
+				return nil, err
 			}
-			return results
-		}(),
-		"tags": obj.Labels,
-	})
+
+			return json.Marshal(map[string]any{
+				"aws_access_key": awscreds.AccessKey,
+				"aws_secret_key": awscreds.SecretKey,
+				"aws_region":     obj.Spec.Region,
+				// "aws_assume_role": map[string]any{"enabled": false},
+				"vpc_name": getPrefixedName(obj.Name),
+				"vpc_cidr": obj.Spec.CIDR,
+				"public_subnets": func() []map[string]any {
+					results := make([]map[string]any, len(obj.Spec.PublicSubnets))
+					for i := range obj.Spec.PublicSubnets {
+						results[i] = map[string]any{
+							"availability_zone": obj.Spec.PublicSubnets[i].AvailabilityZone,
+							"cidr":              obj.Spec.PublicSubnets[i].CIDR,
+						}
+					}
+					return results
+				}(),
+				"tags": obj.Labels,
+			})
+		}
+	case clustersv1.AwsAuthMechanismAssumeRole:
+		{
+
+			awscreds, err := fn.ParseFromSecret[clustersv1.AwsAssumeRoleParams](credsSecret)
+			if err != nil {
+				return nil, err
+			}
+
+			return json.Marshal(map[string]any{
+				"aws_access_key": ev.KlAwsAccessKey,
+				"aws_secret_key": ev.KlAwsSecretKey,
+				"aws_region":     obj.Spec.Region,
+				"aws_assume_role": map[string]any{
+					"enabled":     true,
+					"role_arn":    string(awscreds.RoleARN),
+					"external_id": string(awscreds.ExternalID),
+				},
+
+				"vpc_name": getPrefixedName(obj.Name),
+				"vpc_cidr": obj.Spec.CIDR,
+				"public_subnets": func() []map[string]any {
+					results := make([]map[string]any, len(obj.Spec.PublicSubnets))
+					for i := range obj.Spec.PublicSubnets {
+						results[i] = map[string]any{
+							"availability_zone": obj.Spec.PublicSubnets[i].AvailabilityZone,
+							"cidr":              obj.Spec.PublicSubnets[i].CIDR,
+						}
+					}
+					return results
+				}(),
+				"tags": obj.Labels,
+			})
+		}
+	default:
+		{
+			return nil, fmt.Errorf("unknown auth mechanism %s", obj.Spec.Credentials.AuthMechanism)
+		}
+	}
 }
 
 func (r *AwsVPCReconciler) createVPC(req *rApi.Request[*clustersv1.AwsVPC]) stepResult.Result {
@@ -279,7 +321,7 @@ func (r *AwsVPCReconciler) createVPC(req *rApi.Request[*clustersv1.AwsVPC]) step
 
 	if job == nil {
 		credsSecret := &corev1.Secret{}
-		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
+		if err := r.Get(ctx, fn.NN(obj.Spec.Credentials.SecretRef.Namespace, obj.Spec.Credentials.SecretRef.Name), credsSecret); err != nil {
 			return fail(err)
 		}
 
@@ -390,7 +432,7 @@ func (r *AwsVPCReconciler) cleanupVPC(req *rApi.Request[*clustersv1.AwsVPC]) ste
 
 	if job == nil {
 		credsSecret := &corev1.Secret{}
-		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
+		if err := r.Get(ctx, fn.NN(obj.Spec.Credentials.SecretRef.Namespace, obj.Spec.Credentials.SecretRef.Name), credsSecret); err != nil {
 			return fail(err)
 		}
 

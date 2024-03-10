@@ -14,8 +14,7 @@ type AwsSubnet struct {
 
 // AwsVPCSpec defines the desired state of AwsVPC
 type AwsVPCSpec struct {
-	CredentialsRef common_types.SecretRef      `json:"credentialsRef"`
-	CredentialKeys CloudProviderCredentialKeys `json:"credentialKeys" graphql:"noinput"`
+	Credentials AwsCredentials `json:"credentials"`
 
 	// Region AwsAZ `json:"region"`
 	Region string `json:"region"`

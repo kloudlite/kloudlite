@@ -63,6 +63,26 @@ spec:
                 type: string
               aws:
                 properties:
+                  credentials:
+                    description: When - AuthMechanism == "secret_keys", Secret is
+                      unmarshalled as `AwsAuthSecretKeys` - AuthMechanism == "assume_role",
+                      Secret is unmarshalled as `AwsAssumeRoleParams`
+                    properties:
+                      authMechanism:
+                        type: string
+                      secretRef:
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                    required:
+                    - authMechanism
+                    - secretRef
+                    type: object
                   k3sMasters:
                     properties:
                       iamInstanceProfileRole:
@@ -199,6 +219,7 @@ spec:
                     - publicSubnets
                     type: object
                 required:
+                - credentials
                 - region
                 type: object
               backupToS3Enabled:
@@ -230,37 +251,6 @@ spec:
                     type: string
                 required:
                 - key
-                - name
-                type: object
-              credentialKeys:
-                properties:
-                  keyAWSAccountId:
-                    type: string
-                  keyAWSAssumeRoleExternalID:
-                    type: string
-                  keyAWSAssumeRoleRoleARN:
-                    type: string
-                  keyAccessKey:
-                    type: string
-                  keyIAMInstanceProfileRole:
-                    type: string
-                  keySecretKey:
-                    type: string
-                required:
-                - keyAWSAccountId
-                - keyAWSAssumeRoleExternalID
-                - keyAWSAssumeRoleRoleARN
-                - keyAccessKey
-                - keyIAMInstanceProfileRole
-                - keySecretKey
-                type: object
-              credentialsRef:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
                 - name
                 type: object
               kloudliteRelease:
@@ -303,7 +293,6 @@ spec:
             - availabilityMode
             - backupToS3Enabled
             - cloudProvider
-            - credentialsRef
             - kloudliteRelease
             - messageQueueTopicName
             - publicDNSHost
