@@ -11,7 +11,7 @@ variable "aws_secret_key" {
 variable "aws_assume_role" {
   type = object({
     enabled     = bool
-    role_arn    = string
+    role_arn    = optional(string)
     external_id = optional(string, null)
   })
 }
