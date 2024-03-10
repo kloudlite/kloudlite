@@ -1,6 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { ISocketResp, useSubscribe } from './context';
 import { useReload } from '../reloader';
+import useDebounce from '../../hooks/use-debounce';
 
 export const useSocketWatch = (
   onUpdate: (v: ISocketResp<any>[]) => void,
@@ -27,11 +28,15 @@ export const useSocketWatch = (
     []
   );
 
-  useEffect(() => {
-    if (subscribed) {
-      onUpdate(responses);
-    }
-  }, [responses]);
+  useDebounce(
+    () => {
+      if (subscribed) {
+        onUpdate(responses);
+      }
+    },
+    1000,
+    [responses]
+  );
 };
 
 export const useWatchReload = (topic: string | string[]) => {

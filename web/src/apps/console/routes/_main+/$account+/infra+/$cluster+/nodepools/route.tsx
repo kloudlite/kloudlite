@@ -12,10 +12,10 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
+import fake from '~/root/fake-data-generator/fake';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
-import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -49,7 +49,8 @@ const Nodepools = () => {
       <LoadingComp
         data={promise}
         skeletonData={{
-          nodePoolData: fake.ConsoleListNodePoolsQuery.infra_listNodePools as any,
+          nodePoolData: fake.ConsoleListNodePoolsQuery
+            .infra_listNodePools as any,
         }}
       >
         {({ nodePoolData }) => {

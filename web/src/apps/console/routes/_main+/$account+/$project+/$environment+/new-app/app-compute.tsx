@@ -14,8 +14,9 @@ import { useMapper } from '~/components/utils';
 import { registryHost } from '~/lib/configs/base-url.cjs';
 import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
-import { IAppContext } from '~/console/routes/_main+/$account+/$project+/$environment+/app+/$app+/_layout';
+import { useLog } from '~/root/lib/client/hooks/use-log';
 import { plans } from './datas';
+import { IProjectContext } from '../../_layout';
 
 const valueRender = ({
   label,
@@ -49,7 +50,7 @@ const AppCompute = () => {
     getImageTag,
   } = useAppState();
   const api = useConsoleApi();
-  const { cluster } = useOutletContext<IAppContext>();
+  const { cluster } = useOutletContext<IProjectContext>();
 
   const {
     data,
@@ -64,8 +65,18 @@ const AppCompute = () => {
     isLoading: nodepoolLoading,
     error: nodepoolLoadingError,
   } = useCustomSwr('/nodepools', async () => {
-    return api.listNodePools({ clusterName: parseName(cluster) });
+    return api.listNodePools({
+      clusterName: parseName(cluster),
+      pagination: {
+        first: 100,
+        orderBy: 'updateTime',
+        sortDirection: 'DESC',
+      },
+    });
   });
+
+  useLog(nodepoolData);
+  useLog(nodepoolLoadingError);
 
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
