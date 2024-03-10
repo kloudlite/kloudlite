@@ -2,11 +2,13 @@ package entities
 
 import (
 	"fmt"
+
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/operator/pkg/operator"
 
 	"github.com/kloudlite/api/common"
 	"github.com/kloudlite/api/pkg/repos"
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	ct "github.com/kloudlite/operator/apis/common-types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -21,24 +23,37 @@ const (
 	AWSInstanceProfileName  string = "awsInstanceProfileName"
 )
 
-type AWSSecretCredentials struct {
-	AccessKey *string `json:"accessKey,omitempty"`
-	SecretKey *string `json:"secretKey,omitempty"`
+type AWSAssumeRoleParams struct {
+	AWSAccountID                   string `json:"awsAccountId"`
+	CfParamTrustedARN              string `json:"cfParamTrustedARN" graphql:"noinput"`
+	clustersv1.AwsAssumeRoleParams `json:",inline" graphql:"noinput"`
+}
 
-	AWSAccountId               *string `json:"awsAccountId,omitempty"`
-	CfParamStackName           string  `json:"cfParamStackName,omitempty" graphql:"noinput"`
-	CfParamRoleName            string  `json:"cfParamRoleName,omitempty" graphql:"noinput"`
-	CfParamInstanceProfileName string  `json:"cfParamInstanceProfileName,omitempty" graphql:"noinput"`
-	CfParamTrustedARN          string  `json:"cfParamTrustedARN,omitempty" graphql:"noinput"`
-	CfParamExternalID          string  `json:"cfParamExternalID,omitempty" graphql:"noinput"`
+type AWSAuthSecretKeys struct {
+	CfParamUserName              string `json:"cfParamUserName" graphql:"noinput"`
+	clustersv1.AwsAuthSecretKeys `json:",inline"`
+}
+
+type AWSSecretCredentials struct {
+	CfParamStackName           string `json:"cfParamStackName,omitempty" graphql:"noinput"`
+	CfParamRoleName            string `json:"cfParamRoleName,omitempty" graphql:"noinput"`
+	CfParamInstanceProfileName string `json:"cfParamInstanceProfileName,omitempty" graphql:"noinput"`
+
+	AuthMechanism clustersv1.AwsAuthMechanism `json:"authMechanism"`
+
+	AuthSecretKeys   *AWSAuthSecretKeys   `json:"authSecretKeys,omitempty"`
+	AssumeRoleParams *AWSAssumeRoleParams `json:"assumeRoleParams,omitempty"`
 }
 
 func (asc *AWSSecretCredentials) GetAssumeRoleRoleARN() string {
-	return fmt.Sprintf("arn:aws:iam::%s:role/%s", *asc.AWSAccountId, asc.CfParamRoleName)
+	if asc.AssumeRoleParams != nil {
+		return fmt.Sprintf("arn:aws:iam::%s:role/%s", asc.AssumeRoleParams.AWSAccountID, asc.CfParamRoleName)
+	}
+	return ""
 }
 
 func (asc *AWSSecretCredentials) IsAssumeRoleConfiguration() bool {
-	return asc.AccessKey == nil || asc.SecretKey == nil
+	return asc.AuthMechanism == clustersv1.AwsAuthMechanismAssumeRole
 }
 
 func (asc *AWSSecretCredentials) Validate() error {
@@ -46,28 +61,47 @@ func (asc *AWSSecretCredentials) Validate() error {
 		return errors.Newf("aws secret credentials, is nil")
 	}
 
-	if asc.AccessKey != nil || asc.SecretKey != nil {
-		return nil
-	}
+	switch asc.AuthMechanism {
+	case clustersv1.AwsAuthMechanismSecretKeys:
+		{
+			if asc.AuthSecretKeys == nil {
+				return fmt.Errorf("with aws auth mechanism (%s), secretKeys must be set", asc.AuthMechanism)
+			}
+			if asc.AuthSecretKeys.AccessKey == "" || asc.AuthSecretKeys.SecretKey == "" {
+				return fmt.Errorf("with aws auth mechanism (%s), secretKeys accessKey, and secretKey must be set", asc.AuthMechanism)
+			}
+		}
 
-	if asc.AWSAccountId == nil {
-		return errors.Newf("awsAccountId, must be provided")
-	}
+	case clustersv1.AwsAuthMechanismAssumeRole:
+		{
+			if asc.AssumeRoleParams == nil {
+				return errors.Newf(".spec.assumeRoleParams, must be set, when accessKey and secretKey are not set")
+			}
 
-	if asc.CfParamStackName == "" {
-		return errors.Newf("cfParamStackName, must be provided")
-	}
-	if asc.CfParamExternalID == "" {
-		return errors.Newf("cfParamExternalID, must be provided")
-	}
-	if asc.CfParamRoleName == "" {
-		return errors.Newf("cfParamRoleName, must be provided")
-	}
-	if asc.CfParamTrustedARN == "" {
-		return errors.Newf("cfParamTrustedARN, must be provided")
-	}
-	if asc.CfParamInstanceProfileName == "" {
-		return errors.Newf("cfParamInstanceProfileName, must be provided")
+			if asc.AssumeRoleParams.AWSAccountID == "" {
+				return errors.Newf("awsAccountId, must be provided")
+			}
+
+			if asc.CfParamStackName == "" {
+				return errors.Newf("cfParamStackName, must be provided")
+			}
+			if asc.AssumeRoleParams.ExternalID == "" {
+				return errors.Newf("ExternalID, must be provided")
+			}
+			if asc.CfParamRoleName == "" {
+				return errors.Newf("cfParamRoleName, must be provided")
+			}
+			if asc.AssumeRoleParams.CfParamTrustedARN == "" {
+				return errors.Newf("CfParamTrustedARN, must be provided")
+			}
+			if asc.CfParamInstanceProfileName == "" {
+				return errors.Newf("cfParamInstanceProfileName, must be provided")
+			}
+		}
+	default:
+		{
+			return fmt.Errorf("unknown aws auth mechanism (%s)", asc.AuthMechanism)
+		}
 	}
 
 	return nil
@@ -75,14 +109,14 @@ func (asc *AWSSecretCredentials) Validate() error {
 
 type CloudProviderSecret struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	// corev1.Secret     `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
+	AccountName      string `json:"accountName" graphql:"noinput"`
+
 	metav1.ObjectMeta `json:"metadata"`
+
 	CloudProviderName ct.CloudProvider `json:"cloudProviderName"`
 
 	common.ResourceMetadata `json:",inline"`
 	AWS                     *AWSSecretCredentials `json:"aws,omitempty"`
-
-	AccountName string `json:"accountName" graphql:"noinput"`
 }
 
 func (cps *CloudProviderSecret) GetDisplayName() string {
@@ -127,19 +161,15 @@ func (cps *CloudProviderSecret) Validate() error {
 	case ct.CloudProviderAWS:
 		{
 			if cps.AWS == nil {
-				return errors.Newf(".aws is nil, must be provided when cloudproviderName is set to aws")
+				return errors.Newf(".aws is nil, it must be provided when cloudproviderName is set to aws")
 			}
-			if cps.AWS.AWSAccountId == nil && (cps.AWS.AccessKey == nil || cps.AWS.SecretKey == nil) {
-				return errors.Newf("neither .aws.%s nor (.aws.%s and .aws.%s) is provided", AWSAccountId, AccessKey, SecretKey)
-			}
+
+			return nil
+			// return cps.AWS.Validate()
 		}
 	default:
 		{
-			// if cps.StringData[AccessKey] == "" || cps.StringData[SecretKey] == "" {
-			// 	return false, errors.Newf(".stringData.accessKey or .stringData.accessSecret is empty")
-			// }
+			return fmt.Errorf("not implemented for cloudprovider (%s)", cps.CloudProviderName)
 		}
 	}
-
-	return nil
 }
