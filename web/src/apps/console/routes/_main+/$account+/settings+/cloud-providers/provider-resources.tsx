@@ -36,6 +36,7 @@ import CodeView from '~/console/components/code-view';
 import Yup from '~/root/lib/server/helpers/yup';
 import { PasswordInput } from '~/components/atoms/input';
 import useForm from '~/root/lib/client/hooks/use-form';
+import { Badge } from '~/components/atoms/badge';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
@@ -153,31 +154,41 @@ const AwsValidationPopup = ({
           {/*   <span>Account ID</span> */}
           {/*   <span>{item.aws?.awsAccountId}</span> */}
           {/* </div> */}
-          <div className="flex flex-col gap-xl text-start">
-            <CodeView copy data={url} />
+          {!data?.result && (
+            <div className="flex flex-col gap-xl text-start">
+              <CodeView copy data={url} />
 
-            <span className="flex flex-wrap items-center gap-md">
-              visit the link above and click on the button to validate your AWS
-              account, or
-              <Button
-                loading={il}
-                variant="primary-plain"
-                onClick={async () => {
-                  setIsLoading(true);
-                  try {
-                    await asyncPopupWindow({ url });
+              <span className="flex flex-wrap items-center gap-md">
+                visit the link above and click on the button to validate your
+                AWS account, or
+                <Button
+                  loading={il}
+                  variant="primary-plain"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    try {
+                      await asyncPopupWindow({ url });
 
-                    setIsLoading((s) => !s);
-                  } catch (err) {
-                    handleError(err);
-                  }
+                      setIsLoading((s) => !s);
+                    } catch (err) {
+                      handleError(err);
+                    }
 
-                  setIsLoading(false);
-                }}
-                content="click here"
-              />
-            </span>
-          </div>
+                    setIsLoading(false);
+                  }}
+                  content="click here"
+                />
+              </span>
+            </div>
+          )}
+
+          {data?.result && (
+            <div className="py-2xl">
+              <Badge type="success" icon={<Check />}>
+                Your Credential is valid
+              </Badge>
+            </div>
+          )}
 
           {!data?.result && (
             <>
