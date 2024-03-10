@@ -18,15 +18,11 @@ RUN <<'EOF'
     terraform init -backend=false &
     popd
   done
+
   wait
+
   tdir=$(basename $(dirname $TF_PLUGIN_CACHE_DIR))
-  # zip terraform.zip -r $tdir && rm -rf $tdir
   tar cf - $tdir | lz4 -v -5 > tf.lz4 && rm -rf $tdir
 EOF
-# RUN bash ./script.sh
-# RUN mkdir build-scripts
-# COPY .ci/scripts/terraform-module-cache.sh ./build-scripts/terraform-module-cache.sh
-# RUN bash build-scripts/terraform-module-cache.sh ./infrastructure-templates
 ENV DECOMPRESS_CMD="lz4 -d tf.lz4 | tar xf -"
-# ENV TERRAFORM_ZIPFILE="/app/terraform.zip"
 ENV TEMPLATES_DIR="/app/infrastructure-templates"

@@ -24,7 +24,7 @@ module "kloudlite-k3s-templates" {
 #}
 
 locals {
-  k3s_worker_tags = ["${var.name_prefix}-k3s-worker"]
+  k3s_worker_tags = ["${var.name_prefix}-${var.nodepool_name}-k3s-worker"]
 }
 
 data "google_compute_default_service_account" "default" {}
@@ -37,7 +37,7 @@ module "worker-nodes-firewall" {
   target_tags                 = local.k3s_worker_tags
   allow_incoming_http_traffic = var.allow_incoming_http_traffic
   allow_node_ports            = false
-  name_prefix                 = "${var.name_prefix}-firewall"
+  name_prefix                 = "${var.name_prefix}-${var.nodepool_name}-firewall"
 }
 
 module "worker-nodes" {
@@ -50,11 +50,10 @@ module "worker-nodes" {
     email  = data.google_compute_default_service_account.default.email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
-  name              = "${var.name_prefix}-${each.key}"
+  name              = "${var.name_prefix}-${var.nodepool_name}-${each.key}"
   provision_mode    = var.provision_mode
   ssh_key           = module.ssh-rsa-key.public_key
   availability_zone = var.availability_zone
-
 
   tags = concat(flatten([for k, v in var.tags : [k, v]]), local.k3s_worker_tags)
 
@@ -76,12 +75,12 @@ module "worker-nodes" {
     tf_node_labels          = jsonencode(merge(var.node_labels, {
       (module.constants.node_labels.provider_az)   = var.availability_zone
       (module.constants.node_labels.node_has_role) = "agent"
-      (module.constants.node_labels.nodepool_name) : var.name_prefix
+      (module.constants.node_labels.nodepool_name) : var.nodepool_name,
       (module.constants.node_labels.provider_aws_instance_profile_name) : ""
     },
       #      var.nvidia_gpu_enabled == true ? { (module.constants.node_labels.node_has_gpu) : "true" } : {}
     ))
-    tf_node_name                 = "${var.nodename_prefix}-${each.key}"
+    tf_node_name                 = "${var.nodepool_name}-${each.key}"
     tf_use_cloudflare_nameserver = true
     tf_extra_agent_args          = var.k3s_extra_agent_args
   })
@@ -90,6 +89,7 @@ module "worker-nodes" {
   bootvolume_size = var.bootvolume_size
 
   additional_disk = {
-    for k, v in (var.additional_disk != null ? var.additional_disk : {}) :"${var.name_prefix}-${each.key}-${k}" => v
+    for k, v in (var.additional_disk != null ? var.additional_disk : {}) :
+    "${var.name_prefix}-${var.nodepool_name}-${each.key}-${k}" => v
   }
 }

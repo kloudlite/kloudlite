@@ -1,0 +1,30 @@
+version: 3
+
+tasks:
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+    vars:
+      Push: true
+      DockerArgs: ""
+    cmds:
+      - docker build -t {{.Image}} . {{.DockerArgs}}
+      - |+
+        if [ "{{.Push}}" == "true" ]; then
+          docker push {{.Image}}
+        fi
+
+  local-build:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
+    vars:
+      Push: "{{.Push | default false}}"
+    cmds:
+      - nerdctl build -t {{.Image}} .
+      - |+
+        if [ "{{.Push}}" = "true" ]; then 
+          nerdctl push {{.Image}}
+        fi
+
