@@ -4,55 +4,33 @@ dotenv:
   - .secrets/env
 
 vars:
-  Varsfile: ".secrets/varfile.json"
+  ImagePrefix: ghcr.io/kloudlite/infrastructure-as-code
 
 tasks:
-  sync-from-template:
+  local-build:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
     vars:
-      InfrastructureTemplate: 
-    env:
-      SHELL: bash
-    silent: true
+      Push: "{{.Push | default false}}"
+    # silent: true
     cmds:
-      - chmod -f 600 ./*.tf | true
-      - cp {{.InfrastructureTemplate}}/*.tf ./
-      - chmod 400 ./*.tf
-      - echo "sync complete"
+      - nerdctl build -t {{.Image}} .
+      - |+
+        if [ "{{.Push}}" == "true" ]; then
+          nerdctl push {{.Image}}
+        fi
 
-  init:
-    cmds:
-      - terraform init
-    silent: true
-
-  plan:
-    dir: ./
+  container:build-and-push:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: 'var Image must have a value'
     vars:
-      PlanOutput: ".secrets/plan.out"
+      Push: true
+      DockerArgs: ""
     cmds:
-      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
-      - terraform plan --var-file "{{.Varsfile}}" --out "{{.PlanOutput}}"
-
-  apply:
-    dir: ./
-    dotenv:
-      - .secrets/env
-    vars:
-      PlanOutput: ".secrets/plan.out"
-    cmds:
-      - terraform apply "{{.PlanOutput}}"
-
-  validate:
-    dir: ./
-    cmds:
-      - terraform validate  -var-file={{.Varsfile}}
-
-  destroy:
-    dir: ./
-    dotenv:
-      - .secrets/env
-    vars:
-      PlanOutput: ".secrets/plan.destroy.out"
-    cmds:
-      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
-      - terraform plan --var-file={{.Varsfile}} --destroy --out "{{.PlanOutput}}"
-      - terraform apply "{{.PlanOutput}}"
+      - docker build -t {{.Image}} . {{.DockerArgs}}
+      - |+
+        if [ "{{.Push}}" == "true" ]; then
+          docker push {{.Image}}
+        fi
