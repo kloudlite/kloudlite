@@ -20,14 +20,16 @@ variables:
     spec:
       cloudflareEnabled: true
       availabilityMode: dev
-      credentialsRef:
-        name: "{{.providerSecretName}}"
-        namespace: "{{.providerSecretNamespace}}"
       cloudProvider: aws
       aws:
-        region: eu-north-1
+        credentials:
+          authMechanism: "secret_keys"
+          secretRef:
+            name: "{{.providerSecretName}}"
+            namespace: "{{.providerSecretNamespace}}"
+        region: ap-south-1
         k3sMasters:
-          instanceType: c5a.large
+          instanceType: c6a.large
           nvidiaGpuEnabled: false
 
 ---
