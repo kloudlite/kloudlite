@@ -45,9 +45,13 @@ tasks:
       - go run main.go --dev
       # - go build  -o bin/infra . && ./bin/infra --dev
 
-  build:
+  gen:constants:
     cmds:
       - go generate ./internal/entities/field-constants/gen.go
+
+  build:
+    cmds:
+      - task: gen:constants
       - task: go:build 
         vars: 
           Out: ./bin/{{.app}}

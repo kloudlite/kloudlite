@@ -21,7 +21,7 @@ variables:
   clusterName: "{{.clusterName}}"
   pool:
     displayName: sample
-    stateful: false
+    # stateful: false
     metadata:
       name: first
     spec:
@@ -155,7 +155,7 @@ variables:
 ---
 
 label: List Nodepools
-query: |+
+query: |+ #graphql
   query Infra_listNodePools($clusterName: String!) {
     infra_listNodePools(clusterName: $clusterName) {
       totalCount
@@ -200,7 +200,7 @@ variables:
 
 ---
 label: Get Nodepool
-query: |+
+query: |+ #graphql
   query Infra_getNodePool($clusterName: String!, $poolName: String!) {
     infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
       accountName

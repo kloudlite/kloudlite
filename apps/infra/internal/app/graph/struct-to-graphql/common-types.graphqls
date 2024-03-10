@@ -1,12 +1,23 @@
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams @shareable {
+  awsAccountId: String!
+  cfParamTrustedARN: String!
+  externalID: String!
+  roleARN: String!
+}
+
+type Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys @shareable {
+  accessKey: String!
+  cfParamUserName: String!
+  secretKey: String!
+}
+
 type Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentials @shareable {
-  accessKey: String
-  awsAccountId: String
-  cfParamExternalID: String
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParams
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeys
   cfParamInstanceProfileName: String
   cfParamRoleName: String
   cfParamStackName: String
-  cfParamTrustedARN: String
-  secretKey: String
 }
 
 type Github__com___kloudlite___api___apps___infra___internal___entities__InputField @shareable {
@@ -67,6 +78,7 @@ type Github__com___kloudlite___api___pkg___types__SyncStatus @shareable {
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
   region: String!
@@ -94,6 +106,11 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfi
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
   vpcId: String!
   vpcSubnetId: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentials @shareable {
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig @shareable {
@@ -127,15 +144,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AwsVPCParams @sh
   publicSubnets: [Github__com___kloudlite___operator___apis___clusters___v1__AwsSubnetWithID!]!
 }
 
-type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys @shareable {
-  keyAccessKey: String!
-  keyAWSAccountId: String!
-  keyAWSAssumeRoleExternalID: String!
-  keyAWSAssumeRoleRoleARN: String!
-  keyIAMInstanceProfileRole: String!
-  keySecretKey: String!
-}
-
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
   jobName: String!
   jobNamespace: String!
@@ -157,13 +165,22 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
-  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   kloudliteRelease: String!
   messageQueueTopicName: String!
   output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
   publicDNSHost: String!
   taintMasterNodes: Boolean!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig @shareable {
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {
@@ -176,6 +193,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @shareable {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfig
   maxCount: Int!
   minCount: Int!
   nodeLabels: Map
@@ -720,13 +738,23 @@ type PageInfo @shareable {
   startCursor: String
 }
 
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn {
+  awsAccountId: String!
+}
+
+input Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn {
+  accessKey: String!
+  secretKey: String!
+}
+
 input Github__com___kloudlite___api___apps___infra___internal___entities__AWSSecretCredentialsIn {
-  accessKey: String
-  awsAccountId: String
-  secretKey: String
+  assumeRoleParams: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAssumeRoleParamsIn
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  authSecretKeys: Github__com___kloudlite___api___apps___infra___internal___entities__AWSAuthSecretKeysIn
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  credentials: Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
   region: String!
 }
@@ -742,6 +770,11 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConf
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsCredentialsIn {
+  authMechanism: Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism!
+  secretRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn {
@@ -769,12 +802,23 @@ input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
   cloudflareEnabled: Boolean
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn {
+  availabilityZone: String!
+  bootVolumeSize: Int!
+  bootVolumeType: String!
+  credentials: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  machineType: String!
+  nodes: Map
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType!
+  region: String!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  gcp: Github__com___kloudlite___operator___apis___clusters___v1__GCPNodePoolConfigIn
   maxCount: Int!
   minCount: Int!
   nodeLabels: Map
@@ -1272,9 +1316,19 @@ enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType {
   spot
 }
 
+enum Github__com___kloudlite___operator___apis___clusters___v1__AwsAuthMechanism {
+  assume_role
+  secret_keys
+}
+
 enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode {
   dev
   HA
+}
+
+enum Github__com___kloudlite___operator___apis___clusters___v1__GCPPoolType {
+  SPOT
+  STANDARD
 }
 
 enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {

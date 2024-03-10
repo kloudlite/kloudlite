@@ -41,7 +41,7 @@ func (e ErrClusterAlreadyExists) Error() string {
 	return fmt.Sprintf("cluster with name %q already exists for account: %s", e.ClusterName, e.AccountName)
 }
 
-func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderSecret, clusterName string, clusterNamespace string) (*corev1.Secret, error) {
+func (d *domain) createTokenSecret(ctx InfraContext, clusterName string, clusterNamespace string) (*corev1.Secret, error) {
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -113,15 +113,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.EnsureGVK()
 	cluster.Namespace = accNs
 
-	cps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
-	if err != nil {
-		return nil, errors.NewE(err)
-	}
-
-	if cps.IsMarkedForDeletion() {
-		return nil, errors.Newf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
-	}
-
 	existing, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 		fields.MetadataName:      cluster.Name,
 		fields.MetadataNamespace: cluster.Namespace,
@@ -143,11 +134,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 
 	cluster.Spec.AccountId = out.AccountId
 
-	if cluster.Spec.CredentialsRef.Namespace == "" {
-		cluster.Spec.CredentialsRef.Namespace = cps.Namespace
-	}
-
-	tokenScrt, err := d.createTokenSecret(ctx, cps, cluster.Name, cluster.Namespace)
+	tokenScrt, err := d.createTokenSecret(ctx, cluster.Name, cluster.Namespace)
 	if err != nil {
 		return nil, errors.NewE(err)
 	}
@@ -168,15 +155,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 			Namespace: tokenScrt.Namespace,
 			Key:       keyClusterToken,
 		},
-		CredentialsRef: cluster.Spec.CredentialsRef,
-		CredentialKeys: &clustersv1.CloudProviderCredentialKeys{
-			KeyAWSAccountId:              entities.AWSAccountId,
-			KeyAWSAssumeRoleExternalID:   entities.AWSAssumeRoleExternalId,
-			KeyAWSAssumeRoleRoleARN:      entities.AWAssumeRoleRoleARN,
-			KeyAWSIAMInstanceProfileRole: entities.AWSInstanceProfileName,
-			KeyAccessKey:                 entities.AccessKey,
-			KeySecretKey:                 entities.SecretKey,
-		},
 		AvailabilityMode: cluster.Spec.AvailabilityMode,
 
 		// PublicDNSHost is <cluster-name>.<account-name>.tenants.<public-dns-host-suffix>
@@ -191,7 +169,21 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 			if cluster.Spec.CloudProvider != ct.CloudProviderAWS {
 				return nil
 			}
+
+			cps, err := d.findProviderSecret(ctx, cluster.Spec.AWS.Credentials.SecretRef.Name)
+			if err != nil {
+				return nil
+			}
+
 			return &clustersv1.AWSClusterConfig{
+				Credentials: clustersv1.AwsCredentials{
+					AuthMechanism: cps.AWS.AuthMechanism,
+					SecretRef: ct.SecretRef{
+						Name:      cps.Name,
+						Namespace: cps.Namespace,
+					},
+				},
+
 				Region: cluster.Spec.AWS.Region,
 				K3sMasters: clustersv1.AWSK3sMastersConfig{
 					InstanceType:     cluster.Spec.AWS.K3sMasters.InstanceType,
