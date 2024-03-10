@@ -67,7 +67,7 @@ query: |
     }
   }
 variables:
-  code: "**************"
+  code: "************"
   provider: github
   state: "************"
 ---
