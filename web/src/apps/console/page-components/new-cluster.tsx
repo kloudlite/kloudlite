@@ -352,10 +352,10 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 step={2}
                 label="Add your cloud provider"
               />
-              {/* <MultiStepProgress.Step */}
-              {/*   step={3} */}
-              {/*   label="Validate cloud provider" */}
-              {/* /> */}
+              <MultiStepProgress.Step
+                step={3}
+                label="Validate cloud provider"
+              />
               <MultiStepProgress.Step step={4} label="Setup first cluster">
                 {getView()}
               </MultiStepProgress.Step>

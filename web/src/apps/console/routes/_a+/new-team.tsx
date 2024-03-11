@@ -89,7 +89,7 @@ const NewAccount = () => {
             </div>
           </MultiStepProgress.Step>
           <MultiStepProgress.Step step={2} label="Add your cloud provider" />
-          {/* <MultiStepProgress.Step step={3} label="Validate cloud provider" /> */}
+          <MultiStepProgress.Step step={3} label="Validate cloud provider" />
           <MultiStepProgress.Step step={4} label="Setup first cluster" />
         </MultiStepProgress.Root>
       </MultiStepProgressWrapper>
