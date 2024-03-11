@@ -691,14 +691,28 @@ const LogComp = ({
     }
   }, []);
 
+  const wRef = useRef<HTMLDivElement>(null);
+
+  const getFullWidthInPx = () => {
+    if (wRef.current) {
+      return wRef.current.clientWidth;
+    }
+    return '100%';
+  };
+
   return isClientSide ? (
     <div
+      ref={wRef}
       className={classNames(className, {
         'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
         'relative hljs rounded-md': !fullScreen,
       })}
       style={{
-        width: fullScreen ? '100%' : width,
+        width: fullScreen
+          ? '100%'
+          : width === '100%'
+          ? getFullWidthInPx()
+          : width,
         height: fullScreen ? '100vh' : height,
       }}
     >

@@ -197,14 +197,16 @@ const ListDetail = (
             size="sm"
             variant="basic"
             content={open === item.id ? 'Hide Logs' : 'Show Logs'}
-            onClick={() =>
+            onClick={(e) => {
+              e.preventDefault();
+
               setOpen((s) => {
                 if (s === item.id) {
                   return '';
                 }
                 return item.id;
-              })
-            }
+              });
+            }}
           />
         )}
 
@@ -217,9 +219,13 @@ const ListDetail = (
         </div>
       </div>
 
-      <AnimateHide show={open === item.id} className="w-full pt-4xl">
+      <AnimateHide
+        show={open === item.id}
+        className="w-full flex pt-4xl justify-center items-center"
+      >
         <LogComp
           {...{
+            className: 'flex-1',
             dark: true,
             width: '100%',
             height: '40rem',
@@ -239,16 +245,29 @@ const ListDetail = (
 
 const ListView = ({ items }: IResource) => {
   const [open, setOpen] = useState<string>('');
+  const { account } = useParams();
 
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+
+        const lR = listRender({ keyPrefix, resource: item });
+        const statusRender = lR.statusRender({
+          className: 'min-w-[80px] mx-[25px] basis-full text-center',
+        });
+
         return (
           <List.Row
             key={id}
             className="!p-3xl"
+            {...(!(
+              statusRender.status === 'notready' ||
+              statusRender.status === 'deleting'
+            )
+              ? { to: `/${account}/infra/${id}/overview` }
+              : {})}
             columns={[
               {
                 className: 'w-full',
@@ -260,53 +279,6 @@ const ListView = ({ items }: IResource) => {
             ]}
           />
         );
-
-        // return (
-        //   <List.Row
-        //     key={id}
-        //     className={cn(
-        //       '!p-3xl',
-        //       statusRender.status === 'notready' ||
-        //         statusRender.status === 'deleting'
-        //         ? '!cursor-default hover:!bg-surface-basic-default'
-        //         : ''
-        //     )}
-        //     {...(!(
-        //       statusRender.status === 'notready' ||
-        //       statusRender.status === 'deleting'
-        //     )
-        //       ? { to: `/${account}/infra/${id}/overview` }
-        //       : {})}
-        //     columns={[
-        //       {
-        //         key: generateKey(keyPrefix, name + id),
-        //         className: 'max-w-[180px] min-w-[180px] w-[180px]',
-        //         render: () => (
-        //           <ListTitle
-        //             title={name}
-        //             subtitle={id}
-        //             avatar={<ConsoleAvatar name={id} />}
-        //           />
-        //         ),
-        //       },
-        //
-        //       tempStatus,
-        //       listFlex({ key: 'flex-1' }),
-        //       {
-        //         key: generateKey(keyPrefix, `${provider}`),
-        //         className: 'min-w-[150px] text-start',
-        //         render: () => <ListBody data={provider} />,
-        //       },
-        //       lR.authorRender({ className: 'min-w-[180px] w-[180px]' }),
-        //       {
-        //         key: generateKey(keyPrefix, 'action'),
-        //         render: () => (
-        //           <ExtraButton status={statusRender.status} cluster={item} />
-        //         ),
-        //       },
-        //     ]}
-        //   />
-        // );
       })}
     </List.Root>
   );

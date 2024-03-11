@@ -7,8 +7,8 @@ import { parseName } from '~/console/server/r-utils/common';
 import { Clock, ListNumbers } from '@jengaicons/react';
 import { cn } from '~/components/utils';
 import { useDataState } from '~/console/page-components/common-state';
-import { IClusterContext } from '../../_layout';
 import LogComp from '~/root/lib/client/components/logger';
+import { IClusterContext } from '../../_layout';
 
 const LogsAndMetrics = () => {
   const { cluster, account } = useOutletContext<IClusterContext>();
