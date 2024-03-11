@@ -11,7 +11,8 @@ on:
     paths:
       - "apps/**/graph/*.graphqls"
       - "apps/**/graph/struct-to-graphql/*.graphqls"
-      - "apps/gateway"
+      - "apps/gateway/**"
+      - ".github/workflows/build-gateway.yml"
 
 permissions:
   contents: read
