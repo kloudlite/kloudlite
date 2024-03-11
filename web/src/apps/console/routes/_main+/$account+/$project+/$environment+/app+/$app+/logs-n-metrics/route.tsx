@@ -7,12 +7,11 @@ import { dayjs } from '~/components/molecule/dayjs';
 import { parseValue } from '~/console/page-components/util';
 import { ApexOptions } from 'apexcharts';
 import { parseName } from '~/console/server/r-utils/common';
-import { Clock, ListNumbers } from '@jengaicons/react';
-import { cn } from '~/components/utils';
 import { useDataState } from '~/console/page-components/common-state';
 import { observeUrl } from '~/root/lib/configs/base-url.cjs';
-import { IAppContext } from '../_layout';
 import LogComp from '~/root/lib/client/components/logger';
+import LogAction from '~/console/page-components/log-action';
+import { IAppContext } from '../_layout';
 
 const LogsAndMetrics = () => {
   const { app, project, account } = useOutletContext<IAppContext>();
@@ -87,7 +86,7 @@ const LogsAndMetrics = () => {
     },
   };
 
-  const { state, setState } = useDataState<{
+  const { state } = useDataState<{
     linesVisible: boolean;
     timestampVisible: boolean;
   }>('logs');
@@ -239,41 +238,7 @@ const LogsAndMetrics = () => {
             width: '100%',
             height: '70vh',
             title: 'Logs',
-            actionComponent: (
-              <div className="hljs flex items-center gap-xl px-xs">
-                <div
-                  onClick={() => {
-                    setState((s) => ({ ...s, linesVisible: !s.linesVisible }));
-                  }}
-                  className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
-                >
-                  <span
-                    className={cn({
-                      'opacity-50': !state.linesVisible,
-                    })}
-                  >
-                    <ListNumbers color="currentColor" size={16} />
-                  </span>
-                </div>
-                <div
-                  onClick={() => {
-                    setState((s) => ({
-                      ...s,
-                      timestampVisible: !s.timestampVisible,
-                    }));
-                  }}
-                  className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
-                >
-                  <span
-                    className={cn({
-                      'opacity-50': !state.timestampVisible,
-                    })}
-                  >
-                    <Clock color="currentColor" size={16} />
-                  </span>
-                </div>
-              </div>
-            ),
+            actionComponent: <LogAction />,
             websocket: {
               account: parseName(account),
               cluster: project.clusterName || '',

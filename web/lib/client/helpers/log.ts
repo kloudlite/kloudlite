@@ -7,9 +7,9 @@ const getNodeEnv = () => {
   const env = (() => {
     if (typeof window !== 'undefined') {
       // @ts-ignore
-      return window.ENV;
+      return window.NODE_ENV;
     }
-    return process.env.ENV;
+    return process.env.NODE_ENV;
   })();
 
   if (env) {

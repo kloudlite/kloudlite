@@ -35,6 +35,8 @@ import { dayjs } from '~/components/molecule/dayjs';
 import LogComp from '~/root/lib/client/components/logger';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
+import LogAction from '~/console/page-components/log-action';
+import { useDataState } from '~/console/page-components/common-state';
 import HandleNodePool from './handle-nodepool';
 import {
   findNodePlanWithCategory,
@@ -208,6 +210,11 @@ const ListDetail = (
 
   const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
 
+  const { state } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex flex-row items-center">
@@ -278,12 +285,14 @@ const ListDetail = (
             width: '100%',
             height: '40rem',
             title: 'Logs',
-            hideLineNumber: true,
+            hideLineNumber: !state.linesVisible,
+            hideTimestamp: !state.timestampVisible,
             websocket: {
               account: parseName(account),
               cluster: item.clusterName,
               trackingId: item.id,
             },
+            actionComponent: <LogAction />,
           }}
         />
       </AnimateHide>

@@ -30,6 +30,8 @@ import { dayjs } from '~/components/molecule/dayjs';
 import { Button } from '~/components/atoms/button';
 import AnimateHide from '~/components/atoms/animate-hide';
 import LogComp from '~/root/lib/client/components/logger';
+import LogAction from '~/console/page-components/log-action';
+import { useDataState } from '~/console/page-components/common-state';
 
 const RESOURCE_NAME = 'cluster';
 
@@ -179,6 +181,11 @@ const ListDetail = (
     className: 'basis-full text-center',
   });
 
+  const { state } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
+
   return (
     <div className="w-full flex flex-col">
       <div className="flex flex-row items-center">
@@ -220,22 +227,25 @@ const ListDetail = (
       </div>
 
       <AnimateHide
+        onClick={(e) => e.preventDefault()}
         show={open === item.id}
         className="w-full flex pt-4xl justify-center items-center"
       >
         <LogComp
           {...{
+            hideLineNumber: !state.linesVisible,
+            hideTimestamp: !state.timestampVisible,
             className: 'flex-1',
             dark: true,
             width: '100%',
             height: '40rem',
             title: 'Logs',
-            hideLineNumber: true,
             websocket: {
               account: parseName(account),
               cluster: parseName(item),
               trackingId: item.id,
             },
+            actionComponent: <LogAction />,
           }}
         />
       </AnimateHide>
