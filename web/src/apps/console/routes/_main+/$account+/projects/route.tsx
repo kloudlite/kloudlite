@@ -10,7 +10,6 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import Tools from './tools';
 import ProjectResourcesV2 from './project-resources-v2';
 
@@ -154,58 +153,47 @@ const Projects = () => {
     };
   };
 
-  const reloadPage = useReload();
-
   return (
-    <div>
-      <div
-        onClick={() => {
-          reloadPage();
-        }}
-      >
-        reloadPage
-      </div>
-      <LoadingComp
-        data={promise}
-        skeletonData={{
-          projectsData: fake.ConsoleListProjectsQuery.core_listProjects as any,
-          clustersCount: 1,
-          cloudProviderSecretsCount: 1,
-        }}
-      >
-        {({ projectsData, clustersCount, cloudProviderSecretsCount }) => {
-          const projects = projectsData.edges?.map(({ node }) => node);
-          if (!projects) {
-            return null;
-          }
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        projectsData: fake.ConsoleListProjectsQuery.core_listProjects as any,
+        clustersCount: 1,
+        cloudProviderSecretsCount: 1,
+      }}
+    >
+      {({ projectsData, clustersCount, cloudProviderSecretsCount }) => {
+        const projects = projectsData.edges?.map(({ node }) => node);
+        if (!projects) {
+          return null;
+        }
 
-          return (
-            <Wrapper
-              header={{
-                title: 'Projects',
-                action: projects.length > 0 && (
-                  <Button
-                    variant="primary"
-                    content="Create Project"
-                    prefix={<PlusFill />}
-                    to={`/${account}/new-project`}
-                    LinkComponent={Link}
-                  />
-                ),
-              }}
-              empty={getEmptyState({
-                projectLength: projects.length,
-                clustersLength: clustersCount,
-                secretsLength: cloudProviderSecretsCount,
-              })}
-              tools={<Tools />}
-            >
-              <ProjectResourcesV2 items={projects} />
-            </Wrapper>
-          );
-        }}
-      </LoadingComp>
-    </div>
+        return (
+          <Wrapper
+            header={{
+              title: 'Projects',
+              action: projects.length > 0 && (
+                <Button
+                  variant="primary"
+                  content="Create Project"
+                  prefix={<PlusFill />}
+                  to={`/${account}/new-project`}
+                  LinkComponent={Link}
+                />
+              ),
+            }}
+            empty={getEmptyState({
+              projectLength: projects.length,
+              clustersLength: clustersCount,
+              secretsLength: cloudProviderSecretsCount,
+            })}
+            tools={<Tools />}
+          >
+            <ProjectResourcesV2 items={projects} />
+          </Wrapper>
+        );
+      }}
+    </LoadingComp>
   );
 };
 
