@@ -4,6 +4,9 @@ vars:
   app: gateway
 
 tasks:
+  generate-schema:
+    cmds:
+      - bash ./generate-schema.sh
   dev:
     dotenv:
       - "./.secrets/env"

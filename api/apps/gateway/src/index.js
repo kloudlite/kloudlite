@@ -12,7 +12,7 @@ const useEnv = (key) => {
   return v
 };
 
-const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
+
 
 class CustomDataSource extends RemoteGraphQLDataSource {
   // eslint-disable-next-line class-methods-use-this
@@ -37,10 +37,10 @@ class CustomDataSource extends RemoteGraphQLDataSource {
   }
 }
 
+const superGraphSchema = fs.readFileSync("./prod-schema.graphql");
+
 const gateway = new ApolloGateway({
-  supergraphSdl: new IntrospectAndCompose({
-    subgraphs: cfgMap.serviceList,
-  }),
+  supergraphSdl: superGraphSchema.toString(),
   buildService({ name, url }) {
     return new CustomDataSource({ name, url });
   },
