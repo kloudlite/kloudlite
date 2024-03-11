@@ -86,8 +86,7 @@ const baseUrls = () => {
     cookieDomain,
     baseUrl: bUrl,
     githubAppName: 'kloudlite-dev',
-    // socketUrl: `wss://websocket.${bUrl}`,
-    socketUrl: `wss://websocket.kloudlite.io`,
+    socketUrl: `wss://websocket.${bUrl}`,
     observeUrl: `https://observe.${bUrl}`,
   };
 };
