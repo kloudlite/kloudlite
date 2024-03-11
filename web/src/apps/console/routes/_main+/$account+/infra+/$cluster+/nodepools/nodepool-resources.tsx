@@ -87,6 +87,7 @@ const ExtraButton = ({
     />
   );
 };
+
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
@@ -369,7 +370,6 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
       {items.map((item, index) => {
         const { name, id } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        // const lR = listRender({ keyPrefix, resource: item });
         return (
           <List.Row
             key={id}

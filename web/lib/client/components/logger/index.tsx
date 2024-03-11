@@ -94,7 +94,7 @@ interface IHighlightIt {
 
 const LoadingComp = memo(() => (
   <Pulsable isLoading>
-    <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md">
+    <div className="hljs bg-opacity-50 w-full h-full absolute z-10 flex inset-0 rounded-md overflow-hidden">
       <div className="flex flex-col w-full">
         <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
           <div>Logs</div>
@@ -123,7 +123,7 @@ const LoadingComp = memo(() => (
             const log = logsMockData[Math.floor(Math.random() * 10)];
             return (
               <div className="flex gap-3xl" key={`${i + log}`}>
-                <div className="w-xl pulsable" />
+                <div className="min-w-xl pulsable" />
                 <div className="pulsable">{log}</div>
               </div>
             );

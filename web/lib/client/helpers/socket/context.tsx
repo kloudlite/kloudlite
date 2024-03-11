@@ -110,7 +110,7 @@ export const useSubscribe = <T extends IData>(
 
   useDebounce(
     () => {
-      console.log('subscribing');
+      logger.log('subscribing');
       if (Array.isArray(msg)) {
         msg.forEach((m) => {
           sendMsg({ ...m, data: { ...m.data, event: 'subscribe' } });
@@ -120,7 +120,7 @@ export const useSubscribe = <T extends IData>(
       }
 
       return () => {
-        console.log('unsubscribing');
+        logger.log('unsubscribing');
         if (Array.isArray(msg)) {
           msg.forEach((m) => {
             clear(m);
@@ -249,7 +249,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
             }
           });
         } catch (e) {
-          console.log(e);
+          logger.error(e);
         }
       }
     },

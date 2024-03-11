@@ -255,6 +255,7 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
     edges {
       cursor
       node {
+        id
         displayName
         markedForDeletion
         metadata {

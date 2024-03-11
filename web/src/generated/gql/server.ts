@@ -1805,6 +1805,7 @@ export type ConsoleListClustersQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        id: string;
         displayName: string;
         markedForDeletion?: boolean;
         creationTime: any;

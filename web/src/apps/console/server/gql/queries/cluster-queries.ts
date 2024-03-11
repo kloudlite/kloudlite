@@ -78,6 +78,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
+              id
               displayName
               markedForDeletion
               metadata {
