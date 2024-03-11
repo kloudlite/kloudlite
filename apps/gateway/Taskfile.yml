@@ -19,6 +19,7 @@ tasks:
       - sh: '[[ -n "{{.Image}}" ]]'
         msg: "var Image must have a value, of format 'image_repository:image_tag'"
     cmds:
+      - task generate-schema
       - docker buildx build -f ./Containerfile -t {{.Image}} .
 
   container:build-and-push:
