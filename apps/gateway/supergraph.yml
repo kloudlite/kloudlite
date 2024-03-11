@@ -1,0 +1,22 @@
+federation_version: =2.3.2
+subgraphs:
+  auth-api:
+    routing_url: http://auth-api
+    schema:
+      file: ./schemas/auth-api.schema
+  account-api:
+    routing_url: https://accounts-api
+    schema:
+      file: ./schemas/accounts-api.schema
+  container-registry-api:
+    routing_url: https://container-registry-api
+    schema:
+      file: ./schemas/container-registry-api.schema
+  console-api:
+    routing_url: https://console-api
+    schema:
+      file: ./schemas/console-api.schema
+  infra-api:
+    routing_url: https://infra-api
+    schema:
+      file: ./schemas/infra-api.schema
