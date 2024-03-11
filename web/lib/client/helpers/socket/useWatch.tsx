@@ -34,7 +34,7 @@ export const useSocketWatch = (
         onUpdate(responses);
       }
     },
-    1000,
+    3000,
     [responses]
   );
 };
