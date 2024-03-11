@@ -1,4 +1,4 @@
-import { HeadersFunction } from '@remix-run/node';
+import { HeadersFunction, LinksFunction } from '@remix-run/node';
 import {
   Link,
   Links,
@@ -33,7 +33,7 @@ import tailwindBase from '~/design-system/tailwind-base.js';
 import { isDev } from '../client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
 
-export const links = () => [
+export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
   { rel: 'stylesheet', href: reactToast },
   { rel: 'stylesheet', href: skeletonCSS },
@@ -41,6 +41,11 @@ export const links = () => [
   { rel: 'stylesheet', href: styleReactPulsable },
   { rel: 'stylesheet', href: styleZenerSelect },
   { rel: 'stylesheet', href: rcss },
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Familjen+Grotesk:ital,wght@0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap',
+  },
+  { rel: 'stylesheet', href: 'https://rsms.me/inter/inter.css' },
 ];
 
 export const ErrorWrapper = ({ children, message }: any) => {

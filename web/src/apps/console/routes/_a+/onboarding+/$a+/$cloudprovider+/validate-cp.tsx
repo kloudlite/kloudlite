@@ -68,7 +68,7 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
   const { data, isLoading: il } = useCustomSwr(
     () => parseName(cloudProvider) + isLoading,
     async () => {
-      if (!parseName(cloudProvider.metadata!.name)) {
+      if (!parseName(cloudProvider)) {
         throw new Error('Invalid cloud provider name');
       }
       return api.checkAwsAccess({
