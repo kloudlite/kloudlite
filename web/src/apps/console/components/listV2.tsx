@@ -104,6 +104,7 @@ interface IMain {
 interface IRowBase extends IMain {
   linkComponent?: any;
   headers?: IHeader[];
+  disabled?: boolean;
 }
 
 const RowBase = ({
@@ -115,6 +116,7 @@ const RowBase = ({
   pressed = false,
   plain,
   headers,
+  disabled,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -138,12 +140,13 @@ const RowBase = ({
     {
       'bg-surface-basic-default': !pressed,
       'cursor-pointer hover:bg-surface-basic-hovered':
-        (!!onClick || linkComponent !== 'div') && !pressed,
+        (!!onClick || linkComponent !== 'div') && !pressed && !disabled,
       'bg-surface-basic-active': pressed,
+      'cursor-default': !!disabled,
     }
   );
 
-  if (!!onClick || linkComponent !== 'div') {
+  if (!disabled) {
     return (
       <RovingFocusGroup.Item
         role="row"
@@ -209,7 +212,11 @@ interface IRoot {
   loading?: boolean;
   data?: {
     headers: IHeader[];
-    rows: Array<{ columns: Record<string, IColumn>; to?: string }>;
+    rows: Array<{
+      columns: Record<string, IColumn>;
+      to?: string;
+      disabled?: boolean;
+    }>;
     className?: Array<string>;
   };
   headerClassName?: string;
@@ -279,6 +286,7 @@ const Root = ({
                   columns={r.columns}
                   to={r.to}
                   headers={data.headers}
+                  disabled={r.disabled}
                 />
               ))}
             </div>

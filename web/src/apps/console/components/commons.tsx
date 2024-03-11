@@ -88,21 +88,10 @@ export const CopyButton = ({
       setTimeout(() => {
         setCopyIcon(<CopySimple />);
       }, 1000);
-      // toast.success('Copied to clipboard');
     },
   });
 
   return (
-    // <Chips.Chip
-    //   type="CLICKABLE"
-    //   item={title}
-    //   label={title}
-    //   prefix={copyIcon}
-    //   onClick={() => {
-    //     copy(value);
-    //     setCopyIcon(<Check />);
-    //   }}
-    // />
     <div
       onClick={() => {
         copy(value);

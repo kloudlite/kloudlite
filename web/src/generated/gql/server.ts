@@ -2506,6 +2506,7 @@ export type ConsoleGetAppQuery = {
       isReady: boolean;
       lastReadyGeneration?: number;
       lastReconcileTime?: any;
+      checkList?: Array<{ description?: string; title: string; name: string }>;
       message?: { RawMessage?: any };
       resources?: Array<{
         apiVersion: string;
@@ -2608,6 +2609,11 @@ export type ConsoleListAppsQuery = {
             kind: string;
             name: string;
             namespace: string;
+          }>;
+          checkList?: Array<{
+            description?: string;
+            title: string;
+            name: string;
           }>;
         };
         syncStatus: {

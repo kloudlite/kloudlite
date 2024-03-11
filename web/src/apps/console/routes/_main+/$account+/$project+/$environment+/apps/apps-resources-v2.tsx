@@ -31,8 +31,9 @@ import {
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { listStatus } from '~/console/components/sync-status';
+import { SyncStatusV2, listStatus } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
 import { IEnvironmentContext } from '../_layout';
 
 const RESOURCE_NAME = 'app';
@@ -176,62 +177,68 @@ const GridView = ({ items = [], onAction: _ }: IResource) => {
 const ListView = ({ items = [], onAction }: IResource) => {
   const { account, project, environment } = useParams();
   return (
-    <List.Root linkComponent={Link}>
-      {items.map((item, index) => {
-        const { name, id, updateInfo, intercept } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const status = listStatus({ key: `${keyPrefix}status`, item });
-        return (
-          <List.Row
-            to={`/${account}/${project}/${environment}/app/${id}`}
-            key={keyPrefix + name}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: listClass.title,
+    <ListV2.Root
+      linkComponent={Link}
+      data={{
+        headers: [
+          {
+            render: () => 'Name',
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
-              status,
-              // @ts-ignore
-              ...[
-                intercept && !!intercept.enabled
-                  ? {
-                    key: generateKey(keyPrefix, `${name + id}intercept`),
-                    className: listClass.title,
-                    render: () => (
-                      <ListSecondary
-                        title="intercepted toDevice"
-                        subtitle={intercept?.toDevice}
-                      />
-                    ),
-                  }
-                  : [],
-              ],
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: listClass.author,
+              status: {
+                render: () => (
+                  <div className="inline-block">
+                    <SyncStatusV2 item={i} />
+                  </div>
+                ),
+              },
+              // provider: { render: () => <ListItem data={provider} /> },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton onAction={onAction} item={i} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+            to: `/${account}/infra/${id}/overview`,
+            disabled: true,
+          };
+        }),
+      }}
+    />
   );
 };
 
-const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
+const AppsResourcesV2 = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   const api = useConsoleApi();
   const { environment, project, account } = useParams();
   const { devicesForUser } = useOutletContext<IEnvironmentContext>();
@@ -325,4 +332,4 @@ const AppsResources = ({ items = [] }: Omit<IResource, 'onAction'>) => {
   );
 };
 
-export default AppsResources;
+export default AppsResourcesV2;

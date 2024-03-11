@@ -267,7 +267,6 @@ const ListView = ({ items }: IResource) => {
         const statusRender = lR.statusRender({
           className: 'min-w-[80px] mx-[25px] basis-full text-center',
         });
-
         return (
           <List.Row
             key={id}

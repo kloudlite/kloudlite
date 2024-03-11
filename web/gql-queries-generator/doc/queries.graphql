@@ -1028,6 +1028,11 @@ query consoleGetApp($projectName: String!, $envName: String!, $name: String!) {
       }
     }
     status {
+      checkList {
+        description
+        title
+        name
+      }
       checks
       isReady
       lastReadyGeneration
@@ -1156,6 +1161,11 @@ query consoleListApps($projectName: String!, $envName: String!, $search: SearchA
             kind
             name
             namespace
+          }
+          checkList {
+            description
+            title
+            name
           }
         }
         syncStatus {

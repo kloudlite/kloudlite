@@ -23,7 +23,6 @@ import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
-import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 
 const RESOURCE_NAME = 'storage';

@@ -39,4 +39,12 @@ export {
   BackingServices,
   VirtualMachine,
   Database,
+  ArrowsClockwise,
+  Info,
+  Fan,
+  WarningCircle,
+  ChecksFill as Checks,
+  CircleNotch,
+  Circle,
+  CircleFill,
 } from '@jengaicons/react';
