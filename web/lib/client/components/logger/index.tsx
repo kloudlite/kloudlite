@@ -15,7 +15,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ViewportList } from 'react-viewport-list';
+import { ViewportList, ViewportListRef } from 'react-viewport-list';
 import { dayjs } from '~/components/molecule/dayjs';
 import {
   ISearchInfProps,
@@ -28,6 +28,7 @@ import { generatePlainColor } from '~/root/lib/utils/color-generator';
 import ReactPulsable from 'react-pulsable';
 import { ChildrenProps } from '~/components/types';
 import { logsMockData } from './dummy';
+import { LoadingIndicator } from '../reload-indicator';
 
 const pulsableContext = createContext(false);
 
@@ -499,22 +500,14 @@ const LogBlock = ({
 
   const [showAll, setShowAll] = useState(true);
 
-  const ref = useRef(null);
+  const ref = useRef<ViewportListRef>(null);
 
   useEffect(() => {
-    (async () => {
-      if (
-        follow &&
-        ref.current &&
-        // @ts-ignore
-        typeof ref.current.scrollToIndex === 'function'
-      ) {
-        // @ts-ignore
-        ref.current.scrollToIndex({
-          index: data.length - 1,
-        });
-      }
-    })();
+    if (follow && ref.current) {
+      ref.current.scrollToIndex({
+        index: data.length - 1,
+      });
+    }
   }, [data, maxLines]);
 
   return (
@@ -575,13 +568,8 @@ const LogBlock = ({
           <div
             className="flex-1 flex flex-col pb-8 scroll-container"
             style={{ lineHeight: `${fontSize * 1.5}px` }}
-            ref={ref}
           >
-            <ViewportList
-              items={showAll ? data : searchResult}
-              ref={ref}
-              // viewportRef={listRef}
-            >
+            <ViewportList items={showAll ? data : searchResult} ref={ref}>
               {(log, index) => {
                 return (
                   <LogLine
@@ -750,6 +738,8 @@ const LogComp = ({
                 </div>
               </div>
             </div>
+
+            <LoadingIndicator className="absolute z-20 bottom-lg right-lg" />
           </div>
         </Pulsable>
       )}

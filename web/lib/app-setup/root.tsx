@@ -21,7 +21,6 @@ import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
-// import { SelectPortalContainer } from '~/components/atoms/select';
 import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ToastContainer } from '~/components/molecule/toast';
@@ -30,7 +29,8 @@ import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
 import rcss from 'react-highlightjs-logs/dist/index.css';
 import tailwindBase from '~/design-system/tailwind-base.js';
-import { isDev } from '../client/helpers/log';
+import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
+import { isDev } from '~/lib/client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
 
 export const links: LinksFunction = () => [
@@ -202,6 +202,7 @@ const Root = ({
         <LiveReload port={443} />
         <Tooltip.Provider>
           <ProgressContainer>
+            <ReloadIndicator />
             <NonIdleProgressBar />
             <ToastContainer position="bottom-left" />
             <Wrapper>

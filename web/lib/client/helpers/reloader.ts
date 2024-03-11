@@ -1,9 +1,9 @@
-import { useLocation, useNavigate } from '@remix-run/react';
+import { useRevalidator } from '@remix-run/react';
 
 export const useReload = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const revalidator = useRevalidator();
+
   return () => {
-    navigate(location.pathname + location.search, { replace: true });
+    revalidator.revalidate();
   };
 };

@@ -1,6 +1,7 @@
 import * as RovingFocusGroup from '@radix-ui/react-roving-focus';
 import { KeyboardEvent, ReactNode, useRef } from 'react';
 import { cn } from '~/components/utils';
+import logger from '~/root/lib/client/helpers/log';
 import { LoadingPlaceHolder } from './loading';
 
 const focusableElement = 'a[href], button, input, select, textarea';
@@ -77,7 +78,7 @@ const handleKeyNavigation = (
       }
     }
   } catch {
-    console.log('Error focusing');
+    logger.error('Error focusing');
   }
 };
 
@@ -224,7 +225,7 @@ const Root = ({
 }: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  console.log(data);
+  // logger.log(data);
   return (
     <>
       {!loading && (
@@ -250,7 +251,7 @@ const Root = ({
                 }
               }
             } catch {
-              console.log('Error Focusing');
+              logger.error('Error Focusing');
             }
           }}
           onKeyDown={(e) => {
@@ -265,7 +266,7 @@ const Root = ({
               )}
             >
               {data?.headers.map((h, index) => (
-                <div key={index} className={cn(h.className)}>
+                <div key={`${index + h.name}`} className={cn(h.className)}>
                   {h.render()}
                 </div>
               ))}
@@ -274,7 +275,7 @@ const Root = ({
               {data?.rows.map((r, index) => (
                 <RowBase
                   linkComponent={linkComponent}
-                  key={index}
+                  key={`${index + (r.to || '')}`}
                   columns={r.columns}
                   to={r.to}
                   headers={data.headers}
