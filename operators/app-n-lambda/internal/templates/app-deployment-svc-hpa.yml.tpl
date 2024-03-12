@@ -3,6 +3,7 @@
 {{- $vMounts := get . "volume-mounts"}}
 {{- $ownerRefs := get . "owner-refs" | default list  }}
 
+{{- $podLabels := get . "pod-labels" | default dict }}
 {{- $podAnnotations := get . "pod-annotations" | default dict }}
 
 {{/* for observability */}}
@@ -37,9 +38,7 @@ spec:
     metadata:
       labels:
         app: {{.Name}}
-        {{- if .Spec.Region}}
-        kloudlite.io/region: {{.Spec.Region}}
-        {{- end}}
+        {{ $podLabels | toYAML | nindent 8 }}
       annotations: {{$podAnnotations | toYAML | nindent 8 }}
     spec:
       serviceAccountName: {{.Spec.ServiceAccount}}
@@ -55,6 +54,10 @@ spec:
           operator: Equal
           value: {{.Spec.Region | squote}}
         {{- end}}
+
+      {{- if .Spec.TopologySpreadConstraints }}
+      topologySpreadConstraints: {{.Spec.TopologySpreadConstraints | toYAML | nindent 8}}
+      {{- end }}
 
       dnsPolicy: ClusterFirst
 
