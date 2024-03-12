@@ -9,6 +9,8 @@ import { DataContextProvider } from './page-components/common-state';
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';
 
+const tagId = 'G-HCK0NJNTJ6';
+
 export const links = () => {
   return [
     ...baseLinks(),
@@ -27,7 +29,7 @@ const _Root = ({ ...props }) => {
   return (
     <SockProvider>
       <DataContextProvider>
-        <Root {...props} Wrapper={Layout} />
+        <Root {...props} Wrapper={Layout} tagId={tagId} />
       </DataContextProvider>
     </SockProvider>
   );

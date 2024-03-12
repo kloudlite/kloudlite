@@ -112,8 +112,8 @@ export function ErrorBoundary() {
               ? error.stack
               : JSON.stringify(error.stack, null, 2)
             : typeof error.stack === 'string'
-            ? error.stack
-            : JSON.stringify(error.stack, null, 2)}
+              ? error.stack
+              : JSON.stringify(error.stack, null, 2)}
         </code>
       </ErrorWrapper>
     );
@@ -160,8 +160,10 @@ const NonIdleProgressBar = () => {
 
 const Root = ({
   Wrapper = ({ children }: { children: any }) => children,
+  tagId
 }: {
-  Wrapper: (prop: { children: ReactNode }) => JSX.Element;
+  Wrapper: (prop: { children: ReactNode }) => JSX.Element;,
+  tagId?: string
 }) => {
   const env = useLoaderData();
 
@@ -172,6 +174,34 @@ const Root = ({
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Links />
         <Meta />
+        {/* <script */}
+        {/*   async */}
+        {/*   src="https://www.googletagmanager.com/gtag/js?id=G-9GFNBFM718" */}
+        {/* /> */}
+        {/* <script> */}
+        {/*   window.dataLayer = window.dataLayer || []; */}
+        {/*   function gtag(){dataLayer.push(arguments);} */}
+        {/*   gtag('js', new Date()); */}
+
+        {/*   gtag('config', 'G-9GFNBFM718'); */}
+        {/* </script> */}
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${tagId}`}
+        />
+        <script
+          async
+          id="gtag-init"
+          dangerouslySetInnerHTML={{
+            __html: `
+                window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', ${tagId});
+              `,
+          }}
+        />
       </head>
       <body className="antialiased">
         <div
