@@ -35,7 +35,7 @@
             # source version control
             git
             pre-commit
-            (python312.withPackages(ps: with ps; [
+            (python312.withPackages (ps: with ps; [
               ggshield
             ]))
 
@@ -58,6 +58,8 @@
             # build tools
             podman
             upx
+
+            rover
           ];
 
           shellHook = ''
