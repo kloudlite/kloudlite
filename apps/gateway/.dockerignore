@@ -2,3 +2,4 @@
 !package.json
 !src
 !pnpm-lock.yaml
+!prod-schema.graphql
