@@ -37,7 +37,7 @@ class CustomDataSource extends RemoteGraphQLDataSource {
   }
 }
 
-const superGraphSchema = await fs.readFile("./prod-schema.graphql");
+const superGraphSchema = await fs.readFile(useEnv("SUPERGRAPH_SCHEMA_FILE"));
 
 const gateway = new ApolloGateway({
   supergraphSdl: superGraphSchema.toString(),

@@ -5,4 +5,7 @@ USER node
 COPY --chown=node package.json pnpm-lock.yaml ./
 RUN pnpm i
 COPY --chown=node . ./
+ARG SUPERGRAPH_FILE
+COPY ${SUPERGRAPH_FILE} ./
+ENV SUPERGRAPH_SCHEMA_FILE=${SUPERGRAPH_FILE}
 ENTRYPOINT ["npm","start"]
