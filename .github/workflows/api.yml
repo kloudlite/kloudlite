@@ -83,6 +83,15 @@ jobs:
           enable_upx: true
           enable_docker: true
 
+      - name: Install Rover
+        if: matrix.app == 'gateway'
+        run: |
+          curl -sSL https://rover.apollo.dev/nix/v0.23.0-rc.3 | sh
+          
+          # Add Rover to the $GITHUB_PATH so it can be used in another step
+          # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
+          echo "$HOME/.rover/bin" >> $GITHUB_PATH
+
       - name: Build & Push Container Images
         env:
           IMAGE_TAG: ${{ steps.setup.outputs.image_tag }}
