@@ -1,5 +1,5 @@
 import { CopySimple } from '@jengaicons/react';
-import { useNavigate, useParams } from '@remix-run/react';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
@@ -12,9 +12,11 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
+import { IRepoContext } from '../../_layout';
 
 const ProjectSettingGeneral = () => {
-  const { repo = '', account } = useParams();
+  const { account } = useParams();
+  const { repoName } = useOutletContext<IRepoContext>();
   const api = useConsoleApi();
   const navigate = useNavigate();
   const [deleteRepo, setDeleteRepo] = useState(false);
@@ -30,14 +32,14 @@ const ProjectSettingGeneral = () => {
       <Box title="General">
         <TextInput
           label="Repo name"
-          value={repo}
+          value={repoName}
           // onChange={handleChange('displayName')}
         />
         <div className="flex flex-row items-center gap-3xl">
           <div className="flex-1">
             <TextInput
               label="Repo URL"
-              value={`${consoleBaseUrl}/${account}/repo/${repo}`}
+              value={`${consoleBaseUrl}/${account}/repo/${repoName}`}
               message="This is your URL namespace within Kloudlite"
               disabled
               suffix={
@@ -45,7 +47,7 @@ const ProjectSettingGeneral = () => {
                   <button
                     aria-label="copy"
                     onClick={() =>
-                      copy(`${consoleBaseUrl}/${account}/repo/${repo}}`)
+                      copy(`${consoleBaseUrl}/${account}/repo/${repoName}}`)
                     }
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
@@ -58,14 +60,14 @@ const ProjectSettingGeneral = () => {
           </div>
           <div className="flex-1">
             <TextInput
-              value={repo}
+              value={repoName}
               label="Repo ID"
               message="Used when interacting with the Kloudlite API"
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
                     aria-label="copy"
-                    onClick={() => copy(repo)}
+                    onClick={() => copy(repoName)}
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
                   >
@@ -88,14 +90,14 @@ const ProjectSettingGeneral = () => {
         platform. This action is not reversible — please continue with caution.
       </DeleteContainer>
       <DeleteDialog
-        resourceName={repo}
+        resourceName={repoName}
         resourceType="repo"
         show={deleteRepo}
         setShow={setDeleteRepo}
         onSubmit={async () => {
           try {
             const { errors } = await api.deleteRepo({
-              name: repo,
+              name: repoName,
             });
 
             if (errors) {

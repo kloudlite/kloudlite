@@ -3,8 +3,6 @@ import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FadeIn } from '~/console/page-components/util';
 
-
-
 const ConfigureRepo = () => {
   const [setting, setSetting] = useState('general');
   return (

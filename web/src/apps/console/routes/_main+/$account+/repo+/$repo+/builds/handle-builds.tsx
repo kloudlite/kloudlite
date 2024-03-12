@@ -1,6 +1,6 @@
 /* eslint-disable react/destructuring-assignment */
 import { IDialogBase } from '~/console/components/types.d';
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useOutletContext } from '@remix-run/react';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
@@ -118,8 +118,6 @@ const Root = (props: IDialog) => {
     defaultStep: isUpdate ? 2 : 1,
     totalSteps: 2,
   });
-
-  const { repo } = useParams();
 
   const isAdvanceOptions = (data: any) => {
     if (!data) {
@@ -306,6 +304,7 @@ const Root = (props: IDialog) => {
                     }}
                     error={!!errors.buildClusterName || !!errorCluster}
                     message={
+                      // eslint-disable-next-line no-nested-ternary
                       errors.buildClusterName
                         ? errors.buildClusterName
                         : errorCluster

@@ -4,11 +4,18 @@ import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import { IDialog } from '~/console/components/types.d';
 import { registryHost } from '~/root/lib/configs/base-url.cjs';
+import { useOutletContext } from 'react-router-dom';
 import { ISHADialogData } from './tags-resources';
+import { IRepoContext } from '../_layout';
 
 const SHADialog = ({ show, setShow }: IDialog<ISHADialogData>) => {
-  const { account, repo } = useParams();
-  const url = `${registryHost}/${account}/${repo}:${
+  const { account } = useParams();
+
+  const { repoName } = useOutletContext<IRepoContext>();
+
+  return null;
+
+  const url = `${registryHost}/${account}/${repoName}:${
     show?.data?.tag ? show?.data?.tag : `@${show?.data?.sha}`
   }`;
   return (

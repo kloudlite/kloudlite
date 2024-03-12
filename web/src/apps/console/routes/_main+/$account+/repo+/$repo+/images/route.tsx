@@ -7,13 +7,13 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-import SecondarySubHeader from '~/console/components/secondary-sub-header';
+import fake from '~/root/fake-data-generator/fake';
 import TagsResources from './tags-resources';
 import Tools from './tools';
-import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
+
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { data, errors } = await GQLServerHandler(ctx.request).listDigest({
@@ -21,6 +21,7 @@ export const loader = async (ctx: IRemixCtx) => {
       pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
+
     if (errors) {
       logger.error(errors[0]);
       throw errors[0];
@@ -38,10 +39,10 @@ const Images = () => {
   const { promise } = useLoaderData<typeof loader>();
   return (
     <LoadingComp
-        data={promise}
-        skeletonData={{
-          tagsData: fake.ConsoleListDigestQuery.cr_listDigests as any,
-        }}
+      data={promise}
+      skeletonData={{
+        tagsData: fake.ConsoleListDigestQuery.cr_listDigests as any,
+      }}
     >
       {({ tagsData }) => {
         const tags = tagsData.edges?.map(({ node }) => node);

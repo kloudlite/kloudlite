@@ -25,8 +25,8 @@ import {
   XCircleFill,
 } from '@jengaicons/react';
 import dayjs from 'dayjs';
-import { IAccountContext } from '../../../_layout';
 import LogComp from '~/root/lib/client/components/logger';
+import { IAccountContext } from '../../../_layout';
 
 const RESOURCE_NAME = 'build run';
 type BaseType = ExtractNodeType<IBuildRuns>;
