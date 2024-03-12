@@ -43,11 +43,6 @@ jobs:
           # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
           echo "$HOME/.rover/bin" >> $GITHUB_PATH
 
-      - name: Generate Schema
-        run: |
-          cd apps/gateway
-          task generate-schema
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
