@@ -4,12 +4,23 @@ vars:
   app: gateway
 
 tasks:
+  generate-schema:
+    cmds:
+      - bash ./generate-schema.sh
   dev:
     dotenv:
       - "./.secrets/env"
     interactive: true
     cmds:
       - npm start
+
+  local:build:
+    preconditions:
+      - sh: '[[ -n "{{.Image}}" ]]'
+        msg: "var Image must have a value, of format 'image_repository:image_tag'"
+    cmds:
+      - task generate-schema
+      - docker buildx build -f ./Containerfile -t {{.Image}} .
 
   container:build-and-push:
     preconditions:
