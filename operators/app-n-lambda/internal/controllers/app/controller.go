@@ -213,6 +213,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 			"volume-mounts":      vMounts,
 			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"account-name":       obj.GetAnnotations()[constants.AccountNameKey],
+			"pod-labels":         fn.MapFilter(obj.Labels, "kloudlite.io/"),
 			"pod-annotations":    fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
 		},
