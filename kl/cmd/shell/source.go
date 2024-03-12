@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 var ShellCmd = &cobra.Command{
@@ -109,7 +110,11 @@ func loadEnv(cmd *cobra.Command) error {
 		newEnv = append(newEnv, fmt.Sprintf("KUBECONFIG=%s", *configPath))
 
 	}
-	newCmd := exec.Command(shellName())
+	shell, err := ShellName()
+	if err != nil {
+		return err
+	}
+	newCmd := exec.Command(shell)
 	newCmd.Env = newEnv
 
 	newCmd.Stdin = os.Stdin
@@ -121,17 +126,22 @@ func loadEnv(cmd *cobra.Command) error {
 	return nil
 }
 
-func shellName() string {
+func ShellName() (string, error) {
 
-	shell := os.Getenv("SHELL")
-	if shell[len(shell)-4:] == constants.BashShell {
-		return constants.BashShell
-	} else if shell[len(shell)-4:] == constants.FishShell {
-		return constants.FishShell
-	} else if shell[len(shell)-3:] == constants.ZshShell {
-		return constants.ZshShell
+	shell, exists := os.LookupEnv("SHELL")
+	if !exists {
+		return "", fmt.Errorf("shell not found")
 	}
-	return shell
+	if strings.Contains(shell, constants.BashShell) {
+		return constants.BashShell, nil
+	} else if strings.Contains(shell, constants.FishShell) {
+		return constants.FishShell, nil
+	} else if strings.Contains(shell, constants.ZshShell) {
+		return constants.ZshShell, nil
+	} else if strings.Contains(shell, constants.PowerShell) {
+		return constants.PowerShell, nil
+	}
+	return "", fmt.Errorf("unsupported shell")
 }
 
 func init() {

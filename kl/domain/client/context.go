@@ -3,6 +3,7 @@ package client
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"runtime"
@@ -19,6 +20,7 @@ const (
 	MainCtxFileName   string = "kl-main-contexts.yaml"
 	ExtraDataFileName string = "kl-extra-data.yaml"
 	DeviceFileName    string = "kl-device.yaml"
+	CompleteFileName  string = "kl-completion"
 )
 
 type Env struct {
@@ -269,6 +271,32 @@ func WriteDeviceContext(dName string) error {
 	}
 
 	return writeOnUserScope(DeviceFileName, file)
+}
+
+func WriteCompletionContext() (io.Writer, error) {
+	dir, err := GetConfigFolder()
+	if err != nil {
+		return nil, err
+	}
+
+	filePath := path.Join(dir, CompleteFileName)
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func GetCompletionContext() (string, error) {
+	dir, err := GetConfigFolder()
+	if err != nil {
+		return "", err
+	}
+
+	filePath := path.Join(dir, CompleteFileName)
+	return filePath, nil
 }
 
 func GetDeviceContext() (*DeviceContext, error) {

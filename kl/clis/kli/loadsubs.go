@@ -1,6 +1,7 @@
 package kli
 
 import (
+	"github.com/kloudlite/kl/cmd/completion"
 	"github.com/kloudlite/kl/cmd/shell"
 	"runtime"
 
@@ -44,4 +45,6 @@ func init() {
 	rootCmd.AddCommand(set_base_url.Cmd)
 
 	rootCmd.AddCommand(shell.ShellCmd)
+
+	rootCmd.AddCommand(completion.AutoCompletion)
 }
