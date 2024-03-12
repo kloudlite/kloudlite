@@ -112,8 +112,8 @@ export function ErrorBoundary() {
               ? error.stack
               : JSON.stringify(error.stack, null, 2)
             : typeof error.stack === 'string'
-              ? error.stack
-              : JSON.stringify(error.stack, null, 2)}
+            ? error.stack
+            : JSON.stringify(error.stack, null, 2)}
         </code>
       </ErrorWrapper>
     );
@@ -160,10 +160,10 @@ const NonIdleProgressBar = () => {
 
 const Root = ({
   Wrapper = ({ children }: { children: any }) => children,
-  tagId
+  tagId,
 }: {
-  Wrapper: (prop: { children: ReactNode }) => JSX.Element;,
-  tagId?: string
+  Wrapper: (prop: { children: ReactNode }) => JSX.Element;
+  tagId?: string;
 }) => {
   const env = useLoaderData();
 
