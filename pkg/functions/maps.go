@@ -1,5 +1,7 @@
 package functions
 
+import "strings"
+
 // MapSet sets a key, value in a map. If a map is nil, it firsts initializes the map
 func MapSet[T any](m *map[string]T, key string, value T) {
 	if *m == nil {
@@ -54,4 +56,15 @@ func MapValues[K comparable, V any](m map[K]V) []V {
 		values = append(values, v)
 	}
 	return values
+}
+
+func MapFilter[K string, V any](m map[K]V, prefix string) map[K]V {
+	result := make(map[K]V, len(m)/2)
+	for k, v := range m {
+		if strings.HasPrefix(string(k), prefix) {
+			result[k] = v
+		}
+	}
+
+	return result
 }
