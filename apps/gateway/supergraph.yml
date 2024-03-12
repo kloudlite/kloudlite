@@ -5,18 +5,18 @@ subgraphs:
     schema:
       file: ./schemas/auth-api.schema
   account-api:
-    routing_url: https://accounts-api/query
+    routing_url: http://accounts-api/query
     schema:
       file: ./schemas/accounts-api.schema
   container-registry-api:
-    routing_url: https://container-registry-api/query
+    routing_url: http://container-registry-api/query
     schema:
       file: ./schemas/container-registry-api.schema
   console-api:
-    routing_url: https://console-api/query
+    routing_url: http://console-api/query
     schema:
       file: ./schemas/console-api.schema
   infra-api:
-    routing_url: https://infra-api/query
+    routing_url: http://infra-api/query
     schema:
       file: ./schemas/infra-api.schema
