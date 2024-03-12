@@ -2467,11 +2467,11 @@ input InvitationIn
 scalar join__FieldSet
 
 enum join__Graph {
-  ACCOUNT_API @join__graph(name: "account-api", url: "https://accounts-api/query")
+  ACCOUNT_API @join__graph(name: "account-api", url: "http://accounts-api/query")
   AUTH_API @join__graph(name: "auth-api", url: "http://auth-api/query")
-  CONSOLE_API @join__graph(name: "console-api", url: "https://console-api/query")
-  CONTAINER_REGISTRY_API @join__graph(name: "container-registry-api", url: "https://container-registry-api/query")
-  INFRA_API @join__graph(name: "infra-api", url: "https://infra-api/query")
+  CONSOLE_API @join__graph(name: "console-api", url: "http://console-api/query")
+  CONTAINER_REGISTRY_API @join__graph(name: "container-registry-api", url: "http://container-registry-api/query")
+  INFRA_API @join__graph(name: "infra-api", url: "http://infra-api/query")
 }
 
 scalar Json
