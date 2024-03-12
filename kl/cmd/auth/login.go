@@ -46,16 +46,16 @@ var loginCmd = &cobra.Command{
 		fn.Log("\n")
 
 		go func() {
-			fmt.Println("press enter to open link in browser")
+			fn.Log("press enter to open link in browser")
 			reader, err := bufio.NewReader(os.Stdin).ReadString('\n')
 			if err != nil {
-				fmt.Println(fmt.Errorf(err.Error()))
+				fn.PrintError(err)
 				return
 			}
 			if strings.Contains(reader, "\n") {
 				err := openBrowser(link)
 				if err != nil {
-					fmt.Println(fmt.Errorf(err.Error()))
+					fn.PrintError(err)
 					return
 				}
 			} else {
