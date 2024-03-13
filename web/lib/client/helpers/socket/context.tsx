@@ -62,8 +62,8 @@ export const useSubscribe = <T extends IData>(
   const {
     sendMsg,
     responses,
-    infos: i,
-    errors: e,
+    infos: mInfos,
+    errors: mErrors,
     clear,
   } = useContext(Context);
 
@@ -85,9 +85,10 @@ export const useSubscribe = <T extends IData>(
           const m = msg[k];
 
           tr.push(...(responses[m.for]?.[m.data.id || 'default'] || []));
-          terr.push(...(e[m.for]?.[m.data.id || 'default'] || []));
-          ti.push(...(i[m.for]?.[m.data.id || 'default'] || []));
+          terr.push(...(mErrors[m.for]?.[m.data.id || 'default'] || []));
+          ti.push(...(mInfos[m.for]?.[m.data.id || 'default'] || []));
         }
+
         setResp(tr);
         setErrors(terr);
         setInfos(ti);
@@ -97,16 +98,19 @@ export const useSubscribe = <T extends IData>(
         }
         return;
       }
+      const tempResp = responses[msg.for]?.[msg.data.id || 'default'] || [];
+      setResp(tempResp);
 
-      setResp(responses[msg.for]?.[msg.data.id || 'default'] || []);
-      setErrors(e[msg.for]?.[msg.data.id || 'default'] || []);
-      setInfos(i[msg.for]?.[msg.data.id || 'default'] || []);
+      setErrors(mErrors[msg.for]?.[msg.data.id || 'default'] || []);
 
-      if (resp.length || i[msg.for]?.[msg.data.id || 'default']?.length) {
+      const tempInfo = mInfos[msg.for]?.[msg.data.id || 'default'] || [];
+      setInfos(tempInfo);
+
+      if (tempResp.length || tempInfo.length) {
         setSubscribed(true);
       }
     })();
-  }, [responses]);
+  }, [responses, mInfos, mErrors]);
 
   useDebounce(
     () => {
@@ -236,7 +240,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
               };
 
               w.onerror = (e) => {
-                console.error(e);
+                console.error('socket closed:', e);
                 if (!rejected) {
                   rejected = true;
                   rej(e);

@@ -8,16 +8,16 @@ export const handleError = (
     message: string;
   };
 } => {
+  const err = e as Error;
+
   if (typeof window === 'undefined') {
-    const a = e as Error;
     return {
       error: {
-        message: a.message,
+        message: err.message,
       },
     };
   }
 
-  const err = e as Error;
   toast.error(err.message);
   logger.error(e);
 
