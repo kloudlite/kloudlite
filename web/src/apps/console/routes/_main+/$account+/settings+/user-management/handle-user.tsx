@@ -15,7 +15,6 @@ import {
   IMemberType,
   mapRoleToDisplayName,
 } from '~/console/routes/_main+/$account+/settings+/user-management/user-access-resource';
-import { useState } from 'react';
 import { IAccountContext } from '../../_layout';
 
 type IDialog = IDialogBase<IMemberType>;
@@ -36,7 +35,6 @@ const Root = (props: IDialog) => {
   const api = useConsoleApi();
 
   const { account } = useOutletContext<IAccountContext>();
-  const [inputName, setInputName] = useState('');
 
   const { values, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: isUpdate
@@ -117,23 +115,6 @@ const Root = (props: IDialog) => {
             })}
           </SelectPrimitive.Root>
         </div>
-        {isUpdate && (
-          <div className="py-2xl">
-            <div>
-              Type in <b>confirm</b> to continue.
-            </div>
-            <div className="py-2xl">
-              <TextInput
-                value={inputName}
-                onChange={({ target }) => {
-                  setInputName(target.value);
-                }}
-                // disabled={loading}
-                autoComplete="off"
-              />
-            </div>
-          </div>
-        )}
       </Popup.Content>
       <Popup.Footer>
         <Popup.Button closable content="Cancel" variant="basic" />
@@ -142,7 +123,6 @@ const Root = (props: IDialog) => {
           type="submit"
           content={isUpdate ? 'update' : 'Send invite'}
           variant="primary"
-          disabled={isUpdate ? inputName !== 'confirm' : false}
         />
       </Popup.Footer>
     </Popup.Form>
