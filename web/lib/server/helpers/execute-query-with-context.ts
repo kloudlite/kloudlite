@@ -112,12 +112,12 @@ export const ExecuteQueryWithContext = (
         return { ...resp.data, data };
       } catch (err) {
         if ((err as AxiosError).response) {
-          console.trace('ErrorIn:', apiName, (err as Error).name);
+          console.log('\nErrorIn:', apiName, (err as Error).name, '\n');
 
           return (err as AxiosError).response?.data;
         }
 
-        console.trace('ErrorIn:', apiName, (err as Error).message);
+        console.log('\nErrorIn:', apiName, (err as Error).message, '\n');
 
         return {
           data: null,

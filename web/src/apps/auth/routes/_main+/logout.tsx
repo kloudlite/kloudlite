@@ -1,13 +1,27 @@
-import { getCookie } from '~/root/lib/app-setup/cookies';
-import withContext from '~/root/lib/app-setup/with-contxt';
-import { useNavigate, useLoaderData } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useNavigate } from '@remix-run/react';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { IExtRemixCtx } from '~/root/lib/types/common';
+import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
+import { handleError } from '~/root/lib/utils/common';
+import useExtLoaderData from '~/root/lib/client/hooks/use-custom-loader-data';
+import { useEffect } from 'react';
+
+export const loader = async (ctx: IExtRemixCtx) => {
+  const { errors } = await GQLServerHandler(ctx.request).logout();
+
+  if (errors) {
+    return handleError(errors[0]);
+  }
+
+  return {
+    done: true,
+  };
+};
 
 const LogoutPage = () => {
   const navigate = useNavigate();
-  const { done } = useLoaderData();
+
+  const { done } = useExtLoaderData<typeof loader>();
 
   useEffect(() => {
     if (done) {
@@ -20,23 +34,6 @@ const LogoutPage = () => {
       <span className="heading2xl text-text-strong">Logging out...</span>
     </div>
   );
-};
-
-export const loader = async (ctx: IExtRemixCtx) => {
-  const cookie = getCookie(ctx);
-
-  const keys = Object.keys(cookie.getAll());
-
-  for (let i = 0; i < keys.length; i += 1) {
-    const key = keys[i];
-    if (key === 'hotspot-session') {
-      cookie.remove(key);
-    }
-  }
-
-  return withContext(ctx, {
-    done: 'true',
-  });
 };
 
 export default LogoutPage;

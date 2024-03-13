@@ -1,10 +1,27 @@
 import { toast } from '~/components/molecule/toast';
 import logger from '../client/helpers/log';
 
-export const handleError = (e: unknown): void => {
+export const handleError = (
+  e: unknown
+): {
+  error?: {
+    message: string;
+  };
+} => {
+  if (typeof window === 'undefined') {
+    const a = e as Error;
+    return {
+      error: {
+        message: a.message,
+      },
+    };
+  }
+
   const err = e as Error;
   toast.error(err.message);
   logger.error(e);
+
+  return {};
 };
 
 export const parseError = (e: unknown): Error => {
@@ -27,8 +44,9 @@ export const Truncate = ({
 };
 
 export function sleep(time: number) {
-  // eslint-disable-next-line no-promise-executor-return
-  return new Promise((resolve) => setTimeout(resolve, time));
+  return new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
 }
 
 export const anyUndefined: any = undefined;

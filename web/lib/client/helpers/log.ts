@@ -90,12 +90,12 @@ const logger = {
     }
 
     if (err) {
-      console.log(err);
+      console.trace(`\n\n${err}\n\n`);
       if (!isDev) {
         PostToHook(`\`\`\`${err}\`\`\``);
       }
     } else {
-      console.trace(args);
+      console.trace(`\n\n${args}\n\n`);
     }
 
     if (isDev && typeof window === 'undefined') {

@@ -32,6 +32,7 @@ import tailwindBase from '~/design-system/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
+import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -167,6 +168,8 @@ const Root = ({
 }) => {
   const env = useLoaderData();
 
+  const error = useDataFromMatches('error', '');
+
   return (
     <html lang="en" className="bg-surface-basic-subdued text-text-default">
       <head>
@@ -235,9 +238,13 @@ const Root = ({
             <ReloadIndicator />
             <NonIdleProgressBar />
             <ToastContainer position="bottom-left" />
-            <Wrapper>
-              <Outlet />
-            </Wrapper>
+            {error ? (
+              <div>{JSON.stringify(error)}</div>
+            ) : (
+              <Wrapper>
+                <Outlet />
+              </Wrapper>
+            )}
           </ProgressContainer>
         </Tooltip.Provider>
         <Scripts />

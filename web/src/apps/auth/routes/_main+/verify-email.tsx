@@ -46,6 +46,7 @@ const VerifyEmail = () => {
     (async () => {
       try {
         if (!email) {
+          // TODO: handle this case, by taking email from user
           toast.error('Something went wrong! Please try again.');
           return;
         }
@@ -137,8 +138,9 @@ export const loader = async (ctx: IRemixCtx) => {
   const query = getQueries(ctx);
   const { data, errors } = await GQLServerHandler(ctx.request).whoAmI();
   if (errors) {
-    console.error(errors[0].message);
-    return redirect('/');
+    return {
+      query,
+    };
   }
   const { email, verified } = data || {};
 
