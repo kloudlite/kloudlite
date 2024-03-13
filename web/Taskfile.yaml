@@ -8,7 +8,7 @@ tasks:
     interactive: true
     cmds:
       - |
-        BASE_URL=dev.kloudlite.io
+        BASE_URL=gcp-production.kloudlite.io
         COOKIE_DOMAIN=".kloudlite.io"
         GATEWAY_URL="http://gateway.kloudlite.svc.cluster.local"
         case {{.app}} in

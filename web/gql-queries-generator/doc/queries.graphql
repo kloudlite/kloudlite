@@ -2046,6 +2046,10 @@ mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
   cr_deleteBuild(id: $crDeleteBuildId)
 }
 
+mutation consoleTriggerBuild($crTriggerBuildId: ID!) {
+  cr_triggerBuild(id: $crTriggerBuildId)
+}
+
 query consoleListBuildCaches($pq: CursorPaginationIn, $search: SearchBuildCacheKeys) {
   cr_listBuildCacheKeys(pq: $pq, search: $search) {
     edges {

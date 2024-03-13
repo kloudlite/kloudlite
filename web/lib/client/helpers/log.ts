@@ -90,7 +90,7 @@ const logger = {
     }
 
     if (err) {
-      console.trace(err);
+      console.log(err);
       if (!isDev) {
         PostToHook(`\`\`\`${err}\`\`\``);
       }

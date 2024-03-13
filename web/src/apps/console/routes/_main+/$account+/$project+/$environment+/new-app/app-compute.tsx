@@ -159,6 +159,7 @@ const AppCompute = () => {
                   ? `${values.repoName}:${values.repoImageTag}`
                   : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
+              imagePullPolicy: 'Always',
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {

@@ -10,17 +10,17 @@ import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { Plus } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
+import fake from '~/root/fake-data-generator/fake';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
 import Tools from './tools';
-import fake from "~/root/fake-data-generator/fake";
 
 export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { data, errors } = await GQLServerHandler(ctx.request).listBuilds({
-      repoName: repo,
+      repoName: atob(repo),
       pagination: getPagination(ctx),
       search: getSearch(ctx),
     });
@@ -44,10 +44,10 @@ const Builds = () => {
   return (
     <>
       <LoadingComp
-          data={promise}
-          skeletonData={{
-            buildData: fake.ConsoleListBuildsQuery.cr_listBuilds as any,
-          }}
+        data={promise}
+        skeletonData={{
+          buildData: fake.ConsoleListBuildsQuery.cr_listBuilds as any,
+        }}
       >
         {({ buildData }) => {
           const builds = buildData.edges?.map(({ node }) => node);

@@ -1,4 +1,8 @@
-import { Trash, PencilSimple } from '@jengaicons/react';
+import {
+  Trash,
+  PencilSimple,
+  ArrowClockwise,
+} from '~/console/components/icons';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
@@ -47,9 +51,10 @@ const parseItem = (item: BaseType) => {
 interface IExtraButton {
   onDelete: () => void;
   onEdit: () => void;
+  onTrigger: () => void;
 }
 
-const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
+const ExtraButton = ({ onDelete, onEdit, onTrigger }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
@@ -59,6 +64,17 @@ const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
           type: 'item',
           onClick: onEdit,
           key: 'edit',
+        },
+        {
+          label: 'Trigger',
+          icon: <ArrowClockwise size={16} />,
+          type: 'item',
+          onClick: onTrigger,
+          key: 'trigger',
+        },
+        {
+          type: 'separator',
+          key: 'separator1',
         },
         {
           label: 'Delete',
@@ -77,9 +93,10 @@ interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
   onEdit: (item: BaseType) => void;
+  onTrigger: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete, onEdit }: IResource) => {
+const GridView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -101,6 +118,9 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
                         }}
                         onEdit={() => {
                           onEdit(item);
+                        }}
+                        onTrigger={() => {
+                          onTrigger(item);
                         }}
                       />
                     }
@@ -124,7 +144,7 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete, onEdit }: IResource) => {
+const ListView = ({ items, onDelete, onEdit, onTrigger }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -170,6 +190,9 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
                     onEdit={() => {
                       onEdit(item);
                     }}
+                    onTrigger={() => {
+                      onTrigger(item);
+                    }}
                   />
                 ),
               },
@@ -197,6 +220,22 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
     })
   );
 
+  const triggerBuild = async (id: string) => {
+    try {
+      const { errors } = await api.triggerBuild({
+        crTriggerBuildId: id,
+      });
+
+      if (errors) {
+        throw errors[0];
+      }
+      reloadPage();
+      toast.success(`${titleCase(RESOURCE_NAME)} triggered successfully`);
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
   const props: IResource = {
     items,
     onDelete: (item) => {
@@ -204,6 +243,9 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
     },
     onEdit: (item) => {
       setHandleBuild(item);
+    },
+    onTrigger: async (item) => {
+      await triggerBuild(item.id);
     },
   };
 
