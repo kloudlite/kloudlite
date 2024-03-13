@@ -3500,6 +3500,12 @@ export type ConsoleDeleteBuildMutationVariables = Exact<{
 
 export type ConsoleDeleteBuildMutation = { cr_deleteBuild: boolean };
 
+export type ConsoleTriggerBuildMutationVariables = Exact<{
+  crTriggerBuildId: Scalars['ID']['input'];
+}>;
+
+export type ConsoleTriggerBuildMutation = { cr_triggerBuild: boolean };
+
 export type ConsoleListBuildCachesQueryVariables = Exact<{
   pq?: InputMaybe<CursorPaginationIn>;
   search?: InputMaybe<SearchBuildCacheKeys>;

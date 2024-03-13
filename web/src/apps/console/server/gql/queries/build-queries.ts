@@ -8,6 +8,8 @@ import {
   ConsoleDeleteBuildMutationVariables,
   ConsoleListBuildsQuery,
   ConsoleListBuildsQueryVariables,
+  ConsoleTriggerBuildMutation,
+  ConsoleTriggerBuildMutationVariables,
   ConsoleUpdateBuildMutation,
   ConsoleUpdateBuildMutationVariables,
 } from '~/root/src/generated/gql/server';
@@ -95,7 +97,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListBuildsQuery) => data.cr_listBuilds,
-      vars(_: ConsoleListBuildsQueryVariables) { },
+      vars(_: ConsoleListBuildsQueryVariables) {},
     }
   ),
   createBuild: executor(
@@ -108,7 +110,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleCreateBuildMutation) => data.cr_addBuild,
-      vars(_: ConsoleCreateBuildMutationVariables) { },
+      vars(_: ConsoleCreateBuildMutationVariables) {},
     }
   ),
   updateBuild: executor(
@@ -121,7 +123,7 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleUpdateBuildMutation) => data.cr_updateBuild,
-      vars(_: ConsoleUpdateBuildMutationVariables) { },
+      vars(_: ConsoleUpdateBuildMutationVariables) {},
     }
   ),
   deleteBuild: executor(
@@ -132,7 +134,18 @@ export const buildQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleDeleteBuildMutation) => data.cr_deleteBuild,
-      vars(_: ConsoleDeleteBuildMutationVariables) { },
+      vars(_: ConsoleDeleteBuildMutationVariables) {},
+    }
+  ),
+  triggerBuild: executor(
+    gql`
+      mutation Cr_triggerBuild($crTriggerBuildId: ID!) {
+        cr_triggerBuild(id: $crTriggerBuildId)
+      }
+    `,
+    {
+      transformer: (data: ConsoleTriggerBuildMutation) => data.cr_triggerBuild,
+      vars(_: ConsoleTriggerBuildMutationVariables) {},
     }
   ),
 });
