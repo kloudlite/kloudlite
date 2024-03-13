@@ -32,6 +32,19 @@ interface IResource {
   onDelete: (item: BaseType) => void;
 }
 
+const mapRoleToDisplayName = (role: string): string => {
+  switch (role) {
+    case 'account_owner':
+      return 'owner';
+    case 'account_member':
+      return 'member';
+    case 'account_admin':
+      return 'admin';
+    default:
+      return role;
+  }
+};
+
 const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
   return (
     <ResourceExtraAction
@@ -70,7 +83,7 @@ const ListView = ({ items = [], onDelete }: IResource) => {
             },
             {
               key: 2,
-              render: () => <ListBody data={item.role} />,
+              render: () => <ListBody data={mapRoleToDisplayName(item.role)} />,
             },
             {
               key: 3,

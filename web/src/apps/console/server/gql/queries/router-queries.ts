@@ -37,7 +37,7 @@ export const routerQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateRouterMutation) =>
         data.core_createRouter,
-      vars(_: ConsoleCreateRouterMutationVariables) { },
+      vars(_: ConsoleCreateRouterMutationVariables) {},
     }
   ),
   updateRouter: executor(
@@ -59,7 +59,7 @@ export const routerQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateRouterMutation) =>
         data.core_updateRouter,
-      vars(_: ConsoleUpdateRouterMutationVariables) { },
+      vars(_: ConsoleUpdateRouterMutationVariables) {},
     }
   ),
   deleteRouter: executor(
@@ -79,7 +79,7 @@ export const routerQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteRouterMutation) =>
         data.core_deleteRouter,
-      vars(_: ConsoleDeleteRouterMutationVariables) { },
+      vars(_: ConsoleDeleteRouterMutationVariables) {},
     }
   ),
   listRouters: executor(
@@ -193,7 +193,7 @@ export const routerQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListRoutersQuery) => data.core_listRouters,
-      vars(_: ConsoleListRoutersQueryVariables) { },
+      vars(_: ConsoleListRoutersQueryVariables) {},
     }
   ),
   getRouter: executor(
@@ -283,7 +283,7 @@ export const routerQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleGetRouterQuery) => data.core_getRouter,
-      vars(_: ConsoleGetRouterQueryVariables) { },
+      vars(_: ConsoleGetRouterQueryVariables) {},
     }
   ),
 });
