@@ -183,18 +183,19 @@ const ListView = ({ items, onAction }: IResource) => {
           {
             render: () => 'Name',
             name: 'name',
-            className: 'w-[180px]',
+            className: 'w-[180px] shrink-0',
           },
           {
             render: () => 'Status',
             name: 'status',
-            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+            className:
+              'lg:flex-1 min-w-[80px] flex items-center lg:justify-center shrink-0',
           },
 
           {
             render: () => 'Domains',
             name: 'domains',
-            className: 'w-[250px]',
+            className: 'min-w-[280px] max-w-[280px] lg:max-w-none lg:flex-1',
           },
           {
             render: () => 'Updated',
@@ -220,12 +221,16 @@ const ListView = ({ items, onAction }: IResource) => {
               },
               domains: {
                 render: () => (
-                  <ListItem
-                    data={
-                      <div className="flex flex-row items-center gap-md">
+                  <div className="flex flex-row items-center gap-md">
+                    <Tooltip.Root
+                      content={
                         <Button
                           size="sm"
-                          content={formatDomain(firstDomain).short}
+                          content={
+                            <span className="text-left">
+                              {formatDomain(firstDomain).short}
+                            </span>
+                          }
                           variant="primary-plain"
                           className="!pl-0"
                           onClick={(e) => {
@@ -237,42 +242,66 @@ const ListView = ({ items, onAction }: IResource) => {
                             );
                           }}
                         />
-
-                        {i.spec.domains.length > 1 && (
-                          <Tooltip.Root
-                            content={
-                              <div className="flex flex-col gap-md">
-                                {i.spec.domains
-                                  .filter((d) => d !== firstDomain)
-                                  .map((d) => (
-                                    <Button
-                                      key={d}
-                                      size="sm"
-                                      content={formatDomain(d).short}
-                                      variant="primary-plain"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        window.open(
-                                          formatDomain(d).full,
-                                          '_blank',
-                                          'noopener,noreferrer'
-                                        );
-                                      }}
-                                    />
-                                  ))}
-                              </div>
-                            }
-                          >
-                            <Button
-                              content={`+${i.spec.domains.length - 1} more`}
-                              variant="plain"
-                              size="sm"
-                            />
-                          </Tooltip.Root>
-                        )}
-                      </div>
-                    }
-                  />
+                      }
+                    >
+                      <Button
+                        size="sm"
+                        content={
+                          <span className="truncate text-left">
+                            {formatDomain(firstDomain).short}
+                          </span>
+                        }
+                        variant="primary-plain"
+                        className="truncate"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open(
+                            formatDomain(firstDomain).full,
+                            '_blank',
+                            'noopener,noreferrer'
+                          );
+                        }}
+                      />
+                    </Tooltip.Root>
+                    {i.spec.domains.length > 1 && (
+                      <Tooltip.Root
+                        content={
+                          <div className="flex flex-col gap-md">
+                            {i.spec.domains
+                              .filter((d) => d !== firstDomain)
+                              .map((d) => (
+                                <Button
+                                  key={d}
+                                  size="sm"
+                                  content={
+                                    <span className="text-left">
+                                      {formatDomain(d).short}
+                                    </span>
+                                  }
+                                  variant="primary-plain"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    window.open(
+                                      formatDomain(d).full,
+                                      '_blank',
+                                      'noopener,noreferrer'
+                                    );
+                                  }}
+                                />
+                              ))}
+                          </div>
+                        }
+                      >
+                        <div className="shrink-0">
+                          <Button
+                            content={`+${i.spec.domains.length - 1} more`}
+                            variant="plain"
+                            size="sm"
+                          />
+                        </div>
+                      </Tooltip.Root>
+                    )}
+                  </div>
                 ),
               },
               updated: {

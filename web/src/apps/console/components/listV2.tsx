@@ -232,6 +232,7 @@ interface IRoot {
       disabled?: boolean;
       detail?: ReactNode;
       hideDetailSeperator?: boolean;
+      onClick?: ((item?: Record<string, IColumn>) => void) | null;
     }>;
     className?: Array<string>;
   };
@@ -305,6 +306,7 @@ const Root = ({
                   disabled={r.disabled}
                   detail={r.detail}
                   hideDetailSeperator={r.hideDetailSeperator}
+                  onClick={r.onClick}
                 />
               ))}
             </div>

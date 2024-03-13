@@ -1,11 +1,10 @@
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListSecondary,
+  ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
@@ -24,6 +23,7 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
 
 const RESOURCE_NAME = 'storage';
 type BaseType = ExtractNodeType<IPvs>;
@@ -88,7 +88,13 @@ const GridView = ({ items, onAction }: IResource) => {
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
-                render: () => <ListTitle title={name} subtitle={id} />,
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    action={<ExtraButton item={item} onAction={onAction} />}
+                  />
+                ),
               },
               {
                 key: generateKey(keyPrefix, 'time'),
@@ -102,21 +108,48 @@ const GridView = ({ items, onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items, onAction }: IResource) => {
+const ListView = ({ items = [], onAction }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, updateInfo, storage, storageClass, phase } =
-          parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: 'w-[180px] min-w-[180px] max-w-[180px]',
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[32px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[300px]',
+          },
+          {
+            render: () => 'Phase',
+            name: 'phase',
+            className: 'w-[180px] ml-[20px]',
+          },
+          {
+            render: () => '',
+            name: 'flex',
+            className: 'flex-1',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, updateInfo, storage, storageClass, phase } =
+            parseItem(i);
+          return {
+            columns: {
+              name: {
                 render: () => (
                   <ListTitle
                     title={name}
@@ -137,39 +170,28 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'flex-1'),
-                className: 'flex-grow',
-                render: () => <div />,
+              phase: {
+                render: () => <ListItem data={phase} />,
               },
-              {
-                key: generateKey(keyPrefix, 'phase'),
-                className: 'flex-grow',
-                render: () => <ListSecondary title="Phase" subtitle={phase} />,
+              flex: {
+                render: () => null,
               },
-              {
-                key: generateKey(keyPrefix, 'flex-2'),
-                className: 'flex-grow',
-                render: () => <div />,
+              updated: {
+                render: () => (
+                  <ListItem subtitle={`Updated ${updateInfo.time}`} />
+                ),
               },
-              {
-                key: generateKey(keyPrefix, 'time'),
-                className: 'max-w-[180px] w-[180px]',
-                render: () => <ListBody data={`Updated ${updateInfo.time}`} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
-              },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
-
-const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
+const StorageResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -236,4 +258,4 @@ const StorageResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default StorageResources;
+export default StorageResourcesV2;

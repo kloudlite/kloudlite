@@ -134,7 +134,7 @@ const NewProject = () => {
                       cluster: clster,
                       render: () => (
                         <div>
-                          {status({ item: clster }) === 'ready' ? (
+                          {true ? (
                             <div className="flex flex-col">
                               <div>{clster.displayName}</div>
                               <div className="bodySm text-text-soft">
@@ -161,8 +161,8 @@ const NewProject = () => {
                     })),
                 ]}
                 onChange={(v) => {
-                  if (status({ item: v.cluster }) === 'ready')
-                    handleChange('clusterName')(dummyEvent(v.value));
+                  // if (status({ item: v.cluster }) === 'ready')
+                  handleChange('clusterName')(dummyEvent(v.value));
                 }}
               />
               <BottomNavigation

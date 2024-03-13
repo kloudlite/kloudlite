@@ -1,12 +1,10 @@
 import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  listFlex,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
@@ -26,6 +24,8 @@ import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import HandleHelmChart from './handle-helm-chart';
 
 const RESOURCE_NAME = 'helm chart';
@@ -124,24 +124,47 @@ const GridView = ({ items = [], onAction }: IResource) => {
 
 const ListView = ({ items = [], onAction }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name),
-                className: 'min-w-[180px] max-w-[180px] w-[180px]',
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[32px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[300px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, 'author'),
-                className: 'w-[180px]',
+
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              updated: {
                 render: () => (
                   <ListItem
                     data={updateInfo.author}
@@ -149,19 +172,18 @@ const ListView = ({ items = [], onAction }: IResource) => {
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const HelmChartResources = ({ items = [] }: { items: BaseType[] }) => {
+const HelmChartResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -236,4 +258,4 @@ const HelmChartResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default HelmChartResources;
+export default HelmChartResourcesV2;

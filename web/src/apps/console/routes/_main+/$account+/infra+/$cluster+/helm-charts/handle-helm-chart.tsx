@@ -273,26 +273,26 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: !isUpdate
         ? {
-          displayName: '',
-          name: '',
-          namespace: '',
-          chartName: '',
-          chartRepoURL: '',
-          values: '',
-          isNameError: false,
-        }
+            displayName: '',
+            name: '',
+            namespace: '',
+            chartName: '',
+            chartRepoURL: '',
+            values: '',
+            isNameError: false,
+          }
         : {
-          isNameError: false,
-          displayName: props.data.displayName,
-          name: props.data.metadata?.name || '',
-          values:
-            Object.keys(props.data.spec?.values).length > 0
-              ? yaml.dump(props.data.spec?.values)
-              : '',
-          namespace: props.data.metadata?.namespace,
-          chartName: props.data.spec?.chartName,
-          chartRepoURL: props.data.spec?.chartRepoURL,
-        },
+            isNameError: false,
+            displayName: props.data.displayName,
+            name: props.data.metadata?.name || '',
+            values:
+              Object.keys(props.data.spec?.values).length > 0
+                ? yaml.dump(props.data.spec?.values)
+                : '',
+            namespace: props.data.metadata?.namespace,
+            chartName: props.data.spec?.chartName,
+            chartRepoURL: props.data.spec?.chartRepoURL,
+          },
       validationSchema: Yup.object({
         displayName: Yup.string().required(),
         name: Yup.string().required(),
@@ -425,11 +425,11 @@ const Root = (props: IDialog) => {
               options={async () =>
                 isUpdate
                   ? [
-                    {
-                      label: values.namespace || '',
-                      value: values.namespace || '',
-                    },
-                  ]
+                      {
+                        label: values.namespace || '',
+                        value: values.namespace || '',
+                      },
+                    ]
                   : namespaces
               }
               value={values.namespace}

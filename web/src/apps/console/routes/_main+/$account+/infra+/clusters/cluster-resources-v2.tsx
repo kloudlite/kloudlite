@@ -11,7 +11,6 @@ import {
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -27,10 +26,8 @@ import ListV2 from '~/console/components/listV2';
 import AnimateHide from '~/components/atoms/animate-hide';
 import LogComp from '~/root/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
-import { Button } from '~/components/atoms/button';
 import { useDataState } from '~/console/page-components/common-state';
 import { useState } from 'react';
-import { dayjs } from '~/components/molecule/dayjs';
 
 type BaseType = ExtractNodeType<IClusters>;
 const RESOURCE_NAME = 'cluster';
@@ -172,7 +169,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
           //   className: 'w-[180px]',
           // },
           {
-            render: () => '',
+            render: () => 'Status',
             name: 'status',
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },

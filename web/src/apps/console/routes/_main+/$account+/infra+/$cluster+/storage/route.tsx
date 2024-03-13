@@ -11,7 +11,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import Tools from './tools';
-import StorageResources from './storage-resources';
+import StorageResourcesV2 from './storage-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -65,7 +65,7 @@ const ClusterStorage = () => {
             }}
             tools={<Tools />}
           >
-            <StorageResources items={storages} />
+            <StorageResourcesV2 items={storages} />
           </Wrapper>
         );
       }}

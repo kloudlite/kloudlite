@@ -1,4 +1,5 @@
 export {
+  Domain,
   ArrowLeftFill as ArrowLeft,
   ArrowRightFill as ArrowRight,
   Plus,
