@@ -8,10 +8,10 @@ import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
 import HelmChartResources from './helm-chart-resources';
 import HandleHelmChart from './handle-helm-chart';
+import fake from "~/root/fake-data-generator/fake";
 
 export const loader = (ctx: IRemixCtx) => {
   const { cluster } = ctx.params;
@@ -38,11 +38,10 @@ const HelmCharts = () => {
   return (
     <>
       <LoadingComp
-        data={promise}
-        skeletonData={{
-          helmChartData: fake.ConsoleListHelmChartQuery
-            .infra_listHelmReleases as any,
-        }}
+          data={promise}
+          skeletonData={{
+            helmChartData: fake.ConsoleListHelmChartQuery.infra_listHelmReleases as any,
+          }}
       >
         {({ helmChartData }) => {
           const helmCharts = parseNodes(helmChartData);
