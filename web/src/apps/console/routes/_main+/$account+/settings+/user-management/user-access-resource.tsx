@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Avatar } from '~/components/atoms/avatar';
@@ -11,11 +11,14 @@ import {
 import DeleteDialog from '~/console/components/delete-dialog';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
+import ResourceExtraAction, {
+  IResourceExtraItem,
+} from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { parseName } from '~/console/server/r-utils/common';
+import HandleUser from '~/console/routes/_main+/$account+/settings+/user-management/handle-user';
 import { IAccountContext } from '../../_layout';
 
 const RESOURCE_NAME = 'user';
@@ -26,43 +29,66 @@ type BaseType = {
   role: string;
   email: string;
 };
+export type IMemberType = BaseType;
 
-interface IResource {
-  items: BaseType[];
-  onDelete: (item: BaseType) => void;
-}
+type OnAction = ({
+  action,
+  item,
+}: {
+  action: 'delete' | 'edit';
+  item: BaseType;
+}) => void;
 
-const mapRoleToDisplayName = (role: string): string => {
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+  isInvite: boolean;
+};
+
+export const mapRoleToDisplayName = (role: string): string => {
   switch (role) {
     case 'account_owner':
       return 'owner';
     case 'account_member':
       return 'member';
-    case 'account_admin':
-      return 'admin';
     default:
       return role;
   }
 };
 
-const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
-  return (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Remove',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: onDelete,
-          key: 'remove',
-          className: '!text-text-critical',
-        },
-      ]}
-    />
-  );
+const ExtraButton = ({ onAction, item, isInvite }: IExtraButton) => {
+  let items: IResourceExtraItem[] = [
+    {
+      label: 'Remove',
+      icon: <Trash size={16} />,
+      type: 'item',
+      onClick: () => onAction({ action: 'delete', item }),
+      key: 'remove',
+      className: '!text-text-critical',
+    },
+  ];
+  if (!isInvite) {
+    items = [
+      {
+        label: 'Edit',
+        icon: <PencilSimple size={16} />,
+        type: 'item',
+        onClick: () => onAction({ action: 'edit', item }),
+        key: 'edit',
+      },
+      ...items,
+    ];
+  }
+  return <ResourceExtraAction options={items} />;
 };
 
-const ListView = ({ items = [], onDelete }: IResource) => {
+interface IResource {
+  items: BaseType[];
+  onAction: OnAction;
+  isInvite: boolean;
+}
+
+const ListView = ({ items = [], onAction, isInvite }: IResource) => {
   return (
     <List.Root>
       {items.map((item) => (
@@ -87,7 +113,13 @@ const ListView = ({ items = [], onDelete }: IResource) => {
             },
             {
               key: 3,
-              render: () => <ExtraButton onDelete={() => onDelete(item)} />,
+              render: () => (
+                <ExtraButton
+                  isInvite={isInvite}
+                  onAction={onAction}
+                  item={item}
+                />
+              ),
             },
           ]}
         />
@@ -96,10 +128,17 @@ const ListView = ({ items = [], onDelete }: IResource) => {
   );
 };
 
-const UserAccessResources = ({ items = [] }: { items: BaseType[] }) => {
+const UserAccessResources = ({
+  items = [],
+  isPendingInvitation = false,
+}: {
+  items: BaseType[];
+  isPendingInvitation: boolean;
+}) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [showUserInvite, setShowUserInvite] = useState<BaseType | null>(null);
 
   const { account } = useOutletContext<IAccountContext>();
 
@@ -108,15 +147,34 @@ const UserAccessResources = ({ items = [] }: { items: BaseType[] }) => {
 
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
+    isInvite: isPendingInvitation,
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'edit':
+          setShowUserInvite(item);
+          break;
+        case 'delete':
+          setShowDeleteDialog(item);
+          break;
+        default:
+          break;
+      }
     },
   };
+
   return (
     <>
       <ListGridView
         listView={<ListView {...props} />}
         gridView={<ListView {...props} />}
+      />
+      <HandleUser
+        {...{
+          isUpdate: true,
+          data: showUserInvite!,
+          setVisible: () => setShowUserInvite(null),
+          visible: !!showUserInvite,
+        }}
       />
       <DeleteDialog
         resourceName="confirm"
@@ -139,12 +197,22 @@ const UserAccessResources = ({ items = [] }: { items: BaseType[] }) => {
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteAccountMembership({
-              accountName: parseName(account),
-              memberId: showDeleteDialog!.id,
-            });
-            if (errors) {
-              throw errors[0];
+            if (!isPendingInvitation) {
+              const { errors } = await api.deleteAccountMembership({
+                accountName: parseName(account),
+                memberId: showDeleteDialog!.id,
+              });
+              if (errors) {
+                throw errors[0];
+              }
+            } else if (isPendingInvitation) {
+              const { errors } = await api.deleteAccountInvitation({
+                accountName: parseName(account),
+                invitationId: showDeleteDialog!.id,
+              });
+              if (errors) {
+                throw errors[0];
+              }
             }
             reloadPage();
             toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
