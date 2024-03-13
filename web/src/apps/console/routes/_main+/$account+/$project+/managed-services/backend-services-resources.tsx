@@ -26,7 +26,6 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useOutletContext, useParams } from '@remix-run/react';
 import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
-import { listStatus } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
@@ -141,7 +140,6 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, logo, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -162,7 +160,6 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
                   />
                 ),
               },
-              status,
               listFlex({ key: `${keyPrefix}flex-1` }),
               {
                 key: generateKey(keyPrefix, 'author'),

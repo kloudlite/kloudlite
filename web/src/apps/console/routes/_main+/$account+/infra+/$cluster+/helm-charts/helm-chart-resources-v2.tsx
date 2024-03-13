@@ -1,44 +1,42 @@
-import { Trash, PencilLine } from '@jengaicons/react';
-import { useState } from 'react';
-import { toast } from '~/components/molecule/toast';
+import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListBody,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
-import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import {
   ExtractNodeType,
   parseName,
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import DeleteDialog from '~/console/components/delete-dialog';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
+import { toast } from '~/components/molecule/toast';
+import { useOutletContext, useParams } from '@remix-run/react';
+import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
-import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import { useOutletContext } from '@remix-run/react';
 import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
-import HandleDomain from './handle-domain';
-import DomainDetailPopup from './domain-detail';
+import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import HandleHelmChart from './handle-helm-chart';
 
-const RESOURCE_NAME = 'domain';
-type BaseType = ExtractNodeType<IDomains>;
+const RESOURCE_NAME = 'helm chart';
+type BaseType = ExtractNodeType<IHelmCharts>;
 
 const parseItem = (item: BaseType) => {
   return {
-    name: item.displayName,
-    id: item.id,
-    domainName: item.domainName,
+    name: item?.displayName,
+    id: parseName(item),
     updateInfo: {
-      author: `Updated by ${parseUpdateOrCreatedBy(item)}`,
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -48,7 +46,7 @@ type OnAction = ({
   action,
   item,
 }: {
-  action: 'edit' | 'delete' | 'detail';
+  action: 'delete' | 'edit';
   item: BaseType;
 }) => void;
 
@@ -58,19 +56,20 @@ type IExtraButton = {
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
+  const iconSize = 16;
   return (
     <ResourceExtraAction
       options={[
         {
           label: 'Edit',
-          icon: <PencilLine size={16} />,
+          icon: <PencilSimple size={iconSize} />,
           type: 'item',
           onClick: () => onAction({ action: 'edit', item }),
           key: 'edit',
         },
         {
           label: 'Delete',
-          icon: <Trash size={16} />,
+          icon: <Trash size={iconSize} />,
           type: 'item',
           onClick: () => onAction({ action: 'delete', item }),
           key: 'delete',
@@ -86,27 +85,28 @@ interface IResource {
   onAction: OnAction;
 }
 
-const GridView = ({ items, onAction }: IResource) => {
+const GridView = ({ items = [], onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, domainName, id, updateInfo } = parseItem(item);
+        const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
-            onClick={() => onAction({ action: 'detail', item })}
             key={id}
             rows={[
               {
-                key: generateKey(keyPrefix, name + id),
-                render: () => <ListTitle title={name} />,
+                key: generateKey(keyPrefix, name),
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    action={<ExtraButton onAction={onAction} item={item} />}
+                  />
+                ),
               },
               {
-                key: generateKey(keyPrefix, domainName),
-                render: () => <ListBody data={domainName} />,
-              },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
+                key: generateKey(keyPrefix, 'author'),
                 render: () => (
                   <ListItem
                     data={updateInfo.author}
@@ -122,35 +122,49 @@ const GridView = ({ items, onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items, onAction }: IResource) => {
+const ListView = ({ items = [], onAction }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, domainName, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            onClick={() => onAction({ action: 'detail', item })}
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                render: () => <ListTitle title={name} />,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[32px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[300px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
-              {
-                key: generateKey(keyPrefix, 'flex-1'),
-                className: 'flex-grow',
-                render: () => <div />,
+
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
               },
-              {
-                key: generateKey(keyPrefix, domainName),
-                className: 'w-[300px] text-start',
-                render: () => <ListBody data={domainName} />,
-              },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+              updated: {
                 render: () => (
                   <ListItem
                     data={updateInfo.author}
@@ -158,22 +172,25 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
+              },
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
+const HelmChartResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
-  const [visible, setVisible] = useState<BaseType | null>(null);
-  const [domainDetail, setDomainDetail] = useState<BaseType | null>(null);
+  const [showHandleHelm, setShowHandlehelm] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
+  const params = useParams();
 
   const { account } = useOutletContext<IAccountContext>();
   const { cluster } = useOutletContext<IClusterContext>();
@@ -181,7 +198,7 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
     items.map((i) => {
       return `account:${parseName(account)}.cluster:${parseName(
         cluster
-      )}.domain_entries:${i.domainName}`;
+      )}.helm_release:${parseName(i)}`;
     })
   );
 
@@ -190,15 +207,13 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
     onAction: ({ action, item }) => {
       switch (action) {
         case 'edit':
-          setVisible(item);
+          setShowHandlehelm(item);
           break;
         case 'delete':
           setShowDeleteDialog(item);
           break;
-        case 'detail':
-          setDomainDetail(item);
-          break;
         default:
+          break;
       }
     },
   };
@@ -208,15 +223,24 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
         listView={<ListView {...props} />}
         gridView={<GridView {...props} />}
       />
+      <HandleHelmChart
+        {...{
+          isUpdate: true,
+          data: showHandleHelm!,
+          setVisible: () => setShowHandlehelm(null),
+          visible: !!showHandleHelm,
+        }}
+      />
       <DeleteDialog
-        resourceName={showDeleteDialog?.displayName}
+        resourceName={parseName(showDeleteDialog)}
         resourceType={RESOURCE_NAME}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
           try {
-            const { errors } = await api.deleteDomain({
-              domainName: showDeleteDialog!.domainName,
+            const { errors } = await api.deleteHelmChart({
+              releaseName: parseName(showDeleteDialog),
+              clusterName: params.cluster || '',
             });
 
             if (errors) {
@@ -230,23 +254,8 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <HandleDomain
-        {...{
-          isUpdate: true,
-          data: visible!,
-          visible: !!visible,
-          setVisible: () => setVisible(null),
-        }}
-      />
-      <DomainDetailPopup
-        {...{
-          visible: !!domainDetail,
-          setVisible: () => setDomainDetail(null),
-          data: domainDetail!,
-        }}
-      />
     </>
   );
 };
 
-export default DomainResources;
+export default HelmChartResourcesV2;

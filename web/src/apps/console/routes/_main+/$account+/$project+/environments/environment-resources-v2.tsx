@@ -7,10 +7,8 @@ import {
   ListItem,
   ListTitle,
   listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
@@ -20,12 +18,14 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
+import ListV2 from '~/console/components/listV2';
 import CloneEnvironment from './clone-environment';
 
-const RESOURCE_NAME = 'workspace';
+const RESOURCE_NAME = 'environment';
 type BaseType = ExtractNodeType<IEnvironments>;
 
 const parseItem = (item: BaseType) => {
@@ -121,19 +121,41 @@ const ListView = ({ items, onAction }: IResource) => {
   const { account, project } = useParams();
 
   return (
-    <List.Root linkComponent={Link}>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            to={`/${account}/${project}/${id}`}
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: listClass.title,
+    <ListV2.Root
+      linkComponent={Link}
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
                 render: () => (
                   <ListTitle
                     title={name}
@@ -142,30 +164,30 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-              listFlex({ key: `${keyPrefix}flex-1` }),
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: listClass.author,
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton item={item} onAction={onAction} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+            to: `/${account}/${project}/${id}`,
+          };
+        }),
+      }}
+    />
   );
 };
 
-const Resources = ({ items = [] }: { items: BaseType[] }) => {
+const EnvironmentResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useOutletContext<IAccountContext>();
   const { project } = useOutletContext<IProjectContext>();
   useWatchReload(
@@ -210,4 +232,4 @@ const Resources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default Resources;
+export default EnvironmentResourcesV2;

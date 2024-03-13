@@ -3,11 +3,8 @@ import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
-  listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
@@ -27,6 +24,8 @@ import { Link, useParams } from '@remix-run/react';
 import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
 import { Button } from '~/components/atoms/button';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import HandleManagedResources from './handle-managed-resource';
 
 const RESOURCE_NAME = 'managed resource';
@@ -126,57 +125,76 @@ const ListView = ({ items = [], onAction }: IResource) => {
   const { environment, project, account } = useParams();
   const preUrl = `/${account}/${project}/${environment}/secret/`;
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name),
-                className: listClass.title,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => 'Name',
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'secret',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, updateInfo } = parseItem(i);
+          return {
+            columns: {
+              name: {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
-              item.syncedOutputSecretRef
-                ? {
-                  key: generateKey(keyPrefix, 'secret'),
-                  render: () => (
+              secret: {
+                render: () =>
+                  i.syncedOutputSecretRef ? (
                     <Button
                       content="View secrets"
                       variant="plain"
                       LinkComponent={Link}
-                      to={`${preUrl}${item.syncedOutputSecretRef?.metadata?.name}`}
+                      to={`${preUrl}${i.syncedOutputSecretRef?.metadata?.name}`}
                     />
-                  ),
-                }
-                : {},
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, 'author'),
-                className: listClass.author,
+                  ) : null,
+              },
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const ManagedResourceResources = ({
+const ManagedResourceResourcesV2 = ({
   items = [],
   templates = [],
 }: {
@@ -262,4 +280,4 @@ const ManagedResourceResources = ({
   );
 };
 
-export default ManagedResourceResources;
+export default ManagedResourceResourcesV2;

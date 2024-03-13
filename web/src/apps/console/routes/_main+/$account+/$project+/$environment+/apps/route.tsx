@@ -12,8 +12,8 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import { clearAppState } from '~/console/page-components/app-states';
 import { useEffect } from 'react';
-import AppsResources from './apps-resources';
 import Tools from './tools';
+import AppsResourcesV2 from './apps-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -47,9 +47,9 @@ const Apps = () => {
   return (
     <LoadingComp
       data={promise}
-      skeletonData={{
-        appsData: fake.ConsoleListAppsQuery.core_listApps as any,
-      }}
+    // skeletonData={{
+    //   appsData: fake.ConsoleListAppsQuery.core_listApps as any,
+    // }}
     >
       {({ appsData }) => {
         const apps = parseNodes(appsData);
@@ -87,7 +87,7 @@ const Apps = () => {
               }}
               tools={<Tools />}
             >
-              <AppsResources items={apps} />
+              <AppsResourcesV2 items={apps} />
             </Wrapper>
           </div>
         );

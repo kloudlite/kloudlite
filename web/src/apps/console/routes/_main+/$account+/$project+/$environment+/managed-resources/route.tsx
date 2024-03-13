@@ -9,7 +9,7 @@ import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
-import ManagedResourceResources from './managed-resources-resource';
+import ManagedResourceResourcesV2 from './managed-resources-resource-v2';
 
 export const loader = (ctx: IRemixCtx) => {
   const { project, environment } = ctx.params;
@@ -75,7 +75,10 @@ const KlOperatorServices = () => {
             }}
             tools={<Tools />}
           >
-            <ManagedResourceResources items={managedResources} templates={[]} />
+            <ManagedResourceResourcesV2
+              items={managedResources}
+              templates={[]}
+            />
           </Wrapper>
         );
       }}

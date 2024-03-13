@@ -9,7 +9,7 @@ import { parseNodes } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
-import BackendServicesResources from './backend-services-resources';
+import BackendServicesResourcesV2 from './backend-services-resources-V2';
 
 export const loader = (ctx: IRemixCtx) => {
   const { project } = ctx.params;
@@ -85,7 +85,7 @@ const KlOperatorServices = () => {
             }}
             tools={<Tools />}
           >
-            <BackendServicesResources
+            <BackendServicesResourcesV2
               items={backendServices}
               templates={templatesData}
             />

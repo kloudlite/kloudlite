@@ -1,4 +1,5 @@
 export {
+  Domain,
   ArrowLeftFill as ArrowLeft,
   ArrowRightFill as ArrowRight,
   Plus,
@@ -41,4 +42,12 @@ export {
   BackingServices,
   VirtualMachine,
   Database,
+  ArrowsClockwise,
+  Info,
+  Fan,
+  WarningCircle,
+  ChecksFill as Checks,
+  CircleNotch,
+  Circle,
+  CircleFill,
 } from '@jengaicons/react';

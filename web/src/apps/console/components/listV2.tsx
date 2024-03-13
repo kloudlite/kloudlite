@@ -104,6 +104,9 @@ interface IMain {
 interface IRowBase extends IMain {
   linkComponent?: any;
   headers?: IHeader[];
+  disabled?: boolean;
+  detail?: ReactNode;
+  hideDetailSeperator?: boolean;
 }
 
 const RowBase = ({
@@ -113,8 +116,10 @@ const RowBase = ({
   className = '',
   onClick = null,
   pressed = false,
-  plain,
   headers,
+  disabled,
+  detail,
+  hideDetailSeperator,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -128,27 +133,30 @@ const RowBase = ({
     Component = 'div';
   }
 
-  const css = cn(
-    'w-full overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
-    {
-      '[&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b p-2xl':
-        !plain,
-    },
-    className,
+  const commonCss = cn(
     {
       'bg-surface-basic-default': !pressed,
       'cursor-pointer hover:bg-surface-basic-hovered':
-        (!!onClick || linkComponent !== 'div') && !pressed,
+        (!!onClick || linkComponent !== 'div') && !pressed && !disabled,
       'bg-surface-basic-active': pressed,
-    }
+      'cursor-default': !!disabled,
+    },
+    hideDetailSeperator
+      ? ''
+      : '[&:not(:last-child)]:border-b border-border-default'
   );
 
-  if (!!onClick || linkComponent !== 'div') {
+  const css = cn(
+    'w-full overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
+    ' first:rounded-t last:rounded-b p-2xl',
+    className
+  );
+
+  if (!disabled) {
     return (
       <RovingFocusGroup.Item
         role="row"
         asChild
-        className={css}
         onClick={() => {
           if (onClick) onClick(columns);
         }}
@@ -158,24 +166,33 @@ const RowBase = ({
           }
         }}
       >
-        <Component {...(Component === 'a' ? { href: to } : { to })}>
-          {headers?.map((item) => (
-            <div key={item.name} className={cn(item.className)}>
-              {columns?.[item.name]?.render()}
-            </div>
-          ))}
+        <Component
+          {...(Component === 'a' ? { href: to } : { to })}
+          className={cn('flex flex-col', commonCss)}
+        >
+          <div className={css}>
+            {headers?.map((item) => (
+              <div key={item.name} className={cn(item.className)}>
+                {columns?.[item.name]?.render()}
+              </div>
+            ))}
+          </div>
+          <div className={cn('px-2xl')}>{detail}</div>
         </Component>
       </RovingFocusGroup.Item>
     );
   }
 
   return (
-    <div className={css} role="row">
-      {headers?.map((item) => (
-        <div key={item.name} className={cn(item.className)}>
-          {columns?.[item.name]?.render()}
-        </div>
-      ))}
+    <div className="flex flex-col">
+      <div className={css} role="row">
+        {headers?.map((item) => (
+          <div key={item.name} className={cn(item.className)}>
+            {columns?.[item.name]?.render()}
+          </div>
+        ))}
+      </div>
+      {detail}
     </div>
   );
 };
@@ -209,7 +226,14 @@ interface IRoot {
   loading?: boolean;
   data?: {
     headers: IHeader[];
-    rows: Array<{ columns: Record<string, IColumn>; to?: string }>;
+    rows: Array<{
+      columns: Record<string, IColumn>;
+      to?: string;
+      disabled?: boolean;
+      detail?: ReactNode;
+      hideDetailSeperator?: boolean;
+      onClick?: ((item?: Record<string, IColumn>) => void) | null;
+    }>;
     className?: Array<string>;
   };
   headerClassName?: string;
@@ -279,6 +303,10 @@ const Root = ({
                   columns={r.columns}
                   to={r.to}
                   headers={data.headers}
+                  disabled={r.disabled}
+                  detail={r.detail}
+                  hideDetailSeperator={r.hideDetailSeperator}
+                  onClick={r.onClick}
                 />
               ))}
             </div>

@@ -34,7 +34,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleRestartAppQuery) => data.core_restartApp,
-      vars: (_: ConsoleRestartAppQueryVariables) => {},
+      vars: (_: ConsoleRestartAppQueryVariables) => { },
     }
   ),
   createApp: executor(
@@ -55,7 +55,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleCreateAppMutation) => data.core_createApp,
-      vars(_: ConsoleCreateAppMutationVariables) {},
+      vars(_: ConsoleCreateAppMutationVariables) { },
     }
   ),
 
@@ -79,7 +79,7 @@ export const appQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleUpdateAppMutation) => {
         return data.core_updateApp;
       },
-      vars(_: ConsoleUpdateAppMutationVariables) {},
+      vars(_: ConsoleUpdateAppMutationVariables) { },
     }
   ),
   interceptApp: executor(
@@ -103,7 +103,7 @@ export const appQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleInterceptAppMutation) =>
         data.core_interceptApp,
-      vars(_: ConsoleInterceptAppMutationVariables) {},
+      vars(_: ConsoleInterceptAppMutationVariables) { },
     }
   ),
   deleteApp: executor(
@@ -122,7 +122,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleDeleteAppMutation) => data.core_deleteApp,
-      vars(_: ConsoleDeleteAppMutationVariables) {},
+      vars(_: ConsoleDeleteAppMutationVariables) { },
     }
   ),
   getApp: executor(
@@ -247,6 +247,11 @@ export const appQueries = (executor: IExecutor) => ({
             }
           }
           status {
+            checkList {
+              description
+              title
+              name
+            }
             checks
             isReady
             lastReadyGeneration
@@ -269,7 +274,7 @@ export const appQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetAppQuery) {
         return data.core_getApp;
       },
-      vars(_: ConsoleGetAppQueryVariables) {},
+      vars(_: ConsoleGetAppQueryVariables) { },
     }
   ),
   listApps: executor(
@@ -390,6 +395,11 @@ export const appQueries = (executor: IExecutor) => ({
                   name
                   namespace
                 }
+                checkList {
+                  description
+                  title
+                  name
+                }
               }
               syncStatus {
                 action
@@ -414,7 +424,7 @@ export const appQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListAppsQuery) => data.core_listApps,
-      vars(_: ConsoleListAppsQueryVariables) {},
+      vars(_: ConsoleListAppsQueryVariables) { },
     }
   ),
 });

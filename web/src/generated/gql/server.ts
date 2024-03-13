@@ -1686,6 +1686,7 @@ export type ConsoleGetProjectQuery = {
       isReady: boolean;
       lastReadyGeneration?: number;
       lastReconcileTime?: any;
+      checkList?: Array<{ description?: string; name: string; title: string }>;
       message?: { RawMessage?: any };
       resources?: Array<{
         apiVersion: string;
@@ -1739,6 +1740,11 @@ export type ConsoleListProjectsQuery = {
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
@@ -1819,6 +1825,11 @@ export type ConsoleListClustersQuery = {
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
@@ -1937,6 +1948,7 @@ export type ConsoleGetClusterQuery = {
       isReady: boolean;
       lastReadyGeneration?: number;
       lastReconcileTime?: any;
+      checkList?: Array<{ description?: string; name: string; title: string }>;
       message?: { RawMessage?: any };
       resources?: Array<{
         apiVersion: string;
@@ -2257,6 +2269,7 @@ export type ConsoleGetEnvironmentQuery = {
       isReady: boolean;
       lastReadyGeneration?: number;
       lastReconcileTime?: any;
+      checkList?: Array<{ description?: string; name: string; title: string }>;
       message?: { RawMessage?: any };
       resources?: Array<{
         apiVersion: string;
@@ -2330,6 +2343,11 @@ export type ConsoleListEnvironmentsQuery = {
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
@@ -2506,6 +2524,7 @@ export type ConsoleGetAppQuery = {
       isReady: boolean;
       lastReadyGeneration?: number;
       lastReconcileTime?: any;
+      checkList?: Array<{ description?: string; title: string; name: string }>;
       message?: { RawMessage?: any };
       resources?: Array<{
         apiVersion: string;
@@ -2608,6 +2627,11 @@ export type ConsoleListAppsQuery = {
             kind: string;
             name: string;
             namespace: string;
+          }>;
+          checkList?: Array<{
+            description?: string;
+            title: string;
+            name: string;
           }>;
         };
         syncStatus: {
@@ -2720,6 +2744,11 @@ export type ConsoleListRoutersQuery = {
           isReady: boolean;
           lastReadyGeneration?: number;
           lastReconcileTime?: any;
+          checkList?: Array<{
+            description?: string;
+            name: string;
+            title: string;
+          }>;
           message?: { RawMessage?: any };
           resources?: Array<{
             apiVersion: string;
@@ -2798,15 +2827,7 @@ export type ConsoleGetRouterQuery = {
     status?: {
       checks?: any;
       isReady: boolean;
-      lastReadyGeneration?: number;
-      lastReconcileTime?: any;
-      message?: { RawMessage?: any };
-      resources?: Array<{
-        apiVersion: string;
-        kind: string;
-        name: string;
-        namespace: string;
-      }>;
+      checkList?: Array<{ description?: string; name: string; title: string }>;
     };
   };
 };

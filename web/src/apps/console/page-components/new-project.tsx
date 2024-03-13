@@ -5,13 +5,7 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import Select from '~/components/atoms/select';
-import { listStatus, parseStatus } from '~/console/components/sync-status';
-import { IClusters } from '~/console/server/gql/queries/cluster-queries';
-import {
-  ExtractNodeType,
-  parseName,
-  parseNodes,
-} from '../server/r-utils/common';
+import { parseName, parseNodes } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { INewProjectFromAccountLoader } from '../routes/_a+/$a+/new-project';
 import { useConsoleApi } from '../server/gql/api-provider';
@@ -23,14 +17,7 @@ import MultiStepProgressWrapper from '../components/multi-step-progress-wrapper'
 import { TitleBox } from '../components/raw-wrapper';
 import { BottomNavigation, ReviewComponent } from '../components/commons';
 import FillerProject from '../assets/filler-project';
-
-const statusRender = (item: ExtractNodeType<IClusters>) => {
-  return listStatus({
-    key: parseName(item),
-    item,
-    className: 'text-center',
-  });
-};
+import { SyncStatusV2, status } from '../components/sync-status';
 
 const NewProject = () => {
   const { clustersData } = useLoaderData<INewProjectFromAccountLoader>();
@@ -140,16 +127,14 @@ const NewProject = () => {
                 value={values.clusterName}
                 options={async () => [
                   ...clusters
-                    .filter(
-                      (clster) => parseStatus({ item: clster }) !== 'deleting'
-                    )
+                    .filter((clster) => status({ item: clster }) !== 'deleting')
                     .map((clster) => ({
                       label: clster.displayName,
                       value: parseName(clster),
                       cluster: clster,
                       render: () => (
                         <div>
-                          {parseStatus({ item: clster }) === 'ready' ? (
+                          {true ? (
                             <div className="flex flex-col">
                               <div>{clster.displayName}</div>
                               <div className="bodySm text-text-soft">
@@ -167,9 +152,7 @@ const NewProject = () => {
                                 </div>
                               </div>
                               <div className="flex flex-grow-0 items-center">
-                                {statusRender(
-                                  clster as ExtractNodeType<IClusters>
-                                ).render()}
+                                <SyncStatusV2 item={clster} type="full" />
                               </div>
                             </div>
                           )}
@@ -178,8 +161,8 @@ const NewProject = () => {
                     })),
                 ]}
                 onChange={(v) => {
-                  if (parseStatus({ item: v.cluster }) === 'ready')
-                    handleChange('clusterName')(dummyEvent(v.value));
+                  // if (status({ item: v.cluster }) === 'ready')
+                  handleChange('clusterName')(dummyEvent(v.value));
                 }}
               />
               <BottomNavigation

@@ -1,12 +1,10 @@
 import { PencilSimple, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  listFlex,
   ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
@@ -14,6 +12,8 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import { getManagedTemplate } from '~/console/utils/commons';
 import DeleteDialog from '~/console/components/delete-dialog';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -22,17 +22,23 @@ import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useOutletContext, useParams } from '@remix-run/react';
-import { IHelmCharts } from '~/console/server/gql/queries/helm-chart-queries';
-import { listStatus } from '~/console/components/sync-status';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
-import { IClusterContext } from '~/console/routes/_main+/$account+/infra+/$cluster+/_layout';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import HandleHelmChart from './handle-helm-chart';
+import ListV2 from '~/console/components/listV2';
+import HandleBackendService from './handle-backend-service';
 
-const RESOURCE_NAME = 'helm chart';
-type BaseType = ExtractNodeType<IHelmCharts>;
+const RESOURCE_NAME = 'managed service';
+type BaseType = ExtractNodeType<IProjectMSvs>;
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: BaseType, templates: IMSvTemplates) => {
+  const template = getManagedTemplate({
+    templates,
+    kind: item.spec?.msvcSpec?.serviceTemplate.kind || '',
+    apiVersion: item.spec?.msvcSpec?.serviceTemplate.apiVersion || '',
+  });
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -40,6 +46,7 @@ const parseItem = (item: BaseType) => {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
+    logo: template?.logoUrl,
   };
 };
 
@@ -57,20 +64,19 @@ type IExtraButton = {
 };
 
 const ExtraButton = ({ onAction, item }: IExtraButton) => {
-  const iconSize = 16;
   return (
     <ResourceExtraAction
       options={[
         {
           label: 'Edit',
-          icon: <PencilSimple size={iconSize} />,
+          icon: <PencilSimple size={16} />,
           type: 'item',
           onClick: () => onAction({ action: 'edit', item }),
           key: 'edit',
         },
         {
           label: 'Delete',
-          icon: <Trash size={iconSize} />,
+          icon: <Trash size={16} />,
           type: 'item',
           onClick: () => onAction({ action: 'delete', item }),
           key: 'delete',
@@ -83,14 +89,15 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
 
 interface IResource {
   items: BaseType[];
+  templates: IMSvTemplates;
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], onAction }: IResource) => {
+const GridView = ({ items = [], templates = [], onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
+        const { name, id, logo, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -103,6 +110,9 @@ const GridView = ({ items = [], onAction }: IResource) => {
                     title={name}
                     subtitle={id}
                     action={<ExtraButton onAction={onAction} item={item} />}
+                    avatar={
+                      <img src={logo} alt={name} className="w-4xl h-4xl" />
+                    }
                   />
                 ),
               },
@@ -123,78 +133,111 @@ const GridView = ({ items = [], onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], onAction }: IResource) => {
+const ListView = ({ items = [], templates = [], onAction }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const statusRender = listStatus({
-          key: `${keyPrefix}status`,
-          item,
-        });
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name),
-                className: 'min-w-[180px] max-w-[180px] w-[180px]',
-                render: () => <ListTitle title={name} subtitle={id} />,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, logo, updateInfo } = parseItem(i, templates);
+          return {
+            columns: {
+              name: {
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    avatar={
+                      <div className="pulsable pulsable-circle aspect-square">
+                        <img src={logo} alt={name} className="w-4xl h-4xl" />
+                      </div>
+                    }
+                  />
+                ),
               },
-              statusRender,
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, 'author'),
-                className: 'w-[180px]',
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const HelmChartResources = ({ items = [] }: { items: BaseType[] }) => {
+const BackendServicesResourcesV2 = ({
+  items = [],
+  templates = [],
+}: {
+  items: BaseType[];
+  templates: IMSvTemplates;
+}) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
-  const [showHandleHelm, setShowHandlehelm] = useState<BaseType | null>(null);
+  const [visible, setVisible] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
 
   const { account } = useOutletContext<IAccountContext>();
-  const { cluster } = useOutletContext<IClusterContext>();
+  const { project } = useOutletContext<IProjectContext>();
   useWatchReload(
     items.map((i) => {
-      return `account:${parseName(account)}.cluster:${parseName(
-        cluster
-      )}.helm_release:${parseName(i)}`;
+      return `account:${parseName(account)}.project:${parseName(
+        project
+      )}.project_managed_service:${parseName(i)}`;
     })
   );
 
   const props: IResource = {
     items,
+    templates,
     onAction: ({ action, item }) => {
       switch (action) {
-        case 'edit':
-          setShowHandlehelm(item);
-          break;
         case 'delete':
           setShowDeleteDialog(item);
+          break;
+        case 'edit':
+          setVisible(item);
           break;
         default:
           break;
@@ -207,24 +250,19 @@ const HelmChartResources = ({ items = [] }: { items: BaseType[] }) => {
         listView={<ListView {...props} />}
         gridView={<GridView {...props} />}
       />
-      <HandleHelmChart
-        {...{
-          isUpdate: true,
-          data: showHandleHelm!,
-          setVisible: () => setShowHandlehelm(null),
-          visible: !!showHandleHelm,
-        }}
-      />
       <DeleteDialog
         resourceName={parseName(showDeleteDialog)}
         resourceType={RESOURCE_NAME}
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
+          if (!params.project) {
+            throw new Error('Project is required!.');
+          }
           try {
-            const { errors } = await api.deleteHelmChart({
-              releaseName: parseName(showDeleteDialog),
-              clusterName: params.cluster || '',
+            const { errors } = await api.deleteProjectMSv({
+              pmsvcName: parseName(showDeleteDialog),
+              projectName: params.project,
             });
 
             if (errors) {
@@ -238,8 +276,17 @@ const HelmChartResources = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
+      <HandleBackendService
+        {...{
+          isUpdate: true,
+          visible: !!visible,
+          setVisible: () => setVisible(null),
+          data: visible!,
+          templates: templates || [],
+        }}
+      />
     </>
   );
 };
 
-export default HelmChartResources;
+export default BackendServicesResourcesV2;

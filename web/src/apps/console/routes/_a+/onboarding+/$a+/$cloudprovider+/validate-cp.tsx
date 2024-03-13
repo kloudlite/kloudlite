@@ -267,8 +267,9 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
                   data?.result
                     ? undefined
                     : {
-                        variant: 'primary',
+                        variant: 'outline',
                         content: 'Skip',
+                        prefix: undefined,
                         onClick: () => {
                           navigate(
                             `/onboarding/${parseName(account)}/${parseName(

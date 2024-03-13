@@ -1,6 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
@@ -13,10 +13,10 @@ import {
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { useState } from 'react';
+import fake from '~/root/fake-data-generator/fake';
 import Tools from './tools';
 import HandleRouter from './handle-router';
-import RouterResources from './router-resources';
-import fake from "~/root/fake-data-generator/fake";
+import RouterResourcesV2 from './router-resources-V2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -46,10 +46,10 @@ const Routers = () => {
   return (
     <>
       <LoadingComp
-          data={promise}
-          skeletonData={{
-            routersData: fake.ConsoleListRoutersQuery.core_listRouters as any,
-          }}
+        data={promise}
+        skeletonData={{
+          routersData: fake.ConsoleListRoutersQuery.core_listRouters as any,
+        }}
       >
         {({ routersData }) => {
           const routers = parseNodes(routersData);
@@ -89,7 +89,7 @@ const Routers = () => {
               }}
               tools={<Tools />}
             >
-              <RouterResources items={routers} />
+              <RouterResourcesV2 items={routers} />
             </Wrapper>
           );
         }}
