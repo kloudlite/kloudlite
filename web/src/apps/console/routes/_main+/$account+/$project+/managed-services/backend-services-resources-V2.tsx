@@ -3,11 +3,8 @@ import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
-  listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import {
   ExtractNodeType,
@@ -16,6 +13,7 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { IMSvTemplates } from '~/console/server/gql/queries/managed-templates-queries';
+import { getManagedTemplate } from '~/console/utils/commons';
 import DeleteDialog from '~/console/components/delete-dialog';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -23,16 +21,24 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
-import { Link, useParams } from '@remix-run/react';
-import { IManagedResources } from '~/console/server/gql/queries/managed-resources-queries';
-import { Button } from '~/components/atoms/button';
+import { useOutletContext, useParams } from '@remix-run/react';
+import { IProjectMSvs } from '~/console/server/gql/queries/project-managed-services-queries';
+import { SyncStatusV2 } from '~/console/components/sync-status';
+import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
+import { IProjectContext } from '~/console/routes/_main+/$account+/$project+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
-import HandleManagedResources from './handle-managed-resource';
+import ListV2 from '~/console/components/listV2';
+import HandleBackendService from './handle-backend-service';
 
-const RESOURCE_NAME = 'managed resource';
-type BaseType = ExtractNodeType<IManagedResources>;
+const RESOURCE_NAME = 'managed service';
+type BaseType = ExtractNodeType<IProjectMSvs>;
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: BaseType, templates: IMSvTemplates) => {
+  const template = getManagedTemplate({
+    templates,
+    kind: item.spec?.msvcSpec?.serviceTemplate.kind || '',
+    apiVersion: item.spec?.msvcSpec?.serviceTemplate.apiVersion || '',
+  });
   return {
     name: item?.displayName,
     id: parseName(item),
@@ -40,6 +46,7 @@ const parseItem = (item: BaseType) => {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
+    logo: template?.logoUrl,
   };
 };
 
@@ -82,14 +89,15 @@ const ExtraButton = ({ onAction, item }: IExtraButton) => {
 
 interface IResource {
   items: BaseType[];
+  templates: IMSvTemplates;
   onAction: OnAction;
 }
 
-const GridView = ({ items = [], onAction }: IResource) => {
+const GridView = ({ items = [], templates = [], onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
+        const { name, id, logo, updateInfo } = parseItem(item, templates);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -102,6 +110,9 @@ const GridView = ({ items = [], onAction }: IResource) => {
                     title={name}
                     subtitle={id}
                     action={<ExtraButton onAction={onAction} item={item} />}
+                    avatar={
+                      <img src={logo} alt={name} className="w-4xl h-4xl" />
+                    }
                   />
                 ),
               },
@@ -122,61 +133,77 @@ const GridView = ({ items = [], onAction }: IResource) => {
   );
 };
 
-const ListView = ({ items = [], onAction }: IResource) => {
-  const { environment, project, account } = useParams();
-  const preUrl = `/${account}/${project}/${environment}/secret/`;
+const ListView = ({ items = [], templates = [], onAction }: IResource) => {
   return (
-    <List.Root>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            columns={[
-              {
-                key: generateKey(keyPrefix, name),
-                className: listClass.title,
-                render: () => <ListTitle title={name} subtitle={id} />,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => (
+              <div className="flex flex-row">
+                <span className="w-[48px]" />
+                Name
+              </div>
+            ),
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, id, logo, updateInfo } = parseItem(i, templates);
+          return {
+            columns: {
+              name: {
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    subtitle={id}
+                    avatar={
+                      <div className="pulsable pulsable-circle aspect-square">
+                        <img src={logo} alt={name} className="w-4xl h-4xl" />
+                      </div>
+                    }
+                  />
+                ),
               },
-              item.syncedOutputSecretRef
-                ? {
-                  key: generateKey(keyPrefix, 'secret'),
-                  render: () => (
-                    <Button
-                      content="View secrets"
-                      variant="plain"
-                      LinkComponent={Link}
-                      to={`${preUrl}${item.syncedOutputSecretRef?.metadata?.name}`}
-                    />
-                  ),
-                }
-                : {},
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, 'author'),
-                className: listClass.author,
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const ManagedResourceResources = ({
+const BackendServicesResourcesV2 = ({
   items = [],
   templates = [],
 }: {
@@ -191,18 +218,19 @@ const ManagedResourceResources = ({
   const reloadPage = useReload();
   const params = useParams();
 
-  const { environment, project, account } = useParams();
-
+  const { account } = useOutletContext<IAccountContext>();
+  const { project } = useOutletContext<IProjectContext>();
   useWatchReload(
     items.map((i) => {
-      return `account:${account}.project:${project}.environment:${environment}.managed_resource:${parseName(
-        i
-      )}`;
+      return `account:${parseName(account)}.project:${parseName(
+        project
+      )}.project_managed_service:${parseName(i)}`;
     })
   );
 
   const props: IResource = {
     items,
+    templates,
     onAction: ({ action, item }) => {
       switch (action) {
         case 'delete':
@@ -228,13 +256,12 @@ const ManagedResourceResources = ({
         show={showDeleteDialog}
         setShow={setShowDeleteDialog}
         onSubmit={async () => {
-          if (!params.project || !params.environment) {
-            throw new Error('Project and Environment is required!.');
+          if (!params.project) {
+            throw new Error('Project is required!.');
           }
           try {
-            const { errors } = await api.deleteManagedResource({
-              mresName: parseName(showDeleteDialog),
-              envName: params.environment,
+            const { errors } = await api.deleteProjectMSv({
+              pmsvcName: parseName(showDeleteDialog),
               projectName: params.project,
             });
 
@@ -249,7 +276,7 @@ const ManagedResourceResources = ({
           }
         }}
       />
-      <HandleManagedResources
+      <HandleBackendService
         {...{
           isUpdate: true,
           visible: !!visible,
@@ -262,4 +289,4 @@ const ManagedResourceResources = ({
   );
 };
 
-export default ManagedResourceResources;
+export default BackendServicesResourcesV2;

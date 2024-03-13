@@ -12,7 +12,6 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { listStatus } from '~/console/components/sync-status';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -175,12 +174,6 @@ const ListDetail = (
 
   const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
 
-  const tempStatus = listStatus({
-    key: keyPrefix,
-    item,
-    className: 'basis-full text-center',
-  });
-
   const { state } = useDataState<{
     linesVisible: boolean;
     timestampVisible: boolean;
@@ -218,7 +211,7 @@ const ListDetail = (
         )}
 
         <div className="flex items-center w-[20px] mx-xl flex-grow">
-          {tempStatus.render()}
+          {/* {tempStatus.render()} */}
         </div>
 
         <div className="pr-3xl w-[180px] min-w-[180px]">

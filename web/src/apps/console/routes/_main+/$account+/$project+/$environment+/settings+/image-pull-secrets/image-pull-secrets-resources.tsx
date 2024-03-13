@@ -22,7 +22,6 @@ import {
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { Link, useParams } from '@remix-run/react';
-import { listStatus } from '~/console/components/sync-status';
 import { IImagePullSecrets } from '~/console/server/gql/queries/image-pull-secrets-queries';
 import HandleImagePullSecret from './handle-image-pull-secret';
 
@@ -127,7 +126,6 @@ const ListView = ({ items, onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             key={id}
@@ -139,7 +137,6 @@ const ListView = ({ items, onAction }: IResource) => {
                 className: listClass.title,
                 render: () => <ListTitle title={name} />,
               },
-              status,
               listFlex({ key: 'flex-1' }),
               {
                 key: generateKey(keyPrefix, updateInfo.author),

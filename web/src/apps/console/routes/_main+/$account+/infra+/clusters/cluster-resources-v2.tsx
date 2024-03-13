@@ -1,6 +1,6 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useOutletContext, useParams } from '@remix-run/react';
-import { cn, generateKey, titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -11,7 +11,7 @@ import {
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { IStatus, listStatus } from '~/console/components/sync-status';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -24,6 +24,13 @@ import logger from '~/root/lib/client/helpers/log';
 import { IAccountContext } from '~/console/routes/_main+/$account+/_layout';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
+import AnimateHide from '~/components/atoms/animate-hide';
+import LogComp from '~/root/lib/client/components/logger';
+import LogAction from '~/console/page-components/log-action';
+import { Button } from '~/components/atoms/button';
+import { useDataState } from '~/console/page-components/common-state';
+import { useState } from 'react';
+import { dayjs } from '~/components/molecule/dayjs';
 
 type BaseType = ExtractNodeType<IClusters>;
 const RESOURCE_NAME = 'cluster';
@@ -66,17 +73,10 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const ExtraButton = ({
-  cluster,
-  status,
-}: {
-  cluster: BaseType;
-  status: IStatus;
-}) => {
+const ExtraButton = ({ cluster }: { cluster: BaseType }) => {
   const { account } = useParams();
   return (
     <ResourceExtraAction
-      disabled={status === 'deleting' || status === 'syncing'}
       options={[
         {
           label: 'Settings',
@@ -144,6 +144,12 @@ const GridView = ({ items }: { items: BaseType[] }) => {
   );
 };
 const ListView = ({ items }: { items: BaseType[] }) => {
+  const [open, setOpen] = useState<string>('');
+  const { state } = useDataState<{
+    linesVisible: boolean;
+    timestampVisible: boolean;
+  }>('logs');
+
   const { account } = useParams();
   return (
     <ListV2.Root
@@ -160,6 +166,11 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             name: 'name',
             className: 'w-[180px]',
           },
+          // {
+          //   render: () => '',
+          //   name: 'logs',
+          //   className: 'w-[180px]',
+          // },
           {
             render: () => '',
             name: 'status',
@@ -184,9 +195,10 @@ const ListView = ({ items }: { items: BaseType[] }) => {
         rows: items.map((i) => {
           const { name, id, updateInfo, provider } = parseItem(i);
 
-          const tempStatus = listStatus({
-            item: i,
-          });
+          // const isLatest = dayjs(i.updateTime).isAfter(
+          //   dayjs().subtract(3, 'hour')
+          // );
+
           return {
             columns: {
               name: {
@@ -198,10 +210,27 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
+              // logs: {
+              //   render: () => (
+              //     <Button
+              //       size="sm"
+              //       variant="basic"
+              //       content={open === i.id ? 'Hide Logs' : 'Show Logs'}
+              //       onClick={(e) => {
+              //         e.preventDefault();
+
+              //         setOpen((s) => {
+              //           if (s === i.id) {
+              //             return '';
+              //           }
+              //           return i.id;
+              //         });
+              //       }}
+              //     />
+              //   ),
+              // },
               status: {
-                render: () => (
-                  <div className="inline-block">{tempStatus.render()}</div>
-                ),
+                render: () => null,
               },
               provider: { render: () => <ListItem data={provider} /> },
               updated: {
@@ -213,13 +242,36 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 ),
               },
               action: {
-                render: () => (
-                  <ExtraButton status={tempStatus.status} cluster={i} />
-                ),
+                render: () => <ExtraButton cluster={i} />,
               },
             },
             to: `/${account}/infra/${id}/overview`,
-            disabled: true,
+            detail: (
+              <AnimateHide
+                onClick={(e) => e.preventDefault()}
+                show={open === i.id}
+                className="w-full flex pt-4xl pb-2xl justify-center items-center"
+              >
+                <LogComp
+                  {...{
+                    hideLineNumber: !state.linesVisible,
+                    hideTimestamp: !state.timestampVisible,
+                    className: 'flex-1',
+                    dark: true,
+                    width: '100%',
+                    height: '40rem',
+                    title: 'Logs',
+                    websocket: {
+                      account: account || '',
+                      cluster: parseName(i),
+                      trackingId: i.id,
+                    },
+                    actionComponent: <LogAction />,
+                  }}
+                />
+              </AnimateHide>
+            ),
+            hideDetailSeperator: true,
           };
         }),
       }}

@@ -9,7 +9,7 @@ import {
 import Grid from '~/console/components/grid';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { listStatus } from '~/console/components/sync-status';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { IProjects } from '~/console/server/gql/queries/project-queries';
 import {
   ExtractNodeType,
@@ -112,7 +112,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
             className: 'w-[180px]',
           },
           {
-            render: () => '',
+            render: () => 'Status',
             name: 'status',
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },
@@ -134,11 +134,6 @@ const ListView = ({ items }: { items: BaseType[] }) => {
         ],
         rows: items.map((i) => {
           const { name, id, updateInfo } = parseItem(i);
-          const tempStatus = listStatus({
-            key: '',
-            item: i,
-            className: 'text-center',
-          });
           return {
             columns: {
               name: {
@@ -151,9 +146,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                 ),
               },
               status: {
-                render: () => (
-                  <div className="inline-block">{tempStatus.render()}</div>
-                ),
+                render: () => <SyncStatusV2 item={i} />,
               },
               cluster: { render: () => <ListItem data={i.clusterName} /> },
               updated: {

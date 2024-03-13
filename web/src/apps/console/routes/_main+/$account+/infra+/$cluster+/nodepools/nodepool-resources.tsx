@@ -27,7 +27,6 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link, useOutletContext } from '@remix-run/react';
 import { IStatus, listRender } from '~/console/components/commons';
-import { listStatus } from '~/console/components/sync-status';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { ISetState } from '~/console/page-components/app-states';
 import { Button } from '~/components/atoms/button';
@@ -202,12 +201,6 @@ const ListDetail = (
     type: 'nodepool',
   });
 
-  const tempStatus = listStatus({
-    key: keyPrefix,
-    item,
-    className: 'basis-full text-center',
-  });
-
   const isLatest = dayjs(item.updateTime).isAfter(dayjs().subtract(3, 'hour'));
 
   const { state } = useDataState<{
@@ -249,7 +242,7 @@ const ListDetail = (
         )}
 
         <div className="flex items-center w-[20px] mx-xl flex-grow">
-          {tempStatus.render()}
+          {/* {tempStatus.render()} */}
         </div>
         <div className="flex flex-col gap-sm w-[150px] min-w-[150px] border-border-disabled border-x pl-xl mr-xl pr-xl truncate">
           <span className="bodySm text-text-soft pulsable">Size</span>

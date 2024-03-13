@@ -84,7 +84,7 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
       transformer(data: ConsoleGetProjectMSvQuery) {
         return data.core_getProjectManagedService;
       },
-      vars(_: ConsoleGetProjectMSvQueryVariables) { },
+      vars(_: ConsoleGetProjectMSvQueryVariables) {},
     }
   ),
   createProjectMSv: executor(
@@ -104,7 +104,7 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateProjectMSvMutation) =>
         data.core_createProjectManagedService,
-      vars(_: ConsoleCreateProjectMSvMutationVariables) { },
+      vars(_: ConsoleCreateProjectMSvMutationVariables) {},
     }
   ),
   updateProjectMSv: executor(
@@ -124,7 +124,7 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateProjectMSvMutation) =>
         data.core_updateProjectManagedService,
-      vars(_: ConsoleUpdateProjectMSvMutationVariables) { },
+      vars(_: ConsoleUpdateProjectMSvMutationVariables) {},
     }
   ),
   listProjectMSvs: executor(
@@ -215,7 +215,7 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleListProjectMSvsQuery) =>
         data.core_listProjectManagedServices,
-      vars(_: ConsoleListProjectMSvsQueryVariables) { },
+      vars(_: ConsoleListProjectMSvsQueryVariables) {},
     }
   ),
   deleteProjectMSv: executor(
@@ -233,7 +233,7 @@ export const projectManagedServicesQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleDeleteProjectMSvMutation) =>
         data.core_deleteProjectManagedService,
-      vars(_: ConsoleDeleteProjectMSvMutationVariables) { },
+      vars(_: ConsoleDeleteProjectMSvMutationVariables) {},
     }
   ),
 });

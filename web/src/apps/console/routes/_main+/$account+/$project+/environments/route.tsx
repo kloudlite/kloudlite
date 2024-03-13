@@ -15,8 +15,8 @@ import fake from '~/root/fake-data-generator/fake';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
-import Resources from './resources';
 import Tools from './tools';
+import EnvironmentResourcesV2 from './environment-resources-v2';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -100,7 +100,7 @@ const Workspaces = () => {
               }}
               tools={<Tools />}
             >
-              <Resources items={environments || []} />
+              <EnvironmentResourcesV2 items={environments || []} />
             </Wrapper>
           );
         }}

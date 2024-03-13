@@ -4,12 +4,9 @@ import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
   ListTitle,
-  listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import {
@@ -21,15 +18,17 @@ import {
 import { handleError } from '~/root/lib/utils/common';
 import { IRouters } from '~/console/server/gql/queries/router-queries';
 import { Link, useParams } from '@remix-run/react';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from '~/components/molecule/toast';
 import { Button } from '~/components/atoms/button';
 import Tooltip from '~/components/atoms/tooltip';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
+import ListV2 from '~/console/components/listV2';
 import HandleRouter from './handle-router';
 
-const RESOURCE_NAME = 'router';
+const RESOURCE_NAME = 'domain';
 type BaseType = ExtractNodeType<IRouters>;
 
 const parseItem = (item: BaseType) => {
@@ -177,26 +176,49 @@ const GridView = ({ items, onAction }: IResource) => {
 };
 
 const ListView = ({ items, onAction }: IResource) => {
-  const { account, project, environment } = useParams();
   return (
-    <List.Root linkComponent={Link}>
-      {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
-        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const firstDomain = item.spec.domains?.[0];
-        return (
-          <List.Row
-            key={id}
-            className="!p-3xl"
-            to={`/${account}/${project}/${environment}/router/${id}/routes`}
-            columns={[
-              {
-                key: generateKey(keyPrefix, name + id),
-                className: listClass.title,
+    <ListV2.Root
+      data={{
+        headers: [
+          {
+            render: () => 'Name',
+            name: 'name',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => 'Status',
+            name: 'status',
+            className: 'flex-1 min-w-[30px] flex items-center justify-center',
+          },
+
+          {
+            render: () => 'Domains',
+            name: 'domains',
+            className: 'w-[250px]',
+          },
+          {
+            render: () => 'Updated',
+            name: 'updated',
+            className: 'w-[180px]',
+          },
+          {
+            render: () => '',
+            name: 'action',
+            className: 'w-[24px]',
+          },
+        ],
+        rows: items.map((i) => {
+          const { name, updateInfo } = parseItem(i);
+          const firstDomain = i.spec.domains?.[0];
+          return {
+            columns: {
+              name: {
                 render: () => <ListTitle title={name} />,
               },
-              {
-                key: generateKey(keyPrefix, 'extra_domain'),
+              status: {
+                render: () => <SyncStatusV2 item={i} />,
+              },
+              domains: {
                 render: () => (
                   <ListItem
                     data={
@@ -205,6 +227,7 @@ const ListView = ({ items, onAction }: IResource) => {
                           size="sm"
                           content={formatDomain(firstDomain).short}
                           variant="primary-plain"
+                          className="!pl-0"
                           onClick={(e) => {
                             e.preventDefault();
                             window.open(
@@ -215,11 +238,11 @@ const ListView = ({ items, onAction }: IResource) => {
                           }}
                         />
 
-                        {item.spec.domains.length > 1 && (
+                        {i.spec.domains.length > 1 && (
                           <Tooltip.Root
                             content={
                               <div className="flex flex-col gap-md">
-                                {item.spec.domains
+                                {i.spec.domains
                                   .filter((d) => d !== firstDomain)
                                   .map((d) => (
                                     <Button
@@ -241,7 +264,7 @@ const ListView = ({ items, onAction }: IResource) => {
                             }
                           >
                             <Button
-                              content={`+${item.spec.domains.length - 1} more`}
+                              content={`+${i.spec.domains.length - 1} more`}
                               variant="plain"
                               size="sm"
                             />
@@ -252,30 +275,26 @@ const ListView = ({ items, onAction }: IResource) => {
                   />
                 ),
               },
-              listFlex({ key: 'flex-1' }),
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: listClass.author,
+              updated: {
                 render: () => (
                   <ListItem
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onAction={onAction} item={item} />,
+              action: {
+                render: () => <ExtraButton item={i} onAction={onAction} />,
               },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+            },
+          };
+        }),
+      }}
+    />
   );
 };
 
-const RouterResources = ({ items = [] }: { items: BaseType[] }) => {
+const RouterResourcesV2 = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
@@ -351,4 +370,4 @@ const RouterResources = ({ items = [] }: { items: BaseType[] }) => {
   );
 };
 
-export default RouterResources;
+export default RouterResourcesV2;

@@ -31,7 +31,6 @@ import {
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { listStatus } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import { IEnvironmentContext } from '../_layout';
 
@@ -180,7 +179,6 @@ const ListView = ({ items = [], onAction }: IResource) => {
       {items.map((item, index) => {
         const { name, id, updateInfo, intercept } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
-        const status = listStatus({ key: `${keyPrefix}status`, item });
         return (
           <List.Row
             to={`/${account}/${project}/${environment}/app/${id}`}
@@ -192,20 +190,19 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 className: listClass.title,
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
-              status,
               // @ts-ignore
               ...[
                 intercept && !!intercept.enabled
                   ? {
-                    key: generateKey(keyPrefix, `${name + id}intercept`),
-                    className: listClass.title,
-                    render: () => (
-                      <ListSecondary
-                        title="intercepted toDevice"
-                        subtitle={intercept?.toDevice}
-                      />
-                    ),
-                  }
+                      key: generateKey(keyPrefix, `${name + id}intercept`),
+                      className: listClass.title,
+                      render: () => (
+                        <ListSecondary
+                          title="intercepted toDevice"
+                          subtitle={intercept?.toDevice}
+                        />
+                      ),
+                    }
                   : [],
               ],
               listFlex({ key: 'flex-1' }),

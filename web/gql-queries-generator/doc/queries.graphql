@@ -134,6 +134,11 @@ query consoleGetProject($name: String!) {
     recordVersion
     status {
       checks
+      checkList {
+        description
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -193,6 +198,11 @@ query consoleListProjects($search: SearchProjects, $pq: CursorPaginationIn) {
         }
         status {
           checks
+          checkList {
+            description
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -277,6 +287,11 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         updateTime
         status {
           checks
+          checkList {
+            description
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -409,6 +424,11 @@ query consoleGetCluster($name: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -767,6 +787,11 @@ query consoleGetEnvironment($projectName: String!, $name: String!) {
     }
     status {
       checks
+      checkList {
+        description
+        name
+        title
+      }
       isReady
       lastReadyGeneration
       lastReconcileTime
@@ -836,6 +861,11 @@ query consoleListEnvironments($projectName: String!, $search: SearchEnvironments
         }
         status {
           checks
+          checkList {
+            description
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -1277,6 +1307,11 @@ query consoleListRouters($projectName: String!, $envName: String!, $search: Sear
         }
         status {
           checks
+          checkList {
+            description
+            name
+            title
+          }
           isReady
           lastReadyGeneration
           lastReconcileTime
@@ -1369,18 +1404,12 @@ query consoleGetRouter($projectName: String!, $envName: String!, $name: String!)
     }
     status {
       checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
-        kind
+      checkList {
+        description
         name
-        namespace
+        title
       }
+      isReady
     }
     updateTime
   }

@@ -100,6 +100,11 @@ export const clusterQueries = (executor: IExecutor) => ({
               updateTime
               status {
                 checks
+                checkList {
+                  description
+                  name
+                  title
+                }
                 isReady
                 lastReadyGeneration
                 lastReconcileTime
@@ -241,6 +246,11 @@ export const clusterQueries = (executor: IExecutor) => ({
           }
           status {
             checks
+            checkList {
+              description
+              name
+              title
+            }
             isReady
             lastReadyGeneration
             lastReconcileTime

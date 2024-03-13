@@ -8,13 +8,9 @@ import { Link, useOutletContext, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListItem,
-  ListSecondary,
   ListTitle,
-  listClass,
-  listFlex,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
-import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction, {
   IResourceExtraItem,
@@ -31,7 +27,7 @@ import {
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { SyncStatusV2, listStatus } from '~/console/components/sync-status';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 import { useWatchReload } from '~/lib/client/helpers/socket/useWatch';
 import ListV2 from '~/console/components/listV2';
 import { IEnvironmentContext } from '../_layout';
@@ -187,6 +183,11 @@ const ListView = ({ items = [], onAction }: IResource) => {
             className: 'w-[180px]',
           },
           {
+            render: () => '',
+            name: 'intercept',
+            className: 'w-[250px]',
+          },
+          {
             render: () => 'Status',
             name: 'status',
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
@@ -209,6 +210,21 @@ const ListView = ({ items = [], onAction }: IResource) => {
               name: {
                 render: () => <ListTitle title={name} subtitle={id} />,
               },
+              intercept: {
+                render: () =>
+                  i.spec.intercept?.enabled && (
+                    <ListItem
+                      subtitle={
+                        <div>
+                          Intercepted to{' '}
+                          <span className="bodyMd-medium text-text-strong">
+                            {i.spec.intercept.toDevice}
+                          </span>
+                        </div>
+                      }
+                    />
+                  ),
+              },
               status: {
                 render: () => (
                   <div className="inline-block">
@@ -229,8 +245,7 @@ const ListView = ({ items = [], onAction }: IResource) => {
                 render: () => <ExtraButton onAction={onAction} item={i} />,
               },
             },
-            to: `/${account}/infra/${id}/overview`,
-            disabled: true,
+            to: `/${account}/${project}/${environment}/app/${id}`,
           };
         }),
       }}
