@@ -10,56 +10,56 @@ To install the latest version in Linux or Mac you can run the following command 
 
 ###### Install latest with curl
 ```sh
-curl https://kl.kloudlite.io/kloudlite/kl! | bash
+curl 'https://kl.kloudlite.io/kloudlite!?select=kl' | bash
 ```
 
 ###### Install latest with wget
 
 ```sh
-wget -qO- https://kl.kloudlite.io/kloudlite/kl! | bash
+wget -qO- 'https://kl.kloudlite.io/kloudlite!?select=kl' | bash
 ```
 
 ###### Install specific version
 ```sh
-curl https://kl.kloudlite.io/kloudlite/kl@v1.0.0! | bash
+curl 'https://kl.kloudlite.io/kloudlite@v1.0.0!?select=kl' | bash
 ```
 
 ###### download but don't install
 ```sh
-curl https://kl.kloudlite.io/kloudlite/kl | bash
+curl 'https://kl.kloudlite.io/kloudlite?select=kl' | bash
 ```
 
 ###### install in windows
-```
-iwr https://kl.kloudlite.io/kloudlite/kl | iex
+```sh
+iwr 'https://kl.kloudlite.io/kloudlite!?select=kl' | iex
 ```
 
 #### Installation of kli
 
 ###### Install latest with curl
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl!?source=kli' | bash
+curl 'https://kl.kloudlite.io/kloudlite!?select=kli' | bash
 ```
 
 ###### Install latest with wget
 
 ```sh
-wget -qO- 'https://kl.kloudlite.io/kloudlite/kl!?source=kli' | bash
+wget -qO- 'https://kl.kloudlite.io/kloudlite!?select=kli' | bash
 ```
 
 ###### Install specific version
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl@v1.0.0!?source=kli' | bash
+curl 'https://kl.kloudlite.io/kloudlite@v1.0.0!?select=kli' | bash
 ```
 
 ###### download but don't install
 ```sh
-curl 'https://kl.kloudlite.io/kloudlite/kl?source=kli' | bash
+curl 'https://kl.kloudlite.io/kloudlite?select=kli' | bash
 ```
 
 ###### install in windows
-```
-iwr https://kl.kloudlite.io/kloudlite/kl?source=kli | iex
+```sh
+iwr 'https://kl.kloudlite.io/kloudlite!?select=kli' | iex
 ```
 
 ### Authentication
