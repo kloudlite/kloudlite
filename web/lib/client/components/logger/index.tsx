@@ -71,6 +71,7 @@ export interface IuseLog {
   account: string;
   cluster: string;
   trackingId: string;
+  recordVersion?: number;
 }
 
 const hoverClass = `hover:bg-[#ddd]`;

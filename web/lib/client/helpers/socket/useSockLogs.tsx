@@ -7,9 +7,15 @@ interface IuseLog {
   account: string;
   cluster: string;
   trackingId: string;
+  recordVersion?: number;
 }
 
-export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
+export const useSocketLogs = ({
+  account,
+  cluster,
+  trackingId,
+  recordVersion,
+}: IuseLog) => {
   const [logs, setLogs] = useState<ISocketResp<ILog>[]>([]);
   const { responses, infos, subscribed, errors } = useSubscribe(
     {
@@ -17,9 +23,12 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
       data: {
         id: `${account}.${cluster}.${trackingId}`,
         spec: {
-          account,
-          cluster,
-          trackingId,
+          ...{
+            account,
+            cluster,
+            trackingId,
+            recordVersion,
+          },
         },
       },
     },

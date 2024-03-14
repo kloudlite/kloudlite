@@ -243,6 +243,7 @@ const LogsAndMetrics = () => {
               account: parseName(account),
               cluster: project.clusterName || '',
               trackingId: app.id,
+              recordVersion: app.recordVersion,
             },
           }}
         />
