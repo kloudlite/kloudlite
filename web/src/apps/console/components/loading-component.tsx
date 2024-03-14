@@ -82,7 +82,9 @@ const GetSkeleton = ({
 };
 
 interface AwaitRespProps {
-  readonly error?: string;
+  readonly error?: {
+    readonly message: string;
+  };
   readonly redirect?: string;
   readonly cookie?: FlatMapType<string>[];
 }

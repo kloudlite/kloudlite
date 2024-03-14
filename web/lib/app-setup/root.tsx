@@ -233,21 +233,21 @@ const Root = ({
             __html: getClientEnv(env),
           }}
         />
-        <LiveReload port={443} />
-        <Tooltip.Provider>
-          <ProgressContainer>
-            <ReloadIndicator />
-            <NonIdleProgressBar />
-            {isBrowser() && <ToastContainer position="bottom-left" />}
-            {error ? (
-              <div>{JSON.stringify(error)}</div>
-            ) : (
-              <Wrapper>
+        {/* <LiveReload port={443} /> */}
+        <ToastContainer position="bottom-left" />
+        <ProgressContainer>
+          <ReloadIndicator />
+          <NonIdleProgressBar />
+          {error ? (
+            <div>{JSON.stringify(error)}</div>
+          ) : (
+            <Wrapper>
+              <Tooltip.Provider>
                 <Outlet />
-              </Wrapper>
-            )}
-          </ProgressContainer>
-        </Tooltip.Provider>
+              </Tooltip.Provider>
+            </Wrapper>
+          )}
+        </ProgressContainer>
         <Scripts />
       </body>
     </html>

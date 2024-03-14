@@ -7,10 +7,8 @@ import {
   File,
   TreeStructure,
   Check,
-  ChevronUpDown,
   ChevronDown,
 } from '~/console/components/icons';
-import { redirect } from '@remix-run/node';
 import {
   Link,
   Outlet,
@@ -18,35 +16,26 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import HandleScope from '~/console/page-components/new-scope';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import {
-  ExtractNodeType,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountClientSide,
   ensureAccountSet,
-  ensureClusterClientSide,
 } from '~/console/server/utils/auth-utils';
-import logger from '~/root/lib/client/helpers/log';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { handleError } from '~/root/lib/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { BreadcrumSlash, tabIconSize } from '~/console/utils/commons';
-import {
-  IEnvironment,
-  IEnvironments,
-} from '~/console/server/gql/queries/environment-queries';
+import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { cn } from '~/components/utils';
 import { Button } from '~/components/atoms/button';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { handleError } from '~/root/lib/utils/common';
 import { IProjectContext } from '../_layout';
 
 export interface IEnvironmentContext extends IProjectContext {
@@ -221,7 +210,7 @@ const CurrentBreadcrum = ({ environment }: { environment: IEnvironment }) => {
                 No environments found
               </div>
               <div className="bodyMd text-text-soft">
-                Your search for "{search}" did not match and environments.
+                Your search for {`"${search}"`} did not match and environments.
               </div>
             </div>
           )}
@@ -264,15 +253,14 @@ export const loader = async (ctx: IRemixCtx) => {
     );
 
     if (errors) {
-      logger.error(errors);
-      throw errors[0];
+      return handleError(errors[0]);
     }
 
     return {
       environment: data || {},
     };
   } catch (err) {
-    return redirect(`../environments`);
+    return handleError(err);
   }
 };
 

@@ -7,8 +7,8 @@ import {
   useRef,
   useState,
 } from 'react';
-import * as wsock from 'websocket';
 import { ChildrenProps } from '~/components/types';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 import logger from '~/root/lib/client/helpers/log';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { socketUrl } from '~/root/lib/configs/base-url.cjs';
@@ -152,7 +152,7 @@ export const useSubscribe = <T extends IData>(
 };
 
 export const SockProvider = ({ children }: ChildrenProps) => {
-  const sockPromise = useRef<Promise<wsock.w3cwebsocket> | null>(null);
+  const sockPromise = useRef<Promise<ReconnectingWebSocket> | null>(null);
 
   const [responses, setResponses] = useState<IResponses>({});
   const [errors, setErrors] = useState<IResponses>({});
@@ -200,7 +200,7 @@ export const SockProvider = ({ children }: ChildrenProps) => {
     });
   }, []);
 
-  const onMessage = useCallback((msg: wsock.IMessageEvent) => {
+  const onMessage = useCallback((msg: any) => {
     try {
       const m: ISocketResp = JSON.parse(msg.data as string);
 
@@ -223,52 +223,39 @@ export const SockProvider = ({ children }: ChildrenProps) => {
     }
   }, []);
 
+  const getSocket = () => {
+    return new Promise<ReconnectingWebSocket>((res, rej) => {
+      try {
+        // eslint-disable-next-line new-cap
+        const w = new ReconnectingWebSocket(`${socketUrl}/ws`, '', {});
+
+        w.onmessage = onMessage;
+
+        w.onopen = () => {
+          res(w);
+        };
+
+        w.onerror = (e) => {
+          rej(e);
+        };
+
+        w.onclose = () => {
+          rej();
+        };
+      } catch (e) {
+        rej(e);
+      }
+    });
+  };
+
   useDebounce(
     () => {
       if (typeof window !== 'undefined') {
-        const connnect = (recon = () => {}) => {
-          try {
-            sockPromise.current = new Promise<wsock.w3cwebsocket>(
-              (res, rej) => {
-                try {
-                  // eslint-disable-next-line new-cap
-                  const w = new wsock.w3cwebsocket(
-                    `${socketUrl}/ws`,
-                    '',
-                    '',
-                    {}
-                  );
-
-                  w.onmessage = onMessage;
-
-                  w.onopen = () => {
-                    res(w);
-                  };
-
-                  w.onerror = (e) => {
-                    console.error(e);
-                    recon();
-                  };
-
-                  w.onclose = () => {
-                    recon();
-                  };
-                } catch (e) {
-                  rej(e);
-                }
-              }
-            );
-          } catch (e) {
-            logger.error(e);
-          }
-        };
-
-        connnect(() => {
-          setTimeout(() => {
-            console.log('reconnecting');
-            connnect();
-          }, 1000);
-        });
+        try {
+          sockPromise.current = getSocket();
+        } catch (e) {
+          logger.error(e);
+        }
       }
     },
     1000,

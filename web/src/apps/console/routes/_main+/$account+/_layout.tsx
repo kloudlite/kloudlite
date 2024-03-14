@@ -22,7 +22,6 @@ import {
 } from '@remix-run/react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Popup from '~/components/molecule/popup';
-import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
@@ -61,7 +60,7 @@ import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { IConsoleRootContext } from '../_layout/_layout';
 
-const ProfileIcon = ({ size = 16 }: { size?: number }) => {
+const _ProfileIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg
       width={size}
@@ -79,7 +78,7 @@ const ProfileIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
-const AccountMenu = ({ account }: { account: IAccount }) => {
+const _AccountMenu = ({ account }: { account: IAccount }) => {
   const accounts = useDataFromMatches<IAccounts>('accounts', {});
   const { account: accountName } = useParams();
   const navigate = useNavigate();
@@ -504,7 +503,6 @@ export const loader = async (ctx: IRemixCtx) => {
       devicesForUser,
     };
   } catch (err) {
-    logger.error(err);
     const k = redirect('/teams') as any;
     return k as {
       account: typeof acccountData;

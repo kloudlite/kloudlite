@@ -49,7 +49,7 @@ const logger = {
 
     if (err) {
       if (!isDev) {
-        console.trace(`\n\n${args}\n\n`);
+        console.trace(`\n\n${err}\n\n`);
         return;
       }
       console.error(`\n\n${err}\n\n`);

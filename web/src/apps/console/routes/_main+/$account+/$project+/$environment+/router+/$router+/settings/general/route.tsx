@@ -10,13 +10,11 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseName } from '~/console/server/r-utils/common';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import { IRouterConfig } from 'websocket';
 import Wrapper from '~/console/components/wrapper';
 import DeleteDialog from '~/console/components/delete-dialog';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { IProjectContext } from '../../../../../_layout';
 import { IRouterContext } from '../../_layout';
 
 // export const updateProject = async ({
