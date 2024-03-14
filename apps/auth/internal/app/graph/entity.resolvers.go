@@ -6,16 +6,20 @@ package graph
 
 import (
 	"context"
+
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/generated"
 	"github.com/kloudlite/api/apps/auth/internal/app/graph/model"
-	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/repos"
 )
 
 // FindUserByID is the resolver for the findUserByID field.
 func (r *entityResolver) FindUserByID(ctx context.Context, id repos.ID) (*model.User, error) {
-	userEntity, err := r.d.GetUserById(ctx, id)
-	return userModelFromEntity(userEntity), errors.NewE(err)
+	u, err := r.d.GetUserById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return userModelFromEntity(u), nil
 }
 
 // Entity returns generated.EntityResolver implementation.

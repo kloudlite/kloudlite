@@ -1,12 +1,5 @@
 ---
 global:
-  namespace: "sample-nxtcoder17"
-  accountName: kloudlite-dev
-  workspaceName: sample
-
-  clusterName: "nova-303453"
-  clusterNamespace: "kl-account-nova"
-
   endTime:   '1707205625'
   startTime: '1707119214'
 ---
@@ -27,7 +20,7 @@ query:
 label: Get Memory Metrics for App
 query:
   method: GET
-  url: 'http://console-api.kloudlite.svc.cluster.local:9100/observability/metrics/memory?cluster_name=ab-cluster-3&tracking_id=app-3ez2fpr-3oc8gqjib-ii5-pbat6d&step=5m'
+  url: 'http://console-api.kloudlite.svc.cluster.local:9100/observability/metrics/memory?cluster_name={{.clusterName}}&tracking_id=app-hg2hmvokiiuxih9jsq-ibqquumbl&step=5m'
 
 ---
 
