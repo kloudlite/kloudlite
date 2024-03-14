@@ -32,26 +32,16 @@ func (g *grpcServer) CreateReadOnlyCredential(ctx context.Context, in *container
 		UserEmail:   "",
 	}
 
-	creds, err := g.d.CreateCredential(regctx, entities.Credential{
+	creds, err := g.d.CreateAdminCredential(regctx, entities.Credential{
 		AccountName: in.AccountName,
 		Access:      entities.RepoAccessReadOnly,
 		Expiration:  entities.Expiration{Unit: entities.ExpirationUnitYear, Value: 17},
-		Name:        in.CredentialName,
-		UserName:    in.RegistryUsername,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	token, err := g.d.GetToken(regctx, in.RegistryUsername)
-	if err != nil {
-		return nil, err
-	}
 
 	dockerConfigJson, err := json.Marshal(map[string]any{
 		"auths": map[string]any{
 			g.ev.RegistryHost: map[string]any{
-				"auth": base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", creds.UserName, token))),
+				"auth": base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", creds.UserName, creds.TokenKey))),
 			},
 		},
 	})

@@ -229,3 +229,17 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 
 	return d.cacheClient.Drop(ctx, userName+"::"+ctx.AccountName)
 }
+
+func (d *Impl) CreateAdminCredential(ctx RegistryContext, credential entities.Credential) (*entities.Credential, error) {
+	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", credential.Expiration.Value, credential.Expiration.Unit))
+	if err != nil {
+		return nil, errors.NewE(err)
+	}
+	token, err := admin.GenerateToken(KL_ADMIN, credential.AccountName, string(credential.Access), i, d.envs.RegistrySecretKey+credential.AccountName)
+
+	return &entities.Credential{
+		UserName: KL_ADMIN,
+		TokenKey: token,
+	}, nil
+
+}
