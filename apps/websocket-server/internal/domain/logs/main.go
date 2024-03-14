@@ -19,10 +19,11 @@ const (
 )
 
 type MsgData struct {
-	Account    string  `json:"account"`
-	Cluster    string  `json:"cluster"`
-	TrackingId string  `json:"trackingId"`
-	Since      *string `json:"since,omitempty"`
+	Account       string  `json:"account"`
+	Cluster       string  `json:"cluster"`
+	TrackingId    string  `json:"trackingId"`
+	Since         *string `json:"since,omitempty"`
+	RecordVersion int     `json:"recordVersion"`
 }
 
 type Message struct {
@@ -100,5 +101,5 @@ func ParseSince(since *string) (*time.Time, error) {
 }
 
 func LogSubsId(md MsgData, logStreamName string) string {
-	return fmt.Sprintf("%s.%s.%s.%s.>", logStreamName, md.Account, md.Cluster, md.TrackingId)
+	return fmt.Sprintf("%s.%s.%s.%s.%d.>", logStreamName, md.Account, md.Cluster, md.TrackingId, md.RecordVersion)
 }
