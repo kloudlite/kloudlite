@@ -61,7 +61,6 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) (*entities
 
 // DeleteRepository implements Domain.
 func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
-
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
@@ -104,7 +103,6 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 }
 
 func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, digest string) error {
-
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{

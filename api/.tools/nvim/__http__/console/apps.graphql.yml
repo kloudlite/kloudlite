@@ -38,7 +38,7 @@ query: |+ #graphql
   }
 variables:
   projectName: "{{.projectName}}"
-  envName: "{{.envName}}"
+  envName: "{{.environmentName}}"
 ---
 
 label: Get App

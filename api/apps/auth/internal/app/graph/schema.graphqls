@@ -1,3 +1,6 @@
+directive @isLoggedIn on FIELD_DEFINITION
+directive @isLoggedInAndVerified on FIELD_DEFINITION
+
 scalar Date
 scalar Json
 scalar ProviderDetail
@@ -5,8 +8,8 @@ scalar URL
 scalar Any
 
 type RemoteLogin {
-    status: String!
-    authHeader: String
+  status: String!
+  authHeader: String
 }
 
 type OAuthProviderStatus {
@@ -15,7 +18,7 @@ type OAuthProviderStatus {
 }
 
 type Query {
-  auth_me: User # public-access
+  auth_me: User @isLoggedIn
   auth_findByEmail(email: String!): User # public-access # Deprecate
   oAuth_requestLogin(provider: String!, state: String): URL! # public-access
   auth_getRemoteLogin(loginId: String!, secret: String!): RemoteLogin # public-access
@@ -28,17 +31,21 @@ type Mutation {
 
   auth_login(email: String!, password: String!): Session # public-access
   auth_signup(name: String!, email: String!, password: String!): Session # public-access
-  auth_logout: Boolean! # user-access
-  auth_setMetadata(values: Json!): User! # user-access # Deprecate
-  auth_clearMetadata: User! # user-access # Deprecate
-  auth_verifyEmail(token: String!): Session! # public-access # TBD
-  auth_resetPassword(token: String!, password: String!): Boolean! # user-access
-  auth_requestResetPassword(email: String!): Boolean! # user-access
-  auth_changeEmail(email: String!): Boolean! # user-access #Done
-  auth_resendVerificationEmail: Boolean! # user-access #Done
-  auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! # user-access #Done
+
   oAuth_login(provider: String!, code: String!, state: String): Session! # public-access
   oAuth_addLogin(provider: String!, state: String!, code: String!): Boolean! # public-access
+
+  auth_logout: Boolean! @isLoggedIn
+
+  auth_setMetadata(values: Json!): User! @isLoggedInAndVerified
+  auth_clearMetadata: User! @isLoggedInAndVerified
+
+  auth_verifyEmail(token: String!): Session!
+  auth_resetPassword(token: String!, password: String!): Boolean!
+  auth_requestResetPassword(email: String!): Boolean!
+  auth_changeEmail(email: String!): Boolean! @isLoggedInAndVerified
+  auth_resendVerificationEmail: Boolean! @isLoggedIn
+  auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! @isLoggedInAndVerified
 }
 
 type Session {
