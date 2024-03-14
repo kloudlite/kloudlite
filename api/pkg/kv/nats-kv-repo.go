@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/api/pkg/nats"
-	"github.com/nats-io/nats.go/jetstream"
 	"strings"
 	"time"
+
+	"github.com/kloudlite/api/pkg/nats"
+	"github.com/nats-io/nats.go/jetstream"
 
 	"github.com/kloudlite/api/pkg/errors"
 )
@@ -87,7 +88,7 @@ func (r *natsKVRepo[T]) SetWithExpiry(c context.Context, _key string, value T, d
 }
 
 func (r *natsKVRepo[T]) Drop(c context.Context, key string) error {
-	return r.keyValue.Delete(c, key)
+	return r.keyValue.Delete(c, sanitiseKey(key))
 }
 
 func (r *natsKVRepo[T]) ErrNoRecord(err error) bool {

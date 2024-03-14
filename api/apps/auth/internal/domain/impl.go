@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"strings"
 	"time"
 
@@ -42,16 +43,16 @@ func newAuthSession(userId repos.ID, userEmail string, userName string, userVeri
 }
 
 type domainI struct {
-	userRepo        repos.DbRepo[*User]
-	accessTokenRepo repos.DbRepo[*AccessToken]
+	userRepo        repos.DbRepo[*entities.User]
+	accessTokenRepo repos.DbRepo[*entities.AccessToken]
 	commsClient     comms.CommsClient
-	verifyTokenRepo kv.Repo[*VerifyToken]
-	resetTokenRepo  kv.Repo[*ResetPasswordToken]
+	verifyTokenRepo kv.Repo[*entities.VerifyToken]
+	resetTokenRepo  kv.Repo[*entities.ResetPasswordToken]
 	logger          logging.Logger
 	github          Github
 	gitlab          Gitlab
 	google          Google
-	remoteLoginRepo repos.DbRepo[*RemoteLogin]
+	remoteLoginRepo repos.DbRepo[*entities.RemoteLogin]
 }
 
 func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID, authHeader string) error {
@@ -60,7 +61,7 @@ func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID
 		return errors.NewEf(err, "could not find remote login")
 	}
 	remoteLogin.AuthHeader = authHeader
-	remoteLogin.LoginStatus = LoginStatusSucceeded
+	remoteLogin.LoginStatus = entities.LoginStatusSucceeded
 	_, err = d.remoteLoginRepo.UpdateById(ctx, loginId, remoteLogin)
 	if err != nil {
 		return errors.NewEf(err, "could not update remote login")
@@ -68,7 +69,7 @@ func (d *domainI) SetRemoteLoginAuthHeader(ctx context.Context, loginId repos.ID
 	return nil
 }
 
-func (d *domainI) GetRemoteLogin(ctx context.Context, loginId repos.ID, secret string) (*RemoteLogin, error) {
+func (d *domainI) GetRemoteLogin(ctx context.Context, loginId repos.ID, secret string) (*entities.RemoteLogin, error) {
 	id, err := d.remoteLoginRepo.FindById(ctx, loginId)
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find remote login")
@@ -81,8 +82,8 @@ func (d *domainI) GetRemoteLogin(ctx context.Context, loginId repos.ID, secret s
 
 func (d *domainI) CreateRemoteLogin(ctx context.Context, secret string) (repos.ID, error) {
 	create, err := d.remoteLoginRepo.Create(
-		ctx, &RemoteLogin{
-			LoginStatus: LoginStatusPending,
+		ctx, &entities.RemoteLogin{
+			LoginStatus: entities.LoginStatusPending,
 			Secret:      secret,
 		},
 	)
@@ -92,9 +93,9 @@ func (d *domainI) CreateRemoteLogin(ctx context.Context, secret string) (repos.I
 	return create.Id, nil
 }
 
-func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*User, error) {
+func (d *domainI) EnsureUserByEmail(ctx context.Context, email string) (*entities.User, error) {
 	u, err := d.userRepo.Create(
-		ctx, &User{
+		ctx, &entities.User{
 			Email: email,
 		},
 	)
@@ -144,11 +145,11 @@ func (d *domainI) OauthAddLogin(ctx context.Context, userId repos.ID, provider s
 
 }
 
-func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*User, error) {
+func (d *domainI) GetUserById(ctx context.Context, id repos.ID) (*entities.User, error) {
 	return d.userRepo.FindById(ctx, id)
 }
 
-func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*entities.User, error) {
 	return d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 }
 
@@ -190,7 +191,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 	salt := generateId("salt")
 	sum := md5.Sum([]byte(password + salt))
 	user, err := d.userRepo.Create(
-		ctx, &User{
+		ctx, &entities.User{
 			Name:         name,
 			Email:        email,
 			Password:     hex.EncodeToString(sum[:]),
@@ -223,7 +224,7 @@ func (d *domainI) InviteUser(ctx context.Context, email string, name string) (re
 	panic("implement me")
 }
 
-func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata UserMetadata) (*User, error) {
+func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata entities.UserMetadata) (*entities.User, error) {
 	user, err := d.userRepo.FindById(ctx, userId)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -236,7 +237,7 @@ func (d *domainI) SetUserMetadata(ctx context.Context, userId repos.ID, metadata
 	return updated, nil
 }
 
-func (d *domainI) ClearUserMetadata(ctx context.Context, userId repos.ID) (*User, error) {
+func (d *domainI) ClearUserMetadata(ctx context.Context, userId repos.ID) (*entities.User, error) {
 	user, err := d.userRepo.FindById(ctx, userId)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -315,7 +316,7 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 	err = d.resetTokenRepo.SetWithExpiry(
 		ctx,
 		resetToken,
-		&ResetPasswordToken{Token: resetToken, UserId: one.Id},
+		&entities.ResetPasswordToken{Token: resetToken, UserId: one.Id},
 		time.Second*24*60*60,
 	)
 	if err != nil {
@@ -394,7 +395,7 @@ func (d *domainI) OauthRequestLogin(ctx context.Context, provider string, state 
 	return "", errors.Newf("Unsupported provider (%v)", provider)
 }
 
-func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, u *User, avatarUrl *string) (*User, error) {
+func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, u *entities.User, avatarUrl *string) (*entities.User, error) {
 	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": u.Email})
 	if err != nil {
 		return nil, errors.NewEf(err, "could not find user")
@@ -416,7 +417,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		}
 	}
 	t, err := d.accessTokenRepo.Upsert(
-		ctx, repos.Filter{"email": user.Email, "provider": provider}, &AccessToken{
+		ctx, repos.Filter{"email": user.Email, "provider": provider}, &entities.AccessToken{
 			UserId:   user.Id,
 			Email:    user.Email,
 			Provider: provider,
@@ -428,7 +429,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 		return nil, errors.NewEf(err, "could not store access token in repo")
 	}
 
-	p := &ProviderDetail{TokenId: t.Id, Avatar: avatarUrl}
+	p := &entities.ProviderDetail{TokenId: t.Id, Avatar: avatarUrl}
 
 	if provider == constants.ProviderGithub {
 		user.ProviderGithub = p
@@ -450,7 +451,7 @@ func (d *domainI) addOAuthLogin(ctx context.Context, provider string, token *oau
 	return user, nil
 }
 
-func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *User, avatarUrl *string) (*common.AuthSession, error) {
+func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *oauth2.Token, newUser *entities.User, avatarUrl *string) (*common.AuthSession, error) {
 	user, err := d.addOAuthLogin(ctx, provider, token, newUser, avatarUrl)
 	if err != nil {
 		return nil, errors.NewE(err)
@@ -490,7 +491,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return u.GetLogin()
 			}()
 
-			user := &User{
+			user := &entities.User{
 				Name:   name,
 				Avatar: u.AvatarURL,
 				Email:  email,
@@ -505,7 +506,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return nil, errors.NewEf(err, "could not login to gitlab")
 			}
 
-			user := &User{
+			user := &entities.User{
 				Name:   u.Name,
 				Avatar: &u.AvatarURL,
 				Email:  u.Email,
@@ -521,7 +522,7 @@ func (d *domainI) OauthLogin(ctx context.Context, provider string, state string,
 				return nil, errors.NewEf(err, "could not login to google")
 			}
 
-			user := &User{
+			user := &entities.User{
 				Name:   u.Name,
 				Avatar: u.AvatarURL,
 				Email:  u.Email,
@@ -544,7 +545,7 @@ func (gl *domainI) Hash(t *oauth2.Token) (string, error) {
 	return b64.StdEncoding.EncodeToString(b), nil
 }
 
-func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*AccessToken, error) {
+func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId string, tokenId string) (*entities.AccessToken, error) {
 	if tokenId == "" && (provider == "" || userId == "") {
 		return nil, errors.Newf("bad params: [tokenId, (provider, userId)]")
 	}
@@ -601,7 +602,7 @@ func (d *domainI) GetAccessToken(ctx context.Context, provider string, userId st
 	return accToken, nil
 }
 
-func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *User) error {
+func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user *entities.User) error {
 	_, err := d.commsClient.SendPasswordResetEmail(
 		ctx, &comms.PasswordResetEmailInput{
 			Email:      user.Email,
@@ -615,7 +616,7 @@ func (d *domainI) sendResetPasswordEmail(ctx context.Context, token string, user
 	return nil
 }
 
-func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user *User) error {
+func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user *entities.User) error {
 	_, err := d.commsClient.SendVerificationEmail(
 		ctx, &comms.VerificationEmailInput{
 			Email:             user.Email,
@@ -629,10 +630,10 @@ func (d *domainI) sendVerificationEmail(ctx context.Context, token string, user 
 	return nil
 }
 
-func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *User) error {
+func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *entities.User) error {
 	verificationToken := generateId("invite")
 	err := d.verifyTokenRepo.SetWithExpiry(
-		ctx, verificationToken, &VerifyToken{
+		ctx, verificationToken, &entities.VerifyToken{
 			Token:  verificationToken,
 			UserId: user.Id,
 		}, time.Second*24*60*60,
@@ -648,11 +649,11 @@ func (d *domainI) generateAndSendVerificationToken(ctx context.Context, user *Us
 }
 
 func fxDomain(
-	userRepo repos.DbRepo[*User],
-	accessTokenRepo repos.DbRepo[*AccessToken],
-	remoteLoginRepo repos.DbRepo[*RemoteLogin],
-	verifyTokenRepo kv.Repo[*VerifyToken],
-	resetTokenRepo kv.Repo[*ResetPasswordToken],
+	userRepo repos.DbRepo[*entities.User],
+	accessTokenRepo repos.DbRepo[*entities.AccessToken],
+	remoteLoginRepo repos.DbRepo[*entities.RemoteLogin],
+	verifyTokenRepo kv.Repo[*entities.VerifyToken],
+	resetTokenRepo kv.Repo[*entities.ResetPasswordToken],
 	github Github,
 	gitlab Gitlab,
 	google Google,
