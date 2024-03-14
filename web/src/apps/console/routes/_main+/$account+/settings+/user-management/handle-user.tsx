@@ -21,9 +21,9 @@ type IDialog = IDialogBase<IMemberType>;
 
 const validRoles = (role: string): Role => {
   switch (role) {
-    case 'owner':
+    case 'account_owner':
       return 'account_owner' as Role;
-    case 'member':
+    case 'account_member':
       return 'account_member' as Role;
     default:
       throw new Error(`invalid role ${role}`);
@@ -40,11 +40,11 @@ const Root = (props: IDialog) => {
     initialValues: isUpdate
       ? {
           email: props?.data.email || '',
-          role: mapRoleToDisplayName(props?.data.role) || 'member',
+          role: props?.data.role || 'account_member',
         }
       : {
           email: '',
-          role: 'member',
+          role: 'account_member',
         },
     validationSchema: Yup.object({
       email: Yup.string().required().email(),
@@ -80,7 +80,7 @@ const Root = (props: IDialog) => {
     },
   });
 
-  const roles: string[] = ['owner', 'member'];
+  const roles: string[] = ['account_owner', 'account_member'];
 
   return (
     <Popup.Form onSubmit={handleSubmit}>
@@ -109,7 +109,7 @@ const Root = (props: IDialog) => {
             {roles.map((role) => {
               return (
                 <SelectPrimitive.Option key={role} value={role}>
-                  {role}
+                  {mapRoleToDisplayName(role)}
                 </SelectPrimitive.Option>
               );
             })}
