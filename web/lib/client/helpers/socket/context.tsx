@@ -62,8 +62,8 @@ export const useSubscribe = <T extends IData>(
   const {
     sendMsg,
     responses,
-    infos: i,
-    errors: e,
+    infos: mInfos,
+    errors: mErrors,
     clear,
   } = useContext(Context);
 
@@ -85,9 +85,10 @@ export const useSubscribe = <T extends IData>(
           const m = msg[k];
 
           tr.push(...(responses[m.for]?.[m.data.id || 'default'] || []));
-          terr.push(...(e[m.for]?.[m.data.id || 'default'] || []));
-          ti.push(...(i[m.for]?.[m.data.id || 'default'] || []));
+          terr.push(...(mErrors[m.for]?.[m.data.id || 'default'] || []));
+          ti.push(...(mInfos[m.for]?.[m.data.id || 'default'] || []));
         }
+
         setResp(tr);
         setErrors(terr);
         setInfos(ti);
@@ -97,16 +98,19 @@ export const useSubscribe = <T extends IData>(
         }
         return;
       }
+      const tempResp = responses[msg.for]?.[msg.data.id || 'default'] || [];
+      setResp(tempResp);
 
-      setResp(responses[msg.for]?.[msg.data.id || 'default'] || []);
-      setErrors(e[msg.for]?.[msg.data.id || 'default'] || []);
-      setInfos(i[msg.for]?.[msg.data.id || 'default'] || []);
+      setErrors(mErrors[msg.for]?.[msg.data.id || 'default'] || []);
 
-      if (resp.length || i[msg.for]?.[msg.data.id || 'default']?.length) {
+      const tempInfo = mInfos[msg.for]?.[msg.data.id || 'default'] || [];
+      setInfos(tempInfo);
+
+      if (tempResp.length || tempInfo.length) {
         setSubscribed(true);
       }
     })();
-  }, [responses]);
+  }, [responses, mInfos, mErrors]);
 
   useDebounce(
     () => {
@@ -222,35 +226,49 @@ export const SockProvider = ({ children }: ChildrenProps) => {
   useDebounce(
     () => {
       if (typeof window !== 'undefined') {
-        try {
-          sockPromise.current = new Promise<wsock.w3cwebsocket>((res, rej) => {
-            let rejected = false;
-            try {
-              // eslint-disable-next-line new-cap
-              const w = new wsock.w3cwebsocket(`${socketUrl}/ws`, '', '', {});
+        const connnect = (recon = () => {}) => {
+          try {
+            sockPromise.current = new Promise<wsock.w3cwebsocket>(
+              (res, rej) => {
+                try {
+                  // eslint-disable-next-line new-cap
+                  const w = new wsock.w3cwebsocket(
+                    `${socketUrl}/ws`,
+                    '',
+                    '',
+                    {}
+                  );
 
-              w.onmessage = onMessage;
+                  w.onmessage = onMessage;
 
-              w.onopen = () => {
-                res(w);
-              };
+                  w.onopen = () => {
+                    res(w);
+                  };
 
-              w.onerror = (e) => {
-                console.error(e);
-                if (!rejected) {
-                  rejected = true;
+                  w.onerror = (e) => {
+                    console.error(e);
+                    recon();
+                  };
+
+                  w.onclose = () => {
+                    recon();
+                  };
+                } catch (e) {
                   rej(e);
                 }
-              };
+              }
+            );
+          } catch (e) {
+            logger.error(e);
+          }
+        };
 
-              w.onclose = () => {};
-            } catch (e) {
-              rej(e);
-            }
-          });
-        } catch (e) {
-          logger.error(e);
-        }
+        connnect(() => {
+          setTimeout(() => {
+            console.log('reconnecting');
+            connnect();
+          }, 1000);
+        });
       }
     },
     1000,

@@ -669,7 +669,7 @@ const LogComp = ({
     }
   }, [fullScreen]);
 
-  const { logs, subscribed, errors } = useSocketLogs(websocket);
+  const { logs, subscribed, errors, isLoading } = useSocketLogs(websocket);
 
   const [isClientSide, setIsClientSide] = useState(false);
 
@@ -744,10 +744,10 @@ const LogComp = ({
         </Pulsable>
       )}
 
-      {!subscribed && logs.length === 0 && <LoadingComp />}
+      {isLoading && <LoadingComp />}
 
       {errors.length ? (
-        <pre>{JSON.stringify(errors)}</pre>
+        <pre>{JSON.stringify(errors, null, 2)}</pre>
       ) : (
         logs.length > 0 && (
           <LogBlock

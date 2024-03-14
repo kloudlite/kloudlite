@@ -11,7 +11,7 @@ interface IuseLog {
 
 export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
   const [logs, setLogs] = useState<ISocketResp<ILog>[]>([]);
-  const { responses, subscribed, errors } = useSubscribe(
+  const { responses, infos, subscribed, errors } = useSubscribe(
     {
       for: 'logs',
       data: {
@@ -25,16 +25,6 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
     },
     []
   );
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (subscribed && isLoading) {
-      setIsLoading(false);
-    } else if (!subscribed && !isLoading) {
-      setIsLoading(true);
-    }
-  }, []);
 
   useEffect(() => {
     const sorted = responses.sort((a, b) => {
@@ -55,7 +45,7 @@ export const useSocketLogs = ({ account, cluster, trackingId }: IuseLog) => {
   return {
     logs,
     errors,
-    isLoading,
+    isLoading: !subscribed && (logs.length === 0 || infos.length === 0),
     subscribed,
   };
 };

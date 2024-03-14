@@ -20,6 +20,7 @@ const defaultApp: AppIn = {
       {
         image: '',
         name: 'container-1',
+        env: [],
       },
     ],
   },
