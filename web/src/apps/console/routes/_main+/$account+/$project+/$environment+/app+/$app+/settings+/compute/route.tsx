@@ -15,6 +15,7 @@ import useCustomSwr from '~/lib/client/hooks/use-custom-swr';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { registryHost } from '~/lib/configs/base-url.cjs';
+import { Checkbox } from '~/components/atoms/checkbox';
 import { plans } from '../../../../new-app/datas';
 
 const valueRender = ({
@@ -63,6 +64,8 @@ const SettingCompute = () => {
   const { values, errors, handleChange, submit, resetValues } = useForm({
     initialValues: {
       imageUrl: getContainer(0)?.image || '',
+      imagePullPolicy:
+        app.spec.containers[activeContIndex]?.imagePullPolicy || 'IfNotPresent',
       pullSecret: 'TODO',
       cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
       memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || 1,
@@ -131,7 +134,7 @@ const SettingCompute = () => {
                   ? `${values.repoName}:${values.repoImageTag}`
                   : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
-              imagePullPolicy: 'Always',
+              imagePullPolicy: val.imagePullPolicy,
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {
@@ -261,6 +264,15 @@ const SettingCompute = () => {
             }
             loading={digestLoading}
           />
+
+          <Checkbox
+            label="Image Pull Policy"
+            checked={values.imagePullPolicy === 'Always'}
+            onChange={(val) => {
+              const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
+              handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+            }}
+          />
         </div>
         <div className="flex flex-col">
           <div className="flex flex-row gap-lg items-center pb-3xl">
@@ -309,7 +321,7 @@ const SettingCompute = () => {
                   );
                 }}
               />
-              <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
+              <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default">
                 <div className="flex flex-row gap-lg items-center">
                   <div className="bodyMd-medium text-text-default">
                     Select CPU

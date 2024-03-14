@@ -15,6 +15,7 @@ import { registryHost } from '~/lib/configs/base-url.cjs';
 import { BottomNavigation } from '~/console/components/commons';
 import { useOutletContext } from '@remix-run/react';
 import { useLog } from '~/root/lib/client/hooks/use-log';
+import { Checkbox } from '~/components/atoms/checkbox';
 import { plans } from './datas';
 import { IProjectContext } from '../../_layout';
 
@@ -81,9 +82,17 @@ const AppCompute = () => {
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
       imageUrl: app.spec.containers[activeContIndex]?.image || '',
+      imagePullPolicy:
+        app.spec.containers[activeContIndex]?.imagePullPolicy || 'IfNotPresent',
       pullSecret: 'TODO',
       cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
       memPerCpu: app.metadata?.annotations?.[keyconstants.memPerCpu] || '1',
+      autoscaling: app.spec.hpa?.enabled || false,
+      minReplicas: app.spec.hpa?.minReplicas || 1,
+      maxReplicas: app.spec.hpa?.maxReplicas || 3,
+      cpuThreshold: app.spec.hpa?.thresholdCpu || 75,
+      memoryThreshold: app.spec.hpa?.thresholdMemory || 75,
+      replicas: app.spec.replicas || 1,
 
       cpu: parseValue(
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
@@ -159,7 +168,7 @@ const AppCompute = () => {
                   ? `${values.repoName}:${values.repoImageTag}`
                   : `${registryHost}/${values.repoAccountName}/${values.repoName}:${values.repoImageTag}`,
               name: 'container-0',
-              imagePullPolicy: 'Always',
+              imagePullPolicy: val.imagePullPolicy,
               resourceCpu:
                 val.selectionMode === 'quick'
                   ? {
@@ -184,6 +193,14 @@ const AppCompute = () => {
                     },
             },
           ],
+          hpa: {
+            enabled: val.autoscaling,
+            maxReplicas: val.maxReplicas,
+            minReplicas: val.minReplicas,
+            thresholdCpu: val.cpuThreshold,
+            thresholdMemory: val.memoryThreshold,
+          },
+          replicas: val.replicas,
         },
       }));
     },
@@ -300,6 +317,16 @@ const AppCompute = () => {
               : ''
           }
           loading={digestLoading}
+        />
+
+        <Checkbox
+          label="Image Pull Policy"
+          checked={values.imagePullPolicy === 'Always'}
+          onChange={(val) => {
+            const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
+            console.log(imagePullPolicy);
+            handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+          }}
         />
       </div>
 

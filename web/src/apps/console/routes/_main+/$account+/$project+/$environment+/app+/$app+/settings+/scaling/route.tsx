@@ -109,7 +109,7 @@ const SettingCompute = () => {
           />
           {values.autoscaling ? (
             <div className="flex flex-col gap-3xl">
-              <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
+              <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default">
                 <div className="flex flex-row gap-lg items-center">
                   <div className="bodyMd-medium text-text-default">
                     Select min and max replicas
@@ -125,7 +125,6 @@ const SettingCompute = () => {
                   max={10}
                   value={[values.minReplicas, values.maxReplicas]}
                   onChange={(value) => {
-                    console.log(value);
                     if (Array.isArray(value)) {
                       handleChange('minReplicas')(dummyEvent(value[0]));
                       handleChange('maxReplicas')(dummyEvent(value[1]));
@@ -133,47 +132,49 @@ const SettingCompute = () => {
                   }}
                 />
               </div>
-              <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
-                <div className="flex flex-row gap-lg items-center">
-                  <div className="bodyMd-medium text-text-default">
-                    Select CPU
+              <div className="flex flex-row justify-between gap-3xl">
+                <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default w-full">
+                  <div className="flex flex-row gap-lg items-center">
+                    <div className="bodyMd-medium text-text-default">
+                      Select CPU
+                    </div>
+                    <code className="bodyMd text-text-soft flex-1 text-end">
+                      {values.cpuThreshold || 75}% CPU
+                    </code>
                   </div>
-                  <code className="bodyMd text-text-soft flex-1 text-end">
-                    {values.cpuThreshold || 75}% CPU
-                  </code>
+                  <Slider
+                    step={1}
+                    min={50}
+                    max={95}
+                    value={values.cpuThreshold}
+                    onChange={(value) => {
+                      handleChange('cpuThreshold')(dummyEvent(value));
+                    }}
+                  />
                 </div>
-                <Slider
-                  step={1}
-                  min={50}
-                  max={95}
-                  value={values.cpuThreshold}
-                  onChange={(value) => {
-                    handleChange('cpuThreshold')(dummyEvent(value));
-                  }}
-                />
-              </div>
-              <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
-                <div className="flex flex-row gap-lg items-center">
-                  <div className="bodyMd-medium text-text-default">
-                    Select Memory
+                <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default w-full">
+                  <div className="flex flex-row gap-lg items-center">
+                    <div className="bodyMd-medium text-text-default">
+                      Select Memory
+                    </div>
+                    <code className="bodyMd text-text-soft flex-1 text-end">
+                      {values.memoryThreshold || 75}% Memory
+                    </code>
                   </div>
-                  <code className="bodyMd text-text-soft flex-1 text-end">
-                    {values.memoryThreshold || 75}% Memory
-                  </code>
+                  <Slider
+                    step={1}
+                    min={50}
+                    max={95}
+                    value={values.memoryThreshold}
+                    onChange={(value) => {
+                      handleChange('memoryThreshold')(dummyEvent(value));
+                    }}
+                  />
                 </div>
-                <Slider
-                  step={1}
-                  min={50}
-                  max={95}
-                  value={values.memoryThreshold}
-                  onChange={(value) => {
-                    handleChange('memoryThreshold')(dummyEvent(value));
-                  }}
-                />
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
+            <div className="flex flex-col gap-md p-2xl rounded border border-border-default bg-surface-basic-default">
               <div className="flex flex-row gap-lg items-center">
                 <div className="bodyMd-medium text-text-default">
                   Select replicas

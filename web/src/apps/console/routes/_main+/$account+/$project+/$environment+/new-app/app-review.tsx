@@ -51,7 +51,6 @@ const AppReview = () => {
 
   useEffect(() => {
     const res = validateType(app, 'AppIn');
-    // console.log('res', res);
     setErrors(res);
   }, []);
 

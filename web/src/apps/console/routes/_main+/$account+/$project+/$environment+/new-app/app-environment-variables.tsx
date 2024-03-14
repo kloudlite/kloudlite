@@ -230,7 +230,7 @@ export const EnvironmentVariables = () => {
     submit,
     resetValues: resetAppValue,
   } = useForm({
-    initialValues: getContainer().env || [],
+    initialValues: getContainer().env,
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
       setContainer((c) => ({
@@ -252,15 +252,16 @@ export const EnvironmentVariables = () => {
   }, [hasChanges]);
 
   const addEntry = (val: IEnvVariable) => {
+    const tempVal = val || [];
     setValues((v = []) => {
       const data = {
-        key: val.key,
-        type: val.type,
-        refName: val.refName || '',
-        refKey: val.refKey || '',
-        value: val.value || '',
+        key: tempVal.key,
+        type: tempVal.type,
+        refName: tempVal.refName || '',
+        refKey: tempVal.refKey || '',
+        value: tempVal.value || '',
       };
-      return [...v, data];
+      return [...(v || []), data];
     });
   };
 
@@ -312,8 +313,6 @@ export const EnvironmentVariables = () => {
         }),
     }),
     onSubmit: () => {
-      console.log(eValues);
-
       if (eValues.textInputValue) {
         const ev: IEnvVariable = {
           key: eValues.key,
