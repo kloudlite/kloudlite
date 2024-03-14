@@ -13,9 +13,6 @@ tasks:
       - go run main.go --dev
 
   gql:
-    sources:
-      - graph/schema.graphqls
-      - gqlgen.yml
     dir: internal/app
     cmds:
       - go run github.com/99designs/gqlgen generate

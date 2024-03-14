@@ -1,4 +1,4 @@
-package domain
+package entities
 
 import (
 	"time"
@@ -10,10 +10,10 @@ import (
 type InvitationStatus string
 
 const (
-	InvitationAccepted = InvitationStatus("accepted")
-	InvitationRejected = InvitationStatus("rejected")
-	InvitationNone     = InvitationStatus("none")
-	InvitationSent     = InvitationStatus("sent")
+	InvitationStatusAccepted InvitationStatus = "accepted"
+	InvitationStatusRejected InvitationStatus = "rejected"
+	InvitationStatusNone     InvitationStatus = "none"
+	InvitationStatusSend     InvitationStatus = "sent"
 )
 
 type UserMetadata map[string]any
@@ -32,19 +32,19 @@ type Session struct {
 }
 
 type User struct {
-	repos.BaseEntity `bson:",inline"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
 	Name             string           `json:"name"`
 	Avatar           *string          `json:"avatar"`
-	ProviderGithub   *ProviderDetail  `json:"provider_github" bson:"provider_github"`
-	ProviderGitlab   *ProviderDetail  `json:"provider_gitlab" bson:"provider_gitlab"`
-	ProviderGoogle   *ProviderDetail  `json:"provider_google" bson:"provider_google"`
+	ProviderGithub   *ProviderDetail  `json:"provider_github"`
+	ProviderGitlab   *ProviderDetail  `json:"provider_gitlab"`
+	ProviderGoogle   *ProviderDetail  `json:"provider_google"`
 	Email            string           `json:"email"`
-	Password         string           `json:"password"`
+	Password         string           `json:"password" graphql:"ignore"`
 	InvitationStatus InvitationStatus `json:"invite"`
-	Verified         bool             `json:"verified"`
+	Verified         bool             `json:"verified" graphql:"noinput"`
 	Metadata         UserMetadata     `json:"metadata"`
 	Joined           time.Time        `json:"joined"`
-	PasswordSalt     string           `json:"password_salt"`
+	PasswordSalt     string           `json:"password_salt" graphql:"ignore"`
 }
 
 var UserIndexes = []repos.IndexField{
@@ -64,11 +64,11 @@ var UserIndexes = []repos.IndexField{
 
 type AccessToken struct {
 	repos.BaseEntity `bson:",inline"`
-	UserId           repos.ID       `json:"user_id" bson:"user_id"`
-	Email            string         `json:"email" bson:"email"`
-	Provider         string         `json:"provider" bson:"provider"`
-	Token            *oauth2.Token  `json:"token" bson:"token"`
-	Data             map[string]any `json:"data" bson:"data"`
+	UserId           repos.ID       `json:"user_id"`
+	Email            string         `json:"email"`
+	Provider         string         `json:"provider"`
+	Token            *oauth2.Token  `json:"token"`
+	Data             map[string]any `json:"data"`
 }
 
 var AccessTokenIndexes = []repos.IndexField{
