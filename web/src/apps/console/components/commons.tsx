@@ -1,4 +1,4 @@
-import { CopySimple, Question } from '@jengaicons/react';
+import { CopySimple, Question, Check } from '@jengaicons/react';
 import { ReactNode, useState } from 'react';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { WorkspacesLogo } from '~/components/branding/workspace-logo';
@@ -82,25 +82,27 @@ export const CopyButton = ({
   title: ReactNode;
   value: string;
 }) => {
-  const [_, setCopyIcon] = useState(<CopySimple />);
+  // const [_, setCopyIcon] = useState(<CopySimple />);
+  const [copied, setCopied] = useState(false);
   const { copy } = useClipboard({
     onSuccess: () => {
       setTimeout(() => {
-        setCopyIcon(<CopySimple />);
-      }, 1000);
+        setCopied(false);
+      }, 4000);
     },
   });
 
   return (
     <div
       onClick={() => {
+        setCopied(true);
         copy(value);
       }}
       className="flex flex-row gap-md items-center select-none group cursor-pointer"
     >
       <span>{title}</span>
       <span className="invisible group-hover:visible">
-        <CopySimple size={10} />
+        {copied ? <Check size={12} /> : <CopySimple size={12} />}
       </span>
     </div>
   );
