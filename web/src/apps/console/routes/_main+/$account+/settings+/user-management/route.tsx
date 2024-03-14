@@ -5,10 +5,8 @@ import { Button } from '~/components/atoms/button';
 import Profile from '~/components/molecule/profile';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
-import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { DIALOG_DATA_NONE } from '~/console/utils/commons';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { NonNullableString } from '~/root/lib/types/common';
 import Pulsable from '~/console/components/pulsable';
@@ -22,7 +20,7 @@ import Tools from './tools';
 import UserAccessResources from './user-access-resource';
 
 interface ITeams {
-  setShowUserInvite: React.Dispatch<React.SetStateAction<IShowDialog>>;
+  setShowUserInvite: React.Dispatch<React.SetStateAction<boolean>>;
   searchText: string;
 }
 
@@ -78,7 +76,7 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
             content: 'Invite users',
             prefix: <Plus />,
             onClick: () => {
-              setShowUserInvite(DIALOG_DATA_NONE);
+              setShowUserInvite(true);
             },
           },
         }}
@@ -105,6 +103,7 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
                       email: i.user.email,
                     }))
               }
+              isPendingInvitation={false}
             />
           )}
         </Pulsable>
@@ -159,7 +158,7 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
             content: 'Invite users',
             prefix: <Plus />,
             onClick: () => {
-              setShowUserInvite(DIALOG_DATA_NONE);
+              setShowUserInvite(true);
             },
           },
         }}
@@ -178,6 +177,7 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
                       id: i.id || i.userEmail || '',
                     }))
             }
+            isPendingInvitation
           />
         </Pulsable>
       </Wrapper>
@@ -189,7 +189,7 @@ const SettingUserManagement = () => {
   const [active, setActive] = useState<
     'team' | 'invitations' | NonNullableString
   >('team');
-  const [showUserInvite, setShowUserInvite] = useState<IShowDialog>(null);
+  const [visible, setVisible] = useState(false);
   const { account } = useOutletContext<IAccountContext>();
 
   const [searchText, setSearchText] = useState('');
@@ -219,7 +219,7 @@ const SettingUserManagement = () => {
             <Button
               content="Invite user"
               variant="primary"
-              onClick={() => setShowUserInvite(DIALOG_DATA_NONE)}
+              onClick={() => setVisible(true)}
             />
           }
         />
@@ -272,18 +272,12 @@ const SettingUserManagement = () => {
           <Tools setSearchText={setSearchText} searchText={searchText} />
         </div>
         {active === 'team' ? (
-          <Teams
-            setShowUserInvite={setShowUserInvite}
-            searchText={searchText}
-          />
+          <Teams setShowUserInvite={setVisible} searchText={searchText} />
         ) : (
-          <Invitations
-            setShowUserInvite={setShowUserInvite}
-            searchText={searchText}
-          />
+          <Invitations setShowUserInvite={setVisible} searchText={searchText} />
         )}
       </div>
-      <HandleUser show={showUserInvite} setShow={setShowUserInvite} />
+      <HandleUser {...{ isUpdate: false, visible, setVisible }} />
     </div>
   );
 };
