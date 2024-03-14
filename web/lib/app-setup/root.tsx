@@ -32,6 +32,7 @@ import tailwindBase from '~/design-system/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
+import { isBrowser } from '../client/helpers/is-browser';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -198,7 +199,7 @@ const Root = ({
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
 
-          gtag('config', ${tagId});
+          gtag('config', '${tagId}');
               `,
           }}
         />
@@ -234,7 +235,7 @@ const Root = ({
           <ProgressContainer>
             <ReloadIndicator />
             <NonIdleProgressBar />
-            <ToastContainer position="bottom-left" />
+            {isBrowser() && <ToastContainer position="bottom-left" />}
             <Wrapper>
               <Outlet />
             </Wrapper>

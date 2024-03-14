@@ -28,6 +28,7 @@ import LogComp from '~/root/lib/client/components/logger';
 import LogAction from '~/console/page-components/log-action';
 import { useDataState } from '~/console/page-components/common-state';
 import { useState } from 'react';
+import { SyncStatusV2 } from '~/console/components/sync-status';
 
 type BaseType = ExtractNodeType<IClusters>;
 const RESOURCE_NAME = 'cluster';
@@ -227,7 +228,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               //   ),
               // },
               status: {
-                render: () => null,
+                render: () => <SyncStatusV2 item={i} />,
               },
               provider: { render: () => <ListItem data={provider} /> },
               updated: {

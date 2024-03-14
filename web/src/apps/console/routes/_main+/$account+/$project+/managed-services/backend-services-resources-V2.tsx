@@ -149,7 +149,7 @@ const ListView = ({ items = [], templates = [], onAction }: IResource) => {
             className: 'w-[180px]',
           },
           {
-            render: () => '',
+            render: () => 'Status',
             name: 'status',
             className: 'flex-1 min-w-[30px] flex items-center justify-center',
           },

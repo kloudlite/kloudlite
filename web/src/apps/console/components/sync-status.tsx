@@ -21,7 +21,19 @@ interface IStatusMetaV2 {
   recordVersion: number;
   markedForDeletion?: boolean;
   status?: {
-    checks?: any;
+    checks?: {
+      [key: string]: {
+        error: string;
+        generation: number;
+        message: string;
+        state:
+          | 'yet-to-be-reconciled'
+          | 'under-reconcilation'
+          | 'errored-during-reconcilation'
+          | 'finished-reconcilation';
+        status: boolean;
+      };
+    };
     isReady: boolean;
     lastReadyGeneration?: number;
     lastReconcileTime?: any;
@@ -151,25 +163,21 @@ const state = ({
   }
 };
 
-const parseOverallState = (s: IStatusMetaV2['status']): OverallStates => {
-  const checks: {
-    [key: string]: {
-      error: string;
-      generation: number;
-      message: string;
-      state:
-        | 'yet-to-be-reconciled'
-        | 'under-reconcilation'
-        | 'errored-during-reconcilation'
-        | 'finished-reconcilation';
-      status: boolean;
-    };
-  } = s?.checks;
+const parseOverallState = (item: IStatusMetaV2): OverallStates => {
+  const { status, markedForDeletion, syncStatus } = item;
+
+  const checks = status?.checks;
+  const checkList = status?.checkList;
+
+  if (markedForDeletion && syncStatus.action === 'DELETE') {
+    return 'deleting';
+  }
+
   if (!checks) {
     return 'idle';
   }
 
-  const mainStatus = s?.checkList?.reduce(
+  const mainStatus = checkList?.reduce(
     (acc, curr) => {
       const k = checks[curr.name];
       if (acc.progress === 'done') {
@@ -224,8 +232,6 @@ export const SyncStatusV2 = ({
   item: IStatusMetaV2;
   type?: IStatusViewType;
 }) => {
-  const { status } = item;
-
   const parseStage = (check: OverallStates) => {
     const iconSize = 12;
 
@@ -268,25 +274,17 @@ export const SyncStatusV2 = ({
     }
   };
 
-  const getProgressItems = (s: typeof status) => {
-    const checks: {
-      [key: string]: {
-        error: string;
-        generation: number;
-        message: string;
-        state:
-          | 'yet-to-be-reconciled'
-          | 'under-reconcilation'
-          | 'errored-during-reconcilation'
-          | 'finished-reconcilation';
-        status: boolean;
-      };
-    } = s?.checks;
+  const getProgressItems = (item: IStatusMetaV2) => {
+    const { status } = item;
+
+    const checks = status?.checks;
+    const checkList = status?.checkList;
+
     if (!checks) {
       return [];
     }
 
-    const items = status?.checkList?.reduce(
+    const items = checkList?.reduce(
       (acc, curr) => {
         const k = checks[curr.name];
         if (acc.progress === 'done') {
@@ -374,8 +372,8 @@ export const SyncStatusV2 = ({
     ],
   };
 
-  const k = parseOverallState(status);
-  const ic = getProgressItems(status);
+  const k = parseOverallState(item);
+  const ic = getProgressItems(item);
 
   return (
     <div>
@@ -415,5 +413,5 @@ export const SyncStatusV2 = ({
 };
 
 export const status = ({ item }: { item: IStatusMetaV2 }) => {
-  return parseOverallState(item.status);
+  return parseOverallState(item);
 };
