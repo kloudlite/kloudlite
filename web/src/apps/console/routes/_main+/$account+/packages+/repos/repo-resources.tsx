@@ -1,4 +1,4 @@
-import { Copy, Trash } from '@jengaicons/react';
+import { Copy, Trash, Check } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
@@ -58,12 +58,20 @@ const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
 
 const RepoUrlView = ({ name }: { name: string }) => {
   const { account } = useParams();
-  const { copy } = useClipboard({
-    onSuccess() {
-      toast.success('Registry url copied successfully.');
-    },
-  });
+  const { copy } = useClipboard({});
   const url = `${registryHost}/${account}/${name}`;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    copy(url);
+    setCopied(true);
+    toast.success('Registry url copied successfully.');
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+  };
+
   return (
     <ListBody
       data={
@@ -72,14 +80,22 @@ const RepoUrlView = ({ name }: { name: string }) => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            copy(url);
+            if (!copied) {
+              handleCopy();
+            }
           }}
           title={url}
         >
           <span className="truncate">{url}</span>
-          <span>
-            <Copy size={16} />
-          </span>
+          {copied ? (
+            <span>
+              <Check size={16} />
+            </span>
+          ) : (
+            <span>
+              <Copy size={16} />
+            </span>
+          )}
         </div>
       }
     />
