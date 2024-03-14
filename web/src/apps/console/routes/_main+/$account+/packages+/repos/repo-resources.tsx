@@ -80,7 +80,9 @@ const RepoUrlView = ({ name }: { name: string }) => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            handleCopy();
+            if (!copied) {
+              handleCopy();
+            }
           }}
           title={url}
         >

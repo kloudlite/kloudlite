@@ -88,7 +88,7 @@ export const CopyButton = ({
     onSuccess: () => {
       setTimeout(() => {
         setCopied(false);
-      }, 4000);
+      }, 1000);
     },
   });
 
