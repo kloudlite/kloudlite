@@ -167,7 +167,7 @@ func (d *domain) handleLogsMsg(ctx types.Context, logsSubs *logs.LogsSubsMap, ms
 				utils.WriteInfo(ctx, "[logs] subscription cancelled for ", msg.Id, types.ForLogs)
 			} else {
 				ctx.Mutex.Unlock()
-				utils.WriteError(ctx, fmt.Errorf("[logs] no subscription found for account: %s, cluster: %s, trackingId: %s",
+				utils.WriteWarn(ctx, fmt.Errorf("[logs] no subscription found for account: %s, cluster: %s, trackingId: %s",
 					msg.Spec.Account, msg.Spec.Cluster, msg.Spec.TrackingId), msg.Id, types.ForLogs)
 			}
 
