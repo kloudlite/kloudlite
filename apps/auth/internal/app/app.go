@@ -2,6 +2,10 @@ package app
 
 import (
 	"context"
+	"github.com/kloudlite/api/apps/auth/internal/entities"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/gofiber/fiber/v2"
 	"github.com/kloudlite/api/pkg/nats"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
@@ -23,19 +27,19 @@ type CommsClientConnection *grpc.ClientConn
 
 var Module = fx.Module(
 	"app",
-	repos.NewFxMongoRepo[*domain.User]("users", "usr", domain.UserIndexes),
-	repos.NewFxMongoRepo[*domain.AccessToken]("access_tokens", "tkn", domain.AccessTokenIndexes),
-	repos.NewFxMongoRepo[*domain.RemoteLogin]("remote_logins", "rlgn", domain.RemoteTokenIndexes),
+	repos.NewFxMongoRepo[*entities.User]("users", "usr", entities.UserIndexes),
+	repos.NewFxMongoRepo[*entities.AccessToken]("access_tokens", "tkn", entities.AccessTokenIndexes),
+	repos.NewFxMongoRepo[*entities.RemoteLogin]("remote_logins", "rlgn", entities.RemoteTokenIndexes),
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*domain.VerifyToken], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*entities.VerifyToken], error) {
 			cxt := context.TODO()
-			return kv.NewNatsKVRepo[*domain.VerifyToken](cxt, ev.VerifyTokenKVBucket, jc)
+			return kv.NewNatsKVRepo[*entities.VerifyToken](cxt, ev.VerifyTokenKVBucket, jc)
 		},
 	),
 	fx.Provide(
-		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*domain.ResetPasswordToken], error) {
+		func(ev *env.Env, jc *nats.JetstreamClient) (kv.Repo[*entities.ResetPasswordToken], error) {
 			cxt := context.TODO()
-			return kv.NewNatsKVRepo[*domain.ResetPasswordToken](cxt, ev.ResetPasswordTokenKVBucket, jc)
+			return kv.NewNatsKVRepo[*entities.ResetPasswordToken](cxt, ev.ResetPasswordTokenKVBucket, jc)
 		},
 	),
 
@@ -63,9 +67,33 @@ var Module = fx.Module(
 			ev *env.Env,
 			repo kv.Repo[*common.AuthSession],
 		) {
-			schema := generated.NewExecutableSchema(
-				generated.Config{Resolvers: graph.NewResolver(d, ev)},
-			)
+			gqlConfig := generated.Config{Resolvers: graph.NewResolver(d, ev)}
+			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj any, next graphql.Resolver) (res interface{}, err error) {
+				sess := httpServer.GetSession[*common.AuthSession](ctx)
+				if sess == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+
+				return next(context.WithValue(ctx, "user-session", sess))
+			}
+
+			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj any, next graphql.Resolver) (res interface{}, err error) {
+				sess := httpServer.GetSession[*common.AuthSession](ctx)
+				if sess == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+
+				if !sess.UserVerified {
+					return nil, &fiber.Error{
+						Code:    fiber.StatusForbidden,
+						Message: "user's email is not verified",
+					}
+				}
+
+				return next(context.WithValue(ctx, "user-session", sess))
+			}
+
+			schema := generated.NewExecutableSchema(gqlConfig)
 
 			server.SetupGraphqlServer(
 				schema,

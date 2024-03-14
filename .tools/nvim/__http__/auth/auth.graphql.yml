@@ -36,6 +36,7 @@ query: |
     auth_login(email: $email, password: $password) {
       id
       userId
+      userId
       userEmail
       loginMethod
       userVerified
@@ -245,11 +246,9 @@ variables:
   password: "{{.password}}"
 
 ---
+label: Auth Logout
 query: |+
-  query ListOAuthProviders {
-    auth_listOAuthProviders {
-      provider
-      enabled
-    }
+  mutation AuthLogout {
+    auth_logout
   }
 ---
