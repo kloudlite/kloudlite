@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/kloudlite/api/apps/auth/internal/entities"
 	"github.com/kloudlite/api/pkg/repos"
 
 	"github.com/kloudlite/api/apps/auth/internal/domain"
@@ -29,7 +30,7 @@ func (a *authGrpcServer) GetUser(ctx context.Context, in *auth.GetUserIn) (*auth
 	}, nil
 }
 
-func (a *authGrpcServer) FromAccToken(token domain.AccessToken) *auth.AccessTokenOut {
+func (a *authGrpcServer) FromAccToken(token entities.AccessToken) *auth.AccessTokenOut {
 	return &auth.AccessTokenOut{
 		Id:       string(token.Id),
 		UserId:   string(token.UserId),

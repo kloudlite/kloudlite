@@ -1,6 +1,7 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
   - graph/*.graphqls
+  - graph/struct-to-graphql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -56,6 +57,31 @@ models:
   ID:
     model:
       - github.com/kloudlite/api/pkg/repos.ID
+
+  # AuthSession:
+  #   model:
+  #     - github.com/kloudlite/api/common.AuthSession
+
+  # User:
+  #   model:
+  #     - github.com/kloudlite/api/apps/auth/internal/entities.User
+
+  Github__com___kloudlite___api___apps___auth___internal___entities__ProviderDetail:
+    model:
+      - github.com/kloudlite/api/apps/auth/internal/entities.ProviderDetail
+
+  Github__com___kloudlite___api___apps___auth___internal___entities__ProviderDetailIn:
+    model:
+      - github.com/kloudlite/api/apps/auth/internal/entities.ProviderDetail
+
+  Github__com___kloudlite___api___apps___auth___internal___entities__InvitationStatus:
+    model:
+      - github.com/kloudlite/api/apps/auth/internal/entities.InvitationStatus
+
+  Github__com___kloudlite___api___apps___auth___internal___entities__UserMetadata:
+    model:
+      - github.com/kloudlite/api/apps/auth/internal/entities.UserMetadata
+
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
