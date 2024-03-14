@@ -40,6 +40,7 @@ type Domain interface {
 	ListCredentials(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Credential], error)
 	CreateCredential(ctx RegistryContext, credential entities.Credential) (*entities.Credential, error)
 	DeleteCredential(ctx RegistryContext, userName string) error
+	CreateAdminCredential(ctx RegistryContext, credential entities.Credential) (*entities.Credential, error)
 
 	GetToken(ctx RegistryContext, username string) (string, error)
 	GetTokenKey(ctx context.Context, username string, accountname string) (string, error)
