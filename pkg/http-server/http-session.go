@@ -36,9 +36,9 @@ func NewSessionMiddleware(
 			var get any
 			get, err := repo.Get(ctx.Context(), key)
 			if err != nil {
-			  if !repo.ErrKeyNotFound(err) {
+				if !repo.ErrKeyNotFound(err) {
 					return errors.NewE(err)
-			  }
+				}
 			}
 
 			if get != nil {
@@ -79,6 +79,18 @@ func NewSessionMiddleware(
 							fmt.Println("[ERROR]", err)
 						}
 					}
+					ctx.Cookie(&fiber.Cookie{
+						Name:     cookieName,
+						Value:    "expired",
+						Path:     "/",
+						Domain:   fmt.Sprintf("%v", cookieDomain),
+						Expires:  time.Now().Add(-1 * time.Minute),
+						MaxAge:   0,
+						Secure:   true,
+						HTTPOnly: true,
+						// SameSite: http.SameSiteStrictMode,
+						SameSite: fiber.CookieSameSiteNoneMode,
+					})
 				},
 			),
 		)
@@ -126,7 +138,8 @@ func SetSession[T repos.Entity](ctx context.Context, session T) {
 }
 
 func DeleteSession(ctx context.Context) {
-	deleteSession, ok := ctx.Value("delete-session").(func())
+	userContext := ctx.Value(userContextKey).(context.Context)
+	deleteSession, ok := userContext.Value("delete-session").(func())
 	if !ok {
 		return
 	}
