@@ -14,25 +14,28 @@ import { IListOrGrid } from '../server/r-utils/common';
 const ViewModeContext = createContext<{
   viewMode: IListOrGrid;
   setViewMode: (mode: IListOrGrid) => void;
-}>({ viewMode: 'list', setViewMode() {} });
+}>({ viewMode: 'r', setViewMode() {} });
 
-const retriveInitialViewMode = (): IListOrGrid => {
-  return (
-    isBrowser() ? sessionStorage.getItem('ViewMode') || 'list' : 'list'
-  ) as IListOrGrid;
+const setVM = ({ mode }: { mode: IListOrGrid }) => {
+  sessionStorage.setItem('view-mode', mode);
 };
 
-const saveViewMode = ({ mode }: { mode: IListOrGrid }) => {
+const getVM = (): IListOrGrid => {
   if (isBrowser()) {
-    sessionStorage.setItem('ViewMode', mode);
+    try {
+      return (sessionStorage.getItem('view-mode') || 'r') as IListOrGrid;
+    } catch (err) {
+      //
+    }
   }
+  return 'r';
 };
 
 export const ViewModeProvider = ({ children }: { children: ReactNode }) => {
-  const [viewMode, setViewMode] = useState(retriveInitialViewMode());
+  const [viewMode, setViewMode] = useState<IListOrGrid>(getVM());
 
   useEffect(() => {
-    saveViewMode({ mode: viewMode });
+    setVM({ mode: viewMode });
   }, [viewMode]);
 
   return (
@@ -55,20 +58,14 @@ export const useViewMode = () => {
 const ViewMode = () => {
   const { viewMode, setViewMode } = useViewMode();
 
-  const [tempViewMode, setTempViewMode] = useState<IListOrGrid>('list');
-
-  useEffect(() => {
-    setTempViewMode(viewMode);
-  }, [viewMode]);
-
   return (
     <Toolbar.ButtonGroup.Root
-      value={tempViewMode}
+      value={viewMode}
       onValueChange={setViewMode}
       selectable
     >
-      <Toolbar.ButtonGroup.IconButton icon={<List />} value="list" />
-      <Toolbar.ButtonGroup.IconButton icon={<SquaresFour />} value="grid" />
+      <Toolbar.ButtonGroup.IconButton icon={<List />} value="r" />
+      <Toolbar.ButtonGroup.IconButton icon={<SquaresFour />} value="c" />
     </Toolbar.ButtonGroup.Root>
   );
 };

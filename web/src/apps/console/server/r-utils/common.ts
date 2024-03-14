@@ -151,7 +151,7 @@ export type ExtractNodeType<T> = T extends Nodes
   ? T['edges'][number]['node']
   : T;
 
-export type IListOrGrid = 'list' | 'grid' | NonNullableString;
+export type IListOrGrid = 'r' | 'c' | NonNullableString;
 export type wsOrEnv = 'environment' | 'workspace' | NonNullableString;
 
 export const parseUpdateTime = (resource: { updateTime: string }) => {
