@@ -747,7 +747,7 @@ const LogComp = ({
       {isLoading && <LoadingComp />}
 
       {errors.length ? (
-        <pre>{JSON.stringify(errors)}</pre>
+        <pre>{JSON.stringify(errors, null, 2)}</pre>
       ) : (
         logs.length > 0 && (
           <LogBlock

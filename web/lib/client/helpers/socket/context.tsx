@@ -226,35 +226,49 @@ export const SockProvider = ({ children }: ChildrenProps) => {
   useDebounce(
     () => {
       if (typeof window !== 'undefined') {
-        try {
-          sockPromise.current = new Promise<wsock.w3cwebsocket>((res, rej) => {
-            let rejected = false;
-            try {
-              // eslint-disable-next-line new-cap
-              const w = new wsock.w3cwebsocket(`${socketUrl}/ws`, '', '', {});
+        const connnect = (recon = () => {}) => {
+          try {
+            sockPromise.current = new Promise<wsock.w3cwebsocket>(
+              (res, rej) => {
+                try {
+                  // eslint-disable-next-line new-cap
+                  const w = new wsock.w3cwebsocket(
+                    `${socketUrl}/ws`,
+                    '',
+                    '',
+                    {}
+                  );
 
-              w.onmessage = onMessage;
+                  w.onmessage = onMessage;
 
-              w.onopen = () => {
-                res(w);
-              };
+                  w.onopen = () => {
+                    res(w);
+                  };
 
-              w.onerror = (e) => {
-                console.error('socket closed:', e);
-                if (!rejected) {
-                  rejected = true;
+                  w.onerror = (e) => {
+                    console.error(e);
+                    recon();
+                  };
+
+                  w.onclose = () => {
+                    recon();
+                  };
+                } catch (e) {
                   rej(e);
                 }
-              };
+              }
+            );
+          } catch (e) {
+            logger.error(e);
+          }
+        };
 
-              w.onclose = () => {};
-            } catch (e) {
-              rej(e);
-            }
-          });
-        } catch (e) {
-          logger.error(e);
-        }
+        connnect(() => {
+          setTimeout(() => {
+            console.log('reconnecting');
+            connnect();
+          }, 1000);
+        });
       }
     },
     1000,
