@@ -21,6 +21,7 @@ const (
 	MessageTypeError    MessageType = "error"
 	MessageTypeResponse MessageType = "response"
 	MessageTypeInfo     MessageType = "info"
+	MessageTypeWarning  MessageType = "warning"
 )
 
 type Response[T any] struct {
