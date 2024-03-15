@@ -176,8 +176,10 @@ const GridView = ({ items, onAction }: IResource) => {
 };
 
 const ListView = ({ items, onAction }: IResource) => {
+  const { account, project, environment } = useParams();
   return (
     <ListV2.Root
+      linkComponent={Link}
       data={{
         headers: [
           {
@@ -209,9 +211,10 @@ const ListView = ({ items, onAction }: IResource) => {
           },
         ],
         rows: items.map((i) => {
-          const { name, updateInfo } = parseItem(i);
+          const { name, id, updateInfo } = parseItem(i);
           const firstDomain = i.spec.domains?.[0];
           return {
+            to: `/${account}/${project}/${environment}/router/${id}/routes`,
             columns: {
               name: {
                 render: () => <ListTitle title={name} />,
