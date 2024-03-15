@@ -335,7 +335,7 @@ const AppCompute = () => {
         )}
 
         <Checkbox
-          label="Image Pull Policy"
+          label="Always pull image on restart"
           checked={values.imagePullPolicy === 'Always'}
           onChange={(val) => {
             const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
