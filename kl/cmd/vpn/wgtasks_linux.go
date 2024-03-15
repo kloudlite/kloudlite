@@ -43,13 +43,8 @@ func connect(verbose bool, options ...fn.Option) error {
 		}
 	}
 
-	devName, err := client.CurrentDeviceName()
-	if err != nil {
-		return err
-	}
-
 	// TODO: handle this error later
-	if err = wg_vpn.StartService(devName, verbose); err != nil {
+	if err := wg_vpn.StartService(ifName, verbose); err != nil {
 		if verbose {
 			fn.Log(text.Yellow(fmt.Sprintf("[#] %s", err)))
 		}

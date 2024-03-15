@@ -97,7 +97,7 @@ func Configure(
 	s.Stop()
 	if len(cfg.Address) == 0 {
 		return errors.New("device ip not found")
-	} else if e := SetDeviceIp(cfg.Address[0], devName, verbose); e != nil {
+	} else if e := SetDeviceIp(cfg.Address[0], interfaceName, verbose); e != nil {
 		return e
 	}
 
@@ -156,7 +156,7 @@ func Configure(
 	}
 
 	if isSystemdReslov {
-		if err := setDnsServer(cfg.DNS[0], devName, verbose); err != nil {
+		if err := setDnsServer(cfg.DNS[0], interfaceName, verbose); err != nil {
 			return err
 		}
 	}

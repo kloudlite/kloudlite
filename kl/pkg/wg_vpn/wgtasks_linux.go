@@ -84,7 +84,7 @@ func StopService(verbose bool) error {
 	for _, v := range wgInterface {
 
 		if verbose {
-			fn.Log("[#] disconnecting from", v)
+			fn.Log("[#] disconnecting from ", v)
 		}
 
 		if strings.TrimSpace(v) == "" {

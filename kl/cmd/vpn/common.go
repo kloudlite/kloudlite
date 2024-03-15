@@ -151,14 +151,21 @@ func startConfiguration(verbose bool, options ...fn.Option) error {
 		return nil
 	}
 
-	if err := wg_vpn.Configure(configuration, devName, func() string {
-		if runtime.GOOS == constants.RuntimeDarwin {
-			return ifName
-		}
-		return devName
-	}(), verbose); err != nil {
+	if err := wg_vpn.Configure(configuration, devName, ifName, verbose); err != nil {
 		return err
 	}
+
+	// if err := wg_vpn.Configure(configuration, devName, func() string {
+	// 	if runtime.GOOS == constants.RuntimeDarwin {
+	// 		return ifName
+	// 	}
+	//
+	// 	return "kl-device"
+	//
+	// 	// return devName
+	// }(), verbose); err != nil {
+	// 	return err
+	// }
 
 	if wg_vpn.IsSystemdReslov() {
 		if err := wg_vpn.ExecCmd(fmt.Sprintf("resolvectl domain %s %s", device.Metadata.Name, func() string {
