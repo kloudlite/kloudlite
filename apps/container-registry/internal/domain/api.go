@@ -2,11 +2,13 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	"github.com/kloudlite/api/pkg/logging"
 	"github.com/kloudlite/api/pkg/repos"
 	"github.com/kloudlite/api/pkg/types"
+	t "github.com/kloudlite/operator/operators/resource-watcher/types"
 )
 
 func NewRegistryContext(parent context.Context, userId repos.ID, accountName string) RegistryContext {
@@ -20,6 +22,10 @@ func NewRegistryContext(parent context.Context, userId repos.ID, accountName str
 type CheckNameAvailabilityOutput struct {
 	Result         bool     `json:"result"`
 	SuggestedNames []string `json:"suggestedNames,omitempty"`
+}
+
+type UpdateAndDeleteOpts struct {
+	MessageTimestamp time.Time
 }
 
 type Domain interface {
@@ -81,9 +87,10 @@ type Domain interface {
 
 	ListBuildRuns(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
 	GetBuildRun(ctx RegistryContext, repoName string, runName string) (*entities.BuildRun, error)
-	OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun) error
+	OnBuildRunUpdateMessage(ctx RegistryContext, buildRun entities.BuildRun, status t.ResourceStatus, opts UpdateAndDeleteOpts) error
+
 	OnBuildRunDeleteMessage(ctx RegistryContext, buildRun entities.BuildRun) error
 	OnBuildRunApplyErrorMessage(ctx RegistryContext, clusterName string, name string, errorMsg string) error
 	ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
-	CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string) error
+	CreateBuildRun(ctx RegistryContext, build *entities.Build, hook *GitWebhookPayload, pullToken string, seed string) error
 }
