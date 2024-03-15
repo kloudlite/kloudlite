@@ -84,24 +84,25 @@ type Kv struct {
 }
 
 type CSResp map[string]map[string]*Kv
+type MountMap map[string]string
 
-func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
+func GetLoadMaps() (map[string]string, MountMap, error) {
 
 	kt, err := client.GetKlFile("")
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	env, err := EnsureEnv(nil)
 
 	cookie, err := getCookie()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	projectName, err := client.CurrentProjectName()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	respData, err := klFetch("cli_getConfigSecretMap", map[string]any{
@@ -130,6 +131,20 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			return queries
 		}(),
 
+		"mresQueries": func() []any {
+			var queries []any
+			for _, rt := range kt.Mres {
+				for _, v := range rt.Env {
+					queries = append(queries, map[string]any{
+						"mresName": rt.Name,
+						"key":      v.RefKey,
+					})
+				}
+			}
+
+			return queries
+		}(),
+
 		"secretQueries": func() []any {
 			var queries []any
 			for _, v := range kt.Secrets {
@@ -151,29 +166,17 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			}
 			return queries
 		}(),
-		"mresQueries": func() []any {
-
-			var queries []any
-			for _, rt := range kt.Mres {
-				for _, v := range rt.Env {
-					queries = append(queries, map[string]any{
-						"mresName": rt.Name,
-						"key":      v.RefKey,
-					})
-				}
-			}
-
-			return queries
-		}(),
 	}, &cookie)
 
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
+
 	}
 
 	fromResp, err := GetFromResp[EnvRsp](respData)
+
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	result := map[string]string{}
@@ -201,7 +204,6 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 	}
 
 	mmap := CSResp{}
-
 	for _, rt := range kt.Mres {
 		mmap[rt.Name] = map[string]*Kv{}
 		for _, v := range rt.Env {
@@ -211,13 +213,17 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 		}
 	}
 
+	// ************************[ adding to result|env ]***************************
 	for _, v := range fromResp.Configs {
 		ent := cmap[v.ConfigName][v.Key]
 		if ent != nil {
 			result[ent.Key] = v.Value
 		}
 
-		cmap[v.ConfigName][v.Key].Value = v.Value
+		if cmap[v.ConfigName][v.Key] != nil {
+			cmap[v.ConfigName][v.Key].Value = v.Value
+		}
+
 	}
 
 	for _, v := range fromResp.Secrets {
@@ -226,7 +232,9 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 			result[ent.Key] = v.Value
 		}
 
-		smap[v.SecretName][v.Key].Value = v.Value
+		if smap[v.SecretName][v.Key] != nil {
+			smap[v.SecretName][v.Key].Value = v.Value
+		}
 	}
 
 	for _, v := range fromResp.Mreses {
@@ -234,8 +242,41 @@ func GetLoadMaps() (map[string]string, CSResp, CSResp, error) {
 		if ent != nil {
 			result[ent.Key] = v.Value
 		}
-		mmap[v.MresName][v.Key].Value = v.Value
+
+		if mmap[v.MresName][v.Key] != nil {
+			mmap[v.MresName][v.Key].Value = v.Value
+		}
 	}
 
-	return result, cmap, smap, nil
+	// ************************[ handling mounts ]****************************
+	mountMap := map[string]string{}
+
+	for _, fe := range kt.FileMount.Mounts {
+		pth := fe.Path
+		if pth == "" {
+			pth = fe.Key
+		}
+
+		if fe.Type == client.ConfigType {
+			mountMap[pth] = func() string {
+				for _, ce := range fromResp.Configs {
+					if ce.ConfigName == fe.Name && ce.Key == fe.Key {
+						return ce.Value
+					}
+				}
+				return ""
+			}()
+		} else {
+			mountMap[pth] = func() string {
+				for _, ce := range fromResp.Secrets {
+					if ce.SecretName == fe.Name && ce.Key == fe.Key {
+						return ce.Value
+					}
+				}
+				return ""
+			}()
+		}
+	}
+
+	return result, mountMap, nil
 }

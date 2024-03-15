@@ -2,17 +2,20 @@ package shell
 
 import (
 	"fmt"
-	"github.com/kloudlite/kl/cmd/runner/mounter"
+	// "github.com/kloudlite/kl/cmd/runner/mounter"
 	"github.com/kloudlite/kl/constants"
-	"github.com/kloudlite/kl/domain/client"
+	// "github.com/kloudlite/kl/domain/client"
+	"os"
+	"os/exec"
+
 	"github.com/kloudlite/kl/domain/server"
+	domain_util "github.com/kloudlite/kl/domain/util"
 	"github.com/kloudlite/kl/flags"
 	fn "github.com/kloudlite/kl/pkg/functions"
 	"github.com/kloudlite/kl/pkg/ui/text"
 	"github.com/spf13/cobra"
-	"os"
-	"os/exec"
-	"path"
+
+	// "path"
 	"strings"
 )
 
@@ -39,52 +42,17 @@ func loadEnv(cmd *cobra.Command) error {
 	var err error
 	switch flags.CliName {
 	case constants.CoreCliName:
-		_, err = server.EnsureAccount([]fn.Option{
-			fn.MakeOption("accountName", accountName),
-		}...)
-		if err != nil {
-			return err
-		}
-		klfile, err := client.GetKlFile("")
+		shell, err := ShellName()
 		if err != nil {
 			return err
 		}
 
-		envs, cmap, smap, err := server.GetLoadMaps()
-		if err != nil {
+		if err := domain_util.MountEnv([]string{"--", shell}); err != nil {
 			return err
 		}
 
-		mountfiles := map[string]string{}
-
-		for _, fe := range klfile.FileMount.Mounts {
-			pth := fe.Path
-			if pth == "" {
-				pth = fe.Key
-			}
-
-			if fe.Type == client.ConfigType {
-				mountfiles[pth] = cmap[fe.Name][fe.Key].Value
-			} else {
-				mountfiles[pth] = smap[fe.Name][fe.Key].Value
-			}
-		}
-
-		if err = mounter.Mount(mountfiles, klfile.FileMount.MountBasePath); err != nil {
-			return err
-		}
-
-		cwd, err := os.Getwd()
-		if err != nil {
-			cwd = "."
-		}
-		envs["KL_MOUNT_PATH"] = path.Join(cwd, klfile.FileMount.MountBasePath)
-
-		for index, value := range envs {
-			newEnv = append(newEnv, fmt.Sprintf("%s=%s", index, value))
-		}
+		return nil
 	case constants.InfraCliName:
-
 		clusterName, err = server.EnsureCluster([]fn.Option{
 			fn.MakeOption("accountName", accountName),
 			fn.MakeOption("clusterName", clusterName),
@@ -109,19 +77,20 @@ func loadEnv(cmd *cobra.Command) error {
 		}
 		newEnv = append(newEnv, fmt.Sprintf("KUBECONFIG=%s", *configPath))
 
-	}
-	shell, err := ShellName()
-	if err != nil {
-		return err
-	}
-	newCmd := exec.Command(shell)
-	newCmd.Env = newEnv
+		shell, err := ShellName()
+		if err != nil {
+			return err
+		}
+		newCmd := exec.Command(shell)
+		newCmd.Env = newEnv
 
-	newCmd.Stdin = os.Stdin
-	newCmd.Stdout = os.Stdout
-	newCmd.Stderr = os.Stderr
-	if err := newCmd.Run(); err != nil {
-		return err
+		newCmd.Stdin = os.Stdin
+		newCmd.Stdout = os.Stdout
+		newCmd.Stderr = os.Stderr
+		if err := newCmd.Run(); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }

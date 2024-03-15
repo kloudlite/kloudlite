@@ -8,6 +8,7 @@ import (
 	"path"
 
 	fn "github.com/kloudlite/kl/pkg/functions"
+	"github.com/kloudlite/kl/pkg/ui/text"
 )
 
 func SyncKubeConfig(options ...fn.Option) (*string, error) {
@@ -28,7 +29,11 @@ func SyncKubeConfig(options ...fn.Option) (*string, error) {
 	}
 
 	tmpDir := os.TempDir()
-	tmpFile := path.Join(tmpDir, clusterName)
+
+	td, err := os.MkdirTemp(tmpDir, fmt.Sprintf("kl-kubeconfig-%s-", accountName))
+	tmpFile := path.Join(td, clusterName)
+
+	fn.Logf("%s \"%s\"", text.Bold("kubeconfig file saved at:"), text.Yellow(tmpFile))
 
 	_, err = os.Stat(tmpFile)
 	if err == nil {
