@@ -26,6 +26,38 @@ const LogsAndMetrics = () => {
   const tooltipXAixsFormatter = (val: number) =>
     dayjs(val * 1000).format('DD/MM/YY hh:mm A');
 
+  const getAnnotations = ({
+    min = '',
+    max = '',
+  }: {
+    min?: string;
+    max?: string;
+  }) => {
+    const tmin = parseValue(min, 0);
+    const tmax = parseValue(max, 0);
+
+    // if (tmin === tmax) {
+    //   return {};
+    // }
+
+    const k: ApexOptions['annotations'] = {
+      yaxis: [
+        {
+          y: tmin,
+          y2: tmax,
+          fillColor: '#33f',
+          borderColor: '#33f',
+          opacity: 0.1,
+          strokeDashArray: 0,
+          borderWidth: 1,
+          label: {},
+        },
+      ],
+    };
+
+    return k;
+  };
+
   useDebounce(
     () => {
       (async () => {
@@ -61,7 +93,7 @@ const LogsAndMetrics = () => {
 
   const chartOptions: ApexOptions = {
     chart: {
-      type: 'area',
+      type: 'line',
       zoom: {
         enabled: false,
       },
@@ -74,6 +106,7 @@ const LogsAndMetrics = () => {
       enabled: false,
     },
     stroke: {
+      width: 2,
       curve: 'smooth',
     },
 
@@ -115,6 +148,11 @@ const LogsAndMetrics = () => {
                 },
               },
             },
+
+            annotations: getAnnotations(
+              app.spec.containers[0].resourceCpu || {}
+            ),
+
             yaxis: {
               min: 0,
               max: parseValue(app.spec.containers[0].resourceCpu?.max, 0),
@@ -138,74 +176,11 @@ const LogsAndMetrics = () => {
                 data: memoryData,
               },
             ],
-            yaxis: {
-              min: 0,
-              max: parseValue(app.spec.containers[0].resourceMemory?.max, 0),
 
-              floating: false,
-              labels: {
-                formatter: (val) => `${val} MB`,
-              },
-            },
-            tooltip: {
-              x: {
-                formatter: tooltipXAixsFormatter,
-              },
-              y: {
-                formatter(val) {
-                  return `${val.toFixed(2)} MB`;
-                },
-              },
-            },
-          }}
-        />
+            annotations: getAnnotations(
+              app.spec.containers[0].resourceMemory || {}
+            ),
 
-        <Chart
-          disabled
-          title="Network IO"
-          options={{
-            ...chartOptions,
-            series: [
-              {
-                color: '#1D4ED8',
-                name: 'DiskIO',
-                data: memoryData,
-              },
-            ],
-            yaxis: {
-              min: 0,
-              max: parseValue(app.spec.containers[0].resourceMemory?.max, 0),
-
-              floating: false,
-              labels: {
-                formatter: (val) => `${val} MB`,
-              },
-            },
-            tooltip: {
-              x: {
-                formatter: tooltipXAixsFormatter,
-              },
-              y: {
-                formatter(val) {
-                  return `${val.toFixed(2)} MB`;
-                },
-              },
-            },
-          }}
-        />
-
-        <Chart
-          disabled
-          title="Disk IO"
-          options={{
-            ...chartOptions,
-            series: [
-              {
-                color: '#1D4ED8',
-                name: 'DiskIO',
-                data: memoryData,
-              },
-            ],
             yaxis: {
               min: 0,
               max: parseValue(app.spec.containers[0].resourceMemory?.max, 0),

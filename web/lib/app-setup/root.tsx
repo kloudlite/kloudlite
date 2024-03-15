@@ -32,7 +32,6 @@ import tailwindBase from '~/design-system/tailwind-base.js';
 import { ReloadIndicator } from '~/lib/client/components/reload-indicator';
 import { isDev } from '~/lib/client/helpers/log';
 import { getClientEnv, getServerEnv } from '../configs/base-url.cjs';
-import { isBrowser } from '../client/helpers/is-browser';
 import { useDataFromMatches } from '../client/hooks/use-custom-matches';
 
 export const links: LinksFunction = () => [
@@ -233,7 +232,7 @@ const Root = ({
             __html: getClientEnv(env),
           }}
         />
-        {/* <LiveReload port={443} /> */}
+        <LiveReload port={443} />
         <ToastContainer position="bottom-left" />
         <ProgressContainer>
           <ReloadIndicator />
