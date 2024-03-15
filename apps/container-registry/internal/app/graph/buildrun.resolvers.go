@@ -33,29 +33,17 @@ func (r *buildRunResolver) ID(ctx context.Context, obj *entities.BuildRun) (stri
 
 // Spec is the resolver for the spec field.
 func (r *buildRunResolver) Spec(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec, error) {
-	var m model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return &m, nil
+	return fn.JsonConvert[*model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec](obj.Spec)
 }
 
 // Status is the resolver for the status field.
 func (r *buildRunResolver) Status(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
-	var m model.GithubComKloudliteOperatorPkgOperatorStatus
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return &m, nil
+	return fn.JsonConvert[*model.GithubComKloudliteOperatorPkgOperatorStatus](obj.Status)
 }
 
 // SyncStatus is the resolver for the syncStatus field.
 func (r *buildRunResolver) SyncStatus(ctx context.Context, obj *entities.BuildRun) (*model.GithubComKloudliteAPIPkgTypesSyncStatus, error) {
-	var m model.GithubComKloudliteAPIPkgTypesSyncStatus
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, errors.NewE(err)
-	}
-	return &m, nil
+	return fn.JsonConvert[*model.GithubComKloudliteAPIPkgTypesSyncStatus](obj.SyncStatus)
 }
 
 // UpdateTime is the resolver for the updateTime field.
