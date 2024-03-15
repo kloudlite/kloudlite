@@ -181,18 +181,16 @@ const NewProject = () => {
                 jumpStep(1);
               }}
             >
-              <div className="flex flex-col p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
-                <div className="flex flex-col gap-md  pb-lg  border-b border-border-default">
+              <div className="flex flex-row justify-between p-xl  gap-lg rounded border border-border-default flex-1 overflow-hidden">
+                <div className="flex flex-col gap-md">
+                  <div className="bodySm text-text-soft">Project name</div>
                   <div className="bodyMd-semibold text-text-default">
-                    Project name
+                    {values.name}
                   </div>
-                  <div className="bodySm text-text-soft">{values.name}</div>
                 </div>
                 <div className="flex flex-col gap-md">
+                  <div className="bodySm text-text-soft">Cluster</div>
                   <div className="bodyMd-semibold text-text-default">
-                    Cluster
-                  </div>
-                  <div className="bodySm text-text-soft">
                     {values.clusterName}
                   </div>
                 </div>
