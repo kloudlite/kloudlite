@@ -24,6 +24,12 @@ import { cn, useMapper } from '~/components/utils';
 import Pulsable from 'react-pulsable';
 import { NameIdView } from '~/console/components/name-id-view';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { toast } from '~/components/molecule/toast';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import CodeView from '~/console/components/code-view';
+import CodeMirrorClient from '~/root/lib/client/components/editor-client';
+import { javascript } from '@codemirror/lang-javascript';
+import { basicSetup } from '@uiw/react-codemirror';
 
 const LOGO_URL = 'https://artifacthub.io/image/';
 
@@ -92,6 +98,8 @@ const Root = (props: IDialog) => {
   const [isRepoCreatable, setIsRepoCreatable] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string>('');
   const [repoErrors, setRepoErrors] = useState(false);
+  const [helmValues, setHelmValues] = useState('');
+  const [activeTab, setActiveTab] = useState('defaults');
 
   useEffect(() => {
     if (isUpdate) {
@@ -153,6 +161,28 @@ const Root = (props: IDialog) => {
       setRepoErrors(true);
     } finally {
       setHelmChartsLoading(false);
+    }
+  };
+
+  const fetchValues = async ({
+    packageId,
+    version,
+  }: {
+    packageId: string;
+    version: string;
+  }) => {
+    try {
+      const r = await axios({
+        method: 'get',
+        url: `/artifacthub-values-api`,
+        params: {
+          packageId,
+          version,
+        },
+      });
+      setHelmValues(r.data);
+    } catch (err) {
+      toast.error('Error fetching chart values');
     }
   };
 
@@ -524,22 +554,58 @@ const Root = (props: IDialog) => {
               loading={isUpdate && helmChartsLoading}
               onChange={(val) => {
                 setChartVersion(val);
+                fetchValues({ packageId: selectedRepo, version: val.value });
               }}
               onSearch={() => true}
             />
           </div>
-          <div className="basis-full">
-            <TextArea
-              containerClassName="h-full"
-              className="h-full"
-              label="Helm values"
-              placeholder="Helm values"
-              onChange={handleChange('values')}
-              error={!!errors.values}
-              message={errors.values}
-              value={values.values}
-              name="helm-chart-values"
+          <div className="basis-full flex flex-col">
+            <ExtendedFilledTab
+              value={activeTab}
+              onChange={setActiveTab}
+              items={[
+                { label: 'Defaults', value: 'defaults' },
+                {
+                  label: 'Overrides',
+                  value: 'overrides',
+                },
+
+                {
+                  label: 'Effective',
+                  value: 'effective',
+                },
+              ]}
             />
+            <CodeMirrorClient
+              extensions={[basicSetup]}
+              value={`
+---
+title: Hello World
+---
+
+`}
+            />
+            {/* <TextArea */}
+            {/*   containerClassName="h-full" */}
+            {/*   className="h-full" */}
+            {/*   placeholder="Helm values" */}
+            {/*   onChange={handleChange('values')} */}
+            {/*   error={!!errors.values} */}
+            {/*   message={errors.values} */}
+            {/*   value={(() => { */}
+            {/*     if (activeTab === 'defaults') { */}
+            {/*       return helmValues; */}
+            {/*     } */}
+            {/*     if (activeTab === 'overrides') { */}
+            {/*       return values.values; */}
+            {/*     } */}
+            {/*     if (activeTab === 'effective') { */}
+            {/*       return ''; */}
+            {/*     } */}
+            {/*     return ''; */}
+            {/*   })()} */}
+            {/*   name="helm-chart-values" */}
+            {/* /> */}
           </div>
         </div>
       </Popup.Content>
@@ -566,7 +632,7 @@ const HandleHelmChart = (props: IDialog) => {
       className="!w-[900px]"
     >
       <Popup.Header>
-        {isUpdate ? 'Edit helm chart' : 'Add new helm chart'}
+        {isUpdate ? 'Edit helm chart' : 'Install helm chart'}
       </Popup.Header>
       {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>

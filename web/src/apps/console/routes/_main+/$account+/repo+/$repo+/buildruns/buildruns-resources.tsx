@@ -88,7 +88,7 @@ const GridView = ({ items }: IResource) => {
 const ListItem = ({ item }: { item: BaseType }) => {
   const [open, setOpen] = useState<boolean>(false);
   const { account } = useOutletContext<IAccountContext>();
-  const commitHash = item.metadata?.annotations['github.com/commit'];
+  const commitHash = item.metadata?.annotations?.['github.com/commit'] || '';
 
   // eslint-disable-next-line no-nested-ternary
   const state: 'running' | 'done' | 'error' = item.status?.isReady
@@ -136,7 +136,7 @@ const ListItem = ({ item }: { item: BaseType }) => {
             <ListTitle
               title={
                 <div className="flex items-center gap-xl">
-                  {item.metadata?.annotations['github.com/repository']}{' '}
+                  {item.metadata?.annotations?.['github.com/repository'] || ''}
                 </div>
               }
               subtitle={
@@ -149,7 +149,7 @@ const ListItem = ({ item }: { item: BaseType }) => {
                   </div>
                   <div className="flex items-center gap-md">
                     <GitBranch size={12} />
-                    {item.metadata?.annotations['github.com/branch']}{' '}
+                    {item.metadata?.annotations?.['github.com/branch'] || ''}
                   </div>
 
                   <div className="flex items-center gap-md">
