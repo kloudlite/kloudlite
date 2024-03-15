@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"slices"
 
 	"github.com/kloudlite/api/apps/container-registry/internal/domain/entities"
 	fc "github.com/kloudlite/api/apps/container-registry/internal/domain/entities/field-constants"
@@ -197,7 +198,7 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
 		},
-		Action: string(iamT.UpdateAccount),
+		Action: string(iamT.GetAccount),
 	})
 
 	if err != nil {
@@ -235,5 +236,78 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 }
 
 func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {
-	panic("implement me")
+
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	if !co.Status {
+		return errors.Newf("unauthorized to trigger build")
+	}
+
+	b, err := d.buildRepo.FindById(ctx, buildId)
+	if err != nil {
+		return errors.NewE(err)
+	}
+	if b == nil {
+		return errors.Newf("build not found")
+	}
+
+	var pullToken string
+	var commitHash string
+
+	if !slices.Contains([]string{"github", "gitlab"}, string(b.Source.Provider)) {
+		return errors.Newf("provider %s not supported", b.Source.Provider)
+	}
+
+	at, err := d.getAccessTokenByUserId(ctx, string(b.Source.Provider), ctx.UserId)
+	if err != nil {
+		return errors.NewE(err)
+	}
+
+	switch b.Source.Provider {
+	case "gitlab":
+		pullToken, err = d.GitlabPullToken(ctx, ctx.UserId)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		commitHash, err = d.gitlab.GetLatestCommit(ctx, at, b.Source.Repository, b.Source.Branch)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+	case "github":
+
+		pullToken, err = d.GithubInstallationToken(ctx, b.Source.Repository)
+		if err != nil {
+			return errors.NewE(err)
+		}
+
+		commitHash, err = d.github.GetLatestCommit(ctx, at, b.Source.Repository, b.Source.Branch)
+		if err != nil {
+			return errors.NewE(err)
+		}
+	default:
+		return errors.Newf("provider %s not supported", b.Source.Provider)
+	}
+
+	if err := d.CreateBuildRun(ctx, b, &GitWebhookPayload{
+		GitProvider: string(b.Source.Provider),
+		RepoUrl:     b.Source.Repository,
+		GitBranch:   b.Source.Branch,
+		CommitHash:  commitHash,
+	}, pullToken); err != nil {
+		return errors.NewE(err)
+	}
+
+	return nil
 }
