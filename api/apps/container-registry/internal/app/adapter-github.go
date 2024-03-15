@@ -22,6 +22,7 @@ import (
 
 	"github.com/kloudlite/api/pkg/errors"
 	"github.com/kloudlite/api/pkg/logging"
+
 	// fn "kloudlite.io/pkg/functions"
 	"github.com/kloudlite/api/pkg/types"
 )
@@ -175,16 +176,12 @@ func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *entities.Acces
 		return "", errors.NewE(err)
 	}
 
-	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
+	rc, _, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.GetCommit(ctx, owner, repo, branchName, &github.ListOptions{})
 	if err != nil {
-		return "", errors.NewEf(err, "could not fetch repository installation")
+		return "", errors.NewEf(err, "could not get latest commit")
 	}
-	installationId := *inst.ID
-	it, _, err := gh.ghCli.Apps.CreateInstallationToken(ctx, installationId, &github.InstallationTokenOptions{})
-	if err != nil {
-		return "", errors.NewEf(err, "failed to get installation token")
-	}
-	return it.GetToken(), errors.NewE(err)
+
+	return rc.GetSHA(), nil
 }
 
 // GetToken implements domain.Github.
