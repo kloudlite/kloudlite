@@ -334,15 +334,17 @@ const AppCompute = () => {
           />
         )}
 
-        <Checkbox
-          label="Always pull image on restart"
-          checked={values.imagePullPolicy === 'Always'}
-          onChange={(val) => {
-            const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
-            console.log(imagePullPolicy);
-            handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
-          }}
-        />
+        {advancedOptions && (
+          <Checkbox
+            label="Always pull image on restart"
+            checked={values.imagePullPolicy === 'Always'}
+            onChange={(val) => {
+              const imagePullPolicy = val ? 'Always' : 'IfNotPresent';
+              console.log(imagePullPolicy);
+              handleChange('imagePullPolicy')(dummyEvent(imagePullPolicy));
+            }}
+          />
+        )}
       </div>
 
       <div className="flex flex-col">
