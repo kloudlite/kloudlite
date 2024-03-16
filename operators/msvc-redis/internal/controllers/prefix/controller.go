@@ -40,6 +40,21 @@ func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
+const (
+	DefaultsPatched      string = "defaults-patched"
+	AccessCredsGenerated string = "access-creds-generated"
+	AccessCredsDeleted   string = "access-creds-deleted"
+)
+
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: AccessCredsGenerated, Title: "Access Credentials Generated"},
+}
+
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: AccessCredsDeleted, Title: "Access Credentials Deleted"},
+}
+
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=prefixes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=prefixes/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=prefixes/finalizers,verbs=update
@@ -67,6 +82,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	// if step := req.EnsureChecks(DefaultsPatched, AccessCredsGenerated); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
+
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -85,8 +108,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult.Result {
 	checkName := "finalizing"
+
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
+
+	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+		return step
+	}
 
 	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
 		return step
@@ -97,9 +125,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "patch-defaults"
+	checkName := DefaultsPatched
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -110,9 +138,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*redisMsvcV1.Prefix]) stepR
 
 	hasPatched := false
 
-	if obj.Spec.PrefixKey == "" {
+	if obj.Spec.ResourceNamePrefix == "" {
 		hasPatched = true
-		obj.Spec.PrefixKey = fmt.Sprintf("%s:", obj.Name)
+		obj.Spec.ResourceNamePrefix = fmt.Sprintf("%s:", obj.Name)
 	}
 
 	if obj.Spec.Output.Credentials.Name == "" {
@@ -177,11 +205,15 @@ func (r *Reconciler) getMsvcCredentials(req *rApi.Request[*redisMsvcV1.Prefix]) 
 	}
 }
 
+func genRedisPrefixKey(obj *redisMsvcV1.Prefix) string {
+	return fmt.Sprintf("%s-%s", obj.Spec.ResourceNamePrefix, obj.Name)
+}
+
 func (r *Reconciler) ensureAccessCredentials(req *rApi.Request[*redisMsvcV1.Prefix]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "ensure-access-credentials"
+	checkName := AccessCredsGenerated
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -196,11 +228,17 @@ func (r *Reconciler) ensureAccessCredentials(req *rApi.Request[*redisMsvcV1.Pref
 	}
 
 	creds, err := fn.JsonConvert[map[string]string](types.PrefixCredentialsData{
-		Hosts:    msvcCreds.Hosts,
+		Host: msvcCreds.Host,
+		Port: msvcCreds.Port,
+		Addr: msvcCreds.Addr,
+
+		Uri: types.GenerateRedisURI(msvcCreds.Host, msvcCreds.RootPassword, obj.Spec.RedisDB),
+
+		DB: fmt.Sprintf("%d", obj.Spec.RedisDB),
+
 		Password: msvcCreds.RootPassword,
-		Username: msvcCreds.RootUsername,
-		Prefix:   obj.Spec.PrefixKey,
-		Uri:      msvcCreds.Uri,
+
+		Prefix: genRedisPrefixKey(obj),
 	})
 	if err != nil {
 		return fail(err)

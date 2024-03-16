@@ -2,13 +2,21 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
+func GenerateRedisURI(host string, password string, dbNumber int) string {
+	return fmt.Sprintf("redis://:%s@%s/%d?allowUsernameInURI=true", password, host, dbNumber)
+}
+
 type MsvcOutput struct {
-	RootUsername string `json:"ROOT_USERNAME"`
+	Host string `json:"HOST"`
+	Port string `json:"PORT"`
+	Addr string `json:"ADDR"`
+
+	Uri string `json:"URI"`
+
 	RootPassword string `json:"ROOT_PASSWORD"`
-	Hosts        string `json:"HOSTS"`
-	Uri          string `json:"URI"`
 }
 
 func (mo *MsvcOutput) ToMap() (map[string]string, error) {
@@ -34,9 +42,13 @@ type MresOutput struct {
 }
 
 type PrefixCredentialsData struct {
-	Hosts    string `json:"HOSTS"`
+	Host string `json:"HOST"`
+	Port string `json:"PORT"`
+	Addr string `json:"ADDR"`
+	DB   string `json:"DB"`
+
+	Uri string `json:"URI"`
+
 	Password string `json:"PASSWORD"`
-	Username string `json:"USERNAME"`
 	Prefix   string `json:"PREFIX"`
-	Uri      string `json:"URI"`
 }
