@@ -51,3 +51,11 @@ type MresOutput struct {
 	DbName   string `json:"DB_NAME"`
 	URI      string `json:"URI"`
 }
+
+func ExtractPVCLabelsFromStatefulSetLabels(m map[string]string) map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/component": m["app.kubernetes.io/name"],
+		"app.kubernetes.io/instance":  m["app.kubernetes.io/instance"],
+		"app.kubernetes.io/name":      m["app.kubernetes.io/name"],
+	}
+}
