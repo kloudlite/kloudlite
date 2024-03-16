@@ -99,6 +99,8 @@ spec:
               checkList:
                 items:
                   properties:
+                    debug:
+                      type: boolean
                     description:
                       type: string
                     name:
@@ -106,6 +108,7 @@ spec:
                     title:
                       type: string
                   required:
+                  - debug
                   - name
                   - title
                   type: object

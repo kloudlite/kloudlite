@@ -8,18 +8,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +kubebuilder:validation:Pattern=[\d]+(M|G)i$
+type StorageSize string
+
 type Storage struct {
-	// +kubebuilder:validation:Pattern=[\d]+(M|G)i$
-	Size string `json:"size"`
+	Size StorageSize `json:"size"`
 
 	// +kubebuilder:validation:Optional
 	StorageClass string `json:"storageClass,omitempty"`
 }
 
-func (s Storage) ToInt() (int64, error) {
-	quantity, err := resource.ParseQuantity(s.Size)
+func (s StorageSize) ToInt() (int64, error) {
+	quantity, err := resource.ParseQuantity(string(s))
 	if err != nil {
-		fmt.Printf("could not convert storage (%s) to int\n", s.Size)
+		fmt.Printf("could not convert storage (%s) to int\n", s)
 		return -1, nil
 	}
 	size, ok := quantity.AsInt64()

@@ -87,16 +87,22 @@ spec:
                 required:
                 - credentials
                 type: object
-              prefixKey:
+              redisDB:
+                default: 0
+                type: integer
+              resourceNamePrefix:
                 type: string
             required:
             - msvcRef
+            - redisDB
             type: object
           status:
             properties:
               checkList:
                 items:
                   properties:
+                    debug:
+                      type: boolean
                     description:
                       type: string
                     name:
@@ -104,6 +110,7 @@ spec:
                     title:
                       type: string
                   required:
+                  - debug
                   - name
                   - title
                   type: object
