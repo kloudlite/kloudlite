@@ -14,9 +14,14 @@ type PrefixOutput struct {
 
 // PrefixSpec defines the desired state of Prefix
 type PrefixSpec struct {
-	MsvcRef   ct.MsvcRef   `json:"msvcRef"`
-	PrefixKey string       `json:"prefixKey,omitempty"`
-	Output    PrefixOutput `json:"output,omitempty" graphql:"noinput"`
+	ResourceNamePrefix string `json:"resourceNamePrefix,omitempty"`
+
+	MsvcRef ct.MsvcRef `json:"msvcRef"`
+
+	// +kubebuilder:default=0
+	RedisDB int `json:"redisDB"`
+
+	Output PrefixOutput `json:"output,omitempty" graphql:"noinput"`
 }
 
 //+kubebuilder:object:root=true
@@ -45,6 +50,7 @@ func (a *Prefix) EnsureGVK() {
 func (a *Prefix) GetStatus() *rApi.Status {
 	return &a.Status
 }
+
 func (a *Prefix) GetEnsuredLabels() map[string]string {
 	return map[string]string{}
 }
