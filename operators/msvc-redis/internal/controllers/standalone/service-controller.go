@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -46,18 +47,31 @@ func (r *ServiceReconciler) GetName() string {
 }
 
 const (
-	HelmReady         string = "helm-ready"
-	StsReady          string = "sts-ready"
-	AccessCredsReady  string = "access-creds-ready"
-	ACLConfigMapReady string = "acl-configmap-ready"
+	HelmReady              string = "helm-ready"
+	StsReady               string = "sts-ready"
+	AccessCredsGenerated   string = "access-creds-generated"
+	RedisHelmApplied       string = `redis-helm-applied`
+	RedisHelmReady         string = `redis-helm-ready`
+	RedisHelmDeleted       string = `redis-helm-deleted`
+	RedisStatefulSetsReady string = `redis-statefulsets-ready`
 )
 
 const (
-	KeyRootPassword     string = "root-password"
-	KeyAclConfigMapName string = "acl-configmap-name"
-	KeyMsvcOutput       string = "msvc-output"
-	DefaultsPatched     string = "defaults-patched"
+	KeyMsvcOutput   string = "msvc-output"
+	DefaultsPatched string = "defaults-patched"
 )
+
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: AccessCredsGenerated, Title: "Access Credentials Generated"},
+	{Name: RedisHelmApplied, Title: "Redis Helm Applied"},
+	{Name: RedisHelmReady, Title: "Redis Helm Ready"},
+	{Name: RedisStatefulSetsReady, Title: "Redis StatefulSets Ready"},
+}
+
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: RedisHelmDeleted, Title: "Redis Helm Deleted"},
+}
 
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices/status,verbs=get;update;patch
@@ -69,15 +83,15 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	req.PreReconcile()
+	defer req.PostReconcile()
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
 		return ctrl.Result{}, nil
 	}
-
-	req.PreReconcile()
-	defer req.PostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -87,27 +101,35 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
+	if step := req.EnsureCheckList(ApplyCheckList); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconACLConfigmap(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := req.EnsureChecks(DefaultsPatched, AccessCredsGenerated, RedisHelmApplied, RedisHelmReady, RedisStatefulSetsReady); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconAccessCreds(req); !step.ShouldProceed() {
+	if step := r.generateAccessCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconHelm(req); !step.ShouldProceed() {
+	if step := r.applyHelm(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconSts(req); !step.ShouldProceed() {
+	if step := r.checkHelmReady(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.checkStsReady(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -116,73 +138,32 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+	checkName := "finalizing"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	obj := req.Object
+	if !slices.Equal(obj.Status.CheckList, DeleteCheckList) {
+		obj.Status.CheckList = nil
+	}
+
+	if step := req.EnsureCheckList(DeleteCheckList); !step.ShouldProceed() {
+		return step
+	}
+
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+		return step
+	}
+
 	return req.Finalize()
 }
 
-// func (r *ServiceReconciler) reconACLConfigmap(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
-// 	ctx, obj := req.Context(), req.Object
-// 	check := rApi.Check{Generation: obj.Generation}
-//
-// 	req.LogPreCheck(ACLConfigMapReady)
-// 	defer req.LogPostCheck(ACLConfigMapReady)
-//
-// 	aclConfigmapName := "msvc-" + obj.Name + "-acl"
-//
-// 	aclCfgMap, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, aclConfigmapName), &redisMsvcv1.ACLConfigMap{})
-// 	if err != nil {
-// 		if !apiErrors.IsNotFound(err) {
-// 			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
-// 		}
-// 		req.Logger.Infof("acl configmap (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
-// 	}
-//
-// 	if aclCfgMap == nil {
-// 		if err := r.Create(
-// 			ctx, &redisMsvcv1.ACLConfigMap{
-// 				TypeMeta: metav1.TypeMeta{
-// 					Kind:       "ACLConfigMap",
-// 					APIVersion: "redis.msvc.kloudlite.io/v1",
-// 				},
-// 				ObjectMeta: metav1.ObjectMeta{
-// 					Name:            aclConfigmapName,
-// 					Namespace:       obj.Namespace,
-// 					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-// 				},
-// 				Spec: redisMsvcv1.ACLConfigMapSpec{
-// 					MsvcName: obj.Name,
-// 				},
-// 			},
-// 		); err != nil {
-// 			return req.CheckFailed(ACLConfigMapReady, check, err.Error())
-// 		}
-// 	}
-//
-// 	if !aclCfgMap.Status.IsReady {
-// 		if aclCfgMap.Status.Message == nil {
-// 			return req.CheckFailed(ACLConfigMapReady, check, "waiting for acl config map to reconcile").Err(nil)
-// 		}
-// 		b, err := json.Marshal(aclCfgMap.Status.Message)
-// 		if err != nil {
-// 			return req.CheckFailed(ACLConfigMapReady, check, err.Error()).Err(nil)
-// 		}
-// 		return req.CheckFailed(ACLConfigMapReady, check, string(b)).Err(nil)
-// 	}
-//
-// 	check.Status = true
-// 	if check != obj.Status.Checks[ACLConfigMapReady] {
-// 		obj.Status.Checks[ACLConfigMapReady] = check
-// 		req.UpdateStatus()
-// 	}
-//
-// 	rApi.SetLocal(req, KeyAclConfigMapName, aclCfgMap.Name)
-// 	return req.Next()
-// }
-
 func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "defaults-patched"
+	checkName := DefaultsPatched
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -223,11 +204,11 @@ func (r *ServiceReconciler) patchDefaults(req *rApi.Request[*redisMsvcv1.Standal
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+func (r *ServiceReconciler) generateAccessCreds(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "access-creds-ready"
+	checkName := AccessCredsGenerated
 
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
@@ -243,19 +224,22 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 		obj.SetOwnerReferences(obj.GetOwnerReferences())
 
 		if accessCreds.Data != nil {
+			// means secret already exists, it is not getting created
 			return nil
 		}
 
 		rootPassword := fn.CleanerNanoid(40)
-		host := fmt.Sprintf("%s-headless.%s.svc.%s:6379", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+		host := fmt.Sprintf("%s-headless.%s.svc.%s", obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
+		port := 6379
 
 		var m map[string]string
 
 		out := types.MsvcOutput{
-			RootUsername: "",
-			RootPassword: rootPassword,
-			Hosts:        host,
+			Host:         host,
+			Port:         fmt.Sprintf("%d", port),
+			Addr:         fmt.Sprintf("%s:%d", host, port),
 			Uri:          fmt.Sprintf("redis://:%s@%s?allowUsernameInURI=true", rootPassword, host),
+			RootPassword: rootPassword,
 		}
 
 		m, err := out.ToMap()
@@ -287,11 +271,11 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 	return req.Next()
 }
 
-func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+func (r *ServiceReconciler) applyHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "helm-ready"
+	checkName := RedisHelmApplied
 
 	fail := func(err error) stepResult.Result {
 		return req.CheckFailed(checkName, check, err.Error())
@@ -305,17 +289,15 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		return fail(rApi.ErrNotInReqLocals(KeyMsvcOutput))
 	}
 
-	// aclConfigmapName, ok := rApi.GetLocal[string](req, KeyAclConfigMapName)
-	// if !ok {
-	// 	return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
-	// }
-
 	b, err := templates.ParseBytes(r.templateHelmRedisStandalone, map[string]any{
 		"name":      obj.Name,
 		"namespace": obj.Namespace,
 
 		"labels":     map[string]string{constants.MsvcNameKey: obj.Name},
-		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
+		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+		"pod-labels":      obj.GetLabels(),
+		"pod-annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
 
 		"node-selector": obj.Spec.NodeSelector,
 		"tolerations":   obj.Spec.Tolerations,
@@ -329,8 +311,7 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 		"limits-cpu": obj.Spec.Resources.Cpu.Min,
 		"limits-mem": obj.Spec.Resources.Memory.Max,
 
-		// "acl-configmap-name": aclConfigmapName,
-		"root-password": msvcOutput.RootUsername,
+		"root-password": msvcOutput.RootPassword,
 	})
 	if err != nil {
 		return fail(err).Err(nil)
@@ -354,15 +335,44 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneS
 	return req.Next()
 }
 
-func getStsName(objName string) string {
-	return objName + "-master"
+func (r *ServiceReconciler) checkHelmReady(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := RedisHelmReady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
+	if err != nil {
+		return fail(err)
+	}
+
+	if !hc.Status.IsReady {
+		return fail(fmt.Errorf("waiting for helm installation to complete"))
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
-func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+func (r *ServiceReconciler) checkStsReady(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	checkName := "sts-ready"
+	checkName := RedisStatefulSetsReady
 
 	fail := func(err error) stepResult.Result {
 		return req.CheckFailed(checkName, check, err.Error())
@@ -371,7 +381,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
 
-	sts, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, getStsName(obj.Name)), &appsv1.StatefulSet{})
+	sts, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name+"-master"), &appsv1.StatefulSet{})
 	if err != nil {
 		return fail(err)
 	}

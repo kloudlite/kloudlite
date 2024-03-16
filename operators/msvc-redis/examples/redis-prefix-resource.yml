@@ -9,4 +9,5 @@ spec:
     kind: StandaloneService
     name: redis-standalone
     namespace: default
-  prefixKey: "auth:"
+  # prefixKey: "auth:"
+  resourceNamePrefix: "sample-example"

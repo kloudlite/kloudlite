@@ -3,8 +3,11 @@
 
 {{- $name := get . "name" }}
 {{- $namespace := get . "namespace" }}
-{{- $labels := get . "labels" }}
+
 {{- $ownerRefs := get . "owner-refs" }}
+
+{{- $labels := get . "labels" }}
+{{- $annotations := get . "annotations" }}
 
 {{- $nodeSelector := get . "node-selector" }}
 {{- $tolerations := get . "tolerations" }}
@@ -17,6 +20,7 @@ metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   labels: {{ $labels | toYAML | nindent 4 }}
+  annotations: {{ $annotations | toYAML | nindent 4 }}
   ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec: 
   nodeSelector: {{$nodeSelector |toYAML | nindent 2}}
