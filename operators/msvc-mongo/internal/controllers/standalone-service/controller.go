@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
@@ -18,8 +20,10 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,24 +50,30 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	HelmReady            string = "helm-ready"
-	StsReady             string = "sts-ready"
-	AccessCredsReady     string = "access-creds-ready"
-	HelmSecretReady      string = "helm-secret-ready"
-	ReconcileCredentials string = "reconcile-credentials"
-	CheckPatchDefaults   string = "patch-defaults"
+	AccessCredsGenerated     string = "access-creds-generated"
+	MongoDBHelmApplied       string = `mongodb-helm-applied`
+	MongoDBHelmReady         string = `mongodb-helm-ready`
+	MongoDBHelmDeleted       string = `mongodb-helm-deleted`
+	MongoDBStatefulSetsReady string = `mongodb-statefulsets-ready`
+
+	DefaultsPatched string = "defaults-patched"
+	KeyMsvcOutput   string = "msvc-output"
+
+	AnnotationCurrentStorageSize string = "kloudlite.io/msvc.storage-size"
 )
 
-const (
-	KeyMsvcOutput string = "msvc-output"
-)
+var ApplyCheckList = []rApi.CheckMeta{
+	{Name: DefaultsPatched, Title: "Defaults Patched", Debug: true},
+	{Name: AccessCredsGenerated, Title: "Access Credentials Generated"},
+	{Name: MongoDBHelmApplied, Title: "MongoDB Helm Applied"},
+	{Name: MongoDBHelmReady, Title: "MongoDB Helm Ready"},
+	{Name: MongoDBStatefulSetsReady, Title: "MongoDB StatefulSets Ready"},
+}
 
-const (
-	// secret keys
-	RootPassword string = "ROOT_PASSWORD"
-	Hosts        string = "HOSTS"
-	URI          string = "URI"
-)
+// DefaultsPatched string = "defaults-patched"
+var DeleteCheckList = []rApi.CheckMeta{
+	{Name: MongoDBHelmDeleted, Title: "MongoDB Helm Deleted"},
+}
 
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=services/status,verbs=get;update;patch
@@ -101,15 +111,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconCredentials(req); !step.ShouldProceed() {
+	if step := r.generateAccessCredentials(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconHelmSecret(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := r.applyMongoDBStandaloneHelm(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
-	if step := r.reconHelm(req); !step.ShouldProceed() {
+	if step := r.checkHelmReady(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -136,10 +146,16 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.StandaloneService
 
 func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(CheckPatchDefaults)
-	defer req.LogPostCheck(CheckPatchDefaults)
+	checkName := DefaultsPatched
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	hasPatched := false
 
@@ -165,13 +181,13 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 
 	if hasPatched {
 		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(CheckPatchDefaults, check, err.Error())
+			return fail(err)
 		}
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[CheckPatchDefaults] {
-		fn.MapSet(&obj.Status.Checks, CheckPatchDefaults, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -180,12 +196,18 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*mongodbMsvcv1.StandaloneSe
 	return req.Next()
 }
 
-func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) generateAccessCredentials(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(ReconcileCredentials)
-	defer req.LogPostCheck(ReconcileCredentials)
+	checkName := AccessCredsGenerated
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	rootPassword := fn.CleanerNanoid(40)
 
@@ -196,6 +218,7 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 		msvcOutput.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		if msvcOutput.Data == nil {
+			// secret does not already exists
 			host := fmt.Sprintf("%s-%d.%s.%s.svc.%s:27017", obj.Name, 0, obj.Name, obj.Namespace, r.Env.ClusterInternalDNS)
 
 			rootUsername := "root"
@@ -217,13 +240,16 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 				AuthSource: authSource,
 			}
 
-			var err error
-			msvcOutput.StringData, err = output.ToMap()
-			return err
+			m, err := fn.JsonConvert[map[string]string](output)
+			if err != nil {
+				return nil
+			}
+
+			msvcOutput.StringData = m
 		}
 		return nil
 	}); err != nil {
-		return req.CheckFailed(ReconcileCredentials, check, err.Error())
+		return fail(err)
 	}
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(msvcOutput))
@@ -235,6 +261,7 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 		helmSecret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 
 		if helmSecret.Data == nil {
+			// secret does not already exists
 			helmSecret.StringData = map[string]string{
 				"mongodb-root-password": rootPassword,
 			}
@@ -242,15 +269,15 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 		return nil
 	}); err != nil {
-		return req.CheckFailed(ReconcileCredentials, check, err.Error())
+		return fail(err)
 	}
 
 	req.AddToOwnedResources(rApi.ParseResourceRef(helmSecret))
 	rApi.SetLocal(req, "creds", msvcOutput.Data)
 
 	check.Status = true
-	if check != obj.Status.Checks[ReconcileCredentials] {
-		fn.MapSet(&obj.Status.Checks, ReconcileCredentials, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -259,47 +286,170 @@ func (r *Reconciler) reconCredentials(req *rApi.Request[*mongodbMsvcv1.Standalon
 	return req.Next()
 }
 
-func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
+func (r *Reconciler) applyMongoDBStandaloneHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(HelmReady)
-	defer req.LogPostCheck(HelmReady)
+	checkName := MongoDBHelmApplied
 
-	// TODO (nxtcoder17): when increasing pvc volume size, we can not trigger helm update, as it complains about forbidden field
-	b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
-		"name":          obj.Name,
-		"namespace":     obj.Namespace,
-		"labels":        obj.GetLabels(),
-		"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-		"node-selector": obj.Spec.NodeSelector,
-		"tolerations":   obj.Spec.Tolerations,
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
 
-		"storage-class": obj.Spec.Resources.Storage.StorageClass,
-		"storage-size":  obj.Spec.Resources.Storage.Size,
-
-		"requests-cpu": obj.Spec.Resources.Cpu.Min,
-		"requests-mem": obj.Spec.Resources.Memory.Min,
-
-		"limits-cpu": obj.Spec.Resources.Cpu.Max,
-		"limits-mem": obj.Spec.Resources.Memory.Max,
-
-		"existing-secret": obj.Spec.Output.HelmSecret.Name,
-	})
-	if err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
 	}
 
-	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
 	if err != nil {
-		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+		if !apiErrors.IsNotFound(err) {
+			return fail(err)
+		}
+		hc = nil
 	}
 
-	req.AddToOwnedResources(rr...)
+	if hc == nil {
+		fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
+		if err := r.Update(ctx, obj); err != nil {
+			return fail(err)
+		}
+
+		b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
+			"name":          obj.Name,
+			"namespace":     obj.Namespace,
+			"labels":        obj.GetLabels(),
+			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"node-selector": obj.Spec.NodeSelector,
+			"tolerations":   obj.Spec.Tolerations,
+
+			"pod-labels":      obj.GetLabels(),
+			"pod-annotations": fn.FilterObservabilityAnnotations(obj.GetAnnotations()),
+
+			"storage-class": obj.Spec.Resources.Storage.StorageClass,
+			"storage-size":  obj.Spec.Resources.Storage.Size,
+
+			"requests-cpu": obj.Spec.Resources.Cpu.Min,
+			"requests-mem": obj.Spec.Resources.Memory.Min,
+
+			"limits-cpu": obj.Spec.Resources.Cpu.Max,
+			"limits-mem": obj.Spec.Resources.Memory.Max,
+
+			"existing-secret": obj.Spec.Output.HelmSecret.Name,
+		})
+		if err != nil {
+			return fail(err).Err(nil)
+		}
+
+		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+			return fail(err)
+		}
+
+		return req.Done().RequeueAfter(500 * time.Millisecond)
+	}
+
+	req.AddToOwnedResources(rApi.ParseResourceRef(hc))
+
+	shouldUpdatePVCs := false
+
+	oldSize, ok := obj.GetAnnotations()[AnnotationCurrentStorageSize]
+	if ok {
+		oldSizeNum, err := ct.StorageSize(oldSize).ToInt()
+		if err != nil {
+			return fail(err)
+		}
+
+		newSizeNum, err := ct.StorageSize(obj.Spec.Resources.Storage.Size).ToInt()
+		if err != nil {
+			return fail(err)
+		}
+
+		if oldSizeNum > newSizeNum {
+			return fail(fmt.Errorf("new storage size (%s), must be higher than or equal to old size (%s)", obj.Spec.Resources.Storage.Size, oldSize))
+		}
+		shouldUpdatePVCs = newSizeNum > oldSizeNum
+	}
+	if !ok {
+		shouldUpdatePVCs = true
+	}
+
+	if shouldUpdatePVCs {
+		// need to do something
+		// 1. Patch the PVC directly
+		// 2. Rollout the Statefulsets
+
+		ss, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &appsv1.StatefulSet{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return fail(err)
+			}
+			ss = nil
+		}
+
+		if ss != nil {
+			m := types.ExtractPVCLabelsFromStatefulSetLabels(ss.GetLabels())
+
+			var pvclist corev1.PersistentVolumeClaimList
+			if err := r.List(ctx, &pvclist, &client.ListOptions{
+				LabelSelector: apiLabels.SelectorFromValidatedSet(m),
+				Namespace:     obj.Namespace,
+			}); err != nil {
+				return fail(err)
+			}
+
+			for i := range pvclist.Items {
+				pvclist.Items[i].Spec.Resources.Requests[corev1.ResourceStorage] = resource.MustParse(string(obj.Spec.Resources.Storage.Size))
+				if err := r.Update(ctx, &pvclist.Items[i]); err != nil {
+					return fail(err)
+				}
+			}
+
+			// STEP 2: rollout statefulset
+			if err := fn.RolloutRestart(r.Client, fn.StatefulSet, obj.Namespace, ss.GetLabels()); err != nil {
+				return fail(err)
+			}
+
+			fn.MapSet(&obj.Annotations, AnnotationCurrentStorageSize, string(obj.Spec.Resources.Storage.Size))
+			if err := r.Update(ctx, obj); err != nil {
+				return fail(err)
+			}
+		}
+	}
 
 	check.Status = true
-	if check != obj.Status.Checks[HelmReady] {
-		fn.MapSet(&obj.Status.Checks, HelmReady, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *Reconciler) checkHelmReady(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
+
+	checkName := MongoDBHelmReady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
+
+	hc, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &crdsv1.HelmChart{})
+	if err != nil {
+		return fail(err)
+	}
+
+	if !hc.Status.IsReady {
+		return fail(fmt.Errorf("waiting for helm installation to complete"))
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
@@ -310,25 +460,31 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 
 func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
+	check := rApi.Check{Generation: obj.Generation, State: rApi.RunningState}
 
-	req.LogPreCheck(StsReady)
-	defer req.LogPostCheck(StsReady)
+	checkName := MongoDBStatefulSetsReady
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	fail := func(err error) stepResult.Result {
+		return req.CheckFailed(checkName, check, err.Error())
+	}
 
 	var stsList appsv1.StatefulSetList
 	if err := r.List(
 		ctx, &stsList, &client.ListOptions{
-			LabelSelector: labels.SelectorFromValidatedSet(
+			LabelSelector: apiLabels.SelectorFromValidatedSet(
 				map[string]string{constants.MsvcNameKey: obj.Name},
 			),
 			Namespace: obj.Namespace,
 		},
 	); err != nil {
-		return req.CheckFailed(StsReady, check, err.Error()).Err(nil)
+		return fail(err)
 	}
 
 	if len(stsList.Items) == 0 {
-		return req.CheckFailed(StsReady, check, "no statefulset pods found, waiting for helm controller to reconcile the resource").Err(nil)
+		return fail(fmt.Errorf("no statefulset pods found, waiting for helm controller to reconcile the resource"))
 	}
 
 	for i := range stsList.Items {
@@ -339,32 +495,32 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.StandaloneService
 			var podsList corev1.PodList
 			if err := r.List(
 				ctx, &podsList, &client.ListOptions{
-					LabelSelector: labels.SelectorFromValidatedSet(
+					LabelSelector: apiLabels.SelectorFromValidatedSet(
 						map[string]string{
 							constants.MsvcNameKey: obj.Name,
 						},
 					),
 				},
 			); err != nil {
-				return req.CheckFailed(StsReady, check, err.Error())
+				return fail(err)
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)
 			if len(messages) > 0 {
 				b, err := json.Marshal(messages)
 				if err != nil {
-					return req.CheckFailed(StsReady, check, err.Error()).Err(nil)
+					return fail(err).Err(nil)
 				}
-				return req.CheckFailed(StsReady, check, string(b)).Err(nil)
+				return fail(fmt.Errorf("%s", b)).Err(nil)
 			}
 
-			return req.CheckFailed(StsReady, check, "waiting for pods to start ...").Err(nil)
+			return fail(fmt.Errorf("waiting for statefulset pods to start"))
 		}
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[StsReady] {
-		fn.MapSet(&obj.Status.Checks, StsReady, check)
+	if check != obj.Status.Checks[checkName] {
+		fn.MapSet(&obj.Status.Checks, checkName, check)
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
