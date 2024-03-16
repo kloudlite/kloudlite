@@ -4,6 +4,9 @@
 {{- $annotations := get . "annotations" | default dict}}
 {{- $tolerations := get . "tolerations" | default list }}
 
+{{- $podLabels := get . "pod-labels" }}
+{{- $podAnnotations := get . "pod-annotations" }}
+
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $nodeSelector := get . "node-selector" | default dict }}
@@ -53,7 +56,8 @@ spec:
     replicaCount: 1
 
     commonLabels: {{$labels | toYAML | nindent 6}}
-    podLabels: {{$labels | toYAML | nindent 6}}
+    podLabels: {{$podLabels | toYAML | nindent 6}}
+    podAnnotations: {{$podAnnotations | toYAML | nindent 6 }}
     nodeSelector: {{$nodeSelector | toYAML | nindent 6 }}
     tolerations: {{$tolerations | toYAML | nindent 6 }}
 
