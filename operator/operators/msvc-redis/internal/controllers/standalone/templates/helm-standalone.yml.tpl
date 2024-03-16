@@ -4,6 +4,9 @@
 {{- $labels := get . "labels" | default dict }}
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
+{{- $podLabels := get . "pod-labels" | default dict }}
+{{- $podAnnotations := get . "pod-annotations" | default dict }}
+
 {{- $nodeSelector := get . "node-selector" | default dict }}
 {{- $tolerations := get . "tolerations" | default list }}
 
@@ -62,6 +65,9 @@ spec:
 
     master:
       count: 1
+      podLabels: {{$podLabels | toYAML | nindent 8}}
+      podAnnotations: {{$podAnnotations |toYAML | nindent 8}}
+
       resources:
         requests:
           cpu: {{$requestsCpu}}
@@ -81,4 +87,4 @@ spec:
       enabled: true
 
     metrics:
-      enabled: true
+      enabled: false
